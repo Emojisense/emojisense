@@ -1,0 +1,78 @@
+{
+  "//": "Inputs of `pnpm --filter @emojisense/eval cost` and the eval report. Edit freely. Prices: docs/RESEARCH.md (checked 2026-10-02). Keys named // are comments.",
+  "monthlySearches": 10000000,
+
+  "//deviceShare": "L0: share of searches the on-device dictionary answers with confidence, so no semantic request is made. With useMeasuredDeviceShare, the eval's measured rate (reports/latest.json) replaces it. The eval set over-represents hard queries, so the measured share is pessimistic.",
+  "deviceShare": 0.7,
+  "useMeasuredDeviceShare": true,
+
+  "//requestsPerSemanticSearch": "Debounced requests per search that needs semantic results (a pause while typing sends a request for a prefix).",
+  "requestsPerSemanticSearch": 1.5,
+
+  "//shardHitShare": "L2: share of those semantic requests answered by a static prefix shard (free asset request).",
+  "shardHitShare": 0.5,
+
+  "//cacheHitRate": "L3: Cache API hit rate of the requests that still reach the Worker. Low, because L2 already takes the frequent queries; what is left is the long tail.",
+  "cacheHitRate": 0.1,
+
+  "cpuMsPerRequest": 2,
+
+  "model": {
+    "//": "id null = the production model in packages/data/pack.config.json. pricePerMTokens null = the listed Workers AI price; a model without a listed price (EmbeddingGemma) uses assumedPricePerMTokens and is flagged.",
+    "id": null,
+    "tokensPerQuery": 8,
+    "pricePerMTokens": null,
+    "assumedPricePerMTokens": 0.02
+  },
+
+  "reactions": {
+    "//": "POST /v1/suggest-reactions. Calls per search, input ≤ 256 chars ≈ 64 tokens. Never cached (chat text).",
+    "perSearch": 0.02,
+    "tokensPerRequest": 64,
+    "cpuMsPerRequest": 2
+  },
+
+  "images": {
+    "//": "POST /v1/classify-image. ⚠ pricePerImage is an assumption (vision model not chosen yet). The perceptual-hash cache skips the model for repeated memes; the caption then goes through text search (tokensPerImage).",
+    "perSearch": 0.001,
+    "cacheHitRate": 0.3,
+    "pricePerImage": 0.001,
+    "tokensPerImage": 24,
+    "cpuMsPerRequest": 5,
+    "billedAsWorkersAi": true
+  },
+
+  "workers": {
+    "basePerMonth": 5,
+    "includedRequests": 10000000,
+    "requestPricePerM": 0.3,
+    "includedCpuMs": 30000000,
+    "cpuPricePerMMs": 0.02
+  },
+
+  "workersAi": {
+    "freeNeuronsPerDay": 10000,
+    "pricePer1kNeurons": 0.011
+  },
+
+  "analyticsEngine": {
+    "//": "One data point per Worker request. Billing has not started. ⚠ pricePerMWrites is Cloudflare's announced rate, not verified in RESEARCH.md.",
+    "writesPerWorkerRequest": 1,
+    "includedWrites": 10000000,
+    "pricePerMWrites": 0.25,
+    "billingStarted": false
+  },
+
+  "sensitivity": {
+    "//": "Low and high values for the one-at-a-time sensitivity table.",
+    "deviceShare": [0.4, 0.9],
+    "shardHitShare": [0, 0.8],
+    "cacheHitRate": [0, 0.5],
+    "requestsPerSemanticSearch": [1, 3],
+    "model.tokensPerQuery": [4, 24],
+    "model.pricePerMTokens": [0.012, 0.067],
+    "reactions.perSearch": [0, 0.1],
+    "images.perSearch": [0, 0.01],
+    "images.pricePerImage": [0.0002, 0.005]
+  }
+}

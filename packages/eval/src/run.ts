@@ -28,7 +28,9 @@ import {
   searchVectors,
   shouldUseSemantic,
 } from "emojisense";
-import { costPerMillion } from "./cost.ts";
+import { computeLayeredCost, type MeasuredRate, withValue } from "./cost.ts";
+import { ASSUMPTIONS_PATH, loadCostInputs } from "./cost-inputs.ts";
+import { renderCostReport, usd } from "./cost-report.ts";
 import { judge, percentile, type QueryOutcome, type Summary, summarize } from "./metrics.ts";
 import { type EvalQuery, loadQueries } from "./queries.ts";
 
@@ -166,6 +168,10 @@ for (let round = 0; round < 3; round++) {
   }
 }
 const noiseConfident = noise.filter((q) => (aliasOutputs.get(q.id)?.confidence ?? 0) >= 0.6).length;
+// The client's gate needs only the alias output, so the semantic-call rate is measured even
+// without vectors. `pnpm cost` reads it from latest.json.
+const gateRate =
+  scored.filter((q) => shouldUseSemantic(aliasOutputs.get(q.id) as AliasSearchOutput)).length / scored.length;
 
 // ── Tier 1 + fusion ───────────────────────────────────────────────────────────────────────
 const vectorFiles = readdirSync(packDir)
@@ -267,20 +273,23 @@ const best = [...results].sort(
 )[0] as EngineResult;
 const aliasFull = results[0] as EngineResult;
 
+const measuredGate: MeasuredRate = {
+  semanticRate: gateRate,
+  source: `eval gate, ${scored.length} queries, this run`,
+};
+const costInputs = loadCostInputs(ASSUMPTIONS_PATH, measuredGate);
+/** Same layer assumptions; this engine's model, measured query length and semantic-call rate. */
 const costRows = results
   .filter((r) => r.kind === "fused-gated")
   .map((r) => {
-    const tokens = queryTokens[r.model as string] ?? 8;
-    const at = (hit: number, rate = r.semanticRate ?? 1) =>
-      costPerMillion({
-        semanticRate: rate,
-        requestsPerSemanticSearch: 1.5,
-        cacheHitRate: hit,
-        tokensPerQuery: tokens,
-        modelId: r.model as string,
-        cpuMsPerRequest: 2,
-      });
-    return { r, gated: at(0.7), worst: at(0.7, 1), cold: at(0.3) };
+    const a = structuredClone(costInputs);
+    a.model = {
+      ...a.model,
+      id: r.model as string,
+      pricePerMTokens: null,
+      tokensPerQuery: queryTokens[r.model as string] ?? a.model.tokensPerQuery,
+    };
+    return { r, cost: computeLayeredCost(withValue(a, "deviceShare", 1 - (r.semanticRate ?? 1))) };
   });
 
 const lines: string[] = [];
@@ -361,27 +370,33 @@ for (const [name, f] of Object.entries(
   if (name.startsWith("vectors.")) row([name, kb(f.bytes), kb(f.gzipBytes)]);
 }
 
+lines.push(
+  "",
+  ...renderCostReport(costInputs, { level: 2, measured: measuredGate }),
+  "",
+  "Inputs: `cost.assumptions.json`. Recompute with `pnpm --filter @emojisense/eval cost`.",
+);
 if (costRows.length) {
   lines.push(
     "",
-    "## Estimated cost per 1M searches (Workers Paid, beyond included quota)",
+    "### Per engine",
     "",
-    "Assumptions: 1.5 debounced requests per semantic search, 2 ms CPU per request, query tokens ≈ chars / 4.",
+    "Same layer assumptions; query tokens ≈ chars / 4 of the formatted query.",
     "",
   );
-  row(["Engine", "Tier 1 calls", "Cache hit 70%", "Cache hit 30%", "Every search hits Tier 1, 70% hit"]);
+  row(["Engine", "Tier 1 calls", "$ / 1M tokens", "Search $ / 1M searches", "All layers $ / 1M searches"]);
   row(["---", "--:", "--:", "--:", "--:"]);
-  for (const { r, gated, worst, cold } of costRows) {
-    const flag = gated.priceAssumed ? " ⚠" : "";
+  for (const { r, cost } of costRows) {
+    const flag = cost.price.source === "assumed" ? " ⚠" : "";
     row([
       r.name,
       `${Math.round((r.semanticRate ?? 0) * 100)}%`,
-      `$${gated.totalUsd.toFixed(3)}${flag}`,
-      `$${cold.totalUsd.toFixed(3)}${flag}`,
-      `$${worst.totalUsd.toFixed(3)}${flag}`,
+      `${usd(cost.price.pricePerMTokens)}${flag}`,
+      usd(cost.searchPerMillion),
+      usd(cost.marginalPerMillion),
     ]);
   }
-  lines.push("", "⚠ = model price is not published; $0.02 / 1M tokens (bge-small rate) assumed.");
+  lines.push("", "⚠ = model price is not published; `model.assumedPricePerMTokens` is used.");
 }
 
 lines.push("", `## Misses of the best engine (${best.name})`, "");
@@ -399,6 +414,7 @@ const json = {
   date: new Date().toISOString(),
   packVersion,
   queries: { scored: scored.length, noise: noise.length },
+  gate: { semanticRate: gateRate, n: scored.length },
   engines: results.map(({ outcomes, ...rest }) => ({ ...rest, outcomes })),
   latency: {
     keystroke: { p50: percentile(keystrokeMs, 50), p95: percentile(keystrokeMs, 95) },

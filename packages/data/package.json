@@ -9,6 +9,7 @@
     "validate": "tsx src/validate.ts",
     "build:pack": "tsx src/build-pack.ts",
     "embed": "tsx src/embed.ts",
+    "build:shards": "tsx src/build-shards.ts",
     "build": "tsx src/ingest.ts && tsx src/validate.ts && tsx src/build-pack.ts",
     "check:enrichment": "tsx scripts/check-enrichment.ts",
     "typecheck": "tsc --noEmit",
@@ -21,6 +22,7 @@
     "emojisense": "workspace:*"
   },
   "exports": {
+    "./config": "./src/config.ts",
     "./embeddings": "./src/embeddings.ts",
     "./models": "./src/models.ts",
     "./paths": "./src/paths.ts"
