@@ -11,8 +11,15 @@ defined( 'ABSPATH' ) || exit;
  * Posts, excerpts and comments show the set's images (wp_staticize_emoji with the API as the
  * image source). WordPress's own emoji script uses the same source for emoji anywhere else on
  * the page that the browser cannot draw.
+ *
+ * The API serves set images for publishable keys on a plan with hosted sets, and checks the key
+ * against the page origin from the Referer header, so the images carry `?key=` and a referrer
+ * policy that sends the origin.
  */
 class Emojisense_Emoji_Set {
+
+	/** Sends the page origin (never its path) with image requests, also under a stricter page policy. */
+	const REFERRER_POLICY = 'strict-origin-when-cross-origin';
 
 	/**
 	 * Hooks, only when a hosted set is chosen and the API is on.
@@ -48,12 +55,13 @@ class Emojisense_Emoji_Set {
 	}
 
 	/**
-	 * The hosted sets are SVG.
+	 * The hosted sets are SVG. WordPress appends the extension to the file name, so the key query
+	 * goes here too (the key is letters and digits only).
 	 *
 	 * @return string
 	 */
 	public function extension() {
-		return '.svg';
+		return '.svg' . self::key_query();
 	}
 
 	/**
@@ -66,7 +74,12 @@ class Emojisense_Emoji_Set {
 		if ( is_feed() || ! is_string( $html ) || '' === $html ) {
 			return $html;
 		}
-		return wp_staticize_emoji( $html );
+		$base = $this->base_url();
+		return str_replace(
+			'<img src="' . $base,
+			'<img referrerpolicy="' . self::REFERRER_POLICY . '" src="' . $base,
+			wp_staticize_emoji( $html )
+		);
 	}
 
 	/**
@@ -89,7 +102,17 @@ class Emojisense_Emoji_Set {
 	 * @return string
 	 */
 	public static function image_url( $emoji, $set ) {
-		return Emojisense_Settings::api_url() . '/v1/sets/' . rawurlencode( $set ) . '/' . self::hexcode( $emoji ) . '.svg';
+		return Emojisense_Settings::api_url() . '/v1/sets/' . rawurlencode( $set ) . '/' . self::hexcode( $emoji ) . '.svg' . self::key_query();
+	}
+
+	/**
+	 * `?key=pk_live_…`, or an empty string without a key.
+	 *
+	 * @return string
+	 */
+	private static function key_query() {
+		$key = Emojisense_Settings::publishable_key();
+		return '' === $key ? '' : '?key=' . rawurlencode( $key );
 	}
 
 	/**

@@ -26,7 +26,7 @@ Emojisense finds emoji by meaning, slang and intent, not only by their official 
 
 * Search by meaning: when the built-in dictionary is unsure, the API adds emoji with a similar meaning.
 * Reaction suggestions from the post text.
-* Hosted emoji sets (Twemoji, Noto, Fluent) so every visitor sees the same emoji.
+* Hosted emoji sets (Twemoji, Noto, Fluent) so every visitor sees the same emoji. Hosted sets need a publishable key on the Solo plan or higher.
 
 **11 languages.** English, Chinese, Hindi, Spanish, Arabic, French, Bengali, Portuguese, Russian, Indonesian and Turkish. The plugin uses your site language, and always understands English too.
 
@@ -38,7 +38,7 @@ This plugin can connect to the Emojisense API, a service run by Emojisense. **Th
 
 * **Search by meaning** (can be turned off separately): when the built-in dictionary is unsure about a search in the editor or the comment picker, the visitor's browser sends the search text, the language and the site's publishable key to `https://api.emojisense.com/v1/search`.
 * **Reaction suggestions** (can be turned off separately): when a post is published, your server sends the post title and the first 256 characters of its text, the language and the publishable key to `https://api.emojisense.com/v1/suggest-reactions`. Authors can also ask for suggestions from the editor sidebar.
-* **Hosted emoji set** (when you choose Twemoji, Noto or Fluent): visitors' browsers load emoji images from `https://api.emojisense.com/v1/sets/`.
+* **Hosted emoji set** (when you choose Twemoji, Noto or Fluent): visitors' browsers load emoji images from `https://api.emojisense.com/v1/sets/`. Each image request carries the site's publishable key and the origin of the page (the API checks the key against it).
 * **Culture layer**: the browser loads the current culture file from `https://api.emojisense.com/v1/culture/` instead of the copy in the plugin.
 
 As with any web request, the API receives the IP address of the browser or server; Emojisense uses it only for rate limiting and does not store it. Post text is never stored or logged. Search text is kept only as anonymous search statistics, without an IP address or a user.

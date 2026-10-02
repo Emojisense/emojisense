@@ -46,7 +46,7 @@ const examples = [
   <ul>
     <li><strong>Search by meaning:</strong> unsure searches also ask <code>/v1/search</code>.</li>
     <li><strong>Reaction suggestions:</strong> when a post is published, the server sends its title and first 256 characters to <code>/v1/suggest-reactions</code> (in the background, with WP-Cron).</li>
-    <li><strong>Hosted emoji sets:</strong> posts, comments and reactions show Twemoji, Noto or Fluent images from <code>/v1/sets/</code>.</li>
+    <li><strong>Hosted emoji sets:</strong> posts, comments and reactions show Twemoji, Noto or Fluent images from <code>/v1/sets/</code>. They need a key on the Solo plan or higher; the plugin adds the key and sends the page origin with each image.</li>
   </ul>
   <p>The plugin refuses secret keys. Its privacy guide text (Settings → Privacy) describes each data flow.</p>
 </DocsLayout>

@@ -97,13 +97,17 @@ class Emojisense_Settings {
 	}
 
 	/**
-	 * The hosted emoji set, or "native" when the API is off (the images come from the API).
+	 * The hosted emoji set, or "native" when the API is off or there is no publishable key: the
+	 * images come from the API, which serves them for keys on a plan with hosted sets.
 	 *
 	 * @return string
 	 */
 	public static function emoji_set() {
 		$set = (string) self::value( 'emoji_set' );
-		return self::api_enabled() && in_array( $set, self::EMOJI_SETS, true ) ? $set : 'native';
+		if ( ! self::api_enabled() || '' === self::publishable_key() || ! in_array( $set, self::EMOJI_SETS, true ) ) {
+			return 'native';
+		}
+		return $set;
 	}
 
 	/**
@@ -297,6 +301,13 @@ class Emojisense_Settings {
 
 		$set                = isset( $input['emoji_set'] ) ? (string) $input['emoji_set'] : '';
 		$clean['emoji_set'] = in_array( $set, self::EMOJI_SETS, true ) ? $set : $defaults['emoji_set'];
+		if ( 'native' !== $clean['emoji_set'] && $clean['api_enabled'] && '' === $clean['publishable_key'] ) {
+			self::report_error(
+				'emojisense_emoji_set',
+				__( 'Hosted emoji sets need a publishable key on the Solo plan or higher. Visitors see native emoji until you add one.', 'emojisense' ),
+				'warning'
+			);
+		}
 
 		$locale          = isset( $input['locale'] ) ? (string) $input['locale'] : '';
 		$clean['locale'] = 'auto' === $locale || in_array( $locale, self::LOCALES, true ) ? $locale : 'auto';
@@ -339,14 +350,15 @@ class Emojisense_Settings {
 	}
 
 	/**
-	 * A settings error, when the Settings API is loaded (it is not in REST or CLI updates).
+	 * A settings notice, when the Settings API is loaded (it is not in REST or CLI updates).
 	 *
-	 * @param string $code    Error code.
+	 * @param string $code    Notice code.
 	 * @param string $message Message for the admin.
+	 * @param string $type    error or warning.
 	 */
-	private static function report_error( $code, $message ) {
+	private static function report_error( $code, $message, $type = 'error' ) {
 		if ( function_exists( 'add_settings_error' ) ) {
-			add_settings_error( self::OPTION, $code, $message );
+			add_settings_error( self::OPTION, $code, $message, $type );
 		}
 	}
 }

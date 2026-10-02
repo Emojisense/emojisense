@@ -38,8 +38,9 @@ class Test_Emojisense_Plugin extends WP_UnitTestCase {
 			array_merge(
 				Emojisense_Settings::defaults(),
 				array(
-					'api_enabled' => true,
-					'emoji_set'   => 'twemoji',
+					'api_enabled'     => true,
+					'emoji_set'       => 'twemoji',
+					'publishable_key' => 'pk_live_AbCdEf123456',
 				)
 			)
 		);
@@ -48,9 +49,29 @@ class Test_Emojisense_Plugin extends WP_UnitTestCase {
 		add_filter( 'emoji_url', array( $set, 'base_url' ) );
 		add_filter( 'emoji_ext', array( $set, 'extension' ) );
 		$out = $set->staticize( $html );
-		$this->assertStringContainsString( 'src="https://api.emojisense.com/v1/sets/twemoji/1f355.svg"', $out );
+		$this->assertStringContainsString( '<img referrerpolicy="strict-origin-when-cross-origin" src="https://api.emojisense.com/v1/sets/twemoji/1f355.svg?key=pk_live_AbCdEf123456"', $out );
 		$this->assertStringContainsString( '<code>', $out );
 		$this->assertSame( 1, substr_count( $out, '<img' ) );
+	}
+
+	/**
+	 * Hosted sets need a key: without one, visitors see native emoji.
+	 */
+	public function test_hosted_set_needs_a_key() {
+		update_option(
+			Emojisense_Settings::OPTION,
+			array_merge(
+				Emojisense_Settings::defaults(),
+				array(
+					'api_enabled' => true,
+					'emoji_set'   => 'noto',
+				)
+			)
+		);
+		$this->assertSame( 'native', Emojisense_Settings::emoji_set() );
+		$set = new Emojisense_Emoji_Set();
+		$set->register_filters();
+		$this->assertFalse( has_filter( 'the_content', array( $set, 'staticize' ) ) );
 	}
 
 	/**

@@ -1,7 +1,7 @@
 /**
  * Renders the WordPress.org directory assets into release/wordpress-org/ (they go to the SVN
  * `assets/` folder, not into the plugin zip): icons, banners and the screenshots that
- * `pnpm e2e` took. Emoji in the banner come from the Noto set of the Emojisense API (Apache 2.0).
+ * `pnpm e2e` took. Emoji in the banner are Noto Emoji (Apache 2.0) at the commit the API pins.
  */
 import { copyFile, mkdir, readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
@@ -13,8 +13,20 @@ const PLUGIN = join(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = join(PLUGIN, "assets", "wporg");
 const OUT = join(PLUGIN, "release", "wordpress-org");
 const SCREENSHOTS = join(PLUGIN, "test-results", "e2e");
-const API = process.env.EMOJISENSE_API ?? "https://api.emojisense.com";
+/** The Noto commit the API's hosted set pins (packages/worker/src/sets/upstreams.json). */
+const NOTO_COMMIT = "e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e";
 const require = createRequire(import.meta.url);
+
+/** "1F680" → the pinned Noto SVG (`emoji_u1f680.svg`, no U+FE0F), as the API's set maps it. */
+function notoUrl(hex) {
+  const name = hex
+    .toLowerCase()
+    .split("-")
+    .filter((part) => part !== "fe0f")
+    .map((part) => part.padStart(4, "0"))
+    .join("_");
+  return `https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@${NOTO_COMMIT}/2D/svg/emoji_u${name}.svg`;
+}
 
 async function fontFace(family, file) {
   const path = require.resolve(file);
@@ -34,9 +46,7 @@ async function bannerHtml() {
     ),
   ];
   const html = await readFile(join(SOURCE, "banner.html"), "utf8");
-  return html
-    .replace("/*FONTS*/", fonts.join("\n"))
-    .replace(/EMOJI:([0-9A-F-]+)/g, (_, hex) => `${API}/v1/sets/noto/${hex}.svg`);
+  return html.replace("/*FONTS*/", fonts.join("\n")).replace(/EMOJI:([0-9A-F-]+)/g, (_, hex) => notoUrl(hex));
 }
 
 async function main() {

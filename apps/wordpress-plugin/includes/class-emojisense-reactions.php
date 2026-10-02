@@ -470,9 +470,10 @@ class Emojisense_Reactions {
 			$glyph = 'native' === $set
 				? esc_html( $emoji )
 				: sprintf(
-					'<img src="%1$s" alt="%2$s" class="emojisense-reaction__image" width="20" height="20" loading="lazy" decoding="async" />',
+					'<img src="%1$s" alt="%2$s" class="emojisense-reaction__image" width="20" height="20" loading="lazy" decoding="async" referrerpolicy="%3$s" />',
 					esc_url( Emojisense_Emoji_Set::image_url( $emoji, $set ) ),
-					esc_attr( $emoji )
+					esc_attr( $emoji ),
+					esc_attr( Emojisense_Emoji_Set::REFERRER_POLICY )
 				);
 			// Code points, not the emoji: content filters such as wp_staticize_emoji() rewrite
 			// emoji (and drop U+FE0F) even inside attributes.

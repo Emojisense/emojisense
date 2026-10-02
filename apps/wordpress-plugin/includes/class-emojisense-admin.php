@@ -371,7 +371,7 @@ class Emojisense_Admin {
 		printf(
 			'<p class="description" id="%s-description">%s</p>',
 			esc_attr( self::id( 'emoji_set' ) ),
-			esc_html__( 'Shows the same emoji on every device: posts, excerpts, comments and reactions load the images from the API address. Visitors’ browsers then request images from the API.', 'emojisense' )
+			esc_html__( 'Shows the same emoji on every device: posts, excerpts, comments and reactions load the images from the API address. Needs a publishable key on the Solo plan or higher. Visitors’ browsers then request images from the API.', 'emojisense' )
 		);
 	}
 

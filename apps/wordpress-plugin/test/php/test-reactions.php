@@ -384,13 +384,15 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 			array_merge(
 				Emojisense_Settings::get(),
 				array(
-					'api_enabled' => true,
-					'emoji_set'   => 'noto',
+					'api_enabled'     => true,
+					'emoji_set'       => 'noto',
+					'publishable_key' => 'pk_live_AbCdEf123456',
 				)
 			)
 		);
 		$html = Emojisense_Reactions::render( $this->post_id );
-		$this->assertStringContainsString( 'src="https://api.emojisense.com/v1/sets/noto/1F44D.svg"', $html );
+		$this->assertStringContainsString( 'src="https://api.emojisense.com/v1/sets/noto/1F44D.svg?key=pk_live_AbCdEf123456"', $html );
+		$this->assertStringContainsString( 'referrerpolicy="strict-origin-when-cross-origin"', $html );
 		$this->assertStringContainsString( 'alt="👍"', $html );
 	}
 

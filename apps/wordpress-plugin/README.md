@@ -47,7 +47,7 @@ The zip holds `emojisense.php`, `uninstall.php`, `readme.txt`, `includes/`, `bui
 | Keys | Publishable keys only (`pk_live_`/`pk_test_`); secret keys are refused with advice. Server calls send the site origin, so the key's allowed origins work for both. |
 | Reactions | Counts per emoji in post meta (read, change, write: two reactions at the same instant may count once). Nonce from the GET answer, so cached pages keep working. Rate limit: 10 a minute per client (`emojisense_reaction_rate_limit`), keyed by an HMAC of the IP address that lives for one window. The browser remembers its own reactions in `localStorage`. The buttons carry code points (`data-emoji-hex`) because content filters rewrite emoji in attributes. |
 | Suggestions | After publishing, in WP-Cron, never during the publish request. Skipped when the author chose reactions. |
-| Hosted sets | `wp_staticize_emoji()` with the API as `emoji_url`, on content, excerpts and comments. A missing image falls back to the emoji text. |
+| Hosted sets | `wp_staticize_emoji()` with the API as `emoji_url`, on content, excerpts and comments. The API serves set images only for keys on a plan with hosted sets and checks the key against the `Referer` origin, so the images get `?key=` and `referrerpolicy="strict-origin-when-cross-origin"`; without a key the set stays native. A missing image falls back to the emoji text. |
 
 ## Test
 
