@@ -12,6 +12,11 @@ public data class ApplyCultureOptions @JvmOverloads constructor(
     val region: String? = null,
     /** The moment windows are checked against (epoch milliseconds, local calendar day). Default: now. */
     val now: Long? = null,
+    /**
+     * The calendar day windows are checked against, "YYYY-MM-DD". It wins over [now]. A server
+     * passes the request's UTC day, because it does not know the user's.
+     */
+    val day: String? = null,
     /** Let the last word complete a trigger while the user is typing. */
     val prefix: Boolean = true,
     /** Length of the returned list. Default: the canonical results plus the culture results. */
@@ -28,6 +33,8 @@ public data class RelevantNowOptions @JvmOverloads constructor(
     val locale: String? = null,
     val region: String? = null,
     val now: Long? = null,
+    /** "YYYY-MM-DD"; wins over [now]. */
+    val day: String? = null,
     val limit: Int = 8,
 )
 
@@ -48,10 +55,12 @@ public object CultureLayer {
     /** A BCP 47-style locale tag: "en", "pt", "zh-Hans", "pt-BR". Nothing that can change the URL path. */
     private val LOCALE_TAG = Regex("^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$")
     private val ISO_REGION = Regex("^[A-Z]{2}$")
+    private val DAY = Regex("^\\d{4}-\\d{2}-\\d{2}$")
 
     /**
      * Fetches one locale's culture file, e.g. from `https://api.emojisense.com/v1/culture/0.1.0`.
-     * It changes daily: cache it for an hour, not forever.
+     * It holds the windows of the next 12 months and changes only when a deploy brings new entries:
+     * cache it for an hour, not forever.
      */
     @JvmStatic
     @JvmOverloads
@@ -92,6 +101,18 @@ public object CultureLayer {
         return "${calendar.get(Calendar.YEAR)}-$month-$day"
     }
 
+    /**
+     * The day a scope checks windows against: [day] when given (it must be "YYYY-MM-DD"), else the
+     * local calendar day of [now] (default: now).
+     */
+    @JvmStatic
+    @JvmOverloads
+    public fun scopeDay(day: String? = null, now: Long? = null): String {
+        if (day == null) return localDay(now ?: System.currentTimeMillis())
+        if (!DAY.matches(day)) throw EmojisenseException.InvalidData("culture day must be YYYY-MM-DD, got \"$day\"")
+        return day
+    }
+
     /** Is a window active on `day` ("YYYY-MM-DD")? Null = always. Yearly windows may wrap the year end. */
     @JvmStatic
     public fun isActiveOn(window: CultureWindow?, day: String): Boolean {
@@ -112,7 +133,7 @@ public object CultureLayer {
         val normalized = Normalizer.normalize(query)
         if (normalized.isEmpty()) return emptyList()
         val typing = options.prefix && !endsWithJavaScriptWhitespace(query)
-        val day = localDay(options.now ?: System.currentTimeMillis())
+        val day = scopeDay(options.day, options.now)
         val best = LinkedHashMap<String, CultureResult>()
         for (entry in culture.entries) {
             if (!inScope(entry, options.region, day)) continue
@@ -158,14 +179,15 @@ public object CultureLayer {
         canonicalTopId: String?,
         region: String?,
         now: Long? = null,
+        day: String? = null,
     ): CultureResult? {
         if (region.isNullOrEmpty() || canonicalTopId == null) return null
         val normalized = Normalizer.normalize(query)
-        val day = localDay(now ?: System.currentTimeMillis())
+        val scope = scopeDay(day, now)
         var lead: CultureResult? = null
         for (entry in culture.entries) {
             if (entry.kind != CultureKind.REGIONAL || canonicalTopId !in entry.outranks) continue
-            if (normalized !in entry.triggers || !inScope(entry, region, day)) continue
+            if (normalized !in entry.triggers || !inScope(entry, region, scope)) continue
             var strongest: CultureEmoji? = null
             for (item in entry.emoji) if (strongest == null || item.weight > strongest.weight) strongest = item
             if (strongest == null || strongest.hexcode == canonicalTopId) continue
@@ -221,7 +243,7 @@ public object CultureLayer {
             return match.copy(emoji = entry.emoji, label = label)
         }
         val matches = matchCulture(culture, query, options.copy(limit = MAX_CULTURE_RESULTS)).mapNotNull(::withLabel)
-        val lead = matchRegionalLead(culture, query, results.firstOrNull()?.id, options.region, options.now)
+        val lead = matchRegionalLead(culture, query, results.firstOrNull()?.id, options.region, options.now, options.day)
         val limit = options.limit ?: (results.size + matches.size + 1)
         return insertCulture(results, matches, limit, lead?.let(::withLabel))
     }
@@ -235,7 +257,7 @@ public object CultureLayer {
     public fun relevantNow(cultures: List<Culture>, options: RelevantNowOptions = RelevantNowOptions()): List<RelevantEmoji> {
         val file = (if (options.locale != null) cultures.firstOrNull { it.locale == options.locale } else cultures.firstOrNull())
             ?: return emptyList()
-        val day = localDay(options.now ?: System.currentTimeMillis())
+        val day = scopeDay(options.day, options.now)
         val entries = file.entries.filter {
             it.featured && (it.kind == CultureKind.SEASONAL || it.kind == CultureKind.EVENT) && inScope(it, options.region, day)
         }

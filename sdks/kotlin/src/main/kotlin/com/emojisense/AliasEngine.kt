@@ -14,6 +14,8 @@ public data class AliasSearchOptions @JvmOverloads constructor(
     val region: String? = null,
     /** The moment culture windows are checked against (epoch milliseconds, local calendar day). Default: now. */
     val now: Long? = null,
+    /** The calendar day culture windows are checked against, "YYYY-MM-DD". It wins over [now]. */
+    val day: String? = null,
 )
 
 /** What a search returns. With culture results, [results] holds [CultureResult]s after the top result. */
@@ -79,6 +81,7 @@ public class AliasEngine private constructor(
             ApplyCultureOptions(
                 region = options.region,
                 now = options.now,
+                day = options.day,
                 prefix = options.prefix,
                 limit = options.limit,
                 locale = options.locale,

@@ -121,6 +121,34 @@ class CultureTest {
         assertEquals("2027-01-01", CultureLayer.localDay(date(2027, 0, 1, 0, 1)))
     }
 
+    @Test
+    fun `handles leap days in yearly and dated windows`() {
+        assertEquals("2028-02-29", CultureLayer.localDay(date(2028, 1, 29, 12)))
+        val aroundMarch = CultureWindow("02-25", "03-03", "yearly")
+        assertTrue(CultureLayer.isActiveOn(aroundMarch, "2028-02-29"))
+        assertTrue(CultureLayer.isActiveOn(aroundMarch, "2027-02-28"))
+        assertTrue(CultureLayer.isActiveOn(aroundMarch, "2027-03-01"))
+        val toFebruary28 = CultureWindow("02-20", "02-28", "yearly")
+        assertTrue(CultureLayer.isActiveOn(toFebruary28, "2028-02-28"))
+        assertFalse(CultureLayer.isActiveOn(toFebruary28, "2028-02-29"))
+        val fromMarch = CultureWindow("03-01", "03-08", "yearly")
+        assertFalse(CultureLayer.isActiveOn(fromMarch, "2028-02-29"))
+        assertTrue(CultureLayer.isActiveOn(fromMarch, "2028-03-01"))
+        val leapEvent = CultureWindow("2028-02-28", "2028-03-01")
+        assertTrue(CultureLayer.isActiveOn(leapEvent, "2028-02-29"))
+        assertFalse(CultureLayer.isActiveOn(leapEvent, "2028-03-02"))
+    }
+
+    @Test
+    fun `checks an explicit day before now, and only a YYYY-MM-DD day`() {
+        assertEquals("2026-10-20", CultureLayer.scopeDay(now = october20))
+        assertEquals("2026-11-01", CultureLayer.scopeDay("2026-11-01", october20))
+        assertFailsWith<EmojisenseException.InvalidData> { CultureLayer.scopeDay("2026-11-1") }
+        val file = culture(listOf(halloween))
+        assertEquals(emptyList(), CultureLayer.matchCulture(file, "halloween", ApplyCultureOptions(now = october20, day = "2026-11-01")))
+        assertEquals(2, CultureLayer.matchCulture(file, "halloween", ApplyCultureOptions(now = date(2026, 4, 1), day = "2026-10-31")).size)
+    }
+
     // ── matchCulture ─────────────────────────────────────────────────────────────────────────
 
     @Test
@@ -386,6 +414,75 @@ class CultureTest {
         val regional = culture(listOf(halloween.copy(regions = listOf("US"))))
         assertEquals(emptyList(), CultureLayer.relevantNow(regional, RelevantNowOptions(now = october20)))
         assertEquals(2, CultureLayer.relevantNow(regional, RelevantNowOptions(now = october20, region = "us")).size)
+    }
+
+    // ── One culture file for twelve months ───────────────────────────────────────────────────
+
+    private val diwali = CultureEntry(
+        id = "diwali-2026",
+        kind = CultureKind.EVENT,
+        context = "Diwali 2026",
+        window = CultureWindow("2026-10-30", "2026-11-11"),
+        triggers = listOf("diwali"),
+        emoji = listOf(CultureEmoji("🪔", "1FA94", 0.9)),
+        featured = true,
+    )
+
+    /** Built on 2026-10-02 for 366 days: every yearly entry, the events of the next 12 months, no snapshot. */
+    private val yearFile by lazy { culture(listOf(diwali, halloween, newYear, goat)).copy(until = "2027-10-03") }
+
+    private fun at(year: Int, month: Int, day: Int, hour: Int = 12) = date(year, month - 1, day, hour)
+
+    private fun on(now: Long) = yearFile.entries
+        .filter { CultureLayer.matchCulture(yearFile, it.triggers.firstOrNull() ?: "", ApplyCultureOptions(now = now, prefix = false)).isNotEmpty() }
+        .map { it.id }
+
+    private fun shelf(now: Long) = CultureLayer.relevantNow(yearFile, RelevantNowOptions(now = now)).map { it.cultureId }.distinct()
+
+    @Test
+    fun `switches a seasonal entry on the day it starts, with the same file`() {
+        assertEquals(listOf("goat-football"), on(at(2026, 10, 14)))
+        assertEquals(listOf("halloween", "goat-football"), on(at(2026, 10, 15)))
+        assertEquals(emptyList(), shelf(at(2026, 10, 14)))
+        assertEquals(listOf("halloween"), shelf(at(2026, 10, 15)))
+        assertEquals(listOf("diwali-2026", "goat-football"), on(at(2026, 11, 1)))
+    }
+
+    @Test
+    fun `follows the local day, not the hour, and drops an event the day after it ends`() {
+        assertFalse("halloween" in on(at(2026, 10, 14, 23)))
+        assertTrue("halloween" in on(date(2026, 9, 15, 0, 1)))
+        assertTrue("diwali-2026" in on(at(2026, 11, 11)))
+        assertEquals(listOf("diwali-2026"), shelf(at(2026, 11, 11)))
+        assertFalse("diwali-2026" in on(at(2026, 11, 12)))
+        assertEquals(emptyList(), shelf(at(2026, 11, 12)))
+    }
+
+    @Test
+    fun `crosses the year end and starts the next season again`() {
+        assertEquals(listOf("goat-football"), on(at(2026, 12, 25)))
+        assertEquals(listOf("new-year", "goat-football"), on(date(2026, 11, 31, 23, 59)))
+        assertEquals(listOf("new-year", "goat-football"), on(at(2027, 1, 2)))
+        assertEquals(listOf("goat-football"), on(at(2027, 1, 3)))
+        assertEquals(listOf("halloween", "goat-football"), on(at(2027, 10, 15)))
+    }
+
+    @Test
+    fun `follows the day in a long-lived session`() = runTest {
+        var now = date(2026, 9, 14, 23, 59)
+        val states = mutableListOf<SessionState>()
+        val session = SearchSession(AliasEngine(listOf(pack)).withCulture(yearFile), this, clock = { now }, onChange = { states.add(it) })
+        session.update("halloween")
+        now = date(2026, 9, 15, 0, 1)
+        session.update("halloween")
+        assertEquals(listOf(false, true), states.map { state -> state.results.any { it.source == ResultSource.CULTURE } })
+    }
+
+    @Test
+    fun `checks the windows of a file built the old way and ignores its relevantNow list`() {
+        val oldStyle = culture(listOf(halloween)).copy(from = "2026-10-20", until = "2026-11-03", relevantNow = listOf("halloween"))
+        assertEquals(2, CultureLayer.relevantNow(oldStyle, RelevantNowOptions(now = at(2026, 10, 20))).size)
+        assertEquals(emptyList(), CultureLayer.relevantNow(oldStyle, RelevantNowOptions(now = at(2026, 11, 5))))
     }
 
     // ── Files ────────────────────────────────────────────────────────────────────────────────

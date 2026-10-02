@@ -62,6 +62,8 @@ public class SearchSession @JvmOverloads constructor(
     /** ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". */
     private val region: String? = null,
     private val shouldUseSemantic: (AliasSearchOutput<SearchResult>) -> Boolean = Fusion::shouldUseSemantic,
+    /** Epoch milliseconds. Culture windows follow the local day of each update, also in a long-lived session. */
+    private val clock: () -> Long = System::currentTimeMillis,
     private val onChange: (SessionState) -> Unit,
 ) {
     private var job: Job? = null
@@ -124,7 +126,7 @@ public class SearchSession @JvmOverloads constructor(
             results,
             culture,
             query,
-            ApplyCultureOptions(region = region, limit = limit, locale = locale, engine = engine),
+            ApplyCultureOptions(region = region, now = clock(), limit = limit, locale = locale, engine = engine),
         )
     }
 }

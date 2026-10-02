@@ -62,11 +62,18 @@ public data class CultureEntry(
 public data class Culture(
     val packVersion: String,
     val locale: String,
-    /** Days the build covered (YYYY-MM-DD). Seasonal and event entries outside them are not in the file. */
+    /**
+     * Days the build covered (YYYY-MM-DD): every lasting and regional entry, plus the seasonal and
+     * event entries active on any day of [from, until]. Builds cover at least 12 months, so a client
+     * checks each entry's window against its own day and needs no new file every day.
+     */
     val from: String,
     val until: String,
     val entries: List<CultureEntry>,
-    /** Ids of the featured entries active on [from], in shelf order (for clients that do not evaluate windows). */
+    /**
+     * Ids of the featured entries active on [from], for clients that do not check windows. Files that
+     * cover 12 months hold none; use [CultureLayer.relevantNow], which checks the windows on the device.
+     */
     val relevantNow: List<String> = emptyList(),
 ) {
     public companion object {
