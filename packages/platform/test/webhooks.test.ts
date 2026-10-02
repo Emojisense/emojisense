@@ -265,6 +265,17 @@ describe("dispatch", () => {
     expect(sent.map((s) => s.url)).toEqual([URL_A]);
   });
 
+  it("stays silent while the owning account is below Scale", async () => {
+    const { db, runtime, addWebhook, sent, event } = setup();
+    addWebhook("wh_1");
+    db.exec("UPDATE accounts SET plan = 'pro'");
+    await dispatchWebhookEvent(runtime, event);
+    expect(sent).toEqual([]);
+    db.exec("UPDATE accounts SET plan = 'scale'");
+    await dispatchWebhookEvent(runtime, event);
+    expect(sent).toHaveLength(1);
+  });
+
   it("emits in the background and never throws into the caller", async () => {
     const { runtime, addWebhook, sent, settle, appId } = setup();
     addWebhook("wh_1");

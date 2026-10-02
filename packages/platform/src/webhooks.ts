@@ -8,6 +8,8 @@
  */
 import type { D1DatabaseLike, Parsed } from "./d1-like.js";
 import { randomId } from "./keys.js";
+import { getPlan } from "./plans.js";
+import { planAllows } from "./scale-features.js";
 import { checkWebhookUrl } from "./webhook-url.js";
 
 export const WEBHOOK_EVENTS = [
@@ -264,16 +266,27 @@ export async function deliverWithRetries(
   return attempts;
 }
 
-/** Sends `event` to every enabled webhook of its app that subscribes to the event type. */
+/**
+ * Sends `event` to every enabled webhook of its app that subscribes to the event type, while the
+ * account that owns the app is on a plan with webhooks (a downgrade silences them; nothing is lost
+ * from the table, so an upgrade brings them back).
+ */
 export async function dispatchWebhookEvent(
   runtime: WebhookRuntime,
   event: WebhookEvent,
 ): Promise<DeliveryAttempt[][]> {
   const { results } = await runtime.db
-    .prepare("SELECT id, url, secret, events FROM webhooks WHERE app_id = ? AND disabled_at IS NULL")
+    .prepare(
+      `SELECT w.id, w.url, w.secret, w.events, ac.plan FROM webhooks w
+       JOIN apps a ON a.id = w.app_id JOIN accounts ac ON ac.id = a.account_id
+       WHERE w.app_id = ? AND w.disabled_at IS NULL`,
+    )
     .bind(event.appId)
-    .all<WebhookTarget & { events: string }>();
-  const targets = results.filter((hook) => (parseStoredEvents(hook.events) as string[]).includes(event.type));
+    .all<WebhookTarget & { events: string; plan: string }>();
+  const targets = results
+    .filter((hook) => planAllows(getPlan(hook.plan), "webhooks"))
+    .filter((hook) => (parseStoredEvents(hook.events) as string[]).includes(event.type))
+    .map(({ id, url, secret }) => ({ id, url, secret }));
   return Promise.all(targets.map((target) => deliverWithRetries(runtime, target, event)));
 }
 
