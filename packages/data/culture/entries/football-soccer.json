@@ -4,8 +4,7 @@
   "kind": "regional",
   "context": {
     "en": "Outside North America and Australia, football means soccer",
-    "hi": "उत्तरी अमेरिका के बाहर फ़ुटबॉल का मतलब सॉकर होता है",
-    "bn": "উত্তর আমেরিকার বাইরে ফুটবল মানে সকার"
+    "hi": "उत्तरी अमेरिका के बाहर फ़ुटबॉल का मतलब सॉकर होता है"
   },
   "when": null,
   "regions": [
@@ -24,8 +23,7 @@
   ],
   "locales": [
     "en",
-    "hi",
-    "bn"
+    "hi"
   ],
   "triggers": {
     "en": [
@@ -34,9 +32,6 @@
       "football game"
     ],
     "hi": [
-      "football"
-    ],
-    "bn": [
       "football"
     ]
   },
