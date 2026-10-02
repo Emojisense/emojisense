@@ -102,6 +102,7 @@ export {
   decodeVectors,
   encodeVectors,
   l2normalize,
+  searchVectorSets,
   searchVectors,
   type VectorIndex,
   type VectorMatch,

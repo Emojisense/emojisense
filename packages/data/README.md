@@ -6,7 +6,7 @@ layer-2 shards. Formats: [docs/PACK_FORMAT.md](../../docs/PACK_FORMAT.md).
 | Command (`pnpm --filter @emojisense/data …`) | Output |
 | -------------------------------------------- | ------ |
 | `build` | `build/` (base, validated aliases, documents) and `dist/packs/<packVersion>/` |
-| `embed -- --models bge-m3 --dims 1024` | `dist/packs/<packVersion>/vectors.<model>.<dims>.bin` (needs `wrangler login`) |
+| `embed -- --models bge-m3 --dims 1024` | `dist/packs/<packVersion>/vectors.<model>.<dims>.bin` from the English documents, plus `vectors.<model>.<dims>.<locale>.bin` per other locale for a multilingual model (needs `wrangler login`; 211 Workers AI calls, cached in `.cache/`) |
 | `build:shards -- --log queries.jsonl` | `dist/shards/<packVersion>/` from the analytics export |
 | `build:shards -- --bootstrap` | the same from synthetic day-one queries (see the caveat below) |
 | `culture:propose` | draft culture entries with Workers AI (needs `wrangler login`; see below) |

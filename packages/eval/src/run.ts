@@ -18,19 +18,18 @@ import { gzipSync } from "node:zlib";
 import { disposeEmbeddings, embedTexts, measureLatency } from "@emojisense/data/embeddings";
 import { formatQuery, getModel, MODELS } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
+import { parseVectorFileName, vectorFileName } from "@emojisense/data/vector-files";
 import {
   type AliasEngine,
   type AliasSearchOutput,
   createEngine,
   DEFAULT_SEMANTIC_CALIBRATION,
-  decodeVectors,
   fuse,
   l2normalize,
   type Pack,
   ROW_INDEX,
   type SearchResult,
   type SemanticCalibration,
-  searchVectors,
   shouldUseSemantic,
 } from "emojisense";
 import { computeLayeredCost, type MeasuredRate, withValue } from "./cost.ts";
@@ -46,6 +45,7 @@ import {
   summarize,
 } from "./metrics.ts";
 import { type EvalQuery, loadQueries } from "./queries.ts";
+import { loadVectorLayout, type VectorLayout } from "./vector-layout.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 const { values: args } = parseArgs({
@@ -190,10 +190,11 @@ const gateRate =
   scored.filter((q) => shouldUseSemantic(aliasOutputs.get(q.id) as AliasSearchOutput)).length / scored.length;
 
 // ── Tier 1 + fusion ───────────────────────────────────────────────────────────────────────
+// One engine per shared file; its locale files join it in loadVectorLayout.
 const vectorFiles = readdirSync(packDir)
-  .map((f) => /^vectors\.([\w-]+)\.(\d+)\.bin$/.exec(f))
-  .filter((m): m is RegExpExecArray => m !== null)
-  .map((m) => ({ file: m[0], model: getModel(m[1] as string), dims: Number(m[2]) }))
+  .map(parseVectorFileName)
+  .filter((f) => f !== undefined && f.locale === undefined)
+  .map((f) => ({ model: getModel(f?.modelKey as string), dims: f?.dims as number }))
   .filter((v) => !args.models || args.models.split(",").includes(v.model.key))
   .sort((a, b) => MODELS.indexOf(a.model) - MODELS.indexOf(b.model) || b.dims - a.dims);
 
@@ -225,16 +226,17 @@ try {
     }
   }
 
-  for (const { file, model, dims } of vectorFiles) {
+  for (const { model, dims } of vectorFiles) {
     const vectors = queryVectors.get(model.key);
     if (!vectors) continue;
-    const index = decodeVectors(readFileSync(join(packDir, file)));
+    // The shared file plus the locale files next to it (PACK_FORMAT §5): tr queries search both.
+    const layout = loadVectorLayout(packDir, model, dims) as VectorLayout;
     const semantic = new Map<string, SearchResult[]>();
     scored.forEach((q, i) => {
       const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
       semantic.set(
         q.id,
-        searchVectors(index, query, 24).map((m) => ({
+        layout.search(q.locale, query, 24).map((m) => ({
           emoji: engine.get(m.id)?.emoji ?? "",
           id: m.id,
           score: m.score,
@@ -453,10 +455,25 @@ for (const s of sizes) row([s.variant, kb(s.enGz), kb(s.trGz)]);
 lines.push("");
 row(["Server file", "raw", "gz"]);
 row(["---", "--:", "--:"]);
+// Locale files are summed per model and dims: one row instead of ten.
+const vectorSizes = new Map<string, { bytes: number; gzipBytes: number; files: number }>();
 for (const [name, f] of Object.entries(
   manifest.files as Record<string, { bytes: number; gzipBytes: number }>,
 )) {
-  if (name.startsWith("vectors.")) row([name, kb(f.bytes), kb(f.gzipBytes)]);
+  const file = parseVectorFileName(name);
+  if (!file) continue;
+  const label = file.locale
+    ? vectorFileName(file.modelKey, file.dims, "<locale>")
+    : vectorFileName(file.modelKey, file.dims);
+  const sum = vectorSizes.get(label) ?? { bytes: 0, gzipBytes: 0, files: 0 };
+  vectorSizes.set(label, {
+    bytes: sum.bytes + f.bytes,
+    gzipBytes: sum.gzipBytes + f.gzipBytes,
+    files: sum.files + 1,
+  });
+}
+for (const [label, s] of vectorSizes) {
+  row([s.files > 1 ? `${label} × ${s.files}` : label, kb(s.bytes), kb(s.gzipBytes)]);
 }
 
 lines.push(

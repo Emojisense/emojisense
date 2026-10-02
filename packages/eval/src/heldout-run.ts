@@ -7,16 +7,15 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { disposeEmbeddings, embedTexts } from "@emojisense/data/embeddings";
 import { formatQuery, getModel } from "@emojisense/data/models";
+import { vectorFileName } from "@emojisense/data/vector-files";
 import {
   type AliasEngine,
   type AliasSearchOutput,
   createEngine,
-  decodeVectors,
   fuse,
   l2normalize,
   type Pack,
   type SearchResult,
-  searchVectors,
 } from "emojisense";
 import {
   type HeldoutBaseline,
@@ -30,6 +29,7 @@ import {
 } from "./heldout.ts";
 import { type InHouseScores, renderHeldoutReport } from "./heldout-report.ts";
 import { judge, type QueryOutcome } from "./metrics.ts";
+import { loadVectorLayout } from "./vector-layout.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 export const HELDOUT_PATH = join(EVAL_ROOT, "queries", "heldout.jsonl");
@@ -89,20 +89,21 @@ export async function runHeldoutSuite(options: {
   const skipped: string[] = [];
   const model = getModel(options.model.key);
   const tag = `${model.key}@${options.model.dims}`;
-  const vectorPath = join(packDir, `vectors.${model.key}.${options.model.dims}.bin`);
-  if (!existsSync(vectorPath)) {
-    skipped.push(`fused ${tag}: no ${vectorPath.split("/").at(-1)} in the pack directory`);
+  // The shared vector file plus one per locale, when the pack has them (PACK_FORMAT §5).
+  const layout = loadVectorLayout(packDir, model, options.model.dims);
+  if (!layout) {
+    const file = vectorFileName(model.key, options.model.dims);
+    skipped.push(`fused ${tag}: no ${file} (nor a locale vector file) in the pack directory`);
     return { queries, locales, modes, skipped, details: { alias }, packsFor };
   }
   let semantic: Map<string, SearchResult[]> | undefined;
   try {
     const texts = queries.map((q) => formatQuery(model, q.q));
     const { vectors } = await embedTexts(model, texts, "query", { offline });
-    const index = decodeVectors(readFileSync(vectorPath));
     const ranked = new Map<string, SearchResult[]>(
       queries.map((q, i) => {
         const query = l2normalize((vectors[i] as Float32Array).slice(0, options.model.dims));
-        const results = searchVectors(index, query, 24).map((m) => ({
+        const results = layout.search(q.locale, query, 24).map((m) => ({
           emoji: engineFor(q).get(m.id)?.emoji ?? "",
           id: m.id,
           score: m.score,

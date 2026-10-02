@@ -111,21 +111,48 @@ export function decodeVectors(buffer: ArrayBuffer | Uint8Array): VectorIndex {
   };
 }
 
-/** Exact top-k by dot product (cosine for normalized rows). ~2k rows: well under 1 ms. */
-export function searchVectors(index: VectorIndex, query: Float32Array, k = 24): VectorMatch[] {
+function scoreRows(index: VectorIndex, query: Float32Array): Float32Array {
   if (query.length !== index.dims) {
     throw new Error(`emojisense: query has ${query.length} dims, index has ${index.dims}`);
   }
   const { data, dims, ids } = index;
-  const count = ids.length;
-  const scores = new Float32Array(count);
-  for (let r = 0; r < count; r++) {
+  const scores = new Float32Array(ids.length);
+  for (let r = 0; r < ids.length; r++) {
     let dot = 0;
     const offset = r * dims;
     for (let d = 0; d < dims; d++) dot += (data[offset + d] as number) * (query[d] as number);
     scores[r] = dot;
   }
-  const order = Array.from({ length: count }, (_, i) => i);
+  return scores;
+}
+
+/** Exact top-k by dot product (cosine for normalized rows). ~2k rows: well under 1 ms. */
+export function searchVectors(index: VectorIndex, query: Float32Array, k = 24): VectorMatch[] {
+  const scores = scoreRows(index, query);
+  const order = Array.from({ length: scores.length }, (_, i) => i);
   order.sort((a, b) => (scores[b] as number) - (scores[a] as number));
-  return order.slice(0, k).map((i) => ({ index: i, id: ids[i] as string, score: scores[i] as number }));
+  return order.slice(0, k).map((i) => ({ index: i, id: index.ids[i] as string, score: scores[i] as number }));
+}
+
+/**
+ * Top-k emoji over several indexes of one model and dims, e.g. the vectors of a pack's shared
+ * documents and of one locale's documents (PACK_FORMAT §5). An emoji scores its best row; `index`
+ * is that row's position in its own index. One index gives the same result as `searchVectors`.
+ */
+export function searchVectorSets(
+  indexes: readonly VectorIndex[],
+  query: Float32Array,
+  k = 24,
+): VectorMatch[] {
+  if (indexes.length === 1) return searchVectors(indexes[0] as VectorIndex, query, k);
+  const best = new Map<string, VectorMatch>();
+  for (const index of indexes) {
+    const scores = scoreRows(index, query);
+    index.ids.forEach((id, row) => {
+      const score = scores[row] as number;
+      const current = best.get(id);
+      if (!current || score > current.score) best.set(id, { index: row, id, score });
+    });
+  }
+  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, k);
 }

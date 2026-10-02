@@ -78,6 +78,8 @@ function saveCache(model: EmbeddingModel, cache: Record<string, string>) {
   writeFileSync(cachePath(model), JSON.stringify(cache));
 }
 
+const SAVE_EVERY_MS = 15_000;
+
 const toBase64 = (v: Float32Array) => Buffer.from(v.buffer, v.byteOffset, v.byteLength).toString("base64");
 const fromBase64 = (s: string) => {
   const bytes = Buffer.from(s, "base64");
@@ -91,6 +93,9 @@ function extractVectors(result: unknown): number[][] {
     throw new Error(`unexpected Workers AI response: ${JSON.stringify(result).slice(0, 200)}`);
   return data;
 }
+
+/** Workers AI error 5021: the texts of one call exceed the model's context window. */
+const isContextOverflow = (error: unknown) => /\b5021\b|context window/i.test(String(error));
 
 export interface EmbedStats {
   cached: number;
@@ -112,6 +117,8 @@ export async function embedTexts(
   kind: "query" | "document",
   options: {
     batchSize?: number;
+    /** API calls in flight at once. Default 1. */
+    concurrency?: number;
     offline?: boolean;
     persist?: boolean;
     onProgress?: (done: number) => void;
@@ -120,7 +127,14 @@ export async function embedTexts(
   const persist = options.persist ?? true;
   const cache = persist ? loadCache(model) : {};
   const keys = texts.map((t) => hash(model, kind, t));
-  const missing = [...new Set(keys.map((k, i) => (cache[k] ? -1 : i)).filter((i) => i >= 0))];
+  // One call per distinct text: equal texts share a key.
+  const queued = new Set<string>();
+  const missing: number[] = [];
+  keys.forEach((k, i) => {
+    if (cache[k] || queued.has(k)) return;
+    queued.add(k);
+    missing.push(i);
+  });
   const stats: EmbedStats = { cached: texts.length - missing.length, fetched: 0, callMs: [] };
 
   if (missing.length > 0) {
@@ -129,18 +143,36 @@ export async function embedTexts(
     }
     const { run } = await getRunner();
     const batchSize = Math.min(options.batchSize ?? model.maxBatch, model.maxBatch);
+    const batches: number[][] = [];
     for (let start = 0; start < missing.length; start += batchSize) {
-      const batch = missing.slice(start, start + batchSize);
+      batches.push(missing.slice(start, start + batchSize));
+    }
+    // The cache file grows to ~100 MB with one document per emoji and locale; rewriting it after
+    // every batch would cost more than the API calls. A crash loses at most SAVE_EVERY_MS of work.
+    let savedAt = performance.now();
+    let next = 0;
+    const embedBatch = async (batch: number[]): Promise<void> => {
       const started = performance.now();
-      const vectors = extractVectors(
-        await run(
+      let result: unknown;
+      try {
+        result = await run(
           model.id,
           model.input(
             batch.map((i) => texts[i] as string),
             kind,
           ),
-        ),
-      );
+        );
+      } catch (error) {
+        // The context window counts every text of a call; long documents need smaller batches.
+        if (batch.length > 1 && isContextOverflow(error)) {
+          const half = Math.ceil(batch.length / 2);
+          await embedBatch(batch.slice(0, half));
+          await embedBatch(batch.slice(half));
+          return;
+        }
+        throw error;
+      }
+      const vectors = extractVectors(result);
       stats.callMs.push(performance.now() - started);
       if (vectors.length !== batch.length) {
         throw new Error(`${model.key}: asked for ${batch.length} vectors, got ${vectors.length}`);
@@ -149,8 +181,21 @@ export async function embedTexts(
         cache[keys[i] as string] = toBase64(Float32Array.from(vectors[j] as number[]));
       });
       stats.fetched += batch.length;
-      if (persist) saveCache(model, cache);
+      if (persist && performance.now() - savedAt > SAVE_EVERY_MS) {
+        saveCache(model, cache);
+        savedAt = performance.now();
+      }
       options.onProgress?.(stats.cached + stats.fetched);
+    };
+    const worker = async () => {
+      while (next < batches.length) await embedBatch(batches[next++] as number[]);
+    };
+    const lanes = Math.max(1, Math.min(options.concurrency ?? 1, batches.length));
+    try {
+      await Promise.all(Array.from({ length: lanes }, worker));
+    } finally {
+      // Keep what was fetched even when a later call failed.
+      if (persist) saveCache(model, cache);
     }
   }
   return { vectors: keys.map((k) => fromBase64(cache[k] as string)), stats };

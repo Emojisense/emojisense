@@ -12,7 +12,8 @@ A **pack version** (e.g. `0.1.0`) is a directory of immutable files:
   pack.en.json                        Tier 0 core, English (always load first; ≤ 200 KB gz)
   pack.en.ext.json                    Tier 0 extension, English (load when idle)
   pack.tr.json / pack.tr.ext.json     Turkish core / extension (load when the UI locale is tr)
-  vectors.<model>.<dims>.bin          Tier 1 emoji vectors, one file per model × dims
+  vectors.<model>.<dims>.bin          Tier 1 emoji vectors, one file per model × dims (English documents)
+  vectors.<model>.<dims>.<locale>.bin Tier 1 emoji vectors of one locale's documents (optional, §5)
 ```
 
 Files never change after publication. A change produces a new pack version. Serve them with
@@ -44,6 +45,7 @@ Files never change after publication. A change produces a new pack version. Serv
 - `coreAliases` is informational: how many aliases per emoji each locale's core part keeps (§2).
 - `queryTemplate` is the exact string to embed for a query. `{q}` is replaced by the
   normalized query (§3). Only needed by clients that embed queries themselves.
+- A vector file with a `locale` key holds that locale's document vectors (§5).
 
 ## 2. pack.<locale>.json
 
@@ -227,6 +229,21 @@ Little-endian. All offsets are in bytes from the file start.
   A vector file must never be compared with vectors from another model or with other dims.
 - Sign bits allow a cheap Hamming-distance shortlist on weak devices before an int8 rerank.
 
+**Shared and locale files.** Each model × dims has one **shared** file, embedded from English
+documents. A multilingual model MAY also have one **locale** file per pack locale,
+`vectors.<model>.<dims>.<locale>.bin` (e.g. `vectors.bge-m3.1024.es.bin`), embedded from that
+locale's documents. A document is `"<label>. <description> <CLDR keywords>, <first 40 aliases>"`
+in its language (`packages/data/src/documents.ts`). All files of one model × dims have the same
+binary layout, `model`, `dims` and rows (hexcodes in pack order). In the manifest, a locale file
+has a `locale` key; the shared file has none.
+
+- A query of locale `L` scores each emoji by its best row over the shared file and `L`'s file:
+  `max(cos(q, shared[e]), cos(q, L[e]))`. Without a file for `L` (English, or a locale that has
+  none), the shared file alone gives the ranking. Reference: `searchVectorSets` in
+  `packages/core`.
+- A client MAY load the shared file only. Its results stay valid; they are the English-document
+  ranking.
+
 ## 6. Shards (layer 2: precomputed results)
 
 Frequent queries that the on-device dictionary cannot answer get their semantic results
@@ -242,7 +259,8 @@ precomputed nightly and published as static files:
   Hot prefixes get longer keys (adaptive split), so each shard stays ≤ ~30 KB gz. File names
   are `encodeURIComponent(key)`.
 - `entries` maps a normalized query (§3) to semantic results `[emoji, hexcode, score]`, best
-  first. These are the same results the API returns with `mode=semantic` for that model.
+  first. These are the same results the API returns with `mode=semantic` for that model and
+  `locale=en`: shards are built from the shared vector file only (§5).
 - A client downloads `index.json` once and each shard at most once per session, then answers
   locally. A query that is not in its shard goes to the API.
 - Shards are valid only for the `model` they name. A new model or pack version publishes a new

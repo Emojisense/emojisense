@@ -6,10 +6,11 @@ import {
   fuse,
   l2normalize,
   type SearchResult,
-  searchVectors,
+  searchVectorSets,
   type VectorIndex,
 } from "emojisense";
 import type { Env, GeneratedConfig } from "./env.ts";
+import type { LocaleIndexes } from "./locale-vectors.ts";
 
 /** The data one Worker build serves: alias engines, emoji vectors and the model that made them. */
 export interface Catalog {
@@ -22,7 +23,10 @@ export interface Catalog {
    * first use (locale-engines.ts). Undefined when that pack cannot be loaded now.
    */
   aliasEngine(locale: string, env: Env): Promise<AliasEngine | undefined>;
+  /** The shared (English) emoji vectors, bundled. Reactions search these. */
   index(): VectorIndex;
+  /** What a query of `locale` searches: the shared index and the locale's own (locale-vectors.ts). */
+  vectors(locale: string, env: Env): Promise<LocaleIndexes>;
   /**
    * The published culture file of a pack locale (culture.ts), for `/v1/search?culture=1`.
    * Undefined (or a missing member) = no culture layer: the answer is the canonical ranking.
@@ -99,11 +103,14 @@ export interface Ranked {
   aliasLocale: string | null;
   /** Aliases were asked for, but the locale's pack could not be loaded: never cache the answer. */
   aliasUnavailable: boolean;
+  /** The locale's vector file could not be loaded; semantic results used the shared file only. */
+  vectorsUnavailable: boolean;
 }
 
 /**
  * Alias and/or semantic ranking, fused when both ran. Workers AI failures degrade, never throw.
  * When the locale's pack cannot be loaded, ranking is semantic-only (bge-m3 is multilingual).
+ * Semantic search covers the shared vectors and the locale's own; each emoji scores its best row.
  */
 export async function rank(env: Env, catalog: Catalog, options: RankOptions): Promise<Ranked> {
   const { aliasQuery, embedText, locale, limit } = options;
@@ -117,11 +124,17 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
   let semantic: SearchResult[] | undefined;
   let degraded = false;
   let embedMs = 0;
+  let vectorsUnavailable = false;
   if (embedText !== undefined) {
-    const embedded = await embedQuery(env, catalog, embedText);
+    // A locale's vector file loads while the query is embedded (first use per isolate only).
+    const [embedded, vectors] = await Promise.all([
+      embedQuery(env, catalog, embedText),
+      catalog.vectors(locale, env),
+    ]);
     ({ degraded, ms: embedMs } = embedded);
     if (embedded.vector) {
-      semantic = searchVectors(catalog.index(), embedded.vector, limit).map((m) => ({
+      vectorsUnavailable = !vectors.complete;
+      semantic = searchVectorSets(vectors.indexes, embedded.vector, limit).map((m) => ({
         emoji: engine.get(m.id)?.emoji ?? "",
         id: m.id,
         score: Math.round(m.score * 1000) / 1000,
@@ -142,5 +155,6 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     semanticTop: semantic?.[0]?.score,
     aliasLocale: alias ? locale : null,
     aliasUnavailable: aliasQuery !== undefined && !alias,
+    vectorsUnavailable,
   };
 }

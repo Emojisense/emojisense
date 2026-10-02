@@ -38,4 +38,6 @@ export interface GeneratedConfig {
   modelId: string;
   dims: number;
   queryTemplate: string;
+  /** Locales with their own vector file, read through ASSETS on first use (PACK_FORMAT §5). */
+  vectorLocales: string[];
 }

@@ -31,7 +31,8 @@
     "./embeddings": "./src/embeddings.ts",
     "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",
-    "./paths": "./src/paths.ts"
+    "./paths": "./src/paths.ts",
+    "./vector-files": "./src/vector-files.ts"
   },
   "devDependencies": {
     "wrangler": "4.139.0",

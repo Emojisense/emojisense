@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { formatQuery, getModel } from "./models.ts";
+import { parseVectorFileName } from "./vector-files.ts";
 
 export interface ManifestFile {
   sha256: string;
@@ -39,11 +40,13 @@ export function writeManifest(dir: string, meta: Record<string, unknown>): Manif
     };
     const pack = /^pack\.([\w-]+?)(?:\.ext)?\.json$/.exec(name);
     if (pack) entry.locale = pack[1] as string;
-    const vectors = /^vectors\.([\w-]+)\.(\d+)\.bin$/.exec(name);
+    const vectors = parseVectorFileName(name);
     if (vectors) {
-      const model = getModel(vectors[1] as string);
+      const model = getModel(vectors.modelKey);
+      // A locale's vector file names its locale; the shared file has none (PACK_FORMAT.md §5).
+      if (vectors.locale) entry.locale = vectors.locale;
       entry.model = model.id;
-      entry.dims = Number(vectors[2]);
+      entry.dims = vectors.dims;
       entry.queryTemplate = formatQuery(model, "{q}");
     }
     files[name] = entry;

@@ -53,7 +53,9 @@ pnpm --filter @emojisense/worker dev:offline            # http://localhost:8788,
 - `dev:offline` has no Workers AI binding, so answers are alias-only with `degraded: true`.
   `dev` uses Workers AI and needs `wrangler login`.
 - `sync` defaults to the production model, `--model bge-m3 --dims 1024`. Without
-  `--placeholder` it needs `vectors.bge-m3.1024.bin` from the embed step. When
+  `--placeholder` it needs `vectors.bge-m3.1024.bin` from the embed step. It bundles that shared
+  file and publishes the locale files (`vectors.bge-m3.1024.<locale>.bin`) as static assets; the
+  Worker reads the query locale's file on first use. When
   `packages/data/dist/shards/<packVersion>/` exists for the same model, it is copied to `public/p/`.
 - Local D1 state is in the repo-root `.wrangler/state` (`--persist-to`), so a local dashboard
   that uses the same directory and binding sees the same keys.
@@ -148,6 +150,7 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 | `src/image-rank.ts`, `src/reaction-rank.ts`, `src/reaction-intents.ts` | Photo and reaction ranking; intent cues |
 | `src/fusion.ts`, `src/emoji-lookup.ts` | Weighted reciprocal rank fusion with a confidence floor; emoji text → catalog id |
 | `src/locale-engines.ts` | Alias engines of non-bundled locales: packs read through `ASSETS`, per-isolate LRU |
+| `src/locale-vectors.ts` | Emoji vectors of each locale's documents (PACK_FORMAT §5): read through `ASSETS`, per-isolate LRU |
 | `src/store.ts` | `Store` interface; D1 and in-memory implementations |
 | `src/config.ts` | Tunables: models, size limits, cache and flush timings |
 | `src/sets/` | Hosted emoji sets: servable emoji, pinned upstreams and naming rules, the route |

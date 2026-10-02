@@ -1,10 +1,11 @@
 /**
- * Copy one pack version + the production vector file from packages/data into the Worker.
+ * Copy one pack version + the production vector files from packages/data into the Worker.
  *
  *   tsx scripts/sync-pack.ts --model bge-m3 --dims 1024
  *
- * src/generated/   bundled into the Worker (config, locale packs, vectors) — committed
- * public/v1/pack/  static assets served at /v1/pack/<version>/… — generated, not committed
+ * src/generated/   bundled into the Worker (config, locale packs, shared vectors) — committed
+ * public/v1/pack/  static assets served at /v1/pack/<version>/… (packs, every vector file; the
+ *                  Worker reads the locale vector files from here) — generated, not committed
  * public/p/        layer 2 shards served at /p/<version>/…, if the data package built them
  *                  — generated, not committed
  * public/v1/culture/  culture files served at /v1/culture/<version>/…, built here from the approved
@@ -28,6 +29,7 @@ import { buildCultureFiles } from "@emojisense/data/culture";
 import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
+import { vectorFileName } from "@emojisense/data/vector-files";
 import { decodeVectors, encodeVectors } from "emojisense";
 
 const { values: args } = parseArgs({
@@ -48,7 +50,7 @@ const model = getModel(args.model as string);
 const dims = Number(args.dims);
 const packVersion = JSON.parse(readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8")).packVersion;
 const source = join(DATA_ROOT, "dist", "packs", packVersion);
-const vectorFile = `vectors.${model.key}.${dims}.bin`;
+const vectorFile = vectorFileName(model.key, dims);
 
 let vectorBytes: Uint8Array;
 if (existsSync(join(source, vectorFile))) {
@@ -61,6 +63,19 @@ if (existsSync(join(source, vectorFile))) {
 const index = decodeVectors(vectorBytes);
 if (index.model !== model.id || (index.ids.length > 0 && index.dims !== dims)) {
   throw new Error(`${vectorFile} holds ${index.model}@${index.dims}, expected ${model.id}@${dims}`);
+}
+// Each locale's own vectors (PACK_FORMAT §5): published as static assets, read by the Worker on
+// first use. A file from another build (other model, dims or emoji) would mix rankings: refuse it.
+const vectorLocales =
+  index.ids.length === 0
+    ? []
+    : LOCALE_CODES.filter((code) => existsSync(join(source, vectorFileName(model.key, dims, code))));
+for (const code of vectorLocales) {
+  const file = vectorFileName(model.key, dims, code);
+  const own = decodeVectors(readFileSync(join(source, file)));
+  if (own.model !== model.id || own.dims !== dims || own.ids.join() !== index.ids.join()) {
+    throw new Error(`${file} does not match ${vectorFile} (model, dims or emoji); run the embed step again`);
+  }
 }
 
 const workerRoot = new URL("..", import.meta.url).pathname;
@@ -76,20 +91,27 @@ if (unpublished.length > 0) throw new Error(`no core pack for ${unpublished.join
 const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
+const configJson = JSON.stringify(
+  { packVersion, modelKey: model.key, modelId: model.id, dims, queryTemplate: formatQuery(model, "{q}") },
+  null,
+  2,
+);
+// The locale list on one line, as Biome formats a short array.
+const localeList = vectorLocales.map((code) => JSON.stringify(code)).join(", ");
 writeFileSync(
   join(generated, "config.json"),
-  `${JSON.stringify(
-    { packVersion, modelKey: model.key, modelId: model.id, dims, queryTemplate: formatQuery(model, "{q}") },
-    null,
-    2,
-  )}\n`,
+  `${configJson.replace(/\n}$/, `,\n  "vectorLocales": [${localeList}]\n}`)}\n`,
 );
 
 const publicPack = join(workerRoot, "public", "v1", "pack");
 rmSync(publicPack, { recursive: true, force: true });
 mkdirSync(join(publicPack, packVersion), { recursive: true });
 const manifest = JSON.parse(readFileSync(join(source, "manifest.json"), "utf8"));
-const published = [...PACK_FILES, ...(index.ids.length > 0 ? [vectorFile] : [])];
+const published = [
+  ...PACK_FILES,
+  ...(index.ids.length > 0 ? [vectorFile] : []),
+  ...vectorLocales.map((code) => vectorFileName(model.key, dims, code)),
+];
 manifest.files = Object.fromEntries(published.map((f) => [f, manifest.files[f]]));
 for (const file of published) copyFileSync(join(source, file), join(publicPack, packVersion, file));
 writeFileSync(join(publicPack, packVersion, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -143,5 +165,6 @@ writeFileSync(
   ["/v1/pack/*", ...immutable, "/p/*", ...immutable, "/v1/culture/*", ...hourly, ""].join("\n"),
 );
 console.log(
-  `sync: pack ${packVersion} + ${model.id}@${dims} → src/generated, public/v1/pack/${packVersion}; ${shardNote}; ${cultureNote}`,
+  `sync: pack ${packVersion} + ${model.id}@${dims} (locale vectors: ${vectorLocales.join(", ") || "none"}) → ` +
+    `src/generated, public/v1/pack/${packVersion}; ${shardNote}; ${cultureNote}`,
 );

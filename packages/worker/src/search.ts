@@ -175,8 +175,8 @@ export const handleSearch: Handler = async (
     overLimit: false,
     aliasLocale: ranked.aliasLocale,
   };
-  // Without the locale's aliases (its pack did not load) the answer must not stay cached a week.
-  const cacheable = !ranked.degraded && !ranked.aliasUnavailable;
+  // Without the locale's aliases or vectors (a file did not load) the answer must not stay cached a week.
+  const cacheable = !ranked.degraded && !ranked.aliasUnavailable && !ranked.vectorsUnavailable;
   if (ranked.semantic) metering.count("semantic_calls");
   if (ranked.semantic && cacheable) {
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
