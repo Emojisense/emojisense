@@ -1,6 +1,7 @@
 import type { AliasEngine } from "emojisense";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { englishEngine, fullEngine, sharedSemantic, useEngine } from "../lib/engine-client";
+import { useAutoplayControl } from "./autoplay-control";
 import { DEFAULT_ICON, documentHtml, PAGE_TITLE, TEAMMATE } from "./doc/content";
 import { IconPicker } from "./doc/IconPicker";
 import { sleep } from "./doc/sleep";
@@ -153,6 +154,7 @@ export default function DocDemo() {
     if (doc) runtimeRef.current?.finishScript(doc);
     setTyping(false);
   }, []);
+  useAutoplayControl(typing, takeOver);
 
   useEffect(() => {
     const root = rootRef.current;

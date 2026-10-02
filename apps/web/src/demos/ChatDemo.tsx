@@ -1,6 +1,7 @@
 import type { AliasEngine } from "emojisense";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { englishEngine, fullEngine, useEngine } from "../lib/engine-client";
+import { useAutoplayControl } from "./autoplay-control";
 import { keystrokeDelay, type Run, wait, waitFor } from "./chat/autoplay";
 import { Composer } from "./chat/Composer";
 import { AUTOPLAY_MESSAGE, AUTOPLAY_STEPS, type Message, type Reaction, SEED_MESSAGES } from "./chat/content";
@@ -187,24 +188,25 @@ export default function ChatDemo() {
     return () => observer.disconnect();
   }, []);
 
-  // The visitor's first touch, click, key or focus stops the autoplay for good.
+  // The visitor's first touch, click, key or focus stops the autoplay for good, as does "Stop demo".
+  const stop = useCallback(() => {
+    const state = latest.current.auto;
+    if (state === "off" || state === "done") return;
+    if (runRef.current) runRef.current.cancelled = true;
+    if (state === "playing") latest.current.ac.clear();
+    setPressing(undefined);
+    setAuto("off");
+  }, []);
+  useAutoplayControl(auto === "playing", stop);
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const stop = () => {
-      const state = latest.current.auto;
-      if (state === "off" || state === "done") return;
-      if (runRef.current) runRef.current.cancelled = true;
-      if (state === "playing") latest.current.ac.clear();
-      setPressing(undefined);
-      setAuto("off");
-    };
     const events = ["pointerdown", "keydown", "focusin"] as const;
     for (const type of events) root.addEventListener(type, stop, { capture: true });
     return () => {
       for (const type of events) root.removeEventListener(type, stop, { capture: true });
     };
-  }, []);
+  }, [stop]);
 
   const canStart = auto === "waiting" && visible && engine !== undefined;
   useEffect(() => {

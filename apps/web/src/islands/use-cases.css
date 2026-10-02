@@ -43,7 +43,28 @@
 }
 
 .uc-panel {
+  position: relative;
   animation: uc-in 320ms var(--ease-out);
+}
+
+/* Sits under the stage, in the section's bottom padding, so it never moves the page. */
+.uc-stop {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 50%;
+  translate: -50% 0;
+  padding: 0.4375rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: 400 0.8125rem / 1.2 var(--font-mono);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.uc-stop:hover {
+  color: var(--ink);
 }
 
 .uc-head {
