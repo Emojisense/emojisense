@@ -27,6 +27,13 @@ export interface ApiErrorBody {
   error: { code: string; message: string; field?: string; plan?: PlanId };
 }
 
+/** GET /api/admin: whether the internal pages show for this account (ADMIN_EMAILS). */
+export interface AdminStatusResponse {
+  admin: boolean;
+  /** The Culture page works: the account is an admin and the API Worker is bound. */
+  culture: boolean;
+}
+
 export interface AccountSummary {
   id: string;
   name: string | null;

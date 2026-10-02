@@ -6,6 +6,18 @@ import { getAnalytics } from "./routes/analytics";
 import { createApp, getApp, listApps, updateApp } from "./routes/apps";
 import { devSignIn, logout } from "./routes/auth";
 import { getBilling, requestUpgrade } from "./routes/billing";
+import {
+  approveCultureProposal,
+  exportCulture,
+  getAdminStatus,
+  getCultureOverview,
+  getCultureProposal,
+  previewCultureEntry,
+  publishCulture,
+  rejectCultureProposal,
+  retireCultureEntry,
+  updateCultureProposal,
+} from "./routes/culture";
 import { deleteEmoji, listEmoji, updateEmoji, uploadEmoji } from "./routes/emoji";
 import { importDiscordEmoji, importSlackEmoji } from "./routes/emoji-import";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
@@ -71,6 +83,20 @@ const route = createRouter([
   { method: "POST", path: "/api/invites/:token/accept", handler: authed(acceptInvite) },
   { method: "GET", path: "/api/billing", handler: authed(getBilling) },
   { method: "POST", path: "/api/billing/upgrade", handler: authed(requestUpgrade) },
+  { method: "GET", path: "/api/admin", handler: authed(getAdminStatus) },
+  { method: "GET", path: "/api/admin/culture", handler: authed(getCultureOverview) },
+  { method: "POST", path: "/api/admin/culture/preview", handler: authed(previewCultureEntry) },
+  { method: "POST", path: "/api/admin/culture/publish", handler: authed(publishCulture) },
+  { method: "POST", path: "/api/admin/culture/export", handler: authed(exportCulture) },
+  { method: "GET", path: "/api/admin/culture/proposals/:id", handler: authed(getCultureProposal) },
+  { method: "PATCH", path: "/api/admin/culture/proposals/:id", handler: authed(updateCultureProposal) },
+  {
+    method: "POST",
+    path: "/api/admin/culture/proposals/:id/approve",
+    handler: authed(approveCultureProposal),
+  },
+  { method: "POST", path: "/api/admin/culture/proposals/:id/reject", handler: authed(rejectCultureProposal) },
+  { method: "POST", path: "/api/admin/culture/live/:id/retire", handler: authed(retireCultureEntry) },
   { method: "POST", path: "/api/waitlist", handler: joinWaitlist },
   { method: "OPTIONS", path: "/api/waitlist", handler: waitlistPreflight },
 ]);

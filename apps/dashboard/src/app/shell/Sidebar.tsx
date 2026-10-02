@@ -1,6 +1,7 @@
 import { getPlan, PLANS, type PlanId } from "@emojisense/platform";
 import { useId, useState } from "react";
 import type { App } from "../api";
+import { useAdminStatus } from "../lib/admin";
 import { DOCS_URL } from "../lib/config";
 import { initials } from "../lib/identity";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
@@ -72,6 +73,8 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
           </nav>
         )}
 
+        <InternalLinks route={route} />
+
         <nav className="nav-group" aria-label="Account">
           <p className="nav-label" aria-hidden="true">
             Account
@@ -96,6 +99,27 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
         <AccountMenu />
       </div>
     </aside>
+  );
+}
+
+/** Internal pages, only for ADMIN_EMAILS accounts (GET /api/admin). */
+function InternalLinks({ route }: { route: Route }) {
+  const status = useAdminStatus();
+  if (!status?.admin) return null;
+  return (
+    <nav className="nav-group" aria-label="Internal">
+      <p className="nav-label" aria-hidden="true">
+        Internal
+      </p>
+      <Link
+        to="/internal/culture"
+        className="nav-link"
+        aria-current={route.name === "culture" ? "page" : undefined}
+      >
+        <Icon name="sparkle" />
+        Culture
+      </Link>
+    </nav>
   );
 }
 

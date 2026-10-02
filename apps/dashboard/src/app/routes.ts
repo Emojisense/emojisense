@@ -19,6 +19,8 @@ export type Route =
   | { name: "billing" }
   | { name: "settings" }
   | { name: "invite"; token: string }
+  /** Internal, for ADMIN_EMAILS accounts only: culture proposals and live entries. */
+  | { name: "culture" }
   | { name: "not-found" };
 
 export interface SectionInfo {
@@ -55,6 +57,7 @@ export function parseRoute(path: string): Route {
   if (parts.length === 1 && (first === "team" || first === "billing" || first === "settings")) {
     return { name: first };
   }
+  if (first === "internal" && second === "culture" && !third) return { name: "culture" };
   if (first === "invite" && !third) {
     const token = decode(second);
     return token ? { name: "invite", token } : { name: "not-found" };

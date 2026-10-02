@@ -28,6 +28,11 @@
   // `${API_URL}/v1/custom/:appId/:emojiId`. Local R2 state is keyed by bucket_name, so both
   // Workers share it under --persist-to ../../.wrangler/state.
   "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
+  // The API Worker's CultureAdmin RPC entrypoint (the internal Culture page). A service binding
+  // is never reachable from the internet. The API Worker deploys first (scripts/deploy.sh).
+  // ADMIN_EMAILS (who sees the page) is a secret, so no email address is in git:
+  // `wrangler secret put ADMIN_EMAILS --env <env>`; locally in .dev.vars.
+  "services": [{ "binding": "CULTURE_ADMIN", "service": "emojisense-api", "entrypoint": "CultureAdmin" }],
   // The waitlist is the only public write. Keyed by client IP, held in memory only.
   // WEBHOOK_TEST_LIMITER: "Send test event" per webhook, so the dashboard cannot be used to flood
   // a receiver's URL.
@@ -61,6 +66,9 @@
         }
       ],
       "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" }],
+      "services": [
+        { "binding": "CULTURE_ADMIN", "service": "emojisense-api-dev", "entrypoint": "CultureAdmin" }
+      ],
       "ratelimits": [
         { "name": "WAITLIST_LIMITER", "namespace_id": "2101", "simple": { "limit": 5, "period": 60 } },
         { "name": "WEBHOOK_TEST_LIMITER", "namespace_id": "2102", "simple": { "limit": 5, "period": 60 } }
@@ -90,6 +98,9 @@
         }
       ],
       "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-prod" }],
+      "services": [
+        { "binding": "CULTURE_ADMIN", "service": "emojisense-api-production", "entrypoint": "CultureAdmin" }
+      ],
       "ratelimits": [
         { "name": "WAITLIST_LIMITER", "namespace_id": "2201", "simple": { "limit": 5, "period": 60 } },
         { "name": "WEBHOOK_TEST_LIMITER", "namespace_id": "2202", "simple": { "limit": 5, "period": 60 } }

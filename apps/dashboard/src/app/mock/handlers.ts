@@ -45,6 +45,7 @@ import type {
   WebhookEvent,
 } from "../api";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
+import { CULTURE_ROUTES } from "./culture";
 import {
   accountEmojiCount,
   analyticsFor,
@@ -810,7 +811,7 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
 ];
 
 export async function handle(db: MockDb, request: Omit<MockRequest, "params">): Promise<MockResponse> {
-  for (const [method, pattern, handler] of ROUTES) {
+  for (const [method, pattern, handler] of [...ROUTES, ...CULTURE_ROUTES]) {
     if (method !== request.method) continue;
     const match = pattern.exec(request.url.pathname);
     if (match) return handler(db, { ...request, params: match.slice(1).map(decodeURIComponent) });

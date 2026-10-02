@@ -19,3 +19,7 @@ CLERK_JWT_KEY=
 CLERK_AUTHORIZED_PARTIES=
 # Optional secret: only lets DELETE /api/me delete the Clerk user on the server.
 # CLERK_SECRET_KEY=
+
+# Who sees the internal Culture page (comma-separated verified emails). The dev sign-in's email
+# is <login>@dev.localhost. The page also needs the local API Worker (CULTURE_ADMIN binding).
+ADMIN_EMAILS=ada@dev.localhost

@@ -90,6 +90,24 @@ function seedAccount(h: Harness, login: string, bucket?: ReturnType<typeof memor
     ],
     // A legacy GitHub-era session row: sign-in no longer writes them, deletion still removes them.
     ["INSERT INTO sessions (id, account_id, expires_at) VALUES (?, ?, 0)", `${login}_session`, accountId],
+    // Culture review rows are editorial records, not the account's: the deletion keeps them and
+    // drops the link to the account (ON DELETE SET NULL); the display name stays as attribution.
+    [
+      `INSERT INTO culture_proposals (id, entry_id, status, record, evidence, created_at, updated_at,
+         reviewer_account_id, reviewer_name, reviewed_at, reason)
+       VALUES (?, ?, 'approved', '{}', '{}', 0, 0, ?, 'Editor', 0, NULL)`,
+      `${login}_proposal`,
+      `${login}-entry`,
+      accountId,
+    ],
+    [
+      `INSERT INTO culture_entries_live (id, status, record, proposal_id, approved_at, updated_at,
+         reviewer_account_id, reviewer_name)
+       VALUES (?, 'approved', '{}', ?, 0, 0, ?, 'Editor')`,
+      `${login}-entry`,
+      `${login}_proposal`,
+      accountId,
+    ],
     // Not owned by the account: every deletion prunes rows older than 10 minutes. ada's is old.
     [
       "INSERT INTO deleted_clerk_users (clerk_user_id, deleted_at) VALUES (?, ?)",
@@ -175,8 +193,15 @@ describe("DELETE /api/me", () => {
     );
 
     const isAda = (row: string) => row.includes(adaId) || /ada[_@]|ADA@/.test(row);
+    /** Editorial rows stay, without the link to the account. */
+    const unlinked = new Set(["culture_proposals", "culture_entries_live"]);
     const expected = Object.fromEntries(
-      Object.entries(before).map(([table, rows]) => [table, rows.filter((row) => !isAda(row))]),
+      Object.entries(before).map(([table, rows]) => [
+        table,
+        unlinked.has(table)
+          ? rows.map((row) => row.replace(`"reviewer_account_id":"${adaId}"`, '"reviewer_account_id":null'))
+          : rows.filter((row) => !isAda(row)),
+      ]),
     );
     expect(snapshot(h)).toEqual(expected);
     expect(expected.apps).toHaveLength(1);

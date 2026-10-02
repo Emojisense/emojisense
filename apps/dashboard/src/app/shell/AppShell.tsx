@@ -50,6 +50,8 @@ function crumbsFor(route: Route, app: App | null): Crumb[] {
       return [{ label: "Account" }, { label: "Billing" }];
     case "settings":
       return [{ label: "Account" }, { label: "Settings" }];
+    case "culture":
+      return [{ label: "Internal" }, { label: "Culture" }];
     default:
       return [{ label: "Not found" }];
   }
