@@ -57,6 +57,7 @@ Without React hooks for the data: `engine={createEngine(await loadPacks({ baseUr
 | `ariaLabel` | `"Emoji suggestions"` | Accessible name of the default menu |
 | `menuRenderFn` | default menu | Lexical's `MenuRenderFn<EmojiOption>`, called only while there are results |
 | `anchorClassName` | — | Class for the element Lexical positions at the caret |
+| `commandPriority` | `COMMAND_PRIORITY_CRITICAL` | Priority of the open menu's key handlers. See below. |
 
 ## Behaviour
 
@@ -71,6 +72,12 @@ Without React hooks for the data: `engine={createEngine(await loadPacks({ baseUr
 
 Semantic results (when `semantic` is set and the alias engine is unsure) arrive after
 `debounceMs` and are fused in. Confident alias hits keep their place, so the list does not jump.
+
+While the menu is open, it gets Enter, Tab, ↑ / ↓ and Escape first: its handlers use
+`COMMAND_PRIORITY_CRITICAL`. Lexical's typeahead default (`COMMAND_PRIORITY_LOW`) lets other
+plugins take these keys first, for example `TablePlugin` (Tab moves to the next cell) and code
+blocks (Tab indents). While the menu is closed, all keys go to the editor. To use a different
+priority, pass `commandPriority`.
 
 ## Accessibility
 

@@ -9,8 +9,9 @@ import { type AliasEngine, applySkinTone, type SemanticProvider, type SkinTone }
 import {
   $getSelection,
   $isRangeSelection,
-  COMMAND_PRIORITY_HIGH,
-  KEY_ESCAPE_COMMAND,
+  COMMAND_PRIORITY_CRITICAL,
+  type CommandListenerPriority,
+  KEY_DOWN_COMMAND,
   type TextNode,
 } from "lexical";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -49,6 +50,12 @@ export interface EmojiAutocompletePluginProps {
   menuRenderFn?: MenuRenderFn<EmojiOption>;
   /** Class name for the element Lexical positions at the caret. */
   anchorClassName?: string;
+  /**
+   * Priority of the open menu's key handlers (Enter, Tab, arrows, Escape). Default
+   * `COMMAND_PRIORITY_CRITICAL`, so the menu gets these keys before tables (HIGH), code blocks and
+   * other plugins. The menu returns every key while it is closed.
+   */
+  commandPriority?: CommandListenerPriority;
 }
 
 /**
@@ -74,6 +81,7 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
     ariaLabel,
     menuRenderFn,
     anchorClassName,
+    commandPriority = COMMAND_PRIORITY_CRITICAL,
   } = props;
   const [editor] = useLexicalComposerContext();
   const [results, setResults] = useState(NO_RESULTS);
@@ -125,15 +133,16 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
+  // KEY_DOWN_COMMAND comes before KEY_ESCAPE_COMMAND whatever the menu's `commandPriority` is.
   useEffect(
     () =>
       editor.registerCommand(
-        KEY_ESCAPE_COMMAND,
-        () => {
-          if (visibleRef.current) dismissedAt.current = matchAt.current;
+        KEY_DOWN_COMMAND,
+        (event) => {
+          if (event.key === "Escape" && visibleRef.current) dismissedAt.current = matchAt.current;
           return false; // the typeahead's own handler closes the menu
         },
-        COMMAND_PRIORITY_HIGH,
+        COMMAND_PRIORITY_CRITICAL,
       ),
     [editor],
   );
@@ -196,6 +205,7 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
       // Without a render function and with no options, the typeahead draws nothing and lets every
       // key reach the editor: that is "no results, menu closed". Late semantic results reopen it.
       menuRenderFn={visible ? (menuRenderFn ?? renderDefaultMenu) : undefined}
+      commandPriority={commandPriority}
       {...(anchorClassName ? { anchorClassName } : {})}
     />
   );
