@@ -168,7 +168,7 @@ search API says so, and for a keyed call it asks a concept tier.
 
 **Unsure.** A query is unsure when the dictionary does not cover it with confidence (no phrase
 matches all its words with whole tokens, or the top alias score is below 0.6) and the semantic
-list is flat or low (`semanticStrength` < 0.5: the best cosine on the calibrated scale, halved
+list is flat or low (`semanticStrength` < 0.6: the best cosine on the calibrated scale, halved
 when it does not stand out from results 2–5). The SDKs compute the same verdict on the device
 (`assessConfidence` in `emojisense`, `Confidence` in Swift and Kotlin).
 

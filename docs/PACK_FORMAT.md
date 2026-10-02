@@ -577,7 +577,11 @@ A client that shows alias and semantic results together (a search session, the S
 { popularity })` (`packages/core/src/fusion.ts`, `rerank.ts`; Swift `Fusion.fuse`, Kotlin
 `Fusion.fuse`). A port SHOULD give the same order; the golden file checks it on recorded lists.
 
-1. **Pinned.** Alias results with a score ≥ 0.9 come first, in alias order.
+1. **Pinned.** Alias results with a score ≥ 0.9 come first, in alias order. Without one, number
+   slang is pinned: when the alias output's `query` is ASCII digits only (`^[0-9]+( [0-9]+)*$`),
+   its confidence is ≥ 0.6 and its top result's `match` is the whole query in field `name`,
+   `shortcode`, `keyword` or `alias`, that result comes first (zh "666" → 👍, "88" → 👋: the
+   embedding model reads the digits, 6️⃣ and 8️⃣).
 2. **Candidates.** Every other result of the alias list (its order) and then of the semantic list,
    each id once. A result keeps the alias object when both lists hold it.
 3. **Score.** `Σ wᵢ·xᵢ`, summed left to right, over these features of the candidate:

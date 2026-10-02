@@ -41,7 +41,8 @@ L4  concept tier ─▶ edge cache ─▶ D1 concept_cache ─▶ small LLM on W
 | L4 concept tier for unsure queries (below) | edge: Cache API, D1, Workers AI LLM | ≈ $0.04 per 1,000 model calls; cached answers $0 | +1.5–3 s once per query, then a cache read | built |
 
 **Fusion.** The client merges L0 with L2 or L3 results with a learned reranker: confident L0 hits
-(≥ 0.9) stay pinned, so the list does not jump when semantic results arrive; every other result
+(≥ 0.9) stay pinned, so the list does not jump when semantic results arrive, and so does the
+dictionary's answer to number slang (zh "666" → 👍, not 6️⃣); every other result
 of both lists is ordered by a linear score over the L0 score, rank and confidence, the semantic
 score, its gap and confidence, and the emoji's popularity (`packages/core/src/rerank.ts`,
 PACK_FORMAT §10; Swift and Kotlin carry the same weights). Semantic country flags that L0 does not
@@ -71,7 +72,7 @@ query ─▶ L0 alias (guards: no foreign prefix, no short typo of another word,
    ▼
 L2 / L3 semantic list ─▶ semanticStrength (calibrated best cosine, halved when flat)
    ▼
-assessConfidence: covered (coverage ≥ 0.85, top ≥ 0.6)? or strength ≥ 0.5? ──yes──▶ results
+assessConfidence: covered (coverage ≥ 0.85, top ≥ 0.6)? or strength ≥ 0.6? ──yes──▶ results
    │ unsure
    ├──▶ client: show the results as guesses ("No strong match — try another word")
    ▼
