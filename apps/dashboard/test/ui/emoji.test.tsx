@@ -23,17 +23,58 @@ function emoji(shortcode: string, overrides: Partial<CustomEmoji> = {}): CustomE
 const png = (name: string) =>
   new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], name, { type: "image/png" });
 
-function openEmojiPage(routes: Parameters<typeof stubApi>[0]) {
+function openEmojiPage(routes: Parameters<typeof stubApi>[0], app: typeof APP = PRO_APP) {
   window.history.replaceState(null, "", "/apps/app_1/emoji");
   const fake = stubApi({
     "GET /api/me": { body: me() },
-    "GET /api/apps": { body: { apps: [PRO_APP] } },
-    "GET /api/apps/app_1": { body: { app: PRO_APP, keys: [] } },
+    "GET /api/apps": { body: { apps: [app] } },
+    "GET /api/apps/app_1": { body: { app, keys: [] } },
     ...routes,
   });
   render(<App />);
   return fake;
 }
+
+describe("custom emoji usage", () => {
+  it("shows the account's used and limit, and this app's part of it", async () => {
+    openEmojiPage({
+      "GET /api/apps/app_1/emoji": {
+        body: { emoji: [emoji("shipit"), emoji("lgtm")], used: 1_203, limit: 2_000 },
+      },
+    });
+
+    const meter = await screen.findByRole("meter", { name: "Custom emoji used" });
+    expect(meter.getAttribute("aria-valuetext")).toBe("1,203 of 2,000");
+    expect(screen.getByText("This app: 2 of 1,203. The limit counts every app of the account.")).toBeTruthy();
+    expect(screen.queryByText(/Delete some to add new ones/)).toBeNull();
+    expect((screen.getByRole("button", { name: "Upload emoji" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("turns uploads off at the account's limit and says why", async () => {
+    openEmojiPage({
+      "GET /api/apps/app_1/emoji": { body: { emoji: [emoji("shipit")], used: 2_000, limit: 2_000 } },
+    });
+
+    expect(
+      await screen.findByText(
+        "All 2,000 custom emoji of the Pro plan are in use across the account’s apps. Delete some to add new ones. Scale allows 10,000.",
+      ),
+    ).toBeTruthy();
+    expect((screen.getByRole("button", { name: "Upload emoji" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("keeps emoji left after a downgrade listed, so they can be deleted", async () => {
+    openEmojiPage(
+      { "GET /api/apps/app_1/emoji": { body: { emoji: [emoji("shipit")], used: 1, limit: 0 } } },
+      { ...APP, plan: "free" },
+    );
+
+    expect(await screen.findByRole("button", { name: ":shipit:" })).toBeTruthy();
+    expect(
+      screen.getByText(/^Custom emoji are not part of the Free plan\. You can still edit and delete these\./),
+    ).toBeTruthy();
+  });
+});
 
 describe("custom emoji upload", () => {
   it("names the file the API refused as image_too_large, and can skip it", async () => {

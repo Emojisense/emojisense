@@ -1,10 +1,11 @@
-import { PLANS } from "@emojisense/platform";
+import { lowestPlanWith, PLANS } from "@emojisense/platform";
 import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 import {
   api,
   type CustomEmoji,
   type CustomEmojiListResponse,
   type CustomEmojiSource,
+  type PlanId,
   type Tenant,
 } from "../api";
 import { DropZone } from "../components/emoji/DropZone";
@@ -87,7 +88,11 @@ export function EmojiPage() {
       </>
     );
   }
-  if (list.status === "plan" || (list.status === "ready" && list.data.limit === 0)) {
+  // After a downgrade to a plan without custom emoji, the ones left stay listed so they can be deleted.
+  if (
+    list.status === "plan" ||
+    (list.status === "ready" && list.data.limit === 0 && !list.data.emoji.length)
+  ) {
     return (
       <>
         <Header />
@@ -142,7 +147,7 @@ export function EmojiPage() {
 
       <div className="stack-lg">
         <div className="emoji-bar">
-          <EmojiUsage used={used} limit={limit} />
+          <EmojiUsage used={used} limit={limit} appCount={emoji.length} />
           {emoji.length > 0 && (
             <div className="emoji-filters">
               <div className="input-affix">
@@ -174,6 +179,11 @@ export function EmojiPage() {
           )}
         </div>
 
+        {full && limit !== null && (
+          <p className="notice" role="status">
+            {limitNotice(used, limit, app.plan)}
+          </p>
+        )}
         {!readOnly && !full && <DropZone onFiles={(files) => setUpload({ files })} />}
 
         {emoji.length === 0 ? (
@@ -264,15 +274,20 @@ function Header({ actions }: { actions?: ReactNode }) {
   );
 }
 
-function EmojiUsage({ used, limit }: { used: number; limit: number | null }) {
+/**
+ * `used` and `limit` belong to the account: the plan limit counts the emoji of every app it owns.
+ * `appCount` is this app's part.
+ */
+function EmojiUsage({ used, limit, appCount }: { used: number; limit: number | null; appCount: number }) {
   const percent = limit ? Math.min(100, (used / limit) * 100) : 0;
+  const share = appCount === used ? "" : `This app: ${formatNumber(appCount)} of ${formatNumber(used)}. `;
   return (
     <div className="emoji-usage">
       <p>
         <strong>{formatNumber(used)}</strong>
         <span className="muted"> of {limit === null ? "unlimited" : formatNumber(limit)} custom emoji</span>
       </p>
-      {limit !== null && (
+      {limit !== null && limit > 0 && (
         // biome-ignore lint/a11y/useSemanticElements: same track as the usage meters
         <div
           className="meter-track"
@@ -280,13 +295,30 @@ function EmojiUsage({ used, limit }: { used: number; limit: number | null }) {
           aria-label="Custom emoji used"
           aria-valuemin={0}
           aria-valuemax={limit}
-          aria-valuenow={used}
+          aria-valuenow={Math.min(used, limit)}
+          aria-valuetext={`${formatNumber(used)} of ${formatNumber(limit)}`}
         >
           <div className="meter-fill" style={{ width: used > 0 ? `max(0.375rem, ${percent}%)` : "0" }} />
         </div>
       )}
+      <p className="hint">{share}The limit counts every app of the account.</p>
     </div>
   );
+}
+
+/** Why uploads and imports are off: the account is at (or, after a downgrade, over) its limit. */
+function limitNotice(used: number, limit: number, planId: PlanId): string {
+  const plan = PLANS[planId];
+  const next = lowestPlanWith((candidate) => candidate.limits.custom_emoji > Math.max(limit, used));
+  const upgrade = next ? ` ${PLANS[next].name} allows ${formatNumber(PLANS[next].limits.custom_emoji)}.` : "";
+  if (limit === 0) {
+    return `Custom emoji are not part of the ${plan.name} plan. You can still edit and delete these.${upgrade}`;
+  }
+  const state =
+    used > limit
+      ? `The account has ${formatNumber(used)} custom emoji, more than the ${formatNumber(limit)} of the ${plan.name} plan.`
+      : `All ${formatNumber(limit)} custom emoji of the ${plan.name} plan are in use across the account’s apps.`;
+  return `${state} Delete some to add new ones.${upgrade}`;
 }
 
 function ImportMenu({ onChoose }: { onChoose: (source: ImportSource) => void }) {
