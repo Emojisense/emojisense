@@ -252,7 +252,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
   </ul>
 
   <h2 id="emoji-sets">Emoji sets</h2>
-  <p>For <a href="/docs/guides/emoji-sets/">hosted emoji sets</a>: <code>EMOJI_SETS</code>, <code>isEmojiSet(value)</code> and <code>emojiImageUrl(emoji, {"{ endpoint, emojiSet }"})</code>, which returns <code>undefined</code> for <code>native</code> or without an endpoint.</p>
+  <p>For <a href="/docs/guides/emoji-sets/">hosted emoji sets</a>: <code>EMOJI_SETS</code>, <code>isEmojiSet(value)</code> and <code>emojiImageUrl(emoji, {"{ endpoint, emojiSet, key }"})</code>, which returns <code>undefined</code> for <code>native</code> or without an endpoint. Hosted sets need a key on a plan with sets; set <code>EMOJI_IMAGE_REFERRER_POLICY</code> as the <code>referrerpolicy</code> of set images so a publishable key can be checked against your page's origin.</p>
   <CodeBlock code={sets} lang="ts" />
 
   <h2 id="vectors">Vectors</h2>
