@@ -138,7 +138,8 @@ export const handleClassifyImage: Handler = async (request, env, ctx, { catalog,
 
   const neighbours = await rank(env, catalog, {
     embedText: label.caption,
-    locale,
+    // The caption is English: the shared (English) vectors only, whatever the request's locale.
+    locale: "en",
     limit: CAPTION_NEIGHBOURS,
   });
   const results = rankImage(engine, label, neighbours.semantic ? neighbours.results : undefined, limit);

@@ -49,6 +49,12 @@ export const unit = (i: number) =>
 /** The production model (bge-m3 @1024); the fixture vectors use 8 dims. */
 export const EMBEDDING_MODEL = "@cf/baai/bge-m3";
 
+/** Fixture vectors: one row per fixture emoji; `rows[i]` defaults to `unit(i)`. */
+export const fixtureVectors = (rows: Float32Array[] = [unit(0), unit(1), unit(2), unit(3)]) =>
+  decodeVectors(encodeVectors(EMBEDDING_MODEL, ["1F996", "1F30B", "1F680", "1F436"], rows));
+
+const sharedIndex = fixtureVectors();
+
 export const catalog: Catalog = {
   config: {
     packVersion: "test",
@@ -56,19 +62,15 @@ export const catalog: Catalog = {
     modelId: EMBEDDING_MODEL,
     dims: DIMS,
     queryTemplate: "{q}",
+    vectorLocales: [],
   },
   model: getModel("bge-m3"),
   engine: () => createEngine(pack),
   // English only; test/locales.test.ts builds a catalog with real packs of other locales.
   aliasEngine: async (locale) => (locale === "en" ? createEngine(pack) : undefined),
-  index: () =>
-    decodeVectors(
-      encodeVectors(
-        EMBEDDING_MODEL,
-        ["1F996", "1F30B", "1F680", "1F436"],
-        [unit(0), unit(1), unit(2), unit(3)],
-      ),
-    ),
+  index: () => sharedIndex,
+  // Shared vectors only; test/locale-vectors.test.ts covers the vectors of other locales.
+  vectors: async () => ({ indexes: [sharedIndex], complete: true }),
 };
 
 export function memoryCache(): CacheLike & { store: Map<string, Response>; puts: string[] } {
