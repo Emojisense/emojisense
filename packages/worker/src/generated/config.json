@@ -1,0 +1,7 @@
+{
+  "packVersion": "0.1.0",
+  "modelKey": "embeddinggemma",
+  "modelId": "@cf/google/embeddinggemma-300m",
+  "dims": 256,
+  "queryTemplate": "task: search result | query: {q}"
+}

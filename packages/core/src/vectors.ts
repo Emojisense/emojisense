@@ -105,7 +105,7 @@ export function decodeVectors(buffer: ArrayBuffer | Uint8Array): VectorIndex {
   return {
     model: decoder.decode(bytes.subarray(modelOffset, modelOffset + modelLength)),
     dims,
-    ids: decoder.decode(bytes.subarray(idsOffset, idsOffset + idsLength)).split("\n"),
+    ids: idsLength === 0 ? [] : decoder.decode(bytes.subarray(idsOffset, idsOffset + idsLength)).split("\n"),
     data,
     signs: bytes.slice(signsOffset, signsOffset + (count * dims) / 8),
   };

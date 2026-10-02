@@ -16,6 +16,8 @@ import { formatDocument, getModel, MODELS } from "./models.ts";
 import { BUILD_DIR, DATA_ROOT } from "./paths.ts";
 
 const { values: args } = parseArgs({
+  // pnpm forwards a literal "--"; drop it so flags after it still parse.
+  args: process.argv.slice(2).filter((a) => a !== "--"),
   options: { models: { type: "string" }, dims: { type: "string" } },
 });
 const models = args.models ? args.models.split(",").map(getModel) : MODELS;

@@ -36,6 +36,12 @@ describe("vector index", () => {
     expect(best?.score).toBeGreaterThan(0.99);
   });
 
+  it("round-trips an empty index", () => {
+    const empty = decodeVectors(encodeVectors("m", [], []));
+    expect(empty.ids).toEqual([]);
+    expect(searchVectors({ ...empty, dims: 4 }, new Float32Array(4))).toEqual([]);
+  });
+
   it("rejects a dimension mismatch", () => {
     expect(() => searchVectors(decoded, new Float32Array(32))).toThrow("dims");
   });

@@ -75,7 +75,7 @@ export function App() {
   const pack = sense.packs.find((p) => p.locale === locale);
   const keywordHits = useMemo(() => keywordSearch(pack, query), [pack, query]);
   const modelKey = health?.model.split("@")[0];
-  const receipt = useReceipt(query, search, modelKey);
+  const receipt = useReceipt(query, search, health?.semantic ? modelKey : undefined);
 
   useEffect(() => {
     fetch(`${API_URL}/v1/health`)
@@ -114,7 +114,10 @@ export function App() {
     }
   };
 
-  const top = search.results[0];
+  // Show the big answer only when it is probably right: a confident alias hit or a fused result.
+  const first = search.results[0];
+  const top =
+    first && ((search.alias?.confidence ?? 0) >= 0.5 || first.source === "semantic") ? first : undefined;
 
   return (
     <main className="page">
@@ -247,6 +250,12 @@ export function App() {
   );
 }
 
+/** Code charts label one code point; sequences show their first code point and a "+". */
+function shortHex(id: string) {
+  const [first, ...rest] = id.split("-").filter((part) => part !== "FE0F");
+  return rest.length > 0 ? `${first}+` : (first ?? id);
+}
+
 function KeywordPanel(props: { title: string; note: string; hits: KeywordHit[]; empty: string }) {
   return (
     <article className="panel panel-keyword">
@@ -261,7 +270,7 @@ function KeywordPanel(props: { title: string; note: string; hits: KeywordHit[]; 
           {props.hits.map((hit) => (
             <li key={hit.id} className="cell" title={hit.label}>
               <span className="glyph">{hit.emoji}</span>
-              <span className="hex">{hit.id}</span>
+              <span className="hex">{shortHex(hit.id)}</span>
             </li>
           ))}
         </ul>
@@ -313,7 +322,7 @@ function EmojisensePanel(props: EmojisensePanelProps) {
                 title={why ? `“${why}”` : props.labelOf(r.id)}
               >
                 <span className="glyph">{r.emoji}</span>
-                <span className="hex">{r.id}</span>
+                <span className="hex">{shortHex(r.id)}</span>
                 <span className="source" aria-hidden="true">
                   {r.source === "alias" ? "A" : "S"}
                 </span>

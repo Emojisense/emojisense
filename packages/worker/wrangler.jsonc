@@ -18,5 +18,17 @@
   "vars": {
     // Comma-separated publishable keys. Phase 3 moves keys to a store with per-tenant limits.
     "PUBLISHABLE_KEYS": "pk_demo"
+  },
+  "env": {
+    // `wrangler dev --env offline`: no Workers AI binding, so it runs with no Cloudflare login.
+    // Bindings do not inherit into environments, so they are repeated here.
+    "offline": {
+      "ratelimits": [
+        { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
+        { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+      ],
+      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
+      "vars": { "PUBLISHABLE_KEYS": "pk_demo" }
+    }
   }
 }

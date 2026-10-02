@@ -1,7 +1,7 @@
 import { getModel } from "@emojisense/data/models";
 import { createEngine, decodeVectors, encodeVectors, l2normalize, type Pack } from "emojisense";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Env } from "../src/env.ts";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import type { AiBinding, Env } from "../src/env.ts";
 import { type CacheLike, type Catalog, handleSearch, type SearchBody } from "../src/search.ts";
 
 const row = (emoji: string, hexcode: string, label: string, alias = ""): Pack["emoji"][number] => [
@@ -68,10 +68,10 @@ const get = (q: string, extra = "") =>
 
 describe("GET /v1/search", () => {
   let env: Env;
-  let ai: ReturnType<typeof vi.fn>;
+  let ai: Mock<AiBinding["run"]>;
   beforeEach(() => {
     // Every query embeds near the "volcano" row.
-    ai = vi.fn(async () => ({ data: [Array.from(unit(1))] }));
+    ai = vi.fn<AiBinding["run"]>(async () => ({ data: [Array.from(unit(1))] }));
     env = { AI: { run: ai }, PUBLISHABLE_KEYS: "pk_test", EVENTS: { writeDataPoint: vi.fn() } };
   });
 

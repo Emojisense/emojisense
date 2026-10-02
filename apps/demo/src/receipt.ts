@@ -35,6 +35,7 @@ const EMPTY: Receipt = {
   costUsd: 0,
 };
 
+/** `modelKey` undefined = the edge answered without Workers AI (offline), so no model cost. */
 export function useReceipt(query: string, search: EmojiSearchState, modelKey: string | undefined): Receipt {
   const [receipt, setReceipt] = useState<Receipt>(EMPTY);
   const lastQuery = useRef(query);
@@ -64,7 +65,7 @@ export function useReceipt(query: string, search: EmojiSearchState, modelKey: st
     const cost =
       REQUEST_USD +
       CPU_MS_PER_REQUEST * CPU_MS_USD +
-      (cached ? 0 : tokens * (TOKEN_USD[modelKey ?? ""] ?? 0.02 / 1e6));
+      (cached || modelKey === undefined ? 0 : tokens * (TOKEN_USD[modelKey] ?? 0.02 / 1e6));
     setReceipt((r) => ({
       ...r,
       edgeRequests: r.edgeRequests + 1,

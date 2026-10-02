@@ -17,6 +17,8 @@ import type { BaseEmoji } from "./types.ts";
 import type { Validated } from "./validate.ts";
 
 const { values: args } = parseArgs({
+  // pnpm forwards a literal "--"; drop it so flags after it still parse.
+  args: process.argv.slice(2).filter((a) => a !== "--"),
   options: { "max-aliases": { type: "string" }, out: { type: "string" } },
 });
 const maxAliases = args["max-aliases"] ? Number(args["max-aliases"]) : Number.POSITIVE_INFINITY;

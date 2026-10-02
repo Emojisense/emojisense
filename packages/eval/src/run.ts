@@ -33,6 +33,8 @@ import { type EvalQuery, loadQueries } from "./queries.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 const { values: args } = parseArgs({
+  // pnpm forwards a literal "--"; drop it so flags after it still parse.
+  args: process.argv.slice(2).filter((a) => a !== "--"),
   options: {
     pack: { type: "string" },
     offline: { type: "boolean", default: false },
