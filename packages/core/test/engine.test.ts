@@ -1,0 +1,76 @@
+import { describe, expect, it } from "vitest";
+import { createEngine } from "../src/engine.js";
+import { en, tr } from "./fixture.js";
+
+const engine = createEngine([en, tr]);
+const top = (q: string, locale?: string) =>
+  engine.search(q, locale ? { locale } : {}).results.map((r) => r.emoji);
+
+describe("alias engine", () => {
+  it("ranks an exact name first", () => {
+    expect(top("fire")[0]).toBe("🔥");
+    expect(top("fire")).toContain("🚒");
+  });
+
+  it("matches shortcodes and aliases", () => {
+    expect(top("+1")[0]).toBe("👍");
+    expect(top("lgtm")[0]).toBe("👍");
+    expect(top("ship it")[0]).toBe("🚀");
+    expect(top("jurassic park")[0]).toBe("🦖");
+  });
+
+  it("weights rare words over stopwords", () => {
+    expect(top("greatest of all time")[0]).toBe("🐐");
+    expect(top("the moon")[0]).toBe("🚀");
+  });
+
+  it("completes the token being typed", () => {
+    expect(top("rock")[0]).toBe("🚀");
+    expect(top("jurassic pa")[0]).toBe("🦖");
+  });
+
+  it("does not prefix-complete after a trailing space", () => {
+    expect(top("rock ")).toEqual([]);
+  });
+
+  it("tolerates typos", () => {
+    expect(top("hallowelen")[0]).toBe("🎃");
+    expect(top("rockt")[0]).toBe("🚀");
+    expect(top("thumbs upp")[0]).toBe("👍");
+    expect(top("dinasour")[0]).toBe("🦖");
+  });
+
+  it("searches across loaded locales and prefers the active one", () => {
+    expect(top("doğum günü", "tr")[0]).toBe("🎂");
+    expect(top("dogum gunu", "tr")[0]).toBe("🎂");
+    expect(top("iyi ki doğdun", "tr")[0]).toBe("🎂");
+    expect(top("rocket", "tr")[0]).toBe("🚀");
+  });
+
+  it("returns per-locale labels", () => {
+    const [result] = engine.search("tamam", { locale: "tr" }).results;
+    expect(result?.label).toBe("baş parmak yukarıda");
+  });
+
+  it("returns nothing for empty or emoji-only queries", () => {
+    expect(engine.search("").results).toEqual([]);
+    expect(engine.search("🚀").results).toEqual([]);
+  });
+
+  it("reports confidence and the matching phrase", () => {
+    const out = engine.search("jurassic park");
+    expect(out.confidence).toBeGreaterThan(0.7);
+    expect(out.results[0]?.match).toBe("jurassic park");
+    expect(out.results[0]?.field).toBe("alias");
+    expect(engine.search("qxzvbn").confidence).toBe(0);
+  });
+
+  it("respects the limit", () => {
+    expect(engine.search("f", { limit: 1 }).results).toHaveLength(1);
+  });
+
+  it("looks up entries by id", () => {
+    expect(engine.get("1F680")?.emoji).toBe("🚀");
+    expect(engine.get("1F680")?.labels).toEqual({ en: "rocket" });
+  });
+});
