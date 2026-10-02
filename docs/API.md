@@ -156,7 +156,8 @@ the perceptual hash, the vision model and the prompt version.
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
 These are static asset requests: free, and they do not run the Worker. All send
-`Access-Control-Allow-Origin: *`.
+`Access-Control-Allow-Origin: *`. A `/v1/pack/` path that is not a published file answers `404`
+with `Cache-Control: no-store`, so a browser does not keep the miss.
 
 ### Culture files
 
