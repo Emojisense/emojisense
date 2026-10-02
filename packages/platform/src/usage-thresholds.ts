@@ -1,36 +1,39 @@
 /**
- * `usage.threshold` events: 80% and 100% of a metered limit, once per app, period, metric and
- * threshold.
+ * `usage.threshold` events: 80% and 100% of a metered plan limit, once per account, period,
+ * metric and threshold. Plan limits belong to the account, so the count is the account's total:
+ * the sum of usage_monthly over all of its apps.
  *
- * How "once" is remembered without extra state: usage_monthly.count only grows within a period,
- * and each flush adds its calls with one atomic `UPSERT … RETURNING count`. The count before that
- * flush is `total - added`, so exactly one flush, across all isolates, sees a threshold between its
- * before and after values, and only that flush emits the event. The event id is derived from
- * (app, period, metric, threshold, limit), so a receiver can also drop a duplicate.
+ * How "once" is remembered without a marker table: within a period the account total only
+ * grows. Each flush writes its calls and reads the new account total in ONE D1 batch, which is one
+ * transaction, and D1 runs transactions one at a time. So the total before a flush is exactly
+ * `total - added` (its own calls for that account), the flushes' (before, after] ranges never
+ * overlap, and exactly one flush sees each threshold inside its range. Only that flush emits the
+ * event. The event id is derived from (account, period, metric, threshold, limit), so a receiver
+ * can drop a duplicate too, also when it is subscribed through several apps of the account.
  *
- * Limits of the approach: a flush whose batch fails is retried with the same delta and still sees
- * the crossing; if the isolate is evicted before the event is sent, it is lost (at most once).
- * A plan change in the middle of a period sets new thresholds; a new crossing then fires again
- * (its data and id carry the new limit). A downgrade below the current count fires nothing.
+ * Limits of the approach: a flush whose batch fails is retried with its calls still pending and
+ * still sees the crossing; if the isolate is evicted before the event is sent, it is lost (at most
+ * once). A plan change in the middle of a period sets new thresholds; a new crossing then fires
+ * again (data and id carry the new limit). A downgrade below the current total fires nothing.
  */
 import type { Metric } from "./plans.js";
 
 export const USAGE_THRESHOLDS = [80, 100] as const;
 export type UsageThreshold = (typeof USAGE_THRESHOLDS)[number];
 
-/** One usage_monthly row right after a flush added `added` to it. */
+/** One account's usage of one metric right after a flush added `added` calls to it. */
 export interface FlushedUsage {
-  appId: string;
+  accountId: string;
   period: string;
   metric: Metric;
   added: number;
-  /** The row's count after the flush. */
+  /** The account's total after the flush, over all of its apps. */
   total: number;
   limit: number;
 }
 
 export interface ThresholdCrossing {
-  appId: string;
+  accountId: string;
   period: string;
   metric: Metric;
   threshold: UsageThreshold;
@@ -38,7 +41,7 @@ export interface ThresholdCrossing {
   limit: number;
 }
 
-/** `data` of a usage.threshold event. */
+/** `data` of a usage.threshold event. `used` and `limit` count every app of the account. */
 export interface UsageThresholdData {
   metric: Metric;
   threshold: UsageThreshold;
@@ -61,7 +64,7 @@ export function findThresholdCrossings(flushed: readonly FlushedUsage[]): Thresh
       const at = thresholdCount(row.limit, threshold);
       if (before < at && row.total >= at) {
         crossings.push({
-          appId: row.appId,
+          accountId: row.accountId,
           period: row.period,
           metric: row.metric,
           threshold,
@@ -74,11 +77,11 @@ export function findThresholdCrossings(flushed: readonly FlushedUsage[]): Thresh
   return crossings;
 }
 
-/** Stable across isolates and retries: `evt_` + 32 hex characters of a SHA-256. */
+/** Stable across isolates, retries and apps: `evt_` + 32 hex characters of a SHA-256. */
 export async function usageThresholdEventId(crossing: ThresholdCrossing): Promise<string> {
   const source = [
     "usage.threshold",
-    crossing.appId,
+    crossing.accountId,
     crossing.period,
     crossing.metric,
     crossing.threshold,

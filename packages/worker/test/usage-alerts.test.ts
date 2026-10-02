@@ -14,7 +14,7 @@ interface Delivery {
   signature: string | null;
 }
 
-async function setup(options: { used: number; events?: string[] }) {
+async function setup(options: { used: number; events?: string[]; secondAppUsed?: number }) {
   const sqlite = migratedDatabase();
   sqlite.exec(`
     INSERT INTO accounts (id, name, plan, created_at) VALUES ('acc_1', 'Ada', 'scale', 0);
@@ -36,6 +36,18 @@ async function setup(options: { used: number; events?: string[] }) {
       "INSERT INTO usage_monthly (app_id, period, metric, count) VALUES ('app_1', '2026-10', 'semantic_calls', ?)",
     )
     .run(options.used);
+  if (options.secondAppUsed !== undefined) {
+    // A second app of the same account, with its own usage and its own webhook.
+    sqlite.exec(`
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_2', 'acc_1', 'Second', 0);
+      INSERT INTO webhooks (id, app_id, url, secret, events, created_at)
+        VALUES ('wh_2', 'app_2', 'https://hooks.example.com/second', '${HOOK_SECRET}', '["usage.threshold"]', 0);`);
+    sqlite
+      .prepare(
+        "INSERT INTO usage_monthly (app_id, period, metric, count) VALUES ('app_2', '2026-10', 'semantic_calls', ?)",
+      )
+      .run(options.secondAppUsed);
+  }
 
   const d1 = sqliteD1(sqlite);
   const deliveries: Delivery[] = [];
@@ -61,7 +73,7 @@ async function setup(options: { used: number; events?: string[] }) {
     for (let i = 0; i < 3; i++) await h.ctx.settle();
   };
   const events = () =>
-    deliveries.map((d) => JSON.parse(d.body) as { id: string; type: string; data: unknown });
+    deliveries.map((d) => JSON.parse(d.body) as { id: string; type: string; appId: string; data: unknown });
   return { sqlite, deliveries, fetch, searchOnce, events };
 }
 
@@ -99,6 +111,24 @@ describe("usage.threshold webhooks from the metering flush", () => {
     expect(events().map((e) => (e.data as { threshold: number }).threshold)).toEqual([100]);
     // Over the limit the search answers overLimit and is not metered, so the count stays put.
     expect(sqlite.prepare("SELECT count FROM usage_monthly").get()).toEqual({ count: LIMIT });
+  });
+
+  it("counts every app of the account and tells the webhooks of each app, with one event id", async () => {
+    const used = 10;
+    const { searchOnce, events } = await setup({ used, secondAppUsed: LIMIT * 0.8 - used - 1 });
+    await searchOnce(); // app_1 alone is far below; the account reaches exactly 80%.
+    const sent = events();
+    expect(sent.map((e) => e.appId).sort()).toEqual(["app_1", "app_2"]);
+    expect(new Set(sent.map((e) => e.id)).size).toBe(1);
+    expect(sent[0]?.data).toEqual({
+      metric: "semantic_calls",
+      threshold: 80,
+      period: "2026-10",
+      used: LIMIT * 0.8,
+      limit: LIMIT,
+    });
+    await searchOnce();
+    expect(events()).toHaveLength(2);
   });
 
   it("sends nothing to webhooks that do not subscribe to usage.threshold", async () => {

@@ -119,17 +119,30 @@ export class Meter {
     return this.#flushing;
   }
 
+  /** One entry per account, period and metric: this flush's calls of all its apps, and the new total. */
   #report(deltas: readonly UsageDelta[], totals: readonly UsageTotal[], ctx: WaitUntil): void {
     if (!this.#onFlushed) return;
     const added = new Map(deltas.map((d) => [`${d.appId}|${d.period}|${d.metric}`, d.count]));
-    const flushed: FlushedUsage[] = [];
+    const byAccount = new Map<string, FlushedUsage>();
     for (const total of totals) {
       const limit = this.#limits.get(`${total.appId}|${total.metric}`);
       const delta = added.get(`${total.appId}|${total.period}|${total.metric}`);
       if (limit === undefined || delta === undefined) continue;
-      const { appId, period, metric, count } = total;
-      flushed.push({ appId, period, metric, added: delta, total: count, limit });
+      const key = `${total.accountId}|${total.period}|${total.metric}`;
+      const entry = byAccount.get(key);
+      if (entry) entry.added += delta;
+      else {
+        byAccount.set(key, {
+          accountId: total.accountId,
+          period: total.period,
+          metric: total.metric,
+          added: delta,
+          total: total.accountCount,
+          limit,
+        });
+      }
     }
+    const flushed = [...byAccount.values()];
     try {
       if (flushed.length > 0) this.#onFlushed(flushed, ctx);
     } catch (error) {

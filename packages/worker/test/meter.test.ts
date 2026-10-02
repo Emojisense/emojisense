@@ -139,7 +139,7 @@ describe("Meter flush reports (usage.threshold)", () => {
     return { store, meter, onFlushed, ctx: executionContext() };
   }
 
-  it("reports each flushed row with its new total, the calls added and the plan limit", async () => {
+  it("reports each account's new total, the calls added and the plan limit", async () => {
     const { store, meter, onFlushed, ctx } = reporting();
     await store.addUsage([{ appId: "app", period: "2026-10", metric: "semantic_calls", count: 78 }]);
     meter.add("app", "semantic_calls", true, 100);
@@ -148,11 +148,28 @@ describe("Meter flush reports (usage.threshold)", () => {
     meter.flushIfDue(ctx);
     await ctx.settle();
     expect(onFlushed).toHaveBeenCalledTimes(1);
+    // The memory store treats each app as its own account.
     expect(onFlushed.mock.calls[0]?.[0]).toEqual([
-      { appId: "app", period: "2026-10", metric: "semantic_calls", added: 2, total: 80, limit: 100 },
-      { appId: "app", period: "2026-10", metric: "image_classifications", added: 1, total: 1, limit: 10 },
+      { accountId: "app", period: "2026-10", metric: "semantic_calls", added: 2, total: 80, limit: 100 },
+      { accountId: "app", period: "2026-10", metric: "image_classifications", added: 1, total: 1, limit: 10 },
     ]);
     expect(onFlushed.mock.calls[0]?.[1]).toBe(ctx);
+  });
+
+  it("adds up the calls of all apps of one account in a flush", async () => {
+    const store = createMemoryStore();
+    vi.spyOn(store, "addUsage").mockImplementation(async (deltas) =>
+      deltas.map((d) => ({ ...d, accountId: "acc", accountCount: 90 })),
+    );
+    const onFlushed = vi.fn<NonNullable<MeterOptions["onFlushed"]>>();
+    const meter = new Meter({ store, now: () => OCT, onFlushed });
+    meter.add("app_1", "semantic_calls", true, 100);
+    meter.add("app_2", "semantic_calls", true, 100);
+    meter.add("app_2", "semantic_calls", true, 100);
+    await meter.flush(executionContext());
+    expect(onFlushed.mock.calls[0]?.[0]).toEqual([
+      { accountId: "acc", period: "2026-10", metric: "semantic_calls", added: 3, total: 90, limit: 100 },
+    ]);
   });
 
   it("reports nothing for a failed flush, and a failing report never re-counts calls", async () => {
