@@ -78,6 +78,9 @@ all parts. Index order: every core part first (English first), then the ext part
 one locale count as that locale for the preferred-locale factor (§4). An empty `label` MUST NOT
 replace a label from another part.
 
+A third part, `"custom"`, holds an app's own emoji. It is not a file of a pack version: the API
+builds it per app (§8).
+
 ### Rows
 
 Each element of `emoji` is an array with 11 positions. Row order is the display order (CLDR
@@ -240,3 +243,57 @@ precomputed nightly and published as static files:
   pack-level keys is not breaking. Adding a row position is breaking.
 - `packVersion` is semver for the data. A patch has alias changes only. A minor adds emoji or
   locales. A major changes ids.
+
+## 8. Custom packs (an app's own emoji)
+
+`GET /v1/custom-pack?key=…[&tenant=<externalId>]` (docs/API.md) returns the custom emoji of the
+key's app, plus those of one tenant, as a pack of `formatVersion` 1 with the same row layout:
+
+```json
+{
+  "format": "emojisense-pack",
+  "formatVersion": 1,
+  "packVersion": "custom-3f9a0c1e",
+  "locale": "und",
+  "part": "custom",
+  "emojiVersion": "",
+  "groups": ["custom"],
+  "emoji": [
+    [":party_parrot:", "C-x7Kq2", 0, 0, 0, "party_parrot", "party parrot", "", "celebrate|dance", "", ""]
+  ],
+  "images": { "C-x7Kq2": "https://api.emojisense.com/v1/custom/app_1/x7Kq2" }
+}
+```
+
+| Key or row position | Value |
+| ------------------- | ----- |
+| `part` | `"custom"` |
+| `locale` | `"und"` (BCP 47 "undetermined"): custom emoji belong to no locale |
+| `packVersion` | `custom-` + 8 hex characters, a hash of the rows and images. It changes when the set changes. |
+| `images` | Image URL per hexcode. Images are immutable (docs/API.md, `GET /v1/custom/:appId/:emojiId`). |
+| row[0] emoji | `:shortcode:`. Draw the image of `images[row[1]]` instead of text; use `:shortcode:` as its alt text. |
+| row[1] hexcode | `C-<emojiId>`. The `C-` prefix never collides with an Emojibase hexcode. |
+| row[2] group | `0` = `groups[0]` = `"custom"` |
+| row[3] version | `0`: every device can draw an image |
+| row[4] skins | `0`: skin tones do not apply |
+| row[5] label | the shortcode without colons; its normalized form is the `name` field |
+| row[6] shortcode | the normalized shortcode (`party_parrot` → `party parrot`) |
+| row[7] keyword | empty |
+| row[8] alias | the emoji's aliases, normalized (§3) |
+| row[9], row[10] | empty |
+
+A tenant emoji replaces an app-wide emoji with the same shortcode. Rows are sorted by shortcode.
+
+**Search.** Load a custom pack after the locale packs and index all of them together:
+
+- Primary pack: the first pack that is not custom. Custom rows are appended as their own entries
+  (they are not merged into catalog rows) and take part in IDF like any other entry.
+- Custom phrases count for every locale: the preferred-locale factor (§4) is always 1 for them.
+- A matching custom row is a result with `source: "custom"` and the extra fields `imageUrl`
+  (from `images`) and `shortcode`. Catalog results keep their shape.
+- The engine's `locales` do not include `und`.
+
+The API merges the same custom matches into `/v1/search` and `/v1/suggest-reactions`, first. A
+client that fuses its own results with the API's sees each custom emoji once (fusion is by `id`).
+Clients without custom-pack support can ignore packs with `part: "custom"`: their layout is valid
+and their rows never match catalog hexcodes.

@@ -84,6 +84,8 @@ email. It uses the access token once and never stores it.
 | `WAITLIST_LIMITER` | rate limit | 5 waitlist posts per minute per IP (the IP is only the in-memory key) |
 | `ENVIRONMENT` | var | `development` enables dev sign-in on localhost. Default `production`. |
 | `WEBSITE_ORIGINS` | var | Comma-separated website origins that may POST `/api/waitlist` (CORS) |
+| `EMOJI` | R2 binding | Custom emoji images, bucket `emojisense-emoji`, shared with the API Worker |
+| `API_URL` | var | The API Worker's origin; custom emoji `imageUrl`s point at it. Locally `http://localhost:8788`. |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | secrets | GitHub OAuth app |
 
 ## Behavior worth knowing
