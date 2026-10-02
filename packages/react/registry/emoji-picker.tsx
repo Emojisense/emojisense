@@ -1,8 +1,8 @@
 "use client";
 
-import { type Emojisense, useEmojiSearch } from "@emojisense/react";
+import { EmojiGlyph, type Emojisense, useEmojiSearch } from "@emojisense/react";
 import { useEmojisenseResolver } from "@emojisense/react/frimousse";
-import { applySkinTone, type SearchResult } from "emojisense";
+import { applySkinTone, type EmojiSet, type SearchResult } from "emojisense";
 import {
   type EmojiPickerListCategoryHeaderProps,
   type EmojiPickerListEmojiProps,
@@ -31,6 +31,8 @@ type EmojiPickerContextValue = {
   listboxId: string;
   labelOf: (result: SearchResult) => string;
   onEmojiSelect: (emoji: SelectedEmoji) => void;
+  /** Draws the emoji with the hosted set from `useEmojisense({ emojiSet })`. */
+  glyph: { emojiSet: EmojiSet | undefined; endpoint: string | undefined };
 };
 
 const EmojiPickerContext = React.createContext<EmojiPickerContextValue | null>(null);
@@ -63,7 +65,8 @@ function EmojiPicker({
   const listboxId = React.useId();
   const { results } = useEmojiSearch(query, emojisense, { limit });
   const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
-  const { engine, locale } = emojisense;
+  const { engine, locale, emojiSet, endpoint } = emojisense;
+  const glyph = React.useMemo(() => ({ emojiSet, endpoint }), [emojiSet, endpoint]);
 
   const setQuery = React.useCallback((next: string) => {
     setQueryState(next);
@@ -89,8 +92,9 @@ function EmojiPicker({
       listboxId,
       labelOf,
       onEmojiSelect: select,
+      glyph,
     }),
-    [query, setQuery, results, activeIndex, columns, listboxId, labelOf, select],
+    [query, setQuery, results, activeIndex, columns, listboxId, labelOf, select, glyph],
   );
 
   return (
@@ -201,9 +205,10 @@ function EmojiPickerRow({ children, className, ...props }: EmojiPickerListRowPro
 }
 
 function EmojiPickerEmoji({ emoji, className, ...props }: EmojiPickerListEmojiProps) {
+  const { glyph } = useEmojiPicker();
   return (
     <button data-slot="emoji-picker-emoji" className={cn(emojiTile, className)} {...props}>
-      {emoji.emoji}
+      <EmojiGlyph emoji={emoji.emoji} {...glyph} />
     </button>
   );
 }
@@ -221,7 +226,7 @@ function EmojiPickerCategoryHeader({ category, className, ...props }: EmojiPicke
 }
 
 function EmojiPickerResults({ empty }: { empty: React.ReactNode }) {
-  const { results, activeIndex, setActiveIndex, columns, listboxId, labelOf, onEmojiSelect } =
+  const { results, activeIndex, setActiveIndex, columns, listboxId, labelOf, onEmojiSelect, glyph } =
     useEmojiPicker();
   const [skinTone] = useSkinTone();
 
@@ -267,7 +272,7 @@ function EmojiPickerResults({ empty }: { empty: React.ReactNode }) {
             onPointerEnter={() => setActiveIndex(index)}
             onClick={() => onEmojiSelect({ emoji, label })}
           >
-            {emoji}
+            <EmojiGlyph emoji={emoji} {...glyph} />
           </button>
         );
       })}
@@ -329,14 +334,16 @@ function EmojiPickerContent({
 }
 
 function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">) {
-  const { query, results, activeIndex, labelOf } = useEmojiPicker();
+  const { query, results, activeIndex, labelOf, glyph } = useEmojiPicker();
   const [skinTone] = useSkinTone();
   const result = query.trim() !== "" ? results[activeIndex] : undefined;
 
   const preview = (emoji: SelectedEmoji | undefined) =>
     emoji ? (
       <>
-        <div className="flex size-7 flex-none items-center justify-center text-lg">{emoji.emoji}</div>
+        <div className="flex size-7 flex-none items-center justify-center text-lg">
+          <EmojiGlyph emoji={emoji.emoji} {...glyph} />
+        </div>
         <span className="text-secondary-foreground truncate text-xs">{emoji.label}</span>
       </>
     ) : (

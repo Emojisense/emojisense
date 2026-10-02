@@ -1,3 +1,4 @@
+import type { Emojisense } from "@emojisense/react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createEngine } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
@@ -19,7 +20,7 @@ describe("registry emoji-picker", () => {
     extended: false,
   };
 
-  const Picker = (props: { emojisense: typeof ready; onEmojiSelect?: () => void }) => (
+  const Picker = (props: { emojisense: Emojisense; onEmojiSelect?: () => void }) => (
     <EmojiPicker emojisense={props.emojisense} onEmojiSelect={props.onEmojiSelect}>
       <EmojiPickerSearch />
       <EmojiPickerContent />
@@ -61,5 +62,23 @@ describe("registry emoji-picker", () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
     view.rerender(<Picker emojisense={ready} />);
     expect(await screen.findByRole("gridcell", { name: "thumbs up" })).toBeTruthy();
+  });
+
+  it("draws the list, the results and the footer preview with a hosted emoji set", async () => {
+    const API = "https://api.test";
+    const onEmojiSelect = vi.fn();
+    render(
+      <Picker emojisense={{ ...ready, emojiSet: "twemoji", endpoint: API }} onEmojiSelect={onEmojiSelect} />,
+    );
+    const cell = await screen.findByRole("gridcell", { name: "rocket" });
+    expect(cell.querySelector("img")?.getAttribute("src")).toBe(`${API}/v1/sets/twemoji/1F680.svg`);
+
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "jurassic" } });
+    await screen.findAllByRole("option");
+    const sources = [...document.querySelectorAll("img")].map((img) => img.getAttribute("src"));
+    expect(sources.filter((src) => src === `${API}/v1/sets/twemoji/1F996.svg`)).toHaveLength(2); // option, footer
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onEmojiSelect).toHaveBeenCalledWith({ emoji: "🦖", label: "T-Rex" });
   });
 });

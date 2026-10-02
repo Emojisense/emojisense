@@ -11,6 +11,7 @@ same results as the TypeScript engine.
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6). |
 | Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache. Over the limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Pinned reciprocal rank fusion, as in `core/src/fusion.ts`. |
+| Emoji sets | `EmojiSet`, `Hexcode` | The `emojiSet` option of the pickers: `.native` or a hosted set. `imageURL(for:endpoint:)` gives `/v1/sets/<set>/<hexcode>.svg`. No UI. |
 
 Requirements: iOS 16+ or macOS 13+, Swift 6. No third-party dependencies.
 

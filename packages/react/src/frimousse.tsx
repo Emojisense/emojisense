@@ -7,6 +7,7 @@
  */
 import {
   applySkinTone,
+  type EmojiSet,
   groupLabel,
   type Pack,
   ROW_INDEX,
@@ -14,16 +15,24 @@ import {
   SKIN_TONES,
   type SkinTone,
 } from "emojisense";
-import { EmojiPicker, type EmojiPickerRootProps, useSkinTone } from "frimousse";
+import {
+  EmojiPicker,
+  type EmojiPickerListEmojiProps,
+  type EmojiPickerRootProps,
+  useSkinTone,
+} from "frimousse";
 import {
   type ComponentProps,
+  createContext,
   type KeyboardEvent,
   type ReactNode,
   useCallback,
+  useContext,
   useId,
   useMemo,
   useState,
 } from "react";
+import { EmojiGlyph } from "./glyph.js";
 import { type Emojisense, useEmojiSearch } from "./hooks.js";
 
 type EmojiDataResolver = NonNullable<EmojiPickerRootProps["resolveEmojiData"]>;
@@ -90,6 +99,9 @@ export interface EmojisenseResultsProps
   listboxId: string;
   columns?: number;
   empty?: ReactNode;
+  /** Draw the emoji as images of a hosted set (needs `endpoint`). Default "native". */
+  emojiSet?: EmojiSet | undefined;
+  endpoint?: string | undefined;
 }
 
 /** Ranked results as an ARIA listbox. Must be rendered inside `EmojiPicker.Root` (skin tone). */
@@ -103,6 +115,8 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
     listboxId,
     columns = 9,
     empty = null,
+    emojiSet,
+    endpoint,
     style,
     ...rest
   } = props;
@@ -134,13 +148,27 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
             onMouseEnter={() => onActiveIndexChange(index)}
             onClick={() => onSelect({ emoji, label })}
           >
-            {emoji}
+            <EmojiGlyph emoji={emoji} emojiSet={emojiSet} endpoint={endpoint} />
           </button>
         );
       })}
     </div>
   );
 }
+
+const GlyphContext = createContext<{ emojiSet?: EmojiSet | undefined; endpoint?: string | undefined }>({});
+
+/** Frimousse's default list button, drawing the emoji with the picker's emoji set. */
+function ListEmoji({ emoji, ...props }: EmojiPickerListEmojiProps) {
+  const glyph = useContext(GlyphContext);
+  return (
+    <button type="button" {...props}>
+      <EmojiGlyph emoji={emoji.emoji} {...glyph} />
+    </button>
+  );
+}
+
+const LIST_COMPONENTS = { Emoji: ListEmoji };
 
 export interface EmojisensePickerProps
   extends Omit<EmojiPickerRootProps, "onEmojiSelect" | "resolveEmojiData" | "locale"> {
@@ -172,6 +200,8 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const { results } = useEmojiSearch(query, emojisense, { limit });
   const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
   const searching = query.trim() !== "";
+  const { emojiSet, endpoint } = emojisense;
+  const glyph = useMemo(() => ({ emojiSet, endpoint }), [emojiSet, endpoint]);
 
   const labelOf = useCallback(
     (r: SearchResult) => {
@@ -217,12 +247,14 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
             listboxId={listboxId}
             columns={columns}
             empty={empty}
+            emojiSet={emojiSet}
+            endpoint={endpoint}
           />
         ) : (
-          <>
+          <GlyphContext.Provider value={glyph}>
             <EmojiPicker.Loading>Loading…</EmojiPicker.Loading>
-            <EmojiPicker.List />
-          </>
+            <EmojiPicker.List components={LIST_COMPONENTS} />
+          </GlyphContext.Provider>
         )}
       </EmojiPicker.Viewport>
     </EmojiPicker.Root>

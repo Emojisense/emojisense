@@ -38,6 +38,7 @@ the search engine):
   locale="en"
   columns="9"
   skin-tone="none"
+  emoji-set="native"
 ></emojisense-picker>
 
 <script type="module">
@@ -56,6 +57,7 @@ the search engine):
 | `locale` | `locale` | `en` | `tr` loads the Turkish pack next to English. |
 | `columns` | `columns` | `9` | Emoji per row (1–24). |
 | `skin-tone` | `skinTone` | `none` | `none`, `light`, `medium-light`, `medium`, `medium-dark`, `dark` |
+| `emoji-set` | `emojiSet` | `native` | `native` draws the system font. `twemoji`, `noto` and `fluent` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. A set may not draw every emoji (Fluent has no country flags); then the native emoji takes its place. Credit the set in your app (see NOTICE). |
 | `placeholder` | `placeholder` | `Search emoji…` | Input placeholder and accessible name |
 | — | `packs` | — | Pack objects to use instead of fetching `pack-url` (bundled or offline apps) |
 | — | `query` | `""` | Read or set the search text |
@@ -102,7 +104,7 @@ emojisense-picker::part(active) { background: #e8eefc; }
 ```
 
 Parts: `root`, `search`, `pill`, `viewport`, `listbox`, `group`, `group-label`, `option`,
-`active` (the active option), `message`, `sticker`.
+`image` (the emoji image of a hosted set), `active` (the active option), `message`, `sticker`.
 
 ## Frameworks
 

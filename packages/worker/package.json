@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "sync": "tsx scripts/sync-pack.ts",
+    "sets": "tsx scripts/check-sets.ts",
     "dev": "wrangler dev --persist-to ../../.wrangler/state",
     "dev:offline": "wrangler dev --env offline --persist-to ../../.wrangler/state",
     "db:migrate": "wrangler d1 migrations apply DB --local --env offline --persist-to ../../.wrangler/state",

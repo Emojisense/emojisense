@@ -2,7 +2,7 @@
  * Shadow DOM styles: the "compact" level of docs/DESIGN.md (keycap tiles, emoji-yellow
  * selection, ink outlines, a pill for the query state). Everything is themable through the
  * `--emojisense-*` custom properties and the parts root, search, pill, viewport, listbox, group,
- * group-label, option, active, message and sticker. `light-dark()` follows the page, or the
+ * group-label, option, image, active, message and sticker. `light-dark()` follows the page, or the
  * host's `color-scheme`.
  */
 export const styles: string = /* css */ `
@@ -156,6 +156,13 @@ export const styles: string = /* css */ `
   border-radius: var(--_key-radius);
   cursor: pointer;
   user-select: none;
+}
+
+.option img {
+  display: block;
+  inline-size: 1em;
+  block-size: 1em;
+  pointer-events: none;
 }
 
 :where(#results) .option {

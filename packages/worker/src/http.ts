@@ -32,14 +32,17 @@ export function parseLocale(raw: unknown): "en" | "tr" {
 }
 
 /**
- * Read at most `max` bytes of the body. Returns undefined when the body is larger, without
- * buffering the rest, so an oversized upload costs no more memory than the limit.
+ * Read at most `max` bytes of a request or response body. Returns undefined when the body is
+ * larger, without buffering the rest, so an oversized body costs no more memory than the limit.
  */
-export async function readBodyCapped(request: Request, max: number): Promise<Uint8Array | undefined> {
-  const declared = Number(request.headers.get("content-length"));
+export async function readBodyCapped(
+  message: Request | Response,
+  max: number,
+): Promise<Uint8Array | undefined> {
+  const declared = Number(message.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > max) return undefined;
-  if (!request.body) return new Uint8Array();
-  const reader = request.body.getReader();
+  if (!message.body) return new Uint8Array();
+  const reader = message.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
   for (;;) {

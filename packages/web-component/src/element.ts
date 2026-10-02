@@ -5,7 +5,10 @@ import {
   createLayeredSemantic,
   createSearchSession,
   type EmojiEntry,
+  type EmojiSet,
+  emojiImageUrl,
   groupLabel,
+  isEmojiSet,
   loadPacks,
   type Pack,
   type SearchSession,
@@ -87,6 +90,7 @@ const UPGRADED_PROPERTIES = [
   "locale",
   "columns",
   "skinTone",
+  "emojiSet",
   "placeholder",
   "packs",
 ] as const;
@@ -100,7 +104,8 @@ const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as ty
  * every keystroke, then shard or API results fused in when the dictionary is unsure.
  *
  * Attributes: `pack-url`, `shards-url`, `endpoint`, `key` (alias `publishable-key`), `locale`,
- * `columns`, `skin-tone`, `placeholder`. Event: `emoji-select` with `{ emoji, label, id }`.
+ * `columns`, `skin-tone`, `emoji-set`, `placeholder`. Event: `emoji-select` with
+ * `{ emoji, label, id }`.
  */
 export class EmojisensePickerElement extends Base {
   static readonly observedAttributes = [
@@ -112,6 +117,7 @@ export class EmojisensePickerElement extends Base {
     "locale",
     "columns",
     "skin-tone",
+    "emoji-set",
     "placeholder",
   ];
 
@@ -222,6 +228,18 @@ export class EmojisensePickerElement extends Base {
     this.setAttribute("skin-tone", value);
   }
 
+  /**
+   * `native` (default) draws the system font. `twemoji`, `noto` and `fluent` draw images hosted
+   * at `{endpoint}/v1/sets/{set}/{hexcode}.svg`, so they need `endpoint`.
+   */
+  get emojiSet(): EmojiSet {
+    const set = this.getAttribute("emoji-set");
+    return isEmojiSet(set) ? set : "native";
+  }
+  set emojiSet(value: EmojiSet) {
+    this.setAttribute("emoji-set", value);
+  }
+
   get placeholder(): string {
     return this.getAttribute("placeholder") || DEFAULT_PLACEHOLDER;
   }
@@ -275,9 +293,13 @@ export class EmojisensePickerElement extends Base {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return;
     if (name === "columns") this.#applyColumns();
-    else if (name === "skin-tone") this.#applySkinTone();
+    else if (name === "skin-tone") this.#redrawGlyphs((item) => item.hasSkinTones);
+    else if (name === "emoji-set") this.#redrawGlyphs(() => true);
     else if (name === "placeholder") this.#applyPlaceholder();
-    else this.#schedule();
+    else {
+      if (name === "endpoint") this.#redrawGlyphs(() => true);
+      this.#schedule();
+    }
   }
 
   /**
@@ -481,12 +503,29 @@ export class EmojisensePickerElement extends Base {
     option.setAttribute("aria-label", item.label);
     option.title = item.label;
     option.dataset.index = String(index);
-    option.textContent = this.#glyph(item);
+    this.#drawGlyph(option, item);
     return option;
   }
 
   #glyph(item: Item): string {
     return item.hasSkinTones ? applySkinTone(item.emoji, this.skinTone) : item.emoji;
+  }
+
+  /**
+   * The emoji as text, or as `<img src alt loading="lazy">` of the hosted set. A set may not draw
+   * every emoji (Fluent has no country flags), so a failed image gives way to the text.
+   */
+  #drawGlyph(option: HTMLElement, item: Item) {
+    const emoji = this.#glyph(item);
+    const src = emojiImageUrl(emoji, { emojiSet: this.emojiSet, endpoint: this.endpoint });
+    if (!src) {
+      option.textContent = emoji;
+      return;
+    }
+    const image = element("img", { src, alt: emoji, loading: "lazy", decoding: "async", part: "image" });
+    image.setAttribute("draggable", "false");
+    image.addEventListener("error", () => image.replaceWith(emoji), { once: true });
+    option.replaceChildren(image);
   }
 
   #view(): View {
@@ -574,11 +613,11 @@ export class EmojisensePickerElement extends Base {
     for (const view of [this.#browse, this.#results]) view.layout = layoutRows(view.groupSizes, this.columns);
   }
 
-  #applySkinTone() {
+  #redrawGlyphs(affects: (item: Item) => boolean) {
     for (const view of [this.#browse, this.#results]) {
       view.items.forEach((item, index) => {
         const option = view.options[index];
-        if (option && item.hasSkinTones) option.textContent = this.#glyph(item);
+        if (option && affects(item)) this.#drawGlyph(option, item);
       });
     }
   }

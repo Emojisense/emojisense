@@ -13,7 +13,7 @@ export {
 export { type FuseOptions, fuse, fuseResults, shouldUseSemantic } from "./fusion.js";
 export { boundedEditDistance } from "./fuzzy.js";
 export { groupLabel } from "./groups.js";
-export { baseId } from "./ids.js";
+export { baseId, hexcodeOf } from "./ids.js";
 export { createLayeredSemantic, type LayeredSemanticOptions } from "./layered.js";
 export { type LoadPacksOptions, loadPacks } from "./loader.js";
 export { MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
@@ -42,6 +42,14 @@ export {
   type SessionState,
   type SessionStatus,
 } from "./session.js";
+export {
+  EMOJI_SETS,
+  type EmojiImageOptions,
+  type EmojiSet,
+  emojiImageUrl,
+  type HostedEmojiSet,
+  isEmojiSet,
+} from "./sets.js";
 export {
   createShardProvider,
   type Shard,
