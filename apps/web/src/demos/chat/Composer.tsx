@@ -1,5 +1,7 @@
 import type { AliasEngine, SearchResult } from "emojisense";
 import { type ChangeEvent, type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef } from "react";
+import { useDemoI18n } from "../../i18n/demos";
+import { rich } from "../../i18n/react";
 import type { EngineState } from "../../lib/engine-client";
 import { AtIcon, FormatIcon, PlusIcon, SendIcon, SmileIcon } from "./icons";
 import { expandClosedCode, hintFor, shortcodeFor } from "./shortcodes";
@@ -17,8 +19,11 @@ interface ComposerProps {
   pressing: "option" | "send" | undefined;
 }
 
-function formatMs(ms: number): string {
-  return ms < 1 ? ms.toFixed(2) : ms < 10 ? ms.toFixed(1) : String(Math.round(ms));
+function formatMs(ms: number, lang: string): string {
+  const digits = ms < 1 ? 2 : ms < 10 ? 1 : 0;
+  return new Intl.NumberFormat(lang, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(
+    ms,
+  );
 }
 
 /** `:go` + `goat` → the typed part of the code in full ink, the rest muted. */
@@ -35,6 +40,7 @@ function Code({ code, query }: { code: string; query: string }) {
 
 export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, pressing }: ComposerProps) {
   const id = useId();
+  const { t, lang } = useDemoI18n();
   const listId = `${id}-emoji`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -106,11 +112,11 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
   const activeId = open && results.length > 0 ? `${listId}-${active}` : undefined;
   const timing = session
     ? [
-        `${formatMs(session.aliasMs)} ms on-device`,
+        t.t("chat.onDevice", { ms: formatMs(session.aliasMs, lang) }),
         session.status === "fused" && session.semanticMs !== undefined
-          ? `meaning ${formatMs(session.semanticMs)} ms`
+          ? t.t("chat.meaning", { ms: formatMs(session.semanticMs, lang) })
           : searching
-            ? "meaning…"
+            ? t.t("chat.meaningPending")
             : undefined,
       ]
         .filter(Boolean)
@@ -123,12 +129,18 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
         <div className="chat-pop">
           <div className="chat-pop-head">
             <span className="chat-pop-title">
-              Emoji matching <b>:{trigger.query}</b>
+              {rich(t.raw("chat.popTitle"), { b: (text) => <b>{text}</b> }, { query: trigger.query })}
             </span>
             {timing && <span className="chat-pop-time">{timing}</span>}
           </div>
           {results.length > 0 ? (
-            <div className="chat-pop-list" id={listId} role="listbox" aria-label="Emoji" ref={listRef}>
+            <div
+              className="chat-pop-list"
+              id={listId}
+              role="listbox"
+              aria-label={t.t("chat.listLabel")}
+              ref={listRef}
+            >
               {results.map((r, i) => {
                 const hint = hintFor(engine, r);
                 return (
@@ -149,7 +161,7 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
                     <Code code={shortcodeFor(engine, r)} query={trigger.query} />
                     {hint && (
                       <span className="chat-opt-hint">
-                        {hint.kind === "meaning" ? "by meaning" : <q>{hint.text}</q>}
+                        {hint.kind === "meaning" ? t.t("chat.byMeaning") : <q>{hint.text}</q>}
                       </span>
                     )}
                   </div>
@@ -158,19 +170,19 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
             </div>
           ) : (
             <p className="chat-pop-status">
-              {ready === "loading" ? "Loading emoji…" : "Searching by meaning…"}
+              {ready === "loading" ? t.t("chat.loadingEmoji") : t.t("chat.searchingMeaning")}
             </p>
           )}
           <p className="chat-pop-foot" aria-hidden="true">
             <span>
               <kbd>↑</kbd>
-              <kbd>↓</kbd> navigate
+              <kbd>↓</kbd> {t.t("chat.keyNavigate")}
             </span>
             <span>
-              <kbd>↵</kbd> select
+              <kbd>↵</kbd> {t.t("chat.keySelect")}
             </span>
             <span>
-              <kbd>esc</kbd> dismiss
+              <kbd>esc</kbd> {t.t("chat.keyDismiss")}
             </span>
           </p>
         </div>
@@ -179,7 +191,7 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
       <div className={`chat-composer${ghostCaret ? " is-active" : ""}`}>
         <div className="chat-field">
           <label className="visually-hidden" htmlFor={`${id}-input`}>
-            Message #{channel}
+            {t.t("chat.messageLabel", { channel })}
           </label>
           <textarea
             id={`${id}-input`}
@@ -187,7 +199,7 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
             className="chat-input"
             rows={1}
             value={ac.value}
-            placeholder={`Message #${channel}`}
+            placeholder={t.t("chat.messageLabel", { channel })}
             autoComplete="off"
             spellCheck={false}
             aria-autocomplete="list"
@@ -213,12 +225,12 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
             <AtIcon />
           </span>
           <span className="chat-compose-hint" id={`${id}-hint`}>
-            Type <kbd>:</kbd> and 2 letters for emoji
+            {rich(t.raw("chat.composeHint"), { kbd: (text) => <kbd>{text}</kbd> })}
           </span>
           <button
             type="button"
             className={`chat-send${pressing === "send" ? " is-pressing" : ""}`}
-            aria-label="Send message"
+            aria-label={t.t("chat.send")}
             disabled={ac.value.trim() === ""}
             onClick={onSend}
           >

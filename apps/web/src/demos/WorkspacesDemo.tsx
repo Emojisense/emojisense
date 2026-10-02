@@ -1,13 +1,15 @@
 import { type AliasResult, createSearchSession, type SearchResult, type SessionState } from "emojisense";
 import { type CSSProperties, type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
-import { sharedSemantic, useEngine } from "../lib/engine-client";
+import { useDemoI18n } from "../i18n/demos";
+import { rich } from "../i18n/react";
+import { labelOf, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
+import { formatClock } from "./chat/content";
 import { searchCustom } from "./workspaces/custom-engine";
 import {
   type CustomEmoji,
   customEmojiSrc,
-  PRESET_QUERIES,
+  localizeWorkspaces,
   type SeedReaction,
-  WORKSPACES,
   type Workspace,
 } from "./workspaces/data";
 import workspacesCss from "./workspaces.css?url";
@@ -39,9 +41,7 @@ interface Reaction {
   mine: boolean;
 }
 
-const FIRST = WORKSPACES[0] as Workspace;
-
-function seedReactions(): Record<WorkspaceId, Reaction[]> {
+function seedReactions(workspaces: Workspace[]): Record<WorkspaceId, Reaction[]> {
   const toReaction = (workspace: Workspace, seed: SeedReaction): Reaction =>
     "custom" in seed
       ? {
@@ -54,7 +54,7 @@ function seedReactions(): Record<WorkspaceId, Reaction[]> {
         }
       : { ...seed, mine: false };
   return Object.fromEntries(
-    WORKSPACES.map((w) => [w.id, w.message.reactions.map((seed) => toReaction(w, seed))]),
+    workspaces.map((w) => [w.id, w.message.reactions.map((seed) => toReaction(w, seed))]),
   ) as Record<WorkspaceId, Reaction[]>;
 }
 
@@ -86,13 +86,18 @@ function optionName(option: Option): string {
  * searched by the real engine as an extra in-memory pack, next to the standard set.
  */
 export default function WorkspacesDemo() {
+  const { t, lang, messages } = useDemoI18n();
+  const words = messages.workspaces;
+  const { workspaces, presets } = useMemo(() => localizeWorkspaces(words), [words]);
+  const first = workspaces[0] as Workspace;
+  const locale = useMemo(() => pageLocale(), []);
   const { engine, ready } = useEngine();
-  const [workspaceId, setWorkspaceId] = useState<WorkspaceId>(FIRST.id);
+  const [workspaceId, setWorkspaceId] = useState<WorkspaceId>(first.id);
   const [direction, setDirection] = useState<"up" | "down">("down");
-  const [query, setQuery] = useState<string>(PRESET_QUERIES[0]);
+  const [query, setQuery] = useState<string>(presets[0] ?? "");
   const [standard, setStandard] = useState<SessionState | undefined>();
   const [active, setActive] = useState(0);
-  const [reactions, setReactions] = useState(seedReactions);
+  const [reactions, setReactions] = useState(() => seedReactions(workspaces));
   const [popped, setPopped] = useState<string | undefined>();
   const [inspected, setInspected] = useState<string | undefined>();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,9 +106,9 @@ export default function WorkspacesDemo() {
 
   const workspaceIndex = Math.max(
     0,
-    WORKSPACES.findIndex((w) => w.id === workspaceId),
+    workspaces.findIndex((w) => w.id === workspaceId),
   );
-  const workspace = WORKSPACES[workspaceIndex] ?? FIRST;
+  const workspace = workspaces[workspaceIndex] ?? first;
   const hasQuery = query.trim() !== "";
 
   const semantic = useMemo(() => sharedSemantic(), []);
@@ -113,12 +118,13 @@ export default function WorkspacesDemo() {
         ? createSearchSession({
             engine,
             ...(semantic ? { semantic } : {}),
+            locale,
             limit: STANDARD_LIMIT,
             debounceMs: 180,
             onChange: setStandard,
           })
         : undefined,
-    [engine, semantic],
+    [engine, semantic, locale],
   );
   useEffect(() => {
     session?.update(query);
@@ -146,11 +152,11 @@ export default function WorkspacesDemo() {
         id: r.id,
         kind: "standard",
         emoji: r.emoji,
-        label: alias?.label || engine?.get(r.id)?.labels.en || "",
+        label: alias?.label || labelOf(engine, r.id, locale) || "",
         ...(alias ? { match: alias.match } : {}),
       };
     });
-  }, [standard, query, hasQuery, engine]);
+  }, [standard, query, hasQuery, engine, locale]);
 
   const options = useMemo(() => [...customOptions, ...standardOptions], [customOptions, standardOptions]);
   const activeIndex = Math.min(active, options.length - 1);
@@ -162,21 +168,21 @@ export default function WorkspacesDemo() {
   useEffect(() => setActive(0), [query, workspaceId]);
 
   const switchTo = (index: number, focus = false) => {
-    const next = WORKSPACES[(index + WORKSPACES.length) % WORKSPACES.length];
+    const next = workspaces[(index + workspaces.length) % workspaces.length];
     if (!next) return;
     if (next.id !== workspaceId) {
-      setDirection(WORKSPACES.indexOf(next) > workspaceIndex ? "down" : "up");
+      setDirection(workspaces.indexOf(next) > workspaceIndex ? "down" : "up");
       setWorkspaceId(next.id);
       setInspected(undefined);
     }
-    if (focus) tabRefs.current[WORKSPACES.indexOf(next)]?.focus();
+    if (focus) tabRefs.current[workspaces.indexOf(next)]?.focus();
   };
 
   const onRailKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[event.key];
     if (event.key === "Home" || event.key === "End") {
       event.preventDefault();
-      switchTo(event.key === "Home" ? 0 : WORKSPACES.length - 1, true);
+      switchTo(event.key === "Home" ? 0 : workspaces.length - 1, true);
     } else if (step) {
       event.preventDefault();
       switchTo(workspaceIndex + step, true);
@@ -241,8 +247,17 @@ export default function WorkspacesDemo() {
   const standardTiming =
     standard && standard.query === query && hasQuery
       ? standard.status === "fused" && standard.semanticMs !== undefined
-        ? `meaning · ${Math.round(standard.semanticMs)} ms`
-        : `on-device · ${standard.aliasMs < 0.1 ? "< 0.1" : standard.aliasMs.toFixed(1)} ms`
+        ? t.t("workspaces.timingMeaning", {
+            ms: new Intl.NumberFormat(lang).format(Math.round(standard.semanticMs)),
+          })
+        : t.t("workspaces.timingDevice", {
+            ms:
+              standard.aliasMs < 0.1
+                ? `< ${new Intl.NumberFormat(lang).format(0.1)}`
+                : new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
+                    standard.aliasMs,
+                  ),
+          })
       : undefined;
 
   return (
@@ -253,13 +268,13 @@ export default function WorkspacesDemo() {
           <div
             className="ws-tabs"
             role="tablist"
-            aria-label="Workspaces"
+            aria-label={t.t("workspaces.tabs")}
             aria-orientation="vertical"
             onKeyDown={onRailKey}
             style={{ "--ws-index": workspaceIndex } as CSSProperties}
           >
             <span className="ws-glide" aria-hidden="true" />
-            {WORKSPACES.map((w, i) => (
+            {workspaces.map((w, i) => (
               <button
                 key={w.id}
                 ref={(el) => {
@@ -292,21 +307,25 @@ export default function WorkspacesDemo() {
                   {workspace.channel}
                 </span>
               </div>
-              <span className="ws-tenant" title="Tenant id">
+              <span className="ws-tenant" title={t.t("workspaces.tenantTitle")}>
                 <span className="ws-tenant-key">tenant</span>
                 {workspace.tenant}
               </span>
             </header>
 
             <div className="ws-body">
-              <article key={workspace.id} className="ws-message ws-swap" aria-label="Message">
+              <article
+                key={workspace.id}
+                className="ws-message ws-swap"
+                aria-label={t.t("workspaces.message")}
+              >
                 <span className="ws-avatar" aria-hidden="true">
                   {initials(workspace.message.author)}
                 </span>
                 <div className="ws-message-main">
                   <p className="ws-meta">
                     <span className="ws-author">{workspace.message.author}</span>
-                    <time className="ws-time">{workspace.message.time}</time>
+                    <time className="ws-time">{formatClock(workspace.message.minute, lang)}</time>
                   </p>
                   <p className="ws-text">{workspace.message.text}</p>
                   <div className="ws-reactions">
@@ -331,7 +350,7 @@ export default function WorkspacesDemo() {
                     <button
                       type="button"
                       className="ws-reaction ws-add"
-                      aria-label="Add reaction"
+                      aria-label={t.t("workspaces.addReaction")}
                       onClick={() => inputRef.current?.focus()}
                     >
                       <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -343,7 +362,7 @@ export default function WorkspacesDemo() {
                 </div>
               </article>
 
-              <section className="ws-picker" aria-label="Emoji picker">
+              <section className="ws-picker" aria-label={t.t("workspaces.picker")}>
                 <div className="ws-search">
                   <svg className="ws-search-icon" viewBox="0 0 20 20" aria-hidden="true">
                     <circle cx="8.75" cy="8.75" r="5.75" />
@@ -357,8 +376,8 @@ export default function WorkspacesDemo() {
                     aria-controls={listboxId}
                     aria-autocomplete="list"
                     aria-activedescendant={current ? optionId(activeIndex) : undefined}
-                    aria-label={`Search emoji in ${workspace.name}`}
-                    placeholder={`Search ${workspace.name} emoji`}
+                    aria-label={t.t("workspaces.searchIn", { workspace: workspace.name })}
+                    placeholder={t.t("workspaces.placeholder", { workspace: workspace.name })}
                     value={query}
                     spellCheck={false}
                     autoComplete="off"
@@ -369,7 +388,7 @@ export default function WorkspacesDemo() {
                     <button
                       type="button"
                       className="ws-clear"
-                      aria-label="Clear search"
+                      aria-label={t.t("workspaces.clear")}
                       onClick={() => setQuery("")}
                     >
                       <svg viewBox="0 0 20 20" aria-hidden="true">
@@ -380,8 +399,8 @@ export default function WorkspacesDemo() {
                 </div>
 
                 <div className="ws-chips">
-                  <span className="ws-chips-label">Try</span>
-                  {PRESET_QUERIES.map((preset) => (
+                  <span className="ws-chips-label">{t.t("workspaces.try")}</span>
+                  {presets.map((preset) => (
                     <button
                       key={preset}
                       type="button"
@@ -394,12 +413,17 @@ export default function WorkspacesDemo() {
                   ))}
                 </div>
 
-                <div className="ws-results" id={listboxId} role="listbox" aria-label="Emoji results">
+                <div
+                  className="ws-results"
+                  id={listboxId}
+                  role="listbox"
+                  aria-label={t.t("workspaces.results")}
+                >
                   {/* biome-ignore lint/a11y/useSemanticElements: an option group inside a listbox (ARIA APG pattern); fieldset is not allowed there. */}
                   <div className="ws-group" role="group" aria-labelledby={`${uid}-custom-label`}>
                     <div className="ws-group-label" id={`${uid}-custom-label`} role="presentation">
                       <span className="ws-custom-mark" aria-hidden="true" />
-                      {hasQuery ? "Custom" : "Custom emoji"}
+                      {hasQuery ? t.t("workspaces.custom") : t.t("workspaces.customEmoji")}
                       <span className="ws-group-from">{workspace.name}</span>
                     </div>
                     {customOptions.length > 0 ? (
@@ -412,7 +436,7 @@ export default function WorkspacesDemo() {
                             role="option"
                             tabIndex={-1}
                             aria-selected={i === activeIndex}
-                            aria-label={`:${option.label}:, custom`}
+                            aria-label={t.t("workspaces.customOption", { code: `:${option.label}:` })}
                             className="ws-custom-option"
                             style={{ animationDelay: `${i * 40}ms` }}
                             onMouseEnter={() => setActive(i)}
@@ -425,7 +449,7 @@ export default function WorkspacesDemo() {
                       </div>
                     ) : (
                       <p key={workspace.id} className="ws-none ws-swap" role="presentation">
-                        No custom emoji for “{query.trim()}” here. The standard set still answers.
+                        {t.t("workspaces.noCustom", { query: query.trim() })}
                       </p>
                     )}
                   </div>
@@ -434,12 +458,12 @@ export default function WorkspacesDemo() {
                     // biome-ignore lint/a11y/useSemanticElements: an option group inside a listbox (ARIA APG pattern).
                     <div className="ws-group" role="group" aria-labelledby={`${uid}-standard-label`}>
                       <div className="ws-group-label" id={`${uid}-standard-label`} role="presentation">
-                        Standard
+                        {t.t("workspaces.standard")}
                       </div>
                       <div className="ws-grid" role="presentation">
                         {ready === "failed" && (
                           <p className="ws-none" role="presentation">
-                            The standard set cannot load right now. Custom search still works.
+                            {t.t("workspaces.standardFailed")}
                           </p>
                         )}
                         {!engine &&
@@ -450,7 +474,7 @@ export default function WorkspacesDemo() {
                           ))}
                         {engine && standardOptions.length === 0 && (
                           <p className="ws-none" role="presentation">
-                            No standard match yet. Keep typing.
+                            {t.t("workspaces.noStandard")}
                           </p>
                         )}
                         {standardOptions.map((option, j) => {
@@ -492,60 +516,61 @@ export default function WorkspacesDemo() {
                         <span className="ws-preview-name">{optionName(current)}</span>
                         <span className="ws-preview-why">
                           <span className="ws-source" data-kind={current.kind}>
-                            {current.kind}
+                            {current.kind === "custom"
+                              ? t.t("workspaces.kindCustom")
+                              : t.t("workspaces.kindStandard")}
                           </span>
-                          {hasQuery ? (
-                            current.match ? (
-                              <>
-                                matched <q>{current.match}</q>
-                              </>
-                            ) : (
-                              <>matched by meaning</>
-                            )
-                          ) : (
-                            <>Enter or click to react</>
-                          )}
+                          {hasQuery
+                            ? current.match
+                              ? rich(
+                                  t.raw("workspaces.matched"),
+                                  { q: (text) => <q>{text}</q> },
+                                  { match: current.match },
+                                )
+                              : t.t("workspaces.byMeaning")
+                            : t.t("workspaces.enterToReact")}
                         </span>
                       </span>
                     </>
                   ) : (
-                    <span className="ws-preview-why">Type a word, or try a chip.</span>
+                    <span className="ws-preview-why">{t.t("workspaces.idle")}</span>
                   )}
                   {standardTiming && <span className="ws-timing">{standardTiming}</span>}
                 </footer>
                 <p className="visually-hidden" aria-live="polite">
                   {hasQuery
-                    ? `${customOptions.length} custom and ${standardOptions.length} standard results in ${workspace.name}.`
+                    ? t.t("workspaces.resultCount", {
+                        workspace: workspace.name,
+                        custom: new Intl.NumberFormat(lang).format(customOptions.length),
+                        standard: new Intl.NumberFormat(lang).format(standardOptions.length),
+                      })
                     : ""}
                 </p>
               </section>
             </div>
           </div>
 
-          <aside className="ws-aside" aria-label={`${workspace.name} custom emoji`}>
+          <aside className="ws-aside" aria-label={t.t("workspaces.aside", { workspace: workspace.name })}>
             <div className="ws-aside-head">
               <h4 className="ws-aside-title">
-                Custom emoji <span className="ws-aside-count">{workspace.emoji.length}</span>
+                {t.t("workspaces.customEmoji")}{" "}
+                <span className="ws-aside-count">{workspace.emoji.length}</span>
               </h4>
               {workspace.importedFrom ? (
-                <span
-                  key={workspace.id}
-                  className="ws-badge ws-swap"
-                  title="Slack and Discord import: Pro and Scale plans"
-                >
+                <span key={workspace.id} className="ws-badge ws-swap" title={t.t("workspaces.importTitle")}>
                   <svg viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M8 2.5v7M5 6.8 8 9.8l3-3M3 11v1.5A1 1 0 0 0 4 13.5h8a1 1 0 0 0 1-1V11" />
                   </svg>
-                  Imported from {workspace.importedFrom}
+                  {t.t("workspaces.imported", { source: workspace.importedFrom })}
                 </span>
               ) : (
                 <span key={workspace.id} className="ws-origin ws-swap">
-                  Added by workspace admins
+                  {t.t("workspaces.addedByAdmins")}
                 </span>
               )}
             </div>
 
-            <ul key={workspace.id} className="ws-set" aria-label="Custom set">
+            <ul key={workspace.id} className="ws-set" aria-label={t.t("workspaces.set")}>
               {workspace.emoji.map((item, i) => {
                 const id = `${workspace.id}/${item.name}`;
                 const state = matchedCustom.size === 0 ? "idle" : matchedCustom.has(id) ? "match" : "dim";
@@ -555,7 +580,7 @@ export default function WorkspacesDemo() {
                       type="button"
                       className="ws-set-item"
                       data-state={state}
-                      aria-label={`React with :${item.name}:`}
+                      aria-label={t.t("workspaces.reactWith", { code: `:${item.name}:` })}
                       onMouseEnter={() => setInspected(id)}
                       onFocus={() => setInspected(id)}
                       onMouseLeave={() => setInspected(undefined)}
@@ -576,17 +601,15 @@ export default function WorkspacesDemo() {
                   <span className="ws-inspect-aliases">{inspectedItem.aliases.join(" · ")}</span>
                 </>
               ) : (
-                <span className="ws-inspect-aliases">Point at an emoji to see the words that find it.</span>
+                <span className="ws-inspect-aliases">{t.t("workspaces.inspectIdle")}</span>
               )}
             </div>
 
             <div className="ws-note">
               <p className="ws-note-label">
-                Tenants <span>Scale plan</span>
+                {t.t("workspaces.tenants")} <span>{t.t("workspaces.scalePlan")}</span>
               </p>
-              <p>
-                Each customer is a tenant with its own custom set. Your server writes it with a secret key.
-              </p>
+              <p>{t.t("workspaces.tenantsNote")}</p>
             </div>
           </aside>
         </div>

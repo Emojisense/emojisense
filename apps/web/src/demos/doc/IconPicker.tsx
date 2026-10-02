@@ -17,7 +17,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { sharedSemantic } from "../../lib/engine-client";
+import { useDemoI18n } from "../../i18n/demos";
+import { labelOf, pageLocale, sharedSemantic } from "../../lib/engine-client";
 import { describeEmoji } from "./describe";
 
 const COLUMNS = 8;
@@ -36,7 +37,7 @@ interface Section {
   cells: Cell[];
 }
 
-function browseSections(engine: AliasEngine): Section[] {
+function browseSections(engine: AliasEngine, locale: string): Section[] {
   const byGroup = new Map<string, Cell[]>();
   for (const entry of engine.entries) {
     // Unknown groups (skin tone and hair components) are parts, not icons.
@@ -45,7 +46,7 @@ function browseSections(engine: AliasEngine): Section[] {
     cells.push({ emoji: entry.emoji, id: entry.id, source: "alias" });
     byGroup.set(entry.group, cells);
   }
-  return [...byGroup].map(([group, cells]) => ({ key: group, label: groupLabel(group), cells }));
+  return [...byGroup].map(([group, cells]) => ({ key: group, label: groupLabel(group, locale), cells }));
 }
 
 /** Rows of flat cell indexes, per section, so ↑ / ↓ keep the column across section breaks. */
@@ -115,6 +116,8 @@ interface IconSearchProps {
 
 /** The compact icon popover: browse by group, or search with the engine (meaning fused in). */
 function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
+  const { t, messages } = useDemoI18n();
+  const locale = useMemo(() => pageLocale(), []);
   const id = useId();
   const listId = `${id}-list`;
   const optionId = (index: number) => `${id}-option-${index}`;
@@ -129,12 +132,12 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
     return createSearchSession({
       engine,
       ...(semantic ? { semantic } : {}),
-      locale: "en",
+      locale,
       limit: RESULT_LIMIT,
       debounceMs: 180,
       onChange: setState,
     });
-  }, [engine]);
+  }, [engine, locale]);
   useEffect(() => () => session.dispose(), [session]);
   useEffect(() => {
     session.update(query);
@@ -148,7 +151,7 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
   }, []);
 
   const browsing = query.trim() === "";
-  const all = useMemo(() => browseSections(engine), [engine]);
+  const all = useMemo(() => browseSections(engine, locale), [engine, locale]);
   const sections = useMemo<Section[]>(() => {
     if (browsing) return all;
     if (!state || state.query !== query) return [{ key: "results", cells: [] }];
@@ -172,7 +175,9 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
     });
   }, [sections]);
   const current = cells[active];
-  const info = current ? describeEmoji(engine, current.id, current.source, current.match) : undefined;
+  const info = current
+    ? describeEmoji(engine, current.id, current.source, current.match, messages.doc.menu, locale)
+    : undefined;
 
   useEffect(() => {
     const list = listRef.current;
@@ -240,7 +245,7 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
   const searching = !browsing && (!state || state.query !== query);
 
   return (
-    <div className="doc-pick" role="dialog" aria-label="Choose a page icon">
+    <div className="doc-pick" role="dialog" aria-label={t.t("doc.picker.dialog")}>
       <div className="doc-pick-bar">
         <div className="doc-pick-search">
           <svg className="doc-pick-search-icon" viewBox="0 0 16 16" aria-hidden="true">
@@ -252,8 +257,8 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search emoji…"
-            aria-label="Search emoji"
+            placeholder={t.t("doc.picker.placeholder")}
+            aria-label={t.t("doc.picker.search")}
             autoComplete="off"
             spellCheck={false}
             role="combobox"
@@ -263,11 +268,11 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
             aria-activedescendant={current ? optionId(active) : undefined}
           />
         </div>
-        <button type="button" className="doc-pick-random" onClick={shuffle} title="Random">
+        <button type="button" className="doc-pick-random" onClick={shuffle} title={t.t("doc.picker.random")}>
           <svg className="doc-pick-random-icon" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M2 4.5h2.5c3.5 0 3.5 7 7 7H14M2 11.5h2.5c1.4 0 2.2-1.1 2.9-2.3M9.6 6.8c.7-1.2 1.5-2.3 2.9-2.3H14M12.25 2.75 14 4.5l-1.75 1.75M12.25 9.75 14 11.5l-1.75 1.75" />
           </svg>
-          <span className="visually-hidden">Random emoji</span>
+          <span className="visually-hidden">{t.t("doc.picker.randomEmoji")}</span>
         </button>
       </div>
 
@@ -276,10 +281,14 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
         id={listId}
         className="doc-pick-list"
         role="listbox"
-        aria-label={browsing ? "All emoji" : `Emoji for ${query}`}
+        aria-label={browsing ? t.t("doc.picker.all") : t.t("doc.picker.for", { query })}
       >
         {sections.map((section, sectionIndex) => (
-          <fieldset key={section.key} className="doc-pick-section" aria-label={section.label ?? "Results"}>
+          <fieldset
+            key={section.key}
+            className="doc-pick-section"
+            aria-label={section.label ?? t.t("doc.picker.results")}
+          >
             {section.label && (
               <div className="doc-pick-group" aria-hidden="true">
                 {section.label}
@@ -294,7 +303,7 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
                     cell={cell}
                     index={index}
                     optionId={optionId(index)}
-                    label={engine.get(cell.id)?.labels.en ?? cell.emoji}
+                    label={labelOf(engine, cell.id, locale) ?? cell.emoji}
                     selected={index === active}
                     onChoose={onChoose}
                     onHover={onHover}
@@ -305,7 +314,7 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
           </fieldset>
         ))}
         {!browsing && !searching && cells.length === 0 && (
-          <p className="doc-pick-empty">No emoji for “{query}” yet.</p>
+          <p className="doc-pick-empty">{t.t("doc.picker.empty", { query })}</p>
         )}
       </div>
 
@@ -320,7 +329,7 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
             {info.why && <span className="doc-pick-why">{info.why}</span>}
           </>
         ) : (
-          <span className="doc-pick-hint">Try “launch”, “goat” or “on fire”</span>
+          <span className="doc-pick-hint">{t.t("doc.picker.hint", messages.doc.picker.hintWords)}</span>
         )}
       </div>
     </div>
@@ -335,13 +344,14 @@ export interface IconPickerProps {
 
 /** The page icon. Click it to change it with a compact search popover. */
 export function IconPicker({ icon, engine, onPick }: IconPickerProps) {
+  const { t } = useDemoI18n();
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const label = useMemo(
-    () => engine?.entries.find((entry) => entry.emoji === icon)?.labels.en,
-    [engine, icon],
-  );
+  const label = useMemo(() => {
+    const entry = engine?.entries.find((candidate) => candidate.emoji === icon);
+    return entry ? labelOf(engine, entry.id) : undefined;
+  }, [engine, icon]);
 
   const close = useCallback((restoreFocus: boolean) => {
     setOpen(false);
@@ -373,7 +383,7 @@ export function IconPicker({ icon, engine, onPick }: IconPickerProps) {
         className="doc-icon"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Page icon${label ? `: ${label}` : ""}. Change icon`}
+        aria-label={label ? t.t("doc.picker.pageIconNamed", { label }) : t.t("doc.picker.pageIcon")}
         disabled={!engine}
         onClick={() => setOpen((value) => !value)}
       >

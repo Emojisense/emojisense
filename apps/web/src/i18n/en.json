@@ -826,5 +826,357 @@
     "copied": "Copied",
     "selected": "Selected",
     "selectedStatus": "Command selected. Copy it with your keyboard."
+  },
+  "demos": {
+    "useCases": {
+      "tabs": "Use cases",
+      "stop": "Stop demo",
+      "missing": "This demo is not built yet.",
+      "loading": "Loading the {name} demo…",
+      "cases": {
+        "chat": {
+          "label": "Chat",
+          "title": "Type a colon, find the feeling",
+          "body": "Autocomplete that understands slang and meaning, plus reaction suggestions for every message."
+        },
+        "docs": {
+          "label": "Docs",
+          "title": "Emoji inline, while you write",
+          "body": "A drop-in Tiptap extension. The same engine works in Lexical and any editor."
+        },
+        "workspaces": {
+          "label": "Workspaces",
+          "title": "Every customer, their own emoji",
+          "body": "Custom emoji are searched next to the standard set, with one set per workspace."
+        },
+        "photos": {
+          "label": "Photos",
+          "title": "Reactions for a photo",
+          "body": "Send a picture, get the emoji people would react with. Photos are never stored."
+        },
+        "assistant": {
+          "label": "AI assistant",
+          "title": "Give your AI good taste in emoji",
+          "body": "An MCP server lets any assistant search emoji by meaning, in 11 languages."
+        }
+      }
+    },
+    "chat": {
+      "window": "Demo: a team chat with Emojisense emoji autocomplete and suggested reactions",
+      "topic": "Onboarding v2 rollout, launch day",
+      "members": "Members:",
+      "messagesIn": "Messages in #{channel}",
+      "today": "Today",
+      "you": "You",
+      "seed": {
+        "rc": "RC `2.14.0-rc.3` is green on staging. All 412 end-to-end tests passed on the first run.",
+        "email": "Welcome email is final. “Get started” is now “Set up your workspace”, it won the copy test by a mile.",
+        "rollout": "Rollout hit 100%. Signups are up 18% this morning, great work everyone 📈"
+      },
+      "autoplay": {
+        "shipped": "shipped the new onboarding",
+        "thanks": "thanks team"
+      },
+      "reactionsLabel": "Reactions",
+      "reactionCount": {
+        "one": "{name}: {count} reaction",
+        "other": "{name}: {count} reactions"
+      },
+      "popTitle": "Emoji matching <b>:{query}</b>",
+      "onDevice": "{ms} ms on-device",
+      "meaning": "meaning {ms} ms",
+      "meaningPending": "meaning…",
+      "listLabel": "Emoji",
+      "byMeaning": "by meaning",
+      "loadingEmoji": "Loading emoji…",
+      "searchingMeaning": "Searching by meaning…",
+      "keyNavigate": "navigate",
+      "keySelect": "select",
+      "keyDismiss": "dismiss",
+      "messageLabel": "Message #{channel}",
+      "composeHint": "Type <kbd>:</kbd> and 2 letters for emoji",
+      "send": "Send message",
+      "sidebar": {
+        "search": "Search",
+        "threads": "Threads",
+        "channels": "Channels",
+        "direct": "Direct messages"
+      },
+      "suggested": "Suggested reactions",
+      "reactWith": "React with {name}",
+      "viaDeviceTitle": "The API did not answer, so the on-device engine searched the message",
+      "viaEdge": "edge · {ms} ms",
+      "viaDevice": "on-device"
+    },
+    "doc": {
+      "region": "Live demo: a docs editor with Emojisense emoji autocomplete",
+      "pageTitle": "Q3 launch retro",
+      "sidebar": {
+        "search": "Search",
+        "home": "Home",
+        "inbox": "Inbox",
+        "product": "Product",
+        "private": "Private",
+        "newPage": "New page",
+        "launchPlan": "Launch plan",
+        "retros": "Retros",
+        "q2": "Q2 growth retro",
+        "roadmap": "Roadmap 2027",
+        "experiments": "Experiments",
+        "drafts": "Drafts",
+        "reading": "Reading list"
+      },
+      "typing": "{name} is typing…",
+      "edited": "Edited just now",
+      "share": "Share",
+      "owner": "Owner",
+      "date": "Date",
+      "failed": "The editor did not load. Reload the page to try again.",
+      "body": {
+        "callout": "Blameless format: we talk about systems and decisions, never people.",
+        "wentWell": "What went well",
+        "well1": "Onboarding v2 shipped two weeks early, behind a flag for the first week",
+        "well2": "Setup questions to support dropped once the new checklist went live",
+        "change": "What we would change",
+        "changeBody": "Two deploys failed in launch week. Both came from the same flaky migration test, and the rollback took longer than it should have.",
+        "actions": "Action items",
+        "action1": "Quarantine the flaky migration test (Jonas)",
+        "action2": "Add a deploy freeze to the launch checklist (Priya)",
+        "action3": "Share this retro in #product (Maya)",
+        "summary": "Summary",
+        "win": "Biggest win: the new onboarding",
+        "miss": "Biggest miss: launch-week deploys were a"
+      },
+      "placeholder": "Type “:” and a word for emoji…",
+      "bodyLabel": "Document body",
+      "done": "Done",
+      "notDone": "Not done",
+      "menu": {
+        "label": "Emoji suggestions",
+        "matching": "Emoji matching <code>:{query}</code>",
+        "move": "move",
+        "insert": "insert",
+        "close": "close",
+        "similar": "similar meaning",
+        "custom": "custom emoji"
+      },
+      "picker": {
+        "dialog": "Choose a page icon",
+        "search": "Search emoji",
+        "placeholder": "Search emoji…",
+        "random": "Random",
+        "randomEmoji": "Random emoji",
+        "all": "All emoji",
+        "for": "Emoji for {query}",
+        "results": "Results",
+        "empty": "No emoji for “{query}” yet.",
+        "hint": "Try “{first}”, “{second}” or “{third}”",
+        "hintWords": {
+          "first": "launch",
+          "second": "goat",
+          "third": "on fire"
+        },
+        "pageIcon": "Page icon. Change icon",
+        "pageIconNamed": "Page icon: {label}. Change icon"
+      }
+    },
+    "workspaces": {
+      "tabs": "Workspaces",
+      "tenantTitle": "Tenant id",
+      "message": "Message",
+      "addReaction": "Add reaction",
+      "picker": "Emoji picker",
+      "searchIn": "Search emoji in {workspace}",
+      "placeholder": "Search {workspace} emoji",
+      "clear": "Clear search",
+      "try": "Try",
+      "results": "Emoji results",
+      "custom": "Custom",
+      "customEmoji": "Custom emoji",
+      "noCustom": "No custom emoji for “{query}” here. The standard set still answers.",
+      "standard": "Standard",
+      "standardFailed": "The standard set cannot load right now. Custom search still works.",
+      "noStandard": "No standard match yet. Keep typing.",
+      "kindCustom": "custom",
+      "kindStandard": "standard",
+      "customOption": "{code}, custom",
+      "matched": "matched <q>{match}</q>",
+      "byMeaning": "matched by meaning",
+      "enterToReact": "Enter or click to react",
+      "idle": "Type a word, or try a chip.",
+      "resultCount": "{workspace}: {custom} custom and {standard} standard results.",
+      "timingMeaning": "meaning · {ms} ms",
+      "timingDevice": "on-device · {ms} ms",
+      "aside": "{workspace} custom emoji",
+      "importTitle": "Slack and Discord import: Pro and Scale plans",
+      "imported": "Imported from {source}",
+      "addedByAdmins": "Added by workspace admins",
+      "set": "Custom set",
+      "reactWith": "React with {code}",
+      "inspectIdle": "Point at an emoji to see the words that find it.",
+      "tenants": "Tenants",
+      "scalePlan": "Scale plan",
+      "tenantsNote": "Each customer is a tenant with its own custom set. Your server writes it with a secret key.",
+      "presets": {
+        "shipIt": "ship it",
+        "celebrate": "celebrate",
+        "coffee": "coffee",
+        "gg": "gg"
+      },
+      "kinds": {
+        "acme": "Engineering",
+        "bloom": "Coffee shops",
+        "guild": "Gaming community"
+      },
+      "texts": {
+        "acme": "v4.2 is rolling out to 100%. Thanks to everyone who stayed for the last review.",
+        "bloom": "Oat milk delivery is in, and the almond croissants are out of the oven.",
+        "guild": "Raid starts at 9. Bring potions, we are going for the dragon this time."
+      }
+    },
+    "photo": {
+      "region": "Demo: emoji reactions for a photo",
+      "status": {
+        "scanning": "Reading photo…",
+        "failed": "API unavailable",
+        "live": "Live · {seconds} s",
+        "device": "On-device",
+        "example": "Saved API output"
+      },
+      "posts": {
+        "puppy": {
+          "label": "Corgi",
+          "alt": "A corgi puppy standing on its hind legs with its tongue out"
+        },
+        "cake": {
+          "label": "Birthday cake",
+          "alt": "A birthday cake with sprinkles, stars and a lit number 3 candle"
+        },
+        "sunset": {
+          "label": "Beach sunset",
+          "alt": "People in the shallows at sunset, one with both arms raised"
+        },
+        "pizza": {
+          "label": "Pizza",
+          "alt": "A sliced mushroom pizza on a wooden board"
+        },
+        "cat": {
+          "label": "Cat on a keyboard",
+          "alt": "A tabby cat asleep across a computer keyboard"
+        },
+        "hike": {
+          "label": "Mountain hike",
+          "alt": "A hiker on a rocky ridge above misty mountain valleys"
+        }
+      },
+      "teammate": "Teammate",
+      "yourPhoto": "Your photo",
+      "you": "You",
+      "now": "now",
+      "tagCaption": "Caption",
+      "keywords": "Keywords:",
+      "describing": "Describing the photo",
+      "fallback": "Describe it in a few words and the on-device engine will pick emoji.",
+      "describeLabel": "Describe the photo",
+      "describePlaceholder": "dog at the beach",
+      "find": "Find emoji",
+      "suggested": "Suggested reactions",
+      "reactWith": "React with {emoji}",
+      "suggestedReply": "Suggested reply",
+      "composer": "Message #{channel}",
+      "pick": "Pick a photo",
+      "credit": "Photo: <link>{author}</link>, CC0",
+      "stays": "Your photo stays on this page.",
+      "drop": "Drop to read it",
+      "try": "Try your own photo",
+      "dropHint": "Drop an image here or browse",
+      "privacy": "<strong>Photos are never stored.</strong> Your photo is resized to 384 px in your browser, captioned in memory, then dropped.",
+      "how1": "A vision model writes a caption, keywords and a reply.",
+      "how2": "Emojisense ranks the model's emoji with its own search.",
+      "engineFailed": "The on-device engine could not load. Please try again later.",
+      "errors": {
+        "unreadable": "This file is not a photo we can read. Try a JPEG, PNG or WebP.",
+        "unavailable": "Photo reactions are not available right now.",
+        "tooLarge": "This photo is too large to send.",
+        "tooMany": "Too many photos at once. Wait a few seconds, then try again.",
+        "budget": "The demo has used its photo budget for this month."
+      }
+    },
+    "assistant": {
+      "chat": "Assistant chat",
+      "name": "Assistant",
+      "newChat": "New chat",
+      "connected": "MCP server connected",
+      "toolCount": "3 tools",
+      "emptyTitle": "What should we write?",
+      "emptyBody": "Emojisense is connected, so the emoji come from a real search.",
+      "thinking": "Thinking",
+      "failed": "The emoji tool did not answer, so I can't pick emoji right now. Try again in a moment.",
+      "prompts": "Example prompts",
+      "placeholder": "Pick a prompt to run it",
+      "note": "Scripted conversation · live tool results",
+      "config": {
+        "kicker": "MCP server · stdio",
+        "title": "Add it to any MCP client",
+        "lead": "One entry in your client config. Runs offline; add an API key for semantic results.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "copyFailed": "Press ⌘C / Ctrl+C",
+        "tools": "Tools",
+        "summaries": {
+          "search_emoji": "Keywords, slang, names, films",
+          "emoji_for_text": "Emoji for a sentence you write",
+          "suggest_reactions": "What a reader reacts with"
+        }
+      },
+      "tool": {
+        "failed": "Failed",
+        "used": "Used",
+        "calling": "Calling",
+        "results": {
+          "one": ", {count} result: ",
+          "other": ", {count} results: "
+        },
+        "measured": "Measured in your browser",
+        "error": "error",
+        "running": "Running",
+        "request": "Request",
+        "response": "Response",
+        "view": "Response view",
+        "emoji": "Emoji",
+        "loadFailed": "The emoji data did not load. Check the connection and try again.",
+        "none": "No emoji matched.",
+        "generic": "Generic reaction that fills a short list",
+        "matched": "Matched “{reason}”"
+      },
+      "scenarios": {
+        "tweet": {
+          "prompt": "Write a launch tweet for our dark mode",
+          "intro": "Here's a draft, with emoji from the search:",
+          "quote": "Dark mode is here {lead}\nEasier on the eyes after sunset, kinder to your battery, and it follows your system setting. Update and go dark {close}",
+          "moodier": "Want it moodier? Swap {from} for {to}."
+        },
+        "birthday": {
+          "prompt": "Birthday message for Ana, in Spanish",
+          "intro": "Here's one for Ana:",
+          "labels": "I searched in English and asked for Spanish labels, so {emoji} came back as “{label}”."
+        },
+        "react": {
+          "prompt": "React to “10k users. We did it!”",
+          "none": "Nothing in that message stands out to react to.",
+          "safe": "React with {emoji}. It's the safe default here.",
+          "matched": "React with {emoji}. It matched “{why}”, and it's an emoji people actually react with.",
+          "alsoWork": "{second} and {third} work too if the thread is celebrating.",
+          "skip": "Skip {emoji}: it matched “10k”, as in the race."
+        },
+        "status": {
+          "prompt": "Set my status: deploying on a Friday",
+          "intro": "Here's your status:",
+          "matched": "{emoji} matched “{why}”.",
+          "runnerUp": "Runner-up: {emoji}.",
+          "sideways": "Runner-up: {emoji}. If it goes sideways, {other} is right there."
+        }
+      }
+    }
   }
 }

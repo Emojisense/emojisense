@@ -1,13 +1,13 @@
 import { type ComponentType, type KeyboardEvent, lazy, Suspense, useId, useRef, useState } from "react";
 import { AutoplayStop } from "../demos/autoplay-control";
+import { DemoI18nProvider, type DemoMessages } from "../i18n/demos";
+import { horizontalStep, useTranslator } from "../i18n/react";
 import "./use-cases.css";
 
 interface UseCase {
-  id: string;
+  /** Also the key of its label, title and body in the catalog (demos.useCases.cases). */
+  id: "chat" | "docs" | "workspaces" | "photos" | "assistant";
   emoji: string;
-  label: string;
-  title: string;
-  body: string;
   file: string;
 }
 
@@ -15,41 +15,26 @@ const CASES: UseCase[] = [
   {
     id: "chat",
     emoji: "💬",
-    label: "Chat",
-    title: "Type a colon, find the feeling",
-    body: "Autocomplete that understands slang and meaning, plus reaction suggestions for every message.",
     file: "../demos/ChatDemo.tsx",
   },
   {
     id: "docs",
     emoji: "📝",
-    label: "Docs",
-    title: "Emoji inline, while you write",
-    body: "A drop-in Tiptap extension. The same engine works in Lexical and any editor.",
     file: "../demos/DocDemo.tsx",
   },
   {
     id: "workspaces",
     emoji: "🏢",
-    label: "Workspaces",
-    title: "Every customer, their own emoji",
-    body: "Custom emoji are searched next to the standard set, with one set per workspace.",
     file: "../demos/WorkspacesDemo.tsx",
   },
   {
     id: "photos",
     emoji: "📷",
-    label: "Photos",
-    title: "Reactions for a photo",
-    body: "Send a picture, get the emoji people would react with. Photos are never stored.",
     file: "../demos/PhotoDemo.tsx",
   },
   {
     id: "assistant",
     emoji: "🤖",
-    label: "AI assistant",
-    title: "Give your AI good taste in emoji",
-    body: "An MCP server lets any assistant search emoji by meaning, in 11 languages.",
     file: "../demos/AssistantDemo.tsx",
   },
 ];
@@ -70,8 +55,16 @@ const demos = new Map(
 );
 
 /** Tabs of live mini apps. Each demo loads only when its tab is first opened. */
-export function UseCases() {
-  const [current, setCurrent] = useState(CASES[0]?.id ?? "");
+export interface UseCasesProps {
+  /** The catalog's `demos` part, in the page's language. */
+  messages: DemoMessages;
+  /** Intl tag of the page. */
+  lang: string;
+}
+
+export function UseCases({ messages, lang }: UseCasesProps) {
+  const t = useTranslator(messages, lang);
+  const [current, setCurrent] = useState<string>(CASES[0]?.id ?? "");
   const [opened, setOpened] = useState(() => new Set([current]));
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const id = useId();
@@ -84,13 +77,12 @@ export function UseCases() {
   // WAI-ARIA tabs: arrows move between tabs, Home and End jump to the first and last.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = CASES.findIndex((c) => c.id === current);
+    const step = horizontalStep(event);
     const target: Record<string, number> = {
-      ArrowRight: (index + 1) % CASES.length,
-      ArrowLeft: (index - 1 + CASES.length) % CASES.length,
       Home: 0,
       End: CASES.length - 1,
     };
-    const nextIndex = target[event.key];
+    const nextIndex = step === 0 ? target[event.key] : (index + step + CASES.length) % CASES.length;
     const next = nextIndex === undefined ? undefined : CASES[nextIndex];
     if (nextIndex === undefined || !next) return;
     event.preventDefault();
@@ -99,68 +91,72 @@ export function UseCases() {
   };
 
   return (
-    <div className="uc">
-      <div className="uc-tabs" role="tablist" aria-label="Use cases" onKeyDown={onKeyDown}>
-        {CASES.map((c, i) => (
-          <button
-            key={c.id}
-            ref={(el) => {
-              tabs.current[i] = el;
-            }}
-            id={`${id}-tab-${c.id}`}
-            type="button"
-            role="tab"
-            aria-selected={c.id === current}
-            aria-controls={`${id}-panel-${c.id}`}
-            tabIndex={c.id === current ? 0 : -1}
-            className="uc-tab"
-            onClick={() => open(c.id)}
-          >
-            <span className="emoji" aria-hidden="true">
-              {c.emoji}
-            </span>
-            {c.label}
-          </button>
-        ))}
-      </div>
+    <DemoI18nProvider messages={messages} lang={lang}>
+      <div className="uc">
+        <div className="uc-tabs" role="tablist" aria-label={t.t("useCases.tabs")} onKeyDown={onKeyDown}>
+          {CASES.map((c, i) => (
+            <button
+              key={c.id}
+              ref={(el) => {
+                tabs.current[i] = el;
+              }}
+              id={`${id}-tab-${c.id}`}
+              type="button"
+              role="tab"
+              aria-selected={c.id === current}
+              aria-controls={`${id}-panel-${c.id}`}
+              tabIndex={c.id === current ? 0 : -1}
+              className="uc-tab"
+              onClick={() => open(c.id)}
+            >
+              <span className="emoji" aria-hidden="true">
+                {c.emoji}
+              </span>
+              {t.t(`useCases.cases.${c.id}.label`)}
+            </button>
+          ))}
+        </div>
 
-      {CASES.map((c, i) => {
-        const Demo = demos.get(c.id);
-        return (
-          <section
-            key={c.id}
-            id={`${id}-panel-${c.id}`}
-            role="tabpanel"
-            aria-labelledby={`${id}-tab-${c.id}`}
-            hidden={c.id !== current}
-            className="uc-panel"
-            data-case={c.id}
-          >
-            <header className="uc-head">
-              <h3>{c.title}</h3>
-              <p>{c.body}</p>
-            </header>
-            {/* The stop button comes first in the DOM, before the moving demo; CSS puts it below. */}
-            <AutoplayStop onStop={() => tabs.current[i]?.focus()}>
-              <div className="uc-stage">
-                {!Demo ? (
-                  <p className="uc-missing">This demo is not built yet.</p>
-                ) : opened.has(c.id) ? (
-                  <Suspense
-                    fallback={
-                      <div className="uc-loading" role="status">
-                        <span className="visually-hidden">Loading the {c.label} demo…</span>
-                      </div>
-                    }
-                  >
-                    <Demo />
-                  </Suspense>
-                ) : null}
-              </div>
-            </AutoplayStop>
-          </section>
-        );
-      })}
-    </div>
+        {CASES.map((c, i) => {
+          const Demo = demos.get(c.id);
+          return (
+            <section
+              key={c.id}
+              id={`${id}-panel-${c.id}`}
+              role="tabpanel"
+              aria-labelledby={`${id}-tab-${c.id}`}
+              hidden={c.id !== current}
+              className="uc-panel"
+              data-case={c.id}
+            >
+              <header className="uc-head">
+                <h3>{t.t(`useCases.cases.${c.id}.title`)}</h3>
+                <p>{t.t(`useCases.cases.${c.id}.body`)}</p>
+              </header>
+              {/* The stop button comes first in the DOM, before the moving demo; CSS puts it below. */}
+              <AutoplayStop label={t.t("useCases.stop")} onStop={() => tabs.current[i]?.focus()}>
+                <div className="uc-stage">
+                  {!Demo ? (
+                    <p className="uc-missing">{t.t("useCases.missing")}</p>
+                  ) : opened.has(c.id) ? (
+                    <Suspense
+                      fallback={
+                        <div className="uc-loading" role="status">
+                          <span className="visually-hidden">
+                            {t.t("useCases.loading", { name: t.t(`useCases.cases.${c.id}.label`) })}
+                          </span>
+                        </div>
+                      }
+                    >
+                      <Demo />
+                    </Suspense>
+                  ) : null}
+                </div>
+              </AutoplayStop>
+            </section>
+          );
+        })}
+      </div>
+    </DemoI18nProvider>
   );
 }

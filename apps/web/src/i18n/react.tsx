@@ -53,6 +53,8 @@ export interface IslandI18n<T extends Catalog> {
   t: Translator<T>;
   /** Intl tag of the page ("zh-Hans"). */
   lang: string;
+  /** The raw catalog part, for content built from whole objects. */
+  messages: T;
 }
 
 /** For islands that render many components (the demos): a provider and a hook. */
@@ -60,7 +62,7 @@ export function createI18nContext<T extends Catalog>() {
   const Context = createContext<IslandI18n<T> | null>(null);
   function Provider({ messages, lang, children }: { messages: T; lang: string; children: ReactNode }) {
     const t = useTranslator(messages, lang);
-    const value = useMemo(() => ({ t, lang }), [t, lang]);
+    const value = useMemo(() => ({ t, lang, messages }), [t, lang, messages]);
     return <Context.Provider value={value}>{children}</Context.Provider>;
   }
   function useI18n(): IslandI18n<T> {

@@ -20,20 +20,36 @@ export interface PhotoReading {
 
 export type ClassifyOutcome =
   | { ok: true; reading: PhotoReading; ms: number }
-  | { ok: false; message: string };
+  | { ok: false; reason: ClassifyFailure; message: string };
+
+/** Why a photo got no reactions; the demo says it in the page's language (demos.photo.errors). */
+export type ClassifyFailure = "unreadable" | "unavailable" | "tooLarge" | "tooMany" | "budget";
 
 /** The API expects clients to send about 384 px on the long edge (max 256 KB). */
 export const MAX_EDGE = 384;
 const JPEG_QUALITY = 0.85;
 const TIMEOUT_MS = 20_000;
 
-export const UNREADABLE = "This file is not a photo we can read. Try a JPEG, PNG or WebP.";
-const UNAVAILABLE = "Photo reactions are not available right now.";
+/** English messages (the playground); the demo says the reason in the page's language. */
+export const FAILURE_MESSAGES: Record<ClassifyFailure, string> = {
+  unreadable: "This file is not a photo we can read. Try a JPEG, PNG or WebP.",
+  unavailable: "Photo reactions are not available right now.",
+  tooLarge: "This photo is too large to send.",
+  tooMany: "Too many photos at once. Wait a few seconds, then try again.",
+  budget: "The demo has used its photo budget for this month.",
+};
+export const UNREADABLE = FAILURE_MESSAGES.unreadable;
 
-const STATUS_MESSAGES: Record<number, string> = {
-  400: UNREADABLE,
-  413: "This photo is too large to send.",
-  429: "Too many photos at once. Wait a few seconds, then try again.",
+const failure = (reason: ClassifyFailure) => ({
+  ok: false as const,
+  reason,
+  message: FAILURE_MESSAGES[reason],
+});
+
+const STATUS_FAILURES: Record<number, ClassifyFailure> = {
+  400: "unreadable",
+  413: "tooLarge",
+  429: "tooMany",
 };
 
 /** Decodes any image the browser can read and re-encodes it as a small JPEG. Throws if unreadable. */
@@ -88,14 +104,14 @@ export async function classifyPhoto(image: Blob, signal: AbortSignal, limit = 8)
       body: image,
       signal: timeout.signal,
     });
-    if (!response.ok) return { ok: false, message: STATUS_MESSAGES[response.status] ?? UNAVAILABLE };
+    if (!response.ok) return failure(STATUS_FAILURES[response.status] ?? "unavailable");
     const body = (await response.json()) as { overLimit?: boolean };
-    if (body.overLimit) return { ok: false, message: "The demo has used its photo budget for this month." };
+    if (body.overLimit) return failure("budget");
     const reading = readReading(body);
-    if (!reading) return { ok: false, message: UNAVAILABLE };
+    if (!reading) return failure("unavailable");
     return { ok: true, reading, ms: Math.round(performance.now() - started) };
   } catch {
-    return { ok: false, message: UNAVAILABLE };
+    return failure("unavailable");
   } finally {
     clearTimeout(timer);
     signal.removeEventListener("abort", abort);

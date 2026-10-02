@@ -1,10 +1,18 @@
 import type { AliasEngine } from "emojisense";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { firstEngine, fullEngine, useEngine } from "../lib/engine-client";
+import { useDemoI18n } from "../i18n/demos";
+import { firstEngine, fullEngine, labelOf, useEngine } from "../lib/engine-client";
 import { useAutoplayControl } from "./autoplay-control";
 import { keystrokeDelay, type Run, wait, waitFor } from "./chat/autoplay";
 import { Composer } from "./chat/Composer";
-import { AUTOPLAY_MESSAGE, AUTOPLAY_STEPS, type Message, type Reaction, SEED_MESSAGES } from "./chat/content";
+import {
+  type AutoplayStep,
+  autoplayMessage,
+  autoplaySteps,
+  type Message,
+  type Reaction,
+  seedMessages,
+} from "./chat/content";
 import { MembersIcon } from "./chat/icons";
 import { MessageItem } from "./chat/MessageItem";
 import { type ReactionSuggestions, suggestReactions } from "./chat/reactions";
@@ -54,7 +62,7 @@ function toggleReaction(reactions: Reaction[], emoji: string): Reaction[] {
 }
 
 /** Types the scripted message like a person, picks 🐐 from the ":" popup and sends it. */
-async function runAutoplay(run: Run, driver: () => Driver): Promise<void> {
+async function runAutoplay(run: Run, steps: AutoplayStep[], driver: () => Driver): Promise<void> {
   await wait(START_DELAY_MS);
   let text = "";
   const write = (next: string) => {
@@ -67,7 +75,7 @@ async function runAutoplay(run: Run, driver: () => Driver): Promise<void> {
     driver().press(undefined);
   };
 
-  for (const step of AUTOPLAY_STEPS) {
+  for (const step of steps) {
     if (run.cancelled) return;
     if (step.kind === "pause") {
       await wait(step.ms);
@@ -107,9 +115,10 @@ async function runAutoplay(run: Run, driver: () => Driver): Promise<void> {
  * suggests reactions for the newest message from the edge API (on-device fallback).
  */
 export default function ChatDemo() {
+  const { t } = useDemoI18n();
   const { engine, ready } = useEngine();
   const ac = useEmojiAutocomplete(engine);
-  const [messages, setMessages] = useState<Message[]>(SEED_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>(() => seedMessages(t));
   const [suggestions, setSuggestions] = useState<{
     messageId: string;
     data: ReactionSuggestions | undefined;
@@ -124,7 +133,10 @@ export default function ChatDemo() {
   const runRef = useRef<Run | null>(null);
 
   const names = useMemo(
-    () => new Map((engine?.entries ?? []).map((e) => [e.emoji.replaceAll(VS16, ""), e.labels.en ?? e.emoji])),
+    () =>
+      new Map(
+        (engine?.entries ?? []).map((e) => [e.emoji.replaceAll(VS16, ""), labelOf(engine, e.id) ?? e.emoji]),
+      ),
     [engine],
   );
   const nameOf = (emoji: string) => names.get(emoji.replaceAll(VS16, "")) ?? emoji;
@@ -163,11 +175,11 @@ export default function ChatDemo() {
         id: "you-final",
         author: "you",
         minute: (list.at(-1)?.minute ?? 600) + 3,
-        text: AUTOPLAY_MESSAGE,
+        text: autoplayMessage(t),
         reactions: [],
       },
     ]);
-  }, []);
+  }, [t]);
 
   // Autoplay waits until the window is on screen.
   useEffect(() => {
@@ -214,10 +226,10 @@ export default function ChatDemo() {
     const run: Run = { cancelled: false };
     runRef.current = run;
     setAuto("playing");
-    runAutoplay(run, () => latest.current).then(() => {
+    runAutoplay(run, autoplaySteps(t), () => latest.current).then(() => {
       if (!run.cancelled) setAuto("done");
     });
-  }, [canStart]);
+  }, [canStart, t]);
   useEffect(
     () => () => {
       if (runRef.current) runRef.current.cancelled = true;
@@ -258,10 +270,7 @@ export default function ChatDemo() {
 
   return (
     <div className="chat" ref={rootRef}>
-      <section
-        className="chat-window"
-        aria-label="Demo: a team chat with Emojisense emoji autocomplete and suggested reactions"
-      >
+      <section className="chat-window" aria-label={t.t("chat.window")}>
         <Sidebar />
         <div className="chat-main">
           <header className="chat-head">
@@ -271,10 +280,10 @@ export default function ChatDemo() {
               </span>
               {CHANNEL}
             </p>
-            <p className="chat-topic">Onboarding v2 rollout, launch day</p>
+            <p className="chat-topic">{t.t("chat.topic")}</p>
             <p className="chat-members">
               <MembersIcon />
-              <span className="visually-hidden">Members: </span>
+              <span className="visually-hidden">{t.t("chat.members")} </span>
               {MEMBER_COUNT}
             </p>
           </header>
@@ -283,10 +292,10 @@ export default function ChatDemo() {
             className="chat-log"
             ref={logRef}
             role="log"
-            aria-label={`Messages in #${CHANNEL}`}
+            aria-label={t.t("chat.messagesIn", { channel: CHANNEL })}
             onScroll={onLogScroll}
           >
-            <p className="chat-day">Today</p>
+            <p className="chat-day">{t.t("chat.today")}</p>
             {messages.map((message, i) => {
               const previous = messages[i - 1];
               const grouped =

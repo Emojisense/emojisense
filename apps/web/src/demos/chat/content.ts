@@ -1,4 +1,8 @@
 /** Mock workspace content for the chat demo. The people and messages are fiction. */
+import type { DemoMessages } from "../../i18n/demos";
+import type { Translator } from "../../i18n/translate";
+
+type T = Translator<DemoMessages>;
 
 export type PersonId = "priya" | "marcus" | "lena" | "you";
 
@@ -10,12 +14,16 @@ export interface Person {
   presence?: "online" | "away";
 }
 
-export const PEOPLE: Record<PersonId, Person> = {
-  priya: { name: "Priya Natarajan", initials: "PN", tone: 2, presence: "online" },
-  marcus: { name: "Marcus Webb", initials: "MW", tone: 3, presence: "online" },
-  lena: { name: "Lena Okafor", initials: "LO", tone: 4, presence: "away" },
-  you: { name: "You", initials: "Y", tone: 1 },
-};
+/** The people of the mock workspace. Names stay as they are; "You" is in the page's language. */
+export function people(t: T): Record<PersonId, Person> {
+  const you = t.t("chat.you");
+  return {
+    priya: { name: "Priya Natarajan", initials: "PN", tone: 2, presence: "online" },
+    marcus: { name: "Marcus Webb", initials: "MW", tone: 3, presence: "online" },
+    lena: { name: "Lena Okafor", initials: "LO", tone: 4, presence: "away" },
+    you: { name: you, initials: [...you][0]?.toLocaleUpperCase(t.locale) ?? "Y", tone: 1 },
+  };
+}
 
 export interface Reaction {
   emoji: string;
@@ -37,32 +45,36 @@ export interface Message {
 
 const seedReaction = (emoji: string, count: number): Reaction => ({ emoji, count, mine: false, bump: 0 });
 
-export const SEED_MESSAGES: Message[] = [
-  {
-    id: "seed-1",
-    author: "priya",
-    minute: 10 * 60 + 2,
-    text: "RC `2.14.0-rc.3` is green on staging. All 412 end-to-end tests passed on the first run.",
-    reactions: [seedReaction("✅", 4), seedReaction("🙌", 2)],
-  },
-  {
-    id: "seed-2",
-    author: "marcus",
-    minute: 10 * 60 + 14,
-    text: "Welcome email is final. “Get started” is now “Set up your workspace”, it won the copy test by a mile.",
-    reactions: [seedReaction("🔥", 3)],
-  },
-  {
-    id: "seed-3",
-    author: "lena",
-    minute: 10 * 60 + 21,
-    text: "Rollout hit 100%. Signups are up 18% this morning, great work everyone 📈",
-    reactions: [seedReaction("👀", 2)],
-  },
-];
+export function seedMessages(t: T): Message[] {
+  return [
+    {
+      id: "seed-1",
+      author: "priya",
+      minute: 10 * 60 + 2,
+      text: t.t("chat.seed.rc"),
+      reactions: [seedReaction("✅", 4), seedReaction("🙌", 2)],
+    },
+    {
+      id: "seed-2",
+      author: "marcus",
+      minute: 10 * 60 + 14,
+      text: t.t("chat.seed.email"),
+      reactions: [seedReaction("🔥", 3)],
+    },
+    {
+      id: "seed-3",
+      author: "lena",
+      minute: 10 * 60 + 21,
+      text: t.t("chat.seed.rollout"),
+      reactions: [seedReaction("👀", 2)],
+    },
+  ];
+}
 
 /** What the autoplay sends. Reduced motion shows this message as already sent. */
-export const AUTOPLAY_MESSAGE = "shipped the new onboarding 🎉 thanks team 🐐";
+export function autoplayMessage(t: T): string {
+  return `${t.t("chat.autoplay.shipped")} 🎉 ${t.t("chat.autoplay.thanks")} 🐐`;
+}
 
 export type AutoplayStep =
   | { kind: "type"; text: string }
@@ -72,19 +84,22 @@ export type AutoplayStep =
   | { kind: "pick"; id: string }
   | { kind: "send" };
 
-export const AUTOPLAY_STEPS: AutoplayStep[] = [
-  { kind: "type", text: "shipped the new onboarding " },
-  { kind: "pause", ms: 320 },
-  // Typed with the system emoji keyboard, so it lands in one keystroke.
-  { kind: "insert", text: "🎉" },
-  { kind: "pause", ms: 220 },
-  { kind: "type", text: " thanks team " },
-  { kind: "pause", ms: 380 },
-  { kind: "type", text: ":goat" },
-  { kind: "pick", id: "1F410" },
-  { kind: "pause", ms: 700 },
-  { kind: "send" },
-];
+/** The ":goat" code is the same in every language: shortcodes are English everywhere. */
+export function autoplaySteps(t: T): AutoplayStep[] {
+  return [
+    { kind: "type", text: `${t.t("chat.autoplay.shipped")} ` },
+    { kind: "pause", ms: 320 },
+    // Typed with the system emoji keyboard, so it lands in one keystroke.
+    { kind: "insert", text: "🎉" },
+    { kind: "pause", ms: 220 },
+    { kind: "type", text: ` ${t.t("chat.autoplay.thanks")} ` },
+    { kind: "pause", ms: 380 },
+    { kind: "type", text: ":goat" },
+    { kind: "pick", id: "1F410" },
+    { kind: "pause", ms: 700 },
+    { kind: "send" },
+  ];
+}
 
 export const CHANNELS = [
   { name: "general" },
@@ -94,8 +109,20 @@ export const CHANNELS = [
   { name: "support" },
 ] as const;
 
-export function formatClock(minute: number): string {
-  const hours = Math.floor(minute / 60) % 24;
-  const minutes = String(minute % 60).padStart(2, "0");
-  return `${hours % 12 || 12}:${minutes} ${hours < 12 ? "AM" : "PM"}`;
+/**
+ * The mock clock in the page's language: "10:02 AM" in English, "10:02" where 24-hour time is
+ * usual. `short` drops the AM/PM part (the gutter of a grouped message).
+ */
+export function formatClock(minute: number, lang: string, short = false): string {
+  const date = new Date(Date.UTC(2026, 8, 30, Math.floor(minute / 60) % 24, minute % 60));
+  const parts = new Intl.DateTimeFormat(lang, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).formatToParts(date);
+  return parts
+    .filter((part) => !short || part.type === "hour" || part.type === "minute" || part.type === "literal")
+    .map((part) => part.value)
+    .join("")
+    .trim();
 }

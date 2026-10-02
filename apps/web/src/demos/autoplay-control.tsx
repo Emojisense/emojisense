@@ -29,7 +29,7 @@ export function useAutoplayControl(playing: boolean, stop: () => void): void {
 }
 
 /** For the page: a "Stop demo" button, shown while the demo inside reports that it plays. */
-export function AutoplayStop(props: { children: ReactNode; onStop?: () => void }) {
+export function AutoplayStop(props: { children: ReactNode; onStop?: () => void; label?: string }) {
   const [playing, setPlaying] = useState(false);
   const [stopped, setStopped] = useState(false);
   const control = useMemo(() => ({ stopped, setPlaying }), [stopped]);
@@ -44,7 +44,7 @@ export function AutoplayStop(props: { children: ReactNode; onStop?: () => void }
             props.onStop?.();
           }}
         >
-          Stop demo
+          {props.label ?? "Stop demo"}
         </button>
       )}
       <AutoplayContext.Provider value={control}>{props.children}</AutoplayContext.Provider>

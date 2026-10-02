@@ -1,6 +1,6 @@
 import { type AliasEngine, createSearchSession, type SearchResult, type SessionState } from "emojisense";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { sharedSemantic } from "../../lib/engine-client";
+import { pageLocale, sharedSemantic } from "../../lib/engine-client";
 import { findTrigger, type Trigger } from "./shortcodes";
 
 const LIMIT = 7;
@@ -43,6 +43,7 @@ export function useEmojiAutocomplete(engine: AliasEngine | undefined): EmojiAuto
     return createSearchSession({
       engine,
       ...(semantic ? { semantic } : {}),
+      locale: pageLocale(),
       limit: LIMIT,
       debounceMs: 180,
       onChange: setSession,

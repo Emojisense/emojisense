@@ -1,6 +1,6 @@
 /** The sample document: a realistic team retro. Only the emoji typed by the autoplay are search results. */
+import type { DemoMessages } from "../../i18n/demos";
 
-export const PAGE_TITLE = "Q3 launch retro";
 export const DEFAULT_ICON = "🧭";
 export const TEAMMATE = { name: "Maya", fullName: "Maya Chen", initials: "MC" } as const;
 
@@ -15,50 +15,69 @@ export interface ScriptLine {
   emoji: string;
 }
 
+/** The document's words in the page's language. */
+export interface DocCopy {
+  pageTitle: string;
+  summary: string;
+  body: DemoMessages["doc"]["body"];
+  script: readonly ScriptLine[];
+}
+
 /**
- * What the teammate types at the end of the doc. Picked by running the real engine on the
- * served packs (pack 0.1.0, English core + extension packs, locale "en"):
+ * What the teammate types at the end of the doc. The `:codes` are English shortcodes, the same in
+ * every language. Picked by running the real engine on the served packs (pack 0.1.0):
  * - ":rocket" → 🚀 first (the list changes on every keystroke: ®️, 🇷🇴, 🪨, then 🚀).
  * - ":dumpster_fire" → 🔥 first, then 🗑️ and 🦝 (from the alias "dumpster diving").
  */
-export const SCRIPT: readonly ScriptLine[] = [
-  { text: "Biggest win: the new onboarding ", query: "rocket", target: "1F680", emoji: "🚀" },
-  { text: "Biggest miss: launch-week deploys were a ", query: "dumpster_fire", target: "1F525", emoji: "🔥" },
-];
-
-export const SUMMARY_HEADING = "Summary";
-
-const BODY = `
-<aside data-type="callout" data-emoji="💡">
-  <p>Blameless format: we talk about systems and decisions, never people.</p>
-</aside>
-<h2>What went well</h2>
-<ul>
-  <li><p>Onboarding v2 shipped two weeks early, behind a flag for the first week</p></li>
-  <li><p>Setup questions to support dropped once the new checklist went live</p></li>
-</ul>
-<h2>What we would change</h2>
-<p>Two deploys failed in launch week. Both came from the same flaky migration test, and the rollback took longer than it should have.</p>
-<h2>Action items</h2>
-<ul data-type="taskList">
-  <li data-type="taskItem" data-checked="true"><p>Quarantine the flaky migration test (Jonas)</p></li>
-  <li data-type="taskItem" data-checked="false"><p>Add a deploy freeze to the launch checklist (Priya)</p></li>
-  <li data-type="taskItem" data-checked="false"><p>Share this retro in #product (Maya)</p></li>
-</ul>
-<h2>${SUMMARY_HEADING}</h2>
-`;
+export function docCopy(doc: DemoMessages["doc"]): DocCopy {
+  const { body } = doc;
+  return {
+    pageTitle: doc.pageTitle,
+    summary: body.summary,
+    body,
+    script: [
+      { text: `${body.win} `, query: "rocket", target: "1F680", emoji: "🚀" },
+      { text: `${body.miss} `, query: "dumpster_fire", target: "1F525", emoji: "🔥" },
+    ],
+  };
+}
 
 function escapeHtml(text: string): string {
   return text.replace(/[&<>"]/g, (char) => `&#${char.charCodeAt(0)};`);
 }
 
+function bodyHtml(copy: DocCopy): string {
+  const b = Object.fromEntries(
+    Object.entries(copy.body).map(([key, value]) => [key, escapeHtml(value)]),
+  ) as Record<keyof DocCopy["body"], string>;
+  return `
+<aside data-type="callout" data-emoji="💡">
+  <p>${b.callout}</p>
+</aside>
+<h2>${b.wentWell}</h2>
+<ul>
+  <li><p>${b.well1}</p></li>
+  <li><p>${b.well2}</p></li>
+</ul>
+<h2>${b.change}</h2>
+<p>${b.changeBody}</p>
+<h2>${b.actions}</h2>
+<ul data-type="taskList">
+  <li data-type="taskItem" data-checked="true"><p>${b.action1}</p></li>
+  <li data-type="taskItem" data-checked="false"><p>${b.action2}</p></li>
+  <li data-type="taskItem" data-checked="false"><p>${b.action3}</p></li>
+</ul>
+<h2>${b.summary}</h2>
+`;
+}
+
 /** The finished summary lines, as the autoplay leaves them. */
-export function finalLines(): string[] {
-  return SCRIPT.map((line) => `${line.text}${line.emoji}`);
+export function finalLines(copy: DocCopy): string[] {
+  return copy.script.map((line) => `${line.text}${line.emoji}`);
 }
 
 /** Initial HTML. `finished` shows the final state (reduced motion, or no autoplay). */
-export function documentHtml(finished: boolean): string {
-  const lines = finished ? finalLines().map((line) => `<p>${escapeHtml(line)}</p>`) : [];
-  return `${BODY}${lines.join("")}<p></p>`;
+export function documentHtml(copy: DocCopy, finished: boolean): string {
+  const lines = finished ? finalLines(copy).map((line) => `<p>${escapeHtml(line)}</p>`) : [];
+  return `${bodyHtml(copy)}${lines.join("")}<p></p>`;
 }

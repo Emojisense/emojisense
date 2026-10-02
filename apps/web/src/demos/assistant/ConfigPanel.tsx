@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useDemoI18n } from "../../i18n/demos";
 import { CheckIcon, CopyIcon } from "./icons";
 import { highlightJson } from "./json";
 import { TOOLS, type ToolName } from "./mcp";
@@ -21,6 +22,7 @@ export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }
   const reset = useRef<ReturnType<typeof setTimeout>>(undefined);
   const codeRef = useRef<HTMLElement>(null);
   const titleId = useId();
+  const { t } = useDemoI18n();
 
   useEffect(() => () => clearTimeout(reset.current), []);
 
@@ -42,13 +44,11 @@ export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }
   return (
     <aside className="assistant-side" aria-labelledby={titleId}>
       <div className="assistant-side-head">
-        <p className="assistant-side-kicker">MCP server · stdio</p>
+        <p className="assistant-side-kicker">{t.t("assistant.config.kicker")}</p>
         <p className="assistant-side-title" id={titleId}>
-          Add it to any MCP client
+          {t.t("assistant.config.title")}
         </p>
-        <p className="assistant-side-lead">
-          One entry in your client config. Runs offline; add an API key for semantic results.
-        </p>
+        <p className="assistant-side-lead">{t.t("assistant.config.lead")}</p>
       </div>
 
       <div className="assistant-config">
@@ -57,7 +57,11 @@ export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }
           <button type="button" className="assistant-copy" data-state={copy} onClick={onCopy}>
             {copy === "copied" ? <CheckIcon /> : <CopyIcon />}
             <span aria-live="polite">
-              {copy === "copied" ? "Copied" : copy === "failed" ? "Press ⌘C / Ctrl+C" : "Copy"}
+              {copy === "copied"
+                ? t.t("assistant.config.copied")
+                : copy === "failed"
+                  ? t.t("assistant.config.copyFailed")
+                  : t.t("assistant.config.copy")}
             </span>
           </button>
         </div>
@@ -67,11 +71,11 @@ export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }
         </pre>
       </div>
 
-      <ul className="assistant-tools" aria-label="Tools">
+      <ul className="assistant-tools" aria-label={t.t("assistant.config.tools")}>
         {TOOLS.map((tool) => (
           <li key={tool.name} data-active={tool.name === activeTool}>
             <code>{tool.name}</code>
-            <span>{tool.summary}</span>
+            <span>{t.t(`assistant.config.summaries.${tool.name}`)}</span>
           </li>
         ))}
       </ul>

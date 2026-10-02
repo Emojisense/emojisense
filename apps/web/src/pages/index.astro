@@ -106,7 +106,7 @@ const kindLabel = (kind: string) => {
         <h2 id="uc-title">{t("home.useCases.title")}</h2>
         <p class="lead">{t("home.useCases.lead")}</p>
       </div>
-      <UseCases client:visible />
+      <UseCases client:visible messages={messages.demos} lang={tag} />
     </div>
   </section>
 

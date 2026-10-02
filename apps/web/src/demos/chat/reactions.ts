@@ -1,5 +1,6 @@
 import type { AliasEngine, SearchResult } from "emojisense";
 import { API_URL, PUBLISHABLE_KEY } from "../../config";
+import { pageLocale } from "../../lib/engine-client";
 
 export interface ReactionSuggestions {
   results: SearchResult[];
@@ -28,7 +29,8 @@ export function suggestOnDevice(engine: AliasEngine, text: string): SearchResult
     .filter((clause) => clause.split(/\s+/).length >= 2);
   const best = new Map<string, SearchResult>();
   for (const clause of new Set([text, ...clauses])) {
-    for (const result of engine.search(clause, { limit: SHOWN, prefix: false, locale: "en" }).results) {
+    for (const result of engine.search(clause, { limit: SHOWN, prefix: false, locale: pageLocale() })
+      .results) {
       if (result.score < MIN_DEVICE_SCORE) continue;
       const previous = best.get(result.id);
       if (!previous || result.score > previous.score) best.set(result.id, result);
@@ -53,7 +55,7 @@ async function suggestFromEdge(
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, locale: "en", limit: SHOWN }),
+        body: JSON.stringify({ text, locale: pageLocale(), limit: SHOWN }),
         signal: timeout.signal,
       },
     );

@@ -1,4 +1,5 @@
-import { CHANNELS, PEOPLE, type PersonId } from "./content";
+import { useDemoI18n } from "../../i18n/demos";
+import { CHANNELS, type PersonId, people } from "./content";
 import { ChevronIcon, HashIcon, SearchIcon, ThreadIcon } from "./icons";
 import { Avatar } from "./MessageItem";
 
@@ -6,6 +7,8 @@ const DIRECT: PersonId[] = ["priya", "marcus", "lena"];
 
 /** Decorative workspace navigation: only #launch exists in this demo, so it is hidden from assistive tech. */
 export function Sidebar() {
+  const { t } = useDemoI18n();
+  const team = people(t);
   return (
     <aside className="chat-side" aria-hidden="true">
       <div className="chat-ws">
@@ -16,16 +19,16 @@ export function Sidebar() {
 
       <div className="chat-side-search">
         <SearchIcon />
-        <span>Search</span>
+        <span>{t.t("chat.sidebar.search")}</span>
         <kbd>⌘K</kbd>
       </div>
 
       <div className="chat-side-item">
         <ThreadIcon />
-        <span>Threads</span>
+        <span>{t.t("chat.sidebar.threads")}</span>
       </div>
 
-      <p className="chat-side-label">Channels</p>
+      <p className="chat-side-label">{t.t("chat.sidebar.channels")}</p>
       <ul className="chat-side-list">
         {CHANNELS.map((channel) => {
           const active = "active" in channel;
@@ -44,10 +47,10 @@ export function Sidebar() {
         })}
       </ul>
 
-      <p className="chat-side-label">Direct messages</p>
+      <p className="chat-side-label">{t.t("chat.sidebar.direct")}</p>
       <ul className="chat-side-list">
         {DIRECT.map((id) => {
-          const person = PEOPLE[id];
+          const person = team[id];
           return (
             <li key={id} className="chat-side-item is-person">
               <span className="chat-side-avatar">
