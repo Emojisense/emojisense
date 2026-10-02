@@ -143,5 +143,6 @@ describe.skipIf(!existsSync(join(packDir, "pack.en.json")))("committed culture e
     const result = runCultureGate({ packDir, packVersion, records, catalog: loadCatalog(), queries });
     expect(result.topChanges).toEqual([]);
     expect(result.triggerMisses).toEqual([]);
-  });
+    // Eleven locale engines are built from the full packs: allow a minute.
+  }, 60_000);
 });
