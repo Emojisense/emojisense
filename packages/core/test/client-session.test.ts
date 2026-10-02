@@ -30,7 +30,8 @@ describe("semantic client", () => {
   it("keeps asking over the limit, because the edge cache still answers, but not twice", async () => {
     let overLimit = true;
     const fetch = vi.fn(
-      async () => new Response(JSON.stringify(overLimit ? { ...semanticBody, results: [], overLimit } : semanticBody)),
+      async () =>
+        new Response(JSON.stringify(overLimit ? { ...semanticBody, results: [], overLimit } : semanticBody)),
     );
     const client = createSemanticClient({ endpoint: "https://api.test", fetch });
     expect(await client.search("lava eruption")).toBeUndefined();
