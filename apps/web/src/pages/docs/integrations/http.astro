@@ -33,16 +33,16 @@ const response = await fetch(url);`;
 ---
 
 <DocsLayout path="/docs/integrations/http/">
-  <p>Every feature of the API is plain HTTP with JSON, so any language and any server can use it. This page shows the basics. The <a href="/docs/api/">HTTP API reference</a> has every route and field.</p>
+  <p>Every feature of the API is plain HTTP with JSON, so any language and any server can use it. The base URL is <code>{API_HOST}</code>, over HTTPS only: a plain <code>http://</code> request gets <code>403</code>, so a key is never sent unencrypted. This page shows the basics. The <a href="/docs/api/">HTTP API reference</a> has every route and field.</p>
 
   <h2 id="authenticate">Authenticate</h2>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead><tr><th scope="col">Caller</th><th scope="col">Key</th><th scope="col">Sent as</th></tr></thead>
       <tbody>
-        <tr><td>Servers, bots, CLIs</td><td>Secret <code>sk_live_…</code></td><td><code>Authorization: Bearer sk_live_…</code>. Refused when the request has an <code>Origin</code> header.</td></tr>
+        <tr><td>Servers, bots, CLIs</td><td>Secret <code>sk_live_…</code></td><td><code>Authorization: Bearer sk_live_…</code>. Refused when the request has an <code>Origin</code> header, and never accepted in the URL.</td></tr>
         <tr><td>Browsers, extensions</td><td>Publishable <code>pk_live_…</code></td><td><code>?key=pk_live_…</code>. The <code>Origin</code> must be one of the key’s allowed origins.</td></tr>
-        <tr><td>Quick tests</td><td>none</td><td>Works, with a stricter rate limit per IP.</td></tr>
+        <tr><td>Quick tests</td><td>none</td><td>Search, reactions and photos work, with a stricter rate limit per IP address. No custom emoji and no analytics.</td></tr>
       </tbody>
     </table>
   </div>
@@ -60,7 +60,7 @@ const response = await fetch(url);`;
   />
   <p>The real answer for “{q}”, captured on {API_FIXTURES.madeOn}:</p>
   <CodeBlock code={prettyResponse(search.response)} lang="json" title="200 OK" />
-  <p>The default <code>mode</code> is <code>hybrid</code>: the server merges dictionary and meaning results for you. Use <code>mode=semantic</code> only when you merge with your own on-device results, as the SDKs do. The <code>Server-Timing</code> header shows where the time went, for example <code>{search.serverTiming}</code>.</p>
+  <p><code>aliasLocale</code> is the language whose dictionary ranked the query, and <code>culture</code> is <code>null</code> unless you ask for the culture layer (below). The default <code>mode</code> is <code>hybrid</code>: the server merges dictionary and meaning results for you. Use <code>mode=semantic</code> only when you merge with your own on-device results, as the SDKs do. The <code>Server-Timing</code> header shows where the time went, for example <code>{search.serverTiming}</code>.</p>
   <p>Add <code>culture=1</code> for the culture layer (off by default): editorial emoji for the moment and the culture join the results after the top answer, with <code>source: "culture"</code>, <code>context</code> and <code>cultureId</code>. Add <code>region=GB</code> (an ISO 3166-1 code) for regional entries, for example “football” as ⚽ outside North America. See the <a href="/docs/api/#culture-in-search">API reference</a>.</p>
 
   <h2 id="other-routes">Other routes</h2>
@@ -78,8 +78,8 @@ const response = await fetch(url);`;
 
   <h2 id="errors">Errors and limits</h2>
   <ul>
-    <li><code>400</code> for a missing query or text, <code>401</code> for an unknown or revoked key, <code>403</code> for an origin that is not allowed or a secret key from a browser, <code>413</code> for an image over 256 KB.</li>
-    <li><code>429</code> when you call too fast. Wait for the seconds in <code>Retry-After</code>.</li>
+    <li><code>400</code> for a missing query or text, a language without a pack or an invalid <code>culture</code> or <code>region</code>; <code>401</code> for an unknown or revoked key; <code>403</code> for plain <code>http://</code>, an origin that is not allowed, or a secret key in the URL or from a browser; <code>413</code> for an image over 256 KB.</li>
+    <li><code>429</code> when you call too fast: a key gets 120 requests a minute per IP address, calls without a key 30. Wait for the seconds in <code>Retry-After</code>.</li>
     <li>Over the monthly plan limit, the answer is still <code>200</code>, with <code>"overLimit": true</code>. See <a href="/docs/keys-and-limits/">Keys and limits</a>.</li>
   </ul>
 </DocsLayout>

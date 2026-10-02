@@ -3,7 +3,7 @@ import Callout from "../../../components/docs/Callout.astro";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import CodeTabs from "../../../components/docs/CodeTabs.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
-import { API_FIXTURES, API_HOST, prettyResponse } from "../../../components/docs/facts";
+import { API_FIXTURES, API_HOST, LOCALES, prettyResponse } from "../../../components/docs/facts";
 
 const { reactions } = API_FIXTURES;
 const text = reactions.request.text;
@@ -47,7 +47,7 @@ const curl = `curl -X POST "${API_HOST}/v1/suggest-reactions" \\
   <p>Reaction suggestions read a message and return the emoji people would react with. Show them in a hover bar or a quick-reaction row, so the right reaction is one click away. They are part of every plan.</p>
 
   <h2 id="how-it-works">How it works</h2>
-  <p>You send the message text to <code>POST /v1/suggest-reactions</code>. The API reads the first 256 characters, ranks emoji with the dictionary and meaning search together, and answers in the same shape as search. Each call counts as one Worker call.</p>
+  <p>You send the message text to <code>POST /v1/suggest-reactions</code>. The API reads the first 256 characters, ranks emoji with intent cues, the dictionary and meaning search together, and answers in the same shape as search. Each call counts as one Worker call, except when the embedding model is unavailable.</p>
   <Callout type="privacy" title="Message text is never kept">
     <p>The text goes to the embedding model and nowhere else. It is never logged, cached or stored.</p>
   </Callout>
@@ -69,8 +69,9 @@ const curl = `curl -X POST "${API_HOST}/v1/suggest-reactions" \\
       <thead><tr><th scope="col">Field</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
       <tbody>
         <tr><td><code>text</code></td><td>—</td><td>Required. Whitespace is collapsed, then the text is cut to 256 characters.</td></tr>
-        <tr><td><code>locale</code></td><td><code>en</code></td><td>Language of the dictionary part: <code>en</code> or <code>tr</code> today. Other values use <code>en</code>. Meaning search is multilingual either way.</td></tr>
+        <tr><td><code>locale</code></td><td><code>en</code></td><td>Language of the dictionary part: one of <code>{LOCALES.join(", ")}</code>, or a BCP 47 tag of one, such as <code>pt-BR</code>. Any other language answers <code>400</code>. Meaning search is multilingual either way.</td></tr>
         <tr><td><code>limit</code></td><td><code>8</code></td><td>Number of results, 1–50.</td></tr>
+        <tr><td><code>tenant</code></td><td>—</td><td>Optional, also as a query parameter. Your id for one of your customers: that <a href="/docs/guides/tenants/">tenant’s</a> custom emoji are suggested too. At most 128 characters.</td></tr>
       </tbody>
     </table>
   </div>
@@ -78,7 +79,7 @@ const curl = `curl -X POST "${API_HOST}/v1/suggest-reactions" \\
   <h3 id="response">Response</h3>
   <p>This is the real answer of the API for “{text}”, captured on {API_FIXTURES.madeOn}:</p>
   <CodeBlock code={prettyResponse(reactions.response)} lang="json" title="200 OK" />
-  <p>No word of this message names an emoji, so every result comes from meaning search (<code>"source": "semantic"</code>). The <code>query</code> field echoes the normalized text in the response only. It is not stored.</p>
+  <p>“We did it” is a celebration cue, so the reactions people use for good news lead the list. Intent cues and dictionary matches have <code>"source": "alias"</code>. A result that the message embedding found has <code>"source": "semantic"</code>, as for messages without a clear cue. The <code>query</code> field echoes the normalized text in the response only. It is not stored. <code>aliasLocale</code> names the language whose dictionary ranked the text.</p>
 
   <h2 id="fallbacks">Fallbacks</h2>
   <ul>

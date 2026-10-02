@@ -1,9 +1,9 @@
 {
-  "$comment": "Unedited responses of the real API, shown in the docs. Made on 2026-10-02 against the local Worker (packages/worker, wrangler dev on port 8788 with Workers AI: bge-m3@1024 embeddings, gemma-4-26b-a4b-it vision), pack 0.1.0, key pk_demo. The photo is public/demo/photos/cake.jpg (CC0, see src/demos/photo/credits.json), downscaled to 384 px with `sips -s format jpeg -s formatOptions 82 -Z 384`. The photo answer uses the photo ranking of 2026-10-02 (vision prompt v2: model proposals, keyword alias search and caption embedding, fused). Models are not fully deterministic, so a new run can differ slightly.",
+  "$comment": "Unedited responses of the real API, shown in the docs. Search and reactions: captured on 2026-10-02 from the hosted API (https://api.emojisense.com, no key: bge-m3@1024 embeddings), pack 0.1.0. Photo: made on 2026-10-02 against the local Worker (packages/worker, wrangler dev on port 8788 with Workers AI: bge-m3@1024 embeddings, gemma-4-26b-a4b-it vision), key pk_demo. The photo is public/demo/photos/cake.jpg (CC0, see src/demos/photo/credits.json), downscaled to 384 px with `sips -s format jpeg -s formatOptions 82 -Z 384`. The photo answer uses the photo ranking of 2026-10-02 (vision prompt v2: model proposals, keyword alias search and caption embedding, fused). Models are not fully deterministic, so a new run can differ slightly.",
   "madeOn": "2026-10-02",
   "search": {
     "request": "GET /v1/search?q=late%20night%20coding&limit=5",
-    "serverTiming": "embed;dur=281, total;dur=285",
+    "serverTiming": "embed;dur=450, total;dur=491",
     "response": {
       "query": "late night coding",
       "packVersion": "0.1.0",
@@ -42,7 +42,9 @@
       ],
       "cached": false,
       "degraded": false,
-      "overLimit": false
+      "overLimit": false,
+      "aliasLocale": "en",
+      "culture": null
     }
   },
   "reactions": {
@@ -51,46 +53,47 @@
       "locale": "en",
       "limit": 5
     },
-    "serverTiming": "embed;dur=129, total;dur=136",
+    "serverTiming": "embed;dur=137, total;dur=137",
     "response": {
       "query": "we did it the launch went perfectly",
       "results": [
         {
           "emoji": "🙌",
           "id": "1F64C",
-          "score": 0.467,
-          "source": "semantic"
-        },
-        {
-          "emoji": "🚀",
-          "id": "1F680",
-          "score": 0.46,
-          "source": "semantic"
-        },
-        {
-          "emoji": "✅️",
-          "id": "2705",
-          "score": 0.449,
-          "source": "semantic"
+          "score": 0.933,
+          "source": "alias"
         },
         {
           "emoji": "🎉",
           "id": "1F389",
-          "score": 0.448,
-          "source": "semantic"
+          "score": 0.9,
+          "source": "alias"
         },
         {
           "emoji": "👏",
           "id": "1F44F",
-          "score": 0.431,
-          "source": "semantic"
+          "score": 0.686,
+          "source": "alias"
+        },
+        {
+          "emoji": "🚀",
+          "id": "1F680",
+          "score": 0.673,
+          "source": "alias"
+        },
+        {
+          "emoji": "🥳",
+          "id": "1F973",
+          "score": 0.645,
+          "source": "alias"
         }
       ],
       "packVersion": "0.1.0",
       "model": "bge-m3@1024",
       "cached": false,
       "degraded": false,
-      "overLimit": false
+      "overLimit": false,
+      "aliasLocale": "en"
     }
   },
   "image": {
