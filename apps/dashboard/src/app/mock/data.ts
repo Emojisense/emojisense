@@ -33,7 +33,7 @@ const imageFor = (set: string, file: string) =>
 export interface MockDb {
   /** The signed-in account's own plan. Team apps keep their owner's plan (`App.plan`). */
   plan: PlanId;
-  /** The Whop subscription of the own plan (no manage link: mock mode never leaves the page). */
+  /** The Whop subscription of the own plan; the manage link is added when it is served. */
   billing: Omit<BillingSubscription, "manageUrl">;
   me: Omit<Me, "plan" | "appCount" | "billingStatus">;
   apps: Omit<App, "activeKeyCount">[];

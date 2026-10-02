@@ -782,7 +782,12 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
         },
         appCount: apps.length,
         provider: "whop",
-        subscription: { ...db.billing, manageUrl: null },
+        subscription: {
+          ...db.billing,
+          manageUrl: ["active", "canceling", "past_due"].includes(db.billing.status)
+            ? "https://whop.com/@me/settings/orders/"
+            : null,
+        },
         purchasable: { solo: billingIntervalsOf("solo"), pro: ["month"], scale: ["month"] },
       };
       return ok(response);
