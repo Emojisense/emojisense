@@ -1,16 +1,23 @@
 /**
- * Alias moderation, per locale (a Turkish swear word folded to ASCII can be an innocent
- * English word, e.g. "got", "pic"). BLOCK drops an alias. DEMOTE keeps it searchable only in
- * the weakest field. Matching is on whole normalized tokens.
+ * Alias moderation, per locale. A word that is a slur in one language can be an ordinary word in
+ * another: Turkish swear words folded to ASCII ("got", "pic"), French "retard" (late), Brazilian
+ * "kkk" (laughter), Spanish "Kike" (a name). So each locale has its own lists, and the English
+ * lists apply to English only. BLOCK drops an alias. DEMOTE keeps it searchable only in the
+ * weakest field. Matching is on whole normalized tokens.
  *
  * Kept short on purpose: the generation style guide already forbids slurs and explicit terms.
  * This is the safety net, and everything it catches is listed in review.csv.
  */
-type Locale = "en" | "tr";
+const words = (s: string) => new Set(s.trim().split(/\s+/).filter(Boolean));
 
-const words = (s: string) => new Set(s.trim().split(/\s+/));
+/**
+ * Clear English slurs that are not ordinary words in any wave-1 language. Every locale without
+ * its own list uses only these. Left out on purpose: "kkk" (pt laughter), "retard" (fr "late"),
+ * "kike" (es name), "chink" (Hindi "chheenk", sneeze, in Latin letters).
+ */
+const SHARED_SLURS = `nigger nigga faggot fag tranny spic gook wetback`;
 
-const BLOCK: Record<Locale, Set<string>> = {
+const BLOCK: Record<string, Set<string>> = {
   en: words(`
     porn porno nsfw nude nudes sex horny cum dick cock penis vagina pussy boobs tits titties
     dildo orgasm blowjob nazi swastika kkk retard retarded fag faggot tranny nigga nigger
@@ -18,20 +25,23 @@ const BLOCK: Record<Locale, Set<string>> = {
   tr: words(`
     porno seks sik sikis siktir yarrak amk orospu pic got ibne gavat kahpe pezevenk amcik`),
 };
+const DEFAULT_BLOCK = words(SHARED_SLURS);
 
-const DEMOTE: Record<Locale, Set<string>> = {
+const DEMOTE: Record<string, Set<string>> = {
   en: words(`
     fuck fucking fucked wtf shit shitty bullshit ass asshole bitch damn crap boner booty
     thicc weed stoned hungover`),
   tr: words(`bok boktan lan salak aptal mal`),
 };
+const NONE = new Set<string>();
 
 export type Moderation = "block" | "demote" | "ok";
 
 export function moderate(phrase: string, locale: string): Moderation {
-  const key = (locale === "tr" ? "tr" : "en") satisfies Locale;
+  const block = BLOCK[locale] ?? DEFAULT_BLOCK;
+  const demote = DEMOTE[locale] ?? NONE;
   const tokens = phrase.split(" ");
-  if (tokens.some((t) => BLOCK[key].has(t))) return "block";
-  if (tokens.some((t) => DEMOTE[key].has(t))) return "demote";
+  if (tokens.some((t) => block.has(t))) return "block";
+  if (tokens.some((t) => demote.has(t))) return "demote";
   return "ok";
 }

@@ -28,6 +28,7 @@ Files never change after publication. A change produces a new pack version. Serv
   "emojiVersion": "17.0",
   "emojiCount": 1914,
   "source": { "emojibaseVersion": "17.0.0", "cldrVersion": "48.2.0" },
+  "coreAliases": { "en": 16, "hi": 14 },
   "files": {
     "pack.en.json": { "sha256": "…", "bytes": 1234, "gzipBytes": 456, "locale": "en" },
     "vectors.embeddinggemma.256.bin": {
@@ -40,6 +41,7 @@ Files never change after publication. A change produces a new pack version. Serv
 ```
 
 - Clients SHOULD verify `sha256` (lowercase hex of the raw file bytes) before they cache a file.
+- `coreAliases` is informational: how many aliases per emoji each locale's core part keeps (§2).
 - `queryTemplate` is the exact string to embed for a query. `{q}` is replaced by the
   normalized query (§3). Only needed by clients that embed queries themselves.
 
@@ -68,7 +70,7 @@ Each locale ships in two parts with the same row layout and row order:
 
 | Part | File | `part` key | Holds |
 | ---- | ---- | ---------- | ----- |
-| core | `pack.<locale>.json` | absent or `"core"` | label, shortcodes, keywords, the first N aliases (`pack.config.json` → `initialAliases`) |
+| core | `pack.<locale>.json` | absent or `"core"` | label, shortcodes, keywords, the first N aliases (N ≤ `pack.config.json` → `initialAliases`, lowered per locale until the part is ≤ 200 KB gz; manifest `coreAliases`) |
 | ext | `pack.<locale>.ext.json` | `"ext"` | the remaining aliases, all typos, all low-confidence phrases. `label`, `shortcode` and `keyword` are empty. |
 
 Render with the core parts. Load the ext parts when the device is idle and rebuild the index with
@@ -176,9 +178,14 @@ score = fieldWeight × coverage × (0.6 + 0.4 × min(1, matchedTokens / phraseTo
 ```
 
 `exactPhrase` = every query token matched exactly and the phrase has as many tokens as the query.
+The **preferred locale** is the query's locale, or the locale of the first loaded pack when the
+query has none. A phrase is in a preferred-locale pack when any pack of that locale (core or ext)
+contains it for this emoji.
 
-**Emoji score.** The best phrase score, plus 0.02 for every other matching phrase (at most +0.06),
-capped at 1. Sort by score (descending), then by row order. `confidence` = the top score.
+**Emoji score.** The best phrase score, plus 0.02 for every other matching phrase that is in a
+preferred-locale pack (at most +0.06), capped at 1. Phrases of other locales never add this
+bonus, so many loaded languages that share a loanword ("halloween") cannot lift every emoji to
+the cap. Sort by score (descending), then by row order. `confidence` = the top score.
 
 ## 5. Vectors (`vectors.<model>.<dims>.bin`, "ESVEC1")
 

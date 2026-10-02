@@ -33,5 +33,110 @@
     "alias": "jurassic park",
     "action": "low",
     "why": "🦖 is the poster dinosaur"
+  },
+  {
+    "hexcode": "1F9DB",
+    "locale": "es",
+    "alias": "fiesta de halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB",
+    "locale": "fr",
+    "alias": "joyeux halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB",
+    "locale": "fr",
+    "alias": "bon halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB",
+    "locale": "pt",
+    "alias": "noite de halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB-200D-2642-FE0F",
+    "locale": "fr",
+    "alias": "joyeux halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB-200D-2642-FE0F",
+    "locale": "fr",
+    "alias": "bon halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB-200D-2642-FE0F",
+    "locale": "pt",
+    "alias": "noite de halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB-200D-2640-FE0F",
+    "locale": "fr",
+    "alias": "joyeux halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB-200D-2640-FE0F",
+    "locale": "fr",
+    "alias": "bon halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F9DB-200D-2640-FE0F",
+    "locale": "pt",
+    "alias": "noite de halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1F408-200D-2B1B",
+    "locale": "pt",
+    "alias": "noite de halloween",
+    "action": "remove",
+    "why": "🎃 is the canonical Halloween greeting/party; extra holiday phrases tie it on 'hallowelen'"
+  },
+  {
+    "hexcode": "1FA7C",
+    "locale": "hi",
+    "alias": "break a leg",
+    "action": "remove",
+    "why": "idiom means good luck, not a crutch"
+  },
+  {
+    "hexcode": "1F602",
+    "locale": "pt",
+    "phrase": "kkkk",
+    "action": "add",
+    "why": "the usual Brazilian laugh; the batch had only longer runs"
+  },
+  {
+    "hexcode": "1F602",
+    "locale": "ar",
+    "phrase": "ههههه",
+    "action": "add",
+    "why": "the usual Arabic laugh; the batch had only 7+ letter runs"
+  },
+  {
+    "hexcode": "1F927",
+    "locale": "hi",
+    "alias": "chink",
+    "action": "remove",
+    "why": "Hinglish for sneeze, but the same spelling is an English slur; never show it"
   }
 ]

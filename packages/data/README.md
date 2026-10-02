@@ -10,7 +10,9 @@ layer-2 shards. Formats: [docs/PACK_FORMAT.md](../../docs/PACK_FORMAT.md).
 | `build:shards -- --log queries.jsonl` | `dist/shards/<packVersion>/` from the analytics export |
 | `build:shards -- --bootstrap` | the same from synthetic day-one queries (see the caveat below) |
 
-`pack.config.json` holds the pack version, the core alias budget and the production model
+`pack.config.json` holds the pack version, the most aliases per emoji a core pack keeps
+(`initialAliases`; `build:pack` lowers it per locale until the core pack is ≤ 200 KB gz and
+records the result in the manifest as `coreAliases`) and the production model
 (`model.key`, `model.dims`). The shard builder and `pnpm --filter @emojisense/eval cost` use it.
 
 ## Layer-2 shards (`build:shards`)

@@ -3,7 +3,8 @@
  *
  * - normalize every alias with the shared normalizer, drop empties and duplicates
  * - drop aliases that repeat an indexed name / shortcode / keyword of the same emoji
- * - moderation: block or demote (blocklist.ts)
+ * - curation.json (curation.ts): remove an alias, demote it to `low`, or add a missed phrase
+ * - moderation: block or demote, per locale (blocklist.ts)
  * - collision cap: an alias on more than COLLISION_DEMOTE emoji is demoted to `low`,
  *   on more than COLLISION_DROP emoji it is dropped (it no longer discriminates)
  * - review.csv lists low-confidence, collided and moderated aliases for a human pass
@@ -12,6 +13,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { normalize } from "emojisense";
 import { moderate } from "./blocklist.ts";
+import { curatedAdditions, curationAction, loadCurations } from "./curation.ts";
 import { COMBINED_LOCALES, LOCALE_CODES } from "./locales.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
 import type {
@@ -77,20 +79,8 @@ function enrichmentFor(hexcode: string, locale: Locale): LocaleEnrichment | unde
   return localeRecords.get(locale)?.get(hexcode);
 }
 
-/** Human overrides on generated aliases (enrichment/curation.json): remove, or demote to `low`. */
-interface Curation {
-  hexcode: string;
-  /** A locale code, or "*" for every locale (film titles are often the same everywhere). */
-  locale: string;
-  alias: string;
-  action: "remove" | "low";
-}
-const curationPath = join(ENRICHMENT_DIR, "curation.json");
-const curations: Curation[] = existsSync(curationPath) ? JSON.parse(readFileSync(curationPath, "utf8")) : [];
-const curationOf = (hexcode: string, locale: string, alias: string) =>
-  curations.find(
-    (c) => c.hexcode === hexcode && (c.locale === locale || c.locale === "*") && normalize(c.alias) === alias,
-  )?.action;
+const curations = loadCurations(join(ENRICHMENT_DIR, "curation.json"));
+let curatedAdded = 0;
 
 const minedPath = join(ENRICHMENT_DIR, "mined.json");
 const mined: MinedAlias[] = existsSync(minedPath) ? JSON.parse(readFileSync(minedPath, "utf8")) : [];
@@ -110,21 +100,23 @@ for (const e of emoji) {
   const perLocale = {} as Record<Locale, ValidatedLocale>;
   for (const locale of LOCALES) {
     const block = enrichmentFor(e.hexcode, locale);
+    const additions = curatedAdditions(curations, e.hexcode, locale);
     const out: ValidatedLocale = { desc: block?.desc ?? "", alias: [], typo: [], low: [] };
     perLocale[locale] = out;
-    if (!block) continue;
+    if (!block && additions.length === 0) continue;
 
     const taken = indexedPhrases(e, locale);
-    const lowSet = new Set(block.low.map((s) => normalize(s)));
-    const place = (rawAlias: string, field: "alias" | "typo") => {
+    const lowSet = new Set((block?.low ?? []).map((s) => normalize(s)));
+    /** `manual`: a curator's addition, never treated as low-confidence. */
+    const place = (rawAlias: string, field: "alias" | "typo", manual = false): boolean => {
       const alias = normalize(rawAlias);
-      if (!alias || taken.has(alias)) return;
+      if (!alias || taken.has(alias)) return false;
       taken.add(alias);
-      const curated = curationOf(e.hexcode, locale, alias);
-      if (curated === "remove") return;
+      const curated = curationAction(curations, e.hexcode, locale, alias);
+      if (curated === "remove") return false;
       if (curated === "low") {
         out.low.push(alias);
-        return;
+        return true;
       }
       const verdict = moderate(alias, locale);
       if (verdict === "block") {
@@ -138,9 +130,9 @@ for (const e of emoji) {
           reason: "blocked",
           emojiCount: 1,
         });
-        return;
+        return false;
       }
-      if (verdict === "demote" || lowSet.has(alias)) {
+      if (verdict === "demote" || (!manual && lowSet.has(alias))) {
         out.low.push(alias);
         review.push({
           hexcode: e.hexcode,
@@ -151,10 +143,14 @@ for (const e of emoji) {
           reason: verdict === "demote" ? "demoted:profanity" : "low_confidence",
           emojiCount: 1,
         });
-        return;
+        return true;
       }
       out[field].push(alias);
+      return true;
     };
+    // Curated additions first: they are reviewed fixes, so they belong in the core pack.
+    for (const { phrase, field } of additions) if (place(phrase, field, true)) curatedAdded++;
+    if (!block) continue;
     for (const category of ALIAS_ORDER) for (const a of block[category]) place(a, "alias");
     for (const m of mined) if (m.hexcode === e.hexcode && m.locale === locale) place(m.alias, "alias");
     for (const a of block.typo) place(a, "typo");
@@ -224,5 +220,6 @@ console.log(
     LOCALES.map(
       (l) => `${l}: ${count(l, "alias")} alias, ${count(l, "typo")} typo, ${count(l, "low")} low`,
     ).join(" | ") +
-    ` | collisions: ${demoted} demoted, ${dropped} dropped | moderated: ${moderated} | review rows: ${review.length}`,
+    ` | collisions: ${demoted} demoted, ${dropped} dropped | moderated: ${moderated}` +
+    ` | curated additions: ${curatedAdded} | review rows: ${review.length}`,
 );

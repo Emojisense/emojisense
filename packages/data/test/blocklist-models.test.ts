@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { moderate } from "../src/blocklist.ts";
+import { LOCALE_CODES } from "../src/locales.ts";
 import { formatDocument, formatQuery, getModel, MODELS } from "../src/models.ts";
 
 describe("moderate", () => {
@@ -16,6 +17,25 @@ describe("moderate", () => {
     expect(moderate("you got this", "en")).toBe("ok");
     expect(moderate("take a pic", "en")).toBe("ok");
     expect(moderate("got", "tr")).toBe("block");
+  });
+
+  it("applies the English lists to English only", () => {
+    expect(moderate("je suis en retard", "fr")).toBe("ok");
+    expect(moderate("le bus est en retard", "fr")).toBe("ok");
+    expect(moderate("retard", "en")).toBe("block");
+    expect(moderate("kkk", "pt")).toBe("ok");
+    expect(moderate("aff mas kkk", "pt")).toBe("ok");
+    expect(moderate("kkk", "en")).toBe("block");
+    expect(moderate("feliz cumple kike", "es")).toBe("ok");
+    expect(moderate("holy shit", "es")).toBe("ok");
+  });
+
+  it("blocks clear slurs in every other locale", () => {
+    for (const locale of LOCALE_CODES.filter((l) => l !== "tr")) {
+      expect(moderate("nigger", locale), locale).toBe("block");
+      expect(moderate("you faggot", locale), locale).toBe("block");
+    }
+    expect(moderate("nigger", "xx")).toBe("block");
   });
 });
 

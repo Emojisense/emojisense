@@ -87,6 +87,9 @@ public final class AliasEngine: @unchecked Sendable {
   {
     let tokenCount = tokens.count
     let preferredMask = index.localeMasks[options.locale ?? index.primaryLocale] ?? 1
+    let isPreferred = { (phrase: Int32) in
+      self.index.phraseLocaleMask[Int(phrase)] & preferredMask != 0
+    }
     scratch.startSearch()
 
     var weights: [Double] = []
@@ -129,20 +132,22 @@ public final class AliasEngine: @unchecked Sendable {
       let exactFactor =
         allExact && length == tokenCount
         ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
-      let localeFactor =
-        index.phraseLocaleMask[Int(phrase)] & preferredMask != 0 ? 1 : Scoring.foreignLocaleFactor
+      let preferred = isPreferred(phrase)
+      let localeFactor = preferred ? 1 : Scoring.foreignLocaleFactor
       let score =
         index.phraseFieldWeight[Int(phrase)] * coverage
         * (0.6 + 0.4 * min(1, Double(matched) / Double(length))) * exactFactor * localeFactor
-      scratch.recordEmoji(Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score)
+      scratch.recordEmoji(
+        Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score, preferred: preferred)
     }
 
+    // Only phrases of the preferred locale add evidence (PACK_FORMAT.md §4).
     var ranked = scratch.touchedEmoji.map { emoji in
-      let bonus = min(
-        Scoring.maxEvidenceBonus, Double(scratch.emojiSupport[Int(emoji)]) * Scoring.evidenceBonus)
+      let best = scratch.emojiPhrase[Int(emoji)]
+      let support = Int(scratch.emojiPreferred[Int(emoji)]) - (isPreferred(best) ? 1 : 0)
+      let bonus = min(Scoring.maxEvidenceBonus, Double(support) * Scoring.evidenceBonus)
       return RankedEmoji(
-        emoji: emoji, phrase: scratch.emojiPhrase[Int(emoji)],
-        score: min(1, scratch.emojiScore[Int(emoji)] + bonus))
+        emoji: emoji, phrase: best, score: min(1, scratch.emojiScore[Int(emoji)] + bonus))
     }
     ranked.sort { $0.score != $1.score ? $0.score > $1.score : $0.emoji < $1.emoji }
     return ranked

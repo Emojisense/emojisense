@@ -1,6 +1,6 @@
 import type { Pack, PackRow } from "../src/pack.js";
 
-const row = (
+export const row = (
   emoji: string,
   hexcode: string,
   label: string,

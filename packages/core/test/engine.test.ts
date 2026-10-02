@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEngine } from "../src/engine.js";
-import { en, tr } from "./fixture.js";
+import { en, row, tr } from "./fixture.js";
 
 const engine = createEngine([en, tr]);
 const top = (q: string, locale?: string) =>
@@ -81,6 +81,30 @@ describe("alias engine", () => {
     expect(goat?.score).toBeGreaterThan(0.75);
     expect(withExt.get("1F410")?.labels.en).toBe("goat");
     expect(withExt.locales).toEqual(["en", "tr"]);
+  });
+
+  it("adds the evidence bonus only for phrases of the preferred locale", () => {
+    // 🧛 comes first in row order, so a tie would rank it above 🎃.
+    const english = {
+      ...en,
+      emoji: [
+        row("🧛", "1F9DB", "vampire", { keyword: "halloween" }),
+        row("🎃", "1F383", "jack-o-lantern", { keyword: "halloween|pumpkin", alias: "happy halloween" }),
+      ],
+    };
+    const spanish = {
+      ...en,
+      locale: "es",
+      emoji: [
+        row("🧛", "1F9DB", "vampiro", {
+          alias: "fiesta de halloween|disfraz de halloween|noche de halloween",
+        }),
+      ],
+    };
+    const multi = createEngine([english, spanish]);
+    const first = (locale: string) => multi.search("halloween", { locale }).results[0]?.emoji;
+    expect(first("en")).toBe("🎃");
+    expect(first("es")).toBe("🧛");
   });
 
   it("looks up entries by id", () => {

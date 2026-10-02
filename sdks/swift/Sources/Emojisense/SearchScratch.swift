@@ -12,8 +12,8 @@ struct SearchScratch {
   private var emojiStamp: [UInt32]
   private(set) var emojiScore: [Double]
   private(set) var emojiPhrase: [Int32]
-  /// Number of matching phrases beyond the best one.
-  private(set) var emojiSupport: [Int32]
+  /// Matching phrases from preferred-locale packs, the best phrase included.
+  private(set) var emojiPreferred: [Int32]
   private(set) var touchedEmoji: [Int32] = []
 
   var editDistance = EditDistance()
@@ -25,7 +25,7 @@ struct SearchScratch {
     emojiStamp = Array(repeating: 0, count: emojiCount)
     emojiScore = Array(repeating: 0, count: emojiCount)
     emojiPhrase = Array(repeating: 0, count: emojiCount)
-    emojiSupport = Array(repeating: 0, count: emojiCount)
+    emojiPreferred = Array(repeating: 0, count: emojiCount)
   }
 
   mutating func startSearch() {
@@ -55,19 +55,17 @@ struct SearchScratch {
     return quality[base..<(base + tokenCount)]
   }
 
-  mutating func recordEmoji(_ emoji: Int, phrase: Int32, score: Double) {
+  mutating func recordEmoji(_ emoji: Int, phrase: Int32, score: Double, preferred: Bool) {
     if emojiStamp[emoji] != generation {
       emojiStamp[emoji] = generation
       emojiScore[emoji] = score
       emojiPhrase[emoji] = phrase
-      emojiSupport[emoji] = 0
+      emojiPreferred[emoji] = 0
       touchedEmoji.append(Int32(emoji))
-      return
-    }
-    if score > emojiScore[emoji] {
+    } else if score > emojiScore[emoji] {
       emojiScore[emoji] = score
       emojiPhrase[emoji] = phrase
     }
-    emojiSupport[emoji] += 1
+    if preferred { emojiPreferred[emoji] += 1 }
   }
 }

@@ -14,6 +14,9 @@ export interface ManifestFile {
   queryTemplate?: string;
 }
 
+/** Compressed size as the manifest reports it (and as the pack budget is measured). */
+export const gzipSize = (data: Uint8Array | string) => gzipSync(data, { level: 9 }).length;
+
 /** (Re)write manifest.json for every pack and vector file in `dir`, keeping earlier metadata. */
 export interface Manifest {
   format: "emojisense-manifest";
@@ -32,7 +35,7 @@ export function writeManifest(dir: string, meta: Record<string, unknown>): Manif
     const entry: ManifestFile = {
       sha256: createHash("sha256").update(bytes).digest("hex"),
       bytes: bytes.length,
-      gzipBytes: gzipSync(bytes, { level: 9 }).length,
+      gzipBytes: gzipSize(bytes),
     };
     const pack = /^pack\.([\w-]+?)(?:\.ext)?\.json$/.exec(name);
     if (pack) entry.locale = pack[1] as string;

@@ -221,7 +221,8 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   const emojiStamp = new Uint32Array(entries.length);
   const emojiScore = new Float64Array(entries.length);
   const emojiPhrase = new Int32Array(entries.length);
-  const emojiSupport = new Int32Array(entries.length);
+  /** Matching phrases from preferred-locale packs, the best phrase included. */
+  const emojiPreferred = new Int32Array(entries.length);
   const touchedEmoji = new Int32Array(entries.length);
   let generation = 0;
 
@@ -284,6 +285,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0 };
 
     const preferredMask = preferredMasks.get(locale ?? primary.locale) ?? 1;
+    const isPreferred = (phrase: number) => ((phraseLocaleMask[phrase] as number) & preferredMask) !== 0;
     const lastIsPrefix = prefix && !/\s$/.test(query);
     const n = tokens.length;
     const weights: number[] = [];
@@ -331,37 +333,38 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       if (coverage < minCoverage) continue;
 
       const length = phraseLength[phrase] as number;
-      const mask = phraseLocaleMask[phrase] as number;
+      const preferred = isPreferred(phrase);
       const score =
         (phraseFieldWeight[phrase] as number) *
         coverage *
         (0.6 + 0.4 * Math.min(1, matched / length)) *
         (allExact && length === n ? (n >= 2 ? EXACT_PHRASE_BONUS : 1) : NON_EXACT_FACTOR) *
-        (mask & preferredMask ? 1 : FOREIGN_LOCALE_FACTOR);
+        (preferred ? 1 : FOREIGN_LOCALE_FACTOR);
 
       const emoji = phraseEmoji[phrase] as number;
       if (emojiStamp[emoji] !== generation) {
         emojiStamp[emoji] = generation;
         emojiScore[emoji] = score;
         emojiPhrase[emoji] = phrase;
-        emojiSupport[emoji] = 0;
+        emojiPreferred[emoji] = 0;
         touchedEmoji[touchedEmojiCount++] = emoji;
-      } else {
-        if (score > (emojiScore[emoji] as number)) {
-          emojiScore[emoji] = score;
-          emojiPhrase[emoji] = phrase;
-        }
-        emojiSupport[emoji] = (emojiSupport[emoji] as number) + 1;
+      } else if (score > (emojiScore[emoji] as number)) {
+        emojiScore[emoji] = score;
+        emojiPhrase[emoji] = phrase;
       }
+      if (preferred) emojiPreferred[emoji] = (emojiPreferred[emoji] as number) + 1;
     }
 
+    // Only phrases of the preferred locale add evidence: with many locales loaded, other
+    // languages would otherwise lift every emoji that shares a loanword to the bonus cap.
+    const support = (emoji: number) =>
+      (emojiPreferred[emoji] as number) - (isPreferred(emojiPhrase[emoji] as number) ? 1 : 0);
     const ranked = Array.from(touchedEmoji.subarray(0, touchedEmojiCount), (emoji) => ({
       emoji,
       phrase: emojiPhrase[emoji] as number,
       score: Math.min(
         1,
-        (emojiScore[emoji] as number) +
-          Math.min(MAX_EVIDENCE_BONUS, (emojiSupport[emoji] as number) * EVIDENCE_BONUS),
+        (emojiScore[emoji] as number) + Math.min(MAX_EVIDENCE_BONUS, support(emoji) * EVIDENCE_BONUS),
       ),
     }))
       .sort((a, b) => b.score - a.score || a.emoji - b.emoji)

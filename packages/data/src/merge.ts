@@ -3,12 +3,32 @@
  *   enrichment/_batches/bNN.pK.json            → enrichment/<group>.json            (en + tr records)
  *   enrichment/_batches/<locale>/bNN.pK.json   → enrichment/i18n/<locale>/<group>.json
  * Existing files are kept and overridden per hexcode, so a partial batch can be merged.
+ *
+ *   tsx src/merge.ts [--locales es,fr]
+ *
+ * `--locales` merges only those locales, so batches that are still being written stay out
+ * ("en" or "tr" selects the combined en + tr files). Default: every locale.
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { LOCALE_CODES } from "./locales.ts";
+import { parseArgs } from "node:util";
+import { COMBINED_LOCALES, LOCALE_CODES, localeInfo } from "./locales.ts";
 import { BASE_FILE, ENRICHMENT_DIR } from "./paths.ts";
 import type { BaseEmoji } from "./types.ts";
+
+const { values: args } = parseArgs({
+  // pnpm forwards a literal "--"; drop it so flags after it still parse.
+  args: process.argv.slice(2).filter((a) => a !== "--"),
+  options: { locales: { type: "string" } },
+});
+const selected = args.locales
+  ? args.locales
+      .split(",")
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((l) => localeInfo(l).code)
+  : LOCALE_CODES;
+const isCombined = (l: string) => (COMBINED_LOCALES as readonly string[]).includes(l);
 
 const { emoji }: { emoji: BaseEmoji[] } = JSON.parse(readFileSync(BASE_FILE, "utf8"));
 const known = new Set(emoji.map((e) => e.hexcode));
@@ -50,9 +70,12 @@ function mergeInto(batchDir: string, targetDir: string): [number, number] {
 }
 
 const batchRoot = join(ENRICHMENT_DIR, "_batches");
-const [added, total] = mergeInto(batchRoot, ENRICHMENT_DIR);
-const lines = [`en+tr: ${added} added, ${total}/${emoji.length} enriched`];
-for (const locale of LOCALE_CODES.filter((l) => l !== "en" && l !== "tr")) {
+const lines: string[] = [];
+if (selected.some(isCombined)) {
+  const [added, total] = mergeInto(batchRoot, ENRICHMENT_DIR);
+  lines.push(`en+tr: ${added} added, ${total}/${emoji.length} enriched`);
+}
+for (const locale of selected.filter((l) => !isCombined(l))) {
   const [localeAdded, localeTotal] = mergeInto(join(batchRoot, locale), join(ENRICHMENT_DIR, "i18n", locale));
   if (localeTotal > 0) lines.push(`${locale}: ${localeAdded} added, ${localeTotal}/${emoji.length}`);
 }

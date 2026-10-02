@@ -87,6 +87,30 @@ final class AliasEngineTests: XCTestCase {
     XCTAssertEqual(withExtension.locales, ["en", "tr"])
   }
 
+  func testAddsTheEvidenceBonusOnlyForPhrasesOfThePreferredLocale() throws {
+    // 🧛 comes first in row order, so a tie would rank it above 🎃.
+    var english = Fixtures.english
+    english.emoji = [
+      PackRow(emoji: "🧛", hexcode: "1F9DB", label: "vampire", keyword: "halloween"),
+      PackRow(
+        emoji: "🎃", hexcode: "1F383", label: "jack-o-lantern", keyword: "halloween|pumpkin",
+        alias: "happy halloween"),
+    ]
+    var spanish = Fixtures.english
+    spanish.locale = "es"
+    spanish.emoji = [
+      PackRow(
+        emoji: "🧛", hexcode: "1F9DB", label: "vampiro",
+        alias: "fiesta de halloween|disfraz de halloween|noche de halloween")
+    ]
+    let multi = try AliasEngine(packs: [english, spanish])
+    let first = { (locale: String) in
+      multi.search("halloween", options: AliasSearchOptions(locale: locale)).results.first?.emoji
+    }
+    XCTAssertEqual(first("en"), "🎃")
+    XCTAssertEqual(first("es"), "🧛")
+  }
+
   func testLooksUpEntriesById() {
     XCTAssertEqual(engine.entry(id: "1F680")?.emoji, "🚀")
     XCTAssertEqual(engine.entry(id: "1F680")?.labels, ["en": "rocket"])

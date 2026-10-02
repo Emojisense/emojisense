@@ -7,6 +7,8 @@
  * Per locale, two client files:
  *   pack.<locale>.json      core: label, shortcodes, keywords + the first N aliases (size budget)
  *   pack.<locale>.ext.json  ext:  the remaining aliases, typos and low-confidence phrases
+ * N starts at `initialAliases` (pack.config.json, or --initial-aliases) and drops one step at a
+ * time until the core part fits CORE_BUDGET_GZ. The manifest records N per locale (`coreAliases`).
  * Clients render with core and load ext when idle. Embedding documents use the full alias list.
  */
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -14,7 +16,7 @@ import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { normalize, PACK_FORMAT, PACK_FORMAT_VERSION, type Pack, type PackRow } from "emojisense";
 import { LOCALE_CODES } from "./locales.ts";
-import { writeManifest } from "./manifest.ts";
+import { gzipSize, writeManifest } from "./manifest.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
 import type { BaseEmoji } from "./types.ts";
 import type { Validated } from "./validate.ts";
@@ -27,7 +29,10 @@ const { values: args } = parseArgs({
 const config: { packVersion: string; emojiVersion: string; initialAliases: number } = JSON.parse(
   readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8"),
 );
-const initialAliases = Number(args["initial-aliases"] ?? config.initialAliases);
+/** The most aliases per emoji a core part keeps; a locale gets fewer when its core is too big. */
+const maxAliases = Number(args["initial-aliases"] ?? config.initialAliases);
+/** PACK_FORMAT.md: every core part is ≤ 200 KB gzip, so the first render stays fast. */
+const CORE_BUDGET_GZ = 200 * 1024;
 const { source, emoji }: { source: Record<string, string>; emoji: BaseEmoji[] } = JSON.parse(
   readFileSync(BASE_FILE, "utf8"),
 );
@@ -45,7 +50,7 @@ function fields(lists: string[][]): string[] {
   );
 }
 
-function buildPacks(locale: string): { core: Pack; ext: Pack } {
+function buildPacks(locale: string, coreAliasCount: number): { core: Pack; ext: Pack } {
   const core: PackRow[] = [];
   const ext: PackRow[] = [];
   for (const e of emoji) {
@@ -57,10 +62,10 @@ function buildPacks(locale: string): { core: Pack; ext: Pack } {
       [label],
       locale === "en" ? e.shortcodes : [],
       locale === "en" ? e.tags : (cldr?.tags ?? []),
-      aliases.slice(0, initialAliases),
+      aliases.slice(0, coreAliasCount),
       v?.typo ?? [],
       v?.low ?? [],
-      aliases.slice(initialAliases),
+      aliases.slice(coreAliasCount),
     ]) as string[];
     const head = [
       e.emoji,
@@ -110,10 +115,26 @@ const outDir = args.out ?? join(DATA_ROOT, "dist", "packs", config.packVersion);
 // Replace only the pack files: vector files in the same directory come from the (paid) embed step.
 mkdirSync(outDir, { recursive: true });
 for (const file of readdirSync(outDir)) if (/^pack\.[\w.-]+\.json$/.test(file)) rmSync(join(outDir, file));
+/** The largest alias count (≤ maxAliases) whose core part fits the budget. */
+function fitCore(locale: string): { core: string; ext: string; aliases: number } {
+  for (let aliases = maxAliases; ; aliases--) {
+    const { core, ext } = buildPacks(locale, aliases);
+    const coreJson = JSON.stringify(core);
+    if (gzipSize(coreJson) <= CORE_BUDGET_GZ || aliases === 0) {
+      if (aliases === 0 && gzipSize(coreJson) > CORE_BUDGET_GZ) {
+        console.warn(`⚠ pack.${locale}.json is over the core budget even without aliases`);
+      }
+      return { core: coreJson, ext: JSON.stringify(ext), aliases };
+    }
+  }
+}
+
+const coreAliases: Record<string, number> = {};
 for (const locale of LOCALE_CODES) {
-  const { core, ext } = buildPacks(locale);
-  writeFileSync(join(outDir, `pack.${locale}.json`), JSON.stringify(core));
-  writeFileSync(join(outDir, `pack.${locale}.ext.json`), JSON.stringify(ext));
+  const { core, ext, aliases } = fitCore(locale);
+  coreAliases[locale] = aliases;
+  writeFileSync(join(outDir, `pack.${locale}.json`), core);
+  writeFileSync(join(outDir, `pack.${locale}.ext.json`), ext);
 }
 writeFileSync(join(BUILD_DIR, "documents.json"), `${JSON.stringify(buildDocuments(), null, 1)}\n`);
 
@@ -122,9 +143,11 @@ const manifest = writeManifest(outDir, {
   emojiVersion: config.emojiVersion,
   source,
   emojiCount: emoji.length,
+  coreAliases,
 });
 const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
 for (const [name, f] of Object.entries(manifest.files)) {
   console.log(`pack: ${name.padEnd(16)} ${kb(f.bytes).padStart(10)} raw  ${kb(f.gzipBytes).padStart(9)} gz`);
 }
-console.log(`pack: wrote ${outDir} (core keeps ${initialAliases} aliases per emoji and locale)`);
+const fitted = Object.entries(coreAliases).map(([locale, n]) => `${locale} ${n}`);
+console.log(`pack: wrote ${outDir} (core aliases per emoji, max ${maxAliases}: ${fitted.join(", ")})`);
