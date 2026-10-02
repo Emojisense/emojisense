@@ -19,7 +19,11 @@ export interface Honesty {
 }
 
 export function honestyOf(state: SessionState | undefined, query: string): Honesty {
-  if (!state || !query.trim() || state.status === "idle") return { guessing: false, terms: [] };
+  // While a request is on its way the verdict is the dictionary's alone and changes on every
+  // keystroke: wait for the answer, so the tiles do not flicker while someone types.
+  if (!state || !query.trim() || state.status === "idle" || state.status === "loading") {
+    return { guessing: false, terms: [] };
+  }
   const answered = state.concept?.status === "ok";
   return {
     guessing: state.unsure && !answered,

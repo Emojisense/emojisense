@@ -31,6 +31,10 @@ describe("honestyOf", () => {
     expect(honestyOf(state({}), "rocket")).toEqual({ guessing: false, terms: [] });
     expect(honestyOf(state({ unsure: true }), "  ")).toEqual({ guessing: false, terms: [] });
     expect(honestyOf(state({ unsure: true, status: "idle" }), "x").guessing).toBe(false);
+    // Waiting for the API: no flicker while someone types.
+    expect(honestyOf(state({ unsure: true, status: "loading" }), "x").guessing).toBe(false);
+    // Offline or over the limit: the dictionary's verdict is final.
+    expect(honestyOf(state({ unsure: true, status: "alias" }), "x").guessing).toBe(true);
     expect(honestyOf(undefined, "x").guessing).toBe(false);
   });
 
