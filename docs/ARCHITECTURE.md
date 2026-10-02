@@ -66,8 +66,9 @@ Worker query log (Analytics Engine: normalized text only, no IP/key/user/app)
 
 Emoji meaning depends on culture, region and moment: 💀 means "dying of laughter", "goat" comes
 with ⚽ 🇦🇷 🇵🇹 in football chat, 🪔 matters at Diwali. The culture layer maps these associations
-and adds them to search. Phase 1 is editorial: AI proposes, a person approves. It does not learn
-from search traffic.
+and adds them to search. Phase 1 is editorial: AI proposes, a person approves. Phase 2
+([CULTURE.md](CULTURE.md)) drafts every night from aggregate rising searches and the holiday
+calendar, and an editor still approves every entry, in the dashboard; nothing learns on its own.
 
 ```
 culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + analytics misses (seen ≥ 5)
@@ -99,6 +100,23 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
 
 The culture file is optional and small (≤ 2.7 KB gz per locale for 12 months today). A failed load leaves
 search unchanged, and the engine index is shared, not rebuilt, when the file arrives.
+
+### Culture Phase 2: nightly drafts, approval in the dashboard, publish without a deploy
+
+```
+trends_daily (03:17) + culture/sources ─▶ API Worker cron 04:41: Workers AI drafts (≤ budget)
+   ─▶ validateRecord + culture gate (shared with culture:check / culture:gate) ─▶ D1 culture_proposals (draft)
+dashboard Internal → Culture (ADMIN_EMAILS) ─service binding (RPC CultureAdmin)─▶ API Worker
+   preview per trigger / locale / region · edit · approve / reject ─▶ D1 culture_entries_live
+publish (Publish now · nightly · every 10 min after a change): deployed files + live entries
+   ─▶ R2 SHARDS culture/<v>/<build>/… + current.json ─▶ GET /v1/culture/<v>/* and culture=1
+   (no build for this deployment ─▶ the deployed files from ASSETS)
+export ─▶ culture:import-live ─▶ culture/entries/<id>.json (git stays the long-term record)
+```
+
+Details, checks and costs: [CULTURE.md](CULTURE.md). Code: `packages/worker/src/culture-admin/`,
+`@emojisense/data/culture-core` (the culture logic without file access), the dashboard's
+`src/worker/routes/culture.ts` and `src/app/pages/CulturePage.tsx`.
 
 ## Packages
 
