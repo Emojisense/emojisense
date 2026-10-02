@@ -8,76 +8,75 @@
 
 | Mode | en | zh | hi | es | ar | fr | bn | pt | ru | id | tr | all |
 | --- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
-| alias | 57.8 | 50.0 | 44.0 | 67.2 | 25.0 | 50.8 | 28.6 | 59.4 | 53.1 | 57.1 | 54.8 | 49.2 |
-| fused | 62.5 | 62.5 | 50.0 | 68.8 | 26.7 | 52.5 | 36.9 | 60.9 | 67.2 | 55.6 | 59.7 | 54.4 |
-| gated | 64.1 | 57.8 | 51.2 | 70.3 | 26.7 | 50.8 | 36.9 | 59.4 | 65.6 | 60.3 | 62.9 | 54.6 |
-| semantic | 59.4 | 56.3 | 28.6 | 35.9 | 20.0 | 36.1 | 20.2 | 29.7 | 48.4 | 28.6 | 48.4 | 36.8 |
+| alias | 64.1 | 59.4 | 45.2 | 65.6 | 25.0 | 60.7 | 28.6 | 64.1 | 57.8 | 60.3 | 59.7 | 52.9 |
+| fused | 70.3 | 68.8 | 51.2 | 68.8 | 33.3 | 57.4 | 34.5 | 67.2 | 67.2 | 65.1 | 64.5 | 58.2 |
+| gated | 70.3 | 68.8 | 51.2 | 70.3 | 33.3 | 55.7 | 34.5 | 65.6 | 64.1 | 66.7 | 67.7 | 58.2 |
+| semantic | 60.9 | 62.5 | 33.3 | 40.6 | 28.3 | 44.3 | 19.0 | 40.6 | 62.5 | 46.0 | 54.8 | 43.9 |
 
-The gate calls the semantic tier for 63.6% of the queries.
+The gate calls the semantic tier for 62.5% of the queries.
 
 ## Misses by type: alias
 
 | Type | en | zh | hi | es | ar | fr | bn | pt | ru | id | tr | all |
 | --- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | emoji-in-query | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 11 |
-| gendered-label | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 1 | 0 | 0 | 1 | 4 |
-| disputed-label | 2 | 7 | 4 | 8 | 7 | 8 | 4 | 6 | 2 | 13 | 3 | 64 |
-| romanized | 0 | 0 | 34 | 0 | 15 | 0 | 42 | 0 | 0 | 0 | 0 | 91 |
-| unsegmented-script | 0 | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 12 |
-| collision-capped | 1 | 0 | 0 | 0 | 1 | 1 | 1 | 3 | 1 | 0 | 1 | 9 |
+| gendered-label | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 1 | 1 | 0 | 0 | 4 |
+| disputed-label | 1 | 7 | 4 | 9 | 7 | 8 | 4 | 6 | 2 | 12 | 3 | 63 |
+| romanized | 0 | 0 | 33 | 0 | 15 | 0 | 42 | 0 | 0 | 0 | 0 | 90 |
+| unsegmented-script | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 11 |
+| collision-capped | 1 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 1 | 0 | 0 | 5 |
 | no-match | 0 | 0 | 0 | 0 | 1 | 0 | 2 | 0 | 1 | 2 | 2 | 8 |
-| unknown-word | 3 | 0 | 2 | 3 | 1 | 5 | 2 | 1 | 2 | 4 | 4 | 27 |
-| exact-phrase-other-emoji | 6 | 12 | 2 | 2 | 3 | 6 | 2 | 5 | 7 | 3 | 3 | 51 |
-| phrase-partial | 15 | 1 | 4 | 8 | 6 | 9 | 7 | 10 | 17 | 5 | 13 | 95 |
-| word-sense | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 1 |
-| **misses** | 27 | 32 | 47 | 21 | 45 | 30 | 60 | 26 | 30 | 27 | 28 | 373 |
+| unknown-word | 3 | 0 | 2 | 3 | 1 | 3 | 2 | 1 | 2 | 3 | 4 | 24 |
+| exact-phrase-other-emoji | 3 | 7 | 2 | 2 | 3 | 4 | 2 | 4 | 6 | 3 | 4 | 40 |
+| phrase-partial | 15 | 1 | 4 | 8 | 6 | 8 | 7 | 10 | 14 | 5 | 12 | 90 |
+| **misses** | 23 | 26 | 46 | 22 | 45 | 24 | 60 | 23 | 27 | 25 | 25 | 346 |
 
 ## Misses by type: fused
 
 | Type | en | zh | hi | es | ar | fr | bn | pt | ru | id | tr | all |
 | --- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | emoji-in-query | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 11 |
-| gendered-label | 1 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 2 |
-| disputed-label | 1 | 7 | 4 | 8 | 7 | 8 | 4 | 6 | 2 | 13 | 3 | 63 |
-| fusion-dropped-alias | 2 | 1 | 1 | 2 | 1 | 1 | 1 | 2 | 1 | 5 | 1 | 18 |
-| fusion-dropped-semantic | 5 | 3 | 0 | 1 | 4 | 3 | 3 | 1 | 2 | 1 | 5 | 28 |
-| romanized | 0 | 0 | 29 | 0 | 14 | 0 | 36 | 0 | 0 | 0 | 0 | 79 |
-| unsegmented-script | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 |
-| collision-capped | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 3 | 0 | 0 | 1 | 6 |
-| no-match | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 3 |
-| unknown-word | 3 | 0 | 2 | 3 | 0 | 5 | 2 | 1 | 1 | 3 | 3 | 23 |
-| exact-phrase-other-emoji | 6 | 6 | 2 | 2 | 2 | 3 | 2 | 4 | 6 | 2 | 2 | 37 |
-| phrase-partial | 6 | 0 | 3 | 4 | 4 | 8 | 4 | 8 | 8 | 4 | 9 | 58 |
-| **misses** | 24 | 24 | 42 | 20 | 44 | 29 | 53 | 25 | 21 | 28 | 25 | 335 |
+| gendered-label | 0 | 0 | 1 | 0 | 0 | 2 | 0 | 0 | 1 | 0 | 1 | 5 |
+| disputed-label | 1 | 7 | 3 | 9 | 7 | 8 | 4 | 6 | 2 | 11 | 3 | 61 |
+| fusion-dropped-alias | 1 | 1 | 3 | 3 | 1 | 2 | 1 | 2 | 1 | 1 | 1 | 17 |
+| fusion-dropped-semantic | 5 | 1 | 1 | 0 | 1 | 3 | 2 | 2 | 3 | 1 | 2 | 21 |
+| romanized | 0 | 0 | 27 | 0 | 13 | 0 | 38 | 0 | 0 | 0 | 0 | 78 |
+| unsegmented-script | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 |
+| collision-capped | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 3 |
+| no-match | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 3 |
+| unknown-word | 3 | 0 | 2 | 3 | 0 | 3 | 2 | 1 | 0 | 2 | 3 | 19 |
+| exact-phrase-other-emoji | 3 | 5 | 1 | 1 | 2 | 1 | 2 | 3 | 4 | 3 | 3 | 28 |
+| phrase-partial | 5 | 0 | 3 | 4 | 3 | 7 | 5 | 6 | 9 | 4 | 9 | 55 |
+| **misses** | 19 | 20 | 41 | 20 | 40 | 26 | 55 | 21 | 21 | 22 | 22 | 307 |
 
 ## Misses by type: gated
 
 | Type | en | zh | hi | es | ar | fr | bn | pt | ru | id | tr | all |
 | --- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | emoji-in-query | 0 | 0 | 0 | 0 | 11 | 0 | 0 | 0 | 0 | 0 | 0 | 11 |
-| gendered-label | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 2 |
-| disputed-label | 2 | 7 | 4 | 8 | 7 | 8 | 4 | 6 | 2 | 12 | 2 | 62 |
-| gate-skipped | 0 | 4 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 | 0 | 7 |
-| fusion-dropped-alias | 1 | 0 | 0 | 1 | 1 | 1 | 1 | 2 | 1 | 3 | 0 | 11 |
-| fusion-dropped-semantic | 5 | 3 | 0 | 1 | 4 | 3 | 3 | 1 | 2 | 1 | 5 | 28 |
-| romanized | 0 | 0 | 29 | 0 | 14 | 0 | 36 | 0 | 0 | 0 | 0 | 79 |
-| unsegmented-script | 0 | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 7 |
-| collision-capped | 0 | 0 | 0 | 0 | 1 | 1 | 0 | 3 | 0 | 0 | 1 | 6 |
-| no-match | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 3 |
-| unknown-word | 3 | 0 | 2 | 3 | 0 | 5 | 2 | 1 | 1 | 3 | 3 | 23 |
-| exact-phrase-other-emoji | 6 | 6 | 2 | 2 | 2 | 3 | 2 | 3 | 6 | 2 | 2 | 36 |
-| phrase-partial | 6 | 0 | 3 | 4 | 4 | 8 | 4 | 8 | 8 | 4 | 9 | 58 |
-| **misses** | 23 | 27 | 41 | 19 | 44 | 30 | 53 | 26 | 22 | 25 | 23 | 333 |
+| gendered-label | 0 | 0 | 1 | 0 | 0 | 2 | 0 | 1 | 1 | 0 | 1 | 6 |
+| disputed-label | 1 | 7 | 4 | 9 | 7 | 8 | 4 | 6 | 2 | 11 | 2 | 61 |
+| gate-skipped | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 1 | 2 | 0 | 0 | 5 |
+| fusion-dropped-alias | 1 | 0 | 2 | 2 | 1 | 2 | 1 | 2 | 1 | 0 | 0 | 12 |
+| fusion-dropped-semantic | 5 | 1 | 1 | 0 | 1 | 3 | 2 | 2 | 3 | 1 | 2 | 21 |
+| romanized | 0 | 0 | 27 | 0 | 13 | 0 | 38 | 0 | 0 | 0 | 0 | 78 |
+| unsegmented-script | 0 | 6 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 6 |
+| collision-capped | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | 0 | 0 | 0 | 3 |
+| no-match | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 | 1 | 0 | 0 | 3 |
+| unknown-word | 3 | 0 | 2 | 3 | 0 | 3 | 2 | 1 | 0 | 2 | 3 | 19 |
+| exact-phrase-other-emoji | 3 | 5 | 1 | 1 | 2 | 1 | 2 | 2 | 4 | 3 | 3 | 27 |
+| phrase-partial | 5 | 0 | 3 | 4 | 3 | 7 | 5 | 6 | 9 | 4 | 9 | 55 |
+| **misses** | 19 | 20 | 41 | 19 | 40 | 27 | 55 | 22 | 23 | 21 | 20 | 307 |
 
 ## Cross-cuts
 
 | Mode | misses at rank 6–10 | misses with a country flag in the top 5 (no flag label) |
 | --- | --: | --: |
-| alias | 42 | 14 |
-| fused | 67 | 43 |
-| gated | 61 | 39 |
+| alias | 41 | 14 |
+| fused | 67 | 8 |
+| gated | 60 | 7 |
 
-Name or keyword over alias: for 15 queries another emoji has the whole query as its name or CLDR keyword (weight 1 or 0.85) and ranks first, while a label has it as an alias (0.8). Alias mode: 15 lose recall@1, 3 lose recall@5.
+Name or keyword over alias: for 18 queries another emoji has the whole query as its name or CLDR keyword (weight 1 or 0.85) and ranks first, while a label has it as an alias (0.8). Alias mode: 18 lose recall@1, 3 lose recall@5.
 
 ## Legend
 
