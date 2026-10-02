@@ -1,0 +1,153 @@
+---
+import { REPO_URL } from "../config";
+import { DOC_PAGES, docPage } from "../content/docs";
+import type { Heading } from "../lib/markdown";
+import Base from "./Base.astro";
+
+interface Props {
+  /** Must match an entry of DOC_PAGES. */
+  path: string;
+  headings?: Heading[];
+  /** Repository file this page renders or adapts, for the "Source" link. */
+  source?: string;
+}
+
+const { path, headings = [], source } = Astro.props;
+const page = docPage(path);
+---
+
+<Base title={page.title === "Quickstart" ? "Docs" : `${page.title} docs`} description={page.description} path={path}>
+  <div class="wrap docs">
+    <nav class="docs-nav" aria-label="Docs">
+      <p class="nav-title">Docs</p>
+      <ul>
+        {
+          DOC_PAGES.map((item) => (
+            <li>
+              <a class="pill" href={item.href} aria-current={item.href === path ? "page" : undefined}>
+                {item.title}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <article class="docs-main prose">
+      <header>
+        <p class="pill eyebrow"><span class="emoji" aria-hidden="true">📖</span> Docs</p>
+        <h1>{page.title}</h1>
+        <p class="docs-lede">{page.description}</p>
+      </header>
+      {
+        headings.length > 0 && (
+          <nav class="toc" aria-label="On this page">
+            <p class="toc-title">On this page</p>
+            <ol>
+              {headings.map((heading) => (
+                <li>
+                  <a href={`#${heading.id}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+      <slot />
+      {
+        source && (
+          <p class="source">
+            Source: <a href={`${REPO_URL}/blob/main/${source}`}>{source}</a>
+          </p>
+        )
+      }
+    </article>
+  </div>
+</Base>
+
+<style>
+  .docs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-top: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  .nav-title,
+  .toc-title {
+    margin: 0 0 0.5rem;
+    font-weight: 800;
+    font-size: var(--step--1);
+  }
+
+  .docs-nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0 0 1.25rem;
+    list-style: none;
+    border-bottom: 0.125rem dashed color-mix(in srgb, var(--ink) 15%, transparent);
+  }
+
+  .docs-nav .pill:hover {
+    border-color: var(--sky);
+  }
+
+  .eyebrow {
+    margin: 0;
+  }
+
+  .docs-main header h1 {
+    margin: 1rem 0 0;
+    font-size: var(--step-2);
+    line-height: 1.1;
+  }
+
+  .docs-lede {
+    font-size: var(--step-1);
+    color: var(--muted);
+  }
+
+  .toc {
+    margin: 1.5rem 0 0;
+    padding: 1rem 1.25rem;
+    border: var(--outline);
+    border-radius: var(--radius-card);
+    background: var(--cloud);
+  }
+
+  .toc ol {
+    columns: 2 14rem;
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: var(--step--1);
+  }
+
+  .source {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 0.125rem dashed color-mix(in srgb, var(--ink) 15%, transparent);
+    font: 400 var(--step--1) / 1.4 var(--font-mono);
+    color: var(--muted);
+  }
+
+  @media (min-width: 56rem) {
+    .docs {
+      grid-template-columns: 12rem minmax(0, 1fr);
+      gap: 3rem;
+    }
+
+    .docs-nav {
+      position: sticky;
+      top: calc(var(--header-height) + 1.5rem);
+      align-self: start;
+    }
+
+    .docs-nav ul {
+      display: grid;
+      justify-items: start;
+      border-bottom: 0;
+    }
+  }
+</style>

@@ -1,0 +1,10 @@
+{
+  "extends": "astro/tsconfigs/strictest",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "include": [".astro/types.d.ts", "src", "test", "astro.config.ts", "vitest.config.ts"],
+  "exclude": ["dist"]
+}

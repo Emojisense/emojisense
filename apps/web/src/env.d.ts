@@ -1,0 +1,12 @@
+interface ImportMetaEnv {
+  readonly PUBLIC_SITE_URL?: string;
+  readonly PUBLIC_API_URL?: string;
+  readonly PUBLIC_DASHBOARD_URL?: string;
+  readonly PUBLIC_PACK_VERSION?: string;
+  readonly PUBLIC_PUBLISHABLE_KEY?: string;
+  readonly PUBLIC_REPO_URL?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
