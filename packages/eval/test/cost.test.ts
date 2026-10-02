@@ -145,8 +145,9 @@ describe("assumptions", () => {
     expect(sensitivity({ ...a, model: { ...a.model, id: "@cf/baai/bge-m3" } }).length).toBeGreaterThan(0);
   });
 
-  it("rejects shares outside 0–1 and unknown sensitivity keys", () => {
+  it("rejects shares outside 0–1, missing sections and unknown sensitivity keys", () => {
     expect(() => parseAssumptions(JSON.stringify({ ...base, cacheHitRate: 1.2 }))).toThrow("cacheHitRate");
+    expect(() => parseAssumptions(JSON.stringify({ ...base, images: undefined }))).toThrow('"images"');
     expect(() => parseAssumptions(JSON.stringify({ ...base, sensitivity: { nope: [0, 1] } }))).toThrow(
       "nope",
     );

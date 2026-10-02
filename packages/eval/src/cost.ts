@@ -83,9 +83,15 @@ function stripComments(value: unknown): unknown {
 }
 
 const SHARES: SensitivityPath[] = ["deviceShare", "shardHitShare", "cacheHitRate", "images.cacheHitRate"];
+const SECTIONS = ["model", "reactions", "images", "workers", "workersAi", "analyticsEngine"] as const;
 
 export function parseAssumptions(text: string): CostAssumptions {
   const a = stripComments(JSON.parse(text)) as CostAssumptions;
+  for (const section of SECTIONS) {
+    if (typeof a[section] !== "object" || a[section] === null) {
+      throw new Error(`cost assumptions: section "${section}" is missing`);
+    }
+  }
   for (const path of SHARES) {
     const v = getPath(a, path);
     if (!(v >= 0 && v <= 1)) throw new Error(`cost assumptions: ${path} must be between 0 and 1, got ${v}`);
