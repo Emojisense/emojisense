@@ -252,7 +252,7 @@ function random(seed: number): () => number {
 }
 
 /**
- * `fuse` with and without the reranker on each query's real alias output (limit 24) and a
+ * `fuse` with and without the reranker on each query's real alias output (limit 12) and a
  * stand-in semantic list: some alias ids and random emoji (flags included), descending scores in
  * the API's range, three decimals. Self-contained (lists and popularity values), so a port checks
  * its fusion even where its alias output differs.
@@ -260,10 +260,10 @@ function random(seed: number): () => number {
 function fusionCases(engine: AliasEngine, list: Query[]) {
   return list.map((q) => {
     const next = random(fnv1a(0x811c9dc5, q.q));
-    const alias = engine.search(q.q, { locale: q.locale, limit: 24, culture: false });
+    const alias = engine.search(q.q, { locale: q.locale, limit: 12, culture: false });
     const pool = [...alias.results.slice(0, 8).map((r) => r.id)];
-    while (pool.length < 40) pool.push(engine.entries[Math.floor(next() * engine.entries.length)]?.id ?? "");
-    const ids = [...new Set(pool.filter((id) => next() < 0.7))].slice(0, 24);
+    while (pool.length < 24) pool.push(engine.entries[Math.floor(next() * engine.entries.length)]?.id ?? "");
+    const ids = [...new Set(pool.filter(() => next() < 0.7))].slice(0, 12);
     let score = 0.4 + 0.35 * next();
     const semantic = ids.map((id) => {
       const row = [engine.get(id)?.emoji ?? "", id, Math.round(score * 1000) / 1000] as const;
