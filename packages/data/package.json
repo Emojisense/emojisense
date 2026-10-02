@@ -28,6 +28,7 @@
     "emojisense": "workspace:*"
   },
   "exports": {
+    "./blocklist": "./src/blocklist.ts",
     "./config": "./src/config.ts",
     "./culture": "./src/culture/index.ts",
     "./culture-core": "./src/culture/core.ts",

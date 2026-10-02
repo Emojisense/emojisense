@@ -139,6 +139,10 @@ export interface Ranked {
   aliasUnavailable: boolean;
   /** The locale's vector file could not be loaded; semantic results used the shared file only. */
   vectorsUnavailable: boolean;
+  /** The alias output, when the alias search ran. */
+  alias?: AliasSearchOutput | undefined;
+  /** The semantic list before fusion, when it ran. */
+  semanticList?: SearchResult[] | undefined;
 }
 
 /**
@@ -149,11 +153,8 @@ export interface Ranked {
 export async function rank(env: Env, catalog: Catalog, options: RankOptions): Promise<Ranked> {
   const { aliasQuery, embedText, locale, limit } = options;
   const engine = catalog.engine();
-  let alias: AliasSearchOutput | undefined;
-  if (aliasQuery !== undefined) {
-    const aliasEngine = await catalog.aliasEngine(locale, env);
-    alias = aliasEngine?.search(aliasQuery, { locale, limit, prefix: options.prefix ?? true });
-  }
+  // A locale's alias engine is built (first use per isolate only) while the query is embedded.
+  const aliasLoad = aliasQuery !== undefined ? catalog.aliasEngine(locale, env) : undefined;
 
   let semantic: SearchResult[] | undefined;
   let degraded = false;
@@ -172,6 +173,11 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     }
   }
 
+  let alias: AliasSearchOutput | undefined;
+  if (aliasQuery !== undefined) {
+    const aliasEngine = await aliasLoad;
+    alias = aliasEngine?.search(aliasQuery, { locale, limit, prefix: options.prefix ?? true });
+  }
   let results: SearchResult[];
   if (alias && semantic) results = fuse(alias, semantic, limit, undefined, { popularity: engine.popularity });
   else results = alias?.results ?? semantic ?? [];
@@ -185,5 +191,7 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     aliasLocale: alias ? locale : null,
     aliasUnavailable: aliasQuery !== undefined && !alias,
     vectorsUnavailable,
+    alias,
+    semanticList: semantic,
   };
 }

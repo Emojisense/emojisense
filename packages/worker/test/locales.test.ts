@@ -156,8 +156,9 @@ describe("aliases of every pack locale", () => {
     const h = localeHarness();
     const aliasHits = async (q: string) =>
       (await h.searchBody(q, "&locale=en")).results.filter((r) => r.source === "alias").map((r) => r.emoji);
-    // "arabia felix" (Yemen) is the nearest English alias of "feliz".
-    expect(await aliasHits("feliz cumpleaños")).toEqual(["🇾🇪"]);
+    // "arabia felix" (Yemen) was the nearest English alias of "feliz". A typo match of one word
+    // no longer stands for a query whose other word the dictionary does not know.
+    expect(await aliasHits("feliz cumpleaños")).toEqual([]);
     expect(await aliasHits("बधाई हो")).toEqual([]);
     expect(await aliasHits("مبروك")).toEqual([]);
   });

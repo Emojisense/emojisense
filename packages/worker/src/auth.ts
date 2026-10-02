@@ -203,7 +203,8 @@ export async function identify(
 
 const rateLimited = () => errorResponse(429, "rate limited", { "Retry-After": "60" });
 
-function rateLimitFor(
+/** The limiter and key of a caller. The concept tier reuses them for its model calls (concepts/search.ts). */
+export function rateLimitFor(
   env: Env,
   principal: Principal,
   origin: string | null,
