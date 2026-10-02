@@ -157,8 +157,11 @@ export interface Ranked {
  */
 export async function rank(env: Env, catalog: Catalog, options: RankOptions): Promise<Ranked> {
   const { aliasQuery, embedText, locale, limit } = options;
-  const engine = catalog.engine();
   const started = Date.now();
+  // The Workers AI call goes out first. In a new isolate the engines below take a CPU moment to
+  // build (the bundled en + tr engine: 130–160 ms on a laptop), which then overlaps the call.
+  const embedding = embedText !== undefined ? embedQuery(env, catalog, embedText) : undefined;
+  const engine = catalog.engine();
   // How long a load kept this call waiting; its failure is handled where its value is used.
   const elapsed = () => Date.now() - started;
   const waited = (promise: Promise<unknown>) => promise.then(elapsed, elapsed);
@@ -171,11 +174,11 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
   let embedMs = 0;
   let vectorsMs = 0;
   let vectorsUnavailable = false;
-  if (embedText !== undefined) {
+  if (embedding) {
     // A locale's vector file loads while the query is embedded (first use per isolate only).
     const vectorsLoad = catalog.vectors(locale, env);
     const [embedded, vectors, vectorsWait] = await Promise.all([
-      embedQuery(env, catalog, embedText),
+      embedding,
       vectorsLoad,
       waited(vectorsLoad),
     ]);

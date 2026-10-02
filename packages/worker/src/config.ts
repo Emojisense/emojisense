@@ -16,11 +16,12 @@ export const VISION_PROMPT_VERSION = 2;
 export const LOCALE_ENGINE_CACHE_SIZE = 2;
 
 /**
- * Locale vector indexes (1,914 × 1024 float32, 8.2 MB each) kept per isolate next to the bundled
- * shared one. With two locale engines and two indexes an isolate is near 76 MB of its 128 MB
- * (DECISIONS.md, "Multilingual semantic tier").
+ * Locale vector indexes kept per isolate next to the bundled shared one. With bge-m3 (1,914 ×
+ * 1024 float32, 8.2 MB each) two engines and two indexes put an isolate near 76 MB of its 128 MB
+ * (DECISIONS.md, "Multilingual semantic tier"). EmbeddingGemma @768 rows are 5.9 MB, so three
+ * indexes fit the same budget, and one more locale stays resident (fewer 0.3–1.4 s reloads).
  */
-export const LOCALE_VECTOR_CACHE_SIZE = 2;
+export const LOCALE_VECTOR_CACHE_SIZE = 3;
 
 export const SEARCH_DEFAULT_LIMIT = 24;
 export const REACTIONS_DEFAULT_LIMIT = 8;
