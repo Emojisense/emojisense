@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { normalize } from "emojisense";
 import { moderate } from "./blocklist.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
-import type { AliasCategory, BaseEmoji, EnrichmentRecord, LocaleEnrichment } from "./types.ts";
+import type { AliasCategory, BaseEmoji, EnrichmentRecord, LocaleEnrichment, MinedAlias } from "./types.ts";
 
 export const COLLISION_DEMOTE = 8;
 export const COLLISION_DROP = 20;
@@ -48,6 +48,9 @@ for (const group of new Set(emoji.map((e) => e.group))) {
   if (!existsSync(path)) continue;
   for (const r of JSON.parse(readFileSync(path, "utf8")) as EnrichmentRecord[]) records.set(r.hexcode, r);
 }
+
+const minedPath = join(ENRICHMENT_DIR, "mined.json");
+const mined: MinedAlias[] = existsSync(minedPath) ? JSON.parse(readFileSync(minedPath, "utf8")) : [];
 
 function indexedPhrases(e: BaseEmoji, locale: Locale): Set<string> {
   const raw = locale === "en" ? [e.label, ...e.tags, ...e.shortcodes] : [e.tr.label ?? "", ...e.tr.tags];
@@ -103,6 +106,7 @@ for (const e of emoji) {
       out[field].push(alias);
     };
     for (const category of ALIAS_ORDER) for (const a of block[category]) place(a, "alias");
+    for (const m of mined) if (m.hexcode === e.hexcode && m.locale === locale) place(m.alias, "alias");
     for (const a of block.typo) place(a, "typo");
   }
   draft.set(e.hexcode, perLocale);

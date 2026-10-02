@@ -25,3 +25,16 @@ export interface EnrichmentRecord {
   en: LocaleEnrichment;
   tr: LocaleEnrichment;
 }
+
+/**
+ * Aliases mined from real low-confidence queries (Tier 3), kept apart from the curated
+ * enrichment for provenance. File: enrichment/mined.json.
+ */
+export interface MinedAlias {
+  hexcode: string;
+  locale: "en" | "tr";
+  alias: string;
+  /** Times the query was seen (aggregated, ≥ the k-anonymity threshold). */
+  count: number;
+  minedAt: string;
+}

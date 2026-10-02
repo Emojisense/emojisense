@@ -149,3 +149,9 @@ export async function measureLatency(model: EmbeddingModel, texts: string[]): Pr
   }
   return timings;
 }
+
+/** Run any Workers AI model (e.g. an LLM for alias mining) with the same auth as embeddings. */
+export async function runWorkersAI(model: string, input: Record<string, unknown>): Promise<unknown> {
+  const { run } = await getRunner();
+  return run(model, input);
+}

@@ -1,0 +1,7816 @@
+{
+ "date": "2026-10-02T00:34:13.102Z",
+ "packVersion": "0.1.0",
+ "queries": {
+  "scored": 214,
+  "noise": 3
+ },
+ "engines": [
+  {
+   "name": "alias (full pack)",
+   "kind": "alias",
+   "summary": {
+    "n": 214,
+    "r1": 63.6,
+    "r5": 84.1,
+    "r10": 86,
+    "mrr": 0.719,
+    "forbidRate": 1.4
+   },
+   "byCategory": {
+    "exact": {
+     "n": 26,
+     "r1": 100,
+     "r5": 100,
+     "r10": 100,
+     "mrr": 1,
+     "forbidRate": 0
+    },
+    "typo": {
+     "n": 24,
+     "r1": 87.5,
+     "r5": 91.7,
+     "r10": 95.8,
+     "mrr": 0.901,
+     "forbidRate": 0
+    },
+    "slang": {
+     "n": 33,
+     "r1": 63.6,
+     "r5": 84.8,
+     "r10": 84.8,
+     "mrr": 0.717,
+     "forbidRate": 0
+    },
+    "pop": {
+     "n": 35,
+     "r1": 37.1,
+     "r5": 68.6,
+     "r10": 71.4,
+     "mrr": 0.502,
+     "forbidRate": 0
+    },
+    "idiom": {
+     "n": 21,
+     "r1": 38.1,
+     "r5": 61.9,
+     "r10": 61.9,
+     "mrr": 0.492,
+     "forbidRate": 4.8
+    },
+    "intent": {
+     "n": 32,
+     "r1": 53.1,
+     "r5": 81.3,
+     "r10": 84.4,
+     "mrr": 0.625,
+     "forbidRate": 0
+    },
+    "tr": {
+     "n": 33,
+     "r1": 63.6,
+     "r5": 93.9,
+     "r10": 97,
+     "mrr": 0.767,
+     "forbidRate": 0
+    },
+    "negative": {
+     "n": 10,
+     "r1": 90,
+     "r5": 100,
+     "r10": 100,
+     "mrr": 0.933,
+     "forbidRate": 20
+    }
+   },
+   "outcomes": [
+    {
+     "id": "exact-01",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "exact-02",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔥",
+      "❤️‍🔥",
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "exact-03",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀",
+      "🦵"
+     ]
+    },
+    {
+     "id": "exact-04",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️",
+      "🥰",
+      "😻",
+      "💘",
+      "💝"
+     ]
+    },
+    {
+     "id": "exact-05",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍕",
+      "🍄‍🟫",
+      "🍍",
+      "🤌",
+      "🫃"
+     ]
+    },
+    {
+     "id": "exact-06",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐕️",
+      "🐶",
+      "🦴",
+      "🌭",
+      "🦮"
+     ]
+    },
+    {
+     "id": "exact-07",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐱",
+      "😺",
+      "😿",
+      "🐈️",
+      "😸"
+     ]
+    },
+    {
+     "id": "exact-08",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎉",
+      "👐"
+     ]
+    },
+    {
+     "id": "exact-09",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎉",
+      "🪇",
+      "👯",
+      "👯‍♂️",
+      "👯‍♀️"
+     ]
+    },
+    {
+     "id": "exact-10",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "☠️",
+      "🩻",
+      "👲",
+      "🏴‍☠️"
+     ]
+    },
+    {
+     "id": "exact-11",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👀",
+      "🙄",
+      "😸",
+      "😄",
+      "😊"
+     ]
+    },
+    {
+     "id": "exact-12",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎃",
+      "🏮",
+      "💀",
+      "👨‍🎨",
+      "🏴‍☠️"
+     ]
+    },
+    {
+     "id": "exact-13",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☕️",
+      "🤎",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "exact-14",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦄"
+     ]
+    },
+    {
+     "id": "exact-15",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✨️"
+     ]
+    },
+    {
+     "id": "exact-16",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✔️",
+      "✅️",
+      "💋",
+      "™️",
+      "❗️"
+     ]
+    },
+    {
+     "id": "exact-17",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😭",
+      "😢",
+      "😿",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "exact-18",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐢",
+      "🇦🇨",
+      "🥷",
+      "🍕"
+     ]
+    },
+    {
+     "id": "exact-19",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥑"
+     ]
+    },
+    {
+     "id": "exact-20",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏆️"
+     ]
+    },
+    {
+     "id": "exact-21",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️"
+     ]
+    },
+    {
+     "id": "exact-22",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💯",
+      "💶",
+      "👌",
+      "🏃"
+     ]
+    },
+    {
+     "id": "exact-23",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌈",
+      "🏳️‍🌈",
+      "😿",
+      "🍣",
+      "🪕"
+     ]
+    },
+    {
+     "id": "exact-24",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👻",
+      "📭️",
+      "💀",
+      "🌶️",
+      "🏚️"
+     ]
+    },
+    {
+     "id": "exact-25",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "🪨",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "exact-26",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️",
+      "🫰",
+      "💓",
+      "🧄"
+     ]
+    },
+    {
+     "id": "typo-01",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧛",
+      "👻",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🧟"
+     ]
+    },
+    {
+     "id": "typo-02",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍕"
+     ]
+    },
+    {
+     "id": "typo-03",
+     "cat": "typo",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🪨",
+      "🚀",
+      "🧑‍🎤",
+      "👨‍🎤",
+      "👩‍🎤"
+     ]
+    },
+    {
+     "id": "typo-04",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "typo-05",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥦"
+     ]
+    },
+    {
+     "id": "typo-06",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦕",
+      "🦖",
+      "🦴",
+      "📠"
+     ]
+    },
+    {
+     "id": "typo-07",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦄"
+     ]
+    },
+    {
+     "id": "typo-08",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥑"
+     ]
+    },
+    {
+     "id": "typo-09",
+     "cat": "typo",
+     "rank": 8,
+     "forbidHit": false,
+     "top": [
+      "🎅",
+      "🤶",
+      "🧑‍🎄",
+      "🌲",
+      "🌳"
+     ]
+    },
+    {
+     "id": "typo-10",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👅"
+     ]
+    },
+    {
+     "id": "typo-11",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐘",
+      "🎅",
+      "🩶",
+      "🥜"
+     ]
+    },
+    {
+     "id": "typo-12",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍠"
+     ]
+    },
+    {
+     "id": "typo-13",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍌"
+     ]
+    },
+    {
+     "id": "typo-14",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥪"
+     ]
+    },
+    {
+     "id": "typo-15",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦒"
+     ]
+    },
+    {
+     "id": "typo-16",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍓"
+     ]
+    },
+    {
+     "id": "typo-17",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍔"
+     ]
+    },
+    {
+     "id": "typo-18",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☕️",
+      "🤎",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "typo-19",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐧",
+      "🇦🇶",
+      "🚒",
+      "🚂",
+      "🍝"
+     ]
+    },
+    {
+     "id": "typo-20",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "📆",
+      "📅",
+      "🗓️"
+     ]
+    },
+    {
+     "id": "typo-21",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☂️",
+      "☔️",
+      "🏖️",
+      "⛱️",
+      "🌂"
+     ]
+    },
+    {
+     "id": "typo-22",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍉"
+     ]
+    },
+    {
+     "id": "typo-23",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐙"
+     ]
+    },
+    {
+     "id": "typo-24",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "💊",
+      "🥳",
+      "🤸",
+      "😀"
+     ]
+    },
+    {
+     "id": "slang-01",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "🙆",
+      "🙆‍♂️",
+      "🙆‍♀️"
+     ]
+    },
+    {
+     "id": "slang-02",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚢",
+      "🛳️",
+      "⚓️",
+      "🔱",
+      "👍️"
+     ]
+    },
+    {
+     "id": "slang-03",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤏",
+      "🌃",
+      "😠",
+      "🧌",
+      "😽"
+     ]
+    },
+    {
+     "id": "slang-04",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧑‍💻",
+      "👨‍💻",
+      "👩‍💻",
+      "🏠️"
+     ]
+    },
+    {
+     "id": "slang-05",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐐",
+      "♑️",
+      "🧔",
+      "🧔‍♂️",
+      "🧌"
+     ]
+    },
+    {
+     "id": "slang-06",
+     "cat": "slang",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🔥",
+      "🔥",
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "slang-07",
+     "cat": "slang",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "💯",
+      "👲",
+      "🎓️",
+      "🧢",
+      "🫑"
+     ]
+    },
+    {
+     "id": "slang-08",
+     "cat": "slang",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🙊",
+      "🍣",
+      "🎄",
+      "👀",
+      "🕵️"
+     ]
+    },
+    {
+     "id": "slang-09",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "☠️",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "slang-10",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😆",
+      "😹",
+      "😄",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "slang-11",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😂",
+      "💀",
+      "🤣",
+      "😹",
+      "😭"
+     ]
+    },
+    {
+     "id": "slang-12",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧠",
+      "🧑‍🔬",
+      "☝️",
+      "🧟",
+      "🤓"
+     ]
+    },
+    {
+     "id": "slang-13",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👀",
+      "🫴",
+      "👂️",
+      "💁",
+      "💁‍♂️"
+     ]
+    },
+    {
+     "id": "slang-14",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐛",
+      "🪲",
+      "🦗",
+      "🎺",
+      "🫵"
+     ]
+    },
+    {
+     "id": "slang-15",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🦸"
+     ]
+    },
+    {
+     "id": "slang-16",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "😰",
+      "🤞",
+      "💨",
+      "🪊"
+     ]
+    },
+    {
+     "id": "slang-17",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "🫯",
+      "🙍",
+      "🤦",
+      "🤺"
+     ]
+    },
+    {
+     "id": "slang-18",
+     "cat": "slang",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🧑‍💻",
+      "🦆",
+      "🪿",
+      "🦢",
+      "🛞"
+     ]
+    },
+    {
+     "id": "slang-19",
+     "cat": "slang",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🚶",
+      "🌿",
+      "💚",
+      "🫵",
+      "🧑‍💻"
+     ]
+    },
+    {
+     "id": "slang-20",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🪦",
+      "💀",
+      "🥀",
+      "🍎",
+      "💪"
+     ]
+    },
+    {
+     "id": "slang-21",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "😎",
+      "🏆️",
+      "💅",
+      "💖",
+      "💜"
+     ]
+    },
+    {
+     "id": "slang-22",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤦",
+      "🤦‍♂️",
+      "🤦‍♀️",
+      "🙈"
+     ]
+    },
+    {
+     "id": "slang-23",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤷",
+      "🤷‍♂️",
+      "🤷‍♀️"
+     ]
+    },
+    {
+     "id": "slang-24",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💥",
+      "🧠",
+      "🤯",
+      "😞",
+      "🫳"
+     ]
+    },
+    {
+     "id": "slang-25",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤞",
+      "🍀",
+      "🙏",
+      "🫰",
+      "🎌"
+     ]
+    },
+    {
+     "id": "slang-26",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤦‍♂️",
+      "🤦‍♀️",
+      "😒",
+      "💩",
+      "🙈"
+     ]
+    },
+    {
+     "id": "slang-27",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔜",
+      "💨",
+      "🚶",
+      "📱"
+     ]
+    },
+    {
+     "id": "slang-28",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌴",
+      "✈️",
+      "📅"
+     ]
+    },
+    {
+     "id": "slang-29",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👌",
+      "🙆",
+      "🩵",
+      "☝️"
+     ]
+    },
+    {
+     "id": "slang-30",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💩",
+      "👃"
+     ]
+    },
+    {
+     "id": "slang-31",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😐️",
+      "😑",
+      "😒",
+      "👌",
+      "😤"
+     ]
+    },
+    {
+     "id": "slang-32",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😜",
+      "😝",
+      "💀",
+      "⏳️",
+      "🎆"
+     ]
+    },
+    {
+     "id": "slang-33",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧂",
+      "🙎‍♂️",
+      "🙍",
+      "🙎",
+      "🙎‍♀️"
+     ]
+    },
+    {
+     "id": "pop-01",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🏞️",
+      "🛝",
+      "🎡",
+      "🎢",
+      "⛲️"
+     ]
+    },
+    {
+     "id": "pop-02",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏢",
+      "🧑‍💼",
+      "👨‍💼",
+      "👩‍💼",
+      "💼"
+     ]
+    },
+    {
+     "id": "pop-03",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧙‍♂️",
+      "🧙",
+      "🧝",
+      "🧹",
+      "🧌"
+     ]
+    },
+    {
+     "id": "pop-04",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "💫",
+      "⭐️",
+      "👰",
+      "🍣",
+      "🤩"
+     ]
+    },
+    {
+     "id": "pop-05",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👁️",
+      "🧙",
+      "🧙‍♂️",
+      "🧝",
+      "🧝‍♂️"
+     ]
+    },
+    {
+     "id": "pop-06",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🛳️",
+      "🚢",
+      "😭",
+      "🎻",
+      "💔"
+     ]
+    },
+    {
+     "id": "pop-07",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🏊️",
+      "💙",
+      "🏊‍♂️",
+      "🏊‍♀️",
+      "🇦🇺"
+     ]
+    },
+    {
+     "id": "pop-08",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🫅",
+      "🌄",
+      "🦁",
+      "🪘",
+      "🦭"
+     ]
+    },
+    {
+     "id": "pop-09",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💚",
+      "🧅",
+      "👹",
+      "🤴",
+      "🧌"
+     ]
+    },
+    {
+     "id": "pop-10",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👱‍♀️",
+      "🩷",
+      "👱‍♂️",
+      "💖",
+      "👱"
+     ]
+    },
+    {
+     "id": "pop-11",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫅",
+      "🏰",
+      "👾",
+      "🏏",
+      "🎮️"
+     ]
+    },
+    {
+     "id": "pop-12",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍛",
+      "📱",
+      "🍙"
+     ]
+    },
+    {
+     "id": "pop-13",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🖤",
+      "🦸",
+      "🦸‍♂️",
+      "💥"
+     ]
+    },
+    {
+     "id": "pop-14",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🤟",
+      "🦸",
+      "🦸‍♂️"
+     ]
+    },
+    {
+     "id": "pop-15",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍄",
+      "🧑‍🔧",
+      "👨‍🔧",
+      "👩‍🔧",
+      "💫"
+     ]
+    },
+    {
+     "id": "pop-16",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🖖",
+      "🤦",
+      "🚶",
+      "💫",
+      "⭐️"
+     ]
+    },
+    {
+     "id": "pop-17",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🕴️",
+      "🤖",
+      "🧑‍💻",
+      "☎️"
+     ]
+    },
+    {
+     "id": "pop-18",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🩵",
+      "👩‍🦳",
+      "👸",
+      "🍦",
+      "🍨"
+     ]
+    },
+    {
+     "id": "pop-19",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👶",
+      "🦈",
+      "👩‍🍼",
+      "👨‍🍼",
+      "🧑‍🍼"
+     ]
+    },
+    {
+     "id": "pop-20",
+     "cat": "pop",
+     "rank": 6,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍕",
+      "😭",
+      "👽️",
+      "🪀"
+     ]
+    },
+    {
+     "id": "pop-21",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧱",
+      "🪨",
+      "🪵",
+      "🧟",
+      "🧟‍♂️"
+     ]
+    },
+    {
+     "id": "pop-22",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧙‍♀️",
+      "🧙",
+      "🧙‍♂️",
+      "🪄",
+      "🤳"
+     ]
+    },
+    {
+     "id": "pop-23",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦈"
+     ]
+    },
+    {
+     "id": "pop-24",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👻",
+      "🗽",
+      "☎️"
+     ]
+    },
+    {
+     "id": "pop-25",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏴‍☠️",
+      "☠️",
+      "🚢",
+      "🧜‍♀️",
+      "⚓️"
+     ]
+    },
+    {
+     "id": "pop-26",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🚥",
+      "🚦",
+      "🦑",
+      "👾",
+      "🏏"
+     ]
+    },
+    {
+     "id": "pop-27",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👩‍🦲",
+      "🧇",
+      "🌲",
+      "🚧",
+      "👦"
+     ]
+    },
+    {
+     "id": "pop-28",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "⛷️",
+      "🏂️",
+      "🏃",
+      "🫒",
+      "🇧🇦"
+     ]
+    },
+    {
+     "id": "pop-29",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🇦🇷",
+      "🇧🇷",
+      "🥤",
+      "💘",
+      "🍵"
+     ]
+    },
+    {
+     "id": "pop-30",
+     "cat": "pop",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🍗",
+      "🥣",
+      "🍜",
+      "🏈",
+      "🥑"
+     ]
+    },
+    {
+     "id": "pop-31",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎅",
+      "🤶",
+      "🧑‍🎄",
+      "🌲",
+      "🎄"
+     ]
+    },
+    {
+     "id": "pop-32",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🧛",
+      "👻",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🧟"
+     ]
+    },
+    {
+     "id": "pop-33",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦃",
+      "🧡",
+      "🫃",
+      "🌾",
+      "🍗"
+     ]
+    },
+    {
+     "id": "pop-34",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍇",
+      "🇧🇱",
+      "💋",
+      "🇦🇹",
+      "🏋️"
+     ]
+    },
+    {
+     "id": "pop-35",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫘",
+      "👽️",
+      "🧑‍🚀",
+      "👨‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "idiom-01",
+     "cat": "idiom",
+     "rank": 2,
+     "forbidHit": true,
+     "top": [
+      "🦵",
+      "🍀",
+      "🦿",
+      "🍗",
+      "🧘"
+     ]
+    },
+    {
+     "id": "idiom-02",
+     "cat": "idiom",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🍥",
+      "🍰",
+      "🥮",
+      "🧩",
+      "🎂"
+     ]
+    },
+    {
+     "id": "idiom-03",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫘",
+      "🫛",
+      "🥫",
+      "🫴",
+      "👂️"
+     ]
+    },
+    {
+     "id": "idiom-04",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦶",
+      "🐾",
+      "👞",
+      "🇦🇶",
+      "🥶"
+     ]
+    },
+    {
+     "id": "idiom-05",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐘",
+      "🧖",
+      "🧖‍♂️",
+      "🧖‍♀️",
+      "🚹️"
+     ]
+    },
+    {
+     "id": "idiom-06",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧱",
+      "🛖"
+     ]
+    },
+    {
+     "id": "idiom-07",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🌮",
+      "💦"
+     ]
+    },
+    {
+     "id": "idiom-08",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🇨🇶",
+      "🔙",
+      "🥹",
+      "👱",
+      "🛖"
+     ]
+    },
+    {
+     "id": "idiom-09",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🌡️",
+      "☀️",
+      "🌞",
+      "☁️",
+      "⛅️"
+     ]
+    },
+    {
+     "id": "idiom-10",
+     "cat": "idiom",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "😲",
+      "😫",
+      "💰️"
+     ]
+    },
+    {
+     "id": "idiom-11",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☁️",
+      "9️⃣",
+      "⛈️",
+      "🌤️",
+      "🌥️"
+     ]
+    },
+    {
+     "id": "idiom-12",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🚅",
+      "🫦",
+      "🦟",
+      "🚄",
+      "😥"
+     ]
+    },
+    {
+     "id": "idiom-13",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐴",
+      "🧲",
+      "🫷",
+      "🫸",
+      "🫱"
+     ]
+    },
+    {
+     "id": "idiom-14",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "⛹️",
+      "⛹️‍♂️",
+      "⛹️‍♀️",
+      "🧑‍⚖️",
+      "👨‍⚖️"
+     ]
+    },
+    {
+     "id": "idiom-15",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧊",
+      "🍦",
+      "🍧",
+      "🍨",
+      "🏒"
+     ]
+    },
+    {
+     "id": "idiom-16",
+     "cat": "idiom",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🍥",
+      "🐟️",
+      "🐠",
+      "🎣",
+      "🐡"
+     ]
+    },
+    {
+     "id": "idiom-17",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-18",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌃",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🥱",
+      "🧛"
+     ]
+    },
+    {
+     "id": "idiom-19",
+     "cat": "idiom",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🌄",
+      "🐦️",
+      "🪺",
+      "🌱",
+      "🐦‍⬛"
+     ]
+    },
+    {
+     "id": "idiom-20",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍠",
+      "🛋️",
+      "🍟",
+      "🏃"
+     ]
+    },
+    {
+     "id": "idiom-21",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💗",
+      "😟",
+      "🫚"
+     ]
+    },
+    {
+     "id": "intent-01",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👏",
+      "🚀",
+      "👶",
+      "💒",
+      "🙌"
+     ]
+    },
+    {
+     "id": "intent-02",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😮‍💨",
+      "🫩",
+      "😓",
+      "😩",
+      "😫"
+     ]
+    },
+    {
+     "id": "intent-03",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧔‍♀️",
+      "🍞"
+     ]
+    },
+    {
+     "id": "intent-04",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤞",
+      "🍀",
+      "👍️",
+      "🫡",
+      "🧧"
+     ]
+    },
+    {
+     "id": "intent-05",
+     "cat": "intent",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "❣️",
+      "🫶",
+      "🙏",
+      "🙇",
+      "🙇‍♂️"
+     ]
+    },
+    {
+     "id": "intent-06",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🎈",
+      "🎉"
+     ]
+    },
+    {
+     "id": "intent-07",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "💌",
+      "❤️",
+      "🤟",
+      "😽",
+      "😻"
+     ]
+    },
+    {
+     "id": "intent-08",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥹",
+      "👏",
+      "👍️",
+      "🥲",
+      "🦚"
+     ]
+    },
+    {
+     "id": "intent-09",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🩹",
+      "🏥",
+      "🤲",
+      "🙏",
+      "💪"
+     ]
+    },
+    {
+     "id": "intent-10",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😢",
+      "😿",
+      "💔",
+      "🙇",
+      "🙇‍♂️"
+     ]
+    },
+    {
+     "id": "intent-11",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😕",
+      "😵‍💫",
+      "🫤",
+      "😖",
+      "🥨"
+     ]
+    },
+    {
+     "id": "intent-12",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤣",
+      "😂",
+      "💀",
+      "😹",
+      "🌶️"
+     ]
+    },
+    {
+     "id": "intent-13",
+     "cat": "intent",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "😐️",
+      "😑",
+      "😶",
+      "😬",
+      "😳"
+     ]
+    },
+    {
+     "id": "intent-14",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🫦",
+      "🍿",
+      "🫷",
+      "🫸"
+     ]
+    },
+    {
+     "id": "intent-15",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏃",
+      "🏃‍♂️",
+      "🏃‍♀️",
+      "🏃‍➡️",
+      "🏃‍♀️‍➡️"
+     ]
+    },
+    {
+     "id": "intent-16",
+     "cat": "intent",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "💖",
+      "🌻",
+      "🌼",
+      "📻️",
+      "🌄"
+     ]
+    },
+    {
+     "id": "intent-17",
+     "cat": "intent",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💖",
+      "❤️",
+      "🌃",
+      "👍️",
+      "🥱"
+     ]
+    },
+    {
+     "id": "intent-18",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥳",
+      "🥂",
+      "🎈",
+      "🎉",
+      "🎊"
+     ]
+    },
+    {
+     "id": "intent-19",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😠",
+      "👿",
+      "😡",
+      "😤",
+      "👺"
+     ]
+    },
+    {
+     "id": "intent-20",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🕴️",
+      "💼",
+      "🈺",
+      "🧑‍💼",
+      "👨‍💼"
+     ]
+    },
+    {
+     "id": "intent-21",
+     "cat": "intent",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "🍧",
+      "🧱",
+      "🌶️",
+      "🌭",
+      "🥵"
+     ]
+    },
+    {
+     "id": "intent-22",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🇦🇶",
+      "🥶",
+      "😰",
+      "😓",
+      "😅"
+     ]
+    },
+    {
+     "id": "intent-23",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🏦"
+     ]
+    },
+    {
+     "id": "intent-24",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💃",
+      "🕺",
+      "🍕",
+      "🪇",
+      "🎉"
+     ]
+    },
+    {
+     "id": "intent-25",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💭",
+      "☝️",
+      "💬",
+      "🌃",
+      "🙏"
+     ]
+    },
+    {
+     "id": "intent-26",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😣",
+      "🧗",
+      "✊️",
+      "🧗‍♂️",
+      "🧗‍♀️"
+     ]
+    },
+    {
+     "id": "intent-27",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💪",
+      "🫵",
+      "👊",
+      "🍀",
+      "👌"
+     ]
+    },
+    {
+     "id": "intent-28",
+     "cat": "intent",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "👐",
+      "💕",
+      "🤗",
+      "🤎",
+      "🌵"
+     ]
+    },
+    {
+     "id": "intent-29",
+     "cat": "intent",
+     "rank": 9,
+     "forbidHit": false,
+     "top": [
+      "🌌",
+      "🤯",
+      "😲",
+      "🏠️",
+      "🧑‍🦯"
+     ]
+    },
+    {
+     "id": "intent-30",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✋️",
+      "5️⃣",
+      "🔊",
+      "🫷",
+      "🫸"
+     ]
+    },
+    {
+     "id": "intent-31",
+     "cat": "intent",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️",
+      "☕️",
+      "🥱"
+     ]
+    },
+    {
+     "id": "intent-32",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "👕",
+      "👖",
+      "🕺",
+      "💃"
+     ]
+    },
+    {
+     "id": "tr-01",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🍰",
+      "🎁"
+     ]
+    },
+    {
+     "id": "tr-02",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💪",
+      "👍️",
+      "👷",
+      "👷‍♂️",
+      "👷‍♀️"
+     ]
+    },
+    {
+     "id": "tr-03",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "🤲",
+      "👏",
+      "💪",
+      "👶"
+     ]
+    },
+    {
+     "id": "tr-04",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "👁️‍🗨️",
+      "🪬",
+      "👶",
+      "🤰"
+     ]
+    },
+    {
+     "id": "tr-05",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫖",
+      "🍵",
+      "🧋",
+      "☕️",
+      "🧉"
+     ]
+    },
+    {
+     "id": "tr-06",
+     "cat": "tr",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳",
+      "🍳",
+      "🍲"
+     ]
+    },
+    {
+     "id": "tr-07",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🤲",
+      "🙏",
+      "❤️‍🩹",
+      "🌷",
+      "🍊"
+     ]
+    },
+    {
+     "id": "tr-08",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥳",
+      "🎂",
+      "🫶",
+      "❤️",
+      "🧡"
+     ]
+    },
+    {
+     "id": "tr-09",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫀",
+      "😻",
+      "💝",
+      "💖",
+      "💗"
+     ]
+    },
+    {
+     "id": "tr-10",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "😹",
+      "😭",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "tr-11",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🔥",
+      "🏩",
+      "💘",
+      "💗",
+      "💞"
+     ]
+    },
+    {
+     "id": "tr-12",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🫂",
+      "🙏",
+      "❤️",
+      "🫶",
+      "❣️"
+     ]
+    },
+    {
+     "id": "tr-13",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🎉",
+      "👏",
+      "㊗️",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "tr-14",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😫"
+     ]
+    },
+    {
+     "id": "tr-15",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🤎",
+      "☕️",
+      "🟤",
+      "🟫",
+      "🥱"
+     ]
+    },
+    {
+     "id": "tr-16",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍬",
+      "🍭",
+      "🍖",
+      "🕌",
+      "🙌"
+     ]
+    },
+    {
+     "id": "tr-17",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🧕",
+      "🫓",
+      "🕌",
+      "🤲",
+      "🥁"
+     ]
+    },
+    {
+     "id": "tr-18",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐈️",
+      "😺",
+      "😸",
+      "😹",
+      "😻"
+     ]
+    },
+    {
+     "id": "tr-19",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐕️",
+      "🦴",
+      "🐕‍🦺",
+      "🐶",
+      "🐩"
+     ]
+    },
+    {
+     "id": "tr-20",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔥",
+      "🤒",
+      "🦟",
+      "🧨",
+      "🧯"
+     ]
+    },
+    {
+     "id": "tr-21",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "tr-22",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍨",
+      "🍦",
+      "🥭",
+      "🛑",
+      "👅"
+     ]
+    },
+    {
+     "id": "tr-23",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😢",
+      "💔",
+      "🙏",
+      "🏴",
+      "🖤"
+     ]
+    },
+    {
+     "id": "tr-24",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👌",
+      "🤌",
+      "🎉",
+      "🆒",
+      "👍️"
+     ]
+    },
+    {
+     "id": "tr-25",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😴",
+      "🛌",
+      "💤",
+      "🧸",
+      "🛏️"
+     ]
+    },
+    {
+     "id": "tr-26",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🇹🇷",
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳",
+      "🍳"
+     ]
+    },
+    {
+     "id": "tr-27",
+     "cat": "tr",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍴",
+      "🤌",
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳"
+     ]
+    },
+    {
+     "id": "tr-28",
+     "cat": "tr",
+     "rank": 9,
+     "forbidHit": false,
+     "top": [
+      "🤝",
+      "🏠️",
+      "💼",
+      "❤️",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "tr-29",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🛟",
+      "🥯",
+      "⛴️"
+     ]
+    },
+    {
+     "id": "tr-30",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🐉",
+      "🏬",
+      "💯",
+      "🤘",
+      "🦸"
+     ]
+    },
+    {
+     "id": "tr-31",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🍰",
+      "🎁"
+     ]
+    },
+    {
+     "id": "tr-32",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "🤲",
+      "👏",
+      "💪",
+      "👶"
+     ]
+    },
+    {
+     "id": "tr-33",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🥳",
+      "🎅",
+      "🎂",
+      "🍾"
+     ]
+    },
+    {
+     "id": "neg-01",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": true,
+     "top": [
+      "🌭",
+      "🐕️",
+      "🐶",
+      "🦴",
+      "🦮"
+     ]
+    },
+    {
+     "id": "neg-02",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍍",
+      "🖊️"
+     ]
+    },
+    {
+     "id": "neg-03",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦋",
+      "💇‍♀️",
+      "🏊️",
+      "🏊‍♂️",
+      "🏊‍♀️"
+     ]
+    },
+    {
+     "id": "neg-04",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍉",
+      "👲"
+     ]
+    },
+    {
+     "id": "neg-05",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "neg-06",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐈‍⬛",
+      "🖤",
+      "🙀",
+      "🐈️",
+      "🐱"
+     ]
+    },
+    {
+     "id": "neg-07",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "😓",
+      "😅",
+      "💦",
+      "😥"
+     ]
+    },
+    {
+     "id": "neg-08",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐝",
+      "🍺",
+      "🫜",
+      "🍻",
+      "🥩"
+     ]
+    },
+    {
+     "id": "neg-09",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💔",
+      "⛓️‍💥",
+      "❤️",
+      "😻",
+      "💘"
+     ]
+    },
+    {
+     "id": "neg-10",
+     "cat": "negative",
+     "rank": 3,
+     "forbidHit": true,
+     "top": [
+      "💹",
+      "🥧",
+      "📈",
+      "📉",
+      "📊"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "alias (min coverage 0.5)",
+   "kind": "alias",
+   "summary": {
+    "n": 214,
+    "r1": 61.7,
+    "r5": 79.9,
+    "r10": 81.3,
+    "mrr": 0.689,
+    "forbidRate": 0.9
+   },
+   "byCategory": {
+    "exact": {
+     "n": 26,
+     "r1": 100,
+     "r5": 100,
+     "r10": 100,
+     "mrr": 1,
+     "forbidRate": 0
+    },
+    "typo": {
+     "n": 24,
+     "r1": 83.3,
+     "r5": 87.5,
+     "r10": 87.5,
+     "mrr": 0.854,
+     "forbidRate": 0
+    },
+    "slang": {
+     "n": 33,
+     "r1": 60.6,
+     "r5": 81.8,
+     "r10": 81.8,
+     "mrr": 0.682,
+     "forbidRate": 0
+    },
+    "pop": {
+     "n": 35,
+     "r1": 34.3,
+     "r5": 65.7,
+     "r10": 68.6,
+     "mrr": 0.468,
+     "forbidRate": 0
+    },
+    "idiom": {
+     "n": 21,
+     "r1": 28.6,
+     "r5": 38.1,
+     "r10": 38.1,
+     "mrr": 0.325,
+     "forbidRate": 4.8
+    },
+    "intent": {
+     "n": 32,
+     "r1": 53.1,
+     "r5": 78.1,
+     "r10": 81.3,
+     "mrr": 0.624,
+     "forbidRate": 0
+    },
+    "tr": {
+     "n": 33,
+     "r1": 66.7,
+     "r5": 93.9,
+     "r10": 97,
+     "mrr": 0.782,
+     "forbidRate": 0
+    },
+    "negative": {
+     "n": 10,
+     "r1": 90,
+     "r5": 100,
+     "r10": 100,
+     "mrr": 0.95,
+     "forbidRate": 10
+    }
+   },
+   "outcomes": [
+    {
+     "id": "exact-01",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "exact-02",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔥",
+      "❤️‍🔥",
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "exact-03",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀",
+      "🦵"
+     ]
+    },
+    {
+     "id": "exact-04",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️",
+      "😻",
+      "💘",
+      "💝",
+      "💖"
+     ]
+    },
+    {
+     "id": "exact-05",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍕",
+      "🍄‍🟫",
+      "🍍",
+      "🤌",
+      "🫃"
+     ]
+    },
+    {
+     "id": "exact-06",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐕️",
+      "🐶",
+      "🦴",
+      "🌭",
+      "🦮"
+     ]
+    },
+    {
+     "id": "exact-07",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐱",
+      "😺",
+      "😿",
+      "🐈️",
+      "😸"
+     ]
+    },
+    {
+     "id": "exact-08",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎉",
+      "👐"
+     ]
+    },
+    {
+     "id": "exact-09",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎉"
+     ]
+    },
+    {
+     "id": "exact-10",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "☠️",
+      "🩻",
+      "👲",
+      "🏴‍☠️"
+     ]
+    },
+    {
+     "id": "exact-11",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👀",
+      "🙄",
+      "😸",
+      "😄",
+      "😊"
+     ]
+    },
+    {
+     "id": "exact-12",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎃",
+      "🏮"
+     ]
+    },
+    {
+     "id": "exact-13",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☕️",
+      "🤎",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "exact-14",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦄"
+     ]
+    },
+    {
+     "id": "exact-15",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✨️"
+     ]
+    },
+    {
+     "id": "exact-16",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✔️",
+      "✅️",
+      "💋",
+      "❗️",
+      "❎️"
+     ]
+    },
+    {
+     "id": "exact-17",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😭",
+      "😢",
+      "😿"
+     ]
+    },
+    {
+     "id": "exact-18",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐢",
+      "🇦🇨",
+      "🥷",
+      "🍕"
+     ]
+    },
+    {
+     "id": "exact-19",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥑"
+     ]
+    },
+    {
+     "id": "exact-20",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏆️"
+     ]
+    },
+    {
+     "id": "exact-21",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️"
+     ]
+    },
+    {
+     "id": "exact-22",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💯",
+      "💶",
+      "👌",
+      "🏃"
+     ]
+    },
+    {
+     "id": "exact-23",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌈",
+      "🏳️‍🌈",
+      "😿",
+      "🍣",
+      "🪕"
+     ]
+    },
+    {
+     "id": "exact-24",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👻",
+      "📭️",
+      "💀",
+      "🌶️",
+      "🏚️"
+     ]
+    },
+    {
+     "id": "exact-25",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "🪨",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "exact-26",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️",
+      "🫰",
+      "💓",
+      "🧄"
+     ]
+    },
+    {
+     "id": "typo-01",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧛",
+      "👻",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🧟"
+     ]
+    },
+    {
+     "id": "typo-02",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍕"
+     ]
+    },
+    {
+     "id": "typo-03",
+     "cat": "typo",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🪨",
+      "🚀",
+      "🧑‍🎤",
+      "👨‍🎤",
+      "👩‍🎤"
+     ]
+    },
+    {
+     "id": "typo-04",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "typo-05",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥦"
+     ]
+    },
+    {
+     "id": "typo-06",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦕",
+      "🦖",
+      "🦴",
+      "📠"
+     ]
+    },
+    {
+     "id": "typo-07",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦄"
+     ]
+    },
+    {
+     "id": "typo-08",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥑"
+     ]
+    },
+    {
+     "id": "typo-09",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🎅",
+      "🤶",
+      "🧑‍🎄"
+     ]
+    },
+    {
+     "id": "typo-10",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👅"
+     ]
+    },
+    {
+     "id": "typo-11",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐘",
+      "🎅",
+      "🩶",
+      "🥜"
+     ]
+    },
+    {
+     "id": "typo-12",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍠"
+     ]
+    },
+    {
+     "id": "typo-13",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍌"
+     ]
+    },
+    {
+     "id": "typo-14",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥪"
+     ]
+    },
+    {
+     "id": "typo-15",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦒"
+     ]
+    },
+    {
+     "id": "typo-16",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍓"
+     ]
+    },
+    {
+     "id": "typo-17",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍔"
+     ]
+    },
+    {
+     "id": "typo-18",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☕️",
+      "🤎",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "typo-19",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐧",
+      "🇦🇶",
+      "🚒",
+      "🚂",
+      "🍝"
+     ]
+    },
+    {
+     "id": "typo-20",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "📆",
+      "📅",
+      "🗓️"
+     ]
+    },
+    {
+     "id": "typo-21",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☂️",
+      "☔️",
+      "🏖️",
+      "⛱️",
+      "🌂"
+     ]
+    },
+    {
+     "id": "typo-22",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍉"
+     ]
+    },
+    {
+     "id": "typo-23",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐙"
+     ]
+    },
+    {
+     "id": "typo-24",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "slang-01",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "🙆",
+      "🙆‍♂️",
+      "🙆‍♀️"
+     ]
+    },
+    {
+     "id": "slang-02",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚢",
+      "🛳️",
+      "⚓️",
+      "🔱",
+      "👍️"
+     ]
+    },
+    {
+     "id": "slang-03",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤏",
+      "🌃",
+      "😠",
+      "🧌",
+      "😽"
+     ]
+    },
+    {
+     "id": "slang-04",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧑‍💻",
+      "👨‍💻",
+      "👩‍💻",
+      "🏠️"
+     ]
+    },
+    {
+     "id": "slang-05",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐐",
+      "♑️",
+      "🧔",
+      "🧔‍♂️",
+      "🧌"
+     ]
+    },
+    {
+     "id": "slang-06",
+     "cat": "slang",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🔥",
+      "🔥",
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "slang-07",
+     "cat": "slang",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "💯",
+      "👲",
+      "🎓️",
+      "🧢",
+      "🎌"
+     ]
+    },
+    {
+     "id": "slang-08",
+     "cat": "slang",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🙊",
+      "🍣",
+      "🎄",
+      "👀",
+      "🕵️"
+     ]
+    },
+    {
+     "id": "slang-09",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "☠️",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "slang-10",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😆",
+      "😹",
+      "😄",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "slang-11",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😂",
+      "💀",
+      "🤣",
+      "😹",
+      "😭"
+     ]
+    },
+    {
+     "id": "slang-12",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧠",
+      "☝️",
+      "🧑‍🔬",
+      "🤓",
+      "🧟"
+     ]
+    },
+    {
+     "id": "slang-13",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🫴",
+      "👂️",
+      "👀",
+      "💁",
+      "💁‍♂️"
+     ]
+    },
+    {
+     "id": "slang-14",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐛",
+      "🪲",
+      "🦗",
+      "🎺",
+      "🫵"
+     ]
+    },
+    {
+     "id": "slang-15",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🦸"
+     ]
+    },
+    {
+     "id": "slang-16",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "😰",
+      "🤞",
+      "💨",
+      "🪊"
+     ]
+    },
+    {
+     "id": "slang-17",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "🫯",
+      "🙍",
+      "🤦",
+      "🤺"
+     ]
+    },
+    {
+     "id": "slang-18",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧑‍💻",
+      "🛞"
+     ]
+    },
+    {
+     "id": "slang-19",
+     "cat": "slang",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🚶",
+      "🌿",
+      "💚",
+      "🫵",
+      "🧑‍💻"
+     ]
+    },
+    {
+     "id": "slang-20",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🪦",
+      "💀",
+      "🥀",
+      "🍎",
+      "💪"
+     ]
+    },
+    {
+     "id": "slang-21",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "😎",
+      "🏆️",
+      "💅",
+      "💖",
+      "💜"
+     ]
+    },
+    {
+     "id": "slang-22",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤦",
+      "🤦‍♂️",
+      "🤦‍♀️",
+      "🙈"
+     ]
+    },
+    {
+     "id": "slang-23",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤷",
+      "🤷‍♂️",
+      "🤷‍♀️"
+     ]
+    },
+    {
+     "id": "slang-24",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💥",
+      "🧠",
+      "🤯"
+     ]
+    },
+    {
+     "id": "slang-25",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤞",
+      "🍀",
+      "🙏",
+      "🎌",
+      "🫰"
+     ]
+    },
+    {
+     "id": "slang-26",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤦‍♂️",
+      "🤦‍♀️",
+      "😒",
+      "💩",
+      "🙈"
+     ]
+    },
+    {
+     "id": "slang-27",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔜",
+      "💨",
+      "🚶",
+      "📱"
+     ]
+    },
+    {
+     "id": "slang-28",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌴",
+      "✈️",
+      "📅"
+     ]
+    },
+    {
+     "id": "slang-29",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👌",
+      "🙆",
+      "🩵",
+      "☝️"
+     ]
+    },
+    {
+     "id": "slang-30",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💩",
+      "👃"
+     ]
+    },
+    {
+     "id": "slang-31",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😐️",
+      "😑",
+      "😒",
+      "👌",
+      "😤"
+     ]
+    },
+    {
+     "id": "slang-32",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😜",
+      "😝",
+      "💀",
+      "⏳️",
+      "🎆"
+     ]
+    },
+    {
+     "id": "slang-33",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧂",
+      "🙎‍♂️",
+      "🙍",
+      "🙎",
+      "🙎‍♀️"
+     ]
+    },
+    {
+     "id": "pop-01",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "pop-02",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏢",
+      "🧑‍💼",
+      "👨‍💼",
+      "👩‍💼",
+      "💼"
+     ]
+    },
+    {
+     "id": "pop-03",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧙",
+      "🧙‍♂️",
+      "🧝",
+      "🧹",
+      "🧌"
+     ]
+    },
+    {
+     "id": "pop-04",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "👰",
+      "🍣"
+     ]
+    },
+    {
+     "id": "pop-05",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👁️",
+      "🧙",
+      "🧙‍♂️",
+      "🧝",
+      "🧝‍♂️"
+     ]
+    },
+    {
+     "id": "pop-06",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🛳️",
+      "🚢",
+      "😭",
+      "🎻",
+      "💔"
+     ]
+    },
+    {
+     "id": "pop-07",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🏊️",
+      "💙",
+      "🏊‍♂️",
+      "🏊‍♀️",
+      "🇦🇺"
+     ]
+    },
+    {
+     "id": "pop-08",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🫅",
+      "🌄",
+      "🦁",
+      "🪘",
+      "🦭"
+     ]
+    },
+    {
+     "id": "pop-09",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💚",
+      "🧅",
+      "👹",
+      "🤴",
+      "🧌"
+     ]
+    },
+    {
+     "id": "pop-10",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👱‍♀️",
+      "🩷",
+      "👱‍♂️",
+      "💖",
+      "👱"
+     ]
+    },
+    {
+     "id": "pop-11",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫅",
+      "🏰"
+     ]
+    },
+    {
+     "id": "pop-12",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍛",
+      "📱",
+      "🍙"
+     ]
+    },
+    {
+     "id": "pop-13",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🖤",
+      "🦸",
+      "🦸‍♂️",
+      "💥"
+     ]
+    },
+    {
+     "id": "pop-14",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🤟",
+      "🦸",
+      "🦸‍♂️"
+     ]
+    },
+    {
+     "id": "pop-15",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🔧",
+      "👨‍🔧",
+      "🍄",
+      "👩‍🔧",
+      "💫"
+     ]
+    },
+    {
+     "id": "pop-16",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🖖",
+      "🤦",
+      "🚶"
+     ]
+    },
+    {
+     "id": "pop-17",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🕴️",
+      "🤖",
+      "🧑‍💻",
+      "☎️"
+     ]
+    },
+    {
+     "id": "pop-18",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🩵",
+      "👩‍🦳",
+      "👸",
+      "🍦",
+      "🍨"
+     ]
+    },
+    {
+     "id": "pop-19",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👶",
+      "🦈",
+      "🤝"
+     ]
+    },
+    {
+     "id": "pop-20",
+     "cat": "pop",
+     "rank": 6,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍕",
+      "😭",
+      "👽️",
+      "🪀"
+     ]
+    },
+    {
+     "id": "pop-21",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧱",
+      "🪨",
+      "🪵",
+      "🧟",
+      "🧟‍♂️"
+     ]
+    },
+    {
+     "id": "pop-22",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧙‍♀️"
+     ]
+    },
+    {
+     "id": "pop-23",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦈"
+     ]
+    },
+    {
+     "id": "pop-24",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👻",
+      "🗽",
+      "☎️"
+     ]
+    },
+    {
+     "id": "pop-25",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☠️",
+      "🚢",
+      "🏴‍☠️",
+      "🧜‍♀️",
+      "⚓️"
+     ]
+    },
+    {
+     "id": "pop-26",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🚥",
+      "🚦",
+      "🦑"
+     ]
+    },
+    {
+     "id": "pop-27",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👩‍🦲",
+      "🧇",
+      "🌲"
+     ]
+    },
+    {
+     "id": "pop-28",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "⛷️",
+      "🏂️",
+      "🏃",
+      "🫒",
+      "🇧🇦"
+     ]
+    },
+    {
+     "id": "pop-29",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🇦🇷",
+      "🇧🇷",
+      "🥤",
+      "🍵",
+      "🍶"
+     ]
+    },
+    {
+     "id": "pop-30",
+     "cat": "pop",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "🍗",
+      "🥣",
+      "🍜",
+      "🥑",
+      "🏈"
+     ]
+    },
+    {
+     "id": "pop-31",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎅",
+      "🤶",
+      "🧑‍🎄",
+      "🌲",
+      "🎄"
+     ]
+    },
+    {
+     "id": "pop-32",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🧛",
+      "👻",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🧟"
+     ]
+    },
+    {
+     "id": "pop-33",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦃",
+      "🧡",
+      "🫃",
+      "🌾",
+      "🍗"
+     ]
+    },
+    {
+     "id": "pop-34",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍇",
+      "🇧🇱",
+      "💋",
+      "🇦🇹",
+      "🏋️"
+     ]
+    },
+    {
+     "id": "pop-35",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫘",
+      "👽️",
+      "🧑‍🚀",
+      "👨‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "idiom-01",
+     "cat": "idiom",
+     "rank": 2,
+     "forbidHit": true,
+     "top": [
+      "🦵",
+      "🍀",
+      "🦿",
+      "🍗",
+      "🏋️"
+     ]
+    },
+    {
+     "id": "idiom-02",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-03",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫘",
+      "🫛",
+      "🥫"
+     ]
+    },
+    {
+     "id": "idiom-04",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦶",
+      "🐾",
+      "👞",
+      "🇦🇶",
+      "🦿"
+     ]
+    },
+    {
+     "id": "idiom-05",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐘",
+      "🎅",
+      "🩶",
+      "🥜"
+     ]
+    },
+    {
+     "id": "idiom-06",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-07",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-08",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-09",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧜",
+      "🧜‍♂️",
+      "🧜‍♀️",
+      "🧌",
+      "🍍"
+     ]
+    },
+    {
+     "id": "idiom-10",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-11",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-12",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🚅",
+      "😥"
+     ]
+    },
+    {
+     "id": "idiom-13",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐴",
+      "🥥"
+     ]
+    },
+    {
+     "id": "idiom-14",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "⛹️",
+      "⛹️‍♂️",
+      "⛹️‍♀️",
+      "🧑‍⚖️",
+      "👨‍⚖️"
+     ]
+    },
+    {
+     "id": "idiom-15",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧊",
+      "🍦",
+      "🍧",
+      "🍨",
+      "🏒"
+     ]
+    },
+    {
+     "id": "idiom-16",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-17",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-18",
+     "cat": "idiom",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🌃",
+      "🦉",
+      "🥱"
+     ]
+    },
+    {
+     "id": "idiom-19",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🌄",
+      "🌱",
+      "🥱",
+      "🏡",
+      "🧑‍🌾"
+     ]
+    },
+    {
+     "id": "idiom-20",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍠",
+      "🍟"
+     ]
+    },
+    {
+     "id": "idiom-21",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💗"
+     ]
+    },
+    {
+     "id": "intent-01",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👏",
+      "👶",
+      "💒"
+     ]
+    },
+    {
+     "id": "intent-02",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😮‍💨",
+      "🫩",
+      "😓",
+      "😩",
+      "😫"
+     ]
+    },
+    {
+     "id": "intent-03",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧔‍♀️",
+      "🍞"
+     ]
+    },
+    {
+     "id": "intent-04",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤞",
+      "🍀",
+      "👍️",
+      "🫡",
+      "🧧"
+     ]
+    },
+    {
+     "id": "intent-05",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "❣️",
+      "🥹",
+      "🫶",
+      "🙏",
+      "🙇"
+     ]
+    },
+    {
+     "id": "intent-06",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🎈",
+      "🎉"
+     ]
+    },
+    {
+     "id": "intent-07",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "💌",
+      "❤️",
+      "🤟",
+      "😽",
+      "😻"
+     ]
+    },
+    {
+     "id": "intent-08",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥹",
+      "👏",
+      "👍️",
+      "🥲",
+      "🦚"
+     ]
+    },
+    {
+     "id": "intent-09",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🩹",
+      "🤲",
+      "🙏",
+      "💪",
+      "🧑‍⚕️"
+     ]
+    },
+    {
+     "id": "intent-10",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😢",
+      "😿",
+      "💔",
+      "🙇"
+     ]
+    },
+    {
+     "id": "intent-11",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😕",
+      "😵‍💫",
+      "🫤",
+      "😖",
+      "🥨"
+     ]
+    },
+    {
+     "id": "intent-12",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤣",
+      "😂",
+      "💀",
+      "😹"
+     ]
+    },
+    {
+     "id": "intent-13",
+     "cat": "intent",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "😐️",
+      "😑",
+      "😶",
+      "😬",
+      "😳"
+     ]
+    },
+    {
+     "id": "intent-14",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🫦",
+      "🍿",
+      "🫷",
+      "🫸"
+     ]
+    },
+    {
+     "id": "intent-15",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏃",
+      "🏃‍♂️",
+      "🏃‍♀️",
+      "🏃‍➡️",
+      "🏃‍♀️‍➡️"
+     ]
+    },
+    {
+     "id": "intent-16",
+     "cat": "intent",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "💖",
+      "🌻",
+      "🌼",
+      "📻️",
+      "🌄"
+     ]
+    },
+    {
+     "id": "intent-17",
+     "cat": "intent",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💖",
+      "❤️",
+      "🌃",
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "intent-18",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥳",
+      "🥂",
+      "🎈",
+      "🎉",
+      "🎊"
+     ]
+    },
+    {
+     "id": "intent-19",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😠",
+      "👿",
+      "😡",
+      "😤",
+      "👺"
+     ]
+    },
+    {
+     "id": "intent-20",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💂"
+     ]
+    },
+    {
+     "id": "intent-21",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍧",
+      "🧱",
+      "🌳",
+      "🪾",
+      "🌯"
+     ]
+    },
+    {
+     "id": "intent-22",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🇦🇶",
+      "🥶"
+     ]
+    },
+    {
+     "id": "intent-23",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🏦"
+     ]
+    },
+    {
+     "id": "intent-24",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💃",
+      "🕺",
+      "🍕",
+      "🪇",
+      "🎉"
+     ]
+    },
+    {
+     "id": "intent-25",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💭",
+      "☝️",
+      "💬",
+      "🌃",
+      "🙏"
+     ]
+    },
+    {
+     "id": "intent-26",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😣",
+      "✊️",
+      "🧗",
+      "🧗‍♂️",
+      "🧗‍♀️"
+     ]
+    },
+    {
+     "id": "intent-27",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💪",
+      "🫵",
+      "👊",
+      "🍀",
+      "👌"
+     ]
+    },
+    {
+     "id": "intent-28",
+     "cat": "intent",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "👐",
+      "💕",
+      "🤗",
+      "🤎",
+      "🌵"
+     ]
+    },
+    {
+     "id": "intent-29",
+     "cat": "intent",
+     "rank": 9,
+     "forbidHit": false,
+     "top": [
+      "🌌",
+      "🤯",
+      "😲",
+      "🏠️",
+      "🧑‍🦯"
+     ]
+    },
+    {
+     "id": "intent-30",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✋️",
+      "🔊",
+      "⚡️",
+      "🫷",
+      "🫸"
+     ]
+    },
+    {
+     "id": "intent-31",
+     "cat": "intent",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️",
+      "☕️",
+      "🥱"
+     ]
+    },
+    {
+     "id": "intent-32",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "👕",
+      "👖",
+      "💃",
+      "🕺"
+     ]
+    },
+    {
+     "id": "tr-01",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🍰",
+      "🎁"
+     ]
+    },
+    {
+     "id": "tr-02",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💪",
+      "👍️",
+      "👷",
+      "👷‍♂️",
+      "👷‍♀️"
+     ]
+    },
+    {
+     "id": "tr-03",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "🤲",
+      "👏",
+      "💪",
+      "👶"
+     ]
+    },
+    {
+     "id": "tr-04",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "👁️‍🗨️",
+      "🪬",
+      "👶",
+      "🤰"
+     ]
+    },
+    {
+     "id": "tr-05",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫖",
+      "🍵",
+      "🧋",
+      "☕️",
+      "🧉"
+     ]
+    },
+    {
+     "id": "tr-06",
+     "cat": "tr",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳",
+      "🍳",
+      "🍲"
+     ]
+    },
+    {
+     "id": "tr-07",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🩹",
+      "😥",
+      "🤲",
+      "🙏",
+      "🧑‍⚕️"
+     ]
+    },
+    {
+     "id": "tr-08",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥳",
+      "🎂",
+      "🫶",
+      "❤️",
+      "🧡"
+     ]
+    },
+    {
+     "id": "tr-09",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫀",
+      "😻",
+      "💝",
+      "💖",
+      "💗"
+     ]
+    },
+    {
+     "id": "tr-10",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "😹",
+      "😭",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "tr-11",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🔥",
+      "🏩",
+      "💘",
+      "💗",
+      "💞"
+     ]
+    },
+    {
+     "id": "tr-12",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🫂",
+      "🙏",
+      "❤️",
+      "🫶",
+      "❣️"
+     ]
+    },
+    {
+     "id": "tr-13",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🎉",
+      "👏",
+      "㊗️",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "tr-14",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😫"
+     ]
+    },
+    {
+     "id": "tr-15",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🤎",
+      "☕️",
+      "🟤",
+      "🟫",
+      "🥱"
+     ]
+    },
+    {
+     "id": "tr-16",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍬",
+      "🍭",
+      "🍖",
+      "🕌",
+      "🙌"
+     ]
+    },
+    {
+     "id": "tr-17",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🧕",
+      "🫓",
+      "🕌",
+      "🤲",
+      "🥁"
+     ]
+    },
+    {
+     "id": "tr-18",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐈️",
+      "😺",
+      "😸",
+      "😹",
+      "😻"
+     ]
+    },
+    {
+     "id": "tr-19",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐕️",
+      "🦴",
+      "🐕‍🦺",
+      "🐶",
+      "🐩"
+     ]
+    },
+    {
+     "id": "tr-20",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔥",
+      "🤒",
+      "🦟",
+      "🧨",
+      "🧯"
+     ]
+    },
+    {
+     "id": "tr-21",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "tr-22",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍨",
+      "🍦",
+      "🥭",
+      "🛑",
+      "👅"
+     ]
+    },
+    {
+     "id": "tr-23",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😢",
+      "💔",
+      "🙏",
+      "🏴",
+      "🖤"
+     ]
+    },
+    {
+     "id": "tr-24",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👌",
+      "🤌",
+      "🎉",
+      "🆒",
+      "👍️"
+     ]
+    },
+    {
+     "id": "tr-25",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😴",
+      "🛌",
+      "💤",
+      "🧸",
+      "🛏️"
+     ]
+    },
+    {
+     "id": "tr-26",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🇹🇷",
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳",
+      "🍳"
+     ]
+    },
+    {
+     "id": "tr-27",
+     "cat": "tr",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍴",
+      "🤌",
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳"
+     ]
+    },
+    {
+     "id": "tr-28",
+     "cat": "tr",
+     "rank": 9,
+     "forbidHit": false,
+     "top": [
+      "🤝",
+      "🏠️",
+      "💼",
+      "❤️",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "tr-29",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🛟",
+      "🥯",
+      "⛴️"
+     ]
+    },
+    {
+     "id": "tr-30",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🐉",
+      "🏬",
+      "💯",
+      "🤘",
+      "🦸"
+     ]
+    },
+    {
+     "id": "tr-31",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🍰",
+      "🎁"
+     ]
+    },
+    {
+     "id": "tr-32",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "🤲",
+      "👏",
+      "💪",
+      "👶"
+     ]
+    },
+    {
+     "id": "tr-33",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🥳",
+      "🎅",
+      "🎂",
+      "🍾"
+     ]
+    },
+    {
+     "id": "neg-01",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": true,
+     "top": [
+      "🌭",
+      "🐕️",
+      "🐶",
+      "🦴",
+      "🦮"
+     ]
+    },
+    {
+     "id": "neg-02",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍍",
+      "🖊️"
+     ]
+    },
+    {
+     "id": "neg-03",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦋",
+      "💇‍♀️",
+      "🏊️",
+      "🏊‍♂️",
+      "🏊‍♀️"
+     ]
+    },
+    {
+     "id": "neg-04",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍉",
+      "👲"
+     ]
+    },
+    {
+     "id": "neg-05",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "neg-06",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐈‍⬛",
+      "🖤",
+      "🙀",
+      "🐈️",
+      "🐱"
+     ]
+    },
+    {
+     "id": "neg-07",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "😓",
+      "😅",
+      "💦",
+      "😥"
+     ]
+    },
+    {
+     "id": "neg-08",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐝",
+      "🍺",
+      "🫜",
+      "🥩",
+      "🫚"
+     ]
+    },
+    {
+     "id": "neg-09",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💔",
+      "⛓️‍💥",
+      "🦴",
+      "🥀",
+      "🏚️"
+     ]
+    },
+    {
+     "id": "neg-10",
+     "cat": "negative",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "💹",
+      "📈",
+      "📉",
+      "📊",
+      "🍩"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "alias (min coverage 0.6)",
+   "kind": "alias",
+   "summary": {
+    "n": 214,
+    "r1": 57.9,
+    "r5": 73.4,
+    "r10": 74.8,
+    "mrr": 0.643,
+    "forbidRate": 0.5
+   },
+   "byCategory": {
+    "exact": {
+     "n": 26,
+     "r1": 100,
+     "r5": 100,
+     "r10": 100,
+     "mrr": 1,
+     "forbidRate": 0
+    },
+    "typo": {
+     "n": 24,
+     "r1": 83.3,
+     "r5": 87.5,
+     "r10": 87.5,
+     "mrr": 0.854,
+     "forbidRate": 0
+    },
+    "slang": {
+     "n": 33,
+     "r1": 60.6,
+     "r5": 75.8,
+     "r10": 78.8,
+     "mrr": 0.661,
+     "forbidRate": 0
+    },
+    "pop": {
+     "n": 35,
+     "r1": 34.3,
+     "r5": 60,
+     "r10": 60,
+     "mrr": 0.445,
+     "forbidRate": 0
+    },
+    "idiom": {
+     "n": 21,
+     "r1": 14.3,
+     "r5": 23.8,
+     "r10": 23.8,
+     "mrr": 0.183,
+     "forbidRate": 4.8
+    },
+    "intent": {
+     "n": 32,
+     "r1": 43.8,
+     "r5": 62.5,
+     "r10": 68.8,
+     "mrr": 0.519,
+     "forbidRate": 0
+    },
+    "tr": {
+     "n": 33,
+     "r1": 63.6,
+     "r5": 93.9,
+     "r10": 93.9,
+     "mrr": 0.764,
+     "forbidRate": 0
+    },
+    "negative": {
+     "n": 10,
+     "r1": 80,
+     "r5": 80,
+     "r10": 80,
+     "mrr": 0.8,
+     "forbidRate": 0
+    }
+   },
+   "outcomes": [
+    {
+     "id": "exact-01",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "exact-02",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔥",
+      "❤️‍🔥",
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "exact-03",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀",
+      "🦵"
+     ]
+    },
+    {
+     "id": "exact-04",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️"
+     ]
+    },
+    {
+     "id": "exact-05",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍕",
+      "🍄‍🟫",
+      "🍍",
+      "🤌",
+      "🫃"
+     ]
+    },
+    {
+     "id": "exact-06",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐕️",
+      "🐶",
+      "🦴",
+      "🌭",
+      "🦮"
+     ]
+    },
+    {
+     "id": "exact-07",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐱",
+      "😺",
+      "😿",
+      "🐈️",
+      "😸"
+     ]
+    },
+    {
+     "id": "exact-08",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎉",
+      "👐"
+     ]
+    },
+    {
+     "id": "exact-09",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎉"
+     ]
+    },
+    {
+     "id": "exact-10",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "☠️",
+      "🩻",
+      "👲",
+      "🏴‍☠️"
+     ]
+    },
+    {
+     "id": "exact-11",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👀",
+      "🙄",
+      "😸",
+      "😄",
+      "😊"
+     ]
+    },
+    {
+     "id": "exact-12",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎃"
+     ]
+    },
+    {
+     "id": "exact-13",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☕️",
+      "🤎",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "exact-14",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦄"
+     ]
+    },
+    {
+     "id": "exact-15",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✨️"
+     ]
+    },
+    {
+     "id": "exact-16",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✔️",
+      "✅️"
+     ]
+    },
+    {
+     "id": "exact-17",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😭"
+     ]
+    },
+    {
+     "id": "exact-18",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐢",
+      "🇦🇨",
+      "🥷",
+      "🍕"
+     ]
+    },
+    {
+     "id": "exact-19",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥑"
+     ]
+    },
+    {
+     "id": "exact-20",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏆️"
+     ]
+    },
+    {
+     "id": "exact-21",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️"
+     ]
+    },
+    {
+     "id": "exact-22",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💯",
+      "💶",
+      "👌",
+      "🏃"
+     ]
+    },
+    {
+     "id": "exact-23",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌈",
+      "🏳️‍🌈",
+      "😿",
+      "🍣",
+      "🪕"
+     ]
+    },
+    {
+     "id": "exact-24",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👻",
+      "📭️",
+      "💀",
+      "🌶️",
+      "🏚️"
+     ]
+    },
+    {
+     "id": "exact-25",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "🪨",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "exact-26",
+     "cat": "exact",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️",
+      "🫰",
+      "💓",
+      "🧄"
+     ]
+    },
+    {
+     "id": "typo-01",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧛",
+      "👻",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🧟"
+     ]
+    },
+    {
+     "id": "typo-02",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍕"
+     ]
+    },
+    {
+     "id": "typo-03",
+     "cat": "typo",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🪨",
+      "🚀",
+      "🧑‍🎤",
+      "👨‍🎤",
+      "👩‍🎤"
+     ]
+    },
+    {
+     "id": "typo-04",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👎️"
+     ]
+    },
+    {
+     "id": "typo-05",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥦"
+     ]
+    },
+    {
+     "id": "typo-06",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦕",
+      "🦖",
+      "🦴",
+      "📠"
+     ]
+    },
+    {
+     "id": "typo-07",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦄"
+     ]
+    },
+    {
+     "id": "typo-08",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥑"
+     ]
+    },
+    {
+     "id": "typo-09",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "typo-10",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👅"
+     ]
+    },
+    {
+     "id": "typo-11",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐘",
+      "🎅",
+      "🩶",
+      "🥜"
+     ]
+    },
+    {
+     "id": "typo-12",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍠"
+     ]
+    },
+    {
+     "id": "typo-13",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍌"
+     ]
+    },
+    {
+     "id": "typo-14",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥪"
+     ]
+    },
+    {
+     "id": "typo-15",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦒"
+     ]
+    },
+    {
+     "id": "typo-16",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍓"
+     ]
+    },
+    {
+     "id": "typo-17",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍔"
+     ]
+    },
+    {
+     "id": "typo-18",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☕️",
+      "🤎",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "typo-19",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐧",
+      "🇦🇶",
+      "🚒",
+      "🚂",
+      "🍝"
+     ]
+    },
+    {
+     "id": "typo-20",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "📆",
+      "📅",
+      "🗓️"
+     ]
+    },
+    {
+     "id": "typo-21",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☂️",
+      "☔️",
+      "🏖️",
+      "⛱️",
+      "🌂"
+     ]
+    },
+    {
+     "id": "typo-22",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍉"
+     ]
+    },
+    {
+     "id": "typo-23",
+     "cat": "typo",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐙"
+     ]
+    },
+    {
+     "id": "typo-24",
+     "cat": "typo",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "slang-01",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "🙆",
+      "🙆‍♂️",
+      "🙆‍♀️"
+     ]
+    },
+    {
+     "id": "slang-02",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚢",
+      "🛳️",
+      "⚓️",
+      "🔱",
+      "👍️"
+     ]
+    },
+    {
+     "id": "slang-03",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤏",
+      "🌃",
+      "😠",
+      "🧌",
+      "😽"
+     ]
+    },
+    {
+     "id": "slang-04",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧑‍💻",
+      "👨‍💻",
+      "👩‍💻",
+      "🏠️"
+     ]
+    },
+    {
+     "id": "slang-05",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐐",
+      "♑️",
+      "🧔",
+      "🧔‍♂️",
+      "🧌"
+     ]
+    },
+    {
+     "id": "slang-06",
+     "cat": "slang",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🔥",
+      "🔥",
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "slang-07",
+     "cat": "slang",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "💯",
+      "👲",
+      "🎓️",
+      "🧢",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "slang-08",
+     "cat": "slang",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🙊",
+      "🍣",
+      "🎄",
+      "👀",
+      "🕵️"
+     ]
+    },
+    {
+     "id": "slang-09",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "☠️",
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️"
+     ]
+    },
+    {
+     "id": "slang-10",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😆",
+      "😹",
+      "😄",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "slang-11",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😂",
+      "💀",
+      "🤣",
+      "😹",
+      "😭"
+     ]
+    },
+    {
+     "id": "slang-12",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧠",
+      "☝️",
+      "🧑‍🔬",
+      "🌁",
+      "🤦"
+     ]
+    },
+    {
+     "id": "slang-13",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🫴",
+      "👂️",
+      "👀",
+      "💁",
+      "💁‍♂️"
+     ]
+    },
+    {
+     "id": "slang-14",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐛",
+      "🪲",
+      "🦗",
+      "🎺",
+      "🫵"
+     ]
+    },
+    {
+     "id": "slang-15",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🦸"
+     ]
+    },
+    {
+     "id": "slang-16",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "😰",
+      "🤞",
+      "💨",
+      "🪊"
+     ]
+    },
+    {
+     "id": "slang-17",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "🫯",
+      "🙍",
+      "🤦",
+      "🤺"
+     ]
+    },
+    {
+     "id": "slang-18",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🧑‍💻"
+     ]
+    },
+    {
+     "id": "slang-19",
+     "cat": "slang",
+     "rank": 7,
+     "forbidHit": false,
+     "top": [
+      "🚶",
+      "💚",
+      "🫵",
+      "🧑‍💻",
+      "🚶‍♂️"
+     ]
+    },
+    {
+     "id": "slang-20",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🪦",
+      "💀",
+      "🥀",
+      "🍎",
+      "💪"
+     ]
+    },
+    {
+     "id": "slang-21",
+     "cat": "slang",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "😎",
+      "🏆️",
+      "💅",
+      "💖",
+      "💜"
+     ]
+    },
+    {
+     "id": "slang-22",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤦",
+      "🤦‍♂️",
+      "🤦‍♀️",
+      "🙈"
+     ]
+    },
+    {
+     "id": "slang-23",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤷",
+      "🤷‍♂️",
+      "🤷‍♀️"
+     ]
+    },
+    {
+     "id": "slang-24",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💥",
+      "🧠"
+     ]
+    },
+    {
+     "id": "slang-25",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤞",
+      "🍀",
+      "🙏"
+     ]
+    },
+    {
+     "id": "slang-26",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤦‍♂️",
+      "🤦‍♀️",
+      "😒",
+      "💩",
+      "🙈"
+     ]
+    },
+    {
+     "id": "slang-27",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔜",
+      "💨",
+      "🚶",
+      "📱"
+     ]
+    },
+    {
+     "id": "slang-28",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌴",
+      "✈️",
+      "📅"
+     ]
+    },
+    {
+     "id": "slang-29",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👍️",
+      "👌",
+      "🙆",
+      "🩵",
+      "☝️"
+     ]
+    },
+    {
+     "id": "slang-30",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💩",
+      "👃"
+     ]
+    },
+    {
+     "id": "slang-31",
+     "cat": "slang",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😐️",
+      "😑",
+      "😒",
+      "👌",
+      "😤"
+     ]
+    },
+    {
+     "id": "slang-32",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😜",
+      "😝",
+      "💀",
+      "⏳️",
+      "🎆"
+     ]
+    },
+    {
+     "id": "slang-33",
+     "cat": "slang",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧂",
+      "🙎‍♂️",
+      "🙍",
+      "🙎",
+      "🙎‍♀️"
+     ]
+    },
+    {
+     "id": "pop-01",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "pop-02",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🏢",
+      "🧑‍💼",
+      "👨‍💼",
+      "👩‍💼",
+      "💼"
+     ]
+    },
+    {
+     "id": "pop-03",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧙",
+      "🧙‍♂️",
+      "🧝",
+      "🧹",
+      "🧌"
+     ]
+    },
+    {
+     "id": "pop-04",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "👰",
+      "🍣"
+     ]
+    },
+    {
+     "id": "pop-05",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👁️",
+      "🧙",
+      "🧙‍♂️",
+      "🧝",
+      "🧝‍♂️"
+     ]
+    },
+    {
+     "id": "pop-06",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🛳️",
+      "🚢",
+      "😭",
+      "🎻",
+      "💔"
+     ]
+    },
+    {
+     "id": "pop-07",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💙",
+      "🏊️",
+      "🏊‍♂️",
+      "🏊‍♀️",
+      "🇦🇺"
+     ]
+    },
+    {
+     "id": "pop-08",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫅",
+      "🌄",
+      "🪘"
+     ]
+    },
+    {
+     "id": "pop-09",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💚",
+      "🧅",
+      "👹",
+      "🤴",
+      "🧌"
+     ]
+    },
+    {
+     "id": "pop-10",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👱‍♀️",
+      "🩷",
+      "👱‍♂️",
+      "💖",
+      "👱"
+     ]
+    },
+    {
+     "id": "pop-11",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫅",
+      "🏰"
+     ]
+    },
+    {
+     "id": "pop-12",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍛",
+      "📱",
+      "🍙"
+     ]
+    },
+    {
+     "id": "pop-13",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🖤",
+      "🦸",
+      "🦸‍♂️",
+      "💥"
+     ]
+    },
+    {
+     "id": "pop-14",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🤟",
+      "🦸",
+      "🦸‍♂️"
+     ]
+    },
+    {
+     "id": "pop-15",
+     "cat": "pop",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🔧",
+      "👨‍🔧",
+      "👩‍🔧",
+      "🍄",
+      "💫"
+     ]
+    },
+    {
+     "id": "pop-16",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🖖",
+      "🤦"
+     ]
+    },
+    {
+     "id": "pop-17",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🕴️",
+      "🤖",
+      "🧑‍💻",
+      "☎️"
+     ]
+    },
+    {
+     "id": "pop-18",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🩵",
+      "👩‍🦳",
+      "👸",
+      "🍦",
+      "🍨"
+     ]
+    },
+    {
+     "id": "pop-19",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👶",
+      "🦈",
+      "🤝"
+     ]
+    },
+    {
+     "id": "pop-20",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🥔",
+      "🍕",
+      "😭",
+      "👽️"
+     ]
+    },
+    {
+     "id": "pop-21",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧱",
+      "🪨",
+      "🪵",
+      "🧟",
+      "🧟‍♂️"
+     ]
+    },
+    {
+     "id": "pop-22",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧙‍♀️"
+     ]
+    },
+    {
+     "id": "pop-23",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦈"
+     ]
+    },
+    {
+     "id": "pop-24",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👻",
+      "🗽",
+      "☎️"
+     ]
+    },
+    {
+     "id": "pop-25",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "☠️",
+      "🚢",
+      "🏴‍☠️",
+      "🧜‍♀️",
+      "⚓️"
+     ]
+    },
+    {
+     "id": "pop-26",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🚥",
+      "🚦",
+      "🦑"
+     ]
+    },
+    {
+     "id": "pop-27",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "👩‍🦲",
+      "🧇",
+      "🌲"
+     ]
+    },
+    {
+     "id": "pop-28",
+     "cat": "pop",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "⛷️",
+      "🏂️",
+      "🏃",
+      "🫒",
+      "🇧🇦"
+     ]
+    },
+    {
+     "id": "pop-29",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🇦🇷",
+      "🇧🇷"
+     ]
+    },
+    {
+     "id": "pop-30",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍗",
+      "🥑"
+     ]
+    },
+    {
+     "id": "pop-31",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎅",
+      "🤶",
+      "🧑‍🎄",
+      "🌲",
+      "🎄"
+     ]
+    },
+    {
+     "id": "pop-32",
+     "cat": "pop",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🧛",
+      "👻",
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🧟"
+     ]
+    },
+    {
+     "id": "pop-33",
+     "cat": "pop",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦃",
+      "🧡",
+      "🫃",
+      "🌾",
+      "🍗"
+     ]
+    },
+    {
+     "id": "pop-34",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍇",
+      "🇧🇱",
+      "💋",
+      "🇦🇹",
+      "🏋️"
+     ]
+    },
+    {
+     "id": "pop-35",
+     "cat": "pop",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🫘",
+      "👽️",
+      "🧑‍🚀",
+      "👨‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "idiom-01",
+     "cat": "idiom",
+     "rank": 2,
+     "forbidHit": true,
+     "top": [
+      "🦵",
+      "🍀"
+     ]
+    },
+    {
+     "id": "idiom-02",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-03",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫘"
+     ]
+    },
+    {
+     "id": "idiom-04",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦶"
+     ]
+    },
+    {
+     "id": "idiom-05",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-06",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-07",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-08",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-09",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-10",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-11",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-12",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-13",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-14",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "⛹️",
+      "⛹️‍♂️",
+      "⛹️‍♀️"
+     ]
+    },
+    {
+     "id": "idiom-15",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-16",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-17",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "idiom-18",
+     "cat": "idiom",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🧛‍♂️",
+      "🧛‍♀️",
+      "🌃",
+      "🦉",
+      "🥱"
+     ]
+    },
+    {
+     "id": "idiom-19",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🌄"
+     ]
+    },
+    {
+     "id": "idiom-20",
+     "cat": "idiom",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥔"
+     ]
+    },
+    {
+     "id": "idiom-21",
+     "cat": "idiom",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💗"
+     ]
+    },
+    {
+     "id": "intent-01",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👏"
+     ]
+    },
+    {
+     "id": "intent-02",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😮‍💨",
+      "🫩",
+      "😓",
+      "😩",
+      "😫"
+     ]
+    },
+    {
+     "id": "intent-03",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "intent-04",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🤞",
+      "🍀",
+      "👍️",
+      "🫡",
+      "🧧"
+     ]
+    },
+    {
+     "id": "intent-05",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥹",
+      "❣️",
+      "🫶",
+      "🙏",
+      "🙇"
+     ]
+    },
+    {
+     "id": "intent-06",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🎈",
+      "🎉"
+     ]
+    },
+    {
+     "id": "intent-07",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "💌",
+      "❤️",
+      "🤟",
+      "😽",
+      "😻"
+     ]
+    },
+    {
+     "id": "intent-08",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥹",
+      "👏",
+      "👍️",
+      "🥲",
+      "🦚"
+     ]
+    },
+    {
+     "id": "intent-09",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🩹",
+      "🤲",
+      "🙏",
+      "💪",
+      "🧑‍⚕️"
+     ]
+    },
+    {
+     "id": "intent-10",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😢",
+      "😿",
+      "💔"
+     ]
+    },
+    {
+     "id": "intent-11",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😕",
+      "😵‍💫",
+      "🫤",
+      "😖",
+      "🥨"
+     ]
+    },
+    {
+     "id": "intent-12",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "intent-13",
+     "cat": "intent",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "😐️",
+      "😑",
+      "😶",
+      "😬",
+      "😳"
+     ]
+    },
+    {
+     "id": "intent-14",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🫦",
+      "🍿"
+     ]
+    },
+    {
+     "id": "intent-15",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "🏃",
+      "🏃‍♂️",
+      "🏃‍♀️",
+      "🏃‍➡️"
+     ]
+    },
+    {
+     "id": "intent-16",
+     "cat": "intent",
+     "rank": 6,
+     "forbidHit": false,
+     "top": [
+      "💖",
+      "🌻",
+      "🌼",
+      "📻️",
+      "🥐"
+     ]
+    },
+    {
+     "id": "intent-17",
+     "cat": "intent",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "💖",
+      "❤️",
+      "🌃"
+     ]
+    },
+    {
+     "id": "intent-18",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "intent-19",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😠",
+      "👿",
+      "😡",
+      "😤",
+      "👺"
+     ]
+    },
+    {
+     "id": "intent-20",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "intent-21",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍧",
+      "🧱",
+      "🪾"
+     ]
+    },
+    {
+     "id": "intent-22",
+     "cat": "intent",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🇦🇶",
+      "🥶"
+     ]
+    },
+    {
+     "id": "intent-23",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🏦"
+     ]
+    },
+    {
+     "id": "intent-24",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💃",
+      "🕺",
+      "🍕",
+      "🪇"
+     ]
+    },
+    {
+     "id": "intent-25",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "intent-26",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "😣",
+      "✊️",
+      "🧗",
+      "🧗‍♂️",
+      "🧗‍♀️"
+     ]
+    },
+    {
+     "id": "intent-27",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💪",
+      "🫵",
+      "👊",
+      "🍀",
+      "👌"
+     ]
+    },
+    {
+     "id": "intent-28",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "💕",
+      "👐"
+     ]
+    },
+    {
+     "id": "intent-29",
+     "cat": "intent",
+     "rank": 9,
+     "forbidHit": false,
+     "top": [
+      "🌌",
+      "🤯",
+      "😲",
+      "🏠️",
+      "🧑‍🦯"
+     ]
+    },
+    {
+     "id": "intent-30",
+     "cat": "intent",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "✋️"
+     ]
+    },
+    {
+     "id": "intent-31",
+     "cat": "intent",
+     "rank": 4,
+     "forbidHit": false,
+     "top": [
+      "🧟",
+      "🧟‍♂️",
+      "🧟‍♀️",
+      "🥱"
+     ]
+    },
+    {
+     "id": "intent-32",
+     "cat": "intent",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🙌"
+     ]
+    },
+    {
+     "id": "tr-01",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🍰",
+      "🎁"
+     ]
+    },
+    {
+     "id": "tr-02",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💪",
+      "👍️",
+      "👷",
+      "👷‍♂️",
+      "👷‍♀️"
+     ]
+    },
+    {
+     "id": "tr-03",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "🤲",
+      "👏",
+      "💪",
+      "👶"
+     ]
+    },
+    {
+     "id": "tr-04",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "👁️‍🗨️",
+      "🪬",
+      "👶",
+      "🤰"
+     ]
+    },
+    {
+     "id": "tr-05",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫖",
+      "🍵",
+      "🧋",
+      "☕️",
+      "🧉"
+     ]
+    },
+    {
+     "id": "tr-06",
+     "cat": "tr",
+     "rank": 5,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳",
+      "🍳",
+      "🍲"
+     ]
+    },
+    {
+     "id": "tr-07",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "😥",
+      "❤️‍🩹",
+      "🤲",
+      "🙏",
+      "🧑‍⚕️"
+     ]
+    },
+    {
+     "id": "tr-08",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🥳",
+      "🎂"
+     ]
+    },
+    {
+     "id": "tr-09",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🫀",
+      "😻",
+      "💝",
+      "💖",
+      "💗"
+     ]
+    },
+    {
+     "id": "tr-10",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💀",
+      "😹",
+      "😭",
+      "🤣",
+      "😂"
+     ]
+    },
+    {
+     "id": "tr-11",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "❤️‍🔥",
+      "🏩",
+      "💘",
+      "💗",
+      "💞"
+     ]
+    },
+    {
+     "id": "tr-12",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🫂",
+      "🙏",
+      "❤️",
+      "🫶",
+      "❣️"
+     ]
+    },
+    {
+     "id": "tr-13",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🎉",
+      "👏",
+      "㊗️",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "tr-14",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😫"
+     ]
+    },
+    {
+     "id": "tr-15",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🤎",
+      "☕️",
+      "🟤",
+      "🟫",
+      "🥱"
+     ]
+    },
+    {
+     "id": "tr-16",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍬",
+      "🍭",
+      "🍖",
+      "🕌",
+      "🙌"
+     ]
+    },
+    {
+     "id": "tr-17",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🧕",
+      "🫓",
+      "🕌",
+      "🤲",
+      "🥁"
+     ]
+    },
+    {
+     "id": "tr-18",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐈️",
+      "😺",
+      "😸",
+      "😹",
+      "😻"
+     ]
+    },
+    {
+     "id": "tr-19",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐕️",
+      "🦴",
+      "🐕‍🦺",
+      "🐶",
+      "🐩"
+     ]
+    },
+    {
+     "id": "tr-20",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🔥",
+      "🤒",
+      "🦟",
+      "🧨",
+      "🧯"
+     ]
+    },
+    {
+     "id": "tr-21",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🚀",
+      "👨‍🚀",
+      "🧑‍🚀",
+      "👩‍🚀"
+     ]
+    },
+    {
+     "id": "tr-22",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍨",
+      "🍦",
+      "🥭",
+      "🛑",
+      "👅"
+     ]
+    },
+    {
+     "id": "tr-23",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😢",
+      "💔",
+      "🙏",
+      "🏴"
+     ]
+    },
+    {
+     "id": "tr-24",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "👌",
+      "🤌",
+      "🎉",
+      "🆒",
+      "👍️"
+     ]
+    },
+    {
+     "id": "tr-25",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😴",
+      "🛌",
+      "💤",
+      "🧸",
+      "🛏️"
+     ]
+    },
+    {
+     "id": "tr-26",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🇹🇷",
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳",
+      "🍳"
+     ]
+    },
+    {
+     "id": "tr-27",
+     "cat": "tr",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🍴",
+      "🤌",
+      "🧑‍🍳",
+      "👨‍🍳",
+      "👩‍🍳"
+     ]
+    },
+    {
+     "id": "tr-28",
+     "cat": "tr",
+     "rank": 0,
+     "forbidHit": false,
+     "top": [
+      "🤝",
+      "🏠️",
+      "💼",
+      "❤️",
+      "🧑‍🎓"
+     ]
+    },
+    {
+     "id": "tr-29",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🛟",
+      "🥯",
+      "⛴️"
+     ]
+    },
+    {
+     "id": "tr-30",
+     "cat": "tr",
+     "rank": 3,
+     "forbidHit": false,
+     "top": [
+      "🐉",
+      "🏬",
+      "💯",
+      "🤘",
+      "🦸"
+     ]
+    },
+    {
+     "id": "tr-31",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🎂",
+      "🥳",
+      "💐",
+      "🍰",
+      "🎁"
+     ]
+    },
+    {
+     "id": "tr-32",
+     "cat": "tr",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧿",
+      "🤲",
+      "👏",
+      "💪",
+      "👶"
+     ]
+    },
+    {
+     "id": "tr-33",
+     "cat": "tr",
+     "rank": 2,
+     "forbidHit": false,
+     "top": [
+      "🙌",
+      "🥳",
+      "🎅",
+      "🎂",
+      "🍾"
+     ]
+    },
+    {
+     "id": "neg-01",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🌭",
+      "🫃",
+      "🥪"
+     ]
+    },
+    {
+     "id": "neg-02",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍍",
+      "🖊️"
+     ]
+    },
+    {
+     "id": "neg-03",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🦋",
+      "💇‍♀️",
+      "🏊️",
+      "🏊‍♂️",
+      "🏊‍♀️"
+     ]
+    },
+    {
+     "id": "neg-04",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🍉",
+      "👲"
+     ]
+    },
+    {
+     "id": "neg-05",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🧑‍🚒",
+      "👨‍🚒",
+      "👩‍🚒"
+     ]
+    },
+    {
+     "id": "neg-06",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "🐈‍⬛",
+      "🖤",
+      "🙀"
+     ]
+    },
+    {
+     "id": "neg-07",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "😰",
+      "😓"
+     ]
+    },
+    {
+     "id": "neg-08",
+     "cat": "negative",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    },
+    {
+     "id": "neg-09",
+     "cat": "negative",
+     "rank": 1,
+     "forbidHit": false,
+     "top": [
+      "💔",
+      "⛓️‍💥",
+      "🦴",
+      "🥀",
+      "🏚️"
+     ]
+    },
+    {
+     "id": "neg-10",
+     "cat": "negative",
+     "rank": 0,
+     "forbidHit": false,
+     "top": []
+    }
+   ]
+  }
+ ],
+ "latency": {
+  "keystroke": {
+   "p50": 0.21574999999995725,
+   "p95": 2.324583000000075
+  },
+  "buildMs": 69.487541,
+  "workersAi": []
+ },
+ "sizes": [
+  {
+   "variant": "full",
+   "enGz": 167037,
+   "trGz": 112092
+  }
+ ],
+ "skipped": []
+}
