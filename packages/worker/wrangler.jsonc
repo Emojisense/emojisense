@@ -120,11 +120,13 @@
     // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
     // that value unlocks localhost-only behaviour. Own D1 and R2, never shared with production.
     "dev": {
-      // Traces record the full request URL (search text, publishable key) and the user agent, so
-      // they are on for the internal dev environment only. Production keeps logs without URLs.
+      // Traces and invocation logs record the full request URL (search text, publishable key) and
+      // the user agent, so they are on for the internal dev environment only. Invocation logs add
+      // cpuTimeMs and wallTimeMs per request: the CPU work Server-Timing cannot show (Workers
+      // clocks stop during computation). Production keeps logs without URLs.
       "observability": {
         "enabled": true,
-        "logs": { "enabled": true, "invocation_logs": false },
+        "logs": { "enabled": true, "invocation_logs": true },
         "traces": { "enabled": true, "head_sampling_rate": 1 }
       },
       "routes": [{ "pattern": "api.emojisense.dev", "custom_domain": true }],
