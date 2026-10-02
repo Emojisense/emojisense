@@ -60,5 +60,5 @@ export function verifySignature(
   <CodeBlock code={verify} lang="ts" title="verify.ts" />
 
   <h2 id="retries">Retries</h2>
-  <p>Answer with a <code>2xx</code> status quickly. If a delivery fails, Emojisense tries up to 3 times in total: at once, after 10 seconds and after 60 seconds. Each attempt is recorded, so you can see it in the dashboard. Make your handler idempotent with the event <code>id</code>, because an event can arrive more than once.</p>
+  <p>Answer with a <code>2xx</code> status quickly. If a delivery fails, Emojisense tries up to 3 times in total: at once, after 10 seconds and after 60 seconds. The hosted Workers stop background work 30 seconds after a response, so the third attempt is often cut off: do not rely on it. Each attempt is recorded, so you can see it in the dashboard. Redirects are not followed. Make your handler idempotent with the event <code>id</code>, because an event can arrive more than once.</p>
 </DocsLayout>
