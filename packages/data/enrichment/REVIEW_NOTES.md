@@ -34,13 +34,17 @@ and moderated aliases.
 | 🗜️ (tr) | "işkence" is the carpenters' word for a clamp, but also means "torture". It is in `low`. |
 | 🌈 | Identity slang such as "fruity" is in `low` (can read as an insult). |
 | 🔫 | Water-gun play only; "james bond" and "sniper" may pull in real-gun searches. |
+| 🧩 | "autism awareness" kept; the autistic community disputes the puzzle-piece symbol. |
+| ⛑️ (tr) | Earthquake terms ("6 şubat", "deprem", AFAD/AKUT). Broad ones are in `low`. |
+| 🥛 (tr) | "aslan sütü" and "rakı" (regional use) are in `low`. |
+| 🏟️ (tr) | Club names are in `low`. Stadium names that contain a person's name are left out. |
 | 🫏 🐘 | US party symbols ("democratic party", "republican party") are in `low`. |
 
 ## Accuracy unsure
 
 | Emoji | Note |
 | ----- | ---- |
-| 🫈 🫯 🫜 🫔 🫆 🫪 | New emoji (Emoji 16/17) with little real usage. Many aliases are inferred from the image. |
+| 🫈 🫯 🫜 🫔 🫆 🫪 🛘 | New emoji (Emoji 16/17) with little real usage. Many aliases are inferred from the image. |
 | 👁️‍🗨️ | English "I am a witness" anti-bullying meaning vs Turkish CLDR "nazar". |
 | 🦃 | No alias for the country Türkiye. Check that "turkey" also surfaces 🇹🇷. |
 | 🦞 | "openclaw" (AI agent mascot) is recent and may not last. Older names are in `low`. |
@@ -61,6 +65,10 @@ and moderated aliases.
 | 📘 💴 🎷 | "facebook" (low), yuan via ¥, "epic sax guy" (meme nickname of a real performer). |
 | 🎍 🎏 🎋 | Niche Japanese terms and Turkish cultural stretches ("23 nisan", "hıdırellez") are in `low`. |
 | 🔥 (tr) | Source of the meme "yanıyorsun fuat abi" is unclear. It is in `low`. |
+| 🈂️ (tr) | "sa" / "selamün aleyküm" (from the `sa` shortcode) are in `low`. |
+| 6️⃣ 7️⃣ | The "six seven" / "67" meme is trend-dependent. |
+| 🔵 🟡 🟦 🟨 (tr) | Football club colour combinations are partly in `low`. |
+| ◽️ ▫️ | "gray square" depends on the platform rendering. |
 | 🗼 | "eiffel tower" and "paris" are figurative matches (people use 🗼 for Paris). |
 | 🎡 🎢 (tr) | It is not clear that people search for the theme parks "isfanbul" and "vialand" by name. |
 | 🕋 🕌 | General religious phrases ("inshallah", "allah kabul etsin") are in `low`. |

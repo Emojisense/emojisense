@@ -1,6 +1,6 @@
-import type { SemanticClient } from "./client.js";
 import type { AliasEngine, AliasSearchOutput, SearchResult } from "./engine.js";
 import { shouldUseSemantic as defaultShouldUseSemantic, fuse } from "./fusion.js";
+import type { SemanticLayer, SemanticProvider } from "./provider.js";
 
 export type SessionStatus = "idle" | "alias" | "loading" | "fused" | "error";
 
@@ -14,13 +14,15 @@ export interface SessionState {
   /** Round-trip time of the last semantic request, when one finished. */
   semanticMs?: number;
   semanticCached?: boolean;
+  /** Which layer gave the semantic results ("shard", "api", …). */
+  layer?: SemanticLayer;
   error?: unknown;
 }
 
 export interface SearchSessionOptions {
   engine: AliasEngine;
-  /** Omit for alias-only (fully offline) search. */
-  semantic?: SemanticClient;
+  /** Omit for alias-only (fully offline) search. Use chainProviders(shards, api) for layers. */
+  semantic?: SemanticProvider;
   locale?: string;
   limit?: number;
   /** Delay before a semantic request, after the last keystroke. Default 200 ms. */
@@ -86,6 +88,11 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
             ...(locale ? { locale } : {}),
           });
           if (controller.signal.aborted) return;
+          if (!response) {
+            // No layer had an answer (or the key is over its limit): alias results stand.
+            onChange({ query, results: alias.results, alias, aliasMs, status: "alias" });
+            return;
+          }
           onChange({
             query,
             results: fuse(alias, response.results, limit),
@@ -94,6 +101,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
             status: "fused",
             semanticMs: performance.now() - started,
             semanticCached: response.cached,
+            ...(response.layer ? { layer: response.layer } : {}),
           });
         } catch (error) {
           if (controller.signal.aborted) return;

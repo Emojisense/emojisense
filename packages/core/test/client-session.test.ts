@@ -27,6 +27,25 @@ describe("semantic client", () => {
     expect(url.searchParams.get("key")).toBe("pk_1");
   });
 
+  it("goes quiet after an over-limit answer, then retries after the cooldown", async () => {
+    let now = 0;
+    const fetch = vi.fn(
+      async () => new Response(JSON.stringify({ ...semanticBody, results: [], overLimit: true })),
+    );
+    const client = createSemanticClient({
+      endpoint: "https://api.test",
+      fetch,
+      now: () => now,
+      overLimitCooldownMs: 1000,
+    });
+    expect(await client.search("lava eruption")).toBeUndefined();
+    expect(await client.search("volcano eruption")).toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    now = 2000;
+    await client.search("volcano eruption");
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it("throws on HTTP errors", async () => {
     const client = createSemanticClient({
       endpoint: "https://api.test",
@@ -57,6 +76,19 @@ describe("search session", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(states.at(-1)?.status).toBe("fused");
     expect(states.at(-1)?.results.map((r) => r.emoji)).toContain("🌋");
+  });
+
+  it("keeps alias results when no layer answers", async () => {
+    const states: SessionState[] = [];
+    const session = createSearchSession({
+      engine: createEngine(en),
+      semantic: { search: async () => undefined },
+      debounceMs: 10,
+      onChange: (s) => states.push(s),
+    });
+    session.update("volcano eruption");
+    await vi.advanceTimersByTimeAsync(50);
+    expect(states.at(-1)?.status).toBe("alias");
   });
 
   it("skips the network when the alias match is confident", async () => {

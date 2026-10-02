@@ -1,10 +1,4 @@
-export {
-  createSemanticClient,
-  type SemanticClient,
-  type SemanticClientOptions,
-  type SemanticResponse,
-  type SemanticSearchOptions,
-} from "./client.js";
+export { createSemanticClient, type SemanticClient, type SemanticClientOptions } from "./client.js";
 export {
   type AliasEngine,
   type AliasResult,
@@ -33,12 +27,26 @@ export {
   ROW as ROW_INDEX,
 } from "./pack.js";
 export {
+  chainProviders,
+  type SemanticLayer,
+  type SemanticProvider,
+  type SemanticResponse,
+  type SemanticSearchOptions,
+} from "./provider.js";
+export {
   createSearchSession,
   type SearchSession,
   type SearchSessionOptions,
   type SessionState,
   type SessionStatus,
 } from "./session.js";
+export {
+  createShardProvider,
+  type Shard,
+  type ShardIndex,
+  type ShardProviderOptions,
+  shardKeyFor,
+} from "./shards.js";
 export { applySkinTone, SKIN_TONES, type SkinTone } from "./skin.js";
 export {
   decodeVectors,
