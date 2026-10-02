@@ -128,6 +128,15 @@ export {
   usageThresholdEventId,
 } from "./usage-thresholds.js";
 export {
+  parseWaitlistStatus,
+  WAITLIST_KEEP_MONTHS,
+  WAITLIST_PAGE_PATH,
+  WAITLIST_STATUS_ANCHORS,
+  type WaitlistStatus,
+  waitlistCutoff,
+  waitlistReturnUrl,
+} from "./waitlist.js";
+export {
   checkWebhookUrl,
   MAX_WEBHOOK_URL_LENGTH,
   type WebhookUrlCheck,
