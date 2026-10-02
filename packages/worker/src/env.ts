@@ -14,6 +14,8 @@ export interface Env {
   AI?: AiBinding;
   /** Hosted-service database (packages/platform/migrations): keys, apps, usage. */
   DB?: D1Database;
+  /** Custom emoji images (bucket `emojisense-emoji`), shared with the dashboard. */
+  EMOJI?: R2Bucket;
   SEARCH_LIMITER?: RateLimiter;
   ANON_LIMITER?: RateLimiter;
   EVENTS?: AnalyticsDataset;

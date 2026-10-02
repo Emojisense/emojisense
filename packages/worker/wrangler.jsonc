@@ -17,7 +17,7 @@
   // Workers AI has no local emulator: even `wrangler dev` calls Cloudflare (needs `wrangler login`).
   // Without it the Worker degrades to alias-only results.
   "ai": { "binding": "AI" },
-  // Shared with apps/dashboard: keys, apps and usage_monthly (packages/platform/migrations).
+  // Shared with apps/dashboard: keys, apps, usage and custom emoji (packages/platform/migrations).
   // `wrangler dev` uses a local SQLite file named after `database_id`. It must equal the
   // dashboard's id, so both Workers read the same local database under ../../.wrangler/state.
   // Before a deploy, replace the placeholder with the id from `wrangler d1 create emojisense`.
@@ -30,6 +30,9 @@
       "migrations_dir": "../platform/migrations"
     }
   ],
+  // Custom emoji images, written by the dashboard and served at /v1/custom/:appId/:emojiId.
+  // Local R2 state is keyed by bucket_name, so both Workers share it under --persist-to.
+  "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
   "ratelimits": [
     { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
     { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
@@ -59,6 +62,7 @@
           "migrations_dir": "../platform/migrations"
         }
       ],
+      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }

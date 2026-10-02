@@ -2,6 +2,7 @@ import { normalize, type SearchResult } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
 import { BROWSER_CACHE, EDGE_CACHE_SECONDS, MAX_LIMIT, SEARCH_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
+import { CUSTOM_BROWSER_CACHE, mergeCustom, parseTenant } from "./custom.ts";
 import { errorResponse, json, parseLimit, parseLocale } from "./http.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
 
@@ -29,14 +30,29 @@ function parseParams(url: URL) {
 
 /**
  * GET /v1/search. Metered as semantic_calls, Cache API hits included. Every answered search of a
- * key, cached and over-limit ones included, also goes to the app's analytics (query_daily).
+ * key, cached and over-limit ones included, also goes to the app's analytics (query_daily). The
+ * caller's custom emoji (with `tenant=`, the tenant's too) are matched per request and merged
+ * first; they never enter the shared cache.
  */
-export const handleSearch: Handler = async (request, env, ctx, { catalog, cache }, metering) => {
+export const handleSearch: Handler = async (
+  request,
+  env,
+  ctx,
+  { catalog, cache, custom },
+  metering,
+  caller,
+) => {
   const started = Date.now();
   const url = new URL(request.url);
   const params = parseParams(url);
   if (!params.query) return errorResponse(400, "missing or empty q");
+  const tenant = parseTenant(url.searchParams.get("tenant"));
+  if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
+  const customSet = await custom.forCaller(caller, tenant);
+  const customResults = customSet.search(url.origin, params.query, { limit: params.limit, prefix: true });
+  const withCustom = (results: SearchResult[]) => mergeCustom(customResults, results, params.limit);
+  const browserCache = customSet.rows.length > 0 ? CUSTOM_BROWSER_CACHE : BROWSER_CACHE;
   const log = (outcome: Outcome, scores: { aliasConfidence?: number; semanticTop?: number } = {}) =>
     record(env, indexTag(catalog), {
       endpoint: "search",
@@ -65,10 +81,17 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
   if (hit) {
     const cached = (await hit.json()) as SearchBody;
     if (!overLimit) metering.count("semantic_calls");
-    metering.recordSearch(params.query, cached.results.length);
     log(overLimit ? "hit_over_limit" : "hit");
-    return json({ ...cached, cached: true, degraded: false, overLimit: false } satisfies SearchBody, 200, {
-      "Cache-Control": BROWSER_CACHE,
+    const body: SearchBody = {
+      ...cached,
+      results: withCustom(cached.results),
+      cached: true,
+      degraded: false,
+      overLimit: false,
+    };
+    metering.recordSearch(params.query, body.results.length);
+    return json(body, 200, {
+      "Cache-Control": browserCache,
       "Server-Timing": `total;dur=${Date.now() - started}`,
     });
   }
@@ -82,7 +105,7 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
     log("over_limit", { aliasConfidence: ranked?.aliasConfidence });
     const body: SearchBody = {
       ...base,
-      results: ranked?.results ?? [],
+      results: withCustom(ranked?.results ?? []),
       cached: false,
       degraded: false,
       overLimit: true,
@@ -112,14 +135,15 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }
-  metering.recordSearch(params.query, body.results.length);
+  const answer: SearchBody = { ...body, results: withCustom(body.results) };
+  metering.recordSearch(params.query, answer.results.length);
   log(ranked.degraded ? "degraded" : "miss", {
     aliasConfidence: ranked.aliasConfidence,
     semanticTop: ranked.semanticTop,
   });
-  return json(body, 200, {
+  return json(answer, 200, {
     // Degraded answers are not cached, so the client gets semantic results once AI is back.
-    "Cache-Control": ranked.degraded ? "no-store" : BROWSER_CACHE,
+    "Cache-Control": ranked.degraded ? "no-store" : browserCache,
     "Server-Timing": `embed;dur=${ranked.embedMs}, total;dur=${Date.now() - started}`,
   });
 };

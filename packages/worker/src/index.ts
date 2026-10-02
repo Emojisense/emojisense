@@ -8,6 +8,7 @@ import {
   type VectorIndex,
 } from "emojisense";
 import { createApp } from "./app.ts";
+import { createD1CustomEmojiReader } from "./custom-store.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
 import packEnExt from "./generated/pack.en.ext.json";
@@ -49,6 +50,7 @@ const app = createApp({
   cache: () => caches.default,
   store: (env) => (env.DB ? createD1Store(env.DB) : undefined),
   emojiSets: { rows: () => packEn.emoji as unknown as PackRow[] },
+  customEmoji: (env) => (env.DB ? createD1CustomEmojiReader(env.DB) : undefined),
 });
 
 export default {
