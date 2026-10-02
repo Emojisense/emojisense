@@ -3,7 +3,7 @@
   "search": [
     { "params": { "q": "cold feet", "locale": "en" }, "top": ["😰"] },
     { "params": { "q": "jurassic park", "locale": "en" }, "top": ["🦖"] },
-    { "params": { "q": "lgtm", "locale": "en" }, "top": ["✅"] },
+    { "params": { "q": "lgtm", "locale": "en" }, "top": ["✅", "👍"] },
     { "params": { "q": "ship it", "locale": "en" }, "top": ["🚀"] },
     { "params": { "q": "躺平", "locale": "zh" }, "top": ["🛌"] },
     { "params": { "q": "666", "locale": "zh" }, "top": ["👍"] },
