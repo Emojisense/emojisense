@@ -53,7 +53,7 @@ export function createMetering(
       return (await meter.count(key.appId, metric)) >= plan.limits[metric];
     },
     count(metric) {
-      meter.add(key.appId, metric, persistUsage);
+      meter.add(key.appId, metric, persistUsage, plan.limits[metric]);
       meter.flushIfDue(ctx);
     },
     recordSearch(query, resultCount) {

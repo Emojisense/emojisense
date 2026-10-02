@@ -12,6 +12,7 @@ import { type Catalog, modelTag } from "./semantic.ts";
 import { createEmojiSetsRoute, type EmojiSetsOptions, SETS_PATH_PREFIX } from "./sets/route.ts";
 import type { Store } from "./store.ts";
 import { handleTenants, isTenantsPath } from "./tenants.ts";
+import { alertUsageThresholds } from "./usage-alerts.ts";
 
 export interface AppOptions {
   catalog: Catalog;
@@ -48,7 +49,11 @@ export function createApp(options: AppOptions) {
       const now = options.now;
       services = {
         resolver: new KeyResolver({ store, devKeys: env.DEV_KEYS, ...(now ? { now } : {}) }),
-        meter: new Meter({ store, ...(now ? { now } : {}) }),
+        meter: new Meter({
+          store,
+          ...(now ? { now } : {}),
+          onFlushed: (flushed, ctx) => alertUsageThresholds(webhooksFor(env, ctx), flushed),
+        }),
         queryStats: new QueryStats({ store, ...(now ? { now } : {}) }),
       };
     }

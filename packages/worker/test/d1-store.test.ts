@@ -59,6 +59,20 @@ describe("D1 store on the platform schema", () => {
     expect(await store.readUsage("app_1", "2026-11")).toEqual({});
   });
 
+  it("returns each row's new total after the upsert", async () => {
+    await store.addUsage([{ appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 3 }]);
+    expect(
+      await store.addUsage([
+        { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 4 },
+        { appId: "app_1", period: "2026-10", metric: "image_classifications", count: 2 },
+      ]),
+    ).toEqual([
+      { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 7 },
+      { appId: "app_1", period: "2026-10", metric: "image_classifications", count: 2 },
+    ]);
+    expect(await store.addUsage([])).toEqual([]);
+  });
+
   it("rejects the whole batch when one row breaks a constraint", async () => {
     await expect(
       store.addUsage([
