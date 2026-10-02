@@ -227,6 +227,33 @@ export interface OkResponse {
   ok: true;
 }
 
+/** One of the app owner's own customers (Scale). `externalId` is the id in the owner's system. */
+export interface TenantSummary {
+  id: string;
+  externalId: string;
+  name: string | null;
+  createdAt: number;
+  /** Custom emoji of this tenant. */
+  emojiCount: number;
+}
+
+/** `GET /api/apps/:id/tenants?limit=&cursor=`, ordered by externalId. */
+export interface TenantsResponse {
+  tenants: TenantSummary[];
+  /** Pass as `cursor` for the next page; null on the last page. */
+  nextCursor: string | null;
+}
+
+export interface TenantResponse {
+  tenant: TenantSummary;
+}
+
+export interface DeletedTenantResponse {
+  tenant: TenantSummary;
+  /** Custom emoji (rows and images) deleted with the tenant. */
+  emojiDeleted: number;
+}
+
 export interface WebhookDeliverySummary {
   id: string;
   event: WebhookEnvelopeType;

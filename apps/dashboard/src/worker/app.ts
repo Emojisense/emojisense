@@ -8,6 +8,7 @@ import { getBilling, requestUpgrade } from "./routes/billing";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
 import { getMe } from "./routes/me";
 import { acceptInvite, createInvite, deleteInvite, getTeam, removeMember, updateMember } from "./routes/team";
+import { createAppTenant, deleteAppTenant, getAppTenant, listAppTenants } from "./routes/tenants";
 import { getUsage } from "./routes/usage";
 import { joinWaitlist, waitlistPreflight } from "./routes/waitlist";
 import {
@@ -43,6 +44,10 @@ const route = createRouter([
   { method: "POST", path: "/api/apps/:id/keys", handler: authed(createKey) },
   { method: "GET", path: "/api/apps/:id/usage", handler: authed(getUsage) },
   { method: "GET", path: "/api/apps/:id/analytics", handler: authed(getAnalytics) },
+  { method: "GET", path: "/api/apps/:id/tenants", handler: authed(listAppTenants) },
+  { method: "POST", path: "/api/apps/:id/tenants", handler: authed(createAppTenant) },
+  { method: "GET", path: "/api/apps/:id/tenants/:tenantId", handler: authed(getAppTenant) },
+  { method: "DELETE", path: "/api/apps/:id/tenants/:tenantId", handler: authed(deleteAppTenant) },
   { method: "GET", path: "/api/apps/:id/webhooks", handler: authed(listWebhooks) },
   { method: "POST", path: "/api/apps/:id/webhooks", handler: authed(createWebhook) },
   { method: "PATCH", path: "/api/webhooks/:id", handler: authed(updateWebhook) },
