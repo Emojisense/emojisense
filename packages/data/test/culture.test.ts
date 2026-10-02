@@ -3,6 +3,7 @@ import { loadCatalog } from "../src/culture/catalog.ts";
 import { addDays, compileCulture } from "../src/culture/compile.ts";
 import { findExcluded, loadExclusions, parseExclusions } from "../src/culture/exclusions.ts";
 import { loadRecords } from "../src/culture/records.ts";
+import { type DatedSource, loadSources, occurrencesBetween } from "../src/culture/sources.ts";
 import type { CultureRecord } from "../src/culture/types.ts";
 import { validateRecord, validateRecords, windowDays } from "../src/culture/validate.ts";
 
@@ -188,10 +189,67 @@ describe("culture compiler", () => {
   });
 });
 
-describe("committed culture entries", () => {
-  it("all pass validation", () => {
+describe("committed culture data", () => {
+  const realCatalog = loadCatalog();
+
+  it("entries all pass validation", () => {
     const loaded = loadRecords();
-    const issues = validateRecords(loaded, { catalog: loadCatalog(), exclusions: loadExclusions() });
+    const issues = validateRecords(loaded, { catalog: realCatalog, exclusions: loadExclusions() });
     expect(issues.filter((i) => i.level === "error")).toEqual([]);
+  });
+
+  it("sources use catalog emoji, valid windows and English titles", () => {
+    const { dated, slang } = loadSources();
+    expect(dated.length).toBeGreaterThan(40);
+    for (const source of dated) {
+      expect(source.title.en, source.id).toBeTruthy();
+      for (const hexcode of source.emoji ?? [])
+        expect(realCatalog.has(hexcode), `${source.id} ${hexcode}`).toBe(true);
+      for (const w of Array.isArray(source.dates) ? source.dates : [source.dates]) {
+        const days = windowDays(w.from, w.to, w.recurs === "yearly");
+        expect(days > 0 && days <= 60, `${source.id} ${w.from}..${w.to}`).toBe(true);
+      }
+    }
+    for (const item of slang) {
+      for (const hexcode of item.emoji) expect(realCatalog.has(hexcode), `${item.id} ${hexcode}`).toBe(true);
+    }
+  });
+
+  it("lists every lunar-calendar festival for 2026 and 2027", () => {
+    const { dated } = loadSources();
+    for (const source of dated.filter((s) => Array.isArray(s.dates) && s.category !== "sport")) {
+      const years = (source.dates as { from: string }[]).map((w) => w.from.slice(0, 4));
+      expect(years, source.id).toEqual(["2026", "2027"]);
+    }
+  });
+});
+
+describe("source occurrences", () => {
+  const source = (dates: DatedSource["dates"]): DatedSource => ({
+    id: "x",
+    title: { en: "X" },
+    category: "cultural",
+    regions: ["*"],
+    locales: ["*"],
+    dates,
+    basis: "test",
+    hint: "test",
+  });
+
+  it("finds yearly occurrences across the year end", () => {
+    const newYear = source({ from: "12-31", to: "01-01", recurs: "yearly" });
+    expect(occurrencesBetween(newYear, "2026-12-20", 30)).toEqual([
+      { from: "2026-12-31", to: "2027-01-01", year: 2026, yearly: true },
+    ]);
+    expect(occurrencesBetween(newYear, "2027-01-02", 30)).toEqual([]);
+  });
+
+  it("finds dated occurrences that start in the range", () => {
+    const diwali = source([
+      { from: "2026-11-06", to: "2026-11-10" },
+      { from: "2027-10-27", to: "2027-10-31" },
+    ]);
+    expect(occurrencesBetween(diwali, "2026-10-02", 60).map((o) => o.year)).toEqual([2026]);
+    expect(occurrencesBetween(diwali, "2027-09-01", 60).map((o) => o.year)).toEqual([2027]);
   });
 });

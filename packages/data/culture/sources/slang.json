@@ -1,0 +1,124 @@
+{
+  "format": "emojisense-culture-sources",
+  "kind": "slang",
+  "note": "Meaning shifts: what people mean by an emoji in chat now, and the words they type for it. Editorial notes, checked 2026-10-02. Phrases are raw; entries store them normalized. Leave out sexual double meanings (they are not suggested) and anything that mocks a group.",
+  "items": [
+    {
+      "id": "skull-laughing",
+      "emoji": ["1F480", "1F62D"],
+      "meaning": "'I'm dead': laughing so hard it is too much",
+      "phrases": { "en": ["lmao", "lmfao", "i'm dead", "im dying", "dead", "deceased", "crying laughing"], "fr": ["mort de rire", "ptdr", "je suis mort"] },
+      "regions": ["*"],
+      "note": "Strongest in Gen Z English chat. French 'mort de rire' (mdr) and 'pété de rire' (ptdr) say the same."
+    },
+    {
+      "id": "written-laughter",
+      "emoji": ["1F602", "1F923"],
+      "meaning": "laughter written out, different in every language",
+      "phrases": {
+        "en": ["lol", "haha", "hahaha"],
+        "es": ["jaja", "jajaja", "jsjs"],
+        "pt": ["kkkk", "kkkkk", "rsrs"],
+        "fr": ["mdr", "ptdr", "xptdr"],
+        "id": ["wkwk", "wkwkwk", "awokwok"],
+        "ru": ["ахах", "ахаха", "хаха", "ору"],
+        "zh": ["哈哈哈", "笑死", "233"],
+        "ar": ["ههههه", "خخخخ"],
+        "tr": ["sjsjsj", "ahahah"],
+        "hi": ["हाहाहा"],
+        "bn": ["হাহাহা"]
+      },
+      "regions": ["*"]
+    },
+    {
+      "id": "cap-lie",
+      "emoji": ["1F9E2", "1F925"],
+      "meaning": "'cap' = a lie, 'no cap' = honestly",
+      "phrases": { "en": ["cap", "that's cap", "capping", "stop capping", "big cap"] },
+      "regions": ["*"],
+      "note": "From US hip-hop slang; now common in English chat worldwide."
+    },
+    {
+      "id": "salute-respect",
+      "emoji": ["1FAE1"],
+      "meaning": "respect, or 'yes, on it'",
+      "phrases": { "en": ["yes sir", "on it", "aye aye", "copy that", "o7"], "id": ["siap", "siap laksanakan"], "zh": ["收到", "遵命"], "ru": ["так точно", "есть"], "tr": ["baş üstüne", "emredersiniz"] },
+      "regions": ["*"],
+      "note": "Indonesian 'siap' (ready, yes) is very often sent with the salute."
+    },
+    {
+      "id": "goat",
+      "emoji": ["1F410"],
+      "meaning": "Greatest Of All Time",
+      "phrases": { "en": ["goat", "greatest of all time"], "es": ["goat", "el mejor de la historia"], "pt": ["goat", "o melhor de todos"] },
+      "regions": ["*"],
+      "note": "In football chat it comes with the debate between two players and their flags."
+    },
+    {
+      "id": "moai-deadpan",
+      "emoji": ["1F5FF"],
+      "meaning": "a deadpan, unimpressed reaction",
+      "phrases": { "en": ["bruh", "stone face", "bro what"] },
+      "regions": ["*"]
+    },
+    {
+      "id": "melting-embarrassed",
+      "emoji": ["1FAE0"],
+      "meaning": "embarrassed, overwhelmed, wanting to disappear",
+      "phrases": { "en": ["i'm melting", "so embarrassing", "want to disappear", "so awkward"] },
+      "regions": ["*"]
+    },
+    {
+      "id": "nail-polish-slay",
+      "emoji": ["1F485"],
+      "meaning": "confident, unbothered, 'slay'",
+      "phrases": { "en": ["slay", "slayed", "ate that", "understood the assignment"] },
+      "regions": ["*"]
+    },
+    {
+      "id": "folded-hands-thanks",
+      "emoji": ["1F64F", "1F647"],
+      "meaning": "thanks or please; in Japan often with a bow",
+      "phrases": { "en": ["thank you", "thanks", "please", "arigato"] },
+      "regions": ["JP"],
+      "note": "Many people elsewhere read folded hands as praying or a high five."
+    },
+    {
+      "id": "nazar",
+      "emoji": ["1F9FF"],
+      "meaning": "protection from the evil eye, said with 'maşallah'",
+      "phrases": { "tr": ["maşallah", "nazar", "nazar değmesin"], "ar": ["ما شاء الله"] },
+      "regions": ["*"]
+    },
+    {
+      "id": "saudade",
+      "emoji": ["1F97A", "1F979", "1FAC2"],
+      "meaning": "missing someone or something deeply (Portuguese)",
+      "phrases": { "pt": ["saudade", "saudades", "que saudade"] },
+      "regions": ["*"]
+    },
+    {
+      "id": "la-flemme",
+      "emoji": ["1F971", "1F9A5", "1F6CB"],
+      "meaning": "can't be bothered (French)",
+      "phrases": { "fr": ["la flemme", "flemme", "j'ai la flemme"] },
+      "regions": ["*"]
+    },
+    {
+      "id": "jiayou",
+      "emoji": ["1F4AA", "1F525"],
+      "meaning": "'add oil' = keep going, you can do it (Chinese)",
+      "phrases": { "zh": ["加油", "加油加油"] },
+      "regions": ["*"],
+      "note": "Literal readings give a fuel pump; people mean encouragement."
+    },
+    {
+      "id": "niu-666",
+      "emoji": ["1F402", "1F44D"],
+      "meaning": "awesome, skilful (Chinese internet slang)",
+      "phrases": { "zh": ["666", "6666", "太牛了", "真牛"] },
+      "regions": ["*"],
+      "note": "666 means 'smooth, skilled' in Chinese chat, not the Western 'number of the beast'."
+    }
+  ]
+}
