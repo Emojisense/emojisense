@@ -117,6 +117,22 @@ importers:
         specifier: 4.139.0
         version: 4.139.0(@cloudflare/workers-types@5.20260924.1)(@types/node@24.13.6)
 
+  packages/emoji-mart:
+    dependencies:
+      emojisense:
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@emoji-mart/data':
+        specifier: 1.2.1
+        version: 1.2.1
+      emoji-mart:
+        specifier: 5.6.0
+        version: 5.6.0
+      happy-dom:
+        specifier: 20.14.5
+        version: 20.14.5
+
   packages/eval:
     dependencies:
       '@emojisense/data':
@@ -230,6 +246,19 @@ importers:
       '@tiptap/suggestion':
         specifier: 3.31.3
         version: 3.31.3(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
+      happy-dom:
+        specifier: 20.14.5
+        version: 20.14.5
+
+  packages/web-component:
+    dependencies:
+      emojisense:
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       happy-dom:
         specifier: 20.14.5
         version: 20.14.5
@@ -441,6 +470,9 @@ packages:
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
+
+  '@emoji-mart/data@1.2.1':
+    resolution: {integrity: sha512-no2pQMWiBy6gpBEiqGeU77/bFejDqUTRY7KX+0+iur13op3bqUsXdnwoZs6Xb1zbv0gAj5VvS1PWoUUckSr5Dw==}
 
   '@esbuild/aix-ppc64@0.28.1':
     resolution: {integrity: sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==}
@@ -1702,6 +1734,9 @@ packages:
     engines: {node: '>=0.12.18'}
     hasBin: true
 
+  emoji-mart@5.6.0:
+    resolution: {integrity: sha512-eJp3QRe79pjwa+duv+n7+5YsNhRcMl812EcFVwrnRvYKoNPoQb5qxU8DG6Bgwji0akHdp6D4Ln6tYLG58MFSow==}
+
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
 
@@ -2588,6 +2623,8 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@emoji-mart/data@1.2.1': {}
 
   '@esbuild/aix-ppc64@0.28.1':
     optional: true
@@ -3614,6 +3651,8 @@ snapshots:
       jake: 10.9.4
 
   ejs@6.0.1: {}
+
+  emoji-mart@5.6.0: {}
 
   emoji-regex@8.0.0: {}
 
