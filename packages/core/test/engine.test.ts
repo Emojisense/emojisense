@@ -112,3 +112,53 @@ describe("alias engine", () => {
     expect(engine.get("1F680")?.labels).toEqual({ en: "rocket" });
   });
 });
+
+describe("alias engine memory", () => {
+  /**
+   * Live objects of a constructor after a full GC (Node ≥ 22 `v8.queryObjects`). Counts are
+   * deterministic, unlike heap sizes. A string specifier: the browser-typed tests have no Node types.
+   */
+  async function liveObjects() {
+    const v8 = await import(/* @vite-ignore */ "node:v8".toString());
+    return (ctor: unknown) => v8.queryObjects(ctor, { format: "count" }) as number;
+  }
+
+  it("frees its build-time structures once the index is built", async () => {
+    const count = await liveObjects();
+    let seed = 1;
+    const pick = (n: number) => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return seed % n;
+    };
+    const words = Array.from({ length: 3000 }, (_, i) => `w${i.toString(36)}x`);
+    const phrases = (count: number) =>
+      Array.from({ length: count }, () =>
+        Array.from({ length: 1 + pick(3) }, () => words[pick(words.length)]).join(" "),
+      ).join("|");
+    const EMOJI = 500;
+    const PHRASES_PER_EMOJI = 25;
+    const ENGINES = 5;
+    const pack = {
+      ...en,
+      emoji: Array.from({ length: EMOJI }, (_, i) =>
+        row(String.fromCodePoint(0x1f300 + i), (0x1f300 + i).toString(16), `emoji ${i}`, {
+          keyword: phrases(4),
+          alias: phrases(PHRASES_PER_EMOJI - 5),
+        }),
+      ),
+    };
+
+    const engines = Array.from({ length: ENGINES }, () => createEngine(pack));
+    expect(engines[0]?.search("emoji 7").results[0]?.label).toBe("emoji 7");
+    const maps = count(Map);
+    const arrays = count(Array);
+    engines.length = 0;
+    // What the engines themselves held. They keep a few lookup maps, the vocabulary, phrase texts
+    // and length buckets; not one dedup map per emoji or one token list per phrase. (Right after
+    // a build, V8 can hold the build scope for a moment, e.g. for a background compile job; that
+    // is not the engine's and does not depend on it, so it is not counted here.)
+    const perEngine = (before: number, after: number) => (before - after) / ENGINES;
+    expect(perEngine(maps, count(Map))).toBeLessThan(EMOJI / 10);
+    expect(perEngine(arrays, count(Array))).toBeLessThan((EMOJI * PHRASES_PER_EMOJI) / 10);
+  });
+});

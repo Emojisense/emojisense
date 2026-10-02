@@ -118,35 +118,32 @@ function entryOf(pack: Pack, row: PackRow): EmojiEntry {
   return { ...entry, shortcode, ...(imageUrl ? { imageUrl } : {}) };
 }
 
+/** What search needs from the packs: phrases, vocabulary, postings and IDF. */
+interface PhraseIndex {
+  phraseText: string[];
+  phraseEmoji: Int32Array;
+  phraseField: Uint8Array;
+  /** Bit i set = the phrase is in packs[i]. */
+  phraseLocaleMask: Uint32Array;
+  phraseLength: Int32Array;
+  phraseFieldWeight: Float64Array;
+  /** Sorted, so prefix search is a binary search. */
+  vocab: string[];
+  tokenId: Map<string, number>;
+  postingStart: Int32Array;
+  postings: Int32Array;
+  idf: Float64Array;
+  maxIdf: number;
+  tokensByLength: Map<number, number[]>;
+}
+
 /**
- * Build an in-memory Tier 0 index from one or more packs (same emoji set, different locales).
- * Custom packs (`part: "custom"`) add their own rows; their phrases count for every locale.
+ * Index the phrases of all packs. A separate function on purpose: its build-time structures
+ * (per-emoji dedup maps, token lists) are captured by the closures here, so they are freed when
+ * it returns. Inside createEngine they would share the context of `search` and live as long as
+ * the engine (≈ half of its memory).
  */
-export function createEngine(input: Pack | Pack[], options: EngineOptions = {}): AliasEngine {
-  const minCoverage = options.minCoverage ?? MIN_COVERAGE;
-  const packs = Array.isArray(input) ? input : [input];
-  if (packs.length === 0) throw new Error("emojisense: createEngine needs at least one pack");
-  for (const pack of packs) assertPack(pack);
-  const primary = packs.find((p) => !isCustomPack(p)) ?? (packs[0] as Pack);
-  const locales = [...new Set(packs.filter((p) => !isCustomPack(p)).map((p) => p.locale))];
-  // Core and extension packs of one locale count as one locale for the preference factor.
-  const preferredMasks = new Map<string, number>();
-  let customMask = 0;
-  packs.forEach((p, i) => {
-    if (isCustomPack(p)) customMask |= 1 << i;
-    else preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
-  });
-
-  const entries: EmojiEntry[] = [];
-  const indexById = new Map<string, number>();
-  for (const pack of [primary, ...packs.filter((p) => p !== primary && isCustomPack(p))]) {
-    for (const row of pack.emoji) {
-      if (indexById.has(row[ROW.hexcode])) continue;
-      indexById.set(row[ROW.hexcode], entries.length);
-      entries.push(entryOf(pack, row));
-    }
-  }
-
+function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<string, number>): PhraseIndex {
   // Pass 1: collect phrases, deduplicated per emoji (strongest field / first pack wins).
   const phraseEmojiList: number[] = [];
   const phraseField: number[] = [];
@@ -235,10 +232,6 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     else tokensByLength.set(token.length, [id]);
   });
 
-  // Per-phrase / per-emoji scratch space, reused by every search (no allocation per keystroke:
-  // common words touch thousands of phrases and per-phrase objects caused GC pauses).
-  const phraseCount = phraseText.length;
-  const phraseEmoji = Int32Array.from(phraseEmojiList);
   const phraseLength = Int32Array.from(phraseTokenIds, (ids) => ids.length);
   const phraseFieldWeight = Float64Array.from(
     phraseField,
@@ -249,6 +242,71 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         ] as number[]
       )[field] as number,
   );
+  return {
+    phraseText,
+    phraseEmoji: Int32Array.from(phraseEmojiList),
+    phraseField: Uint8Array.from(phraseField),
+    phraseLocaleMask: Uint32Array.from(phraseLocaleMask),
+    phraseLength,
+    phraseFieldWeight,
+    vocab,
+    tokenId,
+    postingStart,
+    postings,
+    idf,
+    maxIdf,
+    tokensByLength,
+  };
+}
+
+/**
+ * Build an in-memory Tier 0 index from one or more packs (same emoji set, different locales).
+ * Custom packs (`part: "custom"`) add their own rows; their phrases count for every locale.
+ */
+export function createEngine(input: Pack | Pack[], options: EngineOptions = {}): AliasEngine {
+  const minCoverage = options.minCoverage ?? MIN_COVERAGE;
+  const packs = Array.isArray(input) ? input : [input];
+  if (packs.length === 0) throw new Error("emojisense: createEngine needs at least one pack");
+  for (const pack of packs) assertPack(pack);
+  const primary = packs.find((p) => !isCustomPack(p)) ?? (packs[0] as Pack);
+  const locales = [...new Set(packs.filter((p) => !isCustomPack(p)).map((p) => p.locale))];
+  // Core and extension packs of one locale count as one locale for the preference factor.
+  const preferredMasks = new Map<string, number>();
+  let customMask = 0;
+  packs.forEach((p, i) => {
+    if (isCustomPack(p)) customMask |= 1 << i;
+    else preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
+  });
+
+  const entries: EmojiEntry[] = [];
+  const indexById = new Map<string, number>();
+  for (const pack of [primary, ...packs.filter((p) => p !== primary && isCustomPack(p))]) {
+    for (const row of pack.emoji) {
+      if (indexById.has(row[ROW.hexcode])) continue;
+      indexById.set(row[ROW.hexcode], entries.length);
+      entries.push(entryOf(pack, row));
+    }
+  }
+
+  const {
+    phraseText,
+    phraseEmoji,
+    phraseField,
+    phraseLocaleMask,
+    phraseLength,
+    phraseFieldWeight,
+    vocab,
+    tokenId,
+    postingStart,
+    postings,
+    idf,
+    maxIdf,
+    tokensByLength,
+  } = indexPhrases(packs, entries, indexById);
+
+  // Per-phrase / per-emoji scratch space, reused by every search (no allocation per keystroke:
+  // common words touch thousands of phrases and per-phrase objects caused GC pauses).
+  const phraseCount = phraseText.length;
   const quality = new Float32Array(phraseCount * MAX_QUERY_TOKENS);
   const phraseStamp = new Uint32Array(phraseCount);
   const touchedPhrases = new Int32Array(phraseCount);
