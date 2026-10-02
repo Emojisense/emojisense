@@ -16,6 +16,11 @@ import { cn } from "@/lib/utils";
 
 type SelectedEmoji = { emoji: string; label: string };
 
+// Keycap-like tiles drawn only with the app's theme tokens: the active key gets an outline and
+// a hard bottom edge, and sinks a pixel when pressed.
+const emojiTile =
+  "flex size-8 items-center justify-center rounded-lg border border-transparent text-lg data-[active]:border-border data-[active]:bg-accent data-[active]:shadow-[0_0.125rem_0_var(--border)] active:translate-y-px active:shadow-none motion-safe:transition-[translate,box-shadow]";
+
 type EmojiPickerContextValue = {
   query: string;
   setQuery: (query: string) => void;
@@ -197,14 +202,7 @@ function EmojiPickerRow({ children, className, ...props }: EmojiPickerListRowPro
 
 function EmojiPickerEmoji({ emoji, className, ...props }: EmojiPickerListEmojiProps) {
   return (
-    <button
-      data-slot="emoji-picker-emoji"
-      className={cn(
-        "data-[active]:bg-accent flex size-8 items-center justify-center rounded-sm text-lg",
-        className,
-      )}
-      {...props}
-    >
+    <button data-slot="emoji-picker-emoji" className={cn(emojiTile, className)} {...props}>
       {emoji.emoji}
     </button>
   );
@@ -265,7 +263,7 @@ function EmojiPickerResults({ empty }: { empty: React.ReactNode }) {
             tabIndex={-1}
             data-active={active ? "" : undefined}
             data-source={result.source}
-            className="data-[active]:bg-accent flex size-8 items-center justify-center rounded-sm text-lg"
+            className={emojiTile}
             onPointerEnter={() => setActiveIndex(index)}
             onClick={() => onEmojiSelect({ emoji, label })}
           >
