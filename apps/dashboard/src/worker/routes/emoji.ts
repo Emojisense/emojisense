@@ -15,6 +15,7 @@ import {
   listCustomEmoji,
   parseAliases,
   parseShortcode,
+  purgeCustomEmojiImages,
   randomId,
   type TenantRow,
   toCustomEmoji,
@@ -186,6 +187,8 @@ export async function deleteEmoji(ctx: AuthedContext): Promise<Response> {
   if (!isValidId(emojiId)) throw emojiNotFound();
   const deleted = await deleteCustomEmoji(env.DB, requireBucket(env), app.id, emojiId);
   if (!deleted) throw emojiNotFound();
+  // Same zone as the API Worker: its cached copy here goes now, elsewhere within a day.
+  await purgeCustomEmojiImages(ctx.deps.cache, apiUrlOf(env), app.id, [deleted.id]);
   emitEmojiEvent(
     ctx,
     "custom_emoji.deleted",

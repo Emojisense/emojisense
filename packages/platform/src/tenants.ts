@@ -141,17 +141,17 @@ export async function listTenants(
 
 /**
  * Deletes the tenant and its custom emoji (rows in one transaction, then the images). Returns
- * how many emoji were removed.
+ * how many emoji were removed and their ids (to purge cached images).
  */
 export async function deleteTenant(
   db: D1DatabaseLike,
   bucket: EmojiBucket | undefined,
   tenant: TenantRow,
-): Promise<{ emojiDeleted: number }> {
+): Promise<{ emojiDeleted: number; emojiIds: string[] }> {
   const { results } = await db
-    .prepare("SELECT image_key FROM custom_emoji WHERE app_id = ? AND tenant_id = ?")
+    .prepare("SELECT id, image_key FROM custom_emoji WHERE app_id = ? AND tenant_id = ?")
     .bind(tenant.app_id, tenant.id)
-    .all<{ image_key: string }>();
+    .all<{ id: string; image_key: string }>();
   await db.batch([
     db.prepare("DELETE FROM custom_emoji WHERE app_id = ? AND tenant_id = ?").bind(tenant.app_id, tenant.id),
     db.prepare("DELETE FROM tenants WHERE id = ?").bind(tenant.id),
@@ -160,5 +160,5 @@ export async function deleteTenant(
     bucket,
     results.map((row) => row.image_key),
   );
-  return { emojiDeleted: results.length };
+  return { emojiDeleted: results.length, emojiIds: results.map((row) => row.id) };
 }

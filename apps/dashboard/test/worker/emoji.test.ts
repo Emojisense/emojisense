@@ -243,6 +243,8 @@ describe("PATCH and DELETE /api/apps/:id/emoji/:emojiId", () => {
     const response = await h.call("DELETE", path, { cookie });
     expect(await body(response)).toEqual({ ok: true });
     expect(bucket.objects.has(`custom/${appId}/_/${created.id}.png`)).toBe(false);
+    // The API Worker's cached image in this data center is purged at its public URL.
+    expect(h.purged).toEqual([created.imageUrl]);
     expect((await h.call("DELETE", path, { cookie })).status).toBe(404);
     expect((await h.call("PATCH", path, { cookie, body: { aliases: [] } })).status).toBe(404);
   });

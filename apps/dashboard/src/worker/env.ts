@@ -1,4 +1,4 @@
-import type { AccountRow, EmojiBucket } from "@emojisense/platform";
+import type { AccountRow, CachePurger, EmojiBucket } from "@emojisense/platform";
 import type { ClerkFactory } from "./clerk";
 import type { D1Database } from "./d1";
 
@@ -42,6 +42,11 @@ export interface Deps {
   sleep?: (ms: number) => Promise<void>;
   /** Clerk session verification. Tests inject a fake; without it Clerk sign-in is off. */
   clerk?: ClerkFactory;
+  /**
+   * The zone's Cache API (`caches.default`), shared with the API Worker: deleting a custom emoji
+   * purges its cached image in this data center.
+   */
+  cache?: CachePurger;
 }
 
 export interface RequestContext {

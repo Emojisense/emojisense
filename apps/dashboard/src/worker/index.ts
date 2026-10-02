@@ -1,6 +1,10 @@
+import type { CachePurger } from "@emojisense/platform";
 import { handleRequest } from "./app";
 import { createClerkGateway } from "./clerk";
 import type { Env } from "./env";
+
+/** Cloudflare's per-zone Cache API; the WebWorker lib types have no `caches.default`. */
+const zoneCache = () => (caches as unknown as { default: CachePurger }).default;
 
 export default {
   fetch(request: Request, env: Env, ctx: { waitUntil(promise: Promise<unknown>): void }): Promise<Response> {
@@ -10,6 +14,7 @@ export default {
       now: Date.now,
       waitUntil: (promise) => ctx.waitUntil(promise),
       clerk: createClerkGateway,
+      cache: zoneCache(),
     });
   },
 };

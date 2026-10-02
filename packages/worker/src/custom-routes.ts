@@ -1,4 +1,8 @@
-import { CUSTOM_EMOJI_CACHE_CONTROL } from "@emojisense/platform";
+import {
+  CUSTOM_EMOJI_CACHE_CONTROL,
+  CUSTOM_EMOJI_EDGE_CACHE_CONTROL,
+  customEmojiImageUrl,
+} from "@emojisense/platform";
 import { keyRequired } from "./auth.ts";
 import { CUSTOM_PACK_CACHE_SECONDS, CUSTOM_PACK_CACHE_VERSION } from "./config.ts";
 import type { CacheLike, Handler } from "./context.ts";
@@ -22,9 +26,18 @@ const IMAGE_HEADERS = {
   "X-Content-Type-Options": "nosniff",
 };
 
+/** The same response with another Cache-Control (Cache API responses have immutable headers). */
+function withCacheControl(response: Response, cacheControl: string): Response {
+  const copy = new Response(response.body, response);
+  copy.headers.set("Cache-Control", cacheControl);
+  return copy;
+}
+
 /**
  * GET /v1/custom/:appId/:emojiId. Public (it is an `<img src>`), no key and no metering. An id
- * always points at the same image, so the answer is immutable and served from the edge cache.
+ * always points at the same image, so browsers may keep it (immutable). The edge cache keeps it
+ * one day only, so a deleted image leaves every edge location within a day; a delete also purges
+ * the entry of the data center that ran it (tenants API, dashboard).
  */
 export async function handleCustomImage(
   request: Request,
@@ -34,9 +47,10 @@ export async function handleCustomImage(
   ids: { appId: string; emojiId: string },
 ): Promise<Response> {
   const url = new URL(request.url);
-  const cacheKey = new Request(`${url.origin}/v1/custom/${ids.appId}/${ids.emojiId}`);
+  // The image's public URL: the key a delete purges (purgeCustomEmojiImages).
+  const cacheKey = new Request(customEmojiImageUrl(url.origin, ids.appId, ids.emojiId));
   const hit = await deps.cache.match(cacheKey);
-  if (hit) return hit;
+  if (hit) return withCacheControl(hit, CUSTOM_EMOJI_CACHE_CONTROL);
 
   const reader = deps.custom.reader;
   if (!reader || !env.EMOJI) return errorResponse(404, "not found", { "Cache-Control": "no-store" });
@@ -62,7 +76,9 @@ export async function handleCustomImage(
       ...(object.httpEtag ? { ETag: object.httpEtag } : {}),
     },
   });
-  ctx.waitUntil(deps.cache.put(cacheKey, response.clone()));
+  ctx.waitUntil(
+    deps.cache.put(cacheKey, withCacheControl(response.clone(), CUSTOM_EMOJI_EDGE_CACHE_CONTROL)),
+  );
   return response;
 }
 

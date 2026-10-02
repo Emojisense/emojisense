@@ -122,7 +122,10 @@ describe("tenants", () => {
     await put(tenant.id, "b");
     await put(other.id, "a");
 
-    expect(await deleteTenant(db, bucket, tenant)).toEqual({ emojiDeleted: 2 });
+    expect(await deleteTenant(db, bucket, tenant)).toEqual({
+      emojiDeleted: 2,
+      emojiIds: [expect.any(String), expect.any(String)],
+    });
     expect(db.rows("SELECT external_id FROM tenants")).toEqual([{ external_id: "other" }]);
     expect(db.rows("SELECT tenant_id FROM custom_emoji")).toEqual([{ tenant_id: other.id }]);
     expect([...bucket.objects.keys()]).toEqual([expect.stringContaining(`/${other.id}/`)]);

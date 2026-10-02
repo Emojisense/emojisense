@@ -137,6 +137,7 @@ export function createApp(options: AppOptions) {
           principal,
           webhooks: webhooksFor(env, ctx),
           now: options.now ?? Date.now,
+          cache: options.cache(),
         });
       }
       const route = ROUTES[url.pathname];

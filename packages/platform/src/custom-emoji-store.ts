@@ -6,7 +6,7 @@
  * `tenantId` arguments are `tenants.id` values; `null` means app-wide (stored as "").
  * The plan's custom_emoji limit counts every emoji of every app of the owning account.
  */
-import { customEmojiImageKey } from "./custom-emoji.js";
+import { customEmojiImageKey, customEmojiImageUrl } from "./custom-emoji.js";
 import type { D1DatabaseLike, SqlValue } from "./d1-like.js";
 import type { EmojiImage } from "./emoji-image.js";
 import type { CustomEmojiRow, CustomEmojiSource } from "./types.js";
@@ -31,8 +31,41 @@ export interface EmojiBucket {
   delete(keys: string | string[]): Promise<void>;
 }
 
-/** Images never change under one id (a new image is a new emoji), so caches may keep them. */
+/**
+ * For browsers: images never change under one id (a new image is a new emoji), so the URL is
+ * content-addressed and a browser may keep it.
+ */
 export const CUSTOM_EMOJI_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
+/**
+ * For the API Worker's Cache API entries: a deleted (taken-down) image leaves every edge location
+ * within a day, even where the delete could not purge it.
+ */
+export const CUSTOM_EMOJI_EDGE_CACHE_CONTROL = "public, max-age=86400";
+
+/** The Cache API's delete, which the real `caches.default` and the test fakes fit. */
+export interface CachePurger {
+  delete(url: string): Promise<boolean>;
+}
+
+/**
+ * Best effort: removes the images of deleted emoji from the Cache API of the data center that runs
+ * this request (the Cache API is local to one data center). Other edge locations drop them when
+ * their entry expires (CUSTOM_EMOJI_EDGE_CACHE_CONTROL). Failures are logged, not thrown.
+ */
+export async function purgeCustomEmojiImages(
+  cache: CachePurger | undefined,
+  apiUrl: string,
+  appId: string,
+  emojiIds: readonly string[],
+): Promise<void> {
+  if (!cache) return;
+  try {
+    await Promise.all(emojiIds.map((id) => cache.delete(customEmojiImageUrl(apiUrl, appId, id))));
+  } catch (error) {
+    console.warn(JSON.stringify({ event: "emoji_image_purge_failed", error: (error as Error).name }));
+  }
+}
 
 const tenantColumn = (tenantId: string | null) => tenantId ?? "";
 

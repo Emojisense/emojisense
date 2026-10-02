@@ -333,11 +333,14 @@ not metered, not rate limited.
   `Cache-Control: public, max-age=31536000, immutable`, an `ETag`, CORS `*`,
   `Cross-Origin-Resource-Policy: cross-origin`, `X-Content-Type-Options: nosniff` and a CSP that
   sandboxes the file and blocks scripts and requests when it is opened directly. An id always
-  points at the same image (a new image is a new emoji), so edges and browsers keep it.
+  points at the same image (a new image is a new emoji), so browsers keep it.
+- The edge (Cache API) keeps a copy for one day only (`public, max-age=86400` on the cached
+  entry), then reads D1 and R2 again.
 - `404` for an unknown emoji, an emoji of another app, or a missing object. `503` when the
   database cannot be read (not cached).
-- A deleted emoji is gone from D1 and R2 at once, but an edge location that cached the image can
-  still serve it until its cache entry is evicted.
+- **Deletes (takedowns).** A deleted emoji is gone from D1 and R2 at once. The delete (dashboard
+  or tenants API) also purges the cached image in the data center that handled it; other edge
+  locations stop serving it within a day. Browsers that already loaded the image can keep it.
 
 ## `GET /v1/custom-pack`
 

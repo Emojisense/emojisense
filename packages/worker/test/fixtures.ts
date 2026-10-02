@@ -74,16 +74,26 @@ export const catalog: Catalog = {
   vectors: async () => ({ indexes: [sharedIndex], complete: true }),
 };
 
-export function memoryCache(): CacheLike & { store: Map<string, Response>; puts: string[] } {
+export function memoryCache(): CacheLike & {
+  store: Map<string, Response>;
+  puts: string[];
+  deletes: string[];
+} {
   const store = new Map<string, Response>();
   const puts: string[] = [];
+  const deletes: string[] = [];
   return {
     store,
     puts,
+    deletes,
     match: async (r) => store.get(r.url)?.clone(),
     put: async (r, res) => {
       puts.push(r.url);
       store.set(r.url, res.clone());
+    },
+    delete: async (url) => {
+      deletes.push(url);
+      return store.delete(url);
     },
   };
 }
