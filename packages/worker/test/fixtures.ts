@@ -4,6 +4,7 @@ import { createEngine, type Pack } from "emojisense";
 import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { vi } from "vitest";
 import { createApp } from "../src/app.ts";
+import { CONCEPT_MODEL } from "../src/concepts/config.ts";
 import { VISION_MODEL } from "../src/config.ts";
 import type { CacheLike } from "../src/context.ts";
 import type { CustomEmojiReader } from "../src/custom-store.ts";
@@ -120,20 +121,29 @@ export const DEFAULT_LABEL: ImageLabel = {
   emoji: ["🐶"],
 };
 
-/**
- * A fake Workers AI: embeddings always land next to `embedTo` (the volcano row by default), and
- * the vision model answers with `label` in the chat-completions shape (a string is sent as is).
- */
-const visionContent = (label: ImageLabel | string | undefined) =>
-  typeof label === "string" ? label : JSON.stringify(label ?? DEFAULT_LABEL);
+/** What the concept model answers by default: it does not know the query (status "none"). */
+export const UNKNOWN_CONCEPT = { kind: "unknown", concepts: [], emoji: [] };
 
-export function fakeAi(options: { embedTo?: number; label?: ImageLabel | string } = {}) {
-  return vi.fn<AiBinding["run"]>(async (model) => {
-    if (model === VISION_MODEL) {
-      return {
-        choices: [{ message: { role: "assistant", content: visionContent(options.label) } }],
-      };
+/**
+ * A fake Workers AI: embeddings always land next to `embedTo` (the volcano row by default), the
+ * vision model answers with `label` and the concept model (the same model, asked with the
+ * "concept" schema) with `concept`, in the chat-completions shape (a string is sent as is; an
+ * Error is thrown).
+ */
+const content = (value: unknown) => (typeof value === "string" ? value : JSON.stringify(value));
+const chat = (value: unknown) => ({ choices: [{ message: { role: "assistant", content: content(value) } }] });
+const isConceptCall = (input: Record<string, unknown>) =>
+  (input.response_format as { json_schema?: { name?: string } } | undefined)?.json_schema?.name === "concept";
+
+export function fakeAi(
+  options: { embedTo?: number; label?: ImageLabel | string; concept?: object | string | Error } = {},
+) {
+  return vi.fn<AiBinding["run"]>(async (model, input) => {
+    if (model === CONCEPT_MODEL && isConceptCall(input)) {
+      if (options.concept instanceof Error) throw options.concept;
+      return chat(options.concept ?? UNKNOWN_CONCEPT);
     }
+    if (model === VISION_MODEL) return chat(options.label ?? DEFAULT_LABEL);
     const row = options.embedTo ?? ROW.volcano;
     const vector = row === ROW.neutral ? l2normalize(new Float32Array(DIMS).fill(1)) : unit(row);
     return { data: [Array.from(vector)] };
@@ -237,6 +247,8 @@ export function harness(
     embedTo?: number;
     /** What the vision model answers: a label, or raw text. */
     label?: ImageLabel | string;
+    /** What the concept model answers: an answer object, raw text, or an Error to throw. */
+    concept?: object | string | Error;
     catalog?: Catalog;
     /** Outgoing webhook requests, and the wait between their retries. */
     fetch?: (url: string, init: RequestInit) => Promise<Response>;
@@ -246,6 +258,7 @@ export function harness(
   const ai = fakeAi({
     ...(options.embedTo === undefined ? {} : { embedTo: options.embedTo }),
     ...(options.label === undefined ? {} : { label: options.label }),
+    ...(options.concept === undefined ? {} : { concept: options.concept }),
   });
   const events = vi.fn();
   const cache = memoryCache();

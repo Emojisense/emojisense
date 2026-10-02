@@ -2,6 +2,8 @@ public enum ResultSource: String, Codable, Sendable {
   case alias
   case semantic
   case custom
+  /// The server's concept tier: its reading of an unsure query, checked against the catalog.
+  case concept
 }
 
 /// One ranked emoji from any tier.
@@ -55,6 +57,12 @@ public struct AliasSearchOutput: Sendable {
   public var results: [AliasResult]
   /// Score of the best result, 0 when there is none.
   public var confidence: Double
+  /// 0–1, rounded to 3 decimals: the largest IDF-weighted share of the query that one phrase
+  /// matches with whole tokens (exact, a typo of the token, or a completion of the token being
+  /// typed into a word of the preferred locale). A prefix completion into another locale's word
+  /// is a partial match and does not count. Below ``Confidence/wholeCoverage`` the dictionary
+  /// does not explain the query (PACK_FORMAT.md §4).
+  public var coverage: Double = 0
 }
 
 public struct EmojiEntry: Hashable, Sendable {

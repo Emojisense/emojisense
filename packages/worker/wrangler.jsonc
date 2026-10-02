@@ -75,6 +75,10 @@
     "DEV_KEYS": "pk_demo",
     // "true" runs the nightly shard build; set it to "false" to stop it (the served build stays).
     "SHARDS_CRON_ENABLED": "true",
+    // Concept tier (src/concepts/): an LLM reads unsure queries. "false" switches it off; the
+    // daily cap counts its model calls for all keys together (table concept_daily, migration 0007).
+    "CONCEPTS_ENABLED": "true",
+    "CONCEPT_DAILY_CAP": "2000",
     // Our own pages (src/auth.ts, src/sets/access.ts): the website (astro dev) and the dashboard
     // (vite, wrangler dev).
     "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790",
@@ -114,7 +118,9 @@
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790",
         "CULTURE_CRON_ENABLED": "true",
-        "CULTURE_PROPOSE_BUDGET": "12"
+        "CULTURE_PROPOSE_BUDGET": "12",
+        "CONCEPTS_ENABLED": "true",
+        "CONCEPT_DAILY_CAP": "2000"
       }
     },
     // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
@@ -149,7 +155,9 @@
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev",
         "CULTURE_CRON_ENABLED": "true",
-        "CULTURE_PROPOSE_BUDGET": "12"
+        "CULTURE_PROPOSE_BUDGET": "12",
+        "CONCEPTS_ENABLED": "true",
+        "CONCEPT_DAILY_CAP": "2000"
       }
     },
     // Production at api.emojisense.com (`pnpm deploy:production`). No dev keys: every key is a
@@ -184,7 +192,9 @@
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "https://emojisense.com,https://www.emojisense.com,https://app.emojisense.com",
         "CULTURE_CRON_ENABLED": "true",
-        "CULTURE_PROPOSE_BUDGET": "12"
+        "CULTURE_PROPOSE_BUDGET": "12",
+        "CONCEPTS_ENABLED": "true",
+        "CONCEPT_DAILY_CAP": "20000"
       }
     }
   }

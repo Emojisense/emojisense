@@ -2,6 +2,7 @@ import type { AliasEngine, SearchResult } from "emojisense";
 import { type KeyboardEvent, type RefObject, useEffect, useId, useMemo, useRef, useState } from "react";
 import { API_URL, PACK_VERSION } from "../config";
 import type { EngineState } from "../lib/engine-client";
+import { SEARCH_COPY } from "../lib/search-copy";
 import { CodePanel } from "./CodePanel";
 import { type HealthState, useCopy } from "./hooks";
 import { countNameMatches } from "./lib/baseline";
@@ -60,6 +61,9 @@ export function SearchInspector(props: SearchInspectorProps) {
   const id = useId();
 
   const results = query.trim() ? (run?.results ?? []) : [];
+  // The on-device mode has no semantic list: it never calls a query unsure.
+  const guessing = mode !== "alias" && run?.unsure === true && run.concept?.status !== "ok";
+  const terms = run?.concept?.status === "ok" ? (run.concept.terms ?? []) : [];
   const resultKey = results.map((r) => r.id).join(",");
   // biome-ignore lint/correctness/useExhaustiveDependencies: a new result list starts at its first item.
   useEffect(() => setActive(0), [resultKey]);
@@ -275,8 +279,20 @@ export function SearchInspector(props: SearchInspectorProps) {
             </fieldset>
           </header>
 
+          {results.length > 0 && (guessing || terms.length > 0) && (
+            <p className="pg-honesty" role="status">
+              {guessing ? (
+                SEARCH_COPY.unsure
+              ) : (
+                <>
+                  {SEARCH_COPY.understoodAs} <q>{terms.join(", ")}</q>
+                </>
+              )}
+            </p>
+          )}
           <div className="pg-results-body" aria-busy={run?.edge.kind === "waiting" && mode === "semantic"}>
             <SearchResults
+              guessing={guessing}
               id={id}
               view={view}
               gridRef={gridRef}
@@ -298,6 +314,7 @@ export function SearchInspector(props: SearchInspectorProps) {
               <span className="pg-legend" aria-hidden="true">
                 <span data-source="alias">Dictionary</span>
                 <span data-source="semantic">Meaning</span>
+                <span data-source="concept">Concept</span>
                 <span className="pg-legend-hint">Scores compare within one source</span>
               </span>
             )}

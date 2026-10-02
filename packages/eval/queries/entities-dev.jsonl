@@ -1,0 +1,258 @@
+{"id":"ent-en-001","q":"kendrick lamar","locale":"en","cat":"musician","answers":["🎤","🎧","🎶","🎵","🎙️"],"forbid":["🦙","💍"]}
+{"id":"ent-en-002","q":"taylor swift","locale":"en","cat":"musician","answers":["🎤","🎸","💃","🎶","✨","🐍"],"forbid":["🪡","🧵"]}
+{"id":"ent-en-003","q":"drake","locale":"en","cat":"musician","answers":["🎤","🦉","🎧","🎶","🎵"],"forbid":["🦆"],"note":"the rapper; a drake is also a male duck"}
+{"id":"ent-en-004","q":"the weeknd","locale":"en","cat":"musician","answers":["🎤","🎶","🌃","🕶️","🌙"],"forbid":["📅","🗓️"],"review":true}
+{"id":"ent-en-005","q":"bad bunny","locale":"en","cat":"musician","answers":["🐰","🎤","🇵🇷","🎶","🐇"],"forbid":["👎"]}
+{"id":"ent-en-006","q":"nirvana","locale":"en","cat":"musician","answers":["🎸","🤘","🥁","🎤","🧘","☸️"],"review":true,"note":"grunge band; also the Buddhist term"}
+{"id":"ent-en-007","q":"coldplay","locale":"en","cat":"musician","answers":["🎸","🎤","🌈","✨","🎶"],"forbid":["🥶","❄️"]}
+{"id":"ent-en-008","q":"bruno mars","locale":"en","cat":"musician","answers":["🎤","🕺","🎶","🎸","🎹"],"forbid":["🪐","🔴"]}
+{"id":"ent-en-009","q":"freddie mercury","locale":"en","cat":"musician","answers":["🎤","👑","🎹","🎸","🎶"],"forbid":["🪐","🌡️"]}
+{"id":"ent-en-010","q":"bohemian rhapsody","locale":"en","cat":"song","answers":["🎤","🎹","🎸","🎭","👑","🎶"]}
+{"id":"ent-en-011","q":"purple rain","locale":"en","cat":"song","answers":["☔","💜","🟣","🌧️","🎸"],"note":"Prince song"}
+{"id":"ent-en-012","q":"despacito","locale":"en","cat":"song","answers":["💃","🎶","🎤","🇵🇷","🐢"],"review":true,"note":"Luis Fonsi song; the word means slowly"}
+{"id":"ent-en-013","q":"gangnam style","locale":"en","cat":"song","answers":["🐴","🕺","🇰🇷","😎","🎶"]}
+{"id":"ent-en-014","q":"old town road","locale":"en","cat":"song","answers":["🤠","🐴","🐎","🎶","🛣️"]}
+{"id":"ent-en-015","q":"the godfather","locale":"en","cat":"film","answers":["🌹","🍝","🐴","🔫","🇮🇹"],"review":true}
+{"id":"ent-en-016","q":"interstellar","locale":"en","cat":"film","answers":["🚀","🌌","🪐","🕳️","⏳"]}
+{"id":"ent-en-017","q":"hogwarts","locale":"en","cat":"place","answers":["🏰","🧙","🪄","🦉","⚡"]}
+{"id":"ent-en-018","q":"inside out","locale":"en","cat":"film","answers":["🧠","😊","😢","😡","😱","🤢"],"review":true,"note":"Pixar film; also an ordinary phrase"}
+{"id":"ent-en-019","q":"kill bill","locale":"en","cat":"film","answers":["⚔️","🗡️","💛","🩸","🥋"],"forbid":["💵","🧾"]}
+{"id":"ent-en-020","q":"avatar","locale":"en","cat":"film","answers":["🔵","🌳","👽","🏹","🌿"],"forbid":["👤"],"review":true,"note":"James Cameron film; also a profile picture"}
+{"id":"ent-en-021","q":"top gun","locale":"en","cat":"film","answers":["✈️","🛩️","🕶️","🏍️","🇺🇸"],"forbid":["🔫"]}
+{"id":"ent-en-022","q":"oppenheimer","locale":"en","cat":"film","answers":["💣","💥","☢️","🎩","🔥"]}
+{"id":"ent-en-023","q":"bridgerton","locale":"en","cat":"series","answers":["👑","💃","💐","🐝","💌"]}
+{"id":"ent-en-024","q":"house of the dragon","locale":"en","cat":"series","answers":["🐉","👑","🔥","⚔️"],"forbid":["🏠","🏡"]}
+{"id":"ent-en-025","q":"breaking bad","locale":"en","cat":"series","answers":["🧪","⚗️","💎","🔵","🧔"]}
+{"id":"ent-en-026","q":"the walking dead","locale":"en","cat":"series","answers":["🧟","🔫","🏹","💀"],"forbid":["🚶"]}
+{"id":"ent-en-027","q":"roblox","locale":"en","cat":"game","answers":["🎮","🧱","🟥","🕹️","🧒"]}
+{"id":"ent-en-028","q":"fortnite","locale":"en","cat":"game","answers":["🎮","🔫","🪂","🕺","🦙"]}
+{"id":"ent-en-029","q":"candy crush","locale":"en","cat":"game","answers":["🍬","🍭","📱","🎮","🍫"]}
+{"id":"ent-en-030","q":"call of duty","locale":"en","cat":"game","answers":["🔫","🪖","💣","🎮","🎖️"],"forbid":["📞","☎️"]}
+{"id":"ent-en-031","q":"zelda","locale":"en","cat":"game","answers":["🗡️","🛡️","🧝","🔺","🎮"]}
+{"id":"ent-en-032","q":"starbucks","locale":"en","cat":"brand","answers":["☕","🧜‍♀️","🥤","💚"],"forbid":["⭐","🌟"]}
+{"id":"ent-en-033","q":"netflix","locale":"en","cat":"brand","answers":["📺","🍿","🎬","🛋️","🔴"]}
+{"id":"ent-en-034","q":"amazon","locale":"en","cat":"brand","answers":["📦","🛒","🚚","🌳","🌿"],"review":true,"note":"the online store or the rainforest"}
+{"id":"ent-en-035","q":"jaguar","locale":"en","cat":"brand","answers":["🐆","🚗","🏎️"],"review":true,"note":"car brand; the animal is also fine"}
+{"id":"ent-en-036","q":"red bull","locale":"en","cat":"brand","answers":["🐂","🥤","⚡","🪽","🏎️"]}
+{"id":"ent-en-037","q":"duolingo","locale":"en","cat":"brand","answers":["🦉","🟢","📚","🗣️","🔥"]}
+{"id":"ent-en-038","q":"doge","locale":"en","cat":"meme","answers":["🐕","🐶","🪙","😂"]}
+{"id":"ent-en-039","q":"distracted boyfriend","locale":"en","cat":"meme","answers":["👀","💑","😏","👫","💔"],"review":true}
+{"id":"ent-en-040","q":"nyan cat","locale":"en","cat":"meme","answers":["🐱","🌈","✨","🌌"]}
+{"id":"ent-en-041","q":"rickroll","locale":"en","cat":"meme","answers":["🕺","🎤","🎶","😏","🔗"],"review":true}
+{"id":"ent-en-042","q":"moo deng","locale":"en","cat":"meme","answers":["🦛","🇹🇭","🍉","😆"],"note":"pygmy hippo from a Thai zoo"}
+{"id":"ent-en-043","q":"juneteenth","locale":"en","cat":"holiday","answers":["✊","⛓️‍💥","🇺🇸","🎉"]}
+{"id":"ent-en-044","q":"st patrick's day","locale":"en","cat":"holiday","answers":["☘️","🍀","🇮🇪","🍺","🌈"]}
+{"id":"ent-en-045","q":"mardi gras","locale":"en","cat":"holiday","answers":["🎭","⚜️","🎉","🎊","💜"]}
+{"id":"ent-en-046","q":"black friday","locale":"en","cat":"holiday","answers":["🛍️","💸","🏷️","🛒"],"forbid":["🖤","⚫"]}
+{"id":"ent-en-047","q":"may the force be with you","locale":"en","cat":"idiom","answers":["⭐","⚔️","🌌","✨","🙏"],"note":"Star Wars"}
+{"id":"ent-en-048","q":"winter is coming","locale":"en","cat":"idiom","answers":["❄️","🐺","⚔️","🥶","🐉"],"note":"Game of Thrones"}
+{"id":"ent-en-049","q":"houston we have a problem","locale":"en","cat":"idiom","answers":["🚀","🧑‍🚀","⚠️","🆘","🌕"]}
+{"id":"ent-en-050","q":"real madrid","locale":"en","cat":"team","answers":["⚽","👑","🤍","🇪🇸","🏆"]}
+{"id":"ent-en-051","q":"chicago bulls","locale":"en","cat":"team","answers":["🏀","🐂","🔴"]}
+{"id":"ent-en-052","q":"manchester united","locale":"en","cat":"team","answers":["⚽","😈","🔴","🏴󠁧󠁢󠁥󠁮󠁧󠁿"]}
+{"id":"ent-en-053","q":"lebron james","locale":"en","cat":"athlete","answers":["🏀","👑","🐐"]}
+{"id":"ent-en-054","q":"usain bolt","locale":"en","cat":"athlete","answers":["⚡","🏃","🇯🇲","🥇"]}
+{"id":"ent-en-055","q":"michael jordan","locale":"en","cat":"athlete","answers":["🏀","🐐","🐂","👟"],"forbid":["🇯🇴"]}
+{"id":"ent-en-056","q":"stephen curry","locale":"en","cat":"athlete","answers":["🏀","🎯","👌","🔥"],"forbid":["🍛"]}
+{"id":"ent-en-057","q":"tiger woods","locale":"en","cat":"athlete","answers":["⛳","🏌️","🏌️‍♂️","🏆","🐯"],"forbid":["🌲","🌳"]}
+{"id":"ent-en-058","q":"shohei ohtani","locale":"en","cat":"athlete","answers":["⚾","🇯🇵","🦄","🐐"]}
+{"id":"ent-en-059","q":"elon musk","locale":"en","cat":"celebrity","answers":["🚀","🚗","⚡","🤖","🔋"]}
+{"id":"ent-en-060","q":"mr beast","locale":"en","cat":"celebrity","answers":["💰","🎥","💵","🍫","📹"],"forbid":["👹"]}
+{"id":"ent-en-061","q":"gordon ramsay","locale":"en","cat":"celebrity","answers":["🧑‍🍳","🍳","🤬","🥩","🍝"]}
+{"id":"ent-en-062","q":"the rock","locale":"en","cat":"celebrity","answers":["🪨","💪","🤨","🤼","🎬"],"review":true,"note":"Dwayne Johnson"}
+{"id":"ent-en-063","q":"steve jobs","locale":"en","cat":"celebrity","answers":["🍎","📱","💻","👓"],"forbid":["💼"]}
+{"id":"ent-en-064","q":"joker","locale":"en","cat":"character","answers":["🃏","🤡","🦇","💜","😈"],"review":true,"note":"Batman villain; also the playing card"}
+{"id":"ent-en-065","q":"pikachu","locale":"en","cat":"character","answers":["⚡","🐭","🟡","🐹"]}
+{"id":"ent-en-066","q":"darth vader","locale":"en","cat":"character","answers":["⚔️","🖤","🌌","🦹","⭐"]}
+{"id":"ent-en-067","q":"grinch","locale":"en","cat":"character","answers":["💚","🎄","🎅","😈","😠"]}
+{"id":"ent-en-068","q":"sonic","locale":"en","cat":"character","answers":["🦔","💨","💍","🔵"],"note":"Sega hedgehog"}
+{"id":"ent-en-069","q":"wednesday addams","locale":"en","cat":"character","answers":["🖤","🖐️","💃","🎻","⚰️"],"forbid":["📅","🗓️"]}
+{"id":"ent-en-070","q":"las vegas","locale":"en","cat":"place","answers":["🎰","🎲","🃏","💰","🌃"]}
+{"id":"ent-en-071","q":"area 51","locale":"en","cat":"place","answers":["👽","🛸","🏜️","🔒"]}
+{"id":"ent-en-072","q":"hollywood","locale":"en","cat":"place","answers":["🎬","⭐","🎥","🌴"]}
+{"id":"ent-es-001","q":"shakira","locale":"es","cat":"musician","answers":["💃","🎤","🇨🇴","🐺","🎶"]}
+{"id":"ent-es-002","q":"rosalia","locale":"es","cat":"musician","answers":["💅","🎤","💃","🏍️","🇪🇸"],"review":true}
+{"id":"ent-es-003","q":"rafa nadal","locale":"es","cat":"athlete","answers":["🎾","🏆","🇪🇸","💪"]}
+{"id":"ent-es-004","q":"checo perez","locale":"es","cat":"athlete","answers":["🏎️","🏁","🇲🇽"]}
+{"id":"ent-es-005","q":"la casa de papel","locale":"es","cat":"series","answers":["💰","🎭","🔫","🏦","💵","🔴"],"forbid":["📄","🏠"]}
+{"id":"ent-es-006","q":"el chavo del 8","locale":"es","cat":"series","answers":["🛢️","🥪","📺","🇲🇽","👦"],"review":true,"note":"Mexican sitcom"}
+{"id":"ent-es-007","q":"chapulin colorado","locale":"es","cat":"character","answers":["🦗","🔴","🔨","🦸","❤️"]}
+{"id":"ent-es-008","q":"mafalda","locale":"es","cat":"character","answers":["👧","🍲","🇦🇷","🌍","📚"],"review":true,"note":"Argentine comic strip; the girl hates soup"}
+{"id":"ent-es-009","q":"bola de dragón","locale":"es","cat":"series","answers":["🐉","🟠","⭐","🥋","💥"],"forbid":["⚽"],"note":"Dragon Ball"}
+{"id":"ent-es-010","q":"el clásico","locale":"es","cat":"team","answers":["⚽","🔥","🇪🇸","⚪","🔵"],"review":true,"note":"Real Madrid vs Barcelona"}
+{"id":"ent-es-011","q":"boca juniors","locale":"es","cat":"team","answers":["⚽","💙","💛","🇦🇷"]}
+{"id":"ent-es-012","q":"san fermin","locale":"es","cat":"holiday","answers":["🐂","🏃","🇪🇸","🔴","🎉"]}
+{"id":"ent-es-013","q":"la tomatina","locale":"es","cat":"holiday","answers":["🍅","🇪🇸","🎉","🔴"]}
+{"id":"ent-es-014","q":"reyes magos","locale":"es","cat":"holiday","answers":["👑","🐫","🎁","⭐","🤴"]}
+{"id":"ent-es-015","q":"la sagrada familia","locale":"es","cat":"place","answers":["⛪","🏗️","🇪🇸","🏛️"],"forbid":["👪","👨‍👩‍👧"]}
+{"id":"ent-es-016","q":"cerveza corona","locale":"es","cat":"brand","answers":["🍺","🍻","🍋","👑","🇲🇽"],"forbid":["🦠","😷"]}
+{"id":"ent-es-017","q":"no contaban con mi astucia","locale":"es","cat":"idiom","answers":["🦗","😏","🧠","🦸"],"review":true,"note":"catchphrase of El Chapulín Colorado"}
+{"id":"ent-es-018","q":"siuuu","locale":"es","cat":"meme","answers":["⚽","🐐","🙌","🇵🇹"],"review":true,"note":"Cristiano Ronaldo goal celebration"}
+{"id":"ent-es-019","q":"el laberinto del fauno","locale":"es","cat":"film","answers":["🧚","🐐","🌳","👁️","🗝️"],"review":true,"note":"Pan's Labyrinth"}
+{"id":"ent-fr-001","q":"zidane","locale":"fr","cat":"athlete","answers":["⚽","🇫🇷","🐐","🏆"]}
+{"id":"ent-fr-002","q":"stromae","locale":"fr","cat":"musician","answers":["🎤","🎶","🇧🇪","🕺"]}
+{"id":"ent-fr-003","q":"johnny hallyday","locale":"fr","cat":"musician","answers":["🎸","🎤","🏍️","🤘","🇫🇷"]}
+{"id":"ent-fr-004","q":"la marseillaise","locale":"fr","cat":"song","answers":["🇫🇷","🎶","🎺","✊"]}
+{"id":"ent-fr-005","q":"intouchables","locale":"fr","cat":"film","answers":["♿","🤝","😂","🇫🇷","🎬"]}
+{"id":"ent-fr-006","q":"amélie poulain","locale":"fr","cat":"film","answers":["🍮","📸","😊","🇫🇷","💚"],"review":true}
+{"id":"ent-fr-007","q":"lupin","locale":"fr","cat":"series","answers":["🎩","🕵️","💎","📚","🇫🇷"],"review":true,"note":"Netflix series about Arsène Lupin"}
+{"id":"ent-fr-008","q":"asterix","locale":"fr","cat":"character","answers":["🐗","💪","🪖","🛡️","🧪"],"review":true}
+{"id":"ent-fr-009","q":"tintin","locale":"fr","cat":"character","answers":["🐕","🔍","🚀","📰","🇧🇪"]}
+{"id":"ent-fr-010","q":"le petit prince","locale":"fr","cat":"character","answers":["🤴","🌹","🦊","⭐","🪐"]}
+{"id":"ent-fr-011","q":"le 14 juillet","locale":"fr","cat":"holiday","answers":["🎆","🇫🇷","🎉","🎇"]}
+{"id":"ent-fr-012","q":"la chandeleur","locale":"fr","cat":"holiday","answers":["🥞","🕯️","🇫🇷"],"note":"crêpe day, 2 February"}
+{"id":"ent-fr-013","q":"poisson d'avril","locale":"fr","cat":"holiday","answers":["🐟","🐠","😜","🤡","🃏"]}
+{"id":"ent-fr-014","q":"psg","locale":"fr","cat":"team","answers":["⚽","🗼","🔴","🔵","🇫🇷"]}
+{"id":"ent-fr-015","q":"mont saint-michel","locale":"fr","cat":"place","answers":["🏰","🌊","⛪","🇫🇷"]}
+{"id":"ent-fr-016","q":"chanel","locale":"fr","cat":"brand","answers":["👜","👗","💄","🌹","🖤"],"forbid":["📺"],"review":true}
+{"id":"ent-fr-017","q":"michelin","locale":"fr","cat":"brand","answers":["🛞","⭐","🍽️","🚗"],"review":true}
+{"id":"ent-fr-018","q":"van damme","locale":"fr","cat":"celebrity","answers":["🥋","🦵","💪","🇧🇪"],"forbid":["🚐"]}
+{"id":"ent-ru-001","q":"илон маск","locale":"ru","cat":"celebrity","answers":["🚀","🚗","⚡","🤖"]}
+{"id":"ent-ru-002","q":"гагарин","locale":"ru","cat":"celebrity","answers":["🚀","🧑‍🚀","🌍","🇷🇺","✨"]}
+{"id":"ent-ru-003","q":"пугачева","locale":"ru","cat":"musician","answers":["🎤","🌹","👑","🎶"],"review":true}
+{"id":"ent-ru-004","q":"миллион алых роз","locale":"ru","cat":"song","answers":["🌹","🥀","💐","🎶","❤️"]}
+{"id":"ent-ru-005","q":"чебурашка","locale":"ru","cat":"character","answers":["🧸","🍊","🐊","👂"],"review":true}
+{"id":"ent-ru-006","q":"ну погоди","locale":"ru","cat":"series","answers":["🐺","🐰","🐇","🏃"],"note":"Soviet cartoon"}
+{"id":"ent-ru-007","q":"маша и медведь","locale":"ru","cat":"series","answers":["👧","🐻","🍯","🍓"]}
+{"id":"ent-ru-008","q":"ирония судьбы","locale":"ru","cat":"film","answers":["🎄","🛁","🥂","❄️","🍾"],"review":true,"note":"New Year film"}
+{"id":"ent-ru-009","q":"тетрис","locale":"ru","cat":"game","answers":["🧱","🟦","🟥","🎮"]}
+{"id":"ent-ru-010","q":"спартак","locale":"ru","cat":"team","answers":["⚽","🔴","⚪","🇷🇺"]}
+{"id":"ent-ru-011","q":"зенит","locale":"ru","cat":"team","answers":["⚽","🔵","⚪","🇷🇺"],"review":true,"note":"football club; also means zenith"}
+{"id":"ent-ru-012","q":"масленица","locale":"ru","cat":"holiday","answers":["🥞","🔥","☀️","🪆"]}
+{"id":"ent-ru-013","q":"эрмитаж","locale":"ru","cat":"place","answers":["🏛️","🖼️","🐈","🇷🇺"]}
+{"id":"ent-ru-014","q":"красная площадь","locale":"ru","cat":"place","answers":["🇷🇺","🏰","⛪","🟥"],"review":true}
+{"id":"ent-ru-015","q":"яндекс","locale":"ru","cat":"brand","answers":["🔍","🚕","🟡","🔎"]}
+{"id":"ent-ru-016","q":"овечкин","locale":"ru","cat":"athlete","answers":["🏒","🥅","🇷🇺","🐐"],"forbid":["🐑"]}
+{"id":"ent-ru-017","q":"без труда не выловишь и рыбку из пруда","locale":"ru","cat":"idiom","answers":["🎣","🐟","💪","🏞️"]}
+{"id":"ent-ru-018","q":"ждун","locale":"ru","cat":"meme","answers":["⏳","😐","🕰️","🫠"],"review":true,"note":"waiting creature meme"}
+{"id":"ent-zh-001","q":"泰勒·斯威夫特","locale":"zh","cat":"musician","answers":["🎤","🎸","💃","🎶"]}
+{"id":"ent-zh-002","q":"周杰伦","locale":"zh","cat":"musician","answers":["🎤","🎹","🎶","🎵"]}
+{"id":"ent-zh-003","q":"成龙","locale":"zh","cat":"celebrity","answers":["🥋","🎬","🤸","👊"],"note":"Jackie Chan"}
+{"id":"ent-zh-004","q":"李小龙","locale":"zh","cat":"celebrity","answers":["🥋","👊","🐉","🎬"],"note":"Bruce Lee"}
+{"id":"ent-zh-005","q":"姚明","locale":"zh","cat":"athlete","answers":["🏀","🇨🇳","😂"]}
+{"id":"ent-zh-006","q":"谷爱凌","locale":"zh","cat":"athlete","answers":["⛷️","🎿","🥇","🏂"]}
+{"id":"ent-zh-007","q":"孙悟空","locale":"zh","cat":"character","answers":["🐒","🐵","☁️","🍑","🔥"]}
+{"id":"ent-zh-008","q":"西游记","locale":"zh","cat":"series","answers":["🐒","🐷","🐴","🧘","☁️"],"note":"Journey to the West"}
+{"id":"ent-zh-009","q":"黑神话悟空","locale":"zh","cat":"game","answers":["🐒","🎮","🐵","⚔️","☁️"]}
+{"id":"ent-zh-010","q":"哪吒","locale":"zh","cat":"film","answers":["🔥","👦","🐉","🌀","🔱"],"review":true,"note":"Ne Zha animated films"}
+{"id":"ent-zh-011","q":"流浪地球","locale":"zh","cat":"film","answers":["🌍","🚀","🪐","❄️"]}
+{"id":"ent-zh-012","q":"端午节","locale":"zh","cat":"holiday","answers":["🐉","🛶","🚣","🍙"]}
+{"id":"ent-zh-013","q":"双十一","locale":"zh","cat":"holiday","answers":["🛒","🛍️","💸","📦"],"note":"Singles' Day shopping festival"}
+{"id":"ent-zh-014","q":"瑞幸","locale":"zh","cat":"brand","answers":["☕","🦌","🥤"]}
+{"id":"ent-zh-015","q":"蜜雪冰城","locale":"zh","cat":"brand","answers":["🍦","🧋","⛄","🍋"]}
+{"id":"ent-zh-016","q":"故宫","locale":"zh","cat":"place","answers":["🏯","🏮","🇨🇳","👑"]}
+{"id":"ent-zh-017","q":"内卷","locale":"zh","cat":"meme","answers":["😩","🏃","📚","💼","🌀"],"review":true,"note":"involution, rat-race slang"}
+{"id":"ent-zh-018","q":"画蛇添足","locale":"zh","cat":"idiom","answers":["🐍","🦶","🙄","✏️"]}
+{"id":"ent-zh-019","q":"对牛弹琴","locale":"zh","cat":"idiom","answers":["🐄","🐂","🎹","🎻","🙄"]}
+{"id":"ent-hi-001","q":"शाहरुख़ ख़ान","locale":"hi","cat":"celebrity","answers":["🎬","👐","❤️","👑","🤗"],"review":true}
+{"id":"ent-hi-002","q":"अमिताभ बच्चन","locale":"hi","cat":"celebrity","answers":["🎬","🎤","🧔","🇮🇳"],"forbid":["👶","🧒"]}
+{"id":"ent-hi-003","q":"सचिन तेंदुलकर","locale":"hi","cat":"athlete","answers":["🏏","🐐","🇮🇳","🏆"]}
+{"id":"ent-hi-004","q":"धोनी","locale":"hi","cat":"athlete","answers":["🏏","🚁","🧤","🇮🇳","😎"]}
+{"id":"ent-hi-005","q":"विराट कोहली","locale":"hi","cat":"athlete","answers":["🏏","👑","🇮🇳","🔥"]}
+{"id":"ent-hi-006","q":"शोले","locale":"hi","cat":"film","answers":["🔫","🐴","🏍️","🎬","🔥"],"review":true}
+{"id":"ent-hi-007","q":"बाहुबली","locale":"hi","cat":"film","answers":["⚔️","💪","👑","🏰","🐘"]}
+{"id":"ent-hi-008","q":"दिलवाले दुल्हनिया ले जायेंगे","locale":"hi","cat":"film","answers":["🚂","🌻","💑","❤️","🎻"],"review":true}
+{"id":"ent-hi-009","q":"अरिजीत सिंह","locale":"hi","cat":"musician","answers":["🎤","🎶","💔","🎸"],"forbid":["🦁"]}
+{"id":"ent-hi-010","q":"जय हो","locale":"hi","cat":"song","answers":["🎶","🇮🇳","🏆","🙌"],"review":true}
+{"id":"ent-hi-011","q":"गणेश चतुर्थी","locale":"hi","cat":"holiday","answers":["🐘","🙏","🪔","🌺","🎉"]}
+{"id":"ent-hi-012","q":"रक्षाबंधन","locale":"hi","cat":"holiday","answers":["🎀","👫","🎁","🤝","💖"],"review":true}
+{"id":"ent-hi-013","q":"चेन्नई सुपर किंग्स","locale":"hi","cat":"team","answers":["🏏","🦁","💛","🏆"]}
+{"id":"ent-hi-014","q":"अमूल","locale":"hi","cat":"brand","answers":["🧈","🥛","👧","🐄"]}
+{"id":"ent-hi-015","q":"टाटा","locale":"hi","cat":"brand","answers":["🚗","🏭","🧂","🇮🇳"],"forbid":["👋"],"review":true}
+{"id":"ent-hi-016","q":"छोटा भीम","locale":"hi","cat":"character","answers":["💪","👦","🍬","🇮🇳"],"review":true}
+{"id":"ent-hi-017","q":"मोगैम्बो खुश हुआ","locale":"hi","cat":"meme","answers":["😈","😆","🦹","🎬"],"review":true,"note":"villain catchphrase from Mr. India"}
+{"id":"ent-hi-018","q":"ऊँट के मुँह में जीरा","locale":"hi","cat":"idiom","answers":["🐫","🤏","😅"]}
+{"id":"ent-hi-019","q":"ताज महल","locale":"hi","cat":"place","answers":["🕌","💕","🇮🇳","🤍"]}
+{"id":"ent-ar-001","q":"ميسي","locale":"ar","cat":"athlete","answers":["⚽","🐐","🇦🇷","🏆"]}
+{"id":"ent-ar-002","q":"محمد صلاح","locale":"ar","cat":"athlete","answers":["⚽","🇪🇬","👑","🔴"]}
+{"id":"ent-ar-003","q":"أم كلثوم","locale":"ar","cat":"musician","answers":["🎤","🎶","🇪🇬","🕶️","🌹"],"review":true}
+{"id":"ent-ar-004","q":"عمرو دياب","locale":"ar","cat":"musician","answers":["🎤","🎶","🇪🇬","🎸"]}
+{"id":"ent-ar-005","q":"فيروز","locale":"ar","cat":"musician","answers":["🎤","🎶","🇱🇧","☕","🌅"],"review":true,"note":"Lebanese singer; also the word for turquoise"}
+{"id":"ent-ar-006","q":"عادل إمام","locale":"ar","cat":"celebrity","answers":["🎬","😂","🎭","🇪🇬"]}
+{"id":"ent-ar-007","q":"باب الحارة","locale":"ar","cat":"series","answers":["🚪","🏘️","🇸🇾","📺","🗡️"],"review":true}
+{"id":"ent-ar-008","q":"الأهلي","locale":"ar","cat":"team","answers":["⚽","🦅","🔴","🇪🇬"]}
+{"id":"ent-ar-009","q":"الهلال","locale":"ar","cat":"team","answers":["⚽","💙","🌙","🇸🇦"],"review":true,"note":"football club; also means crescent"}
+{"id":"ent-ar-010","q":"عيد الأضحى","locale":"ar","cat":"holiday","answers":["🐑","🕋","🕌","🌙","🎉"]}
+{"id":"ent-ar-011","q":"اليوم الوطني السعودي","locale":"ar","cat":"holiday","answers":["🇸🇦","🎆","💚","🎉"]}
+{"id":"ent-ar-012","q":"برج خليفة","locale":"ar","cat":"place","answers":["🏙️","🇦🇪","🌃","🏗️"]}
+{"id":"ent-ar-013","q":"البتراء","locale":"ar","cat":"place","answers":["🏜️","🏛️","🇯🇴","🐫"]}
+{"id":"ent-ar-014","q":"المراعي","locale":"ar","cat":"brand","answers":["🥛","🧀","🐄","🇸🇦"]}
+{"id":"ent-ar-015","q":"افتح يا سمسم","locale":"ar","cat":"idiom","answers":["🚪","🔓","🗝️","✨","💰"]}
+{"id":"ent-ar-016","q":"علاء الدين","locale":"ar","cat":"character","answers":["🧞","🪔","🧞‍♂️","🐒","🕌"]}
+{"id":"ent-ar-017","q":"ببجي","locale":"ar","cat":"game","answers":["🎮","🔫","🪂","🍗"],"note":"PUBG"}
+{"id":"ent-ar-018","q":"الصبر مفتاح الفرج","locale":"ar","cat":"idiom","answers":["🙏","⏳","🔑","🗝️"],"review":true}
+{"id":"ent-bn-001","q":"শাকিব আল হাসান","locale":"bn","cat":"athlete","answers":["🏏","🇧🇩","🏆","🐯"]}
+{"id":"ent-bn-002","q":"রবীন্দ্রনাথ ঠাকুর","locale":"bn","cat":"celebrity","answers":["✍️","📜","🧔","🎶","🪶"]}
+{"id":"ent-bn-003","q":"নজরুল","locale":"bn","cat":"celebrity","answers":["✍️","🎶","🔥","✊","🇧🇩"],"review":true}
+{"id":"ent-bn-004","q":"সত্যজিৎ রায়","locale":"bn","cat":"celebrity","answers":["🎬","🎥","🕵️","🏆"]}
+{"id":"ent-bn-005","q":"ফেলুদা","locale":"bn","cat":"character","answers":["🕵️","🔍","🧠","🔎"]}
+{"id":"ent-bn-006","q":"গোপাল ভাঁড়","locale":"bn","cat":"character","answers":["😂","🧔","🤡","🎭"],"review":true}
+{"id":"ent-bn-007","q":"পথের পাঁচালী","locale":"bn","cat":"film","answers":["🎬","🚂","👧","👦","🌾"],"review":true}
+{"id":"ent-bn-008","q":"আয়নাবাজি","locale":"bn","cat":"film","answers":["🎬","🪞","🎭"],"review":true,"note":"Bangladeshi thriller film"}
+{"id":"ent-bn-009","q":"আইয়ুব বাচ্চু","locale":"bn","cat":"musician","answers":["🎸","🎤","🤘","🇧🇩"]}
+{"id":"ent-bn-010","q":"আমার সোনার বাংলা","locale":"bn","cat":"song","answers":["🇧🇩","🎶","💚","❤️"]}
+{"id":"ent-bn-011","q":"একুশে ফেব্রুয়ারি","locale":"bn","cat":"holiday","answers":["💐","🇧🇩","🕯️","✍️","🌹"],"review":true}
+{"id":"ent-bn-012","q":"বিজয় দিবস","locale":"bn","cat":"holiday","answers":["🇧🇩","🎉","🎆","✊"]}
+{"id":"ent-bn-013","q":"মোহনবাগান","locale":"bn","cat":"team","answers":["⚽","💚","❤️","⛵"]}
+{"id":"ent-bn-014","q":"কক্সবাজার","locale":"bn","cat":"place","answers":["🏖️","🌊","🇧🇩","🌅"]}
+{"id":"ent-bn-015","q":"সুন্দরবন","locale":"bn","cat":"place","answers":["🐅","🌳","🐯","🌿","🇧🇩"]}
+{"id":"ent-bn-016","q":"গ্রামীণফোন","locale":"bn","cat":"brand","answers":["📱","📶","📞","🇧🇩"]}
+{"id":"ent-bn-017","q":"ঘটি বাঙাল","locale":"bn","cat":"meme","answers":["🐟","🦐","⚽","🤼"],"review":true,"note":"ilish vs chingri, East Bengal vs Mohun Bagan rivalry"}
+{"id":"ent-bn-018","q":"যত গর্জে তত বর্ষে না","locale":"bn","cat":"idiom","answers":["⛈️","🌩️","🗯️","🙄"]}
+{"id":"ent-pt-001","q":"neymar","locale":"pt","cat":"athlete","answers":["⚽","🇧🇷","🤕","🎭"],"review":true}
+{"id":"ent-pt-002","q":"pele","locale":"pt","cat":"athlete","answers":["⚽","👑","🇧🇷","🐐"]}
+{"id":"ent-pt-003","q":"ayrton senna","locale":"pt","cat":"athlete","answers":["🏎️","🏁","🇧🇷","🏆"]}
+{"id":"ent-pt-004","q":"anitta","locale":"pt","cat":"musician","answers":["💃","🎤","🇧🇷","🎶","🍑"]}
+{"id":"ent-pt-005","q":"roberto carlos","locale":"pt","cat":"musician","answers":["🎤","🌹","🎶","⚽"],"review":true,"note":"Brazilian singer; also a footballer"}
+{"id":"ent-pt-006","q":"garota de ipanema","locale":"pt","cat":"song","answers":["🏖️","👙","🎶","🎸","🌊"]}
+{"id":"ent-pt-007","q":"cidade de deus","locale":"pt","cat":"film","answers":["🔫","📸","🏘️","🇧🇷"],"forbid":["⛪","🙏"]}
+{"id":"ent-pt-008","q":"chaves","locale":"pt","cat":"series","answers":["🛢️","🥪","📺","😢"],"forbid":["🔑","🗝️"],"review":true,"note":"Brazilian name of El Chavo; also means keys"}
+{"id":"ent-pt-009","q":"turma da monica","locale":"pt","cat":"character","answers":["🐰","👧","🦷","🐇"]}
+{"id":"ent-pt-010","q":"xuxa","locale":"pt","cat":"celebrity","answers":["👱‍♀️","📺","🚀","💋","⭐"],"review":true}
+{"id":"ent-pt-011","q":"festa junina","locale":"pt","cat":"holiday","answers":["🌽","🔥","🤠","🎆","🎉"]}
+{"id":"ent-pt-012","q":"carnaval do rio","locale":"pt","cat":"holiday","answers":["🎭","💃","🥁","🎉","🇧🇷"]}
+{"id":"ent-pt-013","q":"flamengo","locale":"pt","cat":"team","answers":["⚽","🔴","⚫","🇧🇷"],"forbid":["🦩"]}
+{"id":"ent-pt-014","q":"benfica","locale":"pt","cat":"team","answers":["⚽","🦅","🔴","🇵🇹"]}
+{"id":"ent-pt-015","q":"cristo redentor","locale":"pt","cat":"place","answers":["🙏","⛰️","🇧🇷","✝️"],"review":true}
+{"id":"ent-pt-016","q":"havaianas","locale":"pt","cat":"brand","answers":["🩴","🇧🇷","🏖️"]}
+{"id":"ent-pt-017","q":"guaraná antarctica","locale":"pt","cat":"brand","answers":["🥤","🇧🇷","🍹"],"forbid":["🐧","🧊"],"review":true}
+{"id":"ent-pt-018","q":"nazaré confusa","locale":"pt","cat":"meme","answers":["🤔","🧮","😵‍💫","❓"]}
+{"id":"ent-pt-019","q":"quem não tem cão caça com gato","locale":"pt","cat":"idiom","answers":["🐱","🐶","🤷","💡"],"review":true}
+{"id":"ent-id-001","q":"rich brian","locale":"id","cat":"musician","answers":["🎤","🎧","🇮🇩","💰"]}
+{"id":"ent-id-002","q":"dewa 19","locale":"id","cat":"musician","answers":["🎸","🎤","🤘","🇮🇩"]}
+{"id":"ent-id-003","q":"didi kempot","locale":"id","cat":"musician","answers":["🎤","💔","😭","🎶"]}
+{"id":"ent-id-004","q":"laskar pelangi","locale":"id","cat":"film","answers":["🌈","📚","🏫","🇮🇩"]}
+{"id":"ent-id-005","q":"pengabdi setan","locale":"id","cat":"film","answers":["👻","😱","🔔","🧕"],"review":true,"note":"Indonesian horror film"}
+{"id":"ent-id-006","q":"kkn di desa penari","locale":"id","cat":"film","answers":["👻","💃","🌳","😱"],"review":true,"note":"Indonesian horror film"}
+{"id":"ent-id-007","q":"upin ipin","locale":"id","cat":"character","answers":["👦","🍗","😄","🇲🇾"],"review":true}
+{"id":"ent-id-008","q":"si unyil","locale":"id","cat":"character","answers":["👦","📺","🧢"],"review":true}
+{"id":"ent-id-009","q":"indomie","locale":"id","cat":"brand","answers":["🍜","🇮🇩","🌶️"]}
+{"id":"ent-id-010","q":"gojek","locale":"id","cat":"brand","answers":["🛵","🏍️","🟢","📱"]}
+{"id":"ent-id-011","q":"tokopedia","locale":"id","cat":"brand","answers":["🛒","🦉","🟢","📦"]}
+{"id":"ent-id-012","q":"persib","locale":"id","cat":"team","answers":["⚽","💙","🐯","🐅"],"review":true}
+{"id":"ent-id-013","q":"timnas indonesia","locale":"id","cat":"team","answers":["⚽","🇮🇩","🦅","❤️"]}
+{"id":"ent-id-014","q":"17 agustus","locale":"id","cat":"holiday","answers":["🇮🇩","🎉","🏃","🎆"]}
+{"id":"ent-id-015","q":"nyepi","locale":"id","cat":"holiday","answers":["🤫","🌑","🕯️","🧘"],"note":"Balinese day of silence"}
+{"id":"ent-id-016","q":"borobudur","locale":"id","cat":"place","answers":["🛕","🧘","🇮🇩","🌅"]}
+{"id":"ent-id-017","q":"mobile legends","locale":"id","cat":"game","answers":["🎮","⚔️","📱","🏆"]}
+{"id":"ent-id-018","q":"bagai air di daun talas","locale":"id","cat":"idiom","answers":["💧","🍃","🌿","🤷"],"review":true}
+{"id":"ent-id-019","q":"bang jago","locale":"id","cat":"meme","answers":["💪","😎","🐓"],"review":true}
+{"id":"ent-tr-001","q":"tarkan","locale":"tr","cat":"musician","answers":["🎤","💋","🎶","🇹🇷"]}
+{"id":"ent-tr-002","q":"şımarık","locale":"tr","cat":"song","answers":["💋","😘","🎶"],"review":true,"note":"Tarkan song; also means spoiled"}
+{"id":"ent-tr-003","q":"barış manço","locale":"tr","cat":"musician","answers":["🎸","🎤","💍","🇹🇷"],"review":true}
+{"id":"ent-tr-004","q":"cem yılmaz","locale":"tr","cat":"celebrity","answers":["🎤","😂","🎬","🎭"]}
+{"id":"ent-tr-005","q":"arda güler","locale":"tr","cat":"athlete","answers":["⚽","🇹🇷","⭐"]}
+{"id":"ent-tr-006","q":"galatasaray","locale":"tr","cat":"team","answers":["⚽","🦁","🟡","🔴"]}
+{"id":"ent-tr-007","q":"fenerbahçe","locale":"tr","cat":"team","answers":["⚽","🐤","💛","💙"],"forbid":["🏮"]}
+{"id":"ent-tr-008","q":"beşiktaş","locale":"tr","cat":"team","answers":["⚽","🦅","⚫","⚪"],"forbid":["🪨"]}
+{"id":"ent-tr-009","q":"kurtlar vadisi","locale":"tr","cat":"series","answers":["🐺","🔫","🕶️","📺"]}
+{"id":"ent-tr-010","q":"muhteşem yüzyıl","locale":"tr","cat":"series","answers":["👑","🏰","🕌","📺"]}
+{"id":"ent-tr-011","q":"recep ivedik","locale":"tr","cat":"film","answers":["😂","🎬","🤪"],"review":true}
+{"id":"ent-tr-012","q":"nasreddin hoca","locale":"tr","cat":"character","answers":["🧔","🫏","👳","😂"]}
+{"id":"ent-tr-013","q":"kapadokya","locale":"tr","cat":"place","answers":["🎈","🏜️","🌅","🇹🇷"]}
+{"id":"ent-tr-014","q":"pamukkale","locale":"tr","cat":"place","answers":["♨️","🏞️","🤍","🇹🇷"]}
+{"id":"ent-tr-015","q":"29 ekim","locale":"tr","cat":"holiday","answers":["🇹🇷","🎆","🎉"],"note":"Republic Day"}
+{"id":"ent-tr-016","q":"kurban bayramı","locale":"tr","cat":"holiday","answers":["🐑","🐄","🕌","🤲"]}
+{"id":"ent-tr-017","q":"ülker","locale":"tr","cat":"brand","answers":["🍫","🍪","🇹🇷"]}
+{"id":"ent-tr-018","q":"damlaya damlaya göl olur","locale":"tr","cat":"idiom","answers":["💧","🌊","🏞️","💰"]}
+{"id":"ent-tr-019","q":"bir kahvenin kırk yıl hatırı vardır","locale":"tr","cat":"idiom","answers":["☕","🤝","💕"]}

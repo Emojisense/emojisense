@@ -44,6 +44,9 @@ internal class AliasIndex(packs: List<Pack>, usePopularity: Boolean = true) {
     val maxIdf: Double
     val tokenIdsByLength: Map<Int, IntArray>
 
+    /** Bit i set = a phrase of packs[i] has the token. */
+    val tokenLocaleMask: IntArray
+
     init {
         if (packs.isEmpty()) throw EmojisenseException.NoPacks()
         primary = packs.firstOrNull { !it.isCustom } ?: packs[0]
@@ -139,24 +142,30 @@ internal class AliasIndex(packs: List<Pack>, usePopularity: Boolean = true) {
 
         // IDF over emoji (not phrases), so a token repeated across one emoji's aliases stays specific.
         val idfValues = DoubleArray(vocabulary.size)
+        val localeMasks = IntArray(vocabulary.size)
         val lastSeen = IntArray(entries.size) { -1 }
         val idfByFrequency = HashMap<Int, Double>()
         var max = 0.0
         for (token in vocabulary.indices) {
             var frequency = 0
+            var mask = 0
             for (posting in start[token] until start[token + 1]) {
-                val emoji = phraseEmoji[posted[posting]]
+                val phrase = posted[posting]
+                mask = mask or phraseLocaleMask[phrase]
+                val emoji = phraseEmoji[phrase]
                 if (lastSeen[emoji] != token) {
                     lastSeen[emoji] = token
                     frequency++
                 }
             }
+            localeMasks[token] = mask
             val value = idfByFrequency.getOrPut(frequency) { ReferenceMath.log(1 + entries.size.toDouble() / frequency) }
             idfValues[token] = value
             if (value > max) max = value
         }
         idf = idfValues
         maxIdf = max
+        tokenLocaleMask = localeMasks
 
         val byLength = LinkedHashMap<Int, MutableList<Int>>()
         vocabulary.forEachIndexed { id, token -> byLength.getOrPut(token.length) { mutableListOf() }.add(id) }

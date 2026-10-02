@@ -312,6 +312,24 @@
   border-radius: 0.125rem;
 }
 
+/* Concept: a diamond (the API's concept tier read an unsure query). */
+.pg-source[data-source="concept"]::before,
+.pg-legend [data-source="concept"]::before,
+.pg-tile[data-source="concept"]::after {
+  border-radius: 0.0625rem;
+  transform: rotate(45deg) scale(0.85);
+}
+
+.pg-honesty {
+  margin: 0 0 0.75rem;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+}
+
+.pg-honesty q {
+  color: var(--ink);
+}
+
 /* Search box */
 .pg-query {
   display: flex;
@@ -723,6 +741,17 @@
   color: var(--ink-3);
   font: 400 0.6875rem / 1 var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+
+/* Unsure: no tier understood the query. The tiles are guesses, dimmed but choosable. */
+.pg-grid[data-guessing] .pg-tile-emoji {
+  opacity: 0.4;
+  filter: saturate(0.5);
+}
+
+.pg-grid[data-guessing] .pg-tile[aria-selected="true"] .pg-tile-emoji,
+.pg-grid[data-guessing] .pg-tile:hover .pg-tile-emoji {
+  opacity: 0.75;
 }
 
 .pg-grid > .pg-skeleton {

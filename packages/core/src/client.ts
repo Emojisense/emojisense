@@ -59,7 +59,9 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
         throw new Error(`emojisense: semantic search failed with HTTP ${response.status}`);
       }
       const body = { ...((await response.json()) as SemanticResponse), layer: "api" as const };
-      cache.set(url, body);
+      // A concept answer still pending (or not available now) is not final: ask the API again.
+      const final = body.concept?.status !== "pending" && body.concept?.status !== "unavailable";
+      if (final) cache.set(url, body);
       if (cache.size > cacheSize) cache.delete(cache.keys().next().value as string);
       if (body.overLimit) {
         pausedUntil = now() + overLimitCooldownMs;

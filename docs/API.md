@@ -59,7 +59,9 @@ use the website's own publishable key, so they are not anonymous.
 - Metered: each Worker call to `/v1/search` and `/v1/suggest-reactions` (`semantic_calls`, also
   when the response comes from the Cache API) and each `/v1/classify-image` (`image_classifications`).
   Calls with a key only: anonymous calls are never metered. An answer without a model call
-  (Workers AI down, or over the limit and not in the cache) is not counted.
+  (Workers AI down, or over the limit and not in the cache) is not counted. A search whose
+  [concept answer](#unsure-queries-and-concepts) needed a language-model call counts one more
+  `semantic_calls`.
 - Not metered: static packs and shards, hosted emoji set images, custom emoji images and custom
   packs, on-device search.
 - Monthly UTC periods, no daily caps. Limits come from `PLANS` in `@emojisense/platform`.
@@ -93,6 +95,7 @@ use the website's own publishable key, so they are not anonymous.
 | `key` | — | Publishable key |
 | `tenant` | — | The app owner's id for one of their customers (`tenants.external_id`, ≤ 128 characters): that tenant's custom emoji are searched too |
 | `culture` | `0` | `1` (or `true`) applies the [culture layer](#culture-in-search) to the answer. `0`, `false` or none: the canonical ranking only. Any other value answers `400`. |
+| `concept` | `1` | `0` (or `false`) keeps the search out of the [concept tier](#unsure-queries-and-concepts): no language-model call, `concept: null`. |
 | `region` | — | ISO 3166-1 alpha-2 code of the user's region, e.g. `GB`, `BR` (case does not matter), or `auto`. Turns on regional culture entries; used only with `culture=1`. `auto` uses the country of the request, which Cloudflare's edge derives from the IP address (`request.cf.country`); when it is unknown, no regional entry applies. A code that is not a real region answers `400`. See [Region auto](#region-auto). |
 
 ```json
@@ -105,14 +108,17 @@ use the website's own publishable key, so they are not anonymous.
   "degraded": false,
   "overLimit": false,
   "aliasLocale": "en",
-  "culture": null
+  "culture": null,
+  "confidence": 0.94,
+  "unsure": false,
+  "concept": null
 }
 ```
 
 | Field | Meaning |
 | ----- | ------- |
 | `query` | The normalized query (PACK_FORMAT.md §3) |
-| `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below) or `culture` (only with `culture=1`, with `context` and `cultureId`, see [Culture in search](#culture-in-search)) |
+| `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below), `culture` (only with `culture=1`, with `context` and `cultureId`, see [Culture in search](#culture-in-search)) or `concept` (an unsure query read by the [concept tier](#unsure-queries-and-concepts)) |
 | `packVersion`, `model` | The data the Worker serves, e.g. `0.1.0` and `bge-m3@1024` (model key @ dims) |
 | `cached` | The answer came from the shared edge cache |
 | `degraded` | Workers AI was unavailable, so the results are alias-only (and not cached) |
@@ -120,9 +126,10 @@ use the website's own publishable key, so they are not anonymous.
 | `aliasLocale` | The locale whose aliases were fused into the results. `null` in `semantic` mode, or when that locale's pack could not be loaded (the results are then semantic-only and not cached) |
 | `culture` | With `culture=1`: `{ "from": "2026-10-01", "day": "2026-10-02", "region": "GB" }`, the culture file's first day, the UTC day its windows were checked against, and the region (`null` without one). `null` when culture is off or the locale has no culture file |
 | `region` | Only when the request has `region`: the region used for regional entries, uppercase. With `region=auto`, the request's country, or `null` when it is unknown. Also with `culture=0`, so an SDK can apply regional entries on the device |
+| `confidence`, `unsure`, `concept` | How well the query was understood, and the concept tier's answer: see [Unsure queries and concepts](#unsure-queries-and-concepts). Over the limit and for anonymous calls, `unsure` is the dictionary's verdict alone and `concept` is `null` |
 
 Headers: `Server-Timing: embed;dur=…, total;dur=…` (only `total` on a cache hit or over the
-limit) and `Cache-Control`:
+limit; `concept;dur=…` too when the concept tier was asked) and `Cache-Control`:
 
 | Answer | `Cache-Control` |
 | ------ | --------------- |
@@ -130,7 +137,7 @@ limit) and `Cache-Control`:
 | With `culture=1` | `public, max-age=3600` (no longer than the culture file) |
 | With `region=auto` | `private, max-age=3600` (the answer depends on the caller's country, which the URL does not show) |
 | The app has custom emoji | `private, max-age=60` |
-| Over the limit (not from the cache), degraded, or a locale pack or vector file did not load | `no-store` |
+| Over the limit (not from the cache), degraded, a locale pack or vector file did not load, or `concept.status` is `pending` or `unavailable` | `no-store` |
 
 **Custom emoji.** With a key, the app's custom emoji (app-wide, plus the tenant's with `tenant=`)
 are matched against the query and put first, in both modes, within `limit`:
@@ -152,6 +159,80 @@ are matched against the query and put first, in both modes, within `limit`:
   member sees. Image URLs need no key at all. So do not store private content in custom emoji,
   and use ids that other tenants cannot guess (not sequential numbers or public names) if tenants
   must not see each other's emoji. There is no signed tenant token yet.
+
+### Unsure queries and concepts
+
+Names and pop culture that the emoji data does not mention ("kendrick lamar", "taylor swift",
+"la casa de papel") give a flat, low semantic list and at most a partial dictionary match. The
+search API says so, and for a keyed call it asks a concept tier.
+
+**Unsure.** A query is unsure when the dictionary does not cover it with confidence (no phrase
+matches all its words with whole tokens, or the top alias score is below 0.6) and the semantic
+list is flat or low (`semanticStrength` < 0.6: the best cosine on the calibrated scale, halved
+when it does not stand out from results 2–5). The SDKs compute the same verdict on the device
+(`assessConfidence` in `emojisense`, `Confidence` in Swift and Kotlin).
+
+**Concept tier.** For an unsure search with a key (never for anonymous calls, over the plan
+limit, or with `concept=0`), a small language model on Workers AI (Gemma 4 26B-A4B) says what
+the query refers to: a kind, up to 6 short English terms and up to 8 emoji. Then:
+
+- Every emoji is checked against the catalog (skin tones and variation selectors removed);
+  unknown ones and a short list of sexual or insulting emoji are dropped. A term with a blocked
+  word drops the whole answer; a term with a demoted word is dropped (the alias blocklist).
+- The answer is ranked like photo labels: the model's emoji, an alias search of each term and
+  the semantic neighbours of the terms, fused; single weak evidence is dropped.
+- The results have `source: "concept"`. In `hybrid` mode they come after the confident alias
+  hits and before everything else; in `semantic` mode they come first and the SDK merges them
+  after its own confident alias hits.
+- The model writes no text into the answer. `concept.terms` holds only terms that are phrases
+  of the emoji catalog (at most 3), for an "understood as" line.
+
+| Field | Meaning |
+| ----- | ------- |
+| `confidence` | 0–1: how well the dictionary or the semantic tier understood the query |
+| `unsure` | `true`: neither did (the verdict above). Show the results as guesses unless `concept.status` is `"ok"` |
+| `concept` | `null` when the tier was not asked. Else `{ "status", "kind"?, "terms"? }` |
+| `concept.status` | `ok` (concept results are in `results`), `none` (the model did not know the query, or a blocked word), `pending` (the model is still working: ask again in a moment; the answer is not cached), `unavailable` (no model call now: budget, rate limit or a Workers AI error; not cached) |
+| `concept.kind` | `person`, `music`, `film`, `series`, `game`, `brand`, `sport`, `team`, `character`, `place`, `event`, `meme`, `idiom` or `other` |
+| `concept.terms` | Up to 3 catalog phrases, e.g. `["rapper", "musician"]` |
+
+```json
+{
+  "query": "kendrick lamar",
+  "results": [
+    { "emoji": "🎤", "id": "1F3A4", "score": 0.95, "source": "concept" },
+    { "emoji": "🎶", "id": "1F3B6", "score": 0.507, "source": "concept" },
+    { "emoji": "👑", "id": "1F451", "score": 0.45, "source": "concept" },
+    { "emoji": "🦁", "id": "1F981", "score": 0.4, "source": "semantic" }
+  ],
+  "confidence": 0,
+  "unsure": true,
+  "concept": { "status": "ok", "kind": "person", "terms": ["rapper", "musician"] }
+}
+```
+
+- **Caches.** Each normalized query and locale goes to the model once per model and prompt
+  version: the shared search cache (its key holds the model and prompt version, `k`), a concept
+  edge cache (query, locale, model, prompt version and data hash; no key, user or origin) and
+  the D1 table `concept_cache`, keyed by a SHA-256 of locale and query (no query text), negative
+  answers included. The nightly shard job fills `concept_cache` for popular unsure queries
+  (≤ 500 model calls a night), so common entity queries cost no model call at search time.
+- **Latency.** The search waits up to 3 s for the model. Past that the answer has
+  `concept.status: "pending"` and `Cache-Control: no-store`; the call goes on and fills the
+  caches. The SDK session asks again twice, 1.5 s apart. `Server-Timing` has `concept;dur=…`
+  when the tier was asked.
+- **Budget.** At most 4 model calls in flight per Worker instance, the caller's own rate limiter
+  (a separate `concept:` budget of the same size), and a daily cap for all keys together
+  (`CONCEPT_DAILY_CAP`, default 20,000). Over any of them: `unavailable`.
+- **Metering.** A search whose concept answer needed a model call counts one more
+  `semantic_calls`. Cached concept answers add nothing.
+- **Privacy.** The model sees the normalized query text (≤ 64 characters) and the locale code,
+  nothing else: no key, app, user or IP. Queries that look personal (`privacyReason`: an email,
+  web address, phone or account number, user id, long token) or that the blocklist blocks never
+  reach it. `concept_cache` holds a hash of the query, the model's terms and emoji ids; rows are
+  deleted after 90 days.
+- `CONCEPTS_ENABLED=false` (a Worker variable) switches the tier off; answers then have
+  `concept: null`.
 
 ### Locales
 
@@ -845,6 +926,7 @@ What the hosted service collects, and for how long:
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
 | Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below). No app, account, day or count. | R2 `emojisense-shards`, edge cache | Rebuilt nightly. The previous build is deleted after one more night; browser and edge copies expire within 1 day. |
 | Regional trends: normalized query text, locale, country (or `*`), score, searches and accounts, for queries over the trend thresholds (below). No app, account or user. Not served by any route. | D1 `trends_daily` | 90 days (`TRENDS_KEEP_DAYS`). The daily cron deletes older rows. |
+| Concept answers: a SHA-256 of locale and normalized query (no query text), the model's kind, terms and emoji ids, the ranking, the time. No app, account or user. Plus the number of model calls per UTC day. | D1 `concept_cache`, `concept_daily`; edge cache | 90 days (`CONCEPT_CACHE_DAYS`); daily counts 7 days. The nightly shard job deletes older rows. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
@@ -865,6 +947,9 @@ What the hosted service collects, and for how long:
 - Logs never hold query or message text, keys, IP addresses or emails. Workers AI failures log
   the error type only, because a message could quote the input.
 - Anonymous calls and development keys never reach `query_daily`.
+- The concept tier sends a language model on Workers AI the normalized query text (≤ 64
+  characters) and the locale code of an unsure keyed search, nothing else. Personal-looking or
+  blocklisted queries are never sent.
 - The dashboard names a query only when the app saw it ≥ 5 times in the window.
 - The nightly shard job reads `query_daily` in aggregate. It publishes a query in the public
   shard files of a locale (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10

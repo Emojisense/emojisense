@@ -38,12 +38,27 @@ public data class SessionState(
     /** Which layer gave the semantic results. */
     val layer: SemanticLayer? = null,
     val error: Throwable? = null,
+    /**
+     * No tier understood the query ([Confidence.assessConfidence]): the dictionary does not cover it
+     * and the semantic list is flat or low. While [SessionStatus.LOADING], the dictionary's verdict
+     * alone. Show the results as guesses unless [concept] has [ConceptStatus.OK].
+     */
+    val unsure: Boolean = false,
+    /** 0–1: how well the best tier understood the query. */
+    val confidence: Double = 0.0,
+    /**
+     * The server's concept tier for an unsure query (API layer only): with [ConceptStatus.OK] the
+     * results lead with its emoji ([ResultSource.CONCEPT]) and [ConceptInfo.terms] say how it read
+     * the query ("rapper", "hip hop"). [ConceptStatus.PENDING]: the session asks again shortly.
+     */
+    val concept: ConceptInfo? = null,
 )
 
 /**
  * Search controller, like `createSearchSession` in packages/core: alias results on every
- * keystroke, then debounced, cancellable semantic results fused in. A newer query cancels the
- * older request, so stale answers never arrive. [onChange] runs synchronously for the alias
+ * keystroke, then debounced, cancellable semantic results fused in, and the server's concept
+ * results for unsure queries. A newer query cancels the older request (and a pending concept
+ * retry), so stale answers never arrive. [onChange] runs synchronously for the alias
  * results and in [scope] (e.g. `lifecycleScope` on Android) for the semantic ones.
  *
  * The culture layer is applied last, after fusion, so the canonical top result stays first.
@@ -68,6 +83,8 @@ public class SearchSession @JvmOverloads constructor(
     private val shouldUseSemantic: (AliasSearchOutput<SearchResult>) -> Boolean = Fusion::shouldUseSemantic,
     /** Epoch milliseconds. Culture windows follow the local day of each update, also in a long-lived session. */
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Wait before asking again when the server's concept answer is pending. */
+    private val conceptRetryMillis: Long = 1500,
     private val onChange: (SessionState) -> Unit,
 ) {
     private var job: Job? = null
@@ -89,41 +106,61 @@ public class SearchSession @JvmOverloads constructor(
             wantsSemantic -> SessionStatus.LOADING
             else -> SessionStatus.ALIAS
         }
-        onChange(SessionState(query, present(query, alias.results), alias, status, aliasMillis))
+        val aliasOnly = Confidence.assessConfidence(alias, null)
+        fun aliasState(status: SessionStatus, error: Throwable? = null) = SessionState(
+            query = query,
+            results = present(query, alias.results),
+            alias = alias,
+            status = status,
+            aliasMillis = aliasMillis,
+            error = error,
+            unsure = aliasOnly.unsure,
+            confidence = aliasOnly.confidence,
+        )
+        onChange(aliasState(status))
         if (!wantsSemantic) return
 
         job = scope.launch {
             delay(debounceMillis)
-            val requested = System.nanoTime()
-            val response = try {
-                semantic.search(query, SemanticSearchOptions(locale = locale, limit = limit, region = if (autoRegion) AUTO_REGION else null))
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (error: Exception) {
-                onChange(SessionState(query, present(query, alias.results), alias, SessionStatus.ERROR, aliasMillis, error = error))
-                return@launch
-            }
-            if (response == null) {
-                // No layer had an answer (or the key is over its limit): the alias results stand.
-                onChange(SessionState(query, present(query, alias.results), alias, SessionStatus.ALIAS, aliasMillis))
-                return@launch
-            }
-            if (autoRegion && learnedRegion == null) learnedRegion = response.region
-            onChange(
-                SessionState(
-                    query = query,
-                    results = present(
-                        query,
-                        Fusion.fuse(alias, response.results, limit, ranking = Fusion.Ranking(engine::popularity)),
+            var retriesLeft = CONCEPT_RETRIES
+            while (true) {
+                val requested = System.nanoTime()
+                val response = try {
+                    semantic.search(query, SemanticSearchOptions(locale = locale, limit = limit, region = if (autoRegion) AUTO_REGION else null))
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    onChange(aliasState(SessionStatus.ERROR, error))
+                    return@launch
+                }
+                if (response == null) {
+                    // No layer had an answer (or the key is over its limit): the alias results stand.
+                    onChange(aliasState(SessionStatus.ALIAS))
+                    return@launch
+                }
+                if (autoRegion && learnedRegion == null) learnedRegion = response.region
+                val semanticList = response.results.filter { it.source != ResultSource.CONCEPT }
+                val conceptList = response.results.filter { it.source == ResultSource.CONCEPT }
+                val verdict = Confidence.assessConfidence(alias, semanticList)
+                onChange(
+                    SessionState(
+                        query = query,
+                        results = present(query, Confidence.mergeConcept(Fusion.fuse(alias, semanticList, limit, ranking = Fusion.Ranking(engine::popularity)), conceptList, alias, limit)),
+                        alias = alias,
+                        status = SessionStatus.FUSED,
+                        aliasMillis = aliasMillis,
+                        semanticMillis = (System.nanoTime() - requested) / 1_000_000.0,
+                        semanticCached = response.cached,
+                        layer = response.layer,
+                        unsure = verdict.unsure,
+                        confidence = verdict.confidence,
+                        concept = response.concept,
                     ),
-                    alias = alias,
-                    status = SessionStatus.FUSED,
-                    aliasMillis = aliasMillis,
-                    semanticMillis = (System.nanoTime() - requested) / 1_000_000.0,
-                    semanticCached = response.cached,
-                    layer = response.layer,
-                ),
-            )
+                )
+                if (response.concept?.status != ConceptStatus.PENDING || retriesLeft == 0) return@launch
+                retriesLeft--
+                delay(conceptRetryMillis)
+            }
         }
     }
 
@@ -141,5 +178,10 @@ public class SearchSession @JvmOverloads constructor(
             query,
             ApplyCultureOptions(region = if (autoRegion) learnedRegion else region, now = clock(), limit = limit, locale = locale, engine = engine),
         )
+    }
+
+    private companion object {
+        /** Times a pending concept answer is asked for again (the server keeps working on it). */
+        const val CONCEPT_RETRIES = 2
     }
 }

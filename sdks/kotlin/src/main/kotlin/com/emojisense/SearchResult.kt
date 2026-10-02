@@ -10,6 +10,9 @@ public enum class ResultSource(public val key: String) {
 
     /** An editorial association of the culture layer ([CultureResult]). */
     CULTURE("culture"),
+
+    /** The server's concept tier: an LLM's reading of an unsure query, checked against the catalog ([ConceptInfo]). */
+    CONCEPT("concept"),
     ;
 
     public companion object {

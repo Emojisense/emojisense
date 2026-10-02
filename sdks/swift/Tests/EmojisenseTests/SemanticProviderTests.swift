@@ -76,6 +76,50 @@ final class SemanticClientTests: XCTestCase {
     }
   }
 
+  func testDecodesTheVerdictAndConceptResultsOfAnUnsureQuery() async throws {
+    let body = """
+      {"packVersion":"test","cached":false,"unsure":true,"confidence":0.12,
+       "concept":{"status":"ok","kind":"person","terms":["rapper"]},
+       "results":[{"emoji":"🎤","id":"1F3A4","score":0.9,"source":"concept"},
+                  {"emoji":"🌋","id":"1F30B","score":0.4,"source":"semantic"}]}
+      """
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(body.utf8)) }
+    let response = try await client(transport).search("kendrick lamar")
+    XCTAssertEqual(response?.unsure, true)
+    XCTAssertEqual(response?.confidence, 0.12)
+    XCTAssertEqual(response?.concept, ConceptInfo(status: .ok, kind: "person", terms: ["rapper"]))
+    XCTAssertEqual(response?.results.map(\.source), [.concept, .semantic])
+  }
+
+  func testDoesNotCacheAnAnswerWhoseConceptIsPendingOrUnavailable() async throws {
+    let status = LockedValue("pending")
+    let transport = StubTransport { _ in
+      let body = semanticBody.replacingOccurrences(
+        of: #""cached":false"#,
+        with: #""cached":false,"unsure":true,"concept":{"status":"\#(status.value)"}"#)
+      return HTTPResponse(status: 200, body: Data(body.utf8))
+    }
+    let client = client(transport)
+    let pending = try await client.search("kendrick lamar")
+    XCTAssertEqual(pending?.concept?.status, .pending)
+    status.value = "unavailable"
+    _ = try await client.search("kendrick lamar")
+    status.value = "ok"
+    _ = try await client.search("kendrick lamar")
+    _ = try await client.search("kendrick lamar")
+    let requestCount = await transport.requests.count
+    XCTAssertEqual(requestCount, 3)
+  }
+
+  func testKeepsTheResultsWhenTheConceptStatusIsUnknown() async throws {
+    let body = semanticBody.replacingOccurrences(
+      of: #""cached":false"#, with: #""cached":false,"concept":{"status":"later"}"#)
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(body.utf8)) }
+    let response = try await client(transport).search("kendrick lamar")
+    XCTAssertNil(response?.concept)
+    XCTAssertEqual(response?.results.first?.emoji, "🌋")
+  }
+
   func testSkipsEmptyQueries() async throws {
     let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8)) }
     let response = try await client(transport).search("🚀 !!")
@@ -246,6 +290,29 @@ final class ShardProviderTests: XCTestCase {
     XCTAssertEqual(english?.layer, .shard)
     requests = await requestedURLs(transport)
     XCTAssertEqual(requests.filter { $0.hasSuffix("/de/index.json") }.count, 1)
+  }
+}
+
+/// A value the test changes while a stub transport reads it.
+private final class LockedValue<Value: Sendable>: @unchecked Sendable {
+  private let lock = NSLock()
+  private var current: Value
+
+  init(_ value: Value) {
+    current = value
+  }
+
+  var value: Value {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return current
+    }
+    set {
+      lock.lock()
+      defer { lock.unlock() }
+      current = newValue
+    }
   }
 }
 

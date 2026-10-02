@@ -46,7 +46,8 @@ public class SemanticClient @JvmOverloads constructor(
         if (!response.isSuccess) throw EmojisenseException.HttpStatus(response.status, url)
         val body = SemanticResponse.fromJson(response.body.decodeToString()).copy(layer = SemanticLayer.API)
         synchronized(lock) {
-            cache[url] = body
+            // A concept answer still pending (or not available now) is not final: ask the API again.
+            if (body.concept?.isFinal != false) cache[url] = body
             if (body.overLimit) pausedUntil = clock() + configuration.overLimitCooldownMillis
         }
         return if (body.overLimit) null else body

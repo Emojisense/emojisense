@@ -156,8 +156,9 @@ describe("aliases of every pack locale", () => {
     const h = localeHarness();
     const aliasHits = async (q: string) =>
       (await h.searchBody(q, "&locale=en")).results.filter((r) => r.source === "alias").map((r) => r.emoji);
-    // "arabia felix" (Yemen) is the nearest English alias of "feliz".
-    expect(await aliasHits("feliz cumpleaños")).toEqual(["🇾🇪"]);
+    // "arabia felix" (Yemen) was the nearest English alias of "feliz". A typo match of one word
+    // no longer stands for a query whose other word the dictionary does not know.
+    expect(await aliasHits("feliz cumpleaños")).toEqual([]);
     expect(await aliasHits("बधाई हो")).toEqual([]);
     expect(await aliasHits("مبروك")).toEqual([]);
   });
@@ -169,10 +170,13 @@ describe("aliases of every pack locale", () => {
     expect(h.read).toHaveBeenCalledTimes(2);
     expect(h.read).toHaveBeenCalledWith("pack.es.json", h.env);
     expect(h.read).toHaveBeenCalledWith("pack.es.ext.json", h.env);
-    // Bundled locales and semantic-only searches never read a pack.
+    // Bundled locales never read a pack. A semantic-only search reads one only to judge a weak
+    // list (assessConfidence); the neutral fake embedding has no opinion, so its list is weak.
     await h.searchBody("rocket", "&locale=en");
-    await h.searchBody("नमस्ते", "&locale=hi&mode=semantic");
     expect(h.read).toHaveBeenCalledTimes(2);
+    await h.searchBody("नमस्ते", "&locale=hi&mode=semantic");
+    expect(h.read).toHaveBeenCalledTimes(4);
+    expect(h.read).toHaveBeenCalledWith("pack.hi.json", h.env);
   });
 
   it("ranks with the locale's ext aliases too, as the SDK does after its idle-time load", async () => {
@@ -204,7 +208,8 @@ describe("aliases of every pack locale", () => {
       },
     });
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const res = await h.call(keyedSearch("feliz cumpleaños", "&locale=es"));
+    // No concept tier: the weak semantic list would cache a concept answer.
+    const res = await h.call(keyedSearch("feliz cumpleaños", "&locale=es&concept=0"));
     await h.ctx.settle();
     const body = (await res.json()) as SearchBody;
     expect(body.aliasLocale).toBeNull();
@@ -220,7 +225,7 @@ describe("aliases of every pack locale", () => {
     warn.mockRestore();
 
     available = true;
-    const retried = await h.call(keyedSearch("feliz cumpleaños", "&locale=es"));
+    const retried = await h.call(keyedSearch("feliz cumpleaños", "&locale=es&concept=0"));
     await h.ctx.settle();
     expect(top((await retried.json()) as SearchBody)).toMatchObject({ emoji: "🎂", aliasLocale: "es" });
     expect(h.cache.puts).toHaveLength(1);

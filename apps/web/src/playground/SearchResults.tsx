@@ -64,6 +64,8 @@ export interface SearchResultsProps {
   empty: { text: string; action?: Mode };
   onMode: (mode: Mode) => void;
   loading: boolean;
+  /** No tier understood the query: the tiles are guesses, shown dimmed. */
+  guessing?: boolean;
 }
 
 /** The result list as a grid, a table or the raw JSON the SDK returned. */
@@ -167,7 +169,14 @@ export function SearchResults(props: SearchResultsProps) {
   }
 
   return (
-    <div className="pg-grid" id={`${id}-list`} role="listbox" aria-label="Emoji results" ref={props.gridRef}>
+    <div
+      className="pg-grid"
+      id={`${id}-list`}
+      role="listbox"
+      aria-label="Emoji results"
+      ref={props.gridRef}
+      data-guessing={props.guessing || undefined}
+    >
       {results.map((result, index) => (
         // Combobox pattern: focus stays in the search box, which moves aria-activedescendant.
         // biome-ignore lint/a11y/useKeyWithClickEvents: keys are handled by the search box (see above).

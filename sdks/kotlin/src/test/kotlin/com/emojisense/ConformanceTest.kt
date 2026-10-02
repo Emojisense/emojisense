@@ -1,6 +1,7 @@
 package com.emojisense
 
 import org.junit.jupiter.api.Assumptions.assumeTrue
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -77,6 +78,7 @@ class ConformanceTest {
             val engine = packs.engine(config.packs)
             val topFive = mutableListOf<String>()
             val details = mutableListOf<String>()
+            val coverage = mutableListOf<String>()
             for (case in config.cases) {
                 val output = engine.canonicalSearch(case.q, AliasSearchOptions(limit = 10, locale = case.locale))
                 val actual = output.results.map { Golden.Ranked(it.id, it.score) }
@@ -92,19 +94,25 @@ class ConformanceTest {
                             "ts ${debug(case.query)} ${case.top} ${case.match}/${case.field}",
                     )
                 }
+                if (output.coverage != case.coverage) {
+                    coverage.add("  ${case.id} ${debug(case.q)}: kotlin ${output.coverage}, ts ${case.coverage}")
+                }
             }
             report("[${config.name}] identical top-5 ids", config.cases.size, topFive)
             report("[${config.name}] identical query, top-10 ids + scores, confidence, match", config.cases.size, details)
+            report("[${config.name}] identical coverage", config.cases.size, coverage)
             assertEquals(emptyList(), topFive, "[${config.name}] top 5")
             assertEquals(emptyList(), details, "[${config.name}] details")
+            assertEquals(emptyList(), coverage, "[${config.name}] coverage")
         }
     }
 
-    /** Every prefix of a sample of queries and sentences, as typed: exercises prefix completion. */
+    /** Every prefix of a sample of queries, sentences and entity names, as typed: exercises prefix completion. */
     @Test
     fun `keystrokes match the reference`() {
         val packs = packs()
-        for ((files, cases) in listOf(golden.keystrokePacks to golden.keystrokes) + golden.sentenceKeystrokes) {
+        val groups = listOf(golden.keystrokePacks to golden.keystrokes) + golden.sentenceKeystrokes + golden.entityKeystrokes
+        for ((files, cases) in groups) {
             val engine = packs.engine(files)
             val differences = cases.mapNotNull { case ->
                 val actual = engine.canonicalSearch(case.q, AliasSearchOptions(limit = 5, locale = case.locale))
@@ -123,7 +131,12 @@ class ConformanceTest {
             val alias = AliasSearchOutput<SearchResult>(
                 query = case.aliasQuery,
                 tokens = emptyList(),
-                results = case.alias.map { AliasResult(it.id, it.id, it.score, ResultSource.ALIAS, "", "", Field.ALIAS) },
+                results = case.alias.mapIndexed { index, result ->
+                    val isTop = index == 0
+                    val match = if (isTop) case.aliasMatch ?: "" else ""
+                    val field = if (isTop) case.aliasField?.let(Field::fromKey) ?: Field.ALIAS else Field.ALIAS
+                    AliasResult(result.id, result.id, result.score, ResultSource.ALIAS, "", match, field)
+                },
                 confidence = case.aliasConfidence,
             )
             val semantic = case.semantic.map { (emoji, id, score) -> EmojiResult(emoji, id, score, ResultSource.SEMANTIC) }
@@ -135,6 +148,35 @@ class ConformanceTest {
         }
         report("fusion, identical top-10 ids", golden.fusion.size * 2, differences)
         assertEquals(emptyList(), differences)
+    }
+
+    /** `assessConfidence`, `semanticStrength` and `mergeConcept` on the generated inputs of the reference. */
+    @Test
+    fun `the unsure verdict and the concept merge match the reference`() {
+        val strength = mutableListOf<String>()
+        val verdict = mutableListOf<String>()
+        val merged = mutableListOf<String>()
+        golden.confidence.forEachIndexed { n, case ->
+            val semantic = case.semantic
+            val expected = case.strength
+            if (semantic != null && expected != null) {
+                val actual = Confidence.semanticStrength(semantic)
+                if (abs(actual - expected) > 1e-12) strength.add("  #$n: kotlin $actual, ts $expected")
+            }
+            val actual = Confidence.assessConfidence(case.alias, case.semantic)
+            if (actual != QueryConfidence(case.confidence, case.unsure)) {
+                verdict.add("  #$n: kotlin $actual, ts ${case.confidence}/${case.unsure}")
+            }
+            val ids = Confidence.mergeConcept(case.fused, case.concept, case.alias, case.limit).map { it.id }
+            if (ids != case.merged) merged.add("  #$n: kotlin $ids, ts ${case.merged}")
+        }
+        // Without a semantic list the reference records no strength.
+        report("semantic strength within 1e-12 (cases with a semantic list)", golden.confidence.count { it.semantic != null }, strength)
+        report("unsure verdict: identical confidence and unsure", golden.confidence.size, verdict)
+        report("concept merge: identical ids", golden.confidence.size, merged)
+        assertEquals(emptyList(), strength)
+        assertEquals(emptyList(), verdict)
+        assertEquals(emptyList(), merged)
     }
 
     /** The Kotlin copy (FunctionWords.kt, generated) holds exactly the reference lists. */

@@ -10,6 +10,7 @@
     "eval:heldout": "tsx src/heldout-cli.ts",
     "eval:diagnose": "tsx src/diagnose-cli.ts",
     "eval:semantic": "tsx src/semantic-cli.ts",
+    "eval:entities": "tsx src/entities.ts",
     "culture:gate": "tsx src/culture-gate-cli.ts",
     "heldout:generate": "tsx scripts/make-heldout.ts",
     "photos": "tsx src/photos.ts",

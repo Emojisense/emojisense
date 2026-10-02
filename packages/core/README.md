@@ -100,6 +100,13 @@ cache and never fails hard.
 To fuse by hand: `shouldUseSemantic(aliasOutput)` tells you when to ask, and
 `fuse(aliasOutput, semanticResults)` merges the two lists.
 
+**Unsure queries.** `state.unsure` is `true` when no tier understood the query: the dictionary
+does not cover its words (a name such as "kendrick lamar") and the semantic list is flat or low
+(`assessConfidence`). Show the results as guesses then. For such a search with a key, the API asks
+its concept tier: results with `source: "concept"` come first and `state.concept.terms` says how
+it read the query (`["rapper", "musician"]`). While the answer is `pending`, the session asks
+again twice.
+
 ## More
 
 ```ts

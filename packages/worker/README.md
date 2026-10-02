@@ -153,9 +153,21 @@ then `curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*"`.
 | R2 layout `shards/<packVersion>/<contentHash>/<build>/{index.json,<key>.json}` (English), `…/<build>/<locale>/…` (other locales) and `current.json`. Build id = content hash over every locale; the pointer is written last and lists queries and shards per locale. Keeps the current and previous build; deletes older builds and stores not written for 7 days. | `src/shards/storage.ts` |
 | `GET /p/<v>/<file>` and `/p/<v>/<locale>/<file>` (`en/` = the English files; not a pack locale: 404): pointer per isolate (5 min), edge cache keyed by build, `index.json` 1 h and key files 1 day in browsers, 404s 5 min. Without a build: `public/p` (never immutable). | `src/shards/route.ts` |
 
+| Concepts: each published query that is unsure with its locale's engine (`assessConfidence`) gets its concept answer from `concept_cache` or a model call (≤ 500 a run, `maxConceptCalls`), and its entry leads with the concept results. `concept_cache` rows older than 90 days and `concept_daily` rows older than 7 days are deleted. | `src/shards/concepts.ts` |
+
 Logs hold counts only (`shards_built`, `shards_empty`, `shards_skipped`, `shards_build_failed`).
 Locally the `offline` env has no Workers AI, so the run is skipped; `test/shards-miniflare.test.ts`
 runs the whole flow on Miniflare's local R2, D1 and Cache API with a fake model.
+
+## Concept tier (`src/concepts/`, docs/API.md "Unsure queries and concepts")
+
+| Rule | Where |
+| ---- | ----- |
+| A keyed search is unsure (`assessConfidence`: no confident alias coverage, a flat or low semantic list). Semantic mode loads the locale's aliases only when the semantic list is weak. Anonymous calls, `concept=0` and `CONCEPTS_ENABLED=false` never reach the model. | `search.ts` |
+| Edge cache (query, locale, model, prompt version, content hash) → D1 `concept_cache` (SHA-256 of locale + query; `ok` and `none`) → model call. Budget: 4 in flight per isolate, the caller's limiter (`rateLimitFor`) under a `concept:` key, `CONCEPT_DAILY_CAP` calls a day in D1 `concept_daily`. | `tier.ts`, `store.ts` |
+| `CONCEPT_MODEL` (Gemma 4 26B-A4B, JSON schema) sees the normalized query and the locale code. Emoji are checked against the catalog; a blocked term drops the answer; personal-looking or blocked queries are not sent. | `model.ts`, `config.ts` |
+| Ranking: model emoji + alias hits of the terms + semantic neighbours of the terms (`fuseLists`), `source: "concept"`; "understood as" terms are catalog phrases only. | `rank.ts` |
+| 3 s wait, then `concept.status: "pending"` (no-store) while the call fills the caches. A model call adds one `semantic_calls`. Logs hold event names and error types only (`concept_unavailable`, `concept_store_failed`, `concept_embed_failed`). | `tier.ts`, `search.ts` |
 
 ## Culture Phase 2 (`src/culture-admin/`, docs/CULTURE.md)
 

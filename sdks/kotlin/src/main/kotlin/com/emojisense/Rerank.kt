@@ -53,14 +53,31 @@ public object Rerank {
         )
     }
 
+    /** Fields whose match of the whole query is a curated answer. */
+    private val CURATED_FIELDS = setOf(Field.NAME, Field.SHORTCODE, Field.KEYWORD, Field.ALIAS)
+    private val DIGITS_ONLY = Regex("^[0-9]+( [0-9]+)*$")
+
     /**
-     * Alias results ≥ 0.9 stay on top in alias order, then every other candidate of both lists by
-     * its learned score; equal scores keep alias-then-semantic order.
+     * The dictionary's answer to number slang (a query of digits only, e.g. zh "666", "88"): a
+     * confident top result whose phrase is the whole query in a curated field. The embedding model
+     * reads digits literally (6️⃣, 8️⃣); the dictionary knows the slang (👍, 👋).
+     */
+    internal fun numberSlangAnswer(alias: AliasSearchOutput<SearchResult>): SearchResult? {
+        if (!DIGITS_ONLY.matches(alias.query) || alias.confidence < 0.6) return null
+        val top = alias.results.firstOrNull() as? AliasResult ?: return null
+        return if (top.match == alias.query && top.field in CURATED_FIELDS) top else null
+    }
+
+    /**
+     * Alias results ≥ 0.9 stay on top in alias order, and so does the dictionary's answer to number
+     * slang ([numberSlangAnswer]); then every other candidate of both lists by its learned score;
+     * equal scores keep alias-then-semantic order.
      */
     @JvmStatic
     @JvmOverloads
     public fun rerank(input: Input, limit: Int, weights: List<Double> = WEIGHTS): List<SearchResult> {
-        val pinned = input.alias.results.filter { it.score >= 0.9 }
+        val pinned = input.alias.results.filter { it.score >= 0.9 }.toMutableList<SearchResult>()
+        if (pinned.isEmpty()) numberSlangAnswer(input.alias)?.let { pinned.add(it) }
         val seen = pinned.mapTo(HashSet()) { it.id }
         val rest = ArrayList<Pair<SearchResult, Double>>()
         for (result in input.alias.results + input.semantic) {

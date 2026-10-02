@@ -97,7 +97,8 @@ describe("semantic search with locale vectors", () => {
     expect(body.degraded).toBe(false);
     expect(body.results.length).toBeGreaterThan(0);
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(h.cache.puts).toHaveLength(0);
+    // The concept tier may cache its own answer; the search answer is not cached.
+    expect(h.cache.puts.filter((url) => new URL(url).pathname === "/v1/search")).toHaveLength(0);
   });
 });
 

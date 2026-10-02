@@ -8,7 +8,14 @@ import { join } from "node:path";
 import { disposeEmbeddings, embedTexts } from "@emojisense/data/embeddings";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import { type AliasEngine, embeddingText, type Pack, shouldUseSemantic } from "emojisense";
+import {
+  type AliasEngine,
+  type AliasSearchOutput,
+  embeddingText,
+  type Pack,
+  type SearchResult,
+  shouldUseSemantic,
+} from "emojisense";
 import { l2normalize } from "emojisense/vectors";
 import type { EvalQuery } from "./queries.ts";
 import { fuseRanked, rankingEngine, semanticSearch } from "./ranking.ts";
@@ -21,6 +28,10 @@ const LIMIT = 10;
 export interface DevRow {
   q: EvalQuery;
   lists: Record<DevMode, string[]>;
+  /** The alias output and the semantic list (24 each) the lists were built from, and the fused list. */
+  alias: AliasSearchOutput;
+  semantic: SearchResult[];
+  fused: SearchResult[];
 }
 
 export interface DevRun {
@@ -75,6 +86,9 @@ export async function rankDevSet(
     const fused = fuseRanked(engine, alias, semantic, LIMIT);
     return {
       q,
+      alias,
+      semantic,
+      fused,
       lists: {
         alias: alias.results.slice(0, LIMIT).map((r) => r.emoji),
         semantic: semantic.slice(0, LIMIT).map((r) => r.emoji),

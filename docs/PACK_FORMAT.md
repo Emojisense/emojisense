@@ -259,8 +259,34 @@ an `exactPhrase` match in the `name` or `shortcode` field of another pack scores
 `P − 0.01`. These two fields outweigh a preferred keyword or alias even after the foreign
 factor, so without this fr "foot" gave 🦶 (English name `foot`) before ⚽ (French alias `foot`).
 
+**Partial matches.** Names the dictionary does not know must not borrow a part of a word
+(added 2026-10-02; en "kendrick lamar" gave 💍 by id "lamaran" and 🦙 by tr "lama"):
+
+- A token *matches nothing* when it has no candidate (function words do not count).
+- *Preferred-locale token*: a vocabulary token that occurs in a phrase of a preferred-locale
+  pack (custom packs count for every locale).
+- *Prefix completion into another locale's word*: a prefix candidate that is not a
+  preferred-locale token. Its quality is `(0.6 + 0.35 × len(query token) / len(vocab token)) × 0.7`,
+  and it is a **partial** match.
+- *Short typo*: for a query token of at most 5 UTF-16 code units, a candidate of the
+  optimal-string-alignment step is used only when it is a preferred-locale token and the query
+  token does not start with it ("rockt" is "rocket", not "rock"; en "lamar" is not tr "lama").
+  The repeated-final-letter step is not affected.
+- In a query with a token that matches nothing, a phrase that matches exactly one query token,
+  and not exactly (by prefix or typo), is ignored.
+- After the two caps above: let `L` be the lowest emoji score among the emoji whose best phrase
+  is in a preferred-locale pack and has no partial match. When there is one, every emoji whose
+  best phrase has a partial match scores at most `max(0, L − 0.01)`.
+
+**Coverage.** For each phrase that is kept, its *whole coverage* is `Σ weight_i / Σ weight` over
+the query tokens it matches with a candidate that is not partial (exact, a typo, or a completion
+of the token being typed into a preferred-locale word). The output's `coverage` is the largest
+whole coverage, rounded to 3 decimals (0 without results). `assessConfidence` (core,
+`confidence.ts`) calls the dictionary sure of a query when `coverage ≥ 0.85` and the top score
+`≥ 0.6`.
+
 Sort by score (descending), then by `popularity` (§2, descending), then by row order.
-`confidence` = the top score. Without `popularity`, equal scores keep row order.
+`confidence` = the top score; `coverage` as above. Without `popularity`, equal scores keep row order.
 
 ## 5. Vectors (`vectors.<model>.<dims>.bin`, "ESVEC1")
 
@@ -345,6 +371,9 @@ precomputed nightly and published as static files:
   locale: the files at `/p/<packVersion>/` hold the `locale=en` answers (the shared vector file
   only, §5), the files in `/p/<packVersion>/<locale>/` the answers of that locale (the shared
   vector file and the locale's own).
+- For an unsure query (core `assessConfidence`) that the API's concept tier has answered, the
+  entry leads with the concept results, in the same `[emoji, hexcode, score]` form; the semantic
+  results follow (API.md, "Unsure queries and concepts"). The format does not change.
 - **Locale shards.** A client reads the directory of its search locale: English (and no locale)
   at `/p/<packVersion>/`, every other pack locale at `/p/<packVersion>/<locale>/`, where `<locale>`
   is the language subtag in lowercase (`pt-BR` → `pt`), like the API's `locale`. `en/` is an alias
@@ -548,7 +577,11 @@ A client that shows alias and semantic results together (a search session, the S
 { popularity })` (`packages/core/src/fusion.ts`, `rerank.ts`; Swift `Fusion.fuse`, Kotlin
 `Fusion.fuse`). A port SHOULD give the same order; the golden file checks it on recorded lists.
 
-1. **Pinned.** Alias results with a score ≥ 0.9 come first, in alias order.
+1. **Pinned.** Alias results with a score ≥ 0.9 come first, in alias order. Without one, number
+   slang is pinned: when the alias output's `query` is ASCII digits only (`^[0-9]+( [0-9]+)*$`),
+   its confidence is ≥ 0.6 and its top result's `match` is the whole query in field `name`,
+   `shortcode`, `keyword` or `alias`, that result comes first (zh "666" → 👍, "88" → 👋: the
+   embedding model reads the digits, 6️⃣ and 8️⃣).
 2. **Candidates.** Every other result of the alias list (its order) and then of the semantic list,
    each id once. A result keeps the alias object when both lists hold it.
 3. **Score.** `Σ wᵢ·xᵢ`, summed left to right, over these features of the candidate:

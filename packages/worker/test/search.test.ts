@@ -1,5 +1,6 @@
 import { getModel } from "@emojisense/data/models";
 import { describe, expect, it, vi } from "vitest";
+import { CONCEPT_TAG } from "../src/concepts/config.ts";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
 import type { Store } from "../src/store.ts";
@@ -77,6 +78,7 @@ describe("GET /v1/search", () => {
       mode: "hybrid",
       v: "test:bge-m3@8",
       c: "c0ffee",
+      k: CONCEPT_TAG,
     });
 
     const hotfix = harness({ catalog: { ...catalog, config: { ...catalog.config, contentHash: "beef" } } });

@@ -95,6 +95,7 @@ final class ConformanceTests: XCTestCase {
       let engine = try packs.engine(files: config.packs)
       var topFiveDifferences: [String] = []
       var detailDifferences: [String] = []
+      var coverageDifferences: [String] = []
       for testCase in config.cases {
         let options = AliasSearchOptions(limit: 10, locale: testCase.locale)
         let output = engine.search(testCase.q, options: options)
@@ -114,6 +115,11 @@ final class ConformanceTests: XCTestCase {
               + "\(best?.match ?? "-")/\(best?.field.rawValue ?? "-"), ts \(debug(testCase.query)) "
               + "\(testCase.top) \(testCase.match ?? "-")/\(testCase.field ?? "-")")
         }
+        if output.coverage != testCase.coverage {
+          coverageDifferences.append(
+            "  \(testCase.id) \(debug(testCase.q)): swift \(output.coverage), "
+              + "ts \(testCase.coverage)")
+        }
       }
       let count = config.cases.count
       report(
@@ -122,9 +128,14 @@ final class ConformanceTests: XCTestCase {
       report(
         "[\(config.name)] identical query, top-10 ids + scores, confidence, match",
         agreed: count - detailDifferences.count, of: count, detailDifferences)
+      report(
+        "[\(config.name)] identical coverage", agreed: count - coverageDifferences.count, of: count,
+        coverageDifferences)
       XCTAssertGreaterThanOrEqual(
         Double(count - topFiveDifferences.count) / Double(count), Self.requiredTopFiveAgreement,
         "[\(config.name)] top-5 agreement with the TypeScript engine")
+      // Coverage decides the unsure verdict at a threshold: it must be the reference value.
+      XCTAssertEqual(coverageDifferences, [], "[\(config.name)] coverage")
     }
   }
 
@@ -132,7 +143,11 @@ final class ConformanceTests: XCTestCase {
   func testKeystrokesMatchTheReference() throws {
     let golden = try Self.golden.get()
     let packs = try loadPacks()
-    for keystrokes in [golden.keystrokes] + golden.sentenceKeystrokes {
+    let groups =
+      [("keystrokes", golden.keystrokes)]
+      + golden.sentenceKeystrokes.map { ("sentence keystrokes", $0) }
+      + golden.entityKeystrokes.map { ("entity keystrokes", $0) }
+    for (kind, keystrokes) in groups {
       let engine = try packs.engine(files: keystrokes.packs)
       var differences: [String] = []
       for testCase in keystrokes.cases {
@@ -145,7 +160,7 @@ final class ConformanceTests: XCTestCase {
       }
       let count = keystrokes.cases.count
       report(
-        "[keystrokes \(keystrokes.packs.joined(separator: " "))] identical top-5 ids + scores",
+        "[\(kind) \(locales(keystrokes.packs))] identical top-5 ids + scores",
         agreed: count - differences.count, of: count, differences)
       XCTAssertGreaterThanOrEqual(
         Double(count - differences.count) / Double(count), Self.requiredTopFiveAgreement)
@@ -161,8 +176,12 @@ final class ConformanceTests: XCTestCase {
     for testCase in cases {
       let alias = AliasSearchOutput(
         query: testCase.alias.query, tokens: [],
-        results: testCase.alias.results.map {
-          AliasResult(emoji: $0.id, id: $0.id, score: $0.score, label: "", match: "", field: .alias)
+        results: testCase.alias.results.enumerated().map { index, result in
+          let isTop = index == 0
+          return AliasResult(
+            emoji: result.id, id: result.id, score: result.score, label: "",
+            match: isTop ? testCase.alias.match ?? "" : "",
+            field: isTop ? Field(rawValue: testCase.alias.field ?? "") ?? .alias : .alias)
         },
         confidence: testCase.alias.confidence)
       let semantic = testCase.semantic.map {
@@ -181,6 +200,49 @@ final class ConformanceTests: XCTestCase {
     }
     let count = cases.count * 2
     report("fusion, identical top-10 ids", agreed: count - differences.count, of: count, differences)
+    XCTAssertEqual(differences, [])
+  }
+
+  // MARK: Confidence
+
+  /// The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
+  func testConfidenceMatchesTheReference() throws {
+    let cases = try Self.golden.get().confidence
+    var differences: [String] = []
+    var largestStrengthDifference = 0.0
+    for (number, testCase) in cases.enumerated() {
+      let alias = testCase.alias?.output
+      let semantic = testCase.semantic?.map(\.result)
+      let verdict = Confidence.assess(alias: alias, semantic: semantic)
+      // Strength is checked only for a case with a semantic list.
+      let strength = semantic.map { Confidence.semanticStrength($0) }
+      let concept = testCase.concept.map {
+        SearchResult(emoji: $0.id, id: $0.id, score: $0.score, source: .concept)
+      }
+      let merged = Confidence.mergeConcept(
+        testCase.fused.map(\.result), concept: concept, alias: alias, limit: testCase.limit
+      ).map(\.id)
+      var sameStrength = true
+      if let strength {
+        let difference = testCase.strength.map { abs(strength - $0) } ?? .infinity
+        largestStrengthDifference = max(largestStrengthDifference, difference)
+        sameStrength = difference <= 1e-12
+      }
+      if !sameStrength || verdict.confidence != testCase.confidence
+        || verdict.unsure != testCase.unsure || merged != testCase.merged
+      {
+        let swiftStrength = strength.map { "\($0)" } ?? "-"
+        let referenceStrength = testCase.strength.map { "\($0)" } ?? "-"
+        differences.append(
+          "  case \(number): swift \(swiftStrength) \(verdict) \(merged), ts \(referenceStrength) "
+            + "\(testCase.confidence) \(testCase.unsure) \(testCase.merged)")
+      }
+    }
+    let withSemantic = cases.filter { $0.semantic != nil }.count
+    report(
+      "confidence cases: confidence, unsure, concept merge, strength (\(withSemantic) lists, "
+        + "largest difference \(largestStrengthDifference))",
+      agreed: cases.count - differences.count, of: cases.count, differences)
     XCTAssertEqual(differences, [])
   }
 
@@ -205,6 +267,17 @@ final class ConformanceTests: XCTestCase {
 
   private func fnv1a(_ hash: UInt32, _ unit: UInt16) -> UInt32 {
     (hash ^ UInt32(unit)) &* 0x0100_0193
+  }
+
+  /// "en tr" for the pack files of en and tr; "all 22 packs" for every locale.
+  private func locales(_ files: [String]) -> String {
+    if files.count > 4 { return "all \(files.count) packs" }
+    var locales: [String] = []
+    for file in files {
+      let locale = String(file.split(separator: ".")[1])
+      if !locales.contains(locale) { locales.append(locale) }
+    }
+    return locales.joined(separator: " ")
   }
 
   private func debug(_ text: String) -> String {
