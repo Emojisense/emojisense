@@ -57,6 +57,7 @@ order. Do not repeat a `top` phrase in a category, and never put it in `low`.
 7. No real person names (athletes, celebrities, politicians). Franchises, fictional characters, events, and places are fine.
 8. Variants (skin tone) are not separate records. Gendered variants (👨‍💻 / 👩‍💻 / 🧑‍💻) are separate records. Give them the shared role aliases plus gender words (`woman developer`, `female engineer`).
 9. `desc`: one line, at most 160 characters. Say how people use it in chat, not what the picture shows. English: `Celebrating a release, a launch, or fast progress; "ship it".` Turkish: write natural Turkish, not a translation of the English line.
+10. No politics and no tragedies, in any language: no party or candidate names, no campaign or protest slogans of any conflict or crisis (`free …`, `pray for …`, `glory to …`, `boycott …`), and no named wars, battles, disasters, attacks, massacres or refugee crises (`culture/exclusions.txt` has the same rule). On flags keep the name, demonym, capital, landmarks, national cheers and the country's own independence or national day, and leave out crime and weapon labels (`narcos`, `nuclear missile`).
 
 ## Turkish (`tr`)
 
