@@ -120,9 +120,10 @@ const engine = createEngine(packs, { culture });
 engine.search("goat", { locale: "es", region: "AR" }); // 🐐 first, then culture results such as ⚽
 relevantNow(culture, { region: "MX", limit: 8 }); // a "relevant now" shelf
 
-// Skin tones and hosted emoji sets.
+// Skin tones and hosted emoji sets (they need a key whose plan includes them, Solo and up).
 applySkinTone("👍", "medium"); // "👍🏽"
-emojiImageUrl("🦖", { endpoint, emojiSet: "noto" }); // "https://api.emojisense.com/v1/sets/noto/1F996.svg"
+emojiImageUrl("🦖", { endpoint, emojiSet: "noto", key: "pk_live_…" });
+// "https://api.emojisense.com/v1/sets/noto/1F996.svg?key=<your key, URL-encoded>"
 
 // Your app's custom emoji, searched on the device next to the standard set.
 const custom = await loadCustomPack({ endpoint, key: "pk_live_…" });
