@@ -252,6 +252,13 @@
     "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (stopwatch first)"
   },
   {
+    "hexcode": "0036-FE0F-20E3",
+    "locale": "zh",
+    "alias": "666",
+    "action": "low",
+    "why": "👍 is the canonical '666' (awesome); the keycap 6 stays as a literal match"
+  },
+  {
     "hexcode": "1F44D",
     "locale": "zh",
     "phrase": "666",
