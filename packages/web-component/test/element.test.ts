@@ -1,6 +1,7 @@
+import type { Culture } from "emojisense";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineEmojisensePicker, type EmojiSelectDetail, EmojisensePickerElement } from "../src/index.js";
-import { en, PACK_URL, serve } from "./fixture.js";
+import { CULTURE_URL, culture, en, PACK_URL, serve } from "./fixture.js";
 
 let fetch: ReturnType<typeof serve>;
 
@@ -237,5 +238,54 @@ describe("<emojisense-picker>", () => {
     expect(picker instanceof EmojisensePickerElement).toBe(true);
     expect($$(picker, "#browse [role=option]")).toHaveLength(en.emoji.length);
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("<emojisense-picker> culture layer", () => {
+  it("adds culture results after the top result, with their context", async () => {
+    const picker = await mount({ "culture-url": CULTURE_URL });
+    await vi.waitFor(() => expect(picker.culture?.locale).toBe("en"));
+    expect(fetch.mock.calls.map(([url]) => String(url))).toContain(`${CULTURE_URL}/culture.en.json`);
+    await vi.waitFor(() => {
+      type(picker, "goat");
+      expect(results(picker).map((o) => o.textContent)).toEqual(["🐐", "🚀"]);
+    });
+    expect(results(picker)[1]?.title).toBe("rocket · A test association");
+    expect(results(picker)[1]?.getAttribute("aria-description")).toBe("A test association");
+  });
+
+  it("keeps the canonical ranking without a culture file, and when it cannot load", async () => {
+    const plain = await mount();
+    type(plain, "goat");
+    expect(results(plain).map((o) => o.textContent)).toEqual(["🐐"]);
+    const missing = await mount({ "culture-url": "https://cdn.test/v1/culture/none" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    type(missing, "goat");
+    expect(results(missing).map((o) => o.textContent)).toEqual(["🐐"]);
+  });
+
+  it("shows the relevant-now row only with show-relevant-now", async () => {
+    const off = await mount({ "culture-url": CULTURE_URL });
+    await vi.waitFor(() => expect(off.culture).toBeDefined());
+    expect($$(off, "#browse [role=group]")).toHaveLength(4);
+
+    const on = await mount({ "culture-url": CULTURE_URL, "show-relevant-now": "" });
+    await vi.waitFor(() => expect($$(on, "#browse [role=group]")).toHaveLength(5));
+    expect($(on, ".group-label").textContent).toBe("Relevant now");
+    const row = $$(on, "#browse [role=group]:first-child [role=option]");
+    expect(row.map((o) => o.textContent)).toEqual(["😂", "👋"]);
+    expect(row[0]?.title).toBe("face with tears of joy · A season");
+
+    on.showRelevantNow = false;
+    await vi.waitFor(() => expect($$(on, "#browse [role=group]")).toHaveLength(4));
+  });
+
+  it("uses a culture file set as a property", async () => {
+    const picker = await mount();
+    picker.culture = culture as Culture;
+    await vi.waitFor(() => {
+      type(picker, "goat");
+      expect(results(picker).map((o) => o.textContent)).toEqual(["🐐", "🚀"]);
+    });
   });
 });

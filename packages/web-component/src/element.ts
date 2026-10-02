@@ -1,6 +1,8 @@
 import {
   type AliasEngine,
   applySkinTone,
+  type Culture,
+  type CultureResult,
   createEngine,
   createLayeredSemantic,
   createSearchSession,
@@ -9,9 +11,11 @@ import {
   emojiImageUrl,
   groupLabel,
   isEmojiSet,
+  loadCulture,
   loadCustomPack,
   loadPacks,
   type Pack,
+  relevantNow,
   type SearchSession,
   type SessionState,
   type SessionStatus,
@@ -54,6 +58,8 @@ interface Item {
   /** Custom emoji: drawn from this image, whatever the emoji set. */
   imageUrl?: string | undefined;
   shortcode?: string | undefined;
+  /** Why a culture result or a "relevant now" emoji is there, in the culture file's locale. */
+  context?: string;
 }
 
 interface View {
@@ -69,6 +75,7 @@ interface View {
 const DEFAULT_COLUMNS = 9;
 const MAX_COLUMNS = 24;
 const DEFAULT_PLACEHOLDER = "Search emoji…";
+const RELEVANT_NOW_LABEL = "Relevant now";
 const IDLE_TIMEOUT_MS = 2000;
 
 const TEMPLATE = `<style>${styles}</style>
@@ -103,6 +110,10 @@ const UPGRADED_PROPERTIES = [
   "packs",
   "customEmoji",
   "tenant",
+  "cultureUrl",
+  "region",
+  "showRelevantNow",
+  "culture",
 ] as const;
 
 // Importing this module during server rendering must not throw.
@@ -115,8 +126,9 @@ const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as ty
  *
  * Attributes: `pack-url`, `shards-url`, `endpoint`, `key` (alias `publishable-key`), `locale`,
  * `columns`, `skin-tone`, `emoji-set`, `placeholder`, `custom-emoji` (load the key's custom
- * emoji from `endpoint`) and `tenant`. Custom emoji are drawn as images. Event: `emoji-select`
- * with `{ emoji, label, id }`, plus `imageUrl` and `shortcode` for a custom emoji.
+ * emoji from `endpoint`), `tenant`, `culture-url`, `region` and `show-relevant-now`. Custom emoji
+ * are drawn as images. Event: `emoji-select` with `{ emoji, label, id }`, plus `imageUrl` and
+ * `shortcode` for a custom emoji.
  */
 export class EmojisensePickerElement extends Base {
   static readonly observedAttributes = [
@@ -132,6 +144,9 @@ export class EmojisensePickerElement extends Base {
     "placeholder",
     "custom-emoji",
     "tenant",
+    "culture-url",
+    "region",
+    "show-relevant-now",
   ];
 
   readonly #shadow: ShadowRoot;
@@ -160,6 +175,13 @@ export class EmojisensePickerElement extends Base {
   #loading: AbortController | undefined;
   #cancelIdle: (() => void) | undefined;
   #scheduled = false;
+  /** Set as a property, it wins over `culture-url`. */
+  #cultureOverride: Culture | undefined;
+  #culture: Culture | undefined;
+  #cultureKey: unknown;
+  #cultureLoading: AbortController | undefined;
+  /** What the browse view's "relevant now" row was drawn for. */
+  #shelfKey = "";
 
   constructor() {
     super();
@@ -281,6 +303,42 @@ export class EmojisensePickerElement extends Base {
     this.setAttribute("tenant", value);
   }
 
+  /**
+   * Culture files directory, e.g. "https://api.emojisense.com/v1/culture/0.1.0". Culture results
+   * join after the top result; without it the ranking is the canonical one.
+   */
+  get cultureUrl(): string {
+    return this.getAttribute("culture-url") ?? "";
+  }
+  set cultureUrl(value: string) {
+    this.setAttribute("culture-url", value);
+  }
+
+  /** ISO 3166-1 alpha-2 region (e.g. "BR") for regional culture entries. */
+  get region(): string {
+    return this.getAttribute("region") ?? "";
+  }
+  set region(value: string) {
+    this.setAttribute("region", value);
+  }
+
+  /** Show a "relevant now" row above the browse view (needs culture). Off by default. */
+  get showRelevantNow(): boolean {
+    return this.hasAttribute("show-relevant-now");
+  }
+  set showRelevantNow(value: boolean) {
+    this.toggleAttribute("show-relevant-now", value);
+  }
+
+  /** A culture file to use instead of fetching `culture-url` (bundled or offline apps). */
+  get culture(): Culture | undefined {
+    return this.#culture;
+  }
+  set culture(value: Culture | undefined) {
+    this.#cultureOverride = value;
+    this.#schedule();
+  }
+
   /** Packs to use instead of fetching `pack-url`, e.g. bundled with an offline app. */
   get packs(): Pack[] | undefined {
     return this.#packs;
@@ -318,6 +376,8 @@ export class EmojisensePickerElement extends Base {
 
   disconnectedCallback(): void {
     if (this.#status === "loading") this.#packKey = undefined;
+    if (this.#cultureLoading) this.#cultureKey = undefined;
+    this.#cultureLoading?.abort();
     this.#loading?.abort();
     this.#cancelIdle?.();
     if (this.#customLoading) {
@@ -332,8 +392,10 @@ export class EmojisensePickerElement extends Base {
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return;
-    if (name === "columns") this.#applyColumns();
-    else if (name === "skin-tone") this.#redrawGlyphs((item) => item.hasSkinTones);
+    if (name === "columns") {
+      this.#applyColumns();
+      this.#schedule(); // the "relevant now" row holds one row of emoji
+    } else if (name === "skin-tone") this.#redrawGlyphs((item) => item.hasSkinTones);
     else if (name === "emoji-set") this.#redrawGlyphs(() => true);
     else if (name === "placeholder") this.#applyPlaceholder();
     else {
@@ -367,6 +429,7 @@ export class EmojisensePickerElement extends Base {
 
   #configure() {
     this.#configureCustomEmoji();
+    this.#configureCulture();
     const packKey = this.#packs ?? `${this.packUrl}\n${this.locale}`;
     if (packKey !== this.#packKey) {
       this.#packKey = packKey;
@@ -376,6 +439,53 @@ export class EmojisensePickerElement extends Base {
       return;
     }
     this.#connectSession();
+    if (this.#engine && this.#currentShelfKey() !== this.#shelfKey) this.#refreshBrowse();
+  }
+
+  /** Load the culture file when `culture-url` or `locale` change. It is optional: errors are ignored. */
+  #configureCulture() {
+    const key = this.#cultureOverride ?? (this.cultureUrl ? `${this.cultureUrl}\n${this.locale}` : "");
+    if (key === this.#cultureKey) return;
+    this.#cultureKey = key;
+    this.#cultureLoading?.abort();
+    this.#cultureLoading = undefined;
+    if (this.#cultureOverride || !this.cultureUrl) {
+      this.#useCulture(this.#cultureOverride);
+      return;
+    }
+    const controller = new AbortController();
+    this.#cultureLoading = controller;
+    loadCulture({ baseUrl: this.cultureUrl, locale: this.locale, signal: controller.signal }).then(
+      (culture) => {
+        if (controller.signal.aborted) return;
+        this.#cultureLoading = undefined;
+        this.#useCulture(culture);
+      },
+      () => {
+        // The culture layer only adds results; search works the same without it.
+        if (!controller.signal.aborted) this.#useCulture(undefined);
+      },
+    );
+  }
+
+  #useCulture(culture: Culture | undefined) {
+    this.#culture = culture;
+    if (!this.#engine) return;
+    this.#engine = this.#engine.withCulture(culture);
+    this.#sessionKey = undefined;
+    this.#connectSession();
+    if (this.#currentShelfKey() !== this.#shelfKey) this.#refreshBrowse();
+  }
+
+  #currentShelfKey(): string {
+    if (!this.showRelevantNow || !this.#culture) return "";
+    return [this.#culture.locale, this.#culture.from, this.region, this.columns].join("|");
+  }
+
+  /** Redraw the browse view and keep showing the results of a query being typed. */
+  #refreshBrowse() {
+    this.#renderBrowse();
+    this.#search(this.#input.value);
   }
 
   async #load(baseUrl: string, locale: string) {
@@ -407,7 +517,10 @@ export class EmojisensePickerElement extends Base {
 
   #usePacks(packs: Pack[], renderBrowse: boolean) {
     this.#basePacks = packs;
-    this.#engine = createEngine(this.#customPack ? [...packs, this.#customPack] : packs);
+    this.#engine = createEngine(
+      this.#customPack ? [...packs, this.#customPack] : packs,
+      this.#culture ? { culture: this.#culture } : {},
+    );
     this.#status = "ready";
     if (renderBrowse) this.#renderBrowse();
     this.#sessionKey = undefined;
@@ -467,7 +580,7 @@ export class EmojisensePickerElement extends Base {
   #connectSession() {
     const engine = this.#engine;
     if (!engine) return;
-    const key = [this.shardsUrl, this.endpoint, this.publishableKey, this.locale].join("\n");
+    const key = [this.shardsUrl, this.endpoint, this.publishableKey, this.locale, this.region].join("\n");
     if (this.#session && key === this.#sessionKey) return;
     this.#session?.dispose();
     this.#sessionKey = key;
@@ -480,6 +593,7 @@ export class EmojisensePickerElement extends Base {
         packVersion: engine.packVersion,
       }),
       locale: this.locale,
+      ...(this.region ? { region: this.region } : {}),
       onChange: (state) => this.#showResults(state),
     });
     this.#search(this.#input.value);
@@ -496,26 +610,50 @@ export class EmojisensePickerElement extends Base {
     const fragment = document.createDocumentFragment();
     const items: Item[] = [];
     const groupSizes: number[] = [];
+    const addGroup = (title: string, part = "group") => {
+      const labelId = `group-${groupSizes.length}`;
+      const section = element("div", { class: "group", part, role: "group" });
+      section.setAttribute("aria-labelledby", labelId);
+      // aria-hidden: the label names the group; read inside the listbox it would be noise.
+      const label = element("div", { class: "group-label", part: "group-label", id: labelId });
+      label.setAttribute("aria-hidden", "true");
+      label.textContent = title;
+      const grid = element("div", { class: "grid" });
+      section.append(label, grid);
+      fragment.append(section);
+      groupSizes.push(0);
+      return grid;
+    };
+    const addItem = (grid: HTMLElement, item: Item) => {
+      items.push(item);
+      groupSizes[groupSizes.length - 1] = (groupSizes.at(-1) ?? 0) + 1;
+      grid.append(this.#option("b", items.length - 1, item));
+    };
+
+    // Optional "relevant now" row: featured seasonal and event emoji, one row at most.
+    this.#shelfKey = this.#currentShelfKey();
+    if (this.#shelfKey && this.#culture) {
+      const shelf = relevantNow(this.#culture, {
+        limit: this.columns,
+        ...(this.region ? { region: this.region } : {}),
+      }).flatMap(({ hexcode, context }) => {
+        const entry = engine.get(hexcode);
+        return entry ? [{ ...this.#itemOf(entry), context }] : [];
+      });
+      if (shelf.length > 0) {
+        const grid = addGroup(RELEVANT_NOW_LABEL, "group relevant-now");
+        for (const item of shelf) addItem(grid, item);
+      }
+    }
+
     let grid: HTMLElement | undefined;
     let group: string | undefined;
     for (const entry of engine.entries) {
       if (!grid || entry.group !== group) {
         group = entry.group;
-        const labelId = `group-${groupSizes.length}`;
-        const section = element("div", { class: "group", part: "group", role: "group" });
-        section.setAttribute("aria-labelledby", labelId);
-        // aria-hidden: the label names the group; read inside the listbox it would be noise.
-        const label = element("div", { class: "group-label", part: "group-label", id: labelId });
-        label.setAttribute("aria-hidden", "true");
-        label.textContent = groupLabel(group, this.locale);
-        grid = element("div", { class: "grid" });
-        section.append(label, grid);
-        fragment.append(section);
-        groupSizes.push(0);
+        grid = addGroup(groupLabel(group, this.locale));
       }
-      items.push(this.#itemOf(entry));
-      groupSizes[groupSizes.length - 1] = (groupSizes.at(-1) ?? 0) + 1;
-      grid.append(this.#option("b", items.length - 1, items.at(-1) as Item));
+      addItem(grid, this.#itemOf(entry));
     }
     this.#browse.listbox.replaceChildren(fragment);
     const options = [...this.#browse.listbox.querySelectorAll<HTMLElement>("[role=option]")];
@@ -533,9 +671,10 @@ export class EmojisensePickerElement extends Base {
     this.#results.listbox.hidden = !searching;
     if (searching) {
       const engine = this.#engine;
-      const items = state.results.map((result) => {
+      const items = state.results.map((result): Item => {
         const entry = engine?.get(result.id);
-        return entry ? this.#itemOf(entry) : { ...result, label: result.emoji, hasSkinTones: false };
+        const item = entry ? this.#itemOf(entry) : { ...result, label: result.emoji, hasSkinTones: false };
+        return result.source === "culture" ? { ...item, context: (result as CultureResult).context } : item;
       });
       // Only tiles that were not on screen yet pop in, so typing does not re-animate the grid.
       const shown = new Set(this.#results.items.map((item) => item.id));
@@ -585,7 +724,8 @@ export class EmojisensePickerElement extends Base {
     });
     option.setAttribute("aria-selected", "false");
     option.setAttribute("aria-label", item.label);
-    option.title = item.label;
+    option.title = item.context ? `${item.label} · ${item.context}` : item.label;
+    if (item.context) option.setAttribute("aria-description", item.context);
     option.dataset.index = String(index);
     this.#drawGlyph(option, item);
     return option;
