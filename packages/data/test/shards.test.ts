@@ -14,7 +14,8 @@ import {
 } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildShards } from "../src/shards/build.ts";
-import { loadShardEntries, readShardIndex, writeShardDir } from "../src/shards/files.ts";
+import { gzipBytes, loadShardEntries, readShardIndex, writeShardDir } from "../src/shards/files.ts";
+import { shardJson, utf8Bytes } from "../src/shards/json.ts";
 import { aggregateQueries, createWorkerGate, parseQueryLog } from "../src/shards/queries.ts";
 import { createFakeResolver, createVectorResolver } from "../src/shards/resolvers.ts";
 import { planShards } from "../src/shards/split.ts";
@@ -188,6 +189,7 @@ describe("shard build", () => {
       packVersion: "test",
       resultsPerQuery: 4,
       maxShardBytes: BUDGET,
+      shardBytes: gzipBytes,
     });
     const { gzip } = writeShardDir(dir, built.index, built.plans, built.store);
     return { built, gzip };
@@ -247,11 +249,55 @@ describe("shard build", () => {
       packVersion: "test",
       resultsPerQuery: 4,
       maxShardBytes: BUDGET,
+      shardBytes: gzipBytes,
       previous: (wanted, store) => loadShardEntries(dir, wanted, 4, store),
     });
     expect(rebuilt.stats).toMatchObject({ reused: 240, resolved: 1 });
     expect(resolve).toHaveBeenCalledWith(["brand new query"], 4);
     expect(readShardIndex(dir)?.model).toBe("fake@0");
+  });
+
+  it("budgets raw UTF-8 bytes without a compressor (the Worker's mode)", async () => {
+    const built = await buildShards({
+      queries,
+      reachesWorker: () => true,
+      resolver: createFakeResolver(catalog),
+      packVersion: "test",
+      resultsPerQuery: 4,
+      maxShardBytes: BUDGET * 3,
+    });
+    expect(built.stats.oversized).toEqual([]);
+    for (const plan of built.plans) {
+      const json = shardJson(plan.key, plan.queries, built.store);
+      // The entries fit; the file adds only `{"key":…,"entries":{}}`.
+      expect(utf8Bytes(json)).toBeLessThanOrEqual(BUDGET * 3 + 32 + utf8Bytes(plan.key));
+      expect(utf8Bytes(json)).toBe(new TextEncoder().encode(json).length);
+    }
+  });
+
+  it("never writes a shard named index, which would replace index.json", async () => {
+    const qs = counted(["index", ...Array.from({ length: 30 }, (_, i) => `index finger ${i}`)]);
+    const built = await buildShards({
+      queries: qs,
+      reachesWorker: () => true,
+      resolver: createFakeResolver(catalog),
+      packVersion: "test",
+      resultsPerQuery: 4,
+      maxShardBytes: 400,
+    });
+    // The split itself wants the key "index" here.
+    const unfiltered = planShards([...built.store.queries()], {
+      maxBytes: 400,
+      maxRatio: 1,
+      entryBytes: (q) => utf8Bytes(built.store.entryJson(q)) + 1,
+      measure: () => Number.POSITIVE_INFINITY,
+    });
+    expect(unfiltered.plans.map((p) => p.key)).toContain("index");
+    expect(built.index.keys).not.toContain("index");
+    expect(built.plans.map((p) => p.key)).toEqual(built.index.keys);
+    const placed = built.plans.flatMap((p) => p.queries);
+    expect(placed).not.toContain("index");
+    expect(placed).toContain("index finger 7");
   });
 
   it("drops what the device answers and reports unresolved queries", async () => {
@@ -263,6 +309,7 @@ describe("shard build", () => {
       packVersion: "test",
       resultsPerQuery: 4,
       maxShardBytes: BUDGET,
+      shardBytes: gzipBytes,
     });
     expect(built.stats).toMatchObject({ answeredOnDevice: 1, resolved: 0, unresolved: 1, shards: 0 });
     expect(built.index.keys).toEqual([]);

@@ -142,10 +142,10 @@ device. Queries we did not anticipate still go to the API. Do
 not use bootstrap shards to estimate the real L2 hit rate. Replace them with the first nightly
 build from real logs.
 
-### Open points for serving
+### Serving and the nightly build
 
-- File names are `encodeURIComponent(key)`, so the key `"the "` is the file `the%20.json`.
-  Check that the static asset host serves that literal file name for the request path
-  `/p/<packVersion>/the%20.json` (some hosts decode `%20` before the lookup).
-- A nightly rebuild under the same pack version rewrites files in place. Do not serve them as
-  `immutable` unless the path also carries a build id.
+The API Worker builds the shards every night from `query_daily` with the same code
+(`@emojisense/data/shards`) and serves them from R2 (ARCHITECTURE.md, "Nightly shard build").
+It accepts a key file name encoded or not (`the%20.json`), and it never sends `immutable`: the
+files change under one pack version. This CLI stays for bootstrap shards, dry runs and exports
+(`--log`). Rows of a log go through the same privacy filter (`src/shards/privacy.ts`).

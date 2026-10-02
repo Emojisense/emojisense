@@ -21,7 +21,7 @@ import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
 import { assetPackReader, createLocaleEngines } from "./locale-engines.ts";
 import { assetVectorReader, createLocaleVectors } from "./locale-vectors.ts";
-import { handleScheduled } from "./retention.ts";
+import { runScheduled } from "./scheduled.ts";
 import type { Catalog } from "./semantic.ts";
 import { createD1Store } from "./store.ts";
 
@@ -85,5 +85,5 @@ const app = createApp({
 
 export default {
   fetch: (request, env, ctx) => app.fetch(request, env, ctx),
-  scheduled: (controller, env) => handleScheduled(env, controller.scheduledTime),
+  scheduled: (controller, env) => runScheduled(controller, env, catalog),
 } satisfies ExportedHandler<Env>;

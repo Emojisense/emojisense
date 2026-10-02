@@ -295,6 +295,15 @@ precomputed nightly and published as static files:
   locally. A query that is not in its shard goes to the API.
 - Shards are valid only for the `model` they name. A new model or pack version publishes a new
   directory.
+- A client uses a shard only when `embeddingText(query)` equals `normalize(query)` (§3). The API
+  embeds the text as typed, accents and punctuation kept, so a query such as "doğum günü" or
+  "i'm done!" goes to the API instead of taking the answer of its folded form.
+- The API Worker rebuilds the shards every night from the query counts (ARCHITECTURE.md, "Nightly
+  shard build") and serves them at the same URLs. `index.json` and the key files therefore change
+  under one pack version: they are cached for 1 hour (`index.json`) and 1 day (key files), never
+  `immutable`. Key files of an older build hold valid answers for the same data; a key that is
+  gone answers 404, and the client asks the API.
+- No key is ever `index`: its file would replace `index.json`.
 
 ## 7. Versioning
 

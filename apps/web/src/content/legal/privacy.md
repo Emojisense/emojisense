@@ -113,7 +113,9 @@ you give us for an import is used once and never stored or logged.
 
 ### Searches that reach the API
 
-Most searches are answered on the device or from static files. We do not see those searches.
+Most searches are answered on the device or from precomputed files. We do not see those
+searches: a request for a precomputed file names only the first letters of the search, and we do
+not log it.
 
 When a search reaches the API, we record the search text after normalization (lower case, at most
 64 characters), the language, the mode, the outcome, the match scores and the response time. We
@@ -132,6 +134,16 @@ counts for the analytics period of the plan of the account that owns the app: 30
 1 year on Scale. On Free and Solo we keep them for 7 days and do not show them, so that an upgrade
 shows the last week at once. A daily job deletes older counts. For this data, our customer is the
 controller.
+
+We also use these counts, in aggregate, to precompute results for frequent searches. Every night
+a job selects the search texts that apps of at least 3 different accounts searched at least 10
+times in total over the last 6 full days. It leaves out every text that looks like personal data:
+an email or web address, a phone, account or postal number, a user id or a long token. For each
+selected text it publishes the emoji results in files that anyone can download. These files hold
+only the search text and its emoji, with no app, account, date or count. A text is removed with
+the first nightly build after it no longer meets these rules; copies cached by browsers or by
+Cloudflare's network expire within one day. Searches without a key, and searches with
+development keys, are never counted, so they never reach these files.
 
 ### Reaction suggestions
 

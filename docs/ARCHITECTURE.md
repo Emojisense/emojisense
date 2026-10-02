@@ -20,7 +20,7 @@ L0  alias dictionary ─── on device, $0, < 16 ms ────────�
 L1  on-device semantic model ─── DEFERRED (SemanticProvider slot + Cross-Origin Storage hook)
    │
    ▼
-L2  precomputed results, static prefix shard /p/<v>/<prefix>.json ─── free asset ── exact hit? ──▶ fuse ▶ results
+L2  precomputed results, prefix shard /p/<v>/<prefix>.json ─── edge-cached, not metered ── exact hit? ──▶ fuse ▶ results
    │ miss (debounced 150–250 ms)
    ▼
 L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (bge-m3, 1024 dims)
@@ -33,7 +33,7 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (b
 | ----- | ----- | ---- | ------- | ----- |
 | L0 alias dictionary (prefix index, IDF, fuzzy) | device | $0 | p95 0.4 ms per keystroke | built |
 | L1 on-device semantic | device | — | — | deferred: no small multilingual off-the-shelf model fits unchanged |
-| L2 precomputed prefix shards | static assets | $0 (asset requests are free) | 10–30 ms first fetch, then local | built; not published on the hosted API yet (no query log for the nightly build) |
+| L2 precomputed prefix shards | Worker → R2, edge-cached (nightly build) | not metered; ≈ $0.30 per 1M Worker requests | 10–30 ms first fetch, then local | built; served after the first nightly build |
 | L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | live, with keys, plans and metering |
 
 **Fusion.** The client merges L0 with L2 or L3 results by reciprocal rank fusion. Confident L0
@@ -52,9 +52,11 @@ emojibase (en) + CLDR (tr) ─▶ ingest ─▶ enrichment (aliases, description
         ─▶ packs: pack.<locale>.json (core ≤ 200 KB gz) + pack.<locale>.ext.json (idle-loaded)
         ─▶ embed (chosen model × dims) ─▶ vectors.<model>.<dims>[.<locale>].bin ─▶ manifest.json
 
-Worker query log (Analytics Engine: normalized text only, no IP/key/user)
-        ─▶ nightly: queries seen ≥ 5 times
-              ├─▶ top ~1M → precompute results → prefix shards (L2)          [open]
+query_daily (keyed calls: per app, day, normalized text; no IP/key/user)
+        ─▶ nightly in the API Worker: apps of ≥ 3 accounts, ≥ 10 searches in 6 days, no PII
+              └─▶ precompute results → prefix shards (L2)                    [built]
+Worker query log (Analytics Engine: normalized text only, no IP/key/user/app)
+        ─▶ queries seen ≥ 5 times
               └─▶ weak ones → LLM proposes aliases → eval gate → new pack   [closed, hosted only]
 ```
 
@@ -104,7 +106,7 @@ search unchanged, and the engine index is shared, not rebuilt, when the file arr
 | `packages/data` | Pipeline: ingest → enrichment → curation → validation → embeddings → packs → shards; culture entries and files | MIT |
 | `packages/eval` | Labelled queries, benchmark, `pnpm cost`, CI gate, culture gate | MIT |
 | `packages/platform` | Shared contracts of both Workers: D1 schema and migrations, plans, keys, webhooks | MIT |
-| `packages/worker` | Search API Worker: search, reactions, photo to emoji, custom emoji, tenants, hosted sets, packs, vectors and culture files as assets, plans, metering | MIT |
+| `packages/worker` | Search API Worker: search, reactions, photo to emoji, custom emoji, tenants, hosted sets, packs, vectors and culture files as assets, nightly shard build and `/p/*` from R2, plans, metering | MIT |
 | `apps/dashboard` | Dashboard Worker + SPA: accounts, apps, keys, usage, analytics, custom emoji, teams, webhooks, waitlist | MIT |
 | `packages/react` (`@emojisense/react`) | Hooks, Frimousse adapter, shadcn registry item | MIT |
 | `packages/web-component`, `tiptap`, `lexical`, `emoji-mart`, `mcp` | Picker element, editor autocompletes, emoji-mart adapter, MCP server | MIT |
@@ -120,7 +122,8 @@ search unchanged, and the engine index is shared, not rebuilt, when the file arr
    experience, including offline.
 3. Over a plan limit, search degrades to L0 + L2. It never fails.
 4. No PII: no user IDs, IPs or keys in logs; the IP is only an in-memory rate-limit key. Query
-   text is normalized, capped at 64 characters and used only when seen ≥ 5 times. Message text
+   text is normalized, capped at 64 characters and used only when seen ≥ 5 times; public shards
+   also need apps of ≥ 3 accounts and ≥ 10 searches, and no personal-looking text. Message text
    for reaction suggestions and images for classification are never stored.
 5. Skin-tone variants map to their base emoji. The picker applies the user's tone.
 6. Community custom emoji sets are used only for local evaluation, never shipped.
@@ -175,3 +178,25 @@ per request, never cached: culture (culture=1, UTC day) ─▶ custom emoji firs
    ▼
 metering (semantic_calls, batched to D1) + query_daily (keyed calls) + Analytics Engine point
 ```
+
+## Nightly shard build (L2)
+
+The API Worker builds the shards itself on a second cron (`23 4 * * *`, after the retention run),
+so no job runner is needed. Code: `packages/worker/src/shards/`, shared build logic:
+`@emojisense/data/shards`.
+
+```
+D1 query_daily, last 6 complete UTC days (keyed calls only)
+  ─▶ apps of ≥ 3 accounts and ≥ 10 searches; privacyReason drops emails, URLs, numbers, ids
+  ─▶ drop what the device answers (bundled alias engine)
+  ─▶ reuse the served build's entries; embed new queries like GET /v1/search?mode=semantic&locale=en
+     (embeddingText, template, shared vectors), ≤ 100 per Workers AI call, ≤ 5,000 per night
+  ─▶ adaptive prefix split (≤ 96 KB raw ≈ 25 KB gzip)
+  ─▶ R2 SHARDS: shards/<packVersion>/<contentHash>/<build>/…, then current.json (the pointer)
+GET /p/<v>/<file> ─▶ Worker ─▶ pointer (per isolate, 5 min) ─▶ edge cache ─▶ R2   (no build: public/p)
+```
+
+A build id is a hash of its content, so a re-run on the same day publishes nothing new. The
+previous build stays one more night for isolates that still hold the old pointer; older builds
+and the stores of gone deployments (nothing written for 7 days) are deleted.
+`SHARDS_CRON_ENABLED` switches the build off; the served build then stays.

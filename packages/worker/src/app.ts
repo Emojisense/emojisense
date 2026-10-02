@@ -13,6 +13,7 @@ import { handleReactions } from "./reactions.ts";
 import { handleSearch } from "./search.ts";
 import { type Catalog, modelTag } from "./semantic.ts";
 import { createEmojiSetsRoute, type EmojiSetsOptions, SETS_PATH_PREFIX } from "./sets/route.ts";
+import { createShardRoute, SHARDS_PATH_PREFIX } from "./shards/route.ts";
 import type { Store } from "./store.ts";
 import { handleTenants, isTenantsPath } from "./tenants.ts";
 import { alertUsageThresholds } from "./usage-alerts.ts";
@@ -48,6 +49,7 @@ const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
 export function createApp(options: AppOptions) {
   const { catalog } = options;
   const emojiSets = options.emojiSets ? createEmojiSetsRoute(options.emojiSets) : undefined;
+  const shards = createShardRoute({ config: catalog.config, ...(options.now ? { now: options.now } : {}) });
   let services:
     | { resolver: KeyResolver; meter: Meter; queryStats: QueryStats; custom: CustomEmojiIndex }
     | undefined;
@@ -111,6 +113,8 @@ export function createApp(options: AppOptions) {
       if (url.pathname.startsWith(SETS_PATH_PREFIX)) {
         return emojiSets ? emojiSets(request, url, ctx, options.cache()) : errorResponse(404, "not found");
       }
+      // Layer-2 shards: public files like the images, edge-cached.
+      if (url.pathname.startsWith(SHARDS_PATH_PREFIX)) return shards(request, url, env, ctx, options.cache());
       // Custom emoji images are `<img src>` targets too, edge-cached.
       const image = CUSTOM_IMAGE_PATH.exec(url.pathname);
       if (image) {

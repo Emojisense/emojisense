@@ -199,14 +199,15 @@ the perceptual hash, the vision model and the prompt version.
 | Path | Content | Cache |
 | ---- | ------- | ----- |
 | `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>[.<locale>].bin` | data packs | `public, max-age=31536000, immutable` |
-| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards) | immutable |
+| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards), rebuilt nightly | `public, max-age=3600` (index), `public, max-age=86400` (key files) |
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
-These are static asset requests: free, and they do not run the Worker. All send
+These are free and need no key. Packs and culture files are static assets and do not run the
+Worker; shards run it, which serves the nightly build from R2 through the edge cache. All send
 `Access-Control-Allow-Origin: *`. A `/v1/pack/` path that is not a published file answers `404`
-with `Cache-Control: no-store`, so a browser does not keep the miss. The hosted API does not
-publish layer 2 shards yet (`/p/0.1.0/index.json` answers `404`); the SDK's shard provider then
-answers nothing and the query goes on to `/v1/search`.
+with `Cache-Control: no-store`, so a browser does not keep the miss. Until the first nightly
+shard build exists, `/p/<v>/index.json` answers `404` (no static shards are deployed); the SDK's
+shard provider then answers nothing and the query goes on to `/v1/search`.
 
 ### Culture files
 
@@ -761,6 +762,7 @@ What the hosted service collects, and for how long:
 | ---- | ----- | ---- |
 | Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
+| Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below). No app, account, day or count. | R2 `emojisense-shards`, edge cache | Rebuilt nightly. The previous build is deleted after one more night; browser and edge copies expire within 1 day. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
@@ -775,8 +777,13 @@ What the hosted service collects, and for how long:
 - Logs never hold query or message text, keys, IP addresses or emails. Workers AI failures log
   the error type only, because a message could quote the input.
 - Anonymous calls and development keys never reach `query_daily`.
-- The dashboard names a query only when the app saw it ≥ 5 times in the window. Emojisense's own
-  downstream jobs (shards, alias mining) read Analytics Engine, never `query_daily`, and use a
-  query only when it was seen ≥ 5 times.
+- The dashboard names a query only when the app saw it ≥ 5 times in the window.
+- The nightly shard job reads `query_daily` in aggregate. It publishes a query in the public
+  shard files (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10 times in total
+  over the last 6 complete UTC days, and only when it does not look like personal data (an email
+  or web address, a phone, account or postal number, a user id, a long token, blocklisted words).
+  The files hold the query text and its emoji results: no app, account, day or count. A query
+  leaves them with the first nightly build after it no longer passes. Alias mining reads Analytics
+  Engine and uses a query only when it was seen ≥ 5 times.
 - `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
   Travel can still restore the database to a point in the last 30 days (Paid plan).
