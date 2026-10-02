@@ -11,6 +11,7 @@
     "eval:diagnose": "tsx src/diagnose-cli.ts",
     "eval:semantic": "tsx src/semantic-cli.ts",
     "eval:entities": "tsx src/entities.ts",
+    "eval:models": "tsx src/model-bench.ts",
     "culture:gate": "tsx src/culture-gate-cli.ts",
     "heldout:generate": "tsx scripts/make-heldout.ts",
     "photos": "tsx src/photos.ts",

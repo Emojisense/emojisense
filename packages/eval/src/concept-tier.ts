@@ -21,6 +21,7 @@ import {
   type Pack,
   type QueryConfidence,
   type SearchResult,
+  type SemanticCalibration,
 } from "emojisense";
 import { l2normalize, searchVectorSets } from "emojisense/vectors";
 import { CONCEPT_MODEL, CONCEPT_TAG } from "../../worker/src/concepts/config.ts";
@@ -81,7 +82,14 @@ async function pool<T>(items: readonly T[], lanes: number, work: (item: T) => Pr
 
 export async function runConceptTier(
   items: readonly ConceptItem[],
-  options: { packDir: string; model: { key: string; dims: number }; offline: boolean; concurrency?: number },
+  options: {
+    packDir: string;
+    model: { key: string; dims: number };
+    offline: boolean;
+    concurrency?: number;
+    /** The semantic list's calibration for the unsure verdict; default: the production model's. */
+    calibration?: SemanticCalibration;
+  },
 ): Promise<{ verdicts: ConceptVerdict[]; stats: ConceptTierStats }> {
   const readPack = (name: string): Pack =>
     JSON.parse(readFileSync(join(options.packDir, `pack.${name}.json`), "utf8"));
@@ -100,7 +108,9 @@ export async function runConceptTier(
     ? JSON.parse(readFileSync(cachePath, "utf8"))
     : {};
   const stats: ConceptTierStats = { calls: [], freshCalls: 0, failures: [], embedMs: [] };
-  const verdicts: ConceptVerdict[] = items.map((item) => assessConfidence(item.alias, item.semantic));
+  const verdicts: ConceptVerdict[] = items.map((item) =>
+    assessConfidence(item.alias, item.semantic, options.calibration),
+  );
   const unsure = items.map((_, i) => i).filter((i) => verdicts[i]?.unsure);
 
   const contents = new Map<number, string>();
