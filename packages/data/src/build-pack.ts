@@ -7,6 +7,8 @@
  * Per locale, two client files:
  *   pack.<locale>.json      core: label, shortcodes, keywords + the first N aliases (size budget)
  *   pack.<locale>.ext.json  ext:  the remaining aliases, typos and low-confidence phrases
+ * A CLDR keyword that curation.json demotes moves to the ext `low` field; a removed one is left out
+ * (pack-fields.ts). The CLDR label stays.
  * N starts at `initialAliases` (pack.config.json, or --initial-aliases) and drops one step at a
  * time until the core part fits CORE_BUDGET_GZ. The manifest records N per locale (`coreAliases`).
  * Clients render with core and load ext when idle. Embedding documents use the full alias list.
@@ -14,11 +16,13 @@
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { normalize, PACK_FORMAT, PACK_FORMAT_VERSION, type Pack, type PackRow } from "emojisense";
+import { PACK_FORMAT, PACK_FORMAT_VERSION, type Pack, type PackRow } from "emojisense";
+import { loadCurations } from "./curation.ts";
 import { buildDocuments } from "./documents.ts";
 import { LOCALE_CODES } from "./locales.ts";
 import { gzipSize, writeManifest } from "./manifest.ts";
-import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
+import { packFields } from "./pack-fields.ts";
+import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
 import type { BaseEmoji } from "./types.ts";
 import type { Validated } from "./validate.ts";
 
@@ -38,36 +42,21 @@ const { source, emoji }: { source: Record<string, string>; emoji: BaseEmoji[] } 
   readFileSync(BASE_FILE, "utf8"),
 );
 const validated: Validated = JSON.parse(readFileSync(join(BUILD_DIR, "validated.json"), "utf8"));
+/** Aliases were curated in validate.ts; the CLDR keywords are curated here (pack-fields.ts). */
+const curations = loadCurations(join(ENRICHMENT_DIR, "curation.json"));
 const groups = [...new Set(emoji.map((e) => e.group))];
-
-/** Normalize, drop phrases already present in a stronger field, join with "|". */
-function fields(lists: string[][]): string[] {
-  const seen = new Set<string>();
-  return lists.map((list) =>
-    list
-      .map((s) => normalize(s))
-      .filter((s) => s !== "" && !seen.has(s) && seen.add(s))
-      .join("|"),
-  );
-}
 
 function buildPacks(locale: string, coreAliasCount: number): { core: Pack; ext: Pack } {
   const core: PackRow[] = [];
   const ext: PackRow[] = [];
   for (const e of emoji) {
-    const v = validated[e.hexcode]?.[locale];
-    const cldr = e.i18n[locale];
-    const label = locale === "en" ? e.label : (cldr?.label ?? e.label);
-    const aliases = v?.alias ?? [];
-    const [, shortcode, keyword, alias, typo, low, extAlias] = fields([
-      [label],
-      locale === "en" ? e.shortcodes : [],
-      locale === "en" ? e.tags : (cldr?.tags ?? []),
-      aliases.slice(0, coreAliasCount),
-      v?.typo ?? [],
-      v?.low ?? [],
-      aliases.slice(coreAliasCount),
-    ]) as string[];
+    const { label, shortcode, keyword, alias, typo, low, extAlias } = packFields(
+      e,
+      locale,
+      validated[e.hexcode]?.[locale],
+      coreAliasCount,
+      curations,
+    );
     const head = [
       e.emoji,
       e.hexcode,
@@ -75,8 +64,8 @@ function buildPacks(locale: string, coreAliasCount: number): { core: Pack; ext: 
       e.version,
       e.skins.length > 0 ? 1 : 0,
     ] as const;
-    core.push([...head, label, shortcode as string, keyword as string, alias as string, "", ""]);
-    ext.push([...head, "", "", "", extAlias as string, typo as string, low as string]);
+    core.push([...head, label, shortcode, keyword, alias, "", ""]);
+    ext.push([...head, "", "", "", extAlias, typo, low]);
   }
   const pack = (part: "core" | "ext", rows: PackRow[]): Pack => ({
     format: PACK_FORMAT,

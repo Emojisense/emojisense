@@ -99,3 +99,14 @@ order. Do not repeat a `top` phrase in a category, and never put it in `low`.
   }
 }
 ```
+
+## Curation (`curation.json`)
+
+A `remove` or `low` entry names one phrase of one emoji in one locale (`"*"` = every locale). The
+phrase can be an alias or a CLDR keyword (`tags`). A CLDR keyword has weight 0.85, so it ranks
+above every alias (0.8). Use `low` when another emoji is the canonical answer for the keyword:
+the keyword then moves to the ext `low` field (0.55) of that emoji and locale. Use `remove` when
+the keyword is wrong for the emoji: the pack then leaves it out. The CLDR label (the name) never
+changes, and the embedding documents keep the keyword. The build warns about an entry that matches
+no alias or keyword (`⚠ curation: …`): correct the spelling or delete the entry. Example: 🥹 and 🫂
+have the Hindi keyword `धन्यवाद` (thank you); `low` on both makes 🙏 the first result.

@@ -4,7 +4,9 @@
  * - merge the tr overlay (enrichment/i18n/tr, overlay.ts) into the combined tr blocks
  * - normalize every alias with the shared normalizer, drop empties and duplicates
  * - drop aliases that repeat an indexed name / shortcode / keyword of the same emoji
- * - curation.json (curation.ts): remove an alias, demote it to `low`, or add a missed phrase
+ * - curation.json (curation.ts): remove an alias, demote it to `low`, or add a missed phrase;
+ *   warn about remove/low entries that match no alias or CLDR keyword (build-pack.ts curates the
+ *   keywords)
  * - moderation: block or demote, per locale (blocklist.ts)
  * - collision cap (collisions.ts): an alias on more than 8 emoji stays at full weight on its 8
  *   strongest owners; the others get it as `low` (up to 20 owners) or lose it (more)
@@ -16,9 +18,10 @@ import { normalize } from "emojisense";
 import { orderedAliases } from "./alias-order.ts";
 import { moderate } from "./blocklist.ts";
 import { capCollisions } from "./collisions.ts";
-import { curatedAdditions, curationAction, loadCurations } from "./curation.ts";
+import { curatedAdditions, curationAction, loadCurations, unmatchedEdits } from "./curation.ts";
 import { COMBINED_LOCALES, LOCALE_CODES } from "./locales.ts";
 import { loadOverlay, mergeOverlay, OVERLAY_LOCALES } from "./overlay.ts";
+import { cldrKeywords } from "./pack-fields.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
 import type { BaseEmoji, EnrichmentRecord, LocaleEnrichment, LocaleRecord, MinedAlias } from "./types.ts";
 
@@ -160,6 +163,23 @@ for (const e of emoji) {
     for (const a of block.typo) place(a, "typo");
   }
   draft.set(e.hexcode, perLocale);
+}
+
+// A remove/low entry that names no alias or CLDR keyword of its emoji does nothing: say so.
+const emojiByHexcode = new Map(emoji.map((e) => [e.hexcode, e]));
+const phrasesOf = (hexcode: string, locale: Locale): string[] => {
+  const e = emojiByHexcode.get(hexcode);
+  const block = enrichmentFor(hexcode, locale);
+  return [
+    ...(e ? cldrKeywords(e, locale) : []),
+    ...(block ? [...orderedAliases(block, `${hexcode} ${locale}`), ...block.typo] : []),
+    ...mined.filter((m) => m.hexcode === hexcode && m.locale === locale).map((m) => m.alias),
+  ];
+};
+for (const c of unmatchedEdits(curations, LOCALES, phrasesOf)) {
+  console.warn(
+    `⚠ curation: ${c.hexcode} ${c.locale} "${c.alias}" (${c.action}) matches no alias or CLDR keyword`,
+  );
 }
 
 // Collision cap, per locale, over generated aliases only (collisions.ts).
