@@ -152,7 +152,7 @@ describe("pruneWaitlist", () => {
 });
 
 describe("handleScheduled", () => {
-  it("prunes query_daily and the waitlist and logs counts only", async () => {
+  it("builds the regional trends, prunes query_daily, the waitlist and trends_daily, and logs counts only", async () => {
     const db = migratedDatabase();
     db.exec(`
       INSERT INTO accounts (id, created_at) VALUES ('acc', 0);
@@ -162,8 +162,21 @@ describe("handleScheduled", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     await handleScheduled({ DB: sqliteD1(db) as unknown as D1Database }, NOW);
     expect(log.mock.calls).toEqual([
+      [
+        JSON.stringify({
+          event: "trends_daily_built",
+          day: TODAY,
+          candidates: 0,
+          privacyDropped: 0,
+          capped: 0,
+          rows: 0,
+          rising: 0,
+          regions: 0,
+        }),
+      ],
       [JSON.stringify({ event: "query_daily_pruned", deleted: 1, batches: 1, complete: true })],
       [JSON.stringify({ event: "waitlist_pruned", deleted: 1, batches: 1, complete: true })],
+      [JSON.stringify({ event: "trends_daily_pruned", deleted: 0, batches: 1, complete: true })],
     ]);
     log.mockRestore();
   });
@@ -184,6 +197,7 @@ describe("handleScheduled", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     await expect(handleScheduled(env, NOW)).rejects.toThrow("D1 down");
+    expect(error).toHaveBeenCalledWith(JSON.stringify({ event: "trends_daily_failed", error: "TypeError" }));
     expect(error).toHaveBeenCalledWith(
       JSON.stringify({ event: "query_daily_prune_failed", error: "TypeError" }),
     );
