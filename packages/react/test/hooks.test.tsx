@@ -64,5 +64,57 @@ describe("useEmojisense + useEmojiSearch", () => {
     await act(async () => new Promise((r) => setTimeout(r, 50)));
     await waitFor(() => expect(result.current.status).toBe("fused"));
     expect(result.current.results[0]?.emoji).toBe("🚀");
+    expect(result.current.layer).toBe("api");
+  });
+
+  it("reports the device layer when no semantic layer is configured", async () => {
+    vi.stubGlobal("fetch", packFetch());
+    const { result: sense } = renderHook(() =>
+      useEmojisense({ packBaseUrl: "https://x.test", extended: false }),
+    );
+    await waitFor(() => expect(sense.current.status).toBe("ready"));
+    expect(sense.current.semantic).toBeUndefined();
+    const { result } = renderHook(() => useEmojiSearch("jurassic park", sense.current));
+    await waitFor(() => expect(result.current.status).toBe("alias"));
+    expect(result.current.layer).toBe("device");
+  });
+
+  it("answers from shards before the API", async () => {
+    const pack = packFetch();
+    const fetch = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.endsWith("/p/test/index.json")) {
+        return new Response(
+          JSON.stringify({
+            format: "emojisense-shards",
+            formatVersion: 1,
+            packVersion: "test",
+            model: "m@256",
+            keys: ["to"],
+          }),
+        );
+      }
+      if (url.endsWith("/p/test/to.json")) {
+        return new Response(
+          JSON.stringify({ key: "to", entries: { "to the stars": [["🚀", "1F680", 0.7]] } }),
+        );
+      }
+      if (url.includes("/v1/search")) throw new Error("the API must not be called for a shard hit");
+      return pack(input);
+    });
+    vi.stubGlobal("fetch", fetch);
+    const { result: sense } = renderHook(() =>
+      useEmojisense({
+        packBaseUrl: "https://x.test",
+        shardsUrl: "https://x.test/p/test",
+        endpoint: "https://api.test",
+        extended: false,
+      }),
+    );
+    await waitFor(() => expect(sense.current.status).toBe("ready"));
+    const { result } = renderHook(() => useEmojiSearch("to the stars", sense.current, { debounceMs: 10 }));
+    await waitFor(() => expect(result.current.status).toBe("fused"));
+    expect(result.current.layer).toBe("shard");
+    expect(result.current.results[0]?.emoji).toBe("🚀");
   });
 });

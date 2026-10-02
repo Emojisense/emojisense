@@ -2,12 +2,14 @@ import {
   type AliasEngine,
   type AliasSearchOutput,
   createEngine,
+  createLayeredSemantic,
   createSearchSession,
-  createSemanticClient,
   loadPacks,
   type Pack,
   type SearchResult,
-  type SemanticClient,
+  type SemanticLayer,
+  type SemanticProvider,
+  type SessionState,
   type SessionStatus,
 } from "emojisense";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,7 +19,12 @@ export interface EmojisenseOptions {
   packBaseUrl: string;
   /** UI locale. "tr" loads the Turkish pack next to English. */
   locale?: string;
-  /** Semantic API base URL. Omit for offline alias search only. */
+  /**
+   * Precomputed results (layer 2), e.g. "https://api.emojisense.com/p/0.1.0". Free static files,
+   * asked before the API.
+   */
+  shardsUrl?: string;
+  /** Semantic API base URL (layer 3). Omit both this and `shardsUrl` for on-device search only. */
   endpoint?: string;
   publishableKey?: string;
   /** Load the extension packs (more aliases, typos) when the browser is idle. Default true. */
@@ -26,7 +33,8 @@ export interface EmojisenseOptions {
 
 export interface Emojisense {
   engine: AliasEngine | undefined;
-  semantic: SemanticClient | undefined;
+  /** Shards, then the API, whichever are configured. */
+  semantic: SemanticProvider | undefined;
   packs: Pack[];
   locale: string;
   status: "loading" | "ready" | "error";
@@ -35,9 +43,9 @@ export interface Emojisense {
   error?: unknown;
 }
 
-/** Load the data packs once and build the alias engine (and the semantic client, if configured). */
+/** Load the data packs once and build the alias engine (and the semantic layers, if configured). */
 export function useEmojisense(options: EmojisenseOptions): Emojisense {
-  const { packBaseUrl, locale = "en", endpoint, publishableKey, extended = true } = options;
+  const { packBaseUrl, locale = "en", shardsUrl, endpoint, publishableKey, extended = true } = options;
   const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
     packs: [],
     extended: false,
@@ -78,15 +86,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
   );
   const packVersion = state.packs[0]?.packVersion;
   const semantic = useMemo(
-    () =>
-      endpoint
-        ? createSemanticClient({
-            endpoint,
-            ...(publishableKey ? { key: publishableKey } : {}),
-            ...(packVersion ? { packVersion } : {}),
-          })
-        : undefined,
-    [endpoint, publishableKey, packVersion],
+    () => createLayeredSemantic({ shardsUrl, endpoint, key: publishableKey, packVersion }),
+    [shardsUrl, endpoint, publishableKey, packVersion],
   );
 
   return {
@@ -109,6 +110,12 @@ export interface EmojiSearchState {
   /** Round trip of the last semantic request, ms. */
   semanticMs: number | undefined;
   semanticCached: boolean | undefined;
+  /**
+   * Which layer produced `results`: "device" when the on-device dictionary answered alone,
+   * "shard" or "api" once semantic results are fused in, `undefined` while idle or loading.
+   * Count it when `status` settles to drive per-layer counters.
+   */
+  layer: SemanticLayer | undefined;
 }
 
 export interface UseEmojiSearchOptions {
@@ -123,6 +130,7 @@ const IDLE: EmojiSearchState = {
   aliasMs: undefined,
   semanticMs: undefined,
   semanticCached: undefined,
+  layer: undefined,
 };
 
 /**
@@ -156,6 +164,7 @@ export function useEmojiSearch(
           aliasMs: s.aliasMs,
           semanticMs: s.semanticMs,
           semanticCached: s.semanticCached,
+          layer: layerOf(s),
         }),
     });
     sessionRef.current = session;
@@ -171,6 +180,19 @@ export function useEmojiSearch(
   }, [query, engine]);
 
   return query.trim() === "" ? IDLE : state;
+}
+
+function layerOf(state: SessionState): SemanticLayer | undefined {
+  switch (state.status) {
+    case "fused":
+      return state.layer;
+    // No semantic layer answered, or it failed: the results on screen are the on-device ones.
+    case "alias":
+    case "error":
+      return "device";
+    default:
+      return undefined;
+  }
 }
 
 const IDLE_TIMEOUT_MS = 2000;
