@@ -24,6 +24,19 @@ export function errorResponse(status: number, error: string, headers: Record<str
   return json({ error }, status, { "Cache-Control": "no-store", ...headers });
 }
 
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * True for plain http to a deployed API (ENVIRONMENT staging or production) on a public host.
+ * Such a request carries its key and text unencrypted, so the API refuses it instead of
+ * answering: a client set to http fails at once rather than leaking on every call. Local
+ * `wrangler dev` (no ENVIRONMENT, or "development") and localhost keep plain http.
+ */
+export function refusesPlainHttp(url: URL, environment: string | undefined): boolean {
+  if (url.protocol !== "http:" || environment === undefined || environment === "development") return false;
+  return !LOCAL_HOSTS.has(url.hostname) && !url.hostname.endsWith(".localhost");
+}
+
 export function parseLimit(raw: unknown, fallback: number, max: number): number {
   const value = Number(raw ?? fallback);
   return Number.isFinite(value) ? Math.min(max, Math.max(1, Math.floor(value))) : fallback;

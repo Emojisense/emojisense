@@ -155,3 +155,38 @@ describe("dev keys", () => {
     expect(await h.app.meter?.accountCount("dev:0", "semantic_calls")).toBe(1);
   });
 });
+
+describe("plain http", () => {
+  const overHttp = (host: string) =>
+    new Request(`http://${host}/v1/search?q=rocket&key=${KEYS.publishable}`, {
+      headers: { Origin: ALLOWED_ORIGIN },
+    });
+
+  it.each(["production", "staging"])(
+    "is refused by the %s API before the key is looked up",
+    async (environment) => {
+      const store = await seededStore();
+      const lookup = vi.spyOn(store, "findKeyByHash");
+      const h = harness({ store, env: { ENVIRONMENT: environment } });
+      const res = await h.call(overHttp("api.emojisense.example"));
+      expect(res.status).toBe(403);
+      expect(await res.json()).toEqual({
+        error: "use https://api.emojisense.example: plain http would send keys and text unencrypted",
+      });
+      expect(lookup).not.toHaveBeenCalled();
+      expect((await h.call(new Request("http://api.emojisense.example/v1/health"))).status).toBe(403);
+    },
+  );
+
+  it("is still served over https, on localhost and in local development", async () => {
+    const store = await seededStore();
+    const production = harness({ store, env: { ENVIRONMENT: "production" } });
+    expect((await production.call(withKey(KEYS.publishable, ALLOWED_ORIGIN))).status).toBe(200);
+    expect((await production.call(overHttp("localhost:8788"))).status).toBe(200);
+    expect((await production.call(overHttp("127.0.0.1:8788"))).status).toBe(200);
+    // A phone on the LAN reaching `wrangler dev`.
+    for (const env of [{}, { ENVIRONMENT: "development" }]) {
+      expect((await harness({ store, env }).call(overHttp("192.168.1.20:8788"))).status).toBe(200);
+    }
+  });
+});
