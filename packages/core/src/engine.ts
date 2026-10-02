@@ -1,20 +1,35 @@
 import { boundedEditDistance, maxEditsFor, plausibleTypo } from "./fuzzy.js";
 import { normalize, tokenize } from "./normalize.js";
-import { assertPack, DEFAULT_WEIGHTS, FIELDS, type Field, type Pack, ROW } from "./pack.js";
+import {
+  assertPack,
+  DEFAULT_WEIGHTS,
+  FIELDS,
+  type Field,
+  isCustomPack,
+  type Pack,
+  type PackRow,
+  ROW,
+} from "./pack.js";
 
 export type ResultSource = "alias" | "semantic" | "custom";
 
 export interface SearchResult {
+  /** The emoji character, or `:shortcode:` for a custom emoji. */
   emoji: string;
-  /** Emojibase hexcode of the base emoji, e.g. "1F44D". */
+  /** Emojibase hexcode of the base emoji, e.g. "1F44D"; `C-<emojiId>` for a custom emoji. */
   id: string;
   /** 0–1. Comparable within one source only. */
   score: number;
   source: ResultSource;
+  /** Custom emoji: the image to draw instead of a font glyph. */
+  imageUrl?: string;
+  /** Custom emoji: the shortcode without colons, e.g. "party_parrot". */
+  shortcode?: string;
 }
 
 export interface AliasResult extends SearchResult {
-  source: "alias";
+  /** "custom" for rows of a custom pack (they carry `imageUrl` and `shortcode`). */
+  source: "alias" | "custom";
   label: string;
   /** The phrase that matched best, for debugging and "why this result" UI. */
   match: string;
@@ -47,6 +62,9 @@ export interface EmojiEntry {
   hasSkinTones: boolean;
   /** Display label per loaded locale. */
   labels: Record<string, string>;
+  /** Custom emoji only (see {@link SearchResult}). */
+  imageUrl?: string;
+  shortcode?: string;
 }
 
 export interface EngineOptions {
@@ -85,32 +103,48 @@ const STOPWORDS = new Set(
   ).split(" "),
 );
 
-/** Build an in-memory Tier 0 index from one or more packs (same emoji set, different locales). */
+function entryOf(pack: Pack, row: PackRow): EmojiEntry {
+  const entry: EmojiEntry = {
+    emoji: row[ROW.emoji],
+    id: row[ROW.hexcode],
+    group: pack.groups[row[ROW.group]] ?? "unknown",
+    version: row[ROW.version],
+    hasSkinTones: row[ROW.skins] === 1,
+    labels: {},
+  };
+  if (!isCustomPack(pack)) return entry;
+  const imageUrl = pack.images?.[entry.id];
+  const shortcode = /^:(.+):$/.exec(entry.emoji)?.[1] ?? row[ROW.label];
+  return { ...entry, shortcode, ...(imageUrl ? { imageUrl } : {}) };
+}
+
+/**
+ * Build an in-memory Tier 0 index from one or more packs (same emoji set, different locales).
+ * Custom packs (`part: "custom"`) add their own rows; their phrases count for every locale.
+ */
 export function createEngine(input: Pack | Pack[], options: EngineOptions = {}): AliasEngine {
   const minCoverage = options.minCoverage ?? MIN_COVERAGE;
   const packs = Array.isArray(input) ? input : [input];
   if (packs.length === 0) throw new Error("emojisense: createEngine needs at least one pack");
   for (const pack of packs) assertPack(pack);
-  const primary = packs[0] as Pack;
-  const locales = [...new Set(packs.map((p) => p.locale))];
+  const primary = packs.find((p) => !isCustomPack(p)) ?? (packs[0] as Pack);
+  const locales = [...new Set(packs.filter((p) => !isCustomPack(p)).map((p) => p.locale))];
   // Core and extension packs of one locale count as one locale for the preference factor.
   const preferredMasks = new Map<string, number>();
+  let customMask = 0;
   packs.forEach((p, i) => {
-    preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
+    if (isCustomPack(p)) customMask |= 1 << i;
+    else preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
   });
 
   const entries: EmojiEntry[] = [];
   const indexById = new Map<string, number>();
-  for (const row of primary.emoji) {
-    indexById.set(row[ROW.hexcode], entries.length);
-    entries.push({
-      emoji: row[ROW.emoji],
-      id: row[ROW.hexcode],
-      group: primary.groups[row[ROW.group]] ?? "unknown",
-      version: row[ROW.version],
-      hasSkinTones: row[ROW.skins] === 1,
-      labels: {},
-    });
+  for (const pack of [primary, ...packs.filter((p) => p !== primary && isCustomPack(p))]) {
+    for (const row of pack.emoji) {
+      if (indexById.has(row[ROW.hexcode])) continue;
+      indexById.set(row[ROW.hexcode], entries.length);
+      entries.push(entryOf(pack, row));
+    }
   }
 
   // Pass 1: collect phrases, deduplicated per emoji (strongest field / first pack wins).
@@ -284,7 +318,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
     if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0 };
 
-    const preferredMask = preferredMasks.get(locale ?? primary.locale) ?? 1;
+    const preferredMask = (preferredMasks.get(locale ?? primary.locale) ?? 1) | customMask;
     const isPreferred = (phrase: number) => ((phraseLocaleMask[phrase] as number) & preferredMask) !== 0;
     const lastIsPrefix = prefix && !/\s$/.test(query);
     const n = tokens.length;
@@ -372,14 +406,17 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
 
     const results: AliasResult[] = ranked.map(({ emoji, phrase, score }) => {
       const entry = entries[emoji] as EmojiEntry;
+      const { imageUrl, shortcode } = entry;
       return {
         emoji: entry.emoji,
         id: entry.id,
         score: Math.round(score * 1000) / 1000,
-        source: "alias",
-        label: entry.labels[locale ?? ""] ?? entry.labels[primary.locale] ?? "",
+        source: shortcode === undefined ? "alias" : "custom",
+        label: entry.labels[locale ?? ""] ?? entry.labels[primary.locale] ?? shortcode ?? "",
         match: phraseText[phrase] as string,
         field: FIELDS[phraseField[phrase] as number] as Field,
+        ...(imageUrl ? { imageUrl } : {}),
+        ...(shortcode ? { shortcode } : {}),
       };
     });
     return { query: normalized, tokens, results, confidence: results[0]?.score ?? 0 };

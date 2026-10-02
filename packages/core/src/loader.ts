@@ -1,4 +1,4 @@
-import { assertPack, type Pack } from "./pack.js";
+import { assertPack, isCustomPack, type Pack } from "./pack.js";
 
 export interface LoadPacksOptions {
   /** Base URL of a pack version, e.g. "https://api.emojisense.com/v1/pack/0.1.0". */
@@ -51,4 +51,33 @@ export async function loadPacks(options: LoadPacksOptions): Promise<Pack[]> {
       return pack;
     }),
   );
+}
+
+export interface LoadCustomPackOptions {
+  /** Base URL of the Emojisense API, e.g. "https://api.emojisense.com". */
+  endpoint: string;
+  /** Publishable key (`pk_…`). The custom emoji of its app are loaded. */
+  key: string;
+  /** The app owner's id for one of their customers (tenant): adds that tenant's emoji. */
+  tenant?: string;
+  fetch?: typeof fetch;
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetch the app's custom emoji as a pack (GET /v1/custom-pack). Pass it to `createEngine` after
+ * the locale packs, so custom emoji are searched on the device too. The edge caches it for 60 s.
+ */
+export async function loadCustomPack(options: LoadCustomPackOptions): Promise<Pack> {
+  const { endpoint, key, tenant, signal } = options;
+  const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
+  const params = new URLSearchParams({ key });
+  if (tenant) params.set("tenant", tenant);
+  const url = `${endpoint.replace(/\/+$/, "")}/v1/custom-pack?${params}`;
+  const response = await doFetch(url, { signal: signal ?? null });
+  if (!response.ok) throw new Error(`emojisense: custom pack request failed with HTTP ${response.status}`);
+  const pack: unknown = await response.json();
+  assertPack(pack);
+  if (!isCustomPack(pack)) throw new Error("emojisense: not a custom emoji pack");
+  return pack;
 }

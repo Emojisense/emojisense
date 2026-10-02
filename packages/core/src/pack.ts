@@ -43,13 +43,22 @@ export interface Pack {
   /**
    * "core" (default): loaded first, within the size budget. "ext": the remaining aliases, typos
    * and low-confidence phrases of the same locale, loaded when the browser is idle. Ext rows may
-   * have an empty label.
+   * have an empty label. "custom": an app's own emoji (GET /v1/custom-pack), drawn as images.
    */
-  part?: "core" | "ext";
+  part?: "core" | "ext" | "custom";
   emojiVersion: string;
   groups: string[];
   weights?: Partial<Record<Field, number>>;
   emoji: PackRow[];
+  /** Custom packs only: image URL per hexcode (`C-<emojiId>`). */
+  images?: Record<string, string>;
+}
+
+/** Hexcode prefix of custom emoji rows: `C-<emojiId>`. Never collides with Emojibase hexcodes. */
+export const CUSTOM_ID_PREFIX = "C-";
+
+export function isCustomPack(pack: Pack): boolean {
+  return pack.part === "custom";
 }
 
 export const ROW = {

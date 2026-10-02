@@ -15,13 +15,15 @@ export { boundedEditDistance } from "./fuzzy.js";
 export { groupLabel } from "./groups.js";
 export { baseId, hexcodeOf } from "./ids.js";
 export { createLayeredSemantic, type LayeredSemanticOptions } from "./layered.js";
-export { type LoadPacksOptions, loadPacks } from "./loader.js";
+export { type LoadCustomPackOptions, type LoadPacksOptions, loadCustomPack, loadPacks } from "./loader.js";
 export { MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
 export {
   assertPack,
+  CUSTOM_ID_PREFIX,
   DEFAULT_WEIGHTS,
   FIELDS,
   type Field,
+  isCustomPack,
   PACK_FORMAT,
   PACK_FORMAT_VERSION,
   type Pack,
