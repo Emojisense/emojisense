@@ -116,7 +116,7 @@
   background: var(--ink);
   content: "";
   vertical-align: -0.2em;
-  animation: culture-caret 1.1s steps(1) infinite;
+  animation: culture-caret 1.1s steps(1) 4;
 }
 
 .culture-switch {

@@ -314,6 +314,8 @@ pre {
   font-family: var(--font-mono);
 }
 
+/* WCAG 2.2.2: nothing moves on its own for more than five seconds. Loops get a finite count;
+   longer motion gets a pause or stop control (edge map, hero, use-case demos). See test/motion.test.ts. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

@@ -556,7 +556,7 @@
 
 .ws-skeleton {
   background: var(--bg-soft);
-  animation: ws-shimmer 1.1s ease-in-out infinite alternate;
+  animation: ws-shimmer 1.1s ease-in-out 4 alternate;
 }
 
 .ws-none {
