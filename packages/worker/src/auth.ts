@@ -53,6 +53,16 @@ export function parseDevKeys(raw: string | undefined): Map<string, ApiKey> {
   return keys;
 }
 
+export type KeyResolution = ResolvedKey | undefined | "unavailable" | "limited";
+
+export interface ResolveOptions {
+  /**
+   * Asked before a lookup that misses the isolate cache, i.e. before a D1 read. False refuses the
+   * read: the caller gets a stale entry if there is one, else "limited".
+   */
+  mayLookUp?: () => Promise<boolean>;
+}
+
 /**
  * Key lookups, cached per isolate for `ttlMs`, unknown keys included, so repeated bad keys do
  * not reach D1. When the store fails, a stale entry is still used; with none, the caller gets
@@ -74,7 +84,7 @@ export class KeyResolver {
     this.#maxEntries = options.maxEntries ?? KEY_CACHE_MAX_ENTRIES;
   }
 
-  async resolve(token: string): Promise<ResolvedKey | undefined | "unavailable"> {
+  async resolve(token: string, options: ResolveOptions = {}): Promise<KeyResolution> {
     const devKey = this.#devKeys.get(token);
     if (devKey) return { key: devKey, persistUsage: false };
     if (!this.#store) return undefined;
@@ -82,6 +92,8 @@ export class KeyResolver {
     const hash = await hashKey(token);
     const cached = this.#cache.get(hash);
     if (cached && cached.expiresAt > this.#now()) return wrap(cached.key);
+    // Random keys always miss the cache: each would cost a D1 read without this gate.
+    if (options.mayLookUp && !(await options.mayLookUp())) return cached ? wrap(cached.key) : "limited";
     try {
       const key = await this.#store.findKeyByHash(hash);
       this.#remember(hash, key);
@@ -132,13 +144,16 @@ export async function authenticate(
     sentAs = "query";
   }
 
+  // The IP is a rate-limit key only. It is never logged or stored.
+  const ip = request.headers.get("cf-connecting-ip") ?? "local";
   let principal: Principal = { kind: "anonymous" };
   if (token) {
     // Checked before the lookup: the key is already exposed, so say so without a database read.
     if (sentAs === "query" && keyKind(token) === "secret") {
       return errorResponse(403, "secret keys must be sent as Authorization: Bearer, never in a URL");
     }
-    const resolved = await resolver.resolve(token);
+    const resolved = await resolver.resolve(token, { mayLookUp: keyLookupGate(env, ip) });
+    if (resolved === "limited") return rateLimited();
     if (resolved === "unavailable") {
       // The key store is down and this key is not cached. Serve as anonymous rather than fail
       // (search never fails hard); the anonymous limiter still applies.
@@ -164,14 +179,19 @@ export async function authenticate(
     }
   }
 
-  // The IP is a rate-limit key only. It is never logged or stored.
-  const ip = request.headers.get("cf-connecting-ip") ?? "local";
   const [limiter, limitKey] =
     principal.kind === "key"
       ? [env.SEARCH_LIMITER, `${principal.key.id}:${ip}`]
       : [env.ANON_LIMITER, `anon:${ip}`];
-  if (limiter && !(await limiter.limit({ key: limitKey })).success) {
-    return errorResponse(429, "rate limited", { "Retry-After": "60" });
-  }
+  if (limiter && !(await limiter.limit({ key: limitKey })).success) return rateLimited();
   return principal;
+}
+
+const rateLimited = () => errorResponse(429, "rate limited", { "Retry-After": "60" });
+
+/** Key lookups that miss the isolate cache, per IP (KEY_MISS_LIMITER); none without the binding. */
+function keyLookupGate(env: Env, ip: string): (() => Promise<boolean>) | undefined {
+  const limiter = env.KEY_MISS_LIMITER;
+  if (!limiter) return undefined;
+  return async () => (await limiter.limit({ key: `keymiss:${ip}` })).success;
 }

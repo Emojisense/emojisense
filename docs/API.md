@@ -33,10 +33,13 @@ headers, so every caller is also rate limited:
 | ------ | ----- | ----------- |
 | A key | 120 requests a minute | key and IP address |
 | Anonymous | 30 requests a minute | IP address |
+| Key lookups that miss the per-isolate key cache (each one a database read, unknown keys included) | 60 a minute | IP address |
 
 Over the limit the answer is `429` with `Retry-After: 60`. The IP address is only an in-memory
 limiter key; it is never logged or stored. Static files, `/v1/health` and the emoji image routes
-(`/v1/sets/…`, `/v1/custom/…`) are not limited.
+(`/v1/sets/…`, `/v1/custom/…`) are not limited per call. The key-lookup limit stops a flood of
+random keys before it reaches the database; a key the instance knew before keeps working while
+it holds.
 
 **Anonymous calls** (no key) work on `/v1/search`, `/v1/suggest-reactions` and
 `/v1/classify-image`. They are never metered and never over a plan limit, they get no custom

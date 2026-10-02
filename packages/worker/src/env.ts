@@ -16,6 +16,8 @@ export interface Env {
   DB?: D1Database;
   SEARCH_LIMITER?: RateLimiter;
   ANON_LIMITER?: RateLimiter;
+  /** Key lookups that miss the isolate's key cache (each one a D1 read), per IP. */
+  KEY_MISS_LIMITER?: RateLimiter;
   EVENTS?: AnalyticsDataset;
   /** Static assets (public/): the published packs, read for locales outside the bundle. */
   ASSETS?: { fetch(input: string): Promise<Response> };

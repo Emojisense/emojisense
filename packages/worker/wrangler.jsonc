@@ -43,9 +43,12 @@
     { "binding": "EMOJI", "bucket_name": "emojisense-emoji" },
     { "binding": "SHARDS", "bucket_name": "emojisense-shards" }
   ],
+  // Per minute. KEY_MISS_LIMITER counts, per IP, key lookups that miss the isolate's key cache
+  // (each one a D1 read), so a flood of random keys cannot reach D1 (src/auth.ts).
   "ratelimits": [
     { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
-    { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+    { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+    { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
   // Daily, 03:17 UTC: delete query_daily rows past their plan's retention and waitlist rows
@@ -80,7 +83,8 @@
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
-        { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+        { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+        { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
       // ENVIRONMENT=development lets webhooks reach http://localhost receivers.
@@ -112,7 +116,8 @@
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1101", "simple": { "limit": 120, "period": 60 } },
-        { "name": "ANON_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } }
+        { "name": "ANON_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } },
+        { "name": "KEY_MISS_LIMITER", "namespace_id": "1104", "simple": { "limit": 60, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search_dev" }],
       "vars": { "DEV_KEYS": "pk_demo", "ENVIRONMENT": "staging", "SHARDS_CRON_ENABLED": "true" }
@@ -138,7 +143,8 @@
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1201", "simple": { "limit": 120, "period": 60 } },
-        { "name": "ANON_LIMITER", "namespace_id": "1202", "simple": { "limit": 30, "period": 60 } }
+        { "name": "ANON_LIMITER", "namespace_id": "1202", "simple": { "limit": 30, "period": 60 } },
+        { "name": "KEY_MISS_LIMITER", "namespace_id": "1204", "simple": { "limit": 60, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
       "vars": { "DEV_KEYS": "", "ENVIRONMENT": "production", "SHARDS_CRON_ENABLED": "true" }

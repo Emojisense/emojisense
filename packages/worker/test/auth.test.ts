@@ -105,6 +105,50 @@ describe("key cache", () => {
   });
 });
 
+describe("key lookups that miss the cache", () => {
+  const limiterAllowing = (n: number) => {
+    let left = n;
+    return vi.fn<RateLimiter["limit"]>(async () => ({ success: left-- > 0 }));
+  };
+
+  it("are rate limited per IP before the D1 read, so random keys cannot flood it", async () => {
+    const store = await seededStore();
+    const lookup = vi.spyOn(store, "findKeyByHash");
+    const misses = limiterAllowing(2);
+    const h = harness({ store, env: { KEY_MISS_LIMITER: { limit: misses } } });
+    const ip = { headers: { "cf-connecting-ip": "203.0.113.9" } };
+    expect((await h.call(search("rocket", "&key=pk_live_random1", ip))).status).toBe(401);
+    expect((await h.call(search("rocket", "&key=pk_live_random2", ip))).status).toBe(401);
+    const limited = await h.call(search("rocket", "&key=pk_live_random3", ip));
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("retry-after")).toBe("60");
+    expect(lookup).toHaveBeenCalledTimes(2);
+    expect(misses).toHaveBeenCalledWith({ key: "keymiss:203.0.113.9" });
+    expect(JSON.stringify(misses.mock.calls)).not.toContain("pk_live");
+  });
+
+  it("are not counted for cached keys, and a stale entry still serves when limited", async () => {
+    let now = Date.UTC(2026, 9, 2);
+    const store = await seededStore();
+    const misses = limiterAllowing(1);
+    const h = harness({ store, now: () => now, env: { KEY_MISS_LIMITER: { limit: misses } } });
+    expect((await h.call(withKey(KEYS.wildcard))).status).toBe(200);
+    expect((await h.call(withKey(KEYS.wildcard))).status).toBe(200);
+    expect(misses).toHaveBeenCalledTimes(1);
+    now += 120_000;
+    // The entry expired and the limiter refuses a new read: the known key keeps working.
+    expect((await h.call(withKey(KEYS.wildcard))).status).toBe(200);
+    expect((await h.call(withKey(KEYS.pro))).status).toBe(429);
+  });
+
+  it("need no limiter for development keys", async () => {
+    const misses = limiterAllowing(0);
+    const h = harness({ env: { DEV_KEYS: "pk_demo", KEY_MISS_LIMITER: { limit: misses } } });
+    expect((await h.call(withKey("pk_demo"))).status).toBe(200);
+    expect(misses).not.toHaveBeenCalled();
+  });
+});
+
 describe("rate limits", () => {
   it("use the key id and IP for keys and the IP alone for anonymous callers, never the raw key", async () => {
     const anon = vi.fn<RateLimiter["limit"]>(async () => ({ success: true }));
