@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../../src/app/App";
-import type { CustomEmoji, CustomEmojiListResponse } from "../../src/shared/contract";
+import type { CustomEmoji, CustomEmojiListResponse, EmojiImportResponse } from "../../src/shared/contract";
 import { APP, me, stubApi } from "./fake-api";
 
 const PRO_APP = { ...APP, plan: "pro" as const };
@@ -70,5 +70,86 @@ describe("custom emoji upload", () => {
 
     expect(await screen.findByRole("button", { name: ":shipit:" })).toBeTruthy();
     expect(calls.filter((call) => call.method === "POST")).toHaveLength(2);
+  });
+});
+
+const importAnswer = (
+  imported: number,
+  remaining: number,
+  skippedBy: Partial<EmojiImportResponse["skippedBy"]> = {},
+): EmojiImportResponse => {
+  const reasons = { alias: 0, exists: 0, invalid: 0, limit: 0, failed: 0, ...skippedBy };
+  return {
+    imported,
+    remaining,
+    skipped: Object.values(reasons).reduce((a, b) => a + b, 0),
+    skippedBy: reasons,
+  };
+};
+
+async function startSlackImport(token: string) {
+  fireEvent.click(await screen.findByRole("button", { name: "Import" }));
+  fireEvent.click(screen.getByRole("button", { name: /From Slack/ }));
+  const dialog = await screen.findByRole("dialog", { name: "Import from Slack" });
+  fireEvent.change(within(dialog).getByLabelText("Slack user token"), { target: { value: token } });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Import emoji" }));
+  return dialog;
+}
+
+describe("custom emoji import", () => {
+  it("calls again with the same token while emoji remain, then sums up the whole import", async () => {
+    const answers = [
+      importAnswer(50, 62, { alias: 4, exists: 2 }),
+      importAnswer(50, 12, { alias: 4, exists: 52 }),
+      importAnswer(12, 0, { alias: 4, exists: 102, limit: 1 }),
+    ];
+    const { calls } = openEmojiPage({
+      "GET /api/apps/app_1/emoji": { body: { emoji: [], used: 0, limit: 2_000 } },
+      "POST /api/apps/app_1/emoji/import/slack": () => ({ body: answers.shift() }),
+    });
+
+    const dialog = await startSlackImport("xoxp-test-token");
+
+    expect(await within(dialog).findByText("Imported 112 emoji.")).toBeTruthy();
+    expect(
+      within(dialog).getByText(
+        "Skipped 7: 2 already in this app, 4 aliases of other emoji, 1 over your plan’s limit.",
+      ),
+    ).toBeTruthy();
+    const imports = calls.filter((call) => call.path.endsWith("/import/slack"));
+    expect(imports).toHaveLength(3);
+    expect(imports.every((call) => (call.body as { token: string }).token === "xoxp-test-token")).toBe(true);
+    // The page lists the emoji again once the import stored new ones.
+    expect(calls.filter((call) => call.path === "/api/apps/app_1/emoji").length).toBeGreaterThan(1);
+  });
+
+  it("keeps what an import stored when a later batch fails, and continues it", async () => {
+    const answers: { status?: number; body: unknown }[] = [
+      { body: importAnswer(50, 30) },
+      {
+        status: 429,
+        body: {
+          error: { code: "import_rate_limited", message: "Slack is limiting requests. Wait a minute." },
+        },
+      },
+      { body: importAnswer(30, 0, { exists: 50 }) },
+    ];
+    const { calls } = openEmojiPage({
+      "GET /api/apps/app_1/emoji": { body: { emoji: [], used: 0, limit: 2_000 } },
+      "POST /api/apps/app_1/emoji/import/slack": () => answers.shift() ?? { status: 500, body: null },
+    });
+
+    const dialog = await startSlackImport("xoxp-test-token");
+
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "Slack is limiting requests. Wait a minute.",
+    );
+    expect(within(dialog).getByText("Imported 50 emoji so far.")).toBeTruthy();
+    expect(within(dialog).getByText("30 more wait. Continue to import them.")).toBeTruthy();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "Continue import" }));
+    expect(await within(dialog).findByText("Imported 80 emoji.")).toBeTruthy();
+    expect(within(dialog).queryByRole("button", { name: "Continue import" })).toBeNull();
+    expect(calls.filter((call) => call.path.endsWith("/import/slack"))).toHaveLength(3);
   });
 });
