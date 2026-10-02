@@ -45,3 +45,15 @@ export function toSuggestion(
     ...(result.window ? { window: result.window } : {}),
   };
 }
+
+/**
+ * Convert a result list. An API result without an emoji, for an id the bundled packs do not know
+ * (a newer pack version), cannot be shown and is dropped.
+ */
+export function toSuggestions(
+  engine: AliasEngine,
+  results: readonly (SearchResult & { label?: string; match?: string; window?: string })[],
+  locale?: string,
+): EmojiSuggestion[] {
+  return results.map((result) => toSuggestion(engine, result, locale)).filter((s) => s.emoji !== "");
+}

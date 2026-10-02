@@ -49,6 +49,12 @@ describe("searchEmoji", () => {
     expect(text).toContain("🎉 party popper — semantic match");
   });
 
+  it("drops API results it cannot show (unknown id, no emoji)", async () => {
+    const api = fakeApi(semantic(["", "1FAFF"], ["", "1F389"]));
+    const { structured } = await searchEmoji({ engine, api }, { query: "a great success" });
+    expect(structured.results.map((r) => r.id)).toEqual(["1F389"]);
+  });
+
   it("keeps the offline results when the API has no answer", async () => {
     const api = fakeApi(undefined);
     const { structured } = await searchEmoji({ engine, api }, { query: "dinosaur party" });

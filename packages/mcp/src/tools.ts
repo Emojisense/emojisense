@@ -8,7 +8,7 @@ import {
 } from "emojisense";
 import type { EmojisenseApi } from "./api.js";
 import { suggestReactionsOffline } from "./reactions.js";
-import { type EmojiSuggestion, toSuggestion } from "./suggestion.js";
+import { type EmojiSuggestion, toSuggestions } from "./suggestion.js";
 import { matchText } from "./text.js";
 
 export interface ToolDeps {
@@ -56,9 +56,7 @@ export async function searchEmoji(
   // Same rule as the client SDK: only unsure or conceptual queries reach the (metered) API.
   const semantic =
     api && shouldUseSemantic(alias) ? await api.search(input.query, { locale, limit }) : undefined;
-  const results = (semantic ? fuse(alias, semantic, limit) : alias.results).map((r) =>
-    toSuggestion(engine, r, locale),
-  );
+  const results = toSuggestions(engine, semantic ? fuse(alias, semantic, limit) : alias.results, locale);
   const text = results.length > 0 ? results.map(describe).join("\n") : `No emoji found for "${input.query}".`;
   return { text, structured: { query: alias.query, locale, semantic: Boolean(semantic), results } };
 }
@@ -74,7 +72,7 @@ export async function emojiForText(
   // Message text goes to suggest-reactions, never to search: the search endpoint logs query text.
   const semantic = api ? await api.suggestReactions(input.text, { locale, limit }) : undefined;
   const merged: SearchResult[] = semantic ? fuseLocal(local, semantic, limit) : local.slice(0, limit);
-  const results = merged.map((r) => toSuggestion(engine, r, locale));
+  const results = toSuggestions(engine, merged, locale);
   const best = results[0];
   const suggestion = best ? `${input.text.trimEnd()} ${best.emoji}` : input.text;
   const text = best
@@ -96,7 +94,7 @@ export async function suggestReactions(
   let results = local;
   if (semantic) {
     const matched = local.filter(isMatched);
-    const fused = fuseLocal(matched, semantic, limit).map((r) => toSuggestion(engine, r, locale));
+    const fused = toSuggestions(engine, fuseLocal(matched, semantic, limit), locale);
     // Generic fallbacks (👍 ❤️) only fill places the matches and the API left empty.
     const fillers = local.filter((r) => !isMatched(r) && !fused.some((f) => f.id === r.id));
     results = [...fused, ...fillers].slice(0, limit);

@@ -40,7 +40,11 @@ export default function SearchEmoji() {
     }
   }, [api.warning]);
 
-  const items = engine && state ? state.results.map((result) => toEmojiItem(engine, result, locale)) : [];
+  // An API result for an id these packs do not know has nothing to show; drop it.
+  const items =
+    engine && state
+      ? state.results.map((result) => toEmojiItem(engine, result, locale)).filter((item) => item.emoji)
+      : [];
 
   return (
     <List
