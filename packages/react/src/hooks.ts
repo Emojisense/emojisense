@@ -5,6 +5,7 @@ import {
   createLayeredSemantic,
   createSearchSession,
   type EmojiSet,
+  loadCustomPack,
   loadPacks,
   type Pack,
   type SearchResult,
@@ -35,13 +36,23 @@ export interface EmojisenseOptions {
    * draw images hosted at `${endpoint}/v1/sets/<set>/<hexcode>.svg`, so they need `endpoint`.
    */
   emojiSet?: EmojiSet;
+  /**
+   * Load the app's custom emoji (GET /v1/custom-pack) so they are searched on the device and
+   * drawn as images. Needs `endpoint` and `publishableKey`. Default false.
+   */
+  customEmoji?: boolean;
+  /** The app owner's id for one of their customers: adds that tenant's custom emoji. */
+  tenant?: string;
 }
 
 export interface Emojisense {
   engine: AliasEngine | undefined;
   /** Shards, then the API, whichever are configured. */
   semantic: SemanticProvider | undefined;
+  /** The locale packs (core, then ext). The custom pack is in `customPack`. */
   packs: Pack[];
+  /** The app's custom emoji once loaded (`customEmoji: true`); part of `engine`. */
+  customPack?: Pack;
   locale: string;
   status: "loading" | "ready" | "error";
   /** True once the idle-time extension packs are in the engine. */
@@ -63,11 +74,34 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     publishableKey,
     extended = true,
     emojiSet = "native",
+    customEmoji = false,
+    tenant,
   } = options;
   const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
     packs: [],
     extended: false,
   });
+  const [customPack, setCustomPack] = useState<Pack>();
+
+  useEffect(() => {
+    setCustomPack(undefined);
+    if (!customEmoji || !endpoint || !publishableKey) return;
+    const controller = new AbortController();
+    loadCustomPack({
+      endpoint,
+      key: publishableKey,
+      ...(tenant ? { tenant } : {}),
+      signal: controller.signal,
+    }).then(
+      (pack) => {
+        if (!controller.signal.aborted) setCustomPack(pack);
+      },
+      () => {
+        // Custom emoji are optional: the catalog keeps working without them.
+      },
+    );
+    return () => controller.abort();
+  }, [customEmoji, endpoint, publishableKey, tenant]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -99,8 +133,11 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
   }, [packBaseUrl, locale, extended]);
 
   const engine = useMemo(
-    () => (state.packs.length > 0 ? createEngine(state.packs) : undefined),
-    [state.packs],
+    () =>
+      state.packs.length > 0
+        ? createEngine(customPack ? [...state.packs, customPack] : state.packs)
+        : undefined,
+    [state.packs, customPack],
   );
   const packVersion = state.packs[0]?.packVersion;
   const semantic = useMemo(
@@ -112,6 +149,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     engine,
     semantic,
     packs: state.packs,
+    ...(customPack ? { customPack } : {}),
     locale,
     status: state.error ? "error" : engine ? "ready" : "loading",
     extended: state.extended,
