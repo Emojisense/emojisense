@@ -1,0 +1,71 @@
+{
+  "id": "jurassic-park",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "The dinosaur film series",
+    "es": "La saga de películas de dinosaurios",
+    "pt": "A série de filmes de dinossauros",
+    "fr": "La saga de films de dinosaures",
+    "ru": "Серия фильмов о динозаврах",
+    "zh": "恐龙电影系列"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "es",
+    "pt",
+    "fr",
+    "ru",
+    "zh"
+  ],
+  "triggers": {
+    "en": [
+      "jurassic park",
+      "jurassic world",
+      "clever girl",
+      "life finds a way"
+    ],
+    "es": [
+      "parque jurasico",
+      "jurassic park"
+    ],
+    "pt": [
+      "parque dos dinossauros",
+      "jurassic park"
+    ],
+    "fr": [
+      "parc jurassique",
+      "jurassic park"
+    ],
+    "ru": [
+      "парк юрского периода",
+      "мир юрского периода"
+    ],
+    "zh": [
+      "侏罗纪公园",
+      "侏罗纪世界"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F996",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F995",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F9EC",
+      "weight": 0.4
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

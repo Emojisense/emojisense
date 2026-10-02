@@ -1,0 +1,42 @@
+{
+  "id": "mantap",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Indonesian slang for 'great'",
+    "id": "Bahasa gaul untuk 'keren' atau 'hebat'"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "id"
+  ],
+  "triggers": {
+    "id": [
+      "mantap",
+      "mantul",
+      "mantap jiwa",
+      "mantap betul"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F44D",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F525",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F4AF",
+      "weight": 0.5
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

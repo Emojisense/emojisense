@@ -1,0 +1,59 @@
+{
+  "id": "cricket-world-cup-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Men's Cricket World Cup 2027 in South Africa, Zimbabwe and Namibia",
+    "hi": "पुरुष क्रिकेट विश्व कप 2027, दक्षिण अफ़्रीका, ज़िम्बाब्वे और नामीबिया",
+    "bn": "পুরুষদের ক্রিকেট বিশ্বকাপ ২০২৭, দক্ষিণ আফ্রিকা, জিম্বাবুয়ে ও নামিবিয়া"
+  },
+  "when": {
+    "from": "2027-09-27",
+    "to": "2027-11-21"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "en": [
+      "cricket world cup",
+      "cwc"
+    ],
+    "hi": [
+      "क्रिकेट विश्व कप",
+      "वर्ल्ड कप",
+      "विश्व कप",
+      "world cup",
+      "cricket world cup"
+    ],
+    "bn": [
+      "ক্রিকেট বিশ্বকাপ",
+      "বিশ্বকাপ",
+      "world cup"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3CF",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F3C6",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F1FF-1F1E6",
+      "weight": 0.35
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

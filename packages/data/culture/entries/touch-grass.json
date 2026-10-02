@@ -1,0 +1,36 @@
+{
+  "id": "touch-grass",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Slang: log off and go outside"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "touch grass",
+      "go touch grass",
+      "log off"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F331",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F333",
+      "weight": 0.55
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -1,0 +1,119 @@
+{
+  "id": "written-laughter",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Laughter written out in chat, different in every language",
+    "es": "La risa escrita en los chats",
+    "pt": "A risada escrita nas conversas",
+    "fr": "Le rire écrit dans les messages",
+    "id": "Tawa yang ditulis di obrolan",
+    "ru": "Смех, написанный в переписке",
+    "zh": "聊天里打出来的笑声",
+    "ar": "الضحك المكتوب في المحادثات",
+    "tr": "Mesajlarda yazıya dökülen kahkaha",
+    "hi": "चैट में लिखी हुई हँसी",
+    "bn": "চ্যাটে লেখা হাসি"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "es",
+    "pt",
+    "fr",
+    "id",
+    "ru",
+    "zh",
+    "ar",
+    "tr",
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "es": [
+      "jaja",
+      "jajaja",
+      "jajajaja",
+      "jsjs",
+      "jsjsjs"
+    ],
+    "pt": [
+      "kkk",
+      "kkkk",
+      "kkkkk",
+      "kkkkkk",
+      "rsrs",
+      "rsrsrs"
+    ],
+    "fr": [
+      "mdr",
+      "mdrr",
+      "ptdr",
+      "xptdr"
+    ],
+    "id": [
+      "wkwk",
+      "wkwkwk",
+      "wkwkwkwk",
+      "awokwok",
+      "awokawok"
+    ],
+    "ru": [
+      "ахах",
+      "ахаха",
+      "ахахах",
+      "хаха",
+      "хахаха",
+      "ору"
+    ],
+    "zh": [
+      "哈哈",
+      "哈哈哈",
+      "哈哈哈哈",
+      "笑死",
+      "笑死我了",
+      "233",
+      "2333"
+    ],
+    "ar": [
+      "ههه",
+      "هههه",
+      "ههههه",
+      "هههههه",
+      "خخخ",
+      "خخخخ"
+    ],
+    "tr": [
+      "ahahah",
+      "ahahaha",
+      "sjsjsj",
+      "jsjsjs"
+    ],
+    "hi": [
+      "हाहा",
+      "हाहाहा",
+      "हाहाहाहा"
+    ],
+    "bn": [
+      "হাহা",
+      "হাহাহা",
+      "হাহাহাহা"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F602",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F923",
+      "weight": 0.7
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

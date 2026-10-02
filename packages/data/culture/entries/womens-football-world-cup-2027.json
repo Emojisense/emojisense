@@ -1,0 +1,96 @@
+{
+  "id": "womens-football-world-cup-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Women's Football World Cup 2027 in Brazil",
+    "es": "Mundial Femenino de fútbol 2027 en Brasil",
+    "pt": "Copa do Mundo Feminina 2027 no Brasil",
+    "fr": "Coupe du monde féminine de football 2027 au Brésil",
+    "ru": "Чемпионат мира по футболу среди женщин 2027 в Бразилии",
+    "tr": "2027 Kadınlar Dünya Kupası, Brezilya",
+    "id": "Piala Dunia Wanita 2027 di Brasil",
+    "zh": "2027年巴西女足世界杯",
+    "hi": "महिला फ़ुटबॉल विश्व कप 2027, ब्राज़ील",
+    "bn": "নারী ফুটবল বিশ্বকাপ ২০২৭, ব্রাজিল",
+    "ar": "كأس العالم لكرة القدم للسيدات 2027 في البرازيل"
+  },
+  "when": {
+    "from": "2027-06-17",
+    "to": "2027-07-25"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "*"
+  ],
+  "triggers": {
+    "en": [
+      "womens world cup",
+      "world cup",
+      "world cup 2027"
+    ],
+    "es": [
+      "mundial femenino",
+      "copa del mundo femenina",
+      "mundial"
+    ],
+    "pt": [
+      "copa do mundo feminina",
+      "copa feminina",
+      "copa do mundo"
+    ],
+    "fr": [
+      "coupe du monde feminine",
+      "coupe du monde"
+    ],
+    "ru": [
+      "женскии чемпионат мира",
+      "чемпионат мира по футболу"
+    ],
+    "tr": [
+      "kadinlar dunya kupasi",
+      "dunya kupasi"
+    ],
+    "id": [
+      "piala dunia wanita",
+      "piala dunia"
+    ],
+    "zh": [
+      "女足世界杯",
+      "世界杯"
+    ],
+    "hi": [
+      "महिला फ़ुटबॉल विश्व कप",
+      "फ़ुटबॉल विश्व कप"
+    ],
+    "bn": [
+      "নারী বিশ্বকাপ",
+      "মহিলা বিশ্বকাপ"
+    ],
+    "ar": [
+      "كاس العالم للسيدات",
+      "كاس العالم"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "26BD",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F3C6",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F1E7-1F1F7",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

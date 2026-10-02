@@ -1,0 +1,47 @@
+{
+  "id": "cricket-century",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Cricket: a century (100 runs) or a six",
+    "hi": "क्रिकेट: शतक या छक्का",
+    "bn": "ক্রিকেট: সেঞ্চুরি বা ছক্কা"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "hi": [
+      "शतक",
+      "सेंचुरी",
+      "century",
+      "छक्का",
+      "sixer"
+    ],
+    "bn": [
+      "সেঞ্চুরি",
+      "শতরান",
+      "ছক্কা",
+      "century"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3CF",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F4AF",
+      "weight": 0.6
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -1,0 +1,85 @@
+{
+  "id": "world-emoji-day",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "World Emoji Day, 17 July",
+    "es": "Día Mundial del Emoji, 17 de julio",
+    "pt": "Dia Mundial do Emoji, 17 de julho",
+    "fr": "Journée mondiale de l'emoji, le 17 juillet",
+    "ru": "Всемирный день эмодзи, 17 июля",
+    "tr": "Dünya Emoji Günü, 17 Temmuz",
+    "id": "Hari Emoji Sedunia, 17 Juli",
+    "zh": "世界表情符号日，7月17日",
+    "hi": "विश्व इमोजी दिवस, 17 जुलाई",
+    "bn": "বিশ্ব ইমোজি দিবস, ১৭ জুলাই",
+    "ar": "اليوم العالمي للإيموجي، 17 يوليو"
+  },
+  "when": {
+    "from": "07-10",
+    "to": "07-17",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "*"
+  ],
+  "triggers": {
+    "en": [
+      "world emoji day",
+      "emoji day"
+    ],
+    "es": [
+      "dia mundial del emoji"
+    ],
+    "pt": [
+      "dia mundial do emoji"
+    ],
+    "fr": [
+      "journee mondiale de lemoji",
+      "journee mondiale des emojis"
+    ],
+    "ru": [
+      "всемирныи день эмодзи"
+    ],
+    "tr": [
+      "dunya emoji gunu"
+    ],
+    "id": [
+      "hari emoji sedunia"
+    ],
+    "zh": [
+      "世界表情符号日"
+    ],
+    "hi": [
+      "विश्व इमोजी दिवस"
+    ],
+    "bn": [
+      "বিশ্ব ইমোজি দিবস"
+    ],
+    "ar": [
+      "اليوم العالمي للايموجي"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F600",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F4C5",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F389",
+      "weight": 0.5
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

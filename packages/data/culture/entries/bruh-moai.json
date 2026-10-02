@@ -1,0 +1,37 @@
+{
+  "id": "bruh-moai",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "A deadpan, unimpressed reaction"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "bruh",
+      "bro what",
+      "stone face",
+      "moai"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F5FF",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F610",
+      "weight": 0.5
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

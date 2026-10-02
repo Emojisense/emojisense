@@ -1,0 +1,67 @@
+{
+  "id": "goat-football",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Football's greatest-of-all-time debate",
+    "es": "El debate sobre el mejor futbolista de la historia",
+    "pt": "O debate sobre o melhor jogador de todos os tempos",
+    "fr": "Le débat sur le meilleur footballeur de tous les temps"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "es",
+    "pt",
+    "fr"
+  ],
+  "triggers": {
+    "en": [
+      "goat",
+      "the goat",
+      "greatest of all time"
+    ],
+    "es": [
+      "goat",
+      "el goat",
+      "el mejor de la historia",
+      "el mejor de todos los tiempos"
+    ],
+    "pt": [
+      "goat",
+      "o goat",
+      "o melhor de todos",
+      "melhor de todos os tempos"
+    ],
+    "fr": [
+      "goat",
+      "le goat",
+      "le meilleur de tous les temps"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F410",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "26BD",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F1E6-1F1F7",
+      "weight": 0.45
+    },
+    {
+      "hexcode": "1F1F5-1F1F9",
+      "weight": 0.45
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

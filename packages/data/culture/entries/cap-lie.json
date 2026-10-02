@@ -1,0 +1,38 @@
+{
+  "id": "cap-lie",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Slang: cap means a lie"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "cap",
+      "thats cap",
+      "capping",
+      "stop capping",
+      "big cap"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F9E2",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F925",
+      "weight": 0.55
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

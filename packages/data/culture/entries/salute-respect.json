@@ -1,0 +1,65 @@
+{
+  "id": "salute-respect",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Salute for respect, or for 'yes, on it'",
+    "id": "Hormat: tanda siap atau respek",
+    "zh": "敬礼：表示收到、照办或尊重",
+    "ru": "Салют: «принято» или уважение",
+    "tr": "Selam: tamam, hemen ya da saygı"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "id",
+    "zh",
+    "ru",
+    "tr"
+  ],
+  "triggers": {
+    "en": [
+      "yes sir",
+      "yes maam",
+      "aye aye",
+      "copy that",
+      "on it",
+      "o7",
+      "respect"
+    ],
+    "id": [
+      "siap",
+      "siap laksanakan",
+      "siap pak",
+      "siap bos"
+    ],
+    "zh": [
+      "收到",
+      "遵命",
+      "敬礼"
+    ],
+    "ru": [
+      "так точно",
+      "слушаюсь",
+      "принято"
+    ],
+    "tr": [
+      "bas ustune",
+      "emredersiniz",
+      "saygilar"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1FAE1",
+      "weight": 0.85
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

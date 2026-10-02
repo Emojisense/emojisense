@@ -1,0 +1,42 @@
+{
+  "id": "la-flemme",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "French 'la flemme': can't be bothered",
+    "fr": "La flemme : pas envie de bouger"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "fr"
+  ],
+  "triggers": {
+    "fr": [
+      "la flemme",
+      "flemme",
+      "jai la flemme",
+      "grosse flemme"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F971",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F9A5",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F6CB",
+      "weight": 0.45
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

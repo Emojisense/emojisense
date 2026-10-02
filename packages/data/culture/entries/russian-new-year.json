@@ -1,0 +1,59 @@
+{
+  "id": "russian-new-year",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "New Year in Russia: fir tree, tangerines, the midnight chimes",
+    "ru": "Новый год: ёлка, мандарины и бой курантов"
+  },
+  "when": {
+    "from": "12-20",
+    "to": "01-08",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "ru"
+  ],
+  "triggers": {
+    "ru": [
+      "новыи год",
+      "с новым годом",
+      "новогоднии",
+      "елка",
+      "мандарины",
+      "оливье",
+      "дед мороз",
+      "куранты"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F384",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F34A",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F942",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F386",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "2603",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

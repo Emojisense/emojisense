@@ -1,0 +1,46 @@
+{
+  "id": "cool-spanish-slang",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Spanish words for 'cool' in Mexico, Spain and South America",
+    "es": "Formas de decir «genial» en México, España y Sudamérica"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "es"
+  ],
+  "triggers": {
+    "es": [
+      "chido",
+      "que chido",
+      "guay",
+      "que guay",
+      "chevere",
+      "que chevere",
+      "bacan",
+      "bacano"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F60E",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F44C",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F525",
+      "weight": 0.5
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

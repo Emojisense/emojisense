@@ -1,0 +1,52 @@
+{
+  "id": "pohela-boishakh",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Bengali New Year, 14 April",
+    "bn": "পহেলা বৈশাখ, বাংলা নববর্ষ"
+  },
+  "when": {
+    "from": "04-07",
+    "to": "04-15",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "bn"
+  ],
+  "triggers": {
+    "bn": [
+      "পহেলা বৈশাখ",
+      "শুভ নববর্ষ",
+      "নববর্ষ",
+      "pohela boishakh",
+      "shubho noboborsho"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F389",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F41F",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F35A",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F33A",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

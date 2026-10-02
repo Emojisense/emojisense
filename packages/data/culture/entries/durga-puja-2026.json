@@ -1,0 +1,64 @@
+{
+  "id": "durga-puja-2026",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Durga Puja, 17 to 21 October 2026",
+    "bn": "দুর্গাপূজা, ১৭–২১ অক্টোবর ২০২৬",
+    "hi": "दुर्गा पूजा, 17–21 अक्टूबर 2026"
+  },
+  "when": {
+    "from": "2026-10-10",
+    "to": "2026-10-21"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "bn",
+    "hi"
+  ],
+  "triggers": {
+    "bn": [
+      "দুর্গাপূজা",
+      "দুর্গা পূজা",
+      "পূজা",
+      "শারদীয়া",
+      "শুভ বিজয়া",
+      "durga puja",
+      "pujo"
+    ],
+    "hi": [
+      "दुर्गा पूजा",
+      "durga puja",
+      "दुर्गा माँ"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F531",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F981",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F941",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1FA94",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F33A",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

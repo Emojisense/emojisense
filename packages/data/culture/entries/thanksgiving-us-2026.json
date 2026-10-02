@@ -1,0 +1,50 @@
+{
+  "id": "thanksgiving-us-2026",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Thanksgiving in the US, 26 November 2026"
+  },
+  "when": {
+    "from": "2026-11-19",
+    "to": "2026-11-26"
+  },
+  "regions": [
+    "US"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "thanksgiving",
+      "happy thanksgiving",
+      "turkey day",
+      "friendsgiving",
+      "thanksgiving dinner"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F983",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F967",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F342",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F64F",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

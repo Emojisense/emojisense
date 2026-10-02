@@ -1,0 +1,40 @@
+{
+  "id": "thanks-bow-jp",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "In Japan, thanks and apologies often come with a bow"
+  },
+  "when": null,
+  "regions": [
+    "JP"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "thank you",
+      "thanks",
+      "thank you so much",
+      "arigato",
+      "arigatou",
+      "sorry",
+      "please"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F647",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F64F",
+      "weight": 0.65
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

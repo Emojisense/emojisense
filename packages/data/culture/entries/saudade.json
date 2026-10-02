@@ -1,0 +1,47 @@
+{
+  "id": "saudade",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Portuguese saudade: missing someone deeply",
+    "pt": "Saudade: sentir muita falta de alguém"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "pt"
+  ],
+  "triggers": {
+    "pt": [
+      "saudade",
+      "saudades",
+      "que saudade",
+      "to com saudade",
+      "morrendo de saudade"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F97A",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F979",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1FAC2",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F494",
+      "weight": 0.4
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

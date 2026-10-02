@@ -1,0 +1,88 @@
+{
+  "id": "eid-al-fitr-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Eid al-Fitr, the feast after Ramadan, about 9 March 2027",
+    "ar": "عيد الفطر بعد رمضان، نحو 9 مارس 2027",
+    "id": "Idul Fitri (Lebaran), sekitar 9 Maret 2027",
+    "tr": "Ramazan Bayramı, yaklaşık 9 Mart 2027",
+    "bn": "ঈদুল ফিতর, রমজানের পরের উৎসব, প্রায় ৯ মার্চ ২০২৭",
+    "hi": "ईद उल-फ़ित्र, रमज़ान के बाद का त्योहार, लगभग 9 मार्च 2027"
+  },
+  "when": {
+    "from": "2027-03-05",
+    "to": "2027-03-12"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "ar",
+    "id",
+    "tr",
+    "bn",
+    "hi"
+  ],
+  "triggers": {
+    "ar": [
+      "عيد الفطر",
+      "عيد مبارك",
+      "عيد فطر سعيد",
+      "العيد"
+    ],
+    "id": [
+      "lebaran",
+      "idul fitri",
+      "selamat idul fitri",
+      "minal aidin wal faizin",
+      "mohon maaf lahir dan batin",
+      "ketupat"
+    ],
+    "tr": [
+      "ramazan bayrami",
+      "seker bayrami",
+      "iyi bayramlar",
+      "bayramin mubarek olsun"
+    ],
+    "bn": [
+      "ঈদ মোবারক",
+      "ঈদ",
+      "ঈদুল ফিতর",
+      "ঈদের শুভেচ্ছা"
+    ],
+    "hi": [
+      "ईद",
+      "ईद मुबारक",
+      "eid mubarak",
+      "ईद उल फ़ित्र"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F319",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F54C",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F389",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F36C",
+      "weight": 0.45
+    },
+    {
+      "hexcode": "1F932",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -1,0 +1,54 @@
+{
+  "id": "festa-junina",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "June festivals in Brazil: corn, bonfires, square dancing",
+    "pt": "Festa junina: milho, fogueira e quadrilha"
+  },
+  "when": {
+    "from": "06-01",
+    "to": "06-30",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "pt"
+  ],
+  "triggers": {
+    "pt": [
+      "festa junina",
+      "sao joao",
+      "arraia",
+      "arraial",
+      "quadrilha",
+      "pamonha",
+      "quentao"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F33D",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F525",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F452",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F386",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

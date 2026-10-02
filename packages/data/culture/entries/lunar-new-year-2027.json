@@ -1,0 +1,68 @@
+{
+  "id": "lunar-new-year-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Lunar New Year, 6 February 2027: the Year of the Goat",
+    "zh": "春节，2027年2月6日，羊年",
+    "id": "Imlek, 6 Februari 2027, Tahun Kambing"
+  },
+  "when": {
+    "from": "2027-01-27",
+    "to": "2027-02-20"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "zh",
+    "id"
+  ],
+  "triggers": {
+    "zh": [
+      "春节",
+      "过年",
+      "新年快乐",
+      "春节快乐",
+      "红包",
+      "拜年",
+      "除夕",
+      "恭喜发财",
+      "羊年"
+    ],
+    "id": [
+      "imlek",
+      "gong xi fa cai",
+      "gong xi",
+      "selamat tahun baru imlek",
+      "angpao"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F9E7",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F3EE",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F9E8",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F95F",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F410",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

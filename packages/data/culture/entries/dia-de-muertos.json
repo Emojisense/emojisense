@@ -1,0 +1,54 @@
+{
+  "id": "dia-de-muertos",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Day of the Dead, 1 and 2 November",
+    "es": "Día de Muertos, 1 y 2 de noviembre"
+  },
+  "when": {
+    "from": "10-25",
+    "to": "11-02",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "es"
+  ],
+  "triggers": {
+    "es": [
+      "dia de muertos",
+      "dia de los muertos",
+      "altar de muertos",
+      "ofrenda",
+      "catrina",
+      "pan de muerto",
+      "cempasuchil"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F480",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F33C",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F56F",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F35E",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

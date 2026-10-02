@@ -1,0 +1,38 @@
+{
+  "id": "melting-embarrassed",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Embarrassed or overwhelmed, wanting to disappear"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "im melting",
+      "so embarrassing",
+      "so embarrassed",
+      "i want to disappear",
+      "so awkward"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1FAE0",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F633",
+      "weight": 0.5
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}
