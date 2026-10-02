@@ -23,7 +23,7 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | `shardsUrl` | Precomputed results. Omit it when no shards are deployed. |
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
 | `cultureUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the culture and the moment join the results after the top result, never above it (`source: "culture"`, with `context` and `cultureId`). A failed load is ignored. |
-| `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. |
+| `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. Default: the region of the browser's language (`navigator.language` `"pt-BR"` → `"BR"`; none without a region subtag). It is read on the device and never sent. `""` turns regional entries off. |
 
 `useEmojiSearch(query, sense, { culture: false })` keeps the canonical ranking (for tests and
 benchmarks). `useRelevantNow(sense, { limit })` returns `{ emoji, hexcode, context, cultureId }`

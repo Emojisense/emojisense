@@ -138,6 +138,30 @@ export async function loadCulture(options: LoadCultureOptions): Promise<Culture>
   return culture;
 }
 
+const ISO_REGION = /^[A-Z]{2}$/;
+
+/**
+ * The ISO 3166-1 alpha-2 region of a BCP 47 locale tag: "pt-BR" → "BR", "zh-Hant-TW" → "TW".
+ * Undefined when the tag has no such region ("en", "es-419") or is not a valid tag.
+ */
+export function regionOf(locale: string): string | undefined {
+  try {
+    const { region } = new Intl.Locale(locale);
+    return region && ISO_REGION.test(region) ? region : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * The region of the browser's language (`navigator.language`), the default region for culture
+ * entries when an app gives none. It is read on the device and never sent anywhere.
+ */
+export function deviceRegion(): string | undefined {
+  const language = globalThis.navigator?.language;
+  return language ? regionOf(language) : undefined;
+}
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /** The local calendar day of `now` as "YYYY-MM-DD". */

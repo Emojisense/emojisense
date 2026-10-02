@@ -5,6 +5,7 @@ import {
   createEngine,
   createLayeredSemantic,
   createSearchSession,
+  deviceRegion,
   type EmojiSet,
   loadCulture,
   loadCustomPack,
@@ -53,7 +54,11 @@ export interface EmojisenseOptions {
    * the canonical ranking. A failed load is ignored.
    */
   cultureUrl?: string;
-  /** ISO 3166-1 alpha-2 region, e.g. "BR". Regional culture entries apply only with it. */
+  /**
+   * ISO 3166-1 alpha-2 region, e.g. "BR". Regional culture entries apply only with it. Default:
+   * the region of the browser's language (`navigator.language` "pt-BR" → "BR"), read on the
+   * device and never sent. `""` = no region.
+   */
   region?: string;
 }
 
@@ -75,6 +80,7 @@ export interface Emojisense {
   endpoint?: string;
   /** The loaded culture file (also attached to `engine`), once `cultureUrl` answered. */
   culture?: Culture;
+  /** The region for culture entries: the `region` option, else the browser's region. */
   region?: string;
   error?: unknown;
 }
@@ -92,7 +98,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     customEmoji = false,
     tenant,
     cultureUrl,
-    region,
+    region = deviceRegion(),
   } = options;
   const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
     packs: [],

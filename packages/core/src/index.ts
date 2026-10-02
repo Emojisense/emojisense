@@ -13,6 +13,7 @@ export {
   type CultureScope,
   type CultureWhen,
   type CultureWindow,
+  deviceRegion,
   insertCulture,
   isActiveOn,
   type LoadCultureOptions,
@@ -22,6 +23,7 @@ export {
   matchCulture,
   type RelevantEmoji,
   type RelevantNowOptions,
+  regionOf,
   relevantNow,
 } from "./culture.js";
 export {

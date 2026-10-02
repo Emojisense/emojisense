@@ -6,6 +6,7 @@ import {
   createEngine,
   createLayeredSemantic,
   createSearchSession,
+  deviceRegion,
   type EmojiEntry,
   type EmojiSet,
   emojiImageUrl,
@@ -314,7 +315,11 @@ export class EmojisensePickerElement extends Base {
     this.setAttribute("culture-url", value);
   }
 
-  /** ISO 3166-1 alpha-2 region (e.g. "BR") for regional culture entries. */
+  /**
+   * ISO 3166-1 alpha-2 region (e.g. "BR") for regional culture entries. Without the attribute,
+   * the picker uses the region of the browser's language (`navigator.language` "pt-BR" → "BR"),
+   * on the device only. `region=""` turns regional entries off.
+   */
   get region(): string {
     return this.getAttribute("region") ?? "";
   }
@@ -479,7 +484,13 @@ export class EmojisensePickerElement extends Base {
 
   #currentShelfKey(): string {
     if (!this.showRelevantNow || !this.#culture) return "";
-    return [this.#culture.locale, this.#culture.from, this.region, this.columns].join("|");
+    return [this.#culture.locale, this.#culture.from, this.#region(), this.columns].join("|");
+  }
+
+  /** The `region` attribute, else the region of the browser's language. Never sent anywhere. */
+  #region(): string | undefined {
+    const region = this.getAttribute("region");
+    return region === null ? deviceRegion() : region || undefined;
   }
 
   /** Redraw the browse view and keep showing the results of a query being typed. */
@@ -580,7 +591,8 @@ export class EmojisensePickerElement extends Base {
   #connectSession() {
     const engine = this.#engine;
     if (!engine) return;
-    const key = [this.shardsUrl, this.endpoint, this.publishableKey, this.locale, this.region].join("\n");
+    const region = this.#region();
+    const key = [this.shardsUrl, this.endpoint, this.publishableKey, this.locale, region].join("\n");
     if (this.#session && key === this.#sessionKey) return;
     this.#session?.dispose();
     this.#sessionKey = key;
@@ -593,7 +605,7 @@ export class EmojisensePickerElement extends Base {
         packVersion: engine.packVersion,
       }),
       locale: this.locale,
-      ...(this.region ? { region: this.region } : {}),
+      ...(region ? { region } : {}),
       onChange: (state) => this.#showResults(state),
     });
     this.#search(this.#input.value);
@@ -633,9 +645,10 @@ export class EmojisensePickerElement extends Base {
     // Optional "relevant now" row: featured seasonal and event emoji, one row at most.
     this.#shelfKey = this.#currentShelfKey();
     if (this.#shelfKey && this.#culture) {
+      const region = this.#region();
       const shelf = relevantNow(this.#culture, {
         limit: this.columns,
-        ...(this.region ? { region: this.region } : {}),
+        ...(region ? { region } : {}),
       }).flatMap(({ hexcode, context }) => {
         const entry = engine.get(hexcode);
         return entry ? [{ ...this.#itemOf(entry), context }] : [];

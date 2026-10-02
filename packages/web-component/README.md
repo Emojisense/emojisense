@@ -60,7 +60,7 @@ the search engine):
 | `emoji-set` | `emojiSet` | `native` | `native` draws the system font. `twemoji`, `noto` and `fluent` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. A set may not draw every emoji (Fluent has no country flags); then the native emoji takes its place. Credit the set in your app (see NOTICE). |
 | `placeholder` | `placeholder` | `Search emoji…` | Input placeholder and accessible name |
 | `culture-url` | `cultureUrl` | — | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the moment and culture join the results after the top result (never above it). Without it the ranking is the canonical one. |
-| `region` | `region` | — | ISO 3166-1 code such as `BR`. Regional culture entries apply only with a matching region. |
+| `region` | `region` | browser | ISO 3166-1 code such as `BR`. Regional culture entries apply only with a matching region. Without the attribute, the picker uses the region of the browser's language (`navigator.language` `pt-BR` → `BR`; none without a region subtag). It is read on the device and never sent. `region=""` turns regional entries off. |
 | `show-relevant-now` | `showRelevantNow` | off | Boolean. Adds a "Relevant now" row (seasonal and event emoji) above the browse view. Needs `culture-url`. |
 | — | `culture` | — | A culture file to use instead of fetching `culture-url` |
 | — | `packs` | — | Pack objects to use instead of fetching `pack-url` (bundled or offline apps) |

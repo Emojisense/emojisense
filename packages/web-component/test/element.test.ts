@@ -13,6 +13,7 @@ beforeEach(() => {
 afterEach(() => {
   document.body.replaceChildren();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 async function mount(attributes: Record<string, string> = {}, tag = "emojisense-picker") {
@@ -287,5 +288,69 @@ describe("<emojisense-picker> culture layer", () => {
       type(picker, "goat");
       expect(results(picker).map((o) => o.textContent)).toEqual(["🐐", "🚀"]);
     });
+  });
+});
+
+describe("<emojisense-picker> culture region", () => {
+  /** "goat" also adds 👋, but only in Brazil. */
+  const regional = {
+    ...culture,
+    entries: [
+      ...culture.entries,
+      {
+        id: "goat-br",
+        kind: "lasting",
+        context: "A regional association",
+        when: null,
+        regions: ["BR"],
+        triggers: ["goat"],
+        emoji: [["👋", "1F44B", 0.9]],
+      },
+    ],
+  } as Culture;
+
+  const speak = (language: string) => vi.spyOn(navigator, "language", "get").mockReturnValue(language);
+
+  async function goat(attributes: Record<string, string> = {}) {
+    const picker = await mount(attributes);
+    picker.culture = regional;
+    let found: (string | null)[] = [];
+    await vi.waitFor(() => {
+      type(picker, "goat");
+      found = results(picker).map((o) => o.textContent);
+      expect(found).toContain("🚀");
+    });
+    return found;
+  }
+
+  it("uses the region of the browser's language without a region attribute", async () => {
+    speak("pt-BR");
+    expect(await goat()).toEqual(["🐐", "👋", "🚀"]);
+  });
+
+  it("has no region when the browser's language has no region subtag", async () => {
+    speak("pt");
+    expect(await goat()).toEqual(["🐐", "🚀"]);
+  });
+
+  it('prefers the region attribute, and region="" turns regional entries off', async () => {
+    speak("en-US");
+    expect(await goat({ region: "BR" })).toEqual(["🐐", "👋", "🚀"]);
+    speak("pt-BR");
+    expect(await goat({ region: "" })).toEqual(["🐐", "🚀"]);
+  });
+
+  it("never sends the region", async () => {
+    speak("pt-BR");
+    const picker = await mount({
+      endpoint: "https://api.test",
+      key: "pk_test_1",
+      "culture-url": CULTURE_URL,
+    });
+    type(picker, "tiny horned animal");
+    await vi.waitFor(() => expect(results(picker).map((o) => o.textContent)).toContain("🐐"));
+    const urls = fetch.mock.calls.map(([url]) => String(url));
+    expect(urls.some((url) => url.includes("/v1/search"))).toBe(true);
+    for (const url of urls) expect(url).not.toMatch(/BR|region/i);
   });
 });

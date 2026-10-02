@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   type Culture,
   type CultureEntry,
+  deviceRegion,
   insertCulture,
   isActiveOn,
   loadCulture,
   localDay,
   matchCulture,
+  regionOf,
   relevantNow,
 } from "../src/culture.js";
 import { createEngine, type SearchResult } from "../src/engine.js";
@@ -393,5 +395,31 @@ describe("loadCulture", () => {
     expect(fetch).not.toHaveBeenCalled();
     await loadCulture({ baseUrl: "https://x.test", locale: "pt-BR", fetch });
     expect(String(fetch.mock.calls[0]?.[0])).toBe("https://x.test/culture.pt-BR.json");
+  });
+});
+
+describe("regionOf and deviceRegion", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("reads the two-letter region subtag of a locale tag", () => {
+    expect(regionOf("pt-BR")).toBe("BR");
+    expect(regionOf("zh-Hant-TW")).toBe("TW");
+    expect(regionOf("en-us")).toBe("US");
+    expect(regionOf("de-CH-1996")).toBe("CH");
+    expect(regionOf("en-GB-u-ca-gregory")).toBe("GB");
+  });
+
+  it("gives no region without a two-letter region subtag", () => {
+    for (const tag of ["en", "zh-Hans", "es-419", "", "not a tag"])
+      expect(regionOf(tag), tag).toBeUndefined();
+  });
+
+  it("derives the region from navigator.language", () => {
+    vi.stubGlobal("navigator", { language: "pt-BR" });
+    expect(deviceRegion()).toBe("BR");
+    vi.stubGlobal("navigator", { language: "fr" });
+    expect(deviceRegion()).toBeUndefined();
+    vi.stubGlobal("navigator", undefined);
+    expect(deviceRegion()).toBeUndefined();
   });
 });

@@ -78,7 +78,7 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
 | Results carry `source: "culture"`, `context` (the reason, localized) and `cultureId`. At most 5 per query. | `matchCulture` |
 | A trigger matches the whole normalized query, or a prefix being typed (≥ 3 characters and ≥ half the trigger). | `matchCulture` |
 | Windows are local calendar days. Yearly windows may wrap the year end. Lunar-calendar festivals get one dated entry per year. | `isActiveOn` |
-| Without a region from the app, only entries for every region (`"*"`) apply. | `CultureScope.region` |
+| Without a region, only entries for every region (`"*"`) apply. `useEmojisense` and `<emojisense-picker>` default to the region of the browser's language, read on the device and never sent. | `CultureScope.region`, `deviceRegion` |
 | `culture: false` keeps the canonical ranking (tests, benchmarks). Without a culture file nothing changes. | engine, session, React, web component |
 | A "relevant now" shelf (featured seasonal and event emoji) is off by default. | `relevantNow`, `showRelevantNow` |
 | CI gate: with every approved entry active, no top-1 answer of the eval suites changes, and each trigger brings its entry's strongest emoji into the top 3. | `packages/eval/src/culture-gate.ts` |

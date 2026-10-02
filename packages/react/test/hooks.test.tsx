@@ -1,9 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
+import type { Culture } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useEmojiSearch, useEmojisense, useRelevantNow } from "../src/hooks.js";
-import { packAndCultureFetch, packFetch, packFetchWithExt } from "./fixture.js";
+import { culture, packAndCultureFetch, packFetch, packFetchWithExt } from "./fixture.js";
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("useEmojisense + useEmojiSearch", () => {
   it("loads packs, then searches as the query changes", async () => {
@@ -168,5 +172,93 @@ describe("culture layer", () => {
     expect(result.current).toEqual([
       { emoji: "👍", hexcode: "1F44D", context: "A season", cultureId: "season" },
     ]);
+  });
+});
+
+describe("culture region", () => {
+  /** "jurassic park" also adds 👍, but only in Brazil. */
+  const regional: Culture = {
+    ...culture,
+    entries: [
+      ...culture.entries,
+      {
+        id: "dino-br",
+        kind: "lasting",
+        context: "A regional association",
+        when: null,
+        regions: ["BR"],
+        triggers: ["jurassic park"],
+        emoji: [["👍", "1F44D", 0.7]],
+      },
+    ],
+  };
+  const options = {
+    packBaseUrl: "https://x.test/v1/pack/test",
+    cultureUrl: "https://x.test/v1/culture",
+    extended: false,
+  };
+
+  /** Packs, the regional culture file and the search API; returns every request URL. */
+  function serve() {
+    const packs = packFetch();
+    const fetch = vi.fn(async (url: string | URL | Request) => {
+      const u = String(url);
+      if (u.endsWith("/culture/culture.en.json")) return new Response(JSON.stringify(regional));
+      if (u.includes("/v1/search")) {
+        const results = [{ emoji: "🚀", id: "1F680", score: 0.6, source: "semantic" }];
+        return new Response(JSON.stringify({ results, packVersion: "test", cached: false }));
+      }
+      return packs(url);
+    });
+    vi.stubGlobal("fetch", fetch);
+    return fetch;
+  }
+
+  const speak = (language: string) => vi.spyOn(navigator, "language", "get").mockReturnValue(language);
+
+  async function search(sense: { current: ReturnType<typeof useEmojisense> }, query = "jurassic park") {
+    await waitFor(() => expect(sense.current.engine?.culture).toBeDefined());
+    const { result } = renderHook(() => useEmojiSearch(query, sense.current, { debounceMs: 10 }));
+    await waitFor(() => expect(result.current.results.length).toBeGreaterThan(0));
+    return result.current.results.map((r) => r.emoji);
+  }
+
+  it("defaults to the region of the browser's language", async () => {
+    serve();
+    speak("pt-BR");
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    expect(sense.current.region).toBe("BR");
+    expect(await search(sense)).toEqual(["🦖", "👍", "🚀"]);
+  });
+
+  it("has no region when the browser's language has no region subtag", async () => {
+    serve();
+    speak("pt");
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    expect(sense.current.region).toBeUndefined();
+    expect(await search(sense)).toEqual(["🦖", "🚀"]);
+  });
+
+  it("prefers the app's region, and an empty region turns regional entries off", async () => {
+    serve();
+    speak("en-US");
+    const { result: brazil } = renderHook(() => useEmojisense({ ...options, region: "BR" }));
+    expect(await search(brazil)).toEqual(["🦖", "👍", "🚀"]);
+    speak("pt-BR");
+    const { result: none } = renderHook(() => useEmojisense({ ...options, region: "" }));
+    expect(none.current.region).toBeUndefined();
+    expect(await search(none)).toEqual(["🦖", "🚀"]);
+  });
+
+  it("never sends the region", async () => {
+    const fetch = serve();
+    speak("pt-BR");
+    const { result: sense } = renderHook(() =>
+      useEmojisense({ ...options, endpoint: "https://api.test", publishableKey: "pk_test" }),
+    );
+    await search(sense, "to infinity and beyond");
+    const urls = fetch.mock.calls.map(([url]) => String(url));
+    expect(urls.some((url) => url.includes("/v1/search"))).toBe(true);
+    for (const url of urls) expect(url).not.toMatch(/BR|region/i);
   });
 });
