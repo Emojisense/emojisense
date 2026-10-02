@@ -287,6 +287,58 @@ const links = [
     }
   }
 
+  /*
+   * Links never wrap; when the bar gets tight, "Sign in" goes first (the key button opens the same
+   * dashboard). Translated labels are longer, so translated pages make room earlier.
+   */
+  .links a {
+    white-space: nowrap;
+  }
+
+  .actions {
+    flex: none;
+  }
+
+  @media (max-width: 62rem) {
+    .signin {
+      display: none;
+    }
+  }
+
+  @media (max-width: 84rem) {
+    :global(:root:not(:lang(en))) .signin {
+      display: none;
+    }
+  }
+
+  @media (max-width: 76rem) {
+    :global(:root:not(:lang(en))) .nav-github {
+      display: none;
+    }
+  }
+
+  /* A translated key button is long; on a small phone the dinosaur alone stands for the name. */
+  @media (max-width: 24rem) {
+    :global(:root:not(:lang(en))) .logo-word {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 62rem) {
+    :global(:root:not(:lang(en))) .nav-main {
+      display: none;
+    }
+
+    :global(:root:not(:lang(en))) .menu {
+      display: block;
+    }
+  }
+
   /* On a phone the language list lives in the menu, so the bar keeps room for the key button. */
   @media (max-width: 34rem) {
     .nav-lang {
