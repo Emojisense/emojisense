@@ -5,7 +5,13 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ApiResult } from "./api.ts";
-import { canonicalEmoji, type Judged, type PrecisionSummary } from "./precision.ts";
+import {
+  canonicalEmoji,
+  type Judged,
+  judgeRanking,
+  type PrecisionSummary,
+  summarizePrecision,
+} from "./precision.ts";
 
 export type LiveKind = "photos" | "reactions";
 
@@ -58,6 +64,29 @@ export function loadRuns(dir: string, kind: LiveKind): LiveRun[] {
     return i === -1 ? ORDER.length : i;
   };
   return runs.sort((a, b) => rank(a) - rank(b) || a.date.localeCompare(b.date));
+}
+
+/**
+ * Score stored runs again against the current labels, so a label fixed after a run does not make
+ * runs incomparable. Items whose label is gone keep their old score.
+ */
+export function rejudge(
+  runs: LiveRun[],
+  labels: ReadonlyMap<string, { answers: string[]; forbid?: string[] }>,
+) {
+  return runs.map((run): LiveRun => {
+    const items = run.items.map((item) => {
+      const label = labels.get(item.id);
+      if (!label) return item;
+      const judged = judgeRanking(
+        item.results.map((r) => r.emoji),
+        label.answers,
+        label.forbid,
+      );
+      return { ...item, answers: label.answers, ...(label.forbid ? { forbid: label.forbid } : {}), judged };
+    });
+    return { ...run, items, summary: summarizePrecision(items.map((item) => item.judged)) };
+  });
 }
 
 /** "🐶✓ 🐕✓ 😸 🐩": the top 4, acceptable ones marked, traps marked with ✗. */

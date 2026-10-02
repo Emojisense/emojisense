@@ -21,6 +21,8 @@ export interface FuseListsOptions {
   floor: number;
   /** Summed evidence that is reported as score 1.0. */
   scale: number;
+  /** Ids that skip the floor (they fill the list after the results above it). */
+  exempt?: ReadonlySet<string>;
 }
 
 /**
@@ -31,7 +33,7 @@ export interface FuseListsOptions {
  * `source` of the list that added the most to it, and its score is the evidence / `scale`.
  */
 export function fuseLists(lists: readonly WeightedList[], options: FuseListsOptions): SearchResult[] {
-  const { k, limit, floor, scale } = options;
+  const { k, limit, floor, scale, exempt } = options;
   const fused = new Map<string, { result: SearchResult; total: number; best: number; order: number }>();
   for (const { results, weight, byScore } of lists) {
     const seen = new Set<string>();
@@ -56,7 +58,8 @@ export function fuseLists(lists: readonly WeightedList[], options: FuseListsOpti
   const families = new Set<string>();
   const out: SearchResult[] = [];
   for (const { result, total } of ranked) {
-    if (total < floor || out.length >= limit) break;
+    if (out.length >= limit) break;
+    if (total < floor && !exempt?.has(result.id)) continue;
     const family = familyKey(result.id);
     if (families.has(family)) continue;
     families.add(family);

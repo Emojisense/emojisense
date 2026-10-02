@@ -6,7 +6,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { loadPhotoSet, MAX_IMAGE_BYTES, parsePhotoLabels } from "../src/images/labels.ts";
 import { parseMessages } from "../src/live/messages.ts";
 import { canonicalEmoji, judgeRanking, summarizePrecision } from "../src/live/precision.ts";
-import { type LiveRun, loadRuns, markTop, renderComparison, saveRun } from "../src/live/runs.ts";
+import { type LiveRun, loadRuns, markTop, rejudge, renderComparison, saveRun } from "../src/live/runs.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 const dir = mkdtempSync(join(tmpdir(), "emojisense-live-"));
@@ -143,6 +143,17 @@ describe("stored runs", () => {
     expect(markTop({ ...(runs[0]?.items[0] as LiveRun["items"][number]), error: "timeout" })).toBe(
       "error: timeout",
     );
+  });
+
+  it("scores stored runs again against corrected labels", () => {
+    const stored = { ...run("before", ["🐼", "🐱"], "2026-10-01") };
+    stored.items = [
+      { ...(stored.items[0] as LiveRun["items"][number]), results: [{ emoji: "🐼", source: "semantic" }] },
+    ];
+    const [again] = rejudge([stored], new Map([["cat", { answers: ["🐼"] }]]));
+    expect(again?.summary.p1).toBe(100);
+    expect(again?.items[0]?.answers).toEqual(["🐼"]);
+    expect(rejudge([stored], new Map())[0]?.summary).toEqual(stored.summary);
   });
 
   it("refuses labels that are not file-name safe", () => {

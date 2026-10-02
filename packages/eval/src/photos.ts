@@ -6,8 +6,8 @@
  *
  * Sends every photo in photos/labels.jsonl (no X-Image-Hash, so nothing is cached), scores the
  * results against the acceptable emoji, and stores the run as reports/photos.<label>.json.
- * reports/photos.md compares all stored runs ("before" and "after" first); --render-only only
- * rewrites it.
+ * reports/photos.md compares all stored runs ("before" and "after" first), scored against the
+ * current labels; --render-only only rewrites it.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { extname, join } from "node:path";
@@ -16,7 +16,7 @@ import { EVAL_ROOT } from "./cost-inputs.ts";
 import { loadPhotoSet, type PhotoSet } from "./images/labels.ts";
 import { classifyImage, type LiveTarget } from "./live/api.ts";
 import { judgeRanking, summarizePrecision } from "./live/precision.ts";
-import { type LiveItem, type LiveRun, loadRuns, renderComparison, saveRun } from "./live/runs.ts";
+import { type LiveItem, type LiveRun, loadRuns, rejudge, renderComparison, saveRun } from "./live/runs.ts";
 
 const REPORTS = join(EVAL_ROOT, "reports");
 const TYPES: Record<string, string> = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
@@ -91,11 +91,14 @@ if (!args["render-only"]) {
   };
   const saved = saveRun(REPORTS, run);
   const s = run.summary;
-  console.log(`photos ${run.label}: P@1 ${s.p1} · P@4 ${s.p4} · Hit@4 ${s.hit4} · failed ${run.failed}/${s.n}`);
+  console.log(
+    `photos ${run.label}: P@1 ${s.p1} · P@4 ${s.p4} · Hit@4 ${s.hit4} · failed ${run.failed}/${s.n}`,
+  );
   console.log(`wrote ${saved}`);
 }
 
-const markdown = renderComparison(loadRuns(REPORTS, "photos"), {
+const labels = new Map(set.photos.map((photo) => [photo.label.file.replace(/\.\w+$/, ""), photo.label]));
+const markdown = renderComparison(rejudge(loadRuns(REPORTS, "photos"), labels), {
   title: "Photo → emoji eval (live API)",
   intro: [
     `- ${set.photos.length} photos in \`photos/\` (CC0, credits in \`photos/CREDITS.md\`), 2–4 acceptable emoji each in \`photos/labels.jsonl\`.`,

@@ -3,8 +3,9 @@ import { record } from "./analytics.ts";
 import { MAX_LIMIT, MAX_REACTION_BODY_BYTES, MAX_REACTION_CHARS, REACTIONS_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { errorResponse, json, parseLimit, parseLocale, readBodyCapped } from "./http.ts";
+import { rankReactions } from "./reaction-rank.ts";
 import type { SearchBody } from "./search.ts";
-import { indexTag, modelTag, rank } from "./semantic.ts";
+import { embedQuery, indexTag, modelTag } from "./semantic.ts";
 
 /** Whitespace-collapsed and cut to `max` code points, so a surrogate pair is never split. */
 export function truncateText(text: string, max: number): string {
@@ -12,9 +13,11 @@ export function truncateText(text: string, max: number): string {
 }
 
 /**
- * POST /v1/suggest-reactions `{ text, locale?, limit? }`. Hybrid alias + semantic over the first
- * 256 characters. The text is chat content: it is never cached, logged, or sent anywhere but
- * the embedding model. Metered as semantic_calls.
+ * POST /v1/suggest-reactions `{ text, locale?, limit? }` over the first 256 characters. One
+ * embedding call; the ranking (reaction-rank.ts) fuses emoji in the text, intent cues, the
+ * reaction vocabulary ranked by the embedding, alias hits per clause and the nearest emoji. The
+ * text is chat content: it is never cached, logged, or sent anywhere but the embedding model.
+ * Metered as semantic_calls.
  */
 export const handleReactions: Handler = async (request, env, _ctx, { catalog }, metering) => {
   const started = Date.now();
@@ -32,20 +35,19 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog }, 
   const limit = parseLimit(input.limit, REACTIONS_DEFAULT_LIMIT, MAX_LIMIT);
 
   const overLimit = await metering.overLimit("semantic_calls");
-  const ranked = await rank(env, catalog, {
-    aliasQuery: text,
-    embedText: overLimit ? undefined : text,
+  const embedded = overLimit ? { degraded: false, ms: 0 } : await embedQuery(env, catalog, text, true);
+  const ranked = rankReactions(catalog.engine(), {
+    text,
     locale,
     limit,
-    prefix: false,
-    privateText: true,
+    semantic: embedded.vector ? { index: catalog.index(), vector: embedded.vector } : undefined,
   });
-  if (ranked.semantic) metering.count("semantic_calls");
+  if (embedded.vector) metering.count("semantic_calls");
   record(env, indexTag(catalog), {
     endpoint: "reactions",
     locale,
     mode: "hybrid",
-    outcome: overLimit ? "over_limit" : ranked.degraded ? "degraded" : "miss",
+    outcome: overLimit ? "over_limit" : embedded.degraded ? "degraded" : "miss",
     ms: Date.now() - started,
     aliasConfidence: ranked.aliasConfidence,
     semanticTop: ranked.semanticTop,
@@ -56,11 +58,11 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog }, 
     packVersion: catalog.config.packVersion,
     model: modelTag(catalog),
     cached: false,
-    degraded: ranked.degraded,
+    degraded: embedded.degraded,
     overLimit,
   };
   return json(body, 200, {
     "Cache-Control": "no-store",
-    "Server-Timing": `embed;dur=${ranked.embedMs}, total;dur=${Date.now() - started}`,
+    "Server-Timing": `embed;dur=${embedded.ms}, total;dur=${Date.now() - started}`,
   });
 };

@@ -40,6 +40,36 @@ async function embed(env: Env, catalog: Catalog, text: string): Promise<Float32A
   return l2normalize(Float32Array.from(vector.slice(0, config.dims)));
 }
 
+export interface Embedded {
+  /** L2-normalized at the catalog dims; undefined when Workers AI failed. */
+  vector?: Float32Array | undefined;
+  degraded: boolean;
+  ms: number;
+}
+
+/**
+ * Embed a query, never throwing: a Workers AI failure is logged (the error name only when the
+ * text is user content) and reported as degraded.
+ */
+export async function embedQuery(
+  env: Env,
+  catalog: Catalog,
+  text: string,
+  privateText = false,
+): Promise<Embedded> {
+  const started = Date.now();
+  try {
+    const vector = await embed(env, catalog, text);
+    return { vector, degraded: false, ms: Date.now() - started };
+  } catch (error) {
+    const { name, message } = error as Error;
+    console.warn(
+      JSON.stringify({ event: "semantic_unavailable", error: name, ...(privateText ? {} : { message }) }),
+    );
+    return { degraded: true, ms: Date.now() - started };
+  }
+}
+
 export interface RankOptions {
   /** Searched in the alias dictionary. Omit for semantic-only ranking. */
   aliasQuery?: string | undefined;
@@ -77,26 +107,15 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
   let degraded = false;
   let embedMs = 0;
   if (embedText !== undefined) {
-    try {
-      const started = Date.now();
-      const vector = await embed(env, catalog, embedText);
-      embedMs = Date.now() - started;
-      semantic = searchVectors(catalog.index(), vector, limit).map((m) => ({
+    const embedded = await embedQuery(env, catalog, embedText, options.privateText);
+    ({ degraded, ms: embedMs } = embedded);
+    if (embedded.vector) {
+      semantic = searchVectors(catalog.index(), embedded.vector, limit).map((m) => ({
         emoji: engine.get(m.id)?.emoji ?? "",
         id: m.id,
         score: Math.round(m.score * 1000) / 1000,
         source: "semantic" as const,
       }));
-    } catch (error) {
-      degraded = true;
-      const { name, message } = error as Error;
-      console.warn(
-        JSON.stringify({
-          event: "semantic_unavailable",
-          error: name,
-          ...(options.privateText ? {} : { message }),
-        }),
-      );
     }
   }
 

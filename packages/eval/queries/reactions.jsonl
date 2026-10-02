@@ -14,7 +14,7 @@
 {"id":"en-pizza","text":"anyone want to grab pizza for lunch?","locale":"en","intent":"plans","answers":["🍕","🙋","👍","😋","🙌","🙋‍♂️","🙋‍♀️"],"note":"A literal noun is the right reaction here."}
 {"id":"en-mondays","text":"ugh, mondays","locale":"en","intent":"frustration","answers":["😩","😫","🙄","😴","😤","☕","🥱"]}
 {"id":"en-review","text":"can you review my PR when you have a sec?","locale":"en","intent":"agreement","answers":["👀","👍","✅","👌","🫡"]}
-{"id":"en-cat-coffee","text":"my cat knocked my coffee all over the keyboard","locale":"en","intent":"humor","answers":["😂","🤦","😱","🙀","😹","💀","😭"]}
+{"id":"en-cat-coffee","text":"my cat knocked my coffee all over the keyboard","locale":"en","intent":"humor","answers":["😂","🤣","🤦","😱","🙀","😹","💀","😭"]}
 {"id":"en-final","text":"we lost the final 2-1, gutted","locale":"en","intent":"sympathy","answers":["😢","😭","💔","😞","🫂","😩"]}
 {"id":"en-welcome","text":"welcome to the team, Alex!","locale":"en","intent":"celebration","answers":["👋","🎉","🙌","🤗","❤️","🥳"]}
 {"id":"en-outage","text":"server is down, all hands on deck","locale":"en","intent":"alert","answers":["🚨","🔥","😱","👀","🫡","😬","🆘"]}
@@ -22,7 +22,7 @@
 {"id":"en-running-late","text":"running late, be there in 10","locale":"en","intent":"agreement","answers":["👍","👌","🏃","⏰","🙏","🆗"],"note":"Here the runner is fine; in en-10k it is a trap."}
 {"id":"en-snowing","text":"it's snowing!!","locale":"en","intent":"joy","answers":["❄️","☃️","😍","🥶","⛄","🌨️","🎉"]}
 {"id":"en-coffee","text":"need coffee before this standup","locale":"en","intent":"frustration","answers":["☕","😴","🥱","😩","😅"],"note":"A literal noun is the right reaction here."}
-{"id":"en-typo","text":"found the bug, it was a typo the whole time","locale":"en","intent":"humor","answers":["🤦","😂","😅","🐛","🙃","💀"]}
+{"id":"en-typo","text":"found the bug, it was a typo the whole time","locale":"en","intent":"humor","answers":["🤦","😂","🤣","😅","🐛","🙃","💀"]}
 {"id":"en-prod-fire","text":"prod is on fire 🔥","locale":"en","intent":"alert","answers":["😱","🚨","🔥","😬","🫠","💀"]}
 {"id":"tr-congrats","text":"tebrikler, harika iş çıkardınız!","locale":"tr","intent":"celebration","answers":["🎉","👏","🙌","👍","🥳","🔥","💯"]}
 {"id":"tr-thanks","text":"çok teşekkür ederim 🙏","locale":"tr","intent":"thanks","answers":["🙏","❤️","🤗","🙌","🫶","🥹"]}
