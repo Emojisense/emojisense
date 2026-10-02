@@ -371,9 +371,6 @@ precomputed nightly and published as static files:
   locale: the files at `/p/<packVersion>/` hold the `locale=en` answers (the shared vector file
   only, §5), the files in `/p/<packVersion>/<locale>/` the answers of that locale (the shared
   vector file and the locale's own).
-- For an unsure query (core `assessConfidence`) that the API's concept tier has answered, the
-  entry leads with the concept results, in the same `[emoji, hexcode, score]` form; the semantic
-  results follow (API.md, "Unsure queries and concepts"). The format does not change.
 - **Locale shards.** A client reads the directory of its search locale: English (and no locale)
   at `/p/<packVersion>/`, every other pack locale at `/p/<packVersion>/<locale>/`, where `<locale>`
   is the language subtag in lowercase (`pt-BR` → `pt`), like the API's `locale`. `en/` is an alias
