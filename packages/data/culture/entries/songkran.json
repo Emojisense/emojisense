@@ -11,10 +11,7 @@
     "recurs": "yearly"
   },
   "regions": [
-    "TH",
-    "LA",
-    "MM",
-    "KH"
+    "TH"
   ],
   "locales": [
     "en"

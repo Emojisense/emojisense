@@ -4,7 +4,7 @@
   "kind": "seasonal",
   "context": {
     "en": "Brazil's Valentine's Day, 12 June",
-    "pt": "Dia dos Namorados, 12 de junho"
+    "pt": "Dia dos Namorados no Brasil, 12 de junho"
   },
   "when": {
     "from": "06-05",
@@ -13,6 +13,16 @@
   },
   "regions": [
     "*"
+  ],
+  "exceptRegions": [
+    "PT",
+    "AO",
+    "MZ",
+    "CV",
+    "GW",
+    "ST",
+    "TL",
+    "MO"
   ],
   "locales": [
     "pt"
