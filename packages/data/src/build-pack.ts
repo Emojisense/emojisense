@@ -9,7 +9,7 @@
  *   pack.<locale>.ext.json  ext:  the remaining aliases, typos and low-confidence phrases
  * Clients render with core and load ext when idle. Embedding documents use the full alias list.
  */
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { normalize, PACK_FORMAT, PACK_FORMAT_VERSION, type Pack, type PackRow } from "emojisense";
@@ -107,8 +107,9 @@ function buildDocuments() {
 }
 
 const outDir = args.out ?? join(DATA_ROOT, "dist", "packs", config.packVersion);
-rmSync(outDir, { recursive: true, force: true });
+// Replace only the pack files: vector files in the same directory come from the (paid) embed step.
 mkdirSync(outDir, { recursive: true });
+for (const file of readdirSync(outDir)) if (/^pack\.[\w.-]+\.json$/.test(file)) rmSync(join(outDir, file));
 for (const locale of LOCALE_CODES) {
   const { core, ext } = buildPacks(locale);
   writeFileSync(join(outDir, `pack.${locale}.json`), JSON.stringify(core));
