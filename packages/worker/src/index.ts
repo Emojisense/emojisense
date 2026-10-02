@@ -1,5 +1,6 @@
 import { getModel } from "@emojisense/data/models";
 import { type AliasEngine, createEngine, decodeVectors, type Pack, type VectorIndex } from "emojisense";
+import { createApp } from "./app.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
 import packEnExt from "./generated/pack.en.ext.json";
@@ -7,7 +8,8 @@ import packEn from "./generated/pack.en.json";
 import packTrExt from "./generated/pack.tr.ext.json";
 import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
-import { type Catalog, corsHeaders, handleSearch, json } from "./search.ts";
+import type { Catalog } from "./semantic.ts";
+import { createD1Store } from "./store.ts";
 
 // Built lazily on first use and then reused by every request this isolate serves.
 let engine: AliasEngine | undefined;
@@ -34,21 +36,12 @@ const catalog: Catalog = {
   },
 };
 
-export default {
-  async fetch(request, env, ctx): Promise<Response> {
-    const { pathname } = new URL(request.url);
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
-    if (request.method !== "GET") return json({ error: "method not allowed" }, 405);
+const app = createApp({
+  catalog,
+  cache: () => caches.default,
+  store: (env) => (env.DB ? createD1Store(env.DB) : undefined),
+});
 
-    if (pathname === "/v1/search") return handleSearch(request, env, ctx, catalog, caches.default);
-    if (pathname === "/v1/health") {
-      return json({
-        ok: true,
-        packVersion: config.packVersion,
-        model: `${config.modelKey}@${config.dims}`,
-        semantic: Boolean(env.AI),
-      });
-    }
-    return json({ error: "not found" }, 404);
-  },
+export default {
+  fetch: (request, env, ctx) => app.fetch(request, env, ctx),
 } satisfies ExportedHandler<Env>;
