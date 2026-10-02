@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { UsageResponse } from "../../src/shared/contract";
 import { measureUsage } from "../../src/worker/plans";
-import { body, createAppFor, createHarness } from "./harness";
+import { accountIdOf, body, createAppFor, createHarness } from "./harness";
 
 describe("measureUsage", () => {
   it.each([
@@ -25,16 +25,24 @@ describe("GET /api/apps/:id/usage", () => {
     const h = createHarness();
     const cookie = await h.signIn();
     const appId = await createAppFor(h, cookie);
-    const insert = (period: string, metric: string, count: number) =>
+    const insertFor = (app: string, period: string, metric: string, count: number) =>
       h.db.exec(
         "INSERT INTO usage_monthly (app_id, period, metric, count) VALUES (?, ?, ?, ?)",
-        appId,
+        app,
         period,
         metric,
         count,
       );
+    const insert = (period: string, metric: string, count: number) => insertFor(appId, period, metric, count);
+    /** An app row of the account, without the API's plan check on the number of apps. */
+    const addApp = (id: string, accountId: string) =>
+      h.db.exec(
+        "INSERT INTO apps (id, account_id, name, created_at) VALUES (?, ?, 'Other app', 0)",
+        id,
+        accountId,
+      );
     const usage = (query = "") => h.call("GET", `/api/apps/${appId}/usage${query}`, { cookie });
-    return { h, appId, insert, usage };
+    return { h, appId, insert, insertFor, addApp, usage };
   }
 
   it("reports the current UTC month by default, with zeros for missing metrics", async () => {
@@ -50,11 +58,58 @@ describe("GET /api/apps/:id/usage", () => {
       period: "2026-10",
       plan: { id: "free", name: "Free" },
       metrics: [
-        { metric: "semantic_calls", used: 85_000, limit: 100_000, percent: 85, status: "near_limit" },
-        { metric: "image_classifications", used: 100, limit: 100, percent: 100, status: "over_limit" },
-        { metric: "custom_emoji", used: 0, limit: 0, percent: 0, status: "not_included" },
+        {
+          metric: "semantic_calls",
+          used: 85_000,
+          appUsed: 85_000,
+          limit: 100_000,
+          percent: 85,
+          status: "near_limit",
+        },
+        {
+          metric: "image_classifications",
+          used: 100,
+          appUsed: 100,
+          limit: 100,
+          percent: 100,
+          status: "over_limit",
+        },
+        { metric: "custom_emoji", used: 0, appUsed: 0, limit: 0, percent: 0, status: "not_included" },
       ],
     });
+  });
+
+  it("measures the account's total over all of its apps, with this app's part", async () => {
+    const { h, insert, insertFor, addApp, usage } = await setup();
+    h.db.exec("UPDATE accounts SET plan = 'pro'");
+    addApp("app_sibling", accountIdOf(h, "ada"));
+    h.db.exec("INSERT INTO accounts (id, plan, created_at) VALUES ('acc_other', 'pro', 0)");
+    addApp("app_stranger", "acc_other");
+    insert("2026-10", "semantic_calls", 1_000_000);
+    insertFor("app_sibling", "2026-10", "semantic_calls", 1_400_000);
+    insertFor("app_sibling", "2026-10", "image_classifications", 10_000);
+    insertFor("app_stranger", "2026-10", "semantic_calls", 5_000_000);
+
+    const report = await body<UsageResponse>(await usage());
+    expect(report.metrics).toEqual([
+      {
+        metric: "semantic_calls",
+        used: 2_400_000,
+        appUsed: 1_000_000,
+        limit: 3_000_000,
+        percent: 80,
+        status: "near_limit",
+      },
+      {
+        metric: "image_classifications",
+        used: 10_000,
+        appUsed: 0,
+        limit: 10_000,
+        percent: 100,
+        status: "over_limit",
+      },
+      { metric: "custom_emoji", used: 0, appUsed: 0, limit: 2_000, percent: 0, status: "ok" },
+    ]);
   });
 
   it("reads the requested period and the owning account's plan limits", async () => {

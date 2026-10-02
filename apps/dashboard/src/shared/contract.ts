@@ -129,11 +129,21 @@ export interface MetricUsage {
   status: UsageStatus;
 }
 
+/** One metric of one app: the account's total against the plan limit, and this app's part of it. */
+export interface AppMetricUsage extends MetricUsage {
+  /** This app's count. `used`, `percent` and `status` count every app of the account. */
+  appUsed: number;
+}
+
 export interface UsageResponse {
   appId: string;
   period: string;
   plan: { id: PlanId; name: string };
-  metrics: MetricUsage[];
+  /**
+   * Plan limits belong to the account, so each metric is measured on the account's total over
+   * all of its apps: the total the API's `overLimit` uses.
+   */
+  metrics: AppMetricUsage[];
 }
 
 export interface WaitlistResponse {
