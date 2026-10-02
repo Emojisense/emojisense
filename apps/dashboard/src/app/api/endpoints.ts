@@ -8,8 +8,11 @@ import type {
   BillingResponse,
   CreatedInviteResponse,
   CreatedKeyResponse,
+  CustomEmoji,
+  CustomEmojiListResponse,
   DeleteAccountRequest,
   DeletedTenantResponse,
+  EmojiImportResponse,
   Environment,
   KeyResponse,
   MeResponse,
@@ -26,29 +29,13 @@ import type {
   WebhooksResponse,
   WebhookTestResponse,
 } from "../../shared/contract";
-import { request, unwrap } from "./client";
-import type {
-  CreatedWebhook,
-  CustomEmoji,
-  EmojiList,
-  EmojiUpload,
-  ImportResult,
-  TeamRole,
-  WebhookEvent,
-} from "./types";
+import { request } from "./client";
+import type { CreatedWebhook, EmojiUpload, TeamRole, WebhookEvent } from "./types";
 
 const segment = encodeURIComponent;
 const appPath = (appId: string) => `/api/apps/${segment(appId)}`;
 /** Team routes act on the caller's own team unless `owner` names another one. */
 const ownerQuery = (owner?: string) => (owner ? `?owner=${segment(owner)}` : "");
-
-function normalizeEmoji(emoji: CustomEmoji): CustomEmoji {
-  return {
-    ...emoji,
-    aliases: Array.isArray(emoji.aliases) ? emoji.aliases : [],
-    tenantId: emoji.tenantId || null,
-  };
-}
 
 export const api = {
   me: () => request<MeResponse>("GET", "/api/me"),
@@ -72,31 +59,25 @@ export const api = {
   usage: (appId: string, period: string) =>
     request<UsageResponse>("GET", `${appPath(appId)}/usage?period=${segment(period)}`),
 
-  listEmoji: (appId: string) =>
-    request<EmojiList>("GET", `${appPath(appId)}/emoji`).then((list) => ({
-      ...list,
-      emoji: list.emoji.map(normalizeEmoji),
-    })),
+  /** `used` / `limit` count every emoji of every app of the owning account. */
+  listEmoji: (appId: string) => request<CustomEmojiListResponse>("GET", `${appPath(appId)}/emoji`),
   uploadEmoji: (appId: string, upload: EmojiUpload) => {
     const form = new FormData();
     form.set("file", upload.file);
     form.set("shortcode", upload.shortcode);
     form.set("aliases", upload.aliases.join(","));
     if (upload.tenantId) form.set("tenantId", upload.tenantId);
-    return request<unknown>("POST", `${appPath(appId)}/emoji`, form).then((data) =>
-      normalizeEmoji(unwrap<CustomEmoji>(data, "emoji")),
-    );
+    return request<CustomEmoji>("POST", `${appPath(appId)}/emoji`, form);
   },
   updateEmoji: (appId: string, emojiId: string, input: { shortcode?: string; aliases?: string[] }) =>
-    request<unknown>("PATCH", `${appPath(appId)}/emoji/${segment(emojiId)}`, input).then((data) =>
-      normalizeEmoji(unwrap<CustomEmoji>(data, "emoji")),
-    ),
+    request<CustomEmoji>("PATCH", `${appPath(appId)}/emoji/${segment(emojiId)}`, input),
   deleteEmoji: (appId: string, emojiId: string) =>
-    request<unknown>("DELETE", `${appPath(appId)}/emoji/${segment(emojiId)}`),
+    request<OkResponse>("DELETE", `${appPath(appId)}/emoji/${segment(emojiId)}`),
+  /** One batch of at most 50 new emoji. Call again with the same token while `remaining > 0`. */
   importSlack: (appId: string, token: string) =>
-    request<ImportResult>("POST", `${appPath(appId)}/emoji/import/slack`, { token }),
+    request<EmojiImportResponse>("POST", `${appPath(appId)}/emoji/import/slack`, { token }),
   importDiscord: (appId: string, input: { botToken: string; guildId: string }) =>
-    request<ImportResult>("POST", `${appPath(appId)}/emoji/import/discord`, input),
+    request<EmojiImportResponse>("POST", `${appPath(appId)}/emoji/import/discord`, input),
 
   analytics: (appId: string, days: AnalyticsWindow) =>
     request<AnalyticsResponse>("GET", `${appPath(appId)}/analytics?days=${days}`),

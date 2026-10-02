@@ -1,5 +1,5 @@
 import { type FormEvent, useId, useState } from "react";
-import { api, errorMessage, type ImportResult, isPlanRequired, type PlanId } from "../../api";
+import { api, type EmojiImportResponse, errorMessage, isPlanRequired, type PlanId } from "../../api";
 import { formatNumber } from "../../format";
 import { FEATURE_PLAN, planIncludes } from "../../lib/plans";
 import { Dialog } from "../../ui/Dialog";
@@ -57,7 +57,7 @@ function ImportForm({
   const [requiredPlan, setRequiredPlan] = useState<PlanId | null>(
     planIncludes(plan, "emoji_import") ? null : FEATURE_PLAN.emoji_import,
   );
-  const [result, setResult] = useState<ImportResult | null>(null);
+  const [result, setResult] = useState<EmojiImportResponse | null>(null);
   const tokenId = useId();
   const tokenHintId = useId();
   const guildFieldId = useId();

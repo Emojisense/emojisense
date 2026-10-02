@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, api, PlanRequiredError, request, toApiError, UNAUTHORIZED_EVENT } from "../../src/app/api";
+import {
+  ApiError,
+  api,
+  type CustomEmoji,
+  PlanRequiredError,
+  request,
+  toApiError,
+  UNAUTHORIZED_EVENT,
+} from "../../src/app/api";
 import { stubApi } from "./fake-api";
 
 describe("toApiError", () => {
@@ -100,43 +108,35 @@ describe("endpoints", () => {
     ]);
   });
 
-  it("uploads custom emoji as multipart and accepts a wrapped or a bare answer", async () => {
+  it("uploads custom emoji as multipart and returns the CustomEmoji the API answers with", async () => {
     const forms: FormData[] = [];
-    const emoji = {
+    const emoji: CustomEmoji = {
       id: "emo_1",
       shortcode: "shipit",
       aliases: ["ship it"],
       imageUrl: "https://api.example/v1/custom/app_1/emo_1",
-      tenantId: "",
+      tenantId: null,
       source: "upload",
       bytes: 812,
       createdAt: 1,
     };
-    const answers = [{ emoji }, emoji];
     vi.stubGlobal("fetch", async (_input: string, init: RequestInit) => {
       forms.push(init.body as FormData);
-      return new Response(JSON.stringify(answers.shift()), { status: 201 });
+      return new Response(JSON.stringify(emoji), { status: 201 });
     });
     const file = new File(["<svg/>"], "shipit.svg", { type: "image/svg+xml" });
 
-    const wrapped = await api.uploadEmoji("app_1", {
+    const appWide = await api.uploadEmoji("app_1", {
       file,
       shortcode: "shipit",
       aliases: ["ship it", "launch"],
     });
-    const bare = await api.uploadEmoji("app_1", {
-      file,
-      shortcode: "shipit",
-      aliases: [],
-      tenantId: "ten_1",
-    });
+    await api.uploadEmoji("app_1", { file, shortcode: "shipit", aliases: [], tenantId: "ten_1" });
 
     expect(forms[0]?.get("aliases")).toBe("ship it,launch");
     expect(forms[0]?.get("tenantId")).toBeNull();
     expect(forms[1]?.get("tenantId")).toBe("ten_1");
     expect((forms[0]?.get("file") as File | undefined)?.name).toBe("shipit.svg");
-    // An empty tenantId means app-wide.
-    expect(wrapped.tenantId).toBeNull();
-    expect(bare.id).toBe("emo_1");
+    expect(appWide).toEqual(emoji);
   });
 });

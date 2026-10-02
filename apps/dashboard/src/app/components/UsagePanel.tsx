@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import type { AppMetricUsage, AppSummary, UsageResponse } from "../../shared/contract";
-import { api, type EmojiList, errorMessage } from "../api";
+import { api, type CustomEmojiListResponse, errorMessage } from "../api";
 import { formatPeriod, recentPeriods } from "../format";
 import { planIncludes } from "../lib/plans";
 import { ErrorState, LoadingState } from "../ui/Feedback";
@@ -10,7 +10,7 @@ import { UsageMeter } from "../ui/UsageMeter";
  * The usage route counts calls; custom emoji are rows, so it always reports 0 for them. Their
  * meter comes from the custom emoji list instead (`used` / `limit` over the whole account).
  */
-function withCustomEmoji(metrics: AppMetricUsage[], list: EmojiList | null): AppMetricUsage[] {
+function withCustomEmoji(metrics: AppMetricUsage[], list: CustomEmojiListResponse | null): AppMetricUsage[] {
   return metrics.flatMap((metric) => {
     if (metric.metric !== "custom_emoji" || metric.status === "not_included") return [metric];
     if (!list) return [];
@@ -27,7 +27,7 @@ export function UsagePanel({ app }: { app: AppSummary }) {
   // The last good report stays on screen while another month loads, so the layout holds still.
   const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [settled, setSettled] = useState<{ period: string; error: string | null } | null>(null);
-  const [emojiList, setEmojiList] = useState<EmojiList | null>(null);
+  const [emojiList, setEmojiList] = useState<CustomEmojiListResponse | null>(null);
   const headingId = useId();
   const selectId = useId();
 

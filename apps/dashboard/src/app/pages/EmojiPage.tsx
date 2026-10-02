@@ -1,6 +1,12 @@
 import { PLANS } from "@emojisense/platform";
 import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
-import { api, type CustomEmoji, type EmojiList, type EmojiSource, type Tenant } from "../api";
+import {
+  api,
+  type CustomEmoji,
+  type CustomEmojiListResponse,
+  type CustomEmojiSource,
+  type Tenant,
+} from "../api";
 import { DropZone } from "../components/emoji/DropZone";
 import { EditEmojiDialog } from "../components/emoji/EditEmojiDialog";
 import { ImportDialog, type ImportSource } from "../components/emoji/ImportDialog";
@@ -20,9 +26,9 @@ import { Segmented } from "../ui/Segmented";
 import { useToast } from "../ui/Toast";
 import { usePopover } from "../ui/usePopover";
 
-type SourceFilter = "all" | EmojiSource;
+type SourceFilter = "all" | CustomEmojiSource;
 
-const SOURCE_TAG: Record<EmojiSource, string> = {
+const SOURCE_TAG: Record<CustomEmojiSource, string> = {
   upload: "uploaded",
   slack: "from slack",
   discord: "from discord",
@@ -33,7 +39,9 @@ export function EmojiPage() {
   const { app, readOnly } = useAppDetail();
   const toast = useToast();
   const params = useSearchParams();
-  const [list, { reload, mutate }] = useResource<EmojiList>(`emoji:${app.id}`, () => api.listEmoji(app.id));
+  const [list, { reload, mutate }] = useResource<CustomEmojiListResponse>(`emoji:${app.id}`, () =>
+    api.listEmoji(app.id),
+  );
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [upload, setUpload] = useState<UploadRequest | null>(null);
   const [editing, setEditing] = useState<CustomEmoji | null>(null);
