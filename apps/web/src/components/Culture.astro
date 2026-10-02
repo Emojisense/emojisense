@@ -1,5 +1,6 @@
 ---
 import { CultureLens } from "../islands/CultureLens";
+import cultureLensCss from "../islands/culture-lens.css?url";
 import { cultureShowcase } from "../lib/culture";
 
 const { source, today, queries, calendar } = cultureShowcase();
@@ -39,7 +40,18 @@ const steps = [
       </p>
     </div>
 
-    {queries.length > 0 && <CultureLens client:visible queries={queries} calendar={calendar} today={today} />}
+    {
+      queries.length > 0 && (
+        <>
+          {/* Far below the fold: the lens styles load with it, without blocking the first paint. */}
+          <link rel="stylesheet" href={cultureLensCss} media="print" onload="this.media='all'" />
+          <noscript>
+            <link rel="stylesheet" href={cultureLensCss} />
+          </noscript>
+          <CultureLens client:visible queries={queries} calendar={calendar} today={today} />
+        </>
+      )
+    }
 
     <ol class="steps">
       {
