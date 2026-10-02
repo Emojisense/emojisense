@@ -1,0 +1,87 @@
+/*
+ * Emojisense design tokens, copied from apps/web/src/styles/global.css (keep the values in sync).
+ * A calm, near-monochrome UI: the emoji are the only strong color.
+ *
+ * `:root` serves the extension pages. `.surface` serves the picker and the toast inside their
+ * closed shadow root, where `:root` matches nothing and page styles cannot reach the values.
+ * `data-theme` forces a scheme: the picker follows the page it opens on, not only the system.
+ */
+:root,
+.surface {
+  --bg: #ffffff;
+  --bg-soft: #f6f6f8;
+  --bg-sunk: #eeeef2;
+  --ink: #0d0d12;
+  --ink-2: #4b4b57;
+  --ink-3: #85858f;
+  --line: #e7e7ec;
+  --line-strong: #d3d3db;
+  --accent: #0d0d12;
+  /* The site calls this one --brand-hover. */
+  --accent-hover: #2a2a33;
+  --on-accent: #ffffff;
+  --live: #12b76a;
+  --focus: #3d7bff;
+  --good: #0f9f74;
+  --bad: #c2410c;
+
+  --radius-sm: 0.625rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --pill: 999px;
+  --shadow-sm: 0 0.0625rem 0.125rem rgb(13 13 18 / 0.05);
+  --shadow: 0 0.0625rem 0.125rem rgb(13 13 18 / 0.04), 0 0.5rem 1.5rem rgb(13 13 18 / 0.06);
+  --shadow-lg: 0 0.125rem 0.25rem rgb(13 13 18 / 0.04), 0 1.5rem 4rem rgb(13 13 18 / 0.12);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Bundled with the extension (dist/fonts); nothing is downloaded. */
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk Variable", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]),
+  .surface:not([data-theme="light"]) {
+    --bg: #0b0b0f;
+    --bg-soft: #141419;
+    --bg-sunk: #1b1b22;
+    --ink: #f3f3f6;
+    --ink-2: #b4b4c0;
+    --ink-3: #7c7c88;
+    --line: #24242c;
+    --line-strong: #34343e;
+    --accent: #f3f3f6;
+    --accent-hover: #d9d9e0;
+    --on-accent: #0b0b0f;
+    --good: #34d399;
+    --bad: #fb923c;
+    --shadow: 0 0.0625rem 0.125rem rgb(0 0 0 / 0.3), 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+    --shadow-lg: 0 0.125rem 0.25rem rgb(0 0 0 / 0.3), 0 1.5rem 4rem rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"],
+.surface[data-theme="dark"] {
+  --bg: #0b0b0f;
+  --bg-soft: #141419;
+  --bg-sunk: #1b1b22;
+  --ink: #f3f3f6;
+  --ink-2: #b4b4c0;
+  --ink-3: #7c7c88;
+  --line: #24242c;
+  --line-strong: #34343e;
+  --accent: #f3f3f6;
+  --accent-hover: #d9d9e0;
+  --on-accent: #0b0b0f;
+  --good: #34d399;
+  --bad: #fb923c;
+  --shadow: 0 0.0625rem 0.125rem rgb(0 0 0 / 0.3), 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 0.125rem 0.25rem rgb(0 0 0 / 0.3), 0 1.5rem 4rem rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}

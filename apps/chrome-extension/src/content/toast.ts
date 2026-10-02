@@ -1,7 +1,8 @@
-import overlayCss from "./overlay.css?raw";
 import { placeOverlay } from "./position";
+import { SURFACE_CSS } from "./styles";
 import { createSurface } from "./surface";
 import type { Rect } from "./target";
+import type { Theme } from "./theme";
 
 export interface ToastOptions {
   document: Document;
@@ -9,6 +10,8 @@ export interface ToastOptions {
   anchor: Rect | null;
   emoji: string;
   message: string;
+  /** The page's scheme around the field, as for the picker. */
+  theme?: Theme | undefined;
   /** Long enough to read, short enough not to cover the text being typed. */
   durationMs?: number;
 }
@@ -19,22 +22,23 @@ export interface Toast {
 }
 
 /**
- * A sticker card next to the caret ("🦖 Copied — press ⌘V to paste"). It never takes focus, so
+ * A small card next to the caret ("🦖 Copied — press ⌘V to paste"). It never takes focus, so
  * the user can paste right away; it is a polite live region, so screen readers announce it.
  */
 export function showToast(options: ToastOptions): Toast {
   const { document: doc } = options;
-  const surface = createSurface(doc, options.mount, overlayCss);
+  const surface = createSurface(doc, options.mount, SURFACE_CSS);
   const card = doc.createElement("div");
   card.className = "surface toast";
+  if (options.theme) card.dataset.theme = options.theme;
   card.setAttribute("role", "status");
   card.setAttribute("aria-live", "polite");
-  const sticker = doc.createElement("span");
-  sticker.className = "sticker";
-  sticker.textContent = options.emoji;
+  const emoji = doc.createElement("span");
+  emoji.className = "toast-emoji";
+  emoji.textContent = options.emoji;
   const message = doc.createElement("span");
   message.textContent = options.message;
-  card.append(sticker, message);
+  card.append(emoji, message);
   surface.root.append(card);
 
   const view = doc.defaultView;
@@ -59,8 +63,8 @@ export function showToast(options: ToastOptions): Toast {
     surface.remove();
   }
   card.addEventListener("click", (event) => {
-    // The sticker stays selectable, so a failed copy can still be done by hand.
-    if (event.target !== sticker) dismiss();
+    // The emoji stays selectable, so a failed copy can still be done by hand.
+    if (event.target !== emoji) dismiss();
   });
   return { root: surface.root, dismiss };
 }

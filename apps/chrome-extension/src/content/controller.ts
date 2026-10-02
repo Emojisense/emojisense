@@ -6,6 +6,7 @@ import { focusDocsEditor, pasteIntoDocs } from "./docs";
 import { insertText, restoreTarget } from "./insert";
 import { createPicker, type Picker } from "./overlay";
 import { captureTarget, type EditableTarget, type Rect, targetRect } from "./target";
+import { pageTheme } from "./theme";
 import { showToast } from "./toast";
 
 /** A connection to the service worker's search. Reopened on demand: the worker may sleep. */
@@ -19,6 +20,8 @@ export interface ControllerDeps {
   /** Throws when the extension was reloaded or removed ("Extension context invalidated"). */
   openChannel(onMessage: (message: ServerMessage) => void, onDisconnect: () => void): SearchChannel;
   loadSettings(): Promise<Settings>;
+  /** Registers the bundled fonts; never rejects. The first open waits for it briefly. */
+  loadFonts?(): Promise<void>;
   uiLanguage: string;
   platform: string;
 }
@@ -32,6 +35,12 @@ export interface Controller {
 
 /** Containers that often trap focus; the picker mounts inside them so focus may enter it. */
 const DIALOG_SELECTOR = 'dialog[open], [aria-modal="true"], [role="dialog"]';
+
+/**
+ * How long the first open waits for the fonts, so the text does not change font in front of the
+ * user. They come from the extension package, so this is rarely reached; then the system font shows.
+ */
+export const FONT_WAIT_MS = 150;
 
 export function createController(deps: ControllerDeps): Controller {
   const view = deps.window;
@@ -49,11 +58,25 @@ export function createController(deps: ControllerDeps): Controller {
     // Capture before any await: the caret must be read while the field still has focus.
     const target = captureTarget(doc);
     try {
-      const settings = await deps.loadSettings().catch(() => DEFAULT_SETTINGS);
+      const [settings] = await Promise.all([
+        deps.loadSettings().catch(() => DEFAULT_SETTINGS),
+        deps.loadFonts ? atMost(deps.loadFonts(), FONT_WAIT_MS) : undefined,
+      ]);
       close = open(target, settings);
     } finally {
       opening = false;
     }
+  }
+
+  function atMost(task: Promise<void>, ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = view.setTimeout(resolve, ms);
+      const done = () => {
+        view.clearTimeout(timer);
+        resolve();
+      };
+      task.then(done, done);
+    });
   }
 
   function open(target: EditableTarget, settings: Settings): (restoreFocus: boolean) => void {
@@ -61,6 +84,7 @@ export function createController(deps: ControllerDeps): Controller {
     const pasteKey = pasteShortcut(deps.platform);
     const mode = target.kind === "text-control" || target.kind === "contenteditable" ? "insert" : "copy";
     const mount = mountFor(target, doc);
+    const theme = pageTheme(target.kind === "google-docs" ? target.frame : target.element, view);
     let channel: SearchChannel | undefined;
     let closed = false;
 
@@ -91,6 +115,7 @@ export function createController(deps: ControllerDeps): Controller {
       strings,
       mode,
       pasteKey,
+      theme,
       onQuery: (query) => send({ type: "query", query }),
       onPick: (item, how) => void pick(item, how.copy || mode === "copy"),
       onDismiss: (reason) => finish(reason === "escape"),
@@ -145,7 +170,15 @@ export function createController(deps: ControllerDeps): Controller {
     }
 
     function notify(anchor: Rect | null, emoji: string, message: string): void {
-      showToast({ document: doc, mount: mountFor(target, doc), anchor, emoji, message, durationMs: 4000 });
+      showToast({
+        document: doc,
+        mount: mountFor(target, doc),
+        anchor,
+        emoji,
+        message,
+        theme,
+        durationMs: 4000,
+      });
     }
 
     picker.position(targetRect(target));

@@ -1,31 +1,28 @@
 import type { PickerItem, ResultStatus } from "../shared/messages";
 import type { Strings } from "../shared/strings";
-import overlayCss from "./overlay.css?raw";
 import { type Placement, placeOverlay, type Size } from "./position";
+import { SURFACE_CSS } from "./styles";
 import { createSurface } from "./surface";
 import type { Rect } from "./target";
+import type { Theme } from "./theme";
 
 /** Columns of the result grid; arrow-key moves depend on it (keep in sync with overlay.css). */
 export const COLUMNS = 8;
 
 /** Used for placement until the panel has been laid out once. */
-const NOMINAL_SIZE: Size = { width: 376, height: 300 };
+const NOMINAL_SIZE: Size = { width: 376, height: 320 };
+/** Placeholder tiles while the index loads: two rows, as many as the recent emoji. */
+const SKELETON_TILES = 16;
 const FOCUS_GRACE_MS = 500;
 const MAX_REFOCUS = 2;
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 export type DismissReason = "escape" | "outside";
 
-/** What the query-state pill says; drives its emoji and colour. */
-export type PillState = "loading" | "recent" | "found" | "searching" | "empty" | "offline";
+/** What the status line above the results says. */
+export type StatusState = "loading" | "recent" | "found" | "searching" | "empty" | "offline";
 
-const PILL_EMOJI: Record<PillState, string> = {
-  loading: "⏳",
-  recent: "🕘",
-  found: "🔎",
-  searching: "💭",
-  empty: "🫥",
-  offline: "🔌",
-};
+const EMPTY_EMOJI = "🫥";
 
 export interface PickerOptions {
   document: Document;
@@ -36,6 +33,8 @@ export interface PickerOptions {
   mode: "insert" | "copy";
   /** "⌘V" or "Ctrl+V", for the copy-mode hint. */
   pasteKey: string;
+  /** The page's scheme around the field; without it the picker follows the system setting. */
+  theme?: Theme | undefined;
   onQuery(query: string): void;
   onPick(item: PickerItem, how: { copy: boolean }): void;
   onDismiss(reason: DismissReason): void;
@@ -81,7 +80,7 @@ export function createPicker(options: PickerOptions): Picker {
   if (!defaultView) throw new Error("emojisense: the picker needs a document with a window");
   const view: Window = defaultView;
 
-  const surface = createSurface(doc, options.mount, overlayCss);
+  const surface = createSurface(doc, options.mount, SURFACE_CSS);
   const { host, root } = surface;
 
   const panel = element(doc, "div", {
@@ -89,23 +88,28 @@ export function createPicker(options: PickerOptions): Picker {
     role: "dialog",
     "aria-label": strings.dialogLabel,
   });
+  if (options.theme) panel.dataset.theme = options.theme;
+  const search = element(doc, "div", { class: "search" });
   const input = element(doc, "input", {
     class: "query",
     type: "text",
     role: "combobox",
-    "aria-expanded": "true",
+    "aria-expanded": "false",
     "aria-controls": "es-list",
     "aria-autocomplete": "list",
     "aria-label": strings.searchLabel,
+    "aria-describedby": "es-help",
     placeholder: strings.placeholder,
     autocomplete: "off",
     autocapitalize: "off",
     spellcheck: "false",
   });
-  const pill = element(doc, "p", { class: "pill" });
-  const pillEmoji = element(doc, "span", { class: "pill-emoji", "aria-hidden": "true" });
-  const pillText = element(doc, "span", { class: "pill-text" });
-  pill.append(pillEmoji, pillText);
+  search.append(searchIcon(doc), input);
+  const status = element(doc, "p", { class: "status" });
+  const statusText = element(doc, "span", { class: "status-text" });
+  status.append(element(doc, "span", { class: "status-dot", "aria-hidden": "true" }), statusText);
+  const skeleton = element(doc, "div", { class: "skeleton", "aria-hidden": "true" });
+  for (let i = 0; i < SKELETON_TILES; i++) skeleton.append(element(doc, "span", {}));
   const list = element(doc, "ul", {
     class: "grid",
     role: "listbox",
@@ -113,28 +117,33 @@ export function createPicker(options: PickerOptions): Picker {
     "aria-label": strings.resultsLabel,
   });
   const empty = element(doc, "div", { class: "empty" });
-  const emptySticker = element(doc, "span", { class: "sticker", "aria-hidden": "true" });
+  const emptyEmoji = element(doc, "span", { class: "empty-emoji", "aria-hidden": "true" });
   const emptyText = element(doc, "p", { class: "empty-text" });
-  empty.append(emptySticker, emptyText);
+  empty.append(emptyEmoji, emptyText);
   empty.hidden = true;
   const footer = element(doc, "div", { class: "footer" });
   const preview = element(doc, "span", { class: "preview", "aria-hidden": "true" });
   const previewGlyph = element(doc, "span", { class: "preview-glyph" });
   const previewLabel = element(doc, "span", { class: "preview-label" });
+  const previewTag = element(doc, "span", { class: "preview-tag" });
+  previewTag.textContent = strings.semanticTag;
+  previewTag.hidden = true;
   const previewHex = element(doc, "span", { class: "hex" });
-  preview.append(previewGlyph, previewLabel, previewHex);
+  preview.append(previewGlyph, previewLabel, previewTag, previewHex);
   const hint = element(doc, "span", { class: "hint", "aria-hidden": "true" });
   hint.append(
     ...(options.mode === "copy"
-      ? [keycap(doc, "↵"), strings.keyCopy, ` · ${strings.keyThen}`, keycap(doc, options.pasteKey)]
-      : [keycap(doc, "↵"), strings.keyInsert, keycap(doc, "esc"), strings.keyClose]),
+      ? [keyHint(doc, "↵", strings.keyCopy), keyHint(doc, options.pasteKey, "", strings.keyThen)]
+      : [keyHint(doc, "↵", strings.keyInsert), keyHint(doc, "esc", strings.keyClose)]),
   );
   footer.append(preview, hint);
+  const help = element(doc, "p", { class: "visually-hidden", id: "es-help" });
+  help.textContent = strings.keyboardHelp;
   const live = element(doc, "div", { class: "visually-hidden", role: "status", "aria-live": "polite" });
 
-  panel.append(input, pill, list, empty, footer, live);
+  panel.append(search, status, skeleton, list, empty, footer, help, live);
   root.append(panel);
-  setPill("loading", strings.loading);
+  setStatus("loading", strings.loading);
 
   let items: readonly PickerItem[] = [];
   let active = -1;
@@ -154,15 +163,15 @@ export function createPicker(options: PickerOptions): Picker {
     surface.moveTo(placement.top, placement.left);
   }
 
-  function setPill(state: PillState, text: string): void {
-    pill.dataset.state = state;
-    pillEmoji.textContent = PILL_EMOJI[state];
-    pillText.textContent = text;
+  function setStatus(state: StatusState, text: string): void {
+    status.dataset.state = state;
+    statusText.textContent = text;
+    skeleton.hidden = state !== "loading";
   }
 
   function showEmpty(text: string | undefined): void {
     empty.hidden = text === undefined;
-    emptySticker.textContent = text === undefined ? "" : PILL_EMOJI.empty;
+    emptyEmoji.textContent = text === undefined ? "" : EMPTY_EMOJI;
     emptyText.textContent = text ?? "";
   }
 
@@ -180,14 +189,14 @@ export function createPicker(options: PickerOptions): Picker {
           "data-index": String(index),
           "data-source": item.source,
         });
-        // Stagger index for the entry animation (CSSOM, so a strict page CSP does not block it).
-        option.style.setProperty("--i", String(index));
         const glyph = element(doc, "span", { class: "glyph", "aria-hidden": "true" });
         glyph.textContent = item.emoji;
         option.append(glyph);
         return option;
       }),
     );
+    // Combobox pattern: "expanded" means the listbox is on screen, and an empty one is hidden.
+    input.setAttribute("aria-expanded", String(next.length > 0));
     setActive(next.length > 0 ? 0 : -1, false);
   }
 
@@ -200,6 +209,7 @@ export function createPicker(options: PickerOptions): Picker {
       input.removeAttribute("aria-activedescendant");
       previewGlyph.textContent = "";
       previewLabel.textContent = "";
+      previewTag.hidden = true;
       previewHex.textContent = "";
       return;
     }
@@ -207,6 +217,7 @@ export function createPicker(options: PickerOptions): Picker {
     input.setAttribute("aria-activedescendant", option.id);
     previewGlyph.textContent = item.emoji;
     previewLabel.textContent = item.label;
+    previewTag.hidden = item.source !== "semantic";
     previewHex.textContent = item.id;
     if (scroll && typeof option.scrollIntoView === "function") option.scrollIntoView({ block: "nearest" });
   }
@@ -315,29 +326,29 @@ export function createPicker(options: PickerOptions): Picker {
   return {
     host,
     root,
-    setResults(query, status, next) {
+    setResults(query, resultStatus, next) {
       // Answers for an older query arrive after newer keystrokes; drop them.
       if (destroyed || query !== input.value) return;
       renderItems(next);
       const count = strings.resultCount(next.length);
-      if (status === "recent") {
-        setPill("recent", strings.recent);
+      if (resultStatus === "recent") {
+        setStatus("recent", strings.recent);
         showEmpty(undefined);
-      } else if (status === "loading") {
-        setPill(
+      } else if (resultStatus === "loading") {
+        setStatus(
           "searching",
           next.length > 0 ? `${count} · ${strings.searchingMeaning}` : strings.searchingMeaning,
         );
         showEmpty(undefined);
       } else if (next.length > 0) {
-        setPill("found", count);
+        setStatus("found", count);
         showEmpty(undefined);
       } else {
-        setPill("empty", strings.noMatch);
+        setStatus("empty", strings.noMatch);
         showEmpty(strings.noMatchHelp);
       }
-      if (status !== "recent") {
-        live.textContent = next.length > 0 ? count : status === "loading" ? "" : strings.noMatch;
+      if (resultStatus !== "recent") {
+        live.textContent = next.length > 0 ? count : resultStatus === "loading" ? "" : strings.noMatch;
       }
       // The height changed; above the caret, the panel must grow upwards, not over the text.
       place();
@@ -345,7 +356,7 @@ export function createPicker(options: PickerOptions): Picker {
     setUnavailable() {
       if (destroyed) return;
       renderItems([]);
-      setPill("offline", strings.unavailable);
+      setStatus("offline", strings.unavailable);
       showEmpty(undefined);
       live.textContent = strings.unavailable;
       place();
@@ -373,10 +384,29 @@ function optionIndex(target: EventTarget | null): number | undefined {
   return option && Number.isInteger(index) ? index : undefined;
 }
 
-function keycap(doc: Document, label: string): HTMLElement {
-  const key = doc.createElement("kbd");
-  key.textContent = label;
-  return key;
+/** "↵ insert", or with `before` "then ⌘V": one key and its action, kept on one line. */
+function keyHint(doc: Document, key: string, after: string, before = ""): HTMLElement {
+  const pair = doc.createElement("span");
+  pair.className = "key";
+  const cap = doc.createElement("kbd");
+  cap.textContent = key;
+  pair.append(...[before, cap, after].filter((part) => part !== ""));
+  return pair;
+}
+
+function searchIcon(doc: Document): SVGSVGElement {
+  const svg = doc.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", "search-icon");
+  svg.setAttribute("viewBox", "0 0 16 16");
+  svg.setAttribute("aria-hidden", "true");
+  const lens = doc.createElementNS(SVG_NS, "circle");
+  lens.setAttribute("cx", "7");
+  lens.setAttribute("cy", "7");
+  lens.setAttribute("r", "4.75");
+  const handle = doc.createElementNS(SVG_NS, "path");
+  handle.setAttribute("d", "m10.5 10.5 3.25 3.25");
+  svg.append(lens, handle);
+  return svg;
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(

@@ -1,13 +1,15 @@
 /**
- * Toolbar and store icons, drawn in code so the repository holds no binary files: an emoji-yellow
- * keycap with an ink outline and depth, and a smiling face (docs/DESIGN.md tokens).
+ * Toolbar and store icons, drawn in code so the repository holds no binary files: a white keycap
+ * with an ink outline, a thicker bottom edge like the UI's keycaps, and a smiling face. Monochrome,
+ * as the design system asks (emoji are the only color), and visible on light and dark toolbars.
  */
 import { crc32, deflateSync } from "node:zlib";
 
 type Rgba = readonly [number, number, number, number];
 
-const SUN: Rgba = [0xff, 0xd2, 0x3f, 0xff];
-const INK: Rgba = [0x1e, 0x16, 0x31, 0xff];
+/** --bg and --ink of src/shared/tokens.css. */
+const PAPER: Rgba = [0xff, 0xff, 0xff, 0xff];
+const INK: Rgba = [0x0d, 0x0d, 0x12, 0xff];
 const CLEAR: Rgba = [0, 0, 0, 0];
 const SAMPLES = 4;
 
@@ -28,17 +30,17 @@ function inRoundedRect(
 
 function colourAt(x: number, y: number, size: number): Rgba {
   // Small icons need thicker strokes, or the outline and face vanish.
-  const stroke = Math.max(0.055, 1.25 / size);
+  const stroke = Math.max(0.045, 1.25 / size);
+  const bottom = stroke * 1.8;
   let colour = CLEAR;
-  if (inRoundedRect(x, y, 0.06, 0.12, 0.94, 0.95, 0.2)) colour = INK; // depth under the key
-  if (inRoundedRect(x, y, 0.06, 0.05, 0.94, 0.86, 0.2)) colour = INK; // outline
-  if (inRoundedRect(x, y, 0.06 + stroke, 0.05 + stroke, 0.94 - stroke, 0.86 - stroke, 0.2 - stroke)) {
-    colour = SUN;
+  if (inRoundedRect(x, y, 0.06, 0.06, 0.94, 0.94, 0.22)) colour = INK; // outline
+  if (inRoundedRect(x, y, 0.06 + stroke, 0.06 + stroke, 0.94 - stroke, 0.94 - bottom, 0.22 - stroke)) {
+    colour = PAPER;
   }
   const eye = Math.max(0.055, 1 / size);
-  if (Math.hypot(x - 0.37, y - 0.38) <= eye || Math.hypot(x - 0.63, y - 0.38) <= eye) colour = INK;
-  const smile = Math.hypot(x - 0.5, y - 0.42);
-  if (y > 0.5 && smile >= 0.2 && smile <= 0.2 + stroke) colour = INK;
+  if (Math.hypot(x - 0.37, y - 0.4) <= eye || Math.hypot(x - 0.63, y - 0.4) <= eye) colour = INK;
+  const smile = Math.hypot(x - 0.5, y - 0.44);
+  if (y > 0.52 && smile >= 0.2 && smile <= 0.2 + stroke) colour = INK;
   return colour;
 }
 

@@ -4,19 +4,36 @@
  *   tsx scripts/build.ts --watch   rebuild the scripts on change (static files: run again)
  *
  * The en + tr data packs are copied from packages/data/dist, so the extension needs no network
- * for search and every site shares the one copy inside the extension.
+ * for search and every site shares the one copy inside the extension. Fonts are copied from the
+ * pinned @fontsource packages: the Web Store does not allow remote resources, and none are needed.
  */
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type BuildOptions, build, context, type Plugin } from "esbuild";
 import { createManifest, ICON_SIZES } from "../src/manifest.ts";
+import { PICKER_FONTS } from "../src/shared/fonts.ts";
 import { renderIcon } from "./icons.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DIST = join(ROOT, "dist");
 const DATA = join(ROOT, "../../packages/data");
 const PACK_FILES = ["manifest.json", "pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
+/** Package → font files in dist/fonts. The options page uses all of them, the picker PICKER_FONTS. */
+const FONT_PACKAGES: Record<string, { license: string; files: string[] }> = {
+  "@fontsource-variable/hanken-grotesk": {
+    license: "hanken-grotesk.OFL-1.1.txt",
+    files: ["hanken-grotesk-latin-wght-normal.woff2", "hanken-grotesk-latin-ext-wght-normal.woff2"],
+  },
+  "@fontsource-variable/bricolage-grotesque": {
+    license: "bricolage-grotesque.OFL-1.1.txt",
+    files: ["bricolage-grotesque-latin-opsz-normal.woff2"],
+  },
+  "@fontsource/dm-mono": {
+    license: "dm-mono.OFL-1.1.txt",
+    files: ["dm-mono-latin-400-normal.woff2", "dm-mono-latin-500-normal.woff2"],
+  },
+};
 const watch = process.argv.includes("--watch");
 
 /** `import css from "./x.css?raw"`: the same contract Vite gives the tests. */
@@ -66,6 +83,8 @@ async function copyStatic(): Promise<void> {
   await writeFile(join(DIST, "manifest.json"), `${JSON.stringify(createManifest(version), null, 2)}\n`);
   await copyFile(join(ROOT, "src/options/options.html"), join(DIST, "options.html"));
   await copyFile(join(ROOT, "src/options/options.css"), join(DIST, "options.css"));
+  await copyFile(join(ROOT, "src/options/fonts.css"), join(DIST, "fonts.css"));
+  await copyFile(join(ROOT, "src/shared/tokens.css"), join(DIST, "tokens.css"));
 
   const { packVersion } = JSON.parse(await readFile(join(DATA, "pack.config.json"), "utf8")) as {
     packVersion: string;
@@ -83,6 +102,16 @@ async function copyStatic(): Promise<void> {
     await copyFile(join(DATA, "licenses", file), join(DIST, "licenses", file));
   }
   await copyFile(join(ROOT, "../../LICENSE"), join(DIST, "LICENSE"));
+
+  await mkdir(join(DIST, "fonts"), { recursive: true });
+  for (const [name, { license, files }] of Object.entries(FONT_PACKAGES)) {
+    const source = join(ROOT, "node_modules", name);
+    for (const file of files) await copyFile(join(source, "files", file), join(DIST, "fonts", file));
+    await copyFile(join(source, "LICENSE"), join(DIST, "licenses", license));
+  }
+  for (const font of PICKER_FONTS) {
+    if (!(await exists(join(DIST, font.file)))) throw new Error(`${font.file} is not in FONT_PACKAGES.`);
+  }
 
   await mkdir(join(DIST, "icons"), { recursive: true });
   for (const size of ICON_SIZES) await writeFile(join(DIST, "icons", `icon-${size}.png`), renderIcon(size));

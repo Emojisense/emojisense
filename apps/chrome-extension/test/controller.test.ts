@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type Controller, createController, type SearchChannel } from "../src/content/controller";
+import {
+  type Controller,
+  type ControllerDeps,
+  createController,
+  FONT_WAIT_MS,
+  type SearchChannel,
+} from "../src/content/controller";
 import { DOCS_EVENT_FRAME_CLASS } from "../src/content/docs";
 import type { ClientMessage, ServerMessage } from "../src/shared/messages";
 import { DEFAULT_SETTINGS, type Settings } from "../src/shared/settings";
@@ -21,7 +27,11 @@ afterEach(() => {
   for (const host of document.querySelectorAll("emojisense-ui")) host.remove();
 });
 
-function harness(settings: Partial<Settings> = {}, uiLanguage = "en-US") {
+function harness(
+  settings: Partial<Settings> = {},
+  uiLanguage = "en-US",
+  extra: Partial<ControllerDeps> = {},
+) {
   const sent: ClientMessage[] = [];
   let deliver: (message: ServerMessage) => void = () => undefined;
   let drop: () => void = () => undefined;
@@ -38,6 +48,7 @@ function harness(settings: Partial<Settings> = {}, uiLanguage = "en-US") {
     loadSettings: async () => ({ ...DEFAULT_SETTINGS, ...settings }),
     uiLanguage,
     platform: "MacIntel",
+    ...extra,
   });
   return {
     controller,
@@ -170,6 +181,22 @@ describe("controller: insert into the focused field", () => {
     expect(hosts()[0]?.parentElement).toBe(dialog);
   });
 
+  it("matches a dark page with the picker and the toast", async () => {
+    document.body.style.backgroundColor = "rgb(18, 18, 22)";
+    const field = focusedTextarea("", 0);
+    field.style.backgroundColor = "transparent";
+    stubCopy();
+    const { controller, reply } = harness();
+    await controller.toggle();
+    expect(pickerRoot().querySelector(".panel")?.getAttribute("data-theme")).toBe("dark");
+
+    reply({ type: "results", query: "", status: "recent", items: ITEMS });
+    key(searchBox(), "Enter", { shiftKey: true });
+    await flush();
+    expect(hosts()[0]?.shadowRoot?.querySelector(".toast")?.getAttribute("data-theme")).toBe("dark");
+    document.body.removeAttribute("style");
+  });
+
   it("follows the language setting, or Chrome's language on auto", async () => {
     focusedTextarea("", 0);
     const turkish = harness({ locale: "auto" }, "tr-TR");
@@ -180,6 +207,27 @@ describe("controller: insert into the focused field", () => {
     const english = harness({ locale: "en" }, "tr-TR");
     await english.controller.toggle();
     expect(searchBox().getAttribute("aria-label")).toBe("Search emoji");
+  });
+});
+
+describe("controller: fonts", () => {
+  it("opens as soon as the bundled fonts are registered", async () => {
+    const field = focusedTextarea("", 0);
+    const loadFonts = vi.fn(async () => undefined);
+    const { controller } = harness({}, "en-US", { loadFonts });
+    await controller.toggle();
+    expect(loadFonts).toHaveBeenCalledTimes(1);
+    expect(controller.isOpen()).toBe(true);
+    expect(document.activeElement).not.toBe(field);
+  });
+
+  it("opens with the system font when the fonts are slow", async () => {
+    focusedTextarea("", 0);
+    const { controller } = harness({}, "en-US", { loadFonts: () => new Promise<void>(() => undefined) });
+    const started = performance.now();
+    await controller.toggle();
+    expect(controller.isOpen()).toBe(true);
+    expect(performance.now() - started).toBeGreaterThanOrEqual(FONT_WAIT_MS - 20);
   });
 });
 
@@ -204,12 +252,12 @@ describe("controller: search connection", () => {
       throw new Error("Extension context invalidated.");
     });
     await controller.toggle();
-    expect(pickerRoot().querySelector(".pill")?.getAttribute("data-state")).toBe("offline");
+    expect(pickerRoot().querySelector(".status")?.getAttribute("data-state")).toBe("offline");
   });
 });
 
 describe("controller: copy mode", () => {
-  it("copies and shows a sticker card when nothing editable has focus", async () => {
+  it("copies and shows a toast when nothing editable has focus", async () => {
     const button = document.createElement("button");
     document.body.append(button);
     button.focus();
@@ -226,7 +274,7 @@ describe("controller: copy mode", () => {
     expect(clipboard.text()).toBe("🦖");
     expect(document.activeElement).toBe(button);
     const card = hosts()[0]?.shadowRoot;
-    expect(card?.querySelector(".sticker")?.textContent).toBe("🦖");
+    expect(card?.querySelector(".toast-emoji")?.textContent).toBe("🦖");
     expect(card?.querySelector('[role="status"]')?.textContent).toContain("press ⌘V");
   });
 
