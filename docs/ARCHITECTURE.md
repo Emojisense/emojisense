@@ -20,7 +20,7 @@ L2  precomputed results, static prefix shard /p/<v>/<prefix>.json ─── free
    │ miss (debounced 150–250 ms)
    ▼
 L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with the chosen Workers AI model
-                                         ─▶ dot product over ≈1.9k emoji vectors (≈ 1 ms) ─▶ fuse ▶ results
+                                         ─▶ dot product over ≈1.9k emoji vectors, English + the query locale (3–6 ms) ─▶ fuse ▶ results
    │ key over its monthly limit
    └──▶ { overLimit: true } ─▶ client stays on L0 + L2 silently (never a hard failure)
 ```
@@ -44,7 +44,7 @@ together (`pnpm cost`), never with one global hit rate.
 ```
 emojibase (en) + CLDR (tr) ─▶ ingest ─▶ enrichment (aliases, descriptions) ─▶ validate
         ─▶ packs: pack.<locale>.json (core ≤ 200 KB gz) + pack.<locale>.ext.json (idle-loaded)
-        ─▶ embed (chosen model × dims) ─▶ vectors.<model>.<dims>.bin ─▶ manifest.json
+        ─▶ embed (chosen model × dims) ─▶ vectors.<model>.<dims>[.<locale>].bin ─▶ manifest.json
 
 Worker query log (Analytics Engine: normalized text only, no IP/key/user)
         ─▶ nightly: queries seen ≥ 5 times

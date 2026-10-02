@@ -48,7 +48,7 @@ headers. Every key also has per-second rate limits.
 | Param | Default | Notes |
 | ----- | ------- | ----- |
 | `q` | — | Required. Normalized server-side (PACK_FORMAT.md §3), max 64 characters. |
-| `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). |
+| `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). Semantic search covers the English and this locale's emoji vectors (PACK_FORMAT.md §5). |
 | `limit` | `24` | 1–50 |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
 | `pack` | — | Client pack version (informational) |
@@ -148,7 +148,7 @@ the perceptual hash, the vision model and the prompt version.
 
 | Path | Content | Cache |
 | ---- | ------- | ----- |
-| `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>.bin` | data packs | `public, max-age=31536000, immutable` |
+| `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>[.<locale>].bin` | data packs | `public, max-age=31536000, immutable` |
 | `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards) | immutable |
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
