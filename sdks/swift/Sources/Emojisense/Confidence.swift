@@ -20,7 +20,7 @@ public enum Confidence {
   public static let wholeCoverage = 0.85
   /// Below this semantic strength the semantic list is flat or low: the model matched the query
   /// to nothing in particular ("kendrick lamar" → 🦁 🤦 🧙‍♂️ at cosines 0.38–0.40).
-  public static let semanticSure = 0.5
+  public static let semanticSure = 0.6
   /// The alias tier is unsure below this top score (as in ``Fusion/shouldUseSemantic(_:)``).
   static let aliasSure = 0.6
   /// Results 2–5, whose mean the top cosine must clear to stand out.

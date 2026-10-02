@@ -23,7 +23,7 @@ public object Confidence {
      * Below this semantic strength the semantic list is flat or low: the model matched the query to
      * nothing in particular ("kendrick lamar" → 🦁 🤦 🧙‍♂️ at cosines 0.38–0.40).
      */
-    public const val SEMANTIC_SURE: Double = 0.5
+    public const val SEMANTIC_SURE: Double = 0.6
 
     /** The alias tier is unsure below this top score (as in [Fusion.shouldUseSemantic]). */
     private const val ALIAS_SURE = 0.6

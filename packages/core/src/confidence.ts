@@ -7,7 +7,7 @@ export const WHOLE_COVERAGE = 0.85;
  * Below this semantic strength the semantic list is flat or low: the model matched the query to
  * nothing in particular ("kendrick lamar" → 🦁 🤦 🧙‍♂️ at cosines 0.38–0.40).
  */
-export const SEMANTIC_SURE = 0.5;
+export const SEMANTIC_SURE = 0.6;
 /** The alias tier is unsure below this top score (as in `shouldUseSemantic`). */
 const ALIAS_SURE = 0.6;
 /** Results 2–5 whose mean the top cosine must clear to stand out. */
@@ -58,7 +58,7 @@ export function aliasCovers(alias: AliasSearchOutput): boolean {
 
 /**
  * Is a query unsure? Yes when the dictionary does not cover it (`aliasCovers`) and the semantic
- * list is flat or low (`semanticStrength` < 0.5). Without a semantic list (not asked, offline,
+ * list is flat or low (`semanticStrength` < 0.6). Without a semantic list (not asked, offline,
  * over the limit), when the dictionary does not cover it. An empty query is never unsure.
  * Thresholds: DECISIONS.md, "Unsure queries and the concept tier".
  */

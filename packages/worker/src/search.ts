@@ -229,8 +229,11 @@ export const handleSearch: Handler = async (
     ranked,
     { text: params.query, locale, limit: params.limit, mode: params.mode },
     // Semantic mode: the locale's aliases are searched only when the semantic list is weak.
+    // Hybrid mode searched them already (its pack can be missing): no second load.
     async () =>
-      (await catalog.aliasEngine(locale, env))?.search(params.query, { locale, limit: params.limit }),
+      params.mode === "semantic"
+        ? (await catalog.aliasEngine(locale, env))?.search(params.query, { locale, limit: params.limit })
+        : undefined,
   );
   const body: SearchBody = {
     ...base,
