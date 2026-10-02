@@ -114,9 +114,9 @@ export function EmojiSetsPage() {
               label="Hosted set URL"
               code={`import { emojiImageUrl } from "emojisense";
 
-// Pickers take the same option: emojiSet: "${example}".
-emojiImageUrl("🎉", { endpoint: "${API_URL}", emojiSet: "${example}" });
-// → "${setImageUrl(example, "🎉")}"`}
+// Pickers take the same options: emojiSet: "${example}" and your publishable key.
+emojiImageUrl("🎉", { endpoint: "${API_URL}", emojiSet: "${example}", key: "pk_live_…" });
+// → "${setImageUrl(example, "🎉")}?key=pk_live_…"`}
             />
           </div>
         </section>

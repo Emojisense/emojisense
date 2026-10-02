@@ -44,6 +44,15 @@ describe("emojiImageUrl", () => {
     expect(emojiImageUrl("👍", { endpoint })).toBeUndefined();
     expect(emojiImageUrl("👍", { endpoint: undefined, emojiSet: "noto" })).toBeUndefined();
   });
+
+  it("sends the publishable key, which hosted sets need", () => {
+    expect(emojiImageUrl("👍", { endpoint, emojiSet: "noto", key: "pk_live_a+b" })).toBe(
+      "https://api.emojisense.com/v1/sets/noto/1F44D.svg?key=pk_live_a%2Bb",
+    );
+    expect(emojiImageUrl("👍", { endpoint, emojiSet: "noto", key: "" })).toBe(
+      "https://api.emojisense.com/v1/sets/noto/1F44D.svg",
+    );
+  });
 });
 
 describe("isEmojiSet", () => {

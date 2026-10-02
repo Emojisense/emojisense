@@ -276,12 +276,25 @@ the top canonical result, except a regional sense in the caller's region (below)
 ## `GET /v1/sets/:set/:hexcode.svg`
 
 One emoji image from a hosted set. Pickers use it when their `emojiSet` option is not `native`.
-No key, not metered, not rate limited.
+Hosted sets are a paid feature: the image needs a key whose account plan includes them (Solo and
+up). Not metered, not rate limited per image.
 
 | Part | Values |
 | ---- | ------ |
 | `set` | `twemoji`, `noto`, `fluent` |
 | `hexcode` | Emojibase hexcode of a pack emoji or of one of its single-tone variants, e.g. `1F44D`, `1F44D-1F3FD`, `2764-FE0F-200D-1F525`. Case and U+FE0F spelling do not matter. `hexcodeOf(emoji)` in `emojisense` makes it. |
+| `key` | Query parameter: a publishable key, e.g. `?key=pk_live_…` (`emojiImageUrl(emoji, { endpoint, emojiSet, key })` adds it; the pickers pass their `publishableKey`). A server can send a secret key as `Authorization: Bearer`. |
+
+- **Key checks.** An `<img>` request has no `Origin` header, so a publishable key is checked
+  against the origin of the `Referer` (or `Origin` when there is one). The SDK pickers set
+  `referrerpolicy="strict-origin-when-cross-origin"` on these images, so the page's origin (never
+  its path) is sent even under a stricter page policy. A request with neither header is refused
+  for a key bound to origins. Emojisense's own pages (website and dashboard) show set images
+  without a key.
+- Key errors: `401 key_required` (no key), `401` unknown or revoked key, `402 plan_required` with
+  `plan: "solo"` (the account's plan has no hosted sets), `403` origin not allowed, `429` too many
+  unknown keys from one IP, `503` when the key cannot be checked now. The image of an
+  allowed request stays in browser caches for a year, also after a downgrade.
 
 - `200`: `image/svg+xml` with `Cache-Control: public, max-age=31536000, immutable`, CORS `*`, a
   `Link: <license>; rel="license"` header and a CSP that blocks scripts when the file is opened
@@ -414,14 +427,14 @@ curl -X POST https://api.emojisense.com/v1/tenants/acme/emoji \
 | ------ | ------- |
 | 200 | Also over a plan limit (`"overLimit": true`), without a key on search and reactions, and when Workers AI is down (`"degraded": true`): search never fails hard |
 | 400 | Missing or empty `q` / `text`, a body that is not JSON (reactions), a `locale` without a pack, a `culture` other than `0`/`1`/`true`/`false`, a `region` that is not an ISO 3166-1 alpha-2 region, a wrong image `Content-Type`, a bad `X-Image-Hash`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
-| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/classify-image`, `/v1/custom-pack` and the tenants API |
-| 402 | The account's plan does not include the feature (tenants API) |
-| 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key, a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
+| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/classify-image`, `/v1/custom-pack`, a hosted set image (`key_required`) and the tenants API |
+| 402 | The account's plan does not include the feature (tenants API, hosted sets: `plan_required`) |
+| 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key (for set images: the `Referer`'s origin), a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
 | 404 | No such route, emoji set, emoji or custom emoji |
 | 405 | Wrong method; `Allow` names the right one |
 | 413 | Image larger than 256 KB, or a reaction body larger than 16 KB |
 | 429 | Rate limited (per minute, see [Authentication](#authentication)), also too many key lookups that miss the key cache from one IP. Retry after the seconds in `Retry-After` (60). |
-| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read, or a key cannot be checked now on `/v1/classify-image` and `/v1/custom-pack` (`503`, with `Retry-After`) |
+| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read, or a key cannot be checked now on `/v1/classify-image`, `/v1/custom-pack` and set images (`503`, with `Retry-After`) |
 
 ## Dashboard API (`apps/dashboard`, Clerk session)
 

@@ -138,6 +138,29 @@ export async function authenticate(
   resolver: KeyResolver,
 ): Promise<Principal | Response> {
   const origin = request.headers.get("Origin");
+  const ip = clientIp(request);
+  const principal = await identify(request, url, env, resolver, { origin, ip });
+  if (principal instanceof Response) return principal;
+  const [limiter, limitKey] = rateLimitFor(env, principal, origin, ip);
+  if (limiter && !(await limiter.limit({ key: limitKey })).success) return rateLimited();
+  return principal;
+}
+
+/** The IP is a rate-limit key only. It is never logged or stored. */
+export const clientIp = (request: Request) => request.headers.get("cf-connecting-ip") ?? "local";
+
+/**
+ * The caller's key, checked, without the per-call rate limit (key lookups that miss the isolate
+ * cache are still limited). `origin` is what a publishable key's allowed origins are checked
+ * against: the `Origin` header for API calls.
+ */
+export async function identify(
+  request: Request,
+  url: URL,
+  env: Env,
+  resolver: KeyResolver,
+  { origin, ip }: { origin: string | null; ip: string },
+): Promise<Principal | Response> {
   const authorization = request.headers.get("Authorization");
   let token: string;
   let sentAs: "header" | "query";
@@ -151,44 +174,31 @@ export async function authenticate(
     sentAs = "query";
   }
 
-  // The IP is a rate-limit key only. It is never logged or stored.
-  const ip = request.headers.get("cf-connecting-ip") ?? "local";
-  let principal: Principal = { kind: "anonymous" };
-  if (token) {
-    // Checked before the lookup: the key is already exposed, so say so without a database read.
-    if (sentAs === "query" && keyKind(token) === "secret") {
+  if (!token) return { kind: "anonymous" };
+  // Checked before the lookup: the key is already exposed, so say so without a database read.
+  if (sentAs === "query" && keyKind(token) === "secret") {
+    return errorResponse(403, "secret keys must be sent as Authorization: Bearer, never in a URL");
+  }
+  const resolved = await resolver.resolve(token, { mayLookUp: keyLookupGate(env, ip) });
+  if (resolved === "limited") return rateLimited();
+  if (resolved === "unavailable") {
+    // The key store is down and this key is not cached. Serve as anonymous rather than fail
+    // (search never fails hard); the anonymous limiter still applies.
+    return { kind: "anonymous", keyUnavailable: true };
+  }
+  if (!resolved || resolved.key.revoked) return errorResponse(401, "unknown or revoked key");
+  const { key } = resolved;
+  if (key.kind === "secret") {
+    if (sentAs === "query") {
       return errorResponse(403, "secret keys must be sent as Authorization: Bearer, never in a URL");
     }
-    const resolved = await resolver.resolve(token, { mayLookUp: keyLookupGate(env, ip) });
-    if (resolved === "limited") return rateLimited();
-    if (resolved === "unavailable") {
-      // The key store is down and this key is not cached. Serve as anonymous rather than fail
-      // (search never fails hard); the anonymous limiter still applies.
-      principal = { kind: "anonymous", keyUnavailable: true };
-    } else if (!resolved || resolved.key.revoked) {
-      return errorResponse(401, "unknown or revoked key");
-    } else {
-      const { key } = resolved;
-      if (key.kind === "secret") {
-        if (sentAs === "query") {
-          return errorResponse(403, "secret keys must be sent as Authorization: Bearer, never in a URL");
-        }
-        if (origin !== null) {
-          return errorResponse(
-            403,
-            "secret keys are for servers; requests with an Origin header are refused",
-          );
-        }
-      } else if (!originAllowed(origin, key.allowedOrigins)) {
-        return errorResponse(403, "origin not allowed for this key");
-      }
-      principal = { kind: "key", key, plan: getPlan(key.plan), persistUsage: resolved.persistUsage };
+    if (request.headers.get("Origin") !== null) {
+      return errorResponse(403, "secret keys are for servers; requests with an Origin header are refused");
     }
+  } else if (!originAllowed(origin, key.allowedOrigins)) {
+    return errorResponse(403, "origin not allowed for this key");
   }
-
-  const [limiter, limitKey] = rateLimitFor(env, principal, origin, ip);
-  if (limiter && !(await limiter.limit({ key: limitKey })).success) return rateLimited();
-  return principal;
+  return { kind: "key", key, plan: getPlan(key.plan), persistUsage: resolved.persistUsage };
 }
 
 const rateLimited = () => errorResponse(429, "rate limited", { "Retry-After": "60" });

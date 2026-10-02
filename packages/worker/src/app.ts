@@ -12,6 +12,7 @@ import { QueryStats } from "./query-stats.ts";
 import { handleReactions } from "./reactions.ts";
 import { handleSearch } from "./search.ts";
 import { type Catalog, modelTag } from "./semantic.ts";
+import { authorizeEmojiSets } from "./sets/access.ts";
 import { createEmojiSetsRoute, type EmojiSetsOptions, SETS_PATH_PREFIX } from "./sets/route.ts";
 import { createShardRoute, SHARDS_PATH_PREFIX } from "./shards/route.ts";
 import type { Store } from "./store.ts";
@@ -109,9 +110,12 @@ export function createApp(options: AppOptions) {
           semantic: Boolean(env.AI),
         });
       }
-      // Public images: no key, not metered, not rate limited (a picker loads hundreds of them).
+      // Hosted set images: a key on a plan with sets, not metered, not rate limited per call (a
+      // picker loads hundreds of them).
       if (url.pathname.startsWith(SETS_PATH_PREFIX)) {
-        return emojiSets ? emojiSets(request, url, ctx, options.cache()) : errorResponse(404, "not found");
+        if (!emojiSets) return errorResponse(404, "not found");
+        const refused = await authorizeEmojiSets(request, url, env, servicesFor(env).resolver);
+        return refused ?? emojiSets(request, url, ctx, options.cache());
       }
       // Layer-2 shards: public files like the images, edge-cached.
       if (url.pathname.startsWith(SHARDS_PATH_PREFIX)) return shards(request, url, env, ctx, options.cache());

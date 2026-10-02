@@ -20,7 +20,10 @@ export interface Env {
   KEY_MISS_LIMITER?: RateLimiter;
   /** Publishable-key calls from FIRST_PARTY_ORIGINS (the website's public key), per IP. */
   SITE_LIMITER?: RateLimiter;
-  /** Comma-separated origins of our own pages (website, dashboard). Their key calls use SITE_LIMITER. */
+  /**
+   * Comma-separated origins of our own pages (website, dashboard). Their key calls use
+   * SITE_LIMITER, and they may show hosted set images without a key (sets/access.ts).
+   */
   FIRST_PARTY_ORIGINS?: string;
   EVENTS?: AnalyticsDataset;
   /** Static assets (public/): the published packs, read for locales outside the bundle. */

@@ -31,6 +31,16 @@ final class EmojiSetTests: XCTestCase {
     XCTAssertNil(EmojiSet.native.imageURL(for: "👍", endpoint: endpoint))
   }
 
+  func testHostedSetsSendThePublishableKey() throws {
+    let endpoint = try XCTUnwrap(URL(string: "https://api.emojisense.com"))
+    XCTAssertEqual(
+      EmojiSet.noto.imageURL(for: "👍", endpoint: endpoint, key: "pk_live_a+b")?.absoluteString,
+      "https://api.emojisense.com/v1/sets/noto/1F44D.svg?key=pk_live_a%2Bb")
+    XCTAssertEqual(
+      EmojiSet.noto.imageURL(for: "👍", endpoint: endpoint, key: "")?.absoluteString,
+      "https://api.emojisense.com/v1/sets/noto/1F44D.svg")
+  }
+
   func testMatchesTheTypeScriptSetList() throws {
     XCTAssertEqual(EmojiSet.allCases.map(\.rawValue), ["native", "twemoji", "noto", "fluent"])
     XCTAssertEqual(EmojiSet.allCases.filter(\.isHosted), [.twemoji, .noto, .fluent])

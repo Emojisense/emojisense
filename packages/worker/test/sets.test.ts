@@ -1,4 +1,4 @@
-import { EMOJI_SETS as PLATFORM_EMOJI_SETS } from "@emojisense/platform";
+import { hashKey, EMOJI_SETS as PLATFORM_EMOJI_SETS } from "@emojisense/platform";
 import { EMOJI_SETS, type HostedEmojiSet, type Pack } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
@@ -8,7 +8,8 @@ import { createSetCatalog } from "../src/sets/catalog.ts";
 import { IMMUTABLE, MAX_SET_SVG_BYTES } from "../src/sets/route.ts";
 import generated from "../src/sets/upstreams.json";
 import { createUpstreamResolver, UPSTREAMS, type UpstreamData } from "../src/sets/upstreams.ts";
-import { API, catalog, executionContext, memoryCache } from "./fixtures.ts";
+import { createMemoryStore, type Store } from "../src/store.ts";
+import { ALLOWED_ORIGIN, API, apiKey, catalog, executionContext, memoryCache } from "./fixtures.ts";
 
 const rows = (packEn as unknown as Pack).emoji;
 const data = generated as UpstreamData;
@@ -16,27 +17,44 @@ const SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"/>';
 const svg = (body: BodyInit = SVG, headers: Record<string, string> = {}) =>
   new Response(body, { headers: { "content-type": "image/svg+xml", ...headers } });
 
-/** The app with the real pack and upstreams.json, a fake upstream, and limiters that refuse all. */
-function setsHarness(respond: (url: string) => Response | Promise<Response> = () => svg()) {
+/** Development keys: one on a plan with hosted sets, one on Free (no sets). */
+const SETS_KEY = "pk_sets";
+const FREE_KEY = "pk_free";
+
+/**
+ * The app with the real pack and upstreams.json, a fake upstream, and limiters that refuse all.
+ * `call` sends the set key in the query, as a picker does; `send` sends the request as given.
+ */
+function setsHarness(
+  respond: (url: string) => Response | Promise<Response> = () => svg(),
+  options: { store?: Store; env?: Partial<Env> } = {},
+) {
   const upstream = vi.fn(async (input: RequestInfo | URL) => respond(String(input)));
   const cache = memoryCache();
   const ctx = executionContext();
   const limiter = { limit: vi.fn(async () => ({ success: false })) };
-  const env: Env = { ANON_LIMITER: limiter, SEARCH_LIMITER: limiter };
+  const env: Env = {
+    ANON_LIMITER: limiter,
+    SEARCH_LIMITER: limiter,
+    DEV_KEYS: `${SETS_KEY}:solo,${FREE_KEY}`,
+    ...options.env,
+  };
   const app = createApp({
     catalog,
     cache: () => cache,
+    store: () => options.store,
     emojiSets: { rows: () => rows, fetch: upstream as unknown as typeof fetch },
   });
-  const call = (path: string, init?: RequestInit) => app.fetch(new Request(`${API}${path}`, init), env, ctx);
-  return { upstream, cache, ctx, limiter, call };
+  const send = (path: string, init?: RequestInit) => app.fetch(new Request(`${API}${path}`, init), env, ctx);
+  const call = (path: string, init?: RequestInit) => send(`${path}?key=${SETS_KEY}`, init);
+  return { upstream, cache, ctx, limiter, call, send };
 }
 
 const jsdelivr = (set: HostedEmojiSet, path: string) =>
   `https://cdn.jsdelivr.net/gh/${UPSTREAMS[set].repo}@${UPSTREAMS[set].commit}/${path}`;
 
 describe("GET /v1/sets/:set/:hexcode.svg", () => {
-  it("serves the pinned upstream file as an immutable SVG, without a key or rate limit", async () => {
+  it("serves the pinned upstream file as an immutable SVG, without a rate limit", async () => {
     const h = setsHarness();
     const res = await h.call("/v1/sets/twemoji/1F600.svg");
     expect(res.status).toBe(200);
@@ -142,6 +160,79 @@ describe("GET /v1/sets/:set/:hexcode.svg", () => {
     const res = await h.call("/v1/sets/twemoji/1F600.svg");
     expect(res.status).toBe(404);
     expect(res.headers.get("cache-control")).toBe("no-store");
+    warn.mockRestore();
+  });
+});
+
+describe("access to hosted sets", () => {
+  const PATH = "/v1/sets/twemoji/1F600.svg";
+  const SITE = "https://emojisense.example";
+  const BROWSER_KEY = "pk_live_browsersolo0000000000000000000";
+
+  /** A Solo key bound to ALLOWED_ORIGIN, as a customer's picker has. */
+  async function customerStore() {
+    const key = apiKey(
+      { appId: "app_solo", accountId: "acc_solo" },
+      { plan: "solo", allowedOrigins: [ALLOWED_ORIGIN] },
+    );
+    return createMemoryStore({ [await hashKey(BROWSER_KEY)]: key });
+  }
+
+  it("needs a key: anonymous requests get 401 key_required, without an upstream request", async () => {
+    const h = setsHarness();
+    const res = await h.send(PATH);
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({
+      error: "key_required",
+      message: expect.stringContaining("Solo"),
+    });
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(h.upstream).not.toHaveBeenCalled();
+  });
+
+  it("needs a plan that includes hosted sets: 402 plan_required names the cheapest one", async () => {
+    const h = setsHarness();
+    const res = await h.send(`${PATH}?key=${FREE_KEY}`);
+    expect(res.status).toBe(402);
+    expect(await res.json()).toMatchObject({ error: "plan_required", plan: "solo" });
+    expect(h.upstream).not.toHaveBeenCalled();
+  });
+
+  it("checks a publishable key against the Referer's origin, since images send no Origin", async () => {
+    const h = setsHarness(undefined, { store: await customerStore() });
+    const page = (url: string) => ({ headers: { Referer: url } });
+    expect((await h.send(`${PATH}?key=${BROWSER_KEY}`, page(`${ALLOWED_ORIGIN}/chat/42`))).status).toBe(200);
+    expect((await h.send(`${PATH}?key=${BROWSER_KEY}`, { headers: { Origin: ALLOWED_ORIGIN } })).status).toBe(
+      200,
+    );
+    const elsewhere = await h.send(`${PATH}?key=${BROWSER_KEY}`, page("https://hotlinker.example/"));
+    expect(elsewhere.status).toBe(403);
+    expect((await h.send(`${PATH}?key=${BROWSER_KEY}`)).status).toBe(403);
+    expect((await h.send(`${PATH}?key=pk_live_unknown0000000000000000000000`)).status).toBe(401);
+  });
+
+  it("lets our own pages show set images without a key", async () => {
+    const h = setsHarness(undefined, {
+      env: { FIRST_PARTY_ORIGINS: `${SITE},https://app.emojisense.example` },
+    });
+    expect((await h.send(PATH, { headers: { Referer: `${SITE}/docs/guides/emoji-sets/` } })).status).toBe(
+      200,
+    );
+    expect(
+      (await h.send(PATH, { headers: { Referer: "https://app.emojisense.example/apps/1/sets" } })).status,
+    ).toBe(200);
+    expect(
+      (await h.send(PATH, { headers: { Referer: "https://emojisense.example.evil.test/" } })).status,
+    ).toBe(401);
+    expect(h.limiter.limit).not.toHaveBeenCalled();
+  });
+
+  it("answers 503 when a key was sent but the key store is down", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const store = { findKeyByHash: vi.fn().mockRejectedValue(new Error("D1 unavailable")) };
+    const h = setsHarness(undefined, { store: store as unknown as Store });
+    const res = await h.send(`${PATH}?key=${BROWSER_KEY}`, { headers: { Referer: `${ALLOWED_ORIGIN}/` } });
+    expect(res.status).toBe(503);
     warn.mockRestore();
   });
 });
