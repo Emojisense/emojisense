@@ -5,6 +5,10 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
+      "!.claude",
+      "!packages/data/enrichment/i18n",
+      "!packages/data/enrichment/_batches",
+      "!packages/worker/src/generated",
       "!**/enrichment/*.json",
       "!**/reports/*.json",
       "!**/queries/*.jsonl",

@@ -24,11 +24,11 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
 | `cultureUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the culture and the moment join the results after the top result, never above it (`source: "culture"`, with `context` and `cultureId`). A failed load is ignored. |
 | `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. Default: the region of the browser's language (`navigator.language` `"pt-BR"` → `"BR"`; none without a region subtag). It is read on the device and never sent. `""` turns regional entries off. |
+| `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |
 
 `useEmojiSearch(query, sense, { culture: false })` keeps the canonical ranking (for tests and
 benchmarks). `useRelevantNow(sense, { limit })` returns `{ emoji, hexcode, context, cultureId }`
 for a "relevant now" shelf: featured seasonal and event emoji active today.
-| `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |
 
 For your own components, `<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />`
 draws one emoji the same way (a 1em image, or the text).

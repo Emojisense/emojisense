@@ -61,14 +61,28 @@
   color: var(--ink-2);
 }
 
+.uc {
+  container: uc / inline-size;
+}
+
 .uc-stage {
+  --uc-stage-height: clamp(32rem, 60vh, 38rem);
   position: relative;
-  height: clamp(32rem, 60vh, 38rem);
+  height: var(--uc-stage-height);
   border: 0.0625rem solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--bg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+}
+
+/* The photo demo fills the stage while its columns sit side by side. When it stacks them (below
+   46rem, see photo.css) it needs more height than that, so here the stage height is a minimum: the
+   demo stretches to it or grows past it. */
+[data-case="photos"] .uc-stage {
+  display: grid;
+  height: auto;
+  min-height: var(--uc-stage-height);
 }
 
 .uc-loading {
@@ -99,8 +113,9 @@
   }
 }
 
-/* On phones each demo takes its natural height. Reserve about that much per demo, so a demo that
-   loads after its tab opens does not push the rest of the page down. */
+/* On phones each demo takes its natural height. Reserve that height, so a demo that loads after its
+   tab opens does not push the rest of the page down. The heights below were measured on the landing
+   page in headless Chrome and include the 0.125rem stage border. */
 @media (max-width: 40rem) {
   .uc-stage {
     height: auto;
@@ -112,19 +127,40 @@
     height: 40rem;
   }
 
+  /* The editor stops growing at 40rem. */
   [data-case="docs"] .uc-stage {
-    min-height: 40rem;
+    min-height: 40.125rem;
   }
 
+  /* Narrow screens wrap more text: about 69rem at 320 px, then 1rem less per rem of stage width,
+     and at most 61.75rem from 430 px. */
   [data-case="workspaces"] .uc-stage {
-    min-height: 60rem;
+    min-height: max(61.75rem, 87.25rem - 100cqi);
   }
 
-  [data-case="photos"] .uc-stage {
-    min-height: 54rem;
-  }
-
+  /* The chat has a set height (assistant.css); the install panel below it is about 31.875rem. */
   [data-case="assistant"] .uc-stage {
-    min-height: 66rem;
+    min-height: calc(min(36rem, 86svh) + 31.875rem);
+  }
+}
+
+/* The photo demo stacks below 46rem of its own width (photo.css), which is 46.125rem of stage width,
+   up to about 800 px of screen. Stacked, with its first photo read, it is about 58rem tall, and more
+   on narrow screens, where its text wraps. */
+@container uc (width < 46.125rem) {
+  [data-case="photos"] .uc-stage {
+    min-height: 59rem;
+  }
+}
+
+@container uc (width < 24.25rem) {
+  [data-case="photos"] .uc-stage {
+    min-height: 60.5rem;
+  }
+}
+
+@container uc (width < 18.5rem) {
+  [data-case="photos"] .uc-stage {
+    min-height: 63.25rem;
   }
 }
