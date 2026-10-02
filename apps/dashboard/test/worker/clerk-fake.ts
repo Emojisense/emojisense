@@ -11,7 +11,8 @@ const HARNESS_NOW = Date.UTC(2026, 9, 15, 12);
 
 export interface FakeSession {
   userId: string;
-  email?: string;
+  /** Defaults to `<userId>@example.com`; `null` leaves the claim out. */
+  email?: string | null;
   /** Defaults to true. */
   emailVerified?: boolean;
   name?: string;
@@ -49,7 +50,7 @@ export class FakeClerk implements ClerkGateway {
       sid: `sess_${session.userId}`,
       iat: Math.floor((session.issuedAt ?? HARNESS_NOW) / 1000),
       azp: session.azp ?? "http://localhost:8790",
-      ...(session.email === undefined ? {} : { email: session.email }),
+      ...(session.email === null ? {} : { email: session.email ?? `${session.userId}@example.com` }),
       email_verified: session.emailVerified ?? true,
       ...(session.name === undefined ? {} : { name: session.name }),
       ...session.claims,

@@ -10,6 +10,7 @@ import { APP, me, stubApi, unauthorized } from "./fake-api";
 
 const clerk = vi.hoisted(() => {
   const listeners = new Set<() => void>();
+  const statusListeners = new Set<(status: string) => void>();
   const state = {
     isLoaded: true,
     userId: null as string | null,
@@ -27,6 +28,11 @@ const clerk = vi.hoisted(() => {
   return {
     state,
     listeners,
+    statusListeners,
+    setStatus(status: string) {
+      state.status = status;
+      for (const listener of statusListeners) listener(status);
+    },
     setUser(userId: string | null) {
       state.userId = userId;
       notify();
@@ -60,6 +66,11 @@ vi.mock("@clerk/react", async () => {
     },
     useClerk: () => ({
       status: clerk.state.status,
+      on: (_event: string, listener: (status: string) => void, options?: { notify?: boolean }) => {
+        clerk.statusListeners.add(listener);
+        if (options?.notify) listener(clerk.state.status);
+      },
+      off: (_event: string, listener: (status: string) => void) => clerk.statusListeners.delete(listener),
       user: clerk.state.userId
         ? { deleteSelfEnabled: clerk.state.deleteSelfEnabled, delete: () => clerk.state.deleteUser() }
         : null,
@@ -103,6 +114,8 @@ describe("Clerk sign-in", () => {
       signInUrl: "/",
       signUpUrl: "/",
       afterSignOutUrl: "/",
+      signInForceRedirectUrl: "/",
+      signUpForceRedirectUrl: "/",
     });
   });
 
@@ -126,9 +139,11 @@ describe("Clerk sign-in", () => {
 
   it("says so when Clerk's scripts do not load", async () => {
     clerk.state.isLoaded = false;
-    clerk.state.status = "error";
+    clerk.state.status = "loading";
     const { calls } = stubApi({ "GET /api/me": unauthorized });
     renderWithClerk();
+    expect(screen.getByRole("status").textContent).toContain("Loading the dashboard");
+    act(() => clerk.setStatus("error"));
     expect((await screen.findByRole("alert")).textContent).toContain("The sign-in service did not load");
     expect(calls).toEqual([]);
   });
@@ -149,6 +164,21 @@ describe("Clerk sign-in", () => {
     const authed = calls.filter((call) => call.authorization);
     expect(authed.map((call) => `${call.method} ${call.path}`)).toEqual(["GET /api/me", "GET /api/apps"]);
     expect(new Set(authed.map((call) => call.authorization))).toEqual(new Set(["Bearer token-for-user_ada"]));
+  });
+
+  it("asks for a verified email when the API needs one", async () => {
+    clerk.state.userId = "user_ada";
+    stubApi({
+      "GET /api/me": {
+        status: 403,
+        body: { error: { code: "email_required", message: "The dashboard needs a verified email address." } },
+      },
+    });
+    renderWithClerk();
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "The dashboard needs a verified email address.",
+    );
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeTruthy();
   });
 
   it("explains a session the API does not accept, and signs out from there", async () => {

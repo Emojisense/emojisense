@@ -96,8 +96,8 @@ Set these in the Clerk Dashboard, for each instance:
    }
    ```
 
-   Without these claims, sign-in still works, but accounts have no email: invites with an email
-   cannot match, and account deletion asks for "delete my account".
+   Without these claims (or without a verified email) a new user gets `403 email_required` and
+   no account: the email links legacy accounts, matches invites and confirms deletion.
 2. **User & authentication:** email address on, required, and verified at sign-up. Social
    connections are optional (production needs your own OAuth credentials for each one). Turn on
    "allow users to delete their accounts", so that Settings → Delete account can delete the
@@ -139,8 +139,8 @@ API in `CLERK_PUBLISHABLE_KEY`; `exp`/`nbf`; the session is not `pending`. Cooki
 
 | Topic | Rule |
 | ----- | ---- |
-| Sign-in | A Clerk session token on every API call (see [Clerk](#clerk)); 401 without a valid one. The SPA asks `GET /api/me` once Clerk has loaded and again when Clerk's user changes. A 401 while Clerk has a session shows "We could not open your account" with Try again and Sign out, so a setup mistake cannot loop. |
-| Accounts | The first request of a Clerk user creates the account from the claims (`account_created` is logged with `verifiedEmail: true/false` only). Name and email then follow the claims; only a verified email is stored, and an email that another account has stays out (UNIQUE). A legacy GitHub account with the same verified email moves to Clerk once (`accounts.clerk_user_id`, migration 0003). |
+| Sign-in | A Clerk session token on every API call (see [Clerk](#clerk)); 401 without a valid one. The SPA asks `GET /api/me` once Clerk has loaded and again when Clerk's user changes. A 401 or `email_required` while Clerk has a session shows "We could not open your account" with Try again and Sign out, so a setup mistake cannot loop; so does a sign-out that Clerk refused. If clerk-js does not load (Clerk's status event says `error`), the app says so instead of spinning. After sign-in Clerk always goes to `/` (forced redirect URLs, so a `redirect_url` in the query is ignored). |
+| Accounts | The first request of a Clerk user creates the account from the claims; it needs a verified email (`403 email_required` otherwise). `account_created` is logged with `verifiedEmail: true/false` only. Name and email then follow the claims; only a verified email is stored, and an email that another account has stays out (UNIQUE). A legacy GitHub account with the same verified email moves to Clerk once (`accounts.clerk_user_id`, migration 0003). |
 | Dev sign-in | `/api/auth/dev?login=<name>` sets `es_dev_account` (the account id, HttpOnly). It works only with `ENVIRONMENT=development` on localhost, and never opens an account that has a Clerk user. |
 | Writes | POST/PATCH/DELETE with an `Origin` other than the dashboard's own get 403, which also blocks same-site sibling domains. |
 | CSP | `vite.config.ts` emits `_headers` from `static-headers.ts`. With a Clerk key it adds only Clerk's sources: the Frontend API (script, connect), `img.clerk.com`, Cloudflare Turnstile and `*.protect.clerk.com` (script, frame, connect), `worker-src 'self' blob:`, and `style-src 'unsafe-inline'` (Clerk's CSS-in-JS). |

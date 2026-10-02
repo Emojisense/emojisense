@@ -2,7 +2,8 @@
  * Who is calling. Two ways in, never mixed:
  * - a Clerk session token in `Authorization: Bearer` (src/worker/clerk.ts), and
  * - on localhost with ENVIRONMENT=development only, the dev sign-in cookie.
- * The first Clerk sign-in creates the account. Name and email then follow the token's claims.
+ * The first Clerk sign-in creates the account; it needs a verified email claim, so a legacy
+ * account can be found by it and invites can match. Name and email then follow the claims.
  */
 import { type AccountRow, randomId } from "@emojisense/platform";
 import { authorizedParties, bearerToken, type ClerkGateway, type ClerkIdentity } from "./clerk";
@@ -43,6 +44,13 @@ export function clerkGateway(ctx: RequestContext): ClerkGateway | null {
   return ctx.deps.clerk?.(ctx.env) ?? null;
 }
 
+const emailRequired = () =>
+  new HttpError(
+    403,
+    "email_required",
+    "The dashboard needs a verified email address. Sign in with an email address, or verify the one in your sign-in profile.",
+  );
+
 const clerkUnconfigured = () =>
   new HttpError(
     503,
@@ -74,6 +82,8 @@ async function clerkCaller(ctx: RequestContext, token: string): Promise<Caller |
     );
     return null;
   }
+  // Also what a session token without the custom claims looks like (see the README).
+  if (!identity.email) throw emailRequired();
   return { account: await createClerkAccount(db, identity, ctx.deps.now()), verifiedEmail: identity.email };
 }
 
@@ -121,7 +131,7 @@ function linkLegacyAccount(db: D1Database, identity: ClerkIdentity): Promise<Acc
  * GitHub sign-in did.
  */
 async function createClerkAccount(db: D1Database, identity: ClerkIdentity, now: number): Promise<AccountRow> {
-  const linked = identity.email ? await linkLegacyAccount(db, identity) : null;
+  const linked = await linkLegacyAccount(db, identity);
   if (linked) return linked;
   const insert = async (email: string | null) => {
     const result = await db
@@ -140,7 +150,6 @@ async function createClerkAccount(db: D1Database, identity: ClerkIdentity, now: 
     account = await findByClerkUser(db, identity.userId);
   }
   if (!account) throw new Error("account insert returned no row");
-  // A missing email usually means the session token lacks the custom claims (README).
   if (created)
     console.log(JSON.stringify({ event: "account_created", verifiedEmail: account.email !== null }));
   return account;

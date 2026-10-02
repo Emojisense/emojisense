@@ -148,7 +148,15 @@ export function SignInPage({ invite = false }: { invite?: boolean }) {
 }
 
 /** Clerk has a session, but the dashboard API does not accept it. */
-export function SessionRejectedPage({ onRetry, onSignOut }: { onRetry: () => void; onSignOut: () => void }) {
+export function SessionRejectedPage({
+  message,
+  onRetry,
+  onSignOut,
+}: {
+  message?: string;
+  onRetry: () => void;
+  onSignOut: () => void;
+}) {
   useEffect(() => {
     document.title = "Sign-in problem · Emojisense dashboard";
   }, []);
@@ -163,8 +171,8 @@ export function SessionRejectedPage({ onRetry, onSignOut }: { onRetry: () => voi
           </span>
           <h1 className="auth-title">We could not open your account</h1>
           <p className="page-lede" role="alert">
-            You are signed in, but the dashboard did not accept the sign-in. Try again, or sign out and sign
-            in once more.
+            {message ??
+              "You are signed in, but the dashboard did not accept the sign-in. Try again, or sign out and sign in once more."}
           </p>
           <div className="dialog-actions">
             <button type="button" className="btn" onClick={onSignOut}>

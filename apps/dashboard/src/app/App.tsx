@@ -37,7 +37,7 @@ type AuthState =
   | { status: "signed-out" }
   | { status: "signed-in"; me: Me }
   /** Clerk has a session, but the API does not accept it (a setup problem, or a deleted account). */
-  | { status: "rejected" }
+  | { status: "rejected"; message?: string }
   | { status: "error"; message: string };
 
 const SECTION_PAGES: Record<AppSection, ComponentType> = {
@@ -105,11 +105,11 @@ export function App() {
     try {
       setAuth({ status: "signed-in", me: await api.me() });
     } catch (error) {
-      setAuth(
-        error instanceof ApiError && error.status === 401
-          ? unauthorized()
-          : { status: "error", message: errorMessage(error) },
-      );
+      if (error instanceof ApiError && error.status === 401) setAuth(unauthorized());
+      // Signed in with Clerk, but without a verified email: only signing out helps.
+      else if (error instanceof ApiError && error.code === "email_required")
+        setAuth({ status: "rejected", message: error.message });
+      else setAuth({ status: "error", message: errorMessage(error) });
     }
   }, [unauthorized]);
 
@@ -132,9 +132,13 @@ export function App() {
   const signOut = useCallback(async () => {
     // Clears the dev sign-in cookie, then ends the Clerk session.
     await api.logout().catch(() => undefined);
-    await provider.signOut().catch(() => undefined);
+    const ended = await provider.signOut().then(
+      () => true,
+      () => false,
+    );
     forgetPendingInvite();
-    setAuth({ status: "signed-out" });
+    // If Clerk kept the session, the sign-in form would face a signed-in user: offer sign-out again.
+    setAuth(ended ? { status: "signed-out" } : { status: "rejected" });
     navigate("/", { replace: true });
   }, [provider]);
 
@@ -183,7 +187,13 @@ export function App() {
     );
   }
   if (auth.status === "rejected") {
-    return <SessionRejectedPage onRetry={() => void loadMe()} onSignOut={() => void signOut()} />;
+    return (
+      <SessionRejectedPage
+        message={auth.message}
+        onRetry={() => void loadMe()}
+        onSignOut={() => void signOut()}
+      />
+    );
   }
   if (auth.status === "error") {
     return (

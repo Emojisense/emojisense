@@ -359,8 +359,9 @@ Clerk signs people in, in the browser. Every signed-in route needs `Authorizatio
 <Clerk session token>` (from Clerk's `getToken()`); cookies are not read. The Worker verifies the
 token without a network call (Clerk's JWT public key, `azp` in `CLERK_AUTHORIZED_PARTIES`, issuer,
 expiry, session not pending) and reads `email`, `email_verified` and `name` from the custom session
-claims. The first request of a new Clerk user creates the account. Without a valid token the
-answer is `401 unauthorized`; a token while Clerk is not configured gets `503 clerk_unconfigured`.
+claims. The first request of a new Clerk user creates the account; without a verified email the
+answer is `403 email_required` and no account. Without a valid token the answer is
+`401 unauthorized`; a token while Clerk is not configured gets `503 clerk_unconfigured`.
 
 | Method + path | Purpose |
 | ------------- | ------- |
@@ -423,6 +424,7 @@ answer is `401 unauthorized`; a token while Clerk is not configured gets `503 cl
 | 410 | `invite_used`, `invite_expired` | The invite was accepted already, or is older than 7 days |
 | 400 | `confirmation_required` | `DELETE /api/me` without the right `confirm` value |
 | 403 | `invite_email_mismatch` | The invite names another email than the caller's verified one |
+| 403 | `email_required` | A new Clerk user whose session token has no verified email (or no custom claims) |
 | 503 | `storage_unavailable` | `DELETE /api/me` could not delete the custom emoji images. Nothing was deleted; try again. |
 | 503 | `clerk_unconfigured` | A bearer token reached a Worker without `CLERK_PUBLISHABLE_KEY` and `CLERK_JWT_KEY` |
 

@@ -177,18 +177,28 @@ describe("Clerk sessions", () => {
     expect(accounts(h)).toEqual([]);
   });
 
-  it("keeps an unverified or missing email out of the account", async () => {
+  it("creates no account without a verified email", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    const unverified = clerk.token({ userId: "user_a", email: "a@example.com", emailVerified: false });
+    // No custom claims at all: the Clerk session token was not customized.
+    const bare = clerk.token({ userId: "user_b", email: null, emailVerified: false });
+    for (const token of [unverified, bare]) {
+      const response = await h.call("GET", "/api/me", { token });
+      expect(response.status).toBe(403);
+      expect(await body(response)).toMatchObject({ error: { code: "email_required" } });
+    }
+    expect(accounts(h)).toEqual([]);
+  });
+
+  it("keeps working for an existing account when a later token lacks the email", async () => {
     const h = createHarness();
     const clerk = clerkOf(h);
     vi.spyOn(console, "log").mockImplementation(() => {});
-    const unverified = clerk.token({ userId: "user_a", email: "a@example.com", emailVerified: false });
-    await h.call("GET", "/api/me", { token: unverified });
-    // No custom claims at all: the Clerk session token was not customized.
-    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_b" }) });
-    expect(accounts(h)).toEqual([
-      expect.objectContaining({ clerk_user_id: "user_a", email: null, name: null }),
-      expect.objectContaining({ clerk_user_id: "user_b", email: null, name: null }),
-    ]);
+    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_a", email: "a@example.com" }) });
+    const bare = clerk.token({ userId: "user_a", email: null, emailVerified: false });
+    const me = await body<MeResponse>(await h.call("GET", "/api/me", { token: bare }));
+    expect(me.account.email).toBe("a@example.com");
   });
 
   it("follows name and email changes in the claims, but never takes another account's email", async () => {
@@ -234,14 +244,14 @@ describe("Clerk sessions", () => {
     );
     vi.spyOn(console, "log").mockImplementation(() => {});
 
-    // An unverified email does not link.
+    // An unverified email does not link (and creates no account).
     const unverified = clerk.token({ userId: "user_x", email: "octo@example.com", emailVerified: false });
-    await h.call("GET", "/api/me", { token: unverified });
+    expect((await h.call("GET", "/api/me", { token: unverified })).status).toBe(403);
     const token = clerk.token({ userId: "user_octo", email: "Octo@Example.com" });
     const me = await body<MeResponse>(await h.call("GET", "/api/me", { token }));
     expect(me.account).toMatchObject({ id: "legacy", name: "Octo Cat", email: "octo@example.com" });
     expect(me.plan.id).toBe("pro");
-    expect(accounts(h).map((row) => row.clerk_user_id)).toEqual(["user_octo", "user_x"]);
+    expect(accounts(h).map((row) => row.clerk_user_id)).toEqual(["user_octo"]);
   });
 
   it("creates one account when the first requests run in parallel", async () => {

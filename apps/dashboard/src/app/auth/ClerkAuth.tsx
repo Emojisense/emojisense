@@ -3,7 +3,7 @@
  * and the sign-in form. The Worker verifies the token (src/worker/clerk.ts).
  */
 import { ClerkProvider, type ClerkProviderProps, SignIn, useAuth, useClerk } from "@clerk/react";
-import { type ReactNode, useLayoutEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { setTokenSource } from "../api";
 import { navigate } from "../router";
 import { type AuthAdapter, AuthContext } from "./context";
@@ -60,8 +60,14 @@ function clerkNavigate(to: string, replace: boolean): void {
 function ClerkBridge({ children }: { children: ReactNode }) {
   const { isLoaded, userId, getToken, signOut } = useAuth();
   const clerk = useClerk();
-  // Read here, so the adapter changes when Clerk's status does (the clerk object stays the same).
-  const failed = clerk.status === "error";
+  // When clerk-js cannot load, Clerk never reports "loaded"; its status event says "error".
+  const [status, setStatus] = useState(clerk.status);
+  useEffect(() => {
+    const onStatus = (next: typeof clerk.status) => setStatus(next);
+    clerk.on("status", onStatus, { notify: true });
+    return () => clerk.off("status", onStatus);
+  }, [clerk]);
+  const failed = status === "error";
 
   // A layout effect runs before the app's effects, so the first API call already has the token.
   useLayoutEffect(() => {
@@ -98,11 +104,12 @@ export function ClerkAuth({ publishableKey, children }: { publishableKey: string
       publishableKey={publishableKey}
       appearance={APPEARANCE}
       telemetry={false}
-      // One page signs in and signs up (combined flow); the app then routes from "/".
+      // One page signs in and signs up (combined flow). After it, always "/" (a forced, same-origin
+      // path: a redirect_url in the query is ignored); the app then routes from there.
       signInUrl="/"
       signUpUrl="/"
-      signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
+      signInForceRedirectUrl="/"
+      signUpForceRedirectUrl="/"
       afterSignOutUrl="/"
       routerPush={(to) => clerkNavigate(to, false)}
       routerReplace={(to) => clerkNavigate(to, true)}

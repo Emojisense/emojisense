@@ -255,15 +255,15 @@ describe("invites by email", () => {
   it("refuses another email and an unverified one, and keeps the invite open", async () => {
     const { h, ada, acceptAs } = await emailSetup();
     const invite = await createInvite(h, ada, { role: "viewer", email: "sam@example.com" });
-    const sessions: FakeSession[] = [
-      { userId: "user_eve", email: "eve@example.com" },
-      { userId: "user_sam", email: "sam@example.com", emailVerified: false },
-      { userId: "user_anon" },
+    const sessions: [FakeSession, string][] = [
+      [{ userId: "user_eve", email: "eve@example.com" }, "invite_email_mismatch"],
+      // An unverified email creates no account at all.
+      [{ userId: "user_sam", email: "sam@example.com", emailVerified: false }, "email_required"],
     ];
-    for (const session of sessions) {
+    for (const [session, code] of sessions) {
       const response = await acceptAs(invite, session);
       expect(response.status).toBe(403);
-      expect(await body(response)).toMatchObject({ error: { code: "invite_email_mismatch" } });
+      expect(await body(response)).toMatchObject({ error: { code } });
     }
     expect(h.db.rows("SELECT accepted_at FROM team_invites")).toEqual([{ accepted_at: null }]);
     expect((await acceptAs(invite, { userId: "user_sam", email: "sam@example.com" })).status).toBe(200);
@@ -272,7 +272,7 @@ describe("invites by email", () => {
   it("lets anyone with the link in when the invite has no email", async () => {
     const { h, ada, acceptAs } = await emailSetup();
     const invite = await createInvite(h, ada, { role: "viewer" });
-    expect((await acceptAs(invite, { userId: "user_anon" })).status).toBe(200);
+    expect((await acceptAs(invite, { userId: "user_anyone" })).status).toBe(200);
   });
 
   it("matches a dev account by its dev email", async () => {
