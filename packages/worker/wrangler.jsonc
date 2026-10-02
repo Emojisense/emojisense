@@ -4,11 +4,22 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-24",
   "observability": { "enabled": true },
-  // Pack files (/v1/pack/<version>/…) are static assets: free, immutable, CDN-cached.
-  "assets": { "directory": "./public" },
+  // docs/API.md: the Search API runs on 8788 locally (8787 is taken on the owner's machine).
+  "dev": { "port": 8788 },
+  "assets": {
+    "directory": "./public",
+    // Packs (/v1/pack/*) and shards (/p/*) are static assets: free, immutable, and never run the
+    // Worker. Only the API routes run it first; the negative rule keeps packs on the asset path.
+    "run_worker_first": ["/v1/*", "!/v1/pack/*"]
+  },
   // Workers AI has no local emulator: even `wrangler dev` calls Cloudflare (needs `wrangler login`).
   // Without it the Worker degrades to alias-only results.
   "ai": { "binding": "AI" },
+  // Shared with apps/dashboard: keys, apps and usage_monthly (packages/platform/migrations).
+  // `wrangler dev` uses a local SQLite copy; apply migrations with `pnpm db:migrate`.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "emojisense", "migrations_dir": "../platform/migrations" }
+  ],
   "ratelimits": [
     { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
     { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
@@ -16,19 +27,23 @@
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
   "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }],
   "vars": {
-    // Comma-separated publishable keys. Phase 3 moves keys to a store with per-tenant limits.
-    "PUBLISHABLE_KEYS": "pk_demo"
+    // Keys accepted without a database row (`key` or `key:plan`, comma-separated), metered in
+    // memory only. pk_demo is the demo app's key; remove it once the demo has a real key.
+    "DEV_KEYS": "pk_demo"
   },
   "env": {
     // `wrangler dev --env offline`: no Workers AI binding, so it runs with no Cloudflare login.
     // Bindings do not inherit into environments, so they are repeated here.
     "offline": {
+      "d1_databases": [
+        { "binding": "DB", "database_name": "emojisense", "migrations_dir": "../platform/migrations" }
+      ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
-      "vars": { "PUBLISHABLE_KEYS": "pk_demo" }
+      "vars": { "DEV_KEYS": "pk_demo,sk_live_local:pro" }
     }
   }
 }
