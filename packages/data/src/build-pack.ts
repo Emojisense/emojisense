@@ -13,6 +13,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { normalize, PACK_FORMAT, PACK_FORMAT_VERSION, type Pack, type PackRow } from "emojisense";
+import { LOCALE_CODES } from "./locales.ts";
 import { writeManifest } from "./manifest.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
 import type { BaseEmoji } from "./types.ts";
@@ -44,17 +45,18 @@ function fields(lists: string[][]): string[] {
   );
 }
 
-function buildPacks(locale: "en" | "tr"): { core: Pack; ext: Pack } {
+function buildPacks(locale: string): { core: Pack; ext: Pack } {
   const core: PackRow[] = [];
   const ext: PackRow[] = [];
   for (const e of emoji) {
     const v = validated[e.hexcode]?.[locale];
-    const label = locale === "en" ? e.label : (e.tr.label ?? e.label);
+    const cldr = e.i18n[locale];
+    const label = locale === "en" ? e.label : (cldr?.label ?? e.label);
     const aliases = v?.alias ?? [];
     const [, shortcode, keyword, alias, typo, low, extAlias] = fields([
       [label],
       locale === "en" ? e.shortcodes : [],
-      locale === "en" ? e.tags : e.tr.tags,
+      locale === "en" ? e.tags : (cldr?.tags ?? []),
       aliases.slice(0, initialAliases),
       v?.typo ?? [],
       v?.low ?? [],
@@ -92,7 +94,12 @@ function buildDocuments() {
     const en = validated[e.hexcode]?.en;
     const tr = validated[e.hexcode]?.tr;
     const enTerms = [...e.tags, ...(en?.alias ?? []).slice(0, DOC_ALIASES.en)];
-    const trTerms = [e.tr.label ?? "", ...e.tr.tags, ...(tr?.alias ?? []).slice(0, DOC_ALIASES.tr)];
+    const trCldr = e.i18n.tr;
+    const trTerms = [
+      trCldr?.label ?? "",
+      ...(trCldr?.tags ?? []),
+      ...(tr?.alias ?? []).slice(0, DOC_ALIASES.tr),
+    ];
     const enText = [en?.desc ?? "", enTerms.join(", ")].join(" ");
     const trText = [tr?.desc ?? "", trTerms.join(", ")].join(" ");
     return { hexcode: e.hexcode, title: e.label, en: enText.trim(), tr: trText.trim() };
@@ -102,7 +109,7 @@ function buildDocuments() {
 const outDir = args.out ?? join(DATA_ROOT, "dist", "packs", config.packVersion);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
-for (const locale of ["en", "tr"] as const) {
+for (const locale of LOCALE_CODES) {
   const { core, ext } = buildPacks(locale);
   writeFileSync(join(outDir, `pack.${locale}.json`), JSON.stringify(core));
   writeFileSync(join(outDir, `pack.${locale}.ext.json`), JSON.stringify(ext));

@@ -1,47 +1,59 @@
 /**
- * Collect batch parts written by the enrichment agents into one committed file per group:
- *   enrichment/_batches/bNN.pK.json → enrichment/<group>.json (sorted by Emojibase order)
- * Existing group files are kept and overridden per hexcode, so a partial batch can be merged.
+ * Collect batch parts written by the enrichment agents into committed files, one per group:
+ *   enrichment/_batches/bNN.pK.json            → enrichment/<group>.json            (en + tr records)
+ *   enrichment/_batches/<locale>/bNN.pK.json   → enrichment/i18n/<locale>/<group>.json
+ * Existing files are kept and overridden per hexcode, so a partial batch can be merged.
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { LOCALE_CODES } from "./locales.ts";
 import { BASE_FILE, ENRICHMENT_DIR } from "./paths.ts";
-import type { BaseEmoji, EnrichmentRecord } from "./types.ts";
+import type { BaseEmoji } from "./types.ts";
 
 const { emoji }: { emoji: BaseEmoji[] } = JSON.parse(readFileSync(BASE_FILE, "utf8"));
-const base = new Map(emoji.map((e) => [e.hexcode, e]));
-
-const byHexcode = new Map<string, EnrichmentRecord>();
+const known = new Set(emoji.map((e) => e.hexcode));
 const groups = [...new Set(emoji.map((e) => e.group))];
-for (const group of groups) {
-  const path = join(ENRICHMENT_DIR, `${group}.json`);
-  if (!existsSync(path)) continue;
-  for (const record of JSON.parse(readFileSync(path, "utf8")) as EnrichmentRecord[]) {
-    byHexcode.set(record.hexcode, record);
+const PART = /^b\d+\.p\d+\.json$/;
+
+/** Merge `batchDir` parts into per-group files under `targetDir`. Returns [added, total]. */
+function mergeInto(batchDir: string, targetDir: string): [number, number] {
+  const byHexcode = new Map<string, { hexcode: string }>();
+  for (const group of groups) {
+    const path = join(targetDir, `${group}.json`);
+    if (!existsSync(path)) continue;
+    for (const r of JSON.parse(readFileSync(path, "utf8")) as { hexcode: string }[])
+      byHexcode.set(r.hexcode, r);
   }
-}
-
-const batchDir = join(ENRICHMENT_DIR, "_batches");
-const parts = existsSync(batchDir) ? readdirSync(batchDir).filter((f) => /^b\d+\.p\d+\.json$/.test(f)) : [];
-let added = 0;
-for (const part of parts) {
-  for (const record of JSON.parse(readFileSync(join(batchDir, part), "utf8")) as EnrichmentRecord[]) {
-    if (!base.has(record.hexcode)) throw new Error(`${part}: unknown hexcode ${record.hexcode}`);
-    byHexcode.set(record.hexcode, record);
-    added++;
+  let added = 0;
+  const parts = existsSync(batchDir) ? readdirSync(batchDir).filter((f) => PART.test(f)) : [];
+  for (const part of parts) {
+    for (const record of JSON.parse(readFileSync(join(batchDir, part), "utf8")) as { hexcode: string }[]) {
+      if (!known.has(record.hexcode))
+        throw new Error(`${batchDir}/${part}: unknown hexcode ${record.hexcode}`);
+      byHexcode.set(record.hexcode, record);
+      added++;
+    }
   }
+  if (byHexcode.size === 0) return [0, 0];
+  mkdirSync(targetDir, { recursive: true });
+  for (const group of groups) {
+    const records = emoji
+      .filter((e) => e.group === group && byHexcode.has(e.hexcode))
+      .map((e) => byHexcode.get(e.hexcode));
+    if (records.length === 0) continue;
+    writeFileSync(
+      join(targetDir, `${group}.json`),
+      `[\n${records.map((r) => JSON.stringify(r)).join(",\n")}\n]\n`,
+    );
+  }
+  return [added, byHexcode.size];
 }
 
-for (const group of groups) {
-  const records = emoji
-    .filter((e) => e.group === group && byHexcode.has(e.hexcode))
-    .map((e) => byHexcode.get(e.hexcode) as EnrichmentRecord);
-  if (records.length === 0) continue;
-  const body = records.map((r) => JSON.stringify(r)).join(",\n");
-  writeFileSync(join(ENRICHMENT_DIR, `${group}.json`), `[\n${body}\n]\n`);
+const batchRoot = join(ENRICHMENT_DIR, "_batches");
+const [added, total] = mergeInto(batchRoot, ENRICHMENT_DIR);
+const lines = [`en+tr: ${added} added, ${total}/${emoji.length} enriched`];
+for (const locale of LOCALE_CODES.filter((l) => l !== "en" && l !== "tr")) {
+  const [localeAdded, localeTotal] = mergeInto(join(batchRoot, locale), join(ENRICHMENT_DIR, "i18n", locale));
+  if (localeTotal > 0) lines.push(`${locale}: ${localeAdded} added, ${localeTotal}/${emoji.length}`);
 }
-
-console.log(
-  `merge: ${added} records from ${parts.length} batch parts; ` +
-    `${byHexcode.size}/${emoji.length} emoji enriched`,
-);
+console.log(`merge: ${lines.join(" | ")}`);

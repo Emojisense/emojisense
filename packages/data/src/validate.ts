@@ -12,13 +12,21 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { normalize } from "emojisense";
 import { moderate } from "./blocklist.ts";
+import { COMBINED_LOCALES, LOCALE_CODES } from "./locales.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
-import type { AliasCategory, BaseEmoji, EnrichmentRecord, LocaleEnrichment, MinedAlias } from "./types.ts";
+import type {
+  AliasCategory,
+  BaseEmoji,
+  EnrichmentRecord,
+  LocaleEnrichment,
+  LocaleRecord,
+  MinedAlias,
+} from "./types.ts";
 
 export const COLLISION_DEMOTE = 8;
 export const COLLISION_DROP = 20;
-const LOCALES = ["en", "tr"] as const;
-type Locale = (typeof LOCALES)[number];
+const LOCALES = LOCALE_CODES;
+type Locale = string;
 
 /** Category order = priority when the same alias appears twice for one emoji. */
 const ALIAS_ORDER: AliasCategory[] = ["synonym", "slang", "pop_culture", "dev", "intent"];
@@ -43,17 +51,39 @@ interface ReviewRow {
 
 const { emoji }: { emoji: BaseEmoji[] } = JSON.parse(readFileSync(BASE_FILE, "utf8"));
 const records = new Map<string, EnrichmentRecord>();
-for (const group of new Set(emoji.map((e) => e.group))) {
+const groups = [...new Set(emoji.map((e) => e.group))];
+for (const group of groups) {
   const path = join(ENRICHMENT_DIR, `${group}.json`);
   if (!existsSync(path)) continue;
   for (const r of JSON.parse(readFileSync(path, "utf8")) as EnrichmentRecord[]) records.set(r.hexcode, r);
+}
+
+/** Locales beyond the combined en + tr files: enrichment/i18n/<locale>/<group>.json. */
+const localeRecords = new Map<string, Map<string, LocaleEnrichment>>();
+for (const locale of LOCALES.filter((l) => !(COMBINED_LOCALES as readonly string[]).includes(l))) {
+  const byHexcode = new Map<string, LocaleEnrichment>();
+  for (const group of groups) {
+    const path = join(ENRICHMENT_DIR, "i18n", locale, `${group}.json`);
+    if (!existsSync(path)) continue;
+    for (const r of JSON.parse(readFileSync(path, "utf8")) as LocaleRecord[]) byHexcode.set(r.hexcode, r);
+  }
+  localeRecords.set(locale, byHexcode);
+}
+
+function enrichmentFor(hexcode: string, locale: Locale): LocaleEnrichment | undefined {
+  if ((COMBINED_LOCALES as readonly string[]).includes(locale)) {
+    return records.get(hexcode)?.[locale as (typeof COMBINED_LOCALES)[number]];
+  }
+  return localeRecords.get(locale)?.get(hexcode);
 }
 
 const minedPath = join(ENRICHMENT_DIR, "mined.json");
 const mined: MinedAlias[] = existsSync(minedPath) ? JSON.parse(readFileSync(minedPath, "utf8")) : [];
 
 function indexedPhrases(e: BaseEmoji, locale: Locale): Set<string> {
-  const raw = locale === "en" ? [e.label, ...e.tags, ...e.shortcodes] : [e.tr.label ?? "", ...e.tr.tags];
+  const cldr = e.i18n[locale];
+  const raw =
+    locale === "en" ? [e.label, ...e.tags, ...e.shortcodes] : [cldr?.label ?? "", ...(cldr?.tags ?? [])];
   return new Set(raw.map((s) => normalize(s)).filter(Boolean));
 }
 
@@ -62,10 +92,9 @@ const draft = new Map<string, Record<Locale, ValidatedLocale>>();
 let moderated = 0;
 
 for (const e of emoji) {
-  const record = records.get(e.hexcode);
   const perLocale = {} as Record<Locale, ValidatedLocale>;
   for (const locale of LOCALES) {
-    const block: LocaleEnrichment | undefined = record?.[locale];
+    const block = enrichmentFor(e.hexcode, locale);
     const out: ValidatedLocale = { desc: block?.desc ?? "", alias: [], typo: [], low: [] };
     perLocale[locale] = out;
     if (!block) continue;
@@ -118,8 +147,9 @@ let dropped = 0;
 for (const locale of LOCALES) {
   const owners = new Map<string, string[]>();
   for (const [hexcode, perLocale] of draft) {
-    const { alias, typo, low } = perLocale[locale];
-    for (const a of [...alias, ...typo, ...low]) {
+    const v = perLocale[locale];
+    if (!v) continue;
+    for (const a of [...v.alias, ...v.typo, ...v.low]) {
       const list = owners.get(a);
       if (list) list.push(hexcode);
       else owners.set(a, [hexcode]);
@@ -129,7 +159,8 @@ for (const locale of LOCALES) {
     if (hexcodes.length <= COLLISION_DEMOTE) continue;
     const drop = hexcodes.length > COLLISION_DROP;
     for (const hexcode of hexcodes) {
-      const v = (draft.get(hexcode) as Record<Locale, ValidatedLocale>)[locale];
+      const v = draft.get(hexcode)?.[locale];
+      if (!v) continue;
       const wasLow = v.low.includes(alias);
       v.alias = v.alias.filter((a) => a !== alias);
       v.typo = v.typo.filter((a) => a !== alias);
@@ -166,7 +197,7 @@ const rows = review
 writeFileSync(join(BUILD_DIR, "review.csv"), `${[header, ...rows].join("\n")}\n`);
 
 const count = (locale: Locale, key: keyof Omit<ValidatedLocale, "desc">) =>
-  [...draft.values()].reduce((sum, v) => sum + v[locale][key].length, 0);
+  [...draft.values()].reduce((sum, v) => sum + (v[locale]?.[key].length ?? 0), 0);
 console.log(
   `validate: ${records.size}/${emoji.length} emoji enriched | ` +
     LOCALES.map(
