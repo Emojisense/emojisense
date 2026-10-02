@@ -16,11 +16,13 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/r"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json && tsx scripts/build-registry.ts",
+    "registry:build": "tsx scripts/build-registry.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p registry/tsconfig.json && tsc --noEmit -p tsconfig.scripts.json",
     "test": "vitest run"
   },
   "dependencies": {

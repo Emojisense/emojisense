@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createEngine } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import { createEmojisenseResolver, EmojisensePicker } from "../src/frimousse.js";
@@ -35,6 +35,15 @@ describe("EmojisensePicker", () => {
     expect(input.getAttribute("aria-activedescendant")).toBe(options[0]?.id);
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onEmojiSelect).toHaveBeenCalledWith({ emoji: "🦖", label: "T-Rex" });
+  });
+
+  it("browses the packs once they arrive after mount", async () => {
+    const loading = { ...emojisense, engine: undefined, packs: [], status: "loading" as const };
+    const view = render(<EmojisensePicker emojisense={loading} onEmojiSelect={() => {}} />);
+    // Frimousse asks for data once per mount; the packs arrive later.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    view.rerender(<EmojisensePicker emojisense={emojisense} onEmojiSelect={() => {}} />);
+    expect(await screen.findByRole("gridcell", { name: "thumbs up" })).toBeTruthy();
   });
 
   it("moves the active option with arrow keys", async () => {

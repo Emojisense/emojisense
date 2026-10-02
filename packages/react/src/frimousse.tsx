@@ -7,6 +7,7 @@
  */
 import {
   applySkinTone,
+  groupLabel,
   type Pack,
   ROW_INDEX,
   type SearchResult,
@@ -28,31 +29,6 @@ import { type Emojisense, useEmojiSearch } from "./hooks.js";
 type EmojiDataResolver = NonNullable<EmojiPickerRootProps["resolveEmojiData"]>;
 type EmojiData = Awaited<ReturnType<EmojiDataResolver>>;
 
-const GROUP_LABELS: Record<string, Record<string, string>> = {
-  en: {
-    "smileys-emotion": "Smileys & emotion",
-    "people-body": "People & body",
-    "animals-nature": "Animals & nature",
-    "food-drink": "Food & drink",
-    "travel-places": "Travel & places",
-    activities: "Activities",
-    objects: "Objects",
-    symbols: "Symbols",
-    flags: "Flags",
-  },
-  tr: {
-    "smileys-emotion": "İfadeler ve duygular",
-    "people-body": "İnsanlar ve vücut",
-    "animals-nature": "Hayvanlar ve doğa",
-    "food-drink": "Yiyecek ve içecek",
-    "travel-places": "Seyahat ve yerler",
-    activities: "Etkinlikler",
-    objects: "Nesneler",
-    symbols: "Semboller",
-    flags: "Bayraklar",
-  },
-};
-
 const TONES = SKIN_TONES.filter((t): t is Exclude<SkinTone, "none"> => t !== "none");
 
 /**
@@ -63,10 +39,9 @@ export function createEmojisenseResolver(packs: Pack[]): EmojiDataResolver {
   return (locale) => {
     const pack = packs.find((p) => p.locale === locale) ?? packs[0];
     if (!pack) throw new Error("emojisense: no packs loaded");
-    const labels = GROUP_LABELS[pack.locale] ?? GROUP_LABELS.en ?? {};
     const data: EmojiData = {
       locale,
-      categories: pack.groups.map((group, index) => ({ index, label: labels[group] ?? group })),
+      categories: pack.groups.map((group, index) => ({ index, label: groupLabel(group, pack.locale) })),
       skinTones: Object.fromEntries(TONES.map((t) => [t, applySkinTone("✋", t)])) as EmojiData["skinTones"],
       emojis: pack.emoji.map((row) => {
         const emoji = row[ROW_INDEX.emoji];
@@ -89,6 +64,19 @@ export function createEmojisenseResolver(packs: Pack[]): EmojiDataResolver {
     };
     return data;
   };
+}
+
+const PENDING: EmojiDataResolver = () => new Promise<never>(() => {});
+
+/**
+ * Frimousse props for Emojisense packs that are still loading. Frimousse resolves its data once
+ * per mount and ignores a new resolver, so the returned `key` remounts the picker when the packs
+ * arrive. Until then Frimousse shows its loading state.
+ */
+export function useEmojisenseResolver(packs: Pack[]): { key: string; resolveEmojiData: EmojiDataResolver } {
+  const ready = packs.length > 0;
+  const resolveEmojiData = useMemo(() => (ready ? createEmojisenseResolver(packs) : PENDING), [ready, packs]);
+  return { key: ready ? "ready" : "loading", resolveEmojiData };
 }
 
 export interface EmojisenseResultsProps
@@ -182,7 +170,7 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const listboxId = useId();
   const { results } = useEmojiSearch(query, emojisense, { limit });
-  const resolver = useMemo(() => createEmojisenseResolver(emojisense.packs), [emojisense.packs]);
+  const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
   const searching = query.trim() !== "";
 
   const labelOf = useCallback(
@@ -195,10 +183,11 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
 
   return (
     <EmojiPicker.Root
+      key={key}
       {...rest}
       columns={columns}
       locale={emojisense.locale}
-      resolveEmojiData={resolver}
+      resolveEmojiData={resolveEmojiData}
       onEmojiSelect={onEmojiSelect}
     >
       <SearchInput

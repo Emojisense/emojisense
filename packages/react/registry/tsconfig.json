@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": [],
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./*"],
+      "@emojisense/react": ["../src/index.ts"],
+      "@emojisense/react/frimousse": ["../src/frimousse.tsx"]
+    }
+  },
+  "include": [".", "../test/registry.test.tsx", "../test/registry-build.test.ts"]
+}
