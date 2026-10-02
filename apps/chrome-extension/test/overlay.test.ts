@@ -226,6 +226,33 @@ describe("picker overlay: pointer", () => {
   });
 });
 
+describe("picker overlay: focus", () => {
+  function pageField(): HTMLInputElement {
+    const field = document.createElement("input");
+    document.body.append(field);
+    return field;
+  }
+
+  it("takes focus back when the page grabs it right after opening", async () => {
+    const field = pageField();
+    open();
+    field.focus();
+    await Promise.resolve();
+    expect(callbacks.onDismiss).not.toHaveBeenCalled();
+    expect(picker.root.activeElement).toBe(input());
+  });
+
+  it("closes when focus moves elsewhere later", () => {
+    const now = performance.now();
+    const clock = vi.spyOn(performance, "now").mockReturnValue(now);
+    const field = pageField();
+    open();
+    clock.mockReturnValue(now + 2000);
+    field.focus();
+    expect(callbacks.onDismiss).toHaveBeenCalledWith("outside");
+  });
+});
+
 describe("picker overlay: modes and teardown", () => {
   it("explains copy mode in the footer", () => {
     open({ mode: "copy", pasteKey: "Ctrl+V" });

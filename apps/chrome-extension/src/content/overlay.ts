@@ -10,6 +10,8 @@ export const COLUMNS = 8;
 
 /** Used for placement until the panel has been laid out once. */
 const NOMINAL_SIZE: Size = { width: 376, height: 300 };
+const FOCUS_GRACE_MS = 500;
+const MAX_REFOCUS = 2;
 
 export type DismissReason = "escape" | "outside";
 
@@ -280,10 +282,22 @@ export function createPicker(options: PickerOptions): Picker {
   for (const type of CONTAINED_EVENTS) root.addEventListener(type, contain);
 
   input.addEventListener("input", () => options.onQuery(input.value));
+  const openedAt = performance.now();
+  let refocusAttempts = 0;
   input.addEventListener("focusout", (event) => {
     const next = event.relatedTarget as Node | null;
     // null = the window lost focus (another app); keep the picker for when the user returns.
-    if (next && !root.contains(next) && next !== host) options.onDismiss("outside");
+    if (!next || root.contains(next) || next === host || destroyed) return;
+    // Some editors pull focus back to their field when it blurs. Right after opening that is
+    // the page reacting to us, not the user leaving: take focus back, a bounded number of times.
+    if (performance.now() - openedAt < FOCUS_GRACE_MS && refocusAttempts < MAX_REFOCUS) {
+      refocusAttempts++;
+      queueMicrotask(() => {
+        if (!destroyed) input.focus({ preventScroll: true });
+      });
+      return;
+    }
+    options.onDismiss("outside");
   });
   // Tiles are not focusable; keep focus (and the caret) in the search box while clicking.
   const keepFocus = (event: Event) => event.preventDefault();
