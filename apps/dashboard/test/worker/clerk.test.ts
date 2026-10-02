@@ -139,6 +139,14 @@ describe("createClerkGateway (networkless, public values only)", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("takes the PEM on one line, with literal \\n or without newlines", async () => {
+    const token = await sign(instance.privateKey, sessionClaims());
+    for (const pem of [instance.pem.replace(/\n/g, "\\n"), instance.pem.replace(/\n/g, "")]) {
+      const gateway = createClerkGateway({ ...publicEnv(), CLERK_JWT_KEY: pem } as Env);
+      expect((await gateway?.verifySession(token, ["https://app.emojisense.com"]))?.ok).toBe(true);
+    }
+  });
+
   it.each([
     [
       "another authorized party",

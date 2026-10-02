@@ -96,7 +96,8 @@ async function deleteClerkUser(secretKey: string, userId: string): Promise<void>
 
 export const createClerkGateway: ClerkFactory = (env) => {
   const frontendApi = clerkFrontendApi(env.CLERK_PUBLISHABLE_KEY);
-  const jwtKey = env.CLERK_JWT_KEY?.trim();
+  // A PEM pasted into a one-line var may keep its newlines as literal "\n".
+  const jwtKey = env.CLERK_JWT_KEY?.replace(/\\n/g, "\n").trim();
   if (!frontendApi || !jwtKey) return null;
   const issuer = `https://${frontendApi}`;
   const secretKey = env.CLERK_SECRET_KEY?.trim();
