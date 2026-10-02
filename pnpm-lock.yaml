@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@clerk/shared': 4.35.0
+  '@types/react': 19.3.0
 
 importers:
 
@@ -120,7 +121,7 @@ importers:
     dependencies:
       '@raycast/api':
         specifier: 2.5.1
-        version: 2.5.1(@types/node@22.19.17)(@types/react@19.0.10)
+        version: 2.5.1(@types/node@22.19.17)(@types/react@19.3.0)
       emojisense:
         specifier: workspace:*
         version: link:../../packages/core
@@ -132,8 +133,8 @@ importers:
         specifier: 22.19.17
         version: 22.19.17
       '@types/react':
-        specifier: 19.0.10
-        version: 19.0.10
+        specifier: 19.3.0
+        version: 19.3.0
       react:
         specifier: 19.0.0
         version: 19.0.0
@@ -528,7 +529,7 @@ packages:
     resolution: {integrity: sha512-BUs2jVvuUnPBA/vtp9y1PvvoYeZZtjmwphu0TJX0wSQ6xzR31/OyflQ9Gmm4rn9IRZNFObCJG7wWsZSqr4OMUA==}
     engines: {node: '>=22.12.0'}
     peerDependencies:
-      '@types/react': ^17.0.50 || ^18.0.21 || ^19.0.0
+      '@types/react': 19.3.0
       '@types/react-dom': ^17.0.17 || ^18.0.6 || ^19.0.0
       oxc-transform-react: ^0.145.0
       react: ^17.0.2 || ^18.0.0 || ^19.0.0
@@ -1753,7 +1754,7 @@ packages:
     hasBin: true
     peerDependencies:
       '@types/node': 22.19.17
-      '@types/react': 19.0.10
+      '@types/react': 19.3.0
       react-devtools: 6.1.1
     peerDependenciesMeta:
       '@types/node':
@@ -1909,7 +1910,7 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       '@testing-library/dom': ^10.0.0
-      '@types/react': ^18.0.0 || ^19.0.0
+      '@types/react': 19.3.0
       '@types/react-dom': ^18.0.0 || ^19.0.0
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -2131,10 +2132,7 @@ packages:
   '@types/react-dom@19.3.0':
     resolution: {integrity: sha512-ZI7bU42mZXXKHn/qNLEw2IrbiINU7X5+vfgdixBHkCNpYWXjKgfQ/P+uyGb5CjOLB9UcnTeg3rylQtV2hym44Q==}
     peerDependencies:
-      '@types/react': ^19.3.0
-
-  '@types/react@19.0.10':
-    resolution: {integrity: sha512-JuRQ9KXLEjaUNjTWpzuR231Z2WpIwczOkBEIvbHNCzQefFIT0L8IqE6NV6ULLyC1SI/i234JnDoMkfg+RjQj2g==}
+      '@types/react': 19.3.0
 
   '@types/react@19.3.0':
     resolution: {integrity: sha512-N0rFCuH9YoxG9/m61l9MfpJKfmLOVU0em7ipIz6TRgSSkvReLB9vL85GB+yr8Bs5leqpvg96JSwF4ZS1s4viQg==}
@@ -5004,7 +5002,7 @@ snapshots:
 
   '@preact/signals-core@1.14.4': {}
 
-  '@raycast/api@2.5.1(@types/node@22.19.17)(@types/react@19.0.10)':
+  '@raycast/api@2.5.1(@types/node@22.19.17)(@types/react@19.3.0)':
     dependencies:
       '@oclif/core': 4.14.0
       '@oclif/plugin-autocomplete': 3.3.0
@@ -5014,7 +5012,7 @@ snapshots:
       react: 19.0.0
     optionalDependencies:
       '@types/node': 22.19.17
-      '@types/react': 19.0.10
+      '@types/react': 19.3.0
     transitivePeerDependencies:
       - supports-color
 
@@ -5355,10 +5353,6 @@ snapshots:
   '@types/react-dom@19.3.0(@types/react@19.3.0)':
     dependencies:
       '@types/react': 19.3.0
-
-  '@types/react@19.0.10':
-    dependencies:
-      csstype: 3.2.3
 
   '@types/react@19.3.0':
     dependencies:

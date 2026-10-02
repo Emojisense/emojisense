@@ -40,7 +40,8 @@
   },
   "pnpm": {
     "overrides": {
-      "@clerk/shared": "4.35.0"
+      "@clerk/shared": "4.35.0",
+      "@types/react": "19.3.0"
     }
   }
 }
