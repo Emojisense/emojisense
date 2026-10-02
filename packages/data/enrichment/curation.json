@@ -320,5 +320,19 @@
     "phrase": "الهالوين",
     "action": "add",
     "why": "the definite form of هالوين; it matched only 🧛 through a longer phrase"
+  },
+  {
+    "hexcode": "1FAC2",
+    "locale": "hi",
+    "alias": "धन्यवाद",
+    "action": "low",
+    "why": "🙏 is the canonical 'thank you' (धन्यवाद) in Hindi"
+  },
+  {
+    "hexcode": "1F979",
+    "locale": "hi",
+    "alias": "धन्यवाद",
+    "action": "low",
+    "why": "🙏 is the canonical 'thank you' (धन्यवाद) in Hindi"
   }
 ]

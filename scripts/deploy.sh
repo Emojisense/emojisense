@@ -48,7 +48,13 @@ pnpm -C "$ROOT" --filter @emojisense/worker sync
 
 echo "→ API Worker ($API_URL)"
 cd "$ROOT/packages/worker"
-pnpm exec wrangler d1 migrations apply DB --remote --env "$ENVIRONMENT"
+# The D1 API sometimes fails for a moment; migrations are idempotent, so retry.
+for attempt in 1 2 3; do
+  pnpm exec wrangler d1 migrations apply DB --remote --env "$ENVIRONMENT" && break
+  [ "$attempt" = 3 ] && exit 1
+  echo "D1 migrations failed (attempt $attempt), retrying in 10 s…" >&2
+  sleep 10
+done
 pnpm exec wrangler deploy --env "$ENVIRONMENT"
 
 echo "→ Dashboard ($DASHBOARD_URL)"
