@@ -2,13 +2,16 @@
  * Glyph vectors: build/emoji.base.json + enrichment → vectors.<model>.<dims>.glyph.bin
  *
  *   tsx src/embed-glyph.ts [--kinds glyph,name,context] [--locales en] [--contexts 3]
- *                          [--no-inherit] [--split DIR] [--concurrency 4]
+ *                          [--no-inherit] [--split DIR] [--concurrency 4] [--model M --dims D]
+ *                          [--template]
  *
  * One multi-vector file per model × dims with every selected kind (default: the bare glyph;
  * glyph-documents.ts), rows in
  * pack order per kind (PACK_FORMAT.md §5, "Glyph file"). `--split DIR` writes one file per kind
  * to DIR instead (`glyph.<kind>.bin`), for `eval:glyph`. Texts are embedded as they are (no
- * document template) through the same cached Workers AI path as `embed`.
+ * document template) through the same cached Workers AI path as `embed`. `--template` wraps each
+ * text in the model's document template with the title "none" (EmbeddingGemma's documented
+ * document prompt; `eval:models` compares models with their own prompts).
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -24,7 +27,7 @@ import {
   type ValidatedAliases,
 } from "./glyph-documents.ts";
 import { writeManifest } from "./manifest.ts";
-import { getModel } from "./models.ts";
+import { formatDocument, getModel } from "./models.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
 import { degenerateRows } from "./semantic-score.ts";
 import type { BaseEmoji } from "./types.ts";
@@ -41,6 +44,7 @@ const { values: args } = parseArgs({
     "no-inherit": { type: "boolean", default: false },
     split: { type: "string" },
     concurrency: { type: "string", default: "4" },
+    template: { type: "boolean", default: false },
   },
 });
 
@@ -72,7 +76,7 @@ try {
   const started = performance.now();
   const { vectors, stats } = await embedTexts(
     model,
-    texts.map((t) => t.text),
+    texts.map((t) => (args.template ? formatDocument(model, "none", t.text) : t.text)),
     "document",
     {
       concurrency: Number(args.concurrency),
