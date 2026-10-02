@@ -6,6 +6,7 @@
   "scripts": {
     "eval": "tsx src/run.ts",
     "eval:ci": "tsx src/run.ts --offline --ci",
+    "eval:inhouse": "tsx src/run.ts --offline --ci --no-heldout",
     "eval:heldout": "tsx src/heldout-cli.ts",
     "eval:diagnose": "tsx src/diagnose-cli.ts",
     "eval:semantic": "tsx src/semantic-cli.ts",
