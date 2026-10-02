@@ -66,7 +66,25 @@ const apiBody = {
   cached: false,
 };
 
-/** A fake network: packs under /v1/pack/test/, shards under /p/test/, the API at /v1/search. */
+export const PARROT_URL = "https://api.test/v1/custom/app1/e1";
+
+/** An app's custom emoji, as GET /v1/custom-pack serves them. */
+export const custom: Pack = {
+  format: "emojisense-pack",
+  formatVersion: 1,
+  packVersion: "custom-00000001",
+  locale: "und",
+  part: "custom",
+  emojiVersion: "",
+  groups: ["custom"],
+  emoji: [[":party_parrot:", "C-e1", 0, 0, 0, "party_parrot", "party parrot", "", "celebrate", "", ""]],
+  images: { "C-e1": PARROT_URL },
+};
+
+/**
+ * A fake network: packs under /v1/pack/test/, shards under /p/test/, the API at /v1/search and
+ * /v1/custom-pack.
+ */
 export function serve({ packs = true } = {}) {
   const files: Record<string, unknown> = {
     "/v1/pack/test/pack.en.json": en,
@@ -76,6 +94,7 @@ export function serve({ packs = true } = {}) {
     "/p/test/index.json": shardIndex,
     "/p/test/sp.json": shard,
     "/v1/search": apiBody,
+    "/v1/custom-pack": custom,
   };
   return vi.fn(async (input: string | URL | Request) => {
     const { pathname } = new URL(String(input));
