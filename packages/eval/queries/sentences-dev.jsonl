@@ -1,0 +1,369 @@
+{"id":"sent-zh-01","q":"我想躺平","locale":"zh","cat":"sentence","answers":["🛌","🫠","🦥","😴","🥱"]}
+{"id":"sent-zh-02","q":"我今天好累啊","locale":"zh","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴","🫩"]}
+{"id":"sent-zh-03","q":"我真的很开心","locale":"zh","cat":"sentence","answers":["😊","😄","😁","😃","🥰","☺️","🙂","😆"]}
+{"id":"sent-zh-04","q":"我们去吃饭吧","locale":"zh","cat":"sentence","answers":["🍽️","🍚","🍜","🥢","🍴","😋"]}
+{"id":"sent-zh-05","q":"我好想你","locale":"zh","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂","💭"]}
+{"id":"sent-zh-06","q":"今天是我的生日","locale":"zh","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-zh-07","q":"我饿死了","locale":"zh","cat":"sentence","answers":["😋","🤤","🍽️","🍴","😫"]}
+{"id":"sent-zh-08","q":"你真的太可爱了","locale":"zh","cat":"sentence","answers":["🥰","😍","😊","🤗","💕","☺️"]}
+{"id":"sent-zh-09","q":"他又迟到了","locale":"zh","cat":"sentence","answers":["⏰","🙄","😤","⌛","🕐","😑"]}
+{"id":"sent-zh-10","q":"我在加班","locale":"zh","cat":"sentence","answers":["💼","💻","😩","😫","🏢","⏰"]}
+{"id":"sent-zh-11","q":"我要去睡觉了","locale":"zh","cat":"sentence","answers":["😴","🛌","💤","🌙","🥱"]}
+{"id":"sent-zh-12","q":"我们一起去旅行吧","locale":"zh","cat":"sentence","answers":["✈️","🧳","🗺️","🏖️","🌍","🚗"]}
+{"id":"sent-zh-13","q":"这个真的很好吃","locale":"zh","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-zh-14","q":"我有点紧张","locale":"zh","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-zh-15","q":"我们分手了","locale":"zh","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-zh-16","q":"我考试过了","locale":"zh","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌","😄"]}
+{"id":"sent-zh-17","q":"外面下雨了","locale":"zh","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-zh-18","q":"我感冒了","locale":"zh","cat":"sentence","answers":["🤧","🤒","😷","🤢"]}
+{"id":"sent-zh-19","q":"我们赢了","locale":"zh","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","💪"]}
+{"id":"sent-zh-20","q":"他在打游戏","locale":"zh","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-zh-21","q":"我的猫好可爱","locale":"zh","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-zh-22","q":"我想喝咖啡","locale":"zh","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-zh-23","q":"我们去看电影吧","locale":"zh","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-zh-24","q":"她生气了","locale":"zh","cat":"sentence","answers":["😠","😡","😤","💢","🙎‍♀️"]}
+{"id":"sent-zh-25","q":"我好无聊啊","locale":"zh","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-zh-26","q":"你在干什么","locale":"zh","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-zh-27","q":"我已经到家了","locale":"zh","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-zh-28","q":"我在健身房","locale":"zh","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️","🤸"]}
+{"id":"sent-zh-29","q":"我们要搬家了","locale":"zh","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-zh-30","q":"真的太好笑了","locale":"zh","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-zh-31","q":"我有点害怕","locale":"zh","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-zh-32","q":"我刚下班","locale":"zh","cat":"sentence","answers":["💼","🏃","😮‍💨","🎉","😌","🏠"]}
+{"id":"sent-zh-33","q":"你也太厉害了吧","locale":"zh","cat":"sentence","answers":["👍","💪","🔥","👏","😮","🤩","💯"]}
+{"id":"sent-zh-34","q":"我在学习","locale":"zh","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-zh-35","q":"我爱你","locale":"zh","cat":"sentence","answers":["❤️","😘","🥰","💕","😍"]}
+{"id":"sent-zh-36","q":"我不开心","locale":"zh","cat":"negation","answers":["😞","😔","😢","🙁","😒","☹️","🙍"],"forbid":["😊","😄","😁","😃"]}
+{"id":"sent-zh-37","q":"我不想上班","locale":"zh","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-zh-38","q":"一点都不好笑","locale":"zh","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-zh-39","q":"我也是","locale":"zh","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-zh-40","q":"怎么了","locale":"zh","cat":"fw-alias","answers":["🤔","😟","❓","😕","🤨"]}
+{"id":"sent-zh-41","q":"好吧","locale":"zh","cat":"fw-alias","answers":["👌","🤷","😕","😐","🙂","👍"]}
+{"id":"sent-ru-01","q":"я очень устал","locale":"ru","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴","🫩"]}
+{"id":"sent-ru-02","q":"у меня сегодня день рождения","locale":"ru","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-ru-03","q":"мне очень грустно","locale":"ru","cat":"sentence","answers":["😢","😔","😞","😭","🥺"]}
+{"id":"sent-ru-04","q":"я так рада тебя видеть","locale":"ru","cat":"sentence","answers":["🤗","😊","🥰","😄","😍","💖"]}
+{"id":"sent-ru-05","q":"это было очень смешно","locale":"ru","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-ru-06","q":"я хочу спать","locale":"ru","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-ru-07","q":"мы идём в кино","locale":"ru","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-ru-08","q":"я тебя очень люблю","locale":"ru","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-ru-09","q":"он опять опоздал","locale":"ru","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-ru-10","q":"я на работе","locale":"ru","cat":"sentence","answers":["💼","💻","🏢","👨‍💻","👩‍💻"]}
+{"id":"sent-ru-11","q":"у меня всё хорошо","locale":"ru","cat":"sentence","answers":["👍","😊","🙂","👌","✅","😌"]}
+{"id":"sent-ru-12","q":"мне так скучно","locale":"ru","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-ru-13","q":"я очень голоден","locale":"ru","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-ru-14","q":"это просто ужас","locale":"ru","cat":"sentence","answers":["😱","😨","🤦","😩","😖","💀"]}
+{"id":"sent-ru-15","q":"мы выиграли","locale":"ru","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","💪"]}
+{"id":"sent-ru-16","q":"я заболел","locale":"ru","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-ru-17","q":"на улице идёт дождь","locale":"ru","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-ru-18","q":"я очень волнуюсь","locale":"ru","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-ru-19","q":"мы расстались","locale":"ru","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-ru-20","q":"я сдал экзамен","locale":"ru","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-ru-21","q":"он играет в игры","locale":"ru","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-ru-22","q":"моя кошка такая милая","locale":"ru","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-ru-23","q":"я хочу кофе","locale":"ru","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-ru-24","q":"она на меня злится","locale":"ru","cat":"sentence","answers":["😠","😡","😤","💢"]}
+{"id":"sent-ru-25","q":"что ты делаешь","locale":"ru","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-ru-26","q":"я уже дома","locale":"ru","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-ru-27","q":"я в спортзале","locale":"ru","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-ru-28","q":"мы переезжаем","locale":"ru","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-ru-29","q":"это очень вкусно","locale":"ru","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-ru-30","q":"я так боюсь","locale":"ru","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-ru-31","q":"ты такой молодец","locale":"ru","cat":"sentence","answers":["👍","👏","💪","🔥","🤩","💯","🏆"]}
+{"id":"sent-ru-32","q":"я учусь","locale":"ru","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-ru-33","q":"мы едем на море","locale":"ru","cat":"sentence","answers":["🏖️","🌊","☀️","🚗","✈️","🏝️"]}
+{"id":"sent-ru-34","q":"с новым годом тебя","locale":"ru","cat":"sentence","answers":["🎄","🎆","🎉","🥂","🎇","❄️"]}
+{"id":"sent-ru-35","q":"у меня болит голова","locale":"ru","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-ru-36","q":"мне не смешно","locale":"ru","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-ru-37","q":"я не хочу на работу","locale":"ru","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-ru-38","q":"это не вкусно","locale":"ru","cat":"negation","answers":["🤢","😖","👎","😒","🤮"],"forbid":["😋","🤤"]}
+{"id":"sent-ru-39","q":"я тоже","locale":"ru","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-ru-40","q":"как дела","locale":"ru","cat":"fw-alias","answers":["👋","🙂","😊","🤔","❓","🤗"]}
+{"id":"sent-ru-41","q":"ну и что","locale":"ru","cat":"fw-alias","answers":["🤷","😒","🙄","😑","🤷‍♂️","🤷‍♀️"]}
+{"id":"sent-id-01","q":"aku lagi capek banget","locale":"id","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-id-02","q":"hari ini aku ulang tahun","locale":"id","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-id-03","q":"aku sedih banget","locale":"id","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-id-04","q":"aku seneng banget ketemu kamu","locale":"id","cat":"sentence","answers":["🤗","😊","🥰","😄","😍"]}
+{"id":"sent-id-05","q":"ini lucu banget","locale":"id","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-id-06","q":"aku mau tidur","locale":"id","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-id-07","q":"kita nonton film yuk","locale":"id","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-id-08","q":"aku sayang banget sama kamu","locale":"id","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-id-09","q":"dia telat lagi","locale":"id","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-id-10","q":"aku lagi di kantor","locale":"id","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-id-11","q":"aku lapar banget","locale":"id","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-id-12","q":"aku lagi bosen","locale":"id","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-id-13","q":"kita menang","locale":"id","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","💪"]}
+{"id":"sent-id-14","q":"aku lagi sakit","locale":"id","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-id-15","q":"di luar lagi hujan","locale":"id","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-id-16","q":"aku deg degan banget","locale":"id","cat":"sentence","answers":["😬","😰","😟","😓","💓"]}
+{"id":"sent-id-17","q":"kita udah putus","locale":"id","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-id-18","q":"aku lulus ujian","locale":"id","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🎓"]}
+{"id":"sent-id-19","q":"dia lagi main game","locale":"id","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-id-20","q":"kucing aku lucu banget","locale":"id","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-id-21","q":"aku pengen ngopi","locale":"id","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-id-22","q":"dia marah sama aku","locale":"id","cat":"sentence","answers":["😠","😡","😤","💢"]}
+{"id":"sent-id-23","q":"kamu lagi ngapain","locale":"id","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-id-24","q":"aku udah sampai rumah","locale":"id","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-id-25","q":"aku lagi di gym","locale":"id","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-id-26","q":"kita mau pindahan","locale":"id","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-id-27","q":"makanannya enak banget","locale":"id","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-id-28","q":"aku takut banget","locale":"id","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-id-29","q":"kamu keren banget","locale":"id","cat":"sentence","answers":["😎","👍","🔥","💯","🤩","👏"]}
+{"id":"sent-id-30","q":"aku lagi belajar","locale":"id","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-id-31","q":"kita ke pantai yuk","locale":"id","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-id-32","q":"aku lagi galau nih","locale":"id","cat":"sentence","answers":["😔","💔","😞","🥀","😢","🙍"]}
+{"id":"sent-id-33","q":"selamat ya atas pernikahannya","locale":"id","cat":"sentence","answers":["💍","💒","👰","🤵","🎉","🥂","💐"]}
+{"id":"sent-id-34","q":"kepala aku pusing banget","locale":"id","cat":"sentence","answers":["🤕","😵","😵‍💫","🤯","😣"]}
+{"id":"sent-id-35","q":"aku kangen kamu","locale":"id","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-id-36","q":"aku gak suka","locale":"id","cat":"negation","answers":["👎","😒","🙅","😤","😑"],"forbid":["👍","😍"]}
+{"id":"sent-id-37","q":"ini gak lucu","locale":"id","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-id-38","q":"aku nggak mau kerja","locale":"id","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-id-39","q":"aku juga","locale":"id","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-id-40","q":"apa kabar","locale":"id","cat":"fw-alias","answers":["👋","🙂","😊","🤔","🤗"]}
+{"id":"sent-id-41","q":"ya udah","locale":"id","cat":"fw-alias","answers":["🤷","👌","😐","😑","🙂","🤷‍♂️","🤷‍♀️"]}
+{"id":"sent-es-01","q":"estoy muy cansado","locale":"es","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-es-02","q":"hoy es mi cumpleaños","locale":"es","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-es-03","q":"estoy muy triste","locale":"es","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-es-04","q":"me alegro mucho de verte","locale":"es","cat":"sentence","answers":["🤗","😊","🥰","😄","😍"]}
+{"id":"sent-es-05","q":"eso fue muy gracioso","locale":"es","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-es-06","q":"tengo mucho sueño","locale":"es","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-es-07","q":"vamos al cine","locale":"es","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-es-08","q":"te quiero mucho","locale":"es","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-es-09","q":"él llegó tarde otra vez","locale":"es","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-es-10","q":"estoy en el trabajo","locale":"es","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-es-11","q":"tengo mucha hambre","locale":"es","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-es-12","q":"estoy muy aburrido","locale":"es","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-es-13","q":"ganamos el partido","locale":"es","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","⚽"]}
+{"id":"sent-es-14","q":"estoy enfermo","locale":"es","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-es-15","q":"está lloviendo mucho","locale":"es","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-es-16","q":"estoy un poco nervioso","locale":"es","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-es-17","q":"mi novia me dejó","locale":"es","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-es-18","q":"aprobé el examen","locale":"es","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-es-19","q":"mi hermano está jugando videojuegos","locale":"es","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-es-20","q":"mi gato es muy lindo","locale":"es","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-es-21","q":"quiero un café","locale":"es","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-es-22","q":"ella está enojada conmigo","locale":"es","cat":"sentence","answers":["😠","😡","😤","💢"]}
+{"id":"sent-es-23","q":"qué estás haciendo","locale":"es","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-es-24","q":"ya estoy en casa","locale":"es","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-es-25","q":"estoy en el gimnasio","locale":"es","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-es-26","q":"nos vamos a mudar","locale":"es","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-es-27","q":"esto está muy rico","locale":"es","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-es-28","q":"tengo mucho miedo","locale":"es","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-es-29","q":"eres el mejor","locale":"es","cat":"sentence","answers":["🏆","🥇","👍","💪","🤩","💯","👑"]}
+{"id":"sent-es-30","q":"estoy estudiando para el examen","locale":"es","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-es-31","q":"nos vamos a la playa","locale":"es","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-es-32","q":"me duele mucho la cabeza","locale":"es","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-es-33","q":"te extraño mucho","locale":"es","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-es-34","q":"feliz año nuevo a todos","locale":"es","cat":"sentence","answers":["🎆","🎉","🥂","🎇","🎊"]}
+{"id":"sent-es-35","q":"estoy tan feliz","locale":"es","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-es-36","q":"no me gusta nada","locale":"es","cat":"negation","answers":["👎","😒","🙅","😤","😑"],"forbid":["👍","😍"]}
+{"id":"sent-es-37","q":"no es gracioso","locale":"es","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-es-38","q":"no quiero ir a trabajar","locale":"es","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-es-39","q":"yo también","locale":"es","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-es-40","q":"qué tal","locale":"es","cat":"fw-alias","answers":["👋","🙂","😊","🤔","🤗"]}
+{"id":"sent-es-41","q":"y qué","locale":"es","cat":"fw-alias","answers":["🤷","😒","🙄","😑","🤷‍♂️","🤷‍♀️"]}
+{"id":"sent-fr-01","q":"je suis très fatigué","locale":"fr","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-fr-02","q":"c'est mon anniversaire aujourd'hui","locale":"fr","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-fr-03","q":"je suis tellement triste","locale":"fr","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-fr-04","q":"je suis trop content de te voir","locale":"fr","cat":"sentence","answers":["🤗","😊","🥰","😄","😍"]}
+{"id":"sent-fr-05","q":"c'était vraiment drôle","locale":"fr","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-fr-06","q":"j'ai trop sommeil","locale":"fr","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-fr-07","q":"on va au cinéma","locale":"fr","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-fr-08","q":"je t'aime tellement","locale":"fr","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-fr-09","q":"il est encore en retard","locale":"fr","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-fr-10","q":"je suis au boulot","locale":"fr","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-fr-11","q":"j'ai super faim","locale":"fr","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-fr-12","q":"je m'ennuie trop","locale":"fr","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-fr-13","q":"on a gagné le match","locale":"fr","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","⚽"]}
+{"id":"sent-fr-14","q":"je suis malade","locale":"fr","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-fr-15","q":"il pleut beaucoup","locale":"fr","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-fr-16","q":"je suis un peu stressé","locale":"fr","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-fr-17","q":"ma copine m'a quitté","locale":"fr","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-fr-18","q":"j'ai réussi mon examen","locale":"fr","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-fr-19","q":"mon frère joue aux jeux vidéo","locale":"fr","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-fr-20","q":"mon chat est trop mignon","locale":"fr","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-fr-21","q":"je veux un café","locale":"fr","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-fr-22","q":"elle est fâchée contre moi","locale":"fr","cat":"sentence","answers":["😠","😡","😤","💢"]}
+{"id":"sent-fr-23","q":"qu'est-ce que tu fais","locale":"fr","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-fr-24","q":"je suis déjà à la maison","locale":"fr","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-fr-25","q":"je suis à la salle de sport","locale":"fr","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-fr-26","q":"on déménage la semaine prochaine","locale":"fr","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-fr-27","q":"c'est vraiment délicieux","locale":"fr","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-fr-28","q":"j'ai vraiment peur","locale":"fr","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-fr-29","q":"tu es le meilleur","locale":"fr","cat":"sentence","answers":["🏆","🥇","👍","💪","🤩","💯","👑"]}
+{"id":"sent-fr-30","q":"je révise pour mon examen","locale":"fr","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-fr-31","q":"on va à la plage","locale":"fr","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-fr-32","q":"j'ai mal à la tête","locale":"fr","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-fr-33","q":"tu me manques beaucoup","locale":"fr","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-fr-34","q":"bonne année à tous","locale":"fr","cat":"sentence","answers":["🎆","🎉","🥂","🎇","🎊"]}
+{"id":"sent-fr-35","q":"je suis tellement heureux","locale":"fr","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-fr-36","q":"je n'aime pas du tout","locale":"fr","cat":"negation","answers":["👎","😒","🙅","😤","😑"],"forbid":["👍","😍"]}
+{"id":"sent-fr-37","q":"c'est pas drôle","locale":"fr","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-fr-38","q":"je veux pas aller au travail","locale":"fr","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-fr-39","q":"moi aussi","locale":"fr","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-fr-40","q":"ça va","locale":"fr","cat":"fw-alias","answers":["👋","🙂","😊","👍","🤗","👌"]}
+{"id":"sent-fr-41","q":"et alors","locale":"fr","cat":"fw-alias","answers":["🤷","😒","🙄","😑","🤷‍♂️","🤷‍♀️"]}
+{"id":"sent-pt-01","q":"estou muito cansado","locale":"pt","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-pt-02","q":"hoje é meu aniversário","locale":"pt","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-pt-03","q":"estou muito triste","locale":"pt","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-pt-04","q":"que bom te ver","locale":"pt","cat":"sentence","answers":["🤗","😊","🥰","😄","😍"]}
+{"id":"sent-pt-05","q":"isso foi muito engraçado","locale":"pt","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-pt-06","q":"tô com muito sono","locale":"pt","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-pt-07","q":"vamos ao cinema","locale":"pt","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-pt-08","q":"eu te amo muito","locale":"pt","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-pt-09","q":"ele chegou atrasado de novo","locale":"pt","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-pt-10","q":"estou no trabalho","locale":"pt","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-pt-11","q":"tô morrendo de fome","locale":"pt","cat":"sentence","answers":["😋","🤤","🍽️","🍴","😫"]}
+{"id":"sent-pt-12","q":"estou muito entediado","locale":"pt","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-pt-13","q":"ganhamos o jogo","locale":"pt","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","⚽"]}
+{"id":"sent-pt-14","q":"estou doente","locale":"pt","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-pt-15","q":"está chovendo muito","locale":"pt","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-pt-16","q":"estou um pouco nervoso","locale":"pt","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-pt-17","q":"minha namorada terminou comigo","locale":"pt","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-pt-18","q":"passei na prova","locale":"pt","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-pt-19","q":"meu irmão está jogando videogame","locale":"pt","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-pt-20","q":"meu gato é muito fofo","locale":"pt","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-pt-21","q":"eu quero um café","locale":"pt","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-pt-22","q":"ela está brava comigo","locale":"pt","cat":"sentence","answers":["😠","😡","😤","💢"]}
+{"id":"sent-pt-23","q":"o que você está fazendo","locale":"pt","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-pt-24","q":"já estou em casa","locale":"pt","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-pt-25","q":"estou na academia","locale":"pt","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-pt-26","q":"a gente vai se mudar","locale":"pt","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-pt-27","q":"isso está muito gostoso","locale":"pt","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-pt-28","q":"estou com muito medo","locale":"pt","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-pt-29","q":"você é o melhor","locale":"pt","cat":"sentence","answers":["🏆","🥇","👍","💪","🤩","💯","👑"]}
+{"id":"sent-pt-30","q":"estou estudando pra prova","locale":"pt","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-pt-31","q":"vamos pra praia","locale":"pt","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-pt-32","q":"estou com muita dor de cabeça","locale":"pt","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-pt-33","q":"estou com saudade de você","locale":"pt","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-pt-34","q":"feliz ano novo pra todos","locale":"pt","cat":"sentence","answers":["🎆","🎉","🥂","🎇","🎊"]}
+{"id":"sent-pt-35","q":"estou tão feliz","locale":"pt","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-pt-36","q":"não gostei nada","locale":"pt","cat":"negation","answers":["👎","😒","🙅","😤","😑"],"forbid":["👍","😍"]}
+{"id":"sent-pt-37","q":"não tem graça","locale":"pt","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-pt-38","q":"não quero ir trabalhar","locale":"pt","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-pt-39","q":"eu também","locale":"pt","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-pt-40","q":"tudo bem","locale":"pt","cat":"fw-alias","answers":["👍","🙂","😊","👌","👋"]}
+{"id":"sent-pt-41","q":"e daí","locale":"pt","cat":"fw-alias","answers":["🤷","😒","🙄","😑","🤷‍♂️","🤷‍♀️"]}
+{"id":"sent-ar-01","q":"أنا تعبان جدا","locale":"ar","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-ar-02","q":"اليوم عيد ميلادي","locale":"ar","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-ar-03","q":"أنا حزين جدا","locale":"ar","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-ar-04","q":"أنا مبسوط كتير","locale":"ar","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-ar-05","q":"هذا مضحك جدا","locale":"ar","cat":"sentence","answers":["😂","🤣","😆","😹"]}
+{"id":"sent-ar-06","q":"أنا نعسان","locale":"ar","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-ar-07","q":"خلينا نروح السينما","locale":"ar","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-ar-08","q":"أنا أحبك كثيرا","locale":"ar","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-ar-09","q":"هو تأخر مرة ثانية","locale":"ar","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-ar-10","q":"أنا في الشغل","locale":"ar","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-ar-11","q":"أنا جوعان جدا","locale":"ar","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-ar-12","q":"أنا زهقان","locale":"ar","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-ar-13","q":"فزنا بالمباراة","locale":"ar","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","⚽"]}
+{"id":"sent-ar-14","q":"أنا مريض","locale":"ar","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-ar-15","q":"الدنيا بتمطر","locale":"ar","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-ar-16","q":"أنا متوتر شوي","locale":"ar","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-ar-17","q":"هي سابتني","locale":"ar","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-ar-18","q":"نجحت في الامتحان","locale":"ar","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-ar-19","q":"أخوي يلعب بلايستيشن","locale":"ar","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-ar-20","q":"قطتي حلوة كثير","locale":"ar","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-ar-21","q":"أبي قهوة","locale":"ar","cat":"sentence","answers":["☕","😋"]}
+{"id":"sent-ar-22","q":"هي زعلانة مني","locale":"ar","cat":"sentence","answers":["😠","😡","😤","💢","😞","😔"]}
+{"id":"sent-ar-23","q":"شو عم تعمل","locale":"ar","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-ar-24","q":"أنا في البيت","locale":"ar","cat":"sentence","answers":["🏠","🏡","😌"]}
+{"id":"sent-ar-25","q":"أنا في الجيم","locale":"ar","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-ar-26","q":"رح ننتقل لبيت جديد","locale":"ar","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-ar-27","q":"الأكل لذيذ جدا","locale":"ar","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-ar-28","q":"أنا خايف جدا","locale":"ar","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-ar-29","q":"أنت الأفضل","locale":"ar","cat":"sentence","answers":["🏆","🥇","👍","💪","🤩","💯","👑"]}
+{"id":"sent-ar-30","q":"أنا أذاكر للامتحان","locale":"ar","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-ar-31","q":"يلا نروح البحر","locale":"ar","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-ar-32","q":"راسي يوجعني","locale":"ar","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-ar-33","q":"اشتقت لك كثير","locale":"ar","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-ar-34","q":"كل عام وأنتم بخير","locale":"ar","cat":"sentence","answers":["🌙","🕌","🎉","🥳","🎂","🎊","✨"]}
+{"id":"sent-ar-35","q":"أنا فرحان كتير","locale":"ar","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-ar-36","q":"ما عجبني أبدا","locale":"ar","cat":"negation","answers":["👎","😒","🙅","😤","😑"],"forbid":["👍","😍"]}
+{"id":"sent-ar-37","q":"مش مضحك","locale":"ar","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-ar-38","q":"ما بدي روح عالشغل","locale":"ar","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-ar-39","q":"أنا كمان","locale":"ar","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-ar-40","q":"كيف حالك","locale":"ar","cat":"fw-alias","answers":["👋","🙂","😊","🤔","🤗"]}
+{"id":"sent-ar-41","q":"ولا يهمك","locale":"ar","cat":"fw-alias","answers":["👍","😊","🙂","🤗","👌"]}
+{"id":"sent-hi-01","q":"मैं बहुत थक गया हूँ","locale":"hi","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-hi-02","q":"आज मेरा जन्मदिन है","locale":"hi","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-hi-03","q":"मैं बहुत दुखी हूँ","locale":"hi","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-hi-04","q":"तुमसे मिलकर बहुत खुशी हुई","locale":"hi","cat":"sentence","answers":["🤗","😊","🥰","😄","😍"]}
+{"id":"sent-hi-05","q":"यह बहुत मज़ेदार था","locale":"hi","cat":"sentence","answers":["😂","🤣","😆","😄"]}
+{"id":"sent-hi-06","q":"मुझे नींद आ रही है","locale":"hi","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-hi-07","q":"चलो फिल्म देखने चलते हैं","locale":"hi","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-hi-08","q":"मैं तुमसे बहुत प्यार करता हूँ","locale":"hi","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-hi-09","q":"वो फिर से लेट आया","locale":"hi","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-hi-10","q":"मैं ऑफिस में हूँ","locale":"hi","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-hi-11","q":"मुझे बहुत भूख लगी है","locale":"hi","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-hi-12","q":"मैं बहुत बोर हो रहा हूँ","locale":"hi","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-hi-13","q":"हम मैच जीत गए","locale":"hi","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","🏏"]}
+{"id":"sent-hi-14","q":"मेरी तबीयत खराब है","locale":"hi","cat":"sentence","answers":["🤒","🤧","😷","🤢"]}
+{"id":"sent-hi-15","q":"बाहर बारिश हो रही है","locale":"hi","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-hi-16","q":"मुझे थोड़ी घबराहट हो रही है","locale":"hi","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-hi-17","q":"मेरा ब्रेकअप हो गया","locale":"hi","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-hi-18","q":"मैं परीक्षा में पास हो गया","locale":"hi","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-hi-19","q":"मेरा भाई गेम खेल रहा है","locale":"hi","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-hi-20","q":"मेरी बिल्ली बहुत प्यारी है","locale":"hi","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-hi-21","q":"मुझे चाय चाहिए","locale":"hi","cat":"sentence","answers":["🍵","☕","😋"]}
+{"id":"sent-hi-22","q":"वो मुझसे नाराज़ है","locale":"hi","cat":"sentence","answers":["😠","😡","😤","💢","😒"]}
+{"id":"sent-hi-23","q":"तुम क्या कर रहे हो","locale":"hi","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-hi-24","q":"मैं घर पहुँच गया","locale":"hi","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-hi-25","q":"मैं जिम में हूँ","locale":"hi","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-hi-26","q":"हम नए घर में शिफ्ट हो रहे हैं","locale":"hi","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-hi-27","q":"खाना बहुत स्वादिष्ट है","locale":"hi","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-hi-28","q":"मुझे बहुत डर लग रहा है","locale":"hi","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-hi-29","q":"तुम सबसे अच्छे हो","locale":"hi","cat":"sentence","answers":["🏆","🥇","👍","💪","🤩","💯","👑","🥰"]}
+{"id":"sent-hi-30","q":"मैं पढ़ाई कर रहा हूँ","locale":"hi","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-hi-31","q":"चलो समुद्र किनारे चलते हैं","locale":"hi","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-hi-32","q":"मेरे सिर में दर्द है","locale":"hi","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-hi-33","q":"मुझे तुम्हारी बहुत याद आ रही है","locale":"hi","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-hi-34","q":"सबको नया साल मुबारक","locale":"hi","cat":"sentence","answers":["🎆","🎉","🥂","🎇","🎊"]}
+{"id":"sent-hi-35","q":"मैं बहुत खुश हूँ","locale":"hi","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-hi-36","q":"मुझे बिल्कुल पसंद नहीं आया","locale":"hi","cat":"negation","answers":["👎","😒","🙅","😤","😑"],"forbid":["👍","😍"]}
+{"id":"sent-hi-37","q":"यह मज़ेदार नहीं है","locale":"hi","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-hi-38","q":"मुझे ऑफिस नहीं जाना","locale":"hi","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-hi-39","q":"मैं भी","locale":"hi","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-hi-40","q":"क्या हाल है","locale":"hi","cat":"fw-alias","answers":["👋","🙂","😊","🤔","🤗"]}
+{"id":"sent-hi-41","q":"कोई बात नहीं","locale":"hi","cat":"fw-alias","answers":["👍","😊","🙂","🤗","👌","🤷"]}
+{"id":"sent-bn-01","q":"আমি খুব ক্লান্ত","locale":"bn","cat":"sentence","answers":["😩","😫","😮‍💨","🥱","😴"]}
+{"id":"sent-bn-02","q":"আজ আমার জন্মদিন","locale":"bn","cat":"sentence","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"sent-bn-03","q":"আমার খুব মন খারাপ","locale":"bn","cat":"sentence","answers":["😢","😭","😔","😞","🥺"]}
+{"id":"sent-bn-04","q":"তোমাকে দেখে খুব ভালো লাগলো","locale":"bn","cat":"sentence","answers":["🤗","😊","🥰","😄","😍"]}
+{"id":"sent-bn-05","q":"এটা খুব মজার ছিল","locale":"bn","cat":"sentence","answers":["😂","🤣","😆","😄"]}
+{"id":"sent-bn-06","q":"আমার ঘুম পাচ্ছে","locale":"bn","cat":"sentence","answers":["😴","🥱","🛌","💤"]}
+{"id":"sent-bn-07","q":"চলো সিনেমা দেখতে যাই","locale":"bn","cat":"sentence","answers":["🎬","🍿","🎥","🎞️"]}
+{"id":"sent-bn-08","q":"আমি তোমাকে অনেক ভালোবাসি","locale":"bn","cat":"sentence","answers":["❤️","🥰","😘","💕","😍","💖"]}
+{"id":"sent-bn-09","q":"সে আবার দেরি করেছে","locale":"bn","cat":"sentence","answers":["⏰","🙄","😤","⌛","😑"]}
+{"id":"sent-bn-10","q":"আমি অফিসে আছি","locale":"bn","cat":"sentence","answers":["💼","💻","🏢"]}
+{"id":"sent-bn-11","q":"আমার খুব খিদে পেয়েছে","locale":"bn","cat":"sentence","answers":["😋","🤤","🍽️","🍴"]}
+{"id":"sent-bn-12","q":"আমি খুব বোর হচ্ছি","locale":"bn","cat":"sentence","answers":["😑","🥱","😐","😒","🙄"]}
+{"id":"sent-bn-13","q":"আমরা ম্যাচ জিতেছি","locale":"bn","cat":"sentence","answers":["🏆","🎉","🥇","🙌","🥳","🏏","⚽"]}
+{"id":"sent-bn-14","q":"আমার জ্বর হয়েছে","locale":"bn","cat":"sentence","answers":["🤒","🤧","😷","🌡️"]}
+{"id":"sent-bn-15","q":"বাইরে বৃষ্টি হচ্ছে","locale":"bn","cat":"sentence","answers":["🌧️","☔","☂️","💧"]}
+{"id":"sent-bn-16","q":"আমি একটু নার্ভাস","locale":"bn","cat":"sentence","answers":["😬","😰","😟","😓","😥"]}
+{"id":"sent-bn-17","q":"আমাদের ব্রেকআপ হয়ে গেছে","locale":"bn","cat":"sentence","answers":["💔","😢","😭","😞"]}
+{"id":"sent-bn-18","q":"আমি পরীক্ষায় পাস করেছি","locale":"bn","cat":"sentence","answers":["🎉","🥳","💯","📝","✅","🙌"]}
+{"id":"sent-bn-19","q":"আমার ভাই গেম খেলছে","locale":"bn","cat":"sentence","answers":["🎮","🕹️","👾"]}
+{"id":"sent-bn-20","q":"আমার বিড়ালটা খুব কিউট","locale":"bn","cat":"sentence","answers":["🐱","🐈","😻","🥰","😍"]}
+{"id":"sent-bn-21","q":"আমি চা খাবো","locale":"bn","cat":"sentence","answers":["🍵","☕","😋"]}
+{"id":"sent-bn-22","q":"সে আমার উপর রাগ করেছে","locale":"bn","cat":"sentence","answers":["😠","😡","😤","💢"]}
+{"id":"sent-bn-23","q":"তুমি কি করছো","locale":"bn","cat":"sentence","answers":["🤔","❓","👀","🤷"]}
+{"id":"sent-bn-24","q":"আমি বাসায় পৌঁছে গেছি","locale":"bn","cat":"sentence","answers":["🏠","🏡","✅","😌"]}
+{"id":"sent-bn-25","q":"আমি জিমে আছি","locale":"bn","cat":"sentence","answers":["💪","🏋️","🏋️‍♂️","🏋️‍♀️"]}
+{"id":"sent-bn-26","q":"আমরা নতুন বাসায় যাচ্ছি","locale":"bn","cat":"sentence","answers":["📦","🏠","🚚","🏡"]}
+{"id":"sent-bn-27","q":"খাবারটা খুব মজা","locale":"bn","cat":"sentence","answers":["😋","🤤","👍","🍽️","😍"]}
+{"id":"sent-bn-28","q":"আমার খুব ভয় লাগছে","locale":"bn","cat":"sentence","answers":["😨","😱","😰","😟","😧"]}
+{"id":"sent-bn-29","q":"তুমি সেরা","locale":"bn","cat":"sentence","answers":["🏆","🥇","👍","💪","🤩","💯","👑"]}
+{"id":"sent-bn-30","q":"আমি পড়াশোনা করছি","locale":"bn","cat":"sentence","answers":["📚","📖","✏️","📝","🤓"]}
+{"id":"sent-bn-31","q":"চলো সমুদ্রে যাই","locale":"bn","cat":"sentence","answers":["🏖️","🌊","☀️","🏝️"]}
+{"id":"sent-bn-32","q":"আমার মাথা ব্যথা করছে","locale":"bn","cat":"sentence","answers":["🤕","😣","😖","💊","🤯"]}
+{"id":"sent-bn-33","q":"তোমাকে খুব মিস করছি","locale":"bn","cat":"sentence","answers":["🥺","😢","💕","❤️","😘","🫂"]}
+{"id":"sent-bn-34","q":"সবাইকে শুভ নববর্ষ","locale":"bn","cat":"sentence","answers":["🎆","🎉","🥂","🎇","🎊"]}
+{"id":"sent-bn-35","q":"আমি খুব খুশি","locale":"bn","cat":"sentence","answers":["😊","😄","😁","🥰","😃"]}
+{"id":"sent-bn-36","q":"আমার একদম ভালো লাগেনি","locale":"bn","cat":"negation","answers":["👎","😒","🙅","😤","😑","😞"],"forbid":["👍","😍"]}
+{"id":"sent-bn-37","q":"এটা মজার না","locale":"bn","cat":"negation","answers":["😒","😑","😐","🙄"],"forbid":["😂","🤣"]}
+{"id":"sent-bn-38","q":"আমি অফিসে যেতে চাই না","locale":"bn","cat":"negation","answers":["😩","😫","😒","🙄","💼","😑"]}
+{"id":"sent-bn-39","q":"আমিও","locale":"bn","cat":"fw-alias","answers":["🙋","🙌","👍","🤝","✋","☝️","🙋‍♀️","🙋‍♂️"]}
+{"id":"sent-bn-40","q":"কেমন আছো","locale":"bn","cat":"fw-alias","answers":["👋","🙂","😊","🤔","🤗"]}
+{"id":"sent-bn-41","q":"কোনো ব্যাপার না","locale":"bn","cat":"fw-alias","answers":["👍","😊","🙂","🤗","👌","🤷"]}
