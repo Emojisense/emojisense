@@ -6,6 +6,7 @@ import {
   createCultureFiles,
   isRegionCode,
   parseCultureParams,
+  utcDay,
 } from "../src/culture.ts";
 import type { Env } from "../src/env.ts";
 import type { SearchBody } from "../src/search.ts";
@@ -93,7 +94,7 @@ describe("GET /v1/search with culture", () => {
       context: "Release days come with a party",
       cultureId: "ship-it-party",
     });
-    expect(b.culture).toEqual({ from: "2026-10-02", region: null });
+    expect(b.culture).toEqual({ from: "2026-10-02", day: utcDay(Date.now()), region: null });
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
   });
 
@@ -113,7 +114,7 @@ describe("GET /v1/search with culture", () => {
     const gb = await body(await h.call(search("rocket", "&culture=1&region=gb")));
     expect(glyphs(gb).slice(0, 2)).toEqual(["🦖", "🚀"]);
     expect(gb.results[0]).toMatchObject({ source: "culture", cultureId: "rocket-dino" });
-    expect(gb.culture).toEqual({ from: "2026-10-02", region: "GB" });
+    expect(gb.culture).toEqual({ from: "2026-10-02", day: utcDay(Date.now()), region: "GB" });
     for (const extra of ["&culture=1&region=US", "&culture=1", "&region=GB"]) {
       expect((await body(await h.call(search("rocket", extra)))).results[0]?.emoji).toBe("🚀");
     }
@@ -149,6 +150,41 @@ describe("GET /v1/search with culture", () => {
     const after = await body(await h.call(search("puppy", "&culture=1")));
     expect(after.results.some((r) => r.source === "culture")).toBe(false);
     expect(after.results[0]?.emoji).toBe(inside.results[0]?.emoji);
+  });
+
+  it("uses the request's UTC day near midnight, whatever the runtime's time zone", async () => {
+    const zone = process.env.TZ;
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      // lava-week is 10-01 → 10-07. Each zone's local day differs from the UTC day at two moments.
+      for (const tz of ["Pacific/Kiritimati", "America/Los_Angeles"]) {
+        process.env.TZ = tz;
+        const { h } = withCulture();
+        const seen: [string, string | undefined, boolean][] = [];
+        for (const moment of [
+          "2026-09-30T23:30:00Z",
+          "2026-10-01T00:30:00Z",
+          "2026-10-07T23:30:00Z",
+          "2026-10-08T00:30:00Z",
+        ]) {
+          vi.setSystemTime(new Date(moment));
+          const b = await body(await h.call(search("puppy", "&culture=1")));
+          seen.push([moment, b.culture?.day, b.results.some((r) => r.source === "culture")]);
+        }
+        expect([tz, seen]).toEqual([
+          tz,
+          [
+            ["2026-09-30T23:30:00Z", "2026-09-30", false],
+            ["2026-10-01T00:30:00Z", "2026-10-01", true],
+            ["2026-10-07T23:30:00Z", "2026-10-07", true],
+            ["2026-10-08T00:30:00Z", "2026-10-08", false],
+          ],
+        ]);
+      }
+    } finally {
+      if (zone === undefined) delete process.env.TZ;
+      else process.env.TZ = zone;
+    }
   });
 
   it("answers without culture when the locale has no culture file", async () => {
