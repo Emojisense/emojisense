@@ -248,9 +248,10 @@ function toRecord(candidate: Candidate, answer: Answer, allowed: Set<string>): C
       .filter(([, list]) => (list as string[]).length > 0),
   );
   const context = Object.fromEntries(
-    ["en", ...locales]
-      .filter((l) => answer.context?.[l])
-      .map((l) => [l, (answer.context?.[l] as string).trim()]),
+    ["en", ...locales].flatMap((l) => {
+      const text = answer.context?.[l];
+      return text ? [[l, text.trim()]] : [];
+    }),
   );
   const emoji = (answer.emoji ?? [])
     .filter((e) => allowed.has(e.hexcode))

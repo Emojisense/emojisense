@@ -5,7 +5,20 @@
   "description": "One editorial association, packages/data/culture/entries/<id>.json. The schema covers the shape; src/culture/validate.ts adds the rules a schema cannot express (catalog hexcodes, normalized triggers, window lengths, exclusions, context per targeted locale).",
   "type": "object",
   "additionalProperties": false,
-  "required": ["id", "status", "kind", "context", "when", "regions", "locales", "triggers", "emoji", "source", "createdBy", "createdAt"],
+  "required": [
+    "id",
+    "status",
+    "kind",
+    "context",
+    "when",
+    "regions",
+    "locales",
+    "triggers",
+    "emoji",
+    "source",
+    "createdBy",
+    "createdAt"
+  ],
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "status": { "enum": ["draft", "approved", "retired"] },
@@ -80,7 +93,10 @@
         }
       }
     },
-    "featured": { "type": "boolean", "description": "May appear on a \"relevant now\" shelf. Seasonal and event entries only." },
+    "featured": {
+      "type": "boolean",
+      "description": "May appear on a \"relevant now\" shelf. Seasonal and event entries only."
+    },
     "source": { "enum": ["editorial", "ai-proposed", "calendar"] },
     "createdBy": { "type": "string", "minLength": 1 },
     "reviewedBy": { "type": "string", "minLength": 1, "description": "Required when status is approved." },

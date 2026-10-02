@@ -226,13 +226,10 @@ interface RelevantNowShelfProps {
 function RelevantNowShelf({ emojisense, label, limit, onSelect }: RelevantNowShelfProps) {
   const shelf = useRelevantNow(emojisense, { limit });
   const [skinTone] = useSkinTone();
-  const headingId = useId();
   if (shelf.length === 0) return null;
   return (
-    <div role="group" aria-labelledby={headingId} data-emojisense-relevant-now="">
-      <div id={headingId} data-emojisense-relevant-now-label="">
-        {label}
-      </div>
+    <fieldset data-emojisense-relevant-now="" style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+      <legend data-emojisense-relevant-now-label="">{label}</legend>
       {shelf.map((item) => {
         const emoji = applySkinTone(item.emoji, skinTone);
         const name = emojisense.engine?.get(item.hexcode)?.labels[emojisense.locale] ?? emoji;
@@ -250,7 +247,7 @@ function RelevantNowShelf({ emojisense, label, limit, onSelect }: RelevantNowShe
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }
 
