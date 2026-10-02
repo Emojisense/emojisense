@@ -345,10 +345,10 @@ Custom emoji routes add these codes:
 | 400 | `invalid_request` (`field`: `shortcode`, `aliases`, `tenantId`, `file`, `token`, `botToken`, `guildId`) | A field breaks the rules below |
 | 400 | `unsafe_svg` (`field: file`) | The SVG has scripts, event handlers, `javascript:`, external links or `url()`, entity declarations or embedded documents |
 | 400 | `import_auth_failed` (`field: token`, `botToken` or `guildId`) | Slack or Discord refused the token, or the bot is not in the server. The message names the provider's error code, never the token. |
-| 402 | `plan_required` | Upload on Free (`plan: "solo"`), import below Pro (`plan: "pro"`), or the app is at its plan's custom emoji limit (`plan` = the cheapest plan with a higher limit) |
+| 402 | `plan_required` | Upload on Free (`plan: "solo"`), import below Pro (`plan: "pro"`), or the account is at its plan's custom emoji limit (`plan` = the cheapest plan with a higher limit) |
 | 403 | `plan_limit` | At the limit of the top plan (Scale) |
 | 409 | `shortcode_taken` (`field: shortcode`) | The shortcode exists in the same scope (app-wide, or the same tenant) |
-| 413 | `file_too_large` (`field: file`) | The image is larger than 256 KB |
+| 413 | `image_too_large` (`field: file`) | The image is larger than 256 KB |
 | 415 | `unsupported_image` (`field: file`), `unsupported_media_type` | The file is not PNG, GIF, WebP or SVG (checked by its bytes, not its name or type), or the upload is not `multipart/form-data` |
 | 429 | `import_rate_limited` | Slack or Discord is limiting requests (`Retry-After: 60`) |
 | 502 | `import_unavailable` | Slack or Discord did not answer, or answered with another error |
@@ -363,6 +363,7 @@ type CustomEmoji = {
   aliases: string[];        // normalized search phrases
   imageUrl: string;         // `${API_URL}/v1/custom/<appId>/<id>`, immutable
   tenantId: string | null;  // tenants.id; null = app-wide
+  tenantExternalId?: string | null; // tenants API and webhooks only
   source: "upload" | "slack" | "discord" | "api";
   bytes: number;
   createdAt: number;        // epoch ms
@@ -370,8 +371,9 @@ type CustomEmoji = {
 ```
 
 - **List.** `{ emoji, used, limit }`, newest first. `?tenantId=<tenants.id>` lists one tenant's
-  emoji. `used` counts every emoji of the app (tenants included); `limit` is the owner plan's
-  `custom_emoji` (`0` on Free, `null` = unlimited). Every role may list, on every plan.
+  emoji. `used` is what the limit counts: every emoji of every app of the owning account (tenants
+  included); `limit` is the owner plan's `custom_emoji` (`0` on Free, `null` = unlimited). Every
+  role may list, on every plan.
 - **Upload.** `multipart/form-data` with `file` (≤ 256 KB; PNG, GIF, WebP or SVG by magic bytes),
   `shortcode`, `aliases` (comma-separated, optional) and `tenantId` (optional, a `tenants.id` of
   this app). Images are stored in R2 under `custom/<appId>/<tenantId or "_">/<id>.<ext>`.
@@ -380,10 +382,13 @@ type CustomEmoji = {
   with at least one letter or digit. Unique per app-wide scope and per tenant.
 - **Aliases.** A comma-separated string (forms) or a string array (JSON). Each is normalized like
   a query (PACK_FORMAT.md §3); empty and repeated ones are dropped; at most 20.
-- **Limit.** The plan's `custom_emoji` limit counts per app (dev, staging and prod apps each have
-  their own). The check is part of the INSERT, so parallel uploads cannot pass it together.
+- **Limit.** The plan's `custom_emoji` limit counts every emoji of every app of the account, tenant
+  emoji included, the same rule as the tenants API and `GET /api/billing`. The check is part of
+  the INSERT, so parallel uploads cannot pass it together.
 - **Edit and delete** are not plan-gated, so an account that moved to a lower plan can still
   clean up. A rename keeps the image and the id.
+- **Webhooks.** Uploads, imports and deletes emit `custom_emoji.created` / `custom_emoji.deleted`
+  (Scale). A rename sends nothing.
 - **Search.** The API Worker serves the images and merges custom matches into `/v1/search` and
   `/v1/suggest-reactions` within about a minute of a change.
 
@@ -445,8 +450,8 @@ body to every enabled webhook of the app that subscribes to it.
 | ------ | ---- | ------ |
 | `tenant.created` | A tenant is created (tenants API or dashboard) | `{ id, externalId, name, createdAt }` |
 | `tenant.deleted` | A tenant is deleted | `{ id, externalId, name, createdAt, emojiDeleted }` |
-| `custom_emoji.created` | A tenant emoji is uploaded with the tenants API | `CustomEmoji` (see [Tenants API](#tenants-api-scale-secret-key)) |
-| `custom_emoji.deleted` | A tenant emoji is deleted with the tenants API | `CustomEmoji` |
+| `custom_emoji.created` | A custom emoji is uploaded (tenants API or dashboard) or imported from Slack or Discord (one event per emoji) | `CustomEmoji` with `tenantExternalId` (`null` for app-wide emoji) |
+| `custom_emoji.deleted` | A custom emoji is deleted (tenants API or dashboard) | `CustomEmoji` with `tenantExternalId` |
 | `usage.threshold` | The account reaches 80% or 100% of a monthly limit (`semantic_calls`, `image_classifications`) | `{ metric, threshold, period, used, limit }` |
 | `webhook.test` | "Send test event" in the dashboard; never subscribed | `{ webhookId, message }` |
 
