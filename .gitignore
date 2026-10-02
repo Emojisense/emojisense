@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.turbo/
+.wrangler/
+.dev.vars
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage/
+# local-only caches and large intermediates
+packages/data/.cache/
+packages/data/build/
+# community custom emoji sets: local eval only, never committed or shipped
+packages/eval/private/
+packages/data/enrichment/_batches/
