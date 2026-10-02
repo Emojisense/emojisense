@@ -6,9 +6,12 @@ import { FEATURED_PLAN, PLAN_COPY } from "./pricing/plan-copy";
 interface Props {
   /** Show the monthly / yearly switch. It appears only when a plan bills yearly. */
   billingToggle?: boolean;
+  /** Level of the plan names: 3 under a section h2, 2 when the cards sit right under the page h1. */
+  headingLevel?: 2 | 3;
 }
 
-const { billingToggle = true } = Astro.props;
+const { billingToggle = true, headingLevel = 3 } = Astro.props;
+const PlanName = `h${headingLevel}` as const;
 const plans = planViews(DASHBOARD_URL);
 const yearlyNames = plans.filter((plan) => plan.yearly).map((plan) => plan.name);
 const savings = yearlySavingsPercent();
@@ -57,7 +60,9 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
               </span>
               {copy.badge && <p class="badge">{copy.badge}</p>}
             </div>
-            <h3 id={`plan-${plan.id}`}>{plan.name}</h3>
+            <PlanName id={`plan-${plan.id}`} class="plan-name">
+              {plan.name}
+            </PlanName>
             <p class="blurb">{copy.blurb}</p>
             <p class="price">
               <span class:list={["amount", { "when-monthly": plan.yearly }]}>{plan.monthly}</span>
@@ -287,8 +292,10 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
     font: 500 0.75rem / 1 var(--font-mono);
   }
 
-  h3 {
+  .plan-name {
     font-size: 1.375rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
   }
 
   .blurb {

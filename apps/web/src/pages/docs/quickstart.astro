@@ -115,17 +115,17 @@ input.addEventListener("input", () => session.update(input.value));`;
 
   <ol class="docs-steps">
     <li>
-      <h3 id="get-a-key">Get a key</h3>
+      <h2 id="get-a-key" class="docs-step-title">Get a key</h2>
       <p>Open the <a href={`${DASHBOARD_URL}/`}>dashboard</a> and sign in with your email address or a social account. Create an app, then choose <strong>Create key</strong> and <strong>Publishable key</strong>. Add the origins your app runs on, for example <code>http://localhost:5173</code> and <code>https://your.app</code>. The key works only from those origins.</p>
       <p>The Free plan needs no card. You can also skip this step for now: without a key, the API applies a stricter rate limit per IP.</p>
     </li>
     <li>
-      <h3 id="install">Install</h3>
+      <h2 id="install" class="docs-step-title">Install</h2>
       <CodeTabs tabs={install} group="framework" label="Stack" />
       <p>React apps get hooks and a ready picker. The web component works in Vue, Svelte, Angular and plain HTML. The <code>emojisense</code> package is the engine alone, with no dependencies.</p>
     </li>
     <li>
-      <h3 id="search">Search</h3>
+      <h2 id="search" class="docs-step-title">Search</h2>
       <p>The first search runs as soon as the English core pack arrives. Every keystroke is answered on the device. When the dictionary is unsure, the API adds meaning results a moment later.</p>
       <CodeTabs
         tabs={[
@@ -138,7 +138,7 @@ input.addEventListener("input", () => session.update(input.value));`;
       />
     </li>
     <li>
-      <h3 id="add-a-picker">Add a picker</h3>
+      <h2 id="add-a-picker" class="docs-step-title">Add a picker</h2>
       <p>The picker shows every emoji by category. As soon as someone types, it shows the Emojisense ranking, with keyboard navigation and skin tones.</p>
       <CodeTabs
         tabs={[
@@ -152,7 +152,7 @@ input.addEventListener("input", () => session.update(input.value));`;
       <p>Frimousse is unstyled, so style it like any Frimousse picker, or use the <a href="/docs/integrations/react/#shadcn">shadcn/ui component</a>. The web component has its own theme.</p>
     </li>
     <li>
-      <h3 id="try-it">Try it</h3>
+      <h2 id="try-it" class="docs-step-title">Try it</h2>
       <p>Type these into your picker. The emoji below are the real top results of the on-device engine with the English core and extension packs.</p>
       <QueryResults
         queries={[

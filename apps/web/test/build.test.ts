@@ -628,3 +628,21 @@ describe("security headers", () => {
     }
   });
 });
+
+describe("heading order", () => {
+  it("never skips a heading level on any built page", () => {
+    const pages = (readdirSync(outDir, { recursive: true }) as string[]).filter((f) => f.endsWith(".html"));
+    expect(pages.length).toBeGreaterThan(30);
+    const skips: string[] = [];
+    for (const path of pages) {
+      let previous = 0;
+      for (const heading of Array.from(page(`/${path}`).querySelectorAll("h1, h2, h3, h4, h5, h6"))) {
+        const level = Number(heading.tagName.slice(1));
+        if (level > previous + 1)
+          skips.push(`${path}: h${previous} → h${level} “${heading.textContent?.trim()}”`);
+        previous = level;
+      }
+    }
+    expect(skips).toEqual([]);
+  });
+});

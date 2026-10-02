@@ -290,7 +290,7 @@ export function PhotoLab({ engine, online, active, codeTab, onCodeTab, announce 
           onDrop={onDrop}
         >
           <header className="pg-panel-head">
-            <h3 className="pg-label">Photo</h3>
+            <h2 className="pg-label">Photo</h2>
             <span className="pg-count">resized to 384 px here, never stored</span>
           </header>
           <figure className="pg-figure" data-reading={status.kind === "reading" || undefined}>
@@ -390,7 +390,7 @@ export function PhotoLab({ engine, online, active, codeTab, onCodeTab, announce 
         <div className="pg-stack">
           <section className="pg-panel pg-reading" aria-label="Result" aria-busy={status.kind === "reading"}>
             <header className="pg-panel-head">
-              <h3 className="pg-label">Result</h3>
+              <h2 className="pg-label">Result</h2>
               <span className="pg-count" data-state={status.kind === "done" ? status.via : status.kind}>
                 {statusLabel(status)}
               </span>
@@ -473,7 +473,7 @@ export function PhotoLab({ engine, online, active, codeTab, onCodeTab, announce 
           </section>
           <section className="pg-panel" aria-label="Timing">
             <header className="pg-panel-head">
-              <h3 className="pg-label">Timing</h3>
+              <h2 className="pg-label">Timing</h2>
               <span className="pg-count">
                 {status.kind === "done" && status.via === "saved" ? "server times when saved" : "this photo"}
               </span>

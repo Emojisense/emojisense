@@ -33,7 +33,7 @@ export function ResultDetails({
     return (
       <section className="pg-panel pg-inspector" aria-label="Result details">
         <header className="pg-panel-head">
-          <h3 className="pg-label">Details</h3>
+          <h2 className="pg-label">Details</h2>
         </header>
         <p className="pg-quiet">Pick a result to see why it matched.</p>
       </section>
@@ -47,7 +47,7 @@ export function ResultDetails({
   return (
     <section className="pg-panel pg-inspector" aria-label="Result details">
       <header className="pg-panel-head">
-        <h3 className="pg-label">Details</h3>
+        <h2 className="pg-label">Details</h2>
         <span className="pg-count">
           #{rank} of {total}
         </span>
