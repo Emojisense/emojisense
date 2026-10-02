@@ -1,12 +1,21 @@
 export {
   type BuildCultureOptions,
   buildCultureFiles,
+  CULTURE_GZIP_BUDGET,
   type CultureBuild,
   CultureValidationError,
   type LocaleSummary,
 } from "./build-files.ts";
 export { loadCatalog } from "./catalog.ts";
-export { activeBetween, addDays, type CompileOptions, compileCulture, triggersFor } from "./compile.ts";
+export {
+  activeBetween,
+  addDays,
+  type CompileOptions,
+  CULTURE_DAYS,
+  compileCulture,
+  featuredOn,
+  triggersFor,
+} from "./compile.ts";
 export { type Exclusion, findExcluded, loadExclusions, parseExclusions } from "./exclusions.ts";
 export { ENTRIES_DIR, formatRecord, type LoadedRecord, loadRecords, writeRecord } from "./records.ts";
 export { probeRegions, type RegionProbes } from "./regional.ts";

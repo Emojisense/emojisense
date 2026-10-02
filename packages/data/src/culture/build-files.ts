@@ -5,16 +5,22 @@ import { readPackConfig } from "../config.ts";
 import { LOCALE_CODES } from "../locales.ts";
 import { DATA_ROOT } from "../paths.ts";
 import { loadCatalog } from "./catalog.ts";
-import { addDays, compileCulture } from "./compile.ts";
+import { addDays, CULTURE_DAYS, compileCulture, featuredOn } from "./compile.ts";
 import { loadExclusions } from "./exclusions.ts";
 import { loadRecords } from "./records.ts";
 import type { Issue } from "./types.ts";
 import { validateRecords } from "./validate.ts";
 
+/**
+ * Most gzip bytes per locale file (a unit test checks the committed entries). A 12-month file was
+ * at most 2.7 KB gz on 2026-10-02; the room is for new entries, not for a bigger format.
+ */
+export const CULTURE_GZIP_BUDGET = 6 * 1024;
+
 export interface BuildCultureOptions {
   /** First day the files cover, "YYYY-MM-DD". */
   from: string;
-  /** Days after `from` whose seasonal and event entries are included. Default 14. */
+  /** Days after `from` whose seasonal and event entries are included. Default {@link CULTURE_DAYS}. */
   days?: number;
   /** Default dist/culture/<packVersion>. Emptied first. */
   outDir?: string;
@@ -22,7 +28,8 @@ export interface BuildCultureOptions {
 
 export interface LocaleSummary {
   entries: number;
-  relevantNow: string[];
+  /** Featured entries active on the first day. For the build log only: not in the files. */
+  featuredOnFrom: string[];
   bytes: number;
   gzipBytes: number;
 }
@@ -48,7 +55,7 @@ export class CultureValidationError extends Error {
  * {@link CultureValidationError} when any entry has a validation error.
  */
 export function buildCultureFiles(options: BuildCultureOptions): CultureBuild {
-  const { from, days = 14 } = options;
+  const { from, days = CULTURE_DAYS } = options;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || Number.isNaN(Date.parse(from))) {
     throw new Error(`culture: the first day must be YYYY-MM-DD, got "${from}"`);
   }
@@ -71,14 +78,27 @@ export function buildCultureFiles(options: BuildCultureOptions): CultureBuild {
     writeFileSync(join(outDir, `culture.${locale}.json`), json);
     locales[locale] = {
       entries: culture.entries.length,
-      relevantNow: culture.relevantNow,
+      featuredOnFrom: featuredOn(culture, from),
       bytes: Buffer.byteLength(json),
       gzipBytes: gzipSync(json, { level: 9 }).length,
     };
   }
   const until = addDays(from, days);
-  const summary = { format: "emojisense-culture-index", formatVersion: 1, packVersion, from, until, locales };
-  writeFileSync(join(outDir, "index.json"), `${JSON.stringify(summary, null, 2)}\n`);
+  const sizes = Object.fromEntries(
+    Object.entries(locales).map(([locale, { entries, bytes, gzipBytes }]) => [
+      locale,
+      { entries, bytes, gzipBytes },
+    ]),
+  );
+  const index = {
+    format: "emojisense-culture-index",
+    formatVersion: 1,
+    packVersion,
+    from,
+    until,
+    locales: sizes,
+  };
+  writeFileSync(join(outDir, "index.json"), `${JSON.stringify(index, null, 2)}\n`);
   const approved = records.filter((r) => r.status === "approved").length;
   return { outDir, packVersion, from, until, approved, locales };
 }
