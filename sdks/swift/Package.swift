@@ -9,6 +9,10 @@ let package = Package(
   ],
   targets: [
     .target(name: "Emojisense"),
-    .testTarget(name: "EmojisenseTests", dependencies: ["Emojisense"]),
+    .testTarget(
+      name: "EmojisenseTests",
+      dependencies: ["Emojisense"],
+      resources: [.copy("Resources/golden.json")]
+    ),
   ]
 )
