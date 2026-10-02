@@ -4,10 +4,13 @@
  * team (members and invites) and its memberships in other teams; legacy session rows; and the
  * waitlist entry of its email. A Clerk account leaves its Clerk user id in `deleted_clerk_users`
  * for 10 minutes (migration 0003), so a session token from before the deletion cannot recreate it.
+ * Its Whop memberships go too, except retired ones and the one that still renews: they stay
+ * without the account id until Whop confirms their cancel (whop/memberships.ts).
  */
 import type { AccountRow, EmojiBucket } from "@emojisense/platform";
 import type { D1Database, D1PreparedStatement } from "./d1";
 import { HttpError } from "./http";
+import { deletedAccountMembershipStatements } from "./whop/memberships";
 
 /** R2 deletes at most this many keys per call. */
 const R2_DELETE_MAX_KEYS = 1000;
@@ -53,6 +56,7 @@ function deleteStatements(db: D1Database, account: AccountRow, now: number): D1P
     ...(account.email
       ? [db.prepare("DELETE FROM waitlist WHERE email = ? COLLATE NOCASE").bind(account.email)]
       : []),
+    ...deletedAccountMembershipStatements(db, account, now),
     db.prepare("DELETE FROM accounts WHERE id = ?").bind(id),
     db.prepare("DELETE FROM deleted_clerk_users WHERE deleted_at <= ?").bind(now - DELETED_CLERK_USER_TTL_MS),
     ...(account.clerk_user_id

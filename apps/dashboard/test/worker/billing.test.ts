@@ -1,7 +1,8 @@
 import { DAY_MS } from "@emojisense/platform";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { BillingResponse, MeResponse } from "../../src/shared/contract";
 import type { Env } from "../../src/worker/env";
+import { cancelRetiredMemberships } from "../../src/worker/whop/memberships";
 import { accountIdOf, BASE, body, createAppFor, createHarness, joinTeam, NOW, setPlan } from "./harness";
 import { WHOP_ENV, WHOP_KEY, WHOP_PLANS } from "./whop-fixtures";
 
@@ -357,6 +358,49 @@ describe("account deletion with a subscription", () => {
         "SELECT id, account_id, retired_at IS NOT NULL AS retired, cancel_confirmed_at IS NOT NULL AS confirmed FROM whop_memberships",
       ),
     ).toEqual([{ id: "mem_paid", account_id: null, retired: 1, confirmed: 1 }]);
+  });
+
+  it("keeps the pending cancel of an earlier, replaced membership (one batch with the deletion)", async () => {
+    const { h, ada, adaId } = await setup(WHOP_ENV);
+    subscribe(h, adaId, { plan: "pro", membership: "mem_pro" });
+    // Solo was replaced by Pro, and Whop has not confirmed its cancel yet.
+    h.db.exec(
+      `INSERT INTO whop_memberships (id, account_id, state, event_at, retired_at, cancel_attempts, cancel_retry_at)
+       VALUES ('mem_solo', ?, 'active', 0, 1, 2, ?)`,
+      adaId,
+      NOW + DAY_MS,
+    );
+    // An ended membership of the account: it simply goes.
+    h.db.exec(
+      "INSERT INTO whop_memberships (id, account_id, state, event_at) VALUES ('mem_old', ?, 'ended', 0)",
+      adaId,
+    );
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await h.call("DELETE", "/api/me", {
+      cookie: ada,
+      body: { confirm: "ada@dev.localhost" },
+    });
+    expect(response.status).toBe(200);
+    await h.settle();
+
+    const rows = () =>
+      h.db.rows(
+        "SELECT id, account_id, retired_at IS NOT NULL AS retired, cancel_confirmed_at FROM whop_memberships ORDER BY id",
+      );
+    // Both renewing memberships stay, without the account id, still to cancel.
+    expect(rows()).toEqual([
+      { id: "mem_pro", account_id: null, retired: 1, cancel_confirmed_at: null },
+      { id: "mem_solo", account_id: null, retired: 1, cancel_confirmed_at: null },
+    ]);
+    // A later run (webhook or daily cron) cancels them once Whop answers.
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    h.clock.now = NOW + 2 * DAY_MS;
+    expect(await cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now })).toBe(2);
+    expect(rows().map((row) => (row as { cancel_confirmed_at: number | null }).cancel_confirmed_at)).toEqual([
+      h.clock.now,
+      h.clock.now,
+    ]);
   });
 
   it("calls Whop only for a subscription that still renews", async () => {

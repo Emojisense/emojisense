@@ -12,7 +12,7 @@ import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { loadAccountPlan, toPlanSummary } from "../plans";
 import { toAccountSummary } from "../records";
-import { currentBilling, retireDeletedAccountBilling } from "./billing";
+import { cancelAfterAccountDeletion, currentBilling } from "./billing";
 
 export async function getMe({ env, account: signedIn, deps }: AuthedContext): Promise<Response> {
   const account = await currentBilling(env.DB, signedIn, deps.now());
@@ -79,7 +79,7 @@ export async function deleteMe(ctx: AuthedContext): Promise<Response> {
   assertConfirmed(account, body.confirm);
   const deleted = await deleteAccount(env.DB, env.EMOJI, account, ctx.deps.now());
   // A deleted account must not keep paying: the subscription ends with its paid period.
-  await retireDeletedAccountBilling(ctx, account);
+  await cancelAfterAccountDeletion(ctx);
   const clerkUserDeleted = await deleteClerkUser(ctx);
   // Counts only: no ids or emails in logs (docs/API.md, Privacy).
   console.log(JSON.stringify({ event: "account_deleted", ...deleted, clerkUserDeleted }));

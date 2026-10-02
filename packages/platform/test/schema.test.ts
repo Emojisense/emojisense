@@ -189,6 +189,8 @@ describe("migration 0006 (billing)", () => {
       event_at: 0,
       retired_at: null,
       cancel_confirmed_at: null,
+      cancel_attempts: 0,
+      cancel_retry_at: null,
     } satisfies Record<keyof WhopMembershipRow, unknown>);
     const db = migratedDb();
     expect(columns(db, "whop_memberships")).toEqual(keys.sort());

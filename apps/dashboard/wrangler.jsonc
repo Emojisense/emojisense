@@ -35,6 +35,9 @@
     { "name": "WAITLIST_LIMITER", "namespace_id": "2001", "simple": { "limit": 5, "period": 60 } },
     { "name": "WEBHOOK_TEST_LIMITER", "namespace_id": "2002", "simple": { "limit": 5, "period": 60 } }
   ],
+  // Daily billing sweep (src/worker/index.ts `scheduled`): lapsed subscriptions to Free, and the
+  // retry of Whop cancels for retired memberships. Repeated in each env block below.
+  "triggers": { "crons": ["17 4 * * *"] },
   // Production values. `.dev.vars` overrides them locally (see .dev.vars.example).
   // Clerk sign-in needs CLERK_PUBLISHABLE_KEY and CLERK_JWT_KEY (both public) and, optionally,
   // CLERK_AUTHORIZED_PARTIES. The only optional secret is CLERK_SECRET_KEY (README, "Clerk").
@@ -50,6 +53,7 @@
     // dev API Worker. Clerk values are public (publishable key, JWT public key); no secret is needed.
     "dev": {
       "routes": [{ "pattern": "app.emojisense.dev", "custom_domain": true }],
+      "triggers": { "crons": ["17 4 * * *"] },
       "workers_dev": false,
       "preview_urls": false,
       "d1_databases": [
@@ -79,6 +83,7 @@
     // production API Worker.
     "production": {
       "routes": [{ "pattern": "app.emojisense.com", "custom_domain": true }],
+      "triggers": { "crons": ["17 4 * * *"] },
       "workers_dev": false,
       "preview_urls": false,
       "d1_databases": [

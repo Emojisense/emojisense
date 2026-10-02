@@ -22,7 +22,7 @@ import { finiteOrNull, measureUsage, toPlanSummary } from "../plans";
 import { parseBillingInterval, parsePaidPlan } from "../validate";
 import { createCheckout, WhopApiError } from "../whop/api";
 import { billingEnvironment, whopApi, whopOrdersUrl, whopPlanIds } from "../whop/config";
-import { cancelRetiredMemberships, retireMembership } from "../whop/memberships";
+import { cancelRetiredMemberships } from "../whop/memberships";
 
 /**
  * The account as billing sees it now. A subscription whose grace or cancelled period ran out moves
@@ -157,28 +157,10 @@ export async function startCheckout(ctx: AuthedContext): Promise<Response> {
 }
 
 /**
- * Account deletion: the account's membership rows go, and a membership that still renews becomes
- * an anonymous retired row, so it is cancelled at period end until Whop confirms and never gives
- * a plan again. Runs right after the account rows are deleted; the cancel runs after the answer.
+ * After an account deletion (whose D1 batch retired its renewing membership): asks Whop to cancel
+ * it, after the answer. A failure is retried by later webhooks and the daily cron.
  */
-export async function retireDeletedAccountBilling(ctx: AuthedContext, account: AccountRow): Promise<void> {
-  const db = ctx.env.DB;
-  const now = ctx.deps.now();
-  const statements = [db.prepare("DELETE FROM whop_memberships WHERE account_id = ?").bind(account.id)];
-  const membershipId = account.whop_membership_id;
-  const status = account.billing_status;
-  if (membershipId && (status === "active" || status === "past_due" || status === "canceling")) {
-    statements.push(retireMembership(db, { id: membershipId, accountId: null, state: status, at: now }));
-    // Already cancelled in Whop: nothing to send unless Whop reports that it renews again.
-    if (status === "canceling") {
-      statements.push(
-        db
-          .prepare("UPDATE whop_memberships SET cancel_confirmed_at = ? WHERE id = ?")
-          .bind(now, membershipId),
-      );
-    }
-  }
-  await db.batch(statements);
+export async function cancelAfterAccountDeletion(ctx: AuthedContext): Promise<void> {
   const cancel = cancelRetiredMemberships(ctx.env, ctx.deps);
   if (ctx.deps.waitUntil) ctx.deps.waitUntil(cancel);
   else await cancel;

@@ -33,6 +33,13 @@ export const PAST_DUE_GRACE_DAYS = 7;
  */
 export const CANCELED_PERIOD_SLACK_DAYS = 1;
 
+/**
+ * An active subscription renews with a payment around the end of its period. If neither a
+ * payment nor Whop's final event came this long after the period ended, the account moves to
+ * Free; a later payment of the same membership restores the plan.
+ */
+export const ACTIVE_PERIOD_SLACK_DAYS = 7;
+
 export interface BillingOption {
   plan: PaidPlanId;
   interval: BillingInterval;
@@ -162,12 +169,18 @@ export function billingLapsed(state: BillingState, now: number): boolean {
       state.current_period_end <= now - CANCELED_PERIOD_SLACK_DAYS * DAY_MS
     );
   }
+  if (state.billing_status === "active") {
+    return (
+      state.current_period_end !== null && state.current_period_end <= now - ACTIVE_PERIOD_SLACK_DAYS * DAY_MS
+    );
+  }
   return false;
 }
 
 /**
- * Moves lapsed subscriptions to Free: a past-due grace that ended, or a cancelled subscription
- * whose period ended a day ago without Whop's `membership.deactivated`. With `accountId`, only that
+ * Moves lapsed subscriptions to Free: a past-due grace that ended, a cancelled subscription whose
+ * period ended a day ago without Whop's `membership.deactivated`, or an active one whose period
+ * ended 7 days ago without a renewal payment (a lost final event). With `accountId`, only that
  * account. Returns the number of accounts changed.
  */
 export async function expireLapsedBilling(
@@ -179,10 +192,16 @@ export async function expireLapsedBilling(
     .prepare(
       `UPDATE accounts SET plan = 'free', billing_status = 'canceled', billing_grace_until = NULL
        WHERE ((billing_status = 'past_due' AND billing_grace_until <= ?)
-          OR (billing_status = 'canceling' AND current_period_end <= ?))
+          OR (billing_status = 'canceling' AND current_period_end <= ?)
+          OR (billing_status = 'active' AND current_period_end <= ?))
          ${accountId === undefined ? "" : "AND id = ?"}`,
     )
-    .bind(now, now - CANCELED_PERIOD_SLACK_DAYS * DAY_MS, ...(accountId === undefined ? [] : [accountId]))
+    .bind(
+      now,
+      now - CANCELED_PERIOD_SLACK_DAYS * DAY_MS,
+      now - ACTIVE_PERIOD_SLACK_DAYS * DAY_MS,
+      ...(accountId === undefined ? [] : [accountId]),
+    )
     .run();
   return result.meta.changes;
 }

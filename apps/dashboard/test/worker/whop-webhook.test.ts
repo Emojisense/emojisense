@@ -1,6 +1,7 @@
 import { DAY_MS, PAST_DUE_GRACE_DAYS, type WhopMembershipRow } from "@emojisense/platform";
 import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import type { Env } from "../../src/worker/env";
+import worker from "../../src/worker/index";
 import { parseWhopEvent, planWhopEvent, type WhopEvent } from "../../src/worker/whop/events";
 import { cancelRetiredMemberships } from "../../src/worker/whop/memberships";
 import { accountIdOf, body, createHarness, type Harness, NOW } from "./harness";
@@ -219,19 +220,23 @@ describe("POST /api/whop/webhook: idempotency", () => {
     expect(eventIds(h)).toEqual(["msg_once"]);
   });
 
-  it("records ignored events too, so retries stay cheap", async () => {
-    const { h } = await setup();
+  it("does not remember ignored events, so Whop's retry works after a configuration fix", async () => {
+    // Pro has no variant in this Worker's WHOP_PLAN_IDS yet.
+    const { h, adaId } = await setup({ WHOP_PLAN_IDS: JSON.stringify({ solo: WHOP_PLANS.solo }) });
     vi.spyOn(console, "warn").mockImplementation(() => {});
     const payload = paymentEvent(h, "payment.succeeded", {
-      membershipId: "mem_x",
+      membershipId: "mem_1",
       whopPlanId: WHOP_PLANS.pro.month,
+      metadata: checkoutMetadata(adaId, "pro"),
     });
-    await deliver(h, payload, { id: "msg_ignored" });
-    expect(eventIds(h)).toEqual(["msg_ignored"]);
-    expect(await body(await deliver(h, payload, { id: "msg_ignored" }))).toEqual({
-      ok: true,
-      duplicate: true,
-    });
+    expect((await deliver(h, payload, { id: "msg_later" })).status).toBe(200);
+    expect(eventIds(h)).toEqual([]);
+    expect(billingOf(h, adaId).plan).toBe("free");
+
+    h.env.WHOP_PLAN_IDS = JSON.stringify(WHOP_PLANS);
+    expect(await body(await deliver(h, payload, { id: "msg_later" }))).toEqual({ ok: true });
+    expect(billingOf(h, adaId).plan).toBe("pro");
+    expect(eventIds(h)).toEqual(["msg_later"]);
   });
 
   it("answers 200 to event types it does not handle, without recording them", async () => {
@@ -502,13 +507,23 @@ describe("POST /api/whop/webhook: activation", () => {
     expect(JSON.stringify(logged)).not.toContain("mem_solo");
     expect(membershipOf(h, "mem_solo").cancel_confirmed_at).toBeNull();
 
-    // The daily cron (or the next Whop event) tries again; Whop answers this time.
+    expect(membershipOf(h, "mem_solo")).toMatchObject({
+      cancel_attempts: 1,
+      cancel_retry_at: h.clock.now + 60 * 60 * 1000,
+    });
+
+    // Whop answers now, but the row waits for its backoff (one hour after the first failure).
     h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
-    expect(await cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now })).toBe(1);
+    const run = () => cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now });
+    expect(await run()).toBe(0);
+    expect(cancelCalls(h)).toEqual(["mem_solo"]);
+    // The daily cron (or a later Whop event) tries again after the backoff.
+    h.clock.now += 60 * 60 * 1000;
+    expect(await run()).toBe(1);
     expect(cancelCalls(h)).toEqual(["mem_solo", "mem_solo"]);
     expect(membershipOf(h, "mem_solo").cancel_confirmed_at).toBe(h.clock.now);
     // Confirmed: nothing more to send.
-    expect(await cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now })).toBe(0);
+    expect(await run()).toBe(0);
     expect(cancelCalls(h)).toHaveLength(2);
   });
 
@@ -529,6 +544,54 @@ describe("POST /api/whop/webhook: activation", () => {
     );
     await h.settle();
     expect(membershipOf(h, "mem_solo").cancel_confirmed_at).not.toBeNull();
+  });
+});
+
+describe("cancel retries", () => {
+  it("backs off a row that keeps failing, so newer rows are tried first", async () => {
+    const { h } = await setup();
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    h.db.exec(
+      `INSERT INTO whop_memberships (id, state, event_at, retired_at, cancel_attempts, cancel_retry_at)
+       VALUES ('mem_stuck', 'active', 0, 1, 6, ?), ('mem_new', 'active', 0, 2, 0, NULL)`,
+      NOW - 1,
+    );
+    h.fetchMock.mockImplementation(async (url) =>
+      String(url).includes("mem_stuck")
+        ? new Response("{}", { status: 500 })
+        : new Response("{}", { status: 200 }),
+    );
+    await cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now });
+    expect(cancelCalls(h)).toEqual(["mem_new", "mem_stuck"]);
+    expect(membershipOf(h, "mem_new").cancel_confirmed_at).toBe(NOW);
+    // Seven failures: the next try waits a day (the longest backoff).
+    expect(membershipOf(h, "mem_stuck")).toMatchObject({ cancel_attempts: 7, cancel_retry_at: NOW + DAY_MS });
+    expect(error).toHaveBeenCalled();
+  });
+
+  it("the daily cron of the dashboard Worker retries cancels and sweeps lapsed plans", async () => {
+    const { h, adaId } = await setup();
+    h.db.exec(
+      "INSERT INTO whop_memberships (id, state, event_at, retired_at) VALUES ('mem_old', 'active', 0, 1)",
+    );
+    h.db.exec(
+      "UPDATE accounts SET plan = 'pro', billing_status = 'past_due', billing_grace_until = ? WHERE id = ?",
+      Date.now() - 1,
+      adaId,
+    );
+    const fetchStub = vi.fn(async (_url: string, _init?: RequestInit) => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchStub);
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const background: Promise<unknown>[] = [];
+    worker.scheduled(undefined, h.env, { waitUntil: (promise) => void background.push(promise) });
+    await Promise.all(background);
+    vi.unstubAllGlobals();
+    expect(fetchStub).toHaveBeenCalledWith(
+      "https://sandbox-api.whop.com/api/v1/memberships/mem_old/cancel",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(membershipOf(h, "mem_old").cancel_confirmed_at).not.toBeNull();
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "free", billing_status: "canceled" });
   });
 });
 
@@ -601,6 +664,157 @@ describe("POST /api/whop/webhook: retired memberships", () => {
     await h.settle();
     expect(cancelCalls(h)).toEqual(["mem_solo"]);
     expect(billingOf(h, adaId).whop_membership_id).toBe("mem_pro");
+  });
+});
+
+describe("POST /api/whop/webhook: replacing a cancelled membership", () => {
+  it("does not ask Whop to cancel a replaced membership that was cancelling already", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId, "solo", "mem_solo");
+    await deliver(
+      h,
+      membershipEvent(h, "membership.cancel_at_period_end_changed", {
+        membershipId: "mem_solo",
+        whopPlanId: WHOP_PLANS.solo.month,
+        cancelAtPeriodEnd: true,
+      }),
+    );
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    h.clock.now = NOW + DAY_MS;
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", {
+        membershipId: "mem_pro",
+        whopPlanId: WHOP_PLANS.pro.month,
+        metadata: checkoutMetadata(adaId, "pro"),
+      }),
+    );
+    await h.settle();
+    expect(billingOf(h, adaId).whop_membership_id).toBe("mem_pro");
+    expect(cancelCalls(h)).toEqual([]);
+    expect(membershipOf(h, "mem_solo").cancel_confirmed_at).not.toBeNull();
+  });
+});
+
+describe("POST /api/whop/webhook: refunds and disputes", () => {
+  function refundEvent(
+    h: Harness,
+    input: { amount: number; total: number; status?: string; paidAt?: number; membershipId?: string },
+  ) {
+    return {
+      type: "refund.created",
+      timestamp: new Date(h.clock.now).toISOString(),
+      data: {
+        id: "rfnd_1",
+        amount: input.amount,
+        status: input.status ?? "succeeded",
+        payment: {
+          id: "pay_1",
+          total: input.total,
+          paid_at: new Date(input.paidAt ?? NOW).toISOString(),
+          membership: { id: input.membershipId ?? "mem_1", status: "active" },
+          plan: { id: WHOP_PLANS.pro.month },
+        },
+      },
+    };
+  }
+
+  function disputeEvent(h: Harness, type: "dispute.created" | "dispute.updated", status: string) {
+    return {
+      type,
+      timestamp: new Date(h.clock.now).toISOString(),
+      data: { id: "dspt_1", status, payment: { id: "pay_1", membership: { id: "mem_1" } } },
+    };
+  }
+
+  it("a full refund of the current period's payment ends the plan now and cancels the membership", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    h.clock.now = NOW + 2 * DAY_MS;
+    await deliver(h, refundEvent(h, { amount: 20, total: 20 }));
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "free", billing_status: "canceled" });
+    await h.settle();
+    expect(cancelCalls(h)).toEqual(["mem_1"]);
+    // A later renewal of the refunded membership never brings the plan back.
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    h.clock.now = NOW + 30 * DAY_MS;
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", { membershipId: "mem_1", whopPlanId: WHOP_PLANS.pro.month }),
+    );
+    expect(billingOf(h, adaId).plan).toBe("free");
+  });
+
+  it.each([
+    ["a partial refund", { amount: 5, total: 20 }],
+    ["a refund that is still pending", { amount: 20, total: 20, status: "pending" }],
+    ["a refund of an older period's payment", { amount: 20, total: 20, paidAt: NOW - 60 * DAY_MS }],
+    ["a refund of another membership", { amount: 20, total: 20, membershipId: "mem_other" }],
+  ])("%s changes nothing", async (_, input) => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    h.clock.now = NOW + 2 * DAY_MS;
+    await deliver(h, refundEvent(h, input));
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", billing_status: "active" });
+  });
+
+  it("an open dispute is the grace period; a won dispute ends it", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    h.clock.now = NOW + DAY_MS;
+    await deliver(h, disputeEvent(h, "dispute.created", "needs_response"));
+    expect(billingOf(h, adaId)).toMatchObject({
+      plan: "pro",
+      billing_status: "past_due",
+      billing_grace_until: NOW + DAY_MS + PAST_DUE_GRACE_DAYS * DAY_MS,
+    });
+    h.clock.now = NOW + 3 * DAY_MS;
+    await deliver(h, disputeEvent(h, "dispute.updated", "won"));
+    expect(billingOf(h, adaId)).toMatchObject({
+      plan: "pro",
+      billing_status: "active",
+      billing_grace_until: null,
+    });
+  });
+
+  it("a lost dispute ends the plan now", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    h.clock.now = NOW + DAY_MS;
+    await deliver(h, disputeEvent(h, "dispute.updated", "lost"));
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "free", billing_status: "canceled" });
+  });
+
+  it("an inquiry (no money moved) changes nothing", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await deliver(h, disputeEvent(h, "dispute.created", "warning_needs_response"));
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", billing_status: "active" });
+  });
+});
+
+describe("a lost final event", () => {
+  it("moves an active plan whose period ended 7 days ago to Free; the next payment restores it", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    const cookie = await h.signIn("ada");
+    // No renewal payment and no deactivation arrived for 7 days after the period (30 days).
+    h.clock.now = NOW + 37 * DAY_MS;
+    const me = await body<{ plan: { id: string }; billingStatus: string }>(
+      await h.call("GET", "/api/me", { cookie }),
+    );
+    expect(me).toMatchObject({ plan: { id: "free" }, billingStatus: "canceled" });
+
+    h.clock.now = NOW + 38 * DAY_MS;
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", { membershipId: "mem_1", whopPlanId: WHOP_PLANS.pro.month }),
+    );
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", billing_status: "active" });
   });
 });
 

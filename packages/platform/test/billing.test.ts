@@ -79,7 +79,8 @@ describe("expireLapsedBilling", () => {
       ('grace_left', 'pro', 'past_due', ${NOW + DAY_MS}, NULL, 0),
       ('ended', 'solo', 'canceling', NULL, ${NOW - 2 * DAY_MS}, 0),
       ('ending', 'solo', 'canceling', NULL, ${NOW - DAY_MS / 2}, 0),
-      ('paid', 'scale', 'active', NULL, ${NOW - 5 * DAY_MS}, 0)`);
+      ('paid', 'scale', 'active', NULL, ${NOW - 5 * DAY_MS}, 0),
+      ('silent', 'pro', 'active', NULL, ${NOW - 8 * DAY_MS}, 0)`);
   }
 
   const plans = (db: SqliteD1) =>
@@ -90,14 +91,15 @@ describe("expireLapsedBilling", () => {
   it("moves an ended grace and a cancelled period that ended a day ago to Free", async () => {
     const db = new SqliteD1();
     seed(db);
-    expect(await expireLapsedBilling(db, NOW)).toBe(2);
+    expect(await expireLapsedBilling(db, NOW)).toBe(3);
     expect(plans(db)).toEqual([
       { id: "ended", plan: "free", billing_status: "canceled" },
       { id: "ending", plan: "solo", billing_status: "canceling" },
       { id: "grace_left", plan: "pro", billing_status: "past_due" },
       { id: "grace_over", plan: "free", billing_status: "canceled" },
-      // An active subscription waits for Whop's renewal events, whatever the date says.
+      // An active subscription gets 7 days past its period for the renewal payment to arrive.
       { id: "paid", plan: "scale", billing_status: "active" },
+      { id: "silent", plan: "free", billing_status: "canceled" },
     ]);
   });
 
@@ -117,6 +119,7 @@ describe("expireLapsedBilling", () => {
     expect(rows.filter((row) => billingLapsed(row, NOW)).map((row) => row.id)).toEqual([
       "ended",
       "grace_over",
+      "silent",
     ]);
   });
 });

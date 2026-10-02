@@ -10,6 +10,9 @@
  *   pays with that is older than the last one applied changes nothing.
  * - A retired membership (replaced by a newer plan, or of a deleted account) never activates an
  *   account again; memberships.ts cancels it until Whop confirms.
+ * - Refunds and disputes (Whop does not document that they end the membership): a full refund of
+ *   a payment of the current period, or a lost dispute, moves the account to Free at once and
+ *   retires the membership; an open dispute is the past-due grace; a won one ends that grace.
  * - Anything else is ignored with a reason: the webhook still answers 200, so Whop stops retrying.
  *
  * Payload fields are read in both of Whop's shapes: the current one (`plan_id`, `membership_id`,
@@ -42,6 +45,10 @@ export const WHOP_EVENT_TYPES = [
   "membership.activated",
   "membership.deactivated",
   "membership.cancel_at_period_end_changed",
+  "refund.created",
+  "refund.updated",
+  "dispute.created",
+  "dispute.updated",
 ] as const;
 export type WhopEventType = (typeof WHOP_EVENT_TYPES)[number];
 
@@ -58,6 +65,9 @@ export interface WhopEvent {
   cancelAtPeriodEnd: boolean | null;
   manageUrl: string | null;
   paidAt: number | null;
+  /** Refunds: the refunded amount; `paymentTotal` is what the refunded payment charged. */
+  amount: number | null;
+  paymentTotal: number | null;
 }
 
 export type IgnoreReason =
@@ -72,7 +82,11 @@ export type IgnoreReason =
   | "retired_membership"
   | "membership_ended"
   | "not_paying"
-  | "stale";
+  | "stale"
+  | "not_final"
+  | "not_full_refund"
+  | "old_payment"
+  | "inquiry";
 
 /**
  * What a verified event changes, as statements for one D1 batch. An ignored event can still
@@ -126,6 +140,15 @@ function timeOf(value: unknown): number | null {
   return Number.isNaN(parsed) ? null : parsed;
 }
 
+/** A money amount as a number, a decimal string, or `{ amount: "10.00" }`. */
+function amountOf(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value)))
+    return Number(value);
+  const nested = record(value)?.amount;
+  return nested === undefined ? null : amountOf(nested);
+}
+
 /** Whop's own https pages only; anything else is dropped. */
 function manageUrlOf(value: unknown): string | null {
   const url = text(value);
@@ -147,6 +170,28 @@ export function parseWhopEvent(body: unknown, fallbackAt: number): WhopEvent | n
   const type = envelope?.type;
   const data = record(envelope?.data);
   if (!envelope || !data || !isWhopEventType(type)) return null;
+  if (type.startsWith("refund.") || type.startsWith("dispute.")) {
+    // The membership is on the refunded or disputed payment (or on the object itself).
+    const payment = record(data.payment);
+    return {
+      type,
+      at: timeOf(envelope.timestamp) ?? fallbackAt,
+      membershipId:
+        text(data.membership_id) ??
+        idOf(data.membership) ??
+        text(payment?.membership_id) ??
+        idOf(payment?.membership),
+      whopPlanId: text(payment?.plan_id) ?? idOf(payment?.plan) ?? text(data.plan_id),
+      metadata: record(payment?.metadata) ?? {},
+      status: text(data.status),
+      periodEnd: null,
+      cancelAtPeriodEnd: null,
+      manageUrl: null,
+      paidAt: timeOf(payment?.paid_at ?? payment?.created_at),
+      amount: amountOf(data.amount),
+      paymentTotal: amountOf(payment?.total ?? payment?.amount ?? payment?.usd_total),
+    };
+  }
   const isMembership = type.startsWith("membership.");
   return {
     type,
@@ -159,6 +204,8 @@ export function parseWhopEvent(body: unknown, fallbackAt: number): WhopEvent | n
     cancelAtPeriodEnd: typeof data.cancel_at_period_end === "boolean" ? data.cancel_at_period_end : null,
     manageUrl: manageUrlOf(data.manage_url),
     paidAt: isMembership ? null : timeOf(data.paid_at ?? data.created_at),
+    amount: null,
+    paymentTotal: null,
   };
 }
 
@@ -347,6 +394,8 @@ async function activate(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEv
         accountId: account.id,
         state: MEMBERSHIP_STATE_OF[account.billing_status],
         at: eventAt,
+        // A cancelling membership stops renewing anyway; Whop is asked only if it renews.
+        confirmed: account.billing_status === "canceling",
       }),
     );
   }
@@ -357,24 +406,28 @@ async function activate(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEv
 async function currentAccount(
   ctx: WhopEventContext,
   event: WhopEvent,
+  recordState = true,
 ): Promise<{ account: AccountRow; recorded: D1PreparedStatement[] } | { ignore: WhopEventPlan }> {
   if (!event.membershipId) return { ignore: ignored("missing_fields") };
   const known = await lookUp(ctx, event, event.membershipId);
   const { account, stored } = known;
+  // Refunds and disputes say nothing about the membership's own state.
+  const record = (accountId: string | null) => (recordState ? recordFor(ctx, event, known, accountId) : []);
   if (!account) {
     // No account pays with it: retired, not activated yet (its state waits in whop_memberships
     // for the activation), a failed first checkout, or another environment's.
     const reason = stored?.retired_at != null ? "retired_membership" : "unknown_membership";
-    return { ignore: ignored(reason, recordFor(ctx, event, known, stored?.account_id ?? null)) };
+    return { ignore: ignored(reason, record(stored?.account_id ?? null)) };
   }
-  const recorded = recordFor(ctx, event, known, account.id);
+  if (!recordState && stored?.retired_at != null) return { ignore: ignored("retired_membership") };
+  const recorded = record(account.id);
   if (isStale(account, event)) return { ignore: ignored("stale", recorded) };
   return { account, recorded };
 }
 
 /** payment.failed: the plan stays for the grace period while Whop retries the charge. */
-async function pastDue(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
-  const found = await currentAccount(ctx, event);
+async function pastDue(ctx: WhopEventContext, event: WhopEvent, recordState = true): Promise<WhopEventPlan> {
+  const found = await currentAccount(ctx, event, recordState);
   if ("ignore" in found) return found.ignore;
   const { account, recorded } = found;
   if (!PAYING.has(account.billing_status)) return ignored("not_paying", recorded);
@@ -439,6 +492,76 @@ async function cancelAtPeriodEnd(ctx: WhopEventContext, event: WhopEvent): Promi
   return { result: "applied", accountId: account.id, status, statements: [...recorded, update] };
 }
 
+/** The account loses the plan now, and the membership is retired (cancelled, never granting again). */
+function endNow(ctx: WhopEventContext, event: WhopEvent, account: AccountRow): WhopEventPlan {
+  const membershipId = account.whop_membership_id ?? "";
+  const update = ctx.db
+    .prepare(
+      `UPDATE accounts SET plan = 'free', billing_status = 'canceled', billing_grace_until = NULL,
+         billing_event_at = ?
+       WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
+    )
+    .bind(event.at, account.id, membershipId, event.at);
+  const retire = retireMembership(ctx.db, {
+    id: membershipId,
+    accountId: account.id,
+    state: MEMBERSHIP_STATE_OF[account.billing_status],
+    at: event.at,
+    confirmed: false,
+  });
+  return { result: "applied", accountId: account.id, status: "canceled", statements: [update, retire] };
+}
+
+/**
+ * refund.created / refund.updated: a full refund of a payment of the current period ends the plan
+ * now. Partial refunds, refunds still pending and refunds of older payments change nothing.
+ */
+async function refunded(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
+  if (event.status !== null && event.status !== "succeeded") return ignored("not_final");
+  const found = await currentAccount(ctx, event, false);
+  if ("ignore" in found) return found.ignore;
+  const { account } = found;
+  if (!PAYING.has(account.billing_status)) return ignored("not_paying");
+  if (event.amount === null || event.paymentTotal === null || event.amount + 0.005 < event.paymentTotal) {
+    return ignored("not_full_refund");
+  }
+  const periodDays = BILLING_PERIOD_DAYS[account.billing_interval ?? "month"];
+  if (
+    event.paidAt !== null &&
+    account.current_period_end !== null &&
+    event.paidAt < account.current_period_end - (periodDays + 2) * DAY_MS
+  ) {
+    return ignored("old_payment");
+  }
+  return endNow(ctx, event, account);
+}
+
+/**
+ * dispute.created / dispute.updated: an open dispute is the past-due grace; a lost one (or one
+ * prevented by a refund) ends the plan now; a won one ends the grace. Inquiries (`warning_…`)
+ * move no money and change nothing.
+ */
+async function disputed(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
+  const status = event.status;
+  if (!status || status.startsWith("warning_") || status === "closed") return ignored("inquiry");
+  const found = await currentAccount(ctx, event, false);
+  if ("ignore" in found) return found.ignore;
+  const { account } = found;
+  if (!PAYING.has(account.billing_status)) return ignored("not_paying");
+  if (status === "lost" || status === "prevented") return endNow(ctx, event, account);
+  if (status === "won") {
+    if (account.billing_status !== "past_due") return ignored("not_final");
+    const update = ctx.db
+      .prepare(
+        `UPDATE accounts SET billing_status = 'active', billing_grace_until = NULL, billing_event_at = ?
+         WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
+      )
+      .bind(event.at, account.id, account.whop_membership_id, event.at);
+    return { result: "applied", accountId: account.id, status: "active", statements: [update] };
+  }
+  return pastDue(ctx, { ...event, type: "payment.failed" }, false);
+}
+
 /** What a verified event changes. Reads only; the caller runs the statements in one batch. */
 export async function planWhopEvent(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
   switch (event.type) {
@@ -451,5 +574,11 @@ export async function planWhopEvent(ctx: WhopEventContext, event: WhopEvent): Pr
       return deactivate(ctx, event);
     case "membership.cancel_at_period_end_changed":
       return cancelAtPeriodEnd(ctx, event);
+    case "refund.created":
+    case "refund.updated":
+      return refunded(ctx, event);
+    case "dispute.created":
+    case "dispute.updated":
+      return disputed(ctx, event);
   }
 }

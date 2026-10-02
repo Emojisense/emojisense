@@ -115,8 +115,11 @@ export async function whopWebhook({ request, env, deps }: RequestContext): Promi
     .prepare("INSERT INTO whop_events (id, type, received_at) VALUES (?, ?, ?)")
     .bind(webhookId, event.type, deps.now());
   try {
-    // One transaction: the event id and its change land together, or neither does.
-    await db.batch([remember, ...plan.statements]);
+    // One transaction: the event id and its change land together, or neither does. Only applied
+    // events are remembered: an ignored one (unknown plan, missing account) must work when Whop
+    // sends it again after a configuration fix. Its membership upsert is idempotent.
+    const statements = plan.result === "applied" ? [remember, ...plan.statements] : plan.statements;
+    if (statements.length > 0) await db.batch(statements);
   } catch (error) {
     // A parallel delivery of the same event won the race.
     if (await alreadyApplied(db, webhookId)) return json({ ok: true, duplicate: true });

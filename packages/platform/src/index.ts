@@ -22,6 +22,7 @@ export {
   UNKNOWN_COUNTRY,
 } from "./analytics.js";
 export {
+  ACTIVE_PERIOD_SLACK_DAYS,
   BILLING_INTERVALS,
   BILLING_PERIOD_DAYS,
   BILLING_STATUSES,

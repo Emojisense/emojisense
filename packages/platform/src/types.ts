@@ -63,6 +63,10 @@ export interface WhopMembershipRow {
   retired_at: number | null;
   /** Retired: when Whop confirmed that it stops renewing; `null` = the Worker still cancels it. */
   cancel_confirmed_at: number | null;
+  /** Failed cancel calls since the last reset. */
+  cancel_attempts: number;
+  /** When the next cancel call may run (backoff after a failure); `null` = now. */
+  cancel_retry_at: number | null;
 }
 
 /** A Whop webhook delivery already applied, by its `webhook-id` (0006). */
