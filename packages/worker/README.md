@@ -5,8 +5,8 @@ The Emojisense Search API: a Cloudflare Worker. The HTTP contract is [docs/API.m
 | Route | Runs | Metered as |
 | ----- | ---- | ---------- |
 | `GET /v1/search` | alias + semantic search, Cache API | `semantic_calls` (cache hits too) |
-| `POST /v1/suggest-reactions` | first 256 characters of a message, alias + semantic, no cache | `semantic_calls` |
-| `POST /v1/classify-image` | vision caption + reaction → text search; caption cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
+| `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), no cache | `semantic_calls` |
+| `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API, no key | — |
 | `/v1/tenants[/:externalId[/emoji[/:shortcode]]]` | tenants and their custom emoji (Scale, secret key); D1 + R2 `EMOJI`; sends webhooks | — |
 | `GET /v1/health` | status | — |
@@ -117,7 +117,9 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 | `src/app.ts` | Routing, CORS, per-isolate key cache, meter and search analytics |
 | `src/query-stats.ts`, `src/retention.ts` | Search analytics: batched `query_daily` writes, retention cron |
 | `src/search.ts`, `src/reactions.ts`, `src/image.ts` | Route handlers |
-| `src/semantic.ts`, `src/vision.ts` | Workers AI calls (embedding, `@cf/google/gemma-4-26b-a4b-it` vision) |
+| `src/semantic.ts`, `src/vision.ts` | Workers AI calls (embedding, `@cf/google/gemma-4-26b-a4b-it` vision); the vision label parser |
+| `src/image-rank.ts`, `src/reaction-rank.ts`, `src/reaction-intents.ts` | Photo and reaction ranking; intent cues |
+| `src/fusion.ts`, `src/emoji-lookup.ts` | Weighted reciprocal rank fusion with a confidence floor; emoji text → catalog id |
 | `src/store.ts` | `Store` interface; D1 and in-memory implementations |
 | `src/config.ts` | Tunables: models, size limits, cache and flush timings |
 | `src/sets/` | Hosted emoji sets: servable emoji, pinned upstreams and naming rules, the route |
