@@ -46,7 +46,9 @@ export     ▼ "Export to git" → culture:import-live → packages/data/culture
 
 Evidence holds aggregates only: per country the normalized phrase, its rising score and the
 searches of the 7-day window (rows of `trends_daily`, which are k-anonymous: ≥ 3 accounts and ≥ 10
-searches), or the calendar source. Reviewers are stored by account id (`ON DELETE SET NULL`) and
+searches), or the calendar source. The nightly job empties the trend rows of proposals older than
+`TRENDS_KEEP_DAYS` (90), so the evidence lives no longer than `trends_daily`; the entry stays, so a
+decided idea is not proposed again. Reviewers are stored by account id (`ON DELETE SET NULL`) and
 display name; entries record the name as `reviewedBy`, never an email address.
 
 ## Checks before anything is stored or served

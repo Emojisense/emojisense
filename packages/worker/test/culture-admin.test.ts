@@ -231,6 +231,15 @@ describe("nightly culture proposals", () => {
     expect(report).toMatchObject({ status: "done", candidates: { trend: 0, calendar: 1 } });
   });
 
+  it("drops trend evidence older than the trends themselves, and keeps the proposal", async () => {
+    addTrend(w.db, { query: "spooky season", score: 6 });
+    await runCultureProposals(w.env, w.runtime, { now: NOW });
+    const later = NOW + 91 * 86_400_000;
+    await runScheduled({ cron: CULTURE_NIGHTLY_CRON, scheduledTime: later }, w.env, catalog, w.runtime);
+    const spooky = (await w.admin.overview({})).proposals.find((p) => p.entryId === "spooky-season");
+    expect(spooky?.evidence).toMatchObject({ origin: "trend", trends: [] });
+  });
+
   it("counts a failed Workers AI call and goes on", async () => {
     const failing = world({ ai: { run: async () => Promise.reject(new TypeError("network")) } });
     const report = await runCultureProposals(failing.env, failing.runtime, { now: NOW });

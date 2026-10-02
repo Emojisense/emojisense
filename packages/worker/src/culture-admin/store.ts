@@ -247,6 +247,22 @@ export function createCultureStore(db: D1Like) {
       return meta.changes > 0;
     },
 
+    /**
+     * Drops the trend rows from the evidence of proposals created before `cutoff` (epoch ms): the
+     * phrases and counts are kept no longer than trends_daily keeps them (TRENDS_KEEP_DAYS). The
+     * entry itself stays, so a decided idea is still not proposed again. Returns the rows changed.
+     */
+    async pruneTrendEvidence(cutoff: number): Promise<number> {
+      const { meta } = await db
+        .prepare(
+          `UPDATE culture_proposals SET evidence = json_set(evidence, '$.trends', json('[]'))
+           WHERE created_at < ? AND json_array_length(evidence, '$.trends') > 0`,
+        )
+        .bind(cutoff)
+        .run();
+      return meta.changes;
+    },
+
     async markExported(ids: readonly string[], now: number): Promise<void> {
       if (ids.length === 0) return;
       await db.batch(
