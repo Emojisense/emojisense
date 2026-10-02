@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { EmptyState } from "../components/EmptyState";
 import { Link, usePageHeading } from "../router";
 
 export function NotFoundPage({
@@ -11,21 +10,22 @@ export function NotFoundPage({
 }) {
   const headingRef = usePageHeading(title);
   return (
-    <div className="layout-main">
+    <div className="not-found">
+      <span className="not-found-emoji emoji" aria-hidden="true">
+        🫥
+      </span>
+      <p className="section-label">404</p>
       <h1 ref={headingRef} className="page-title" tabIndex={-1}>
         {title}
       </h1>
-      <EmptyState
-        emoji="🫥"
-        title="Nothing here"
-        action={
-          <Link to="/apps" className="button">
-            Go to your apps
-          </Link>
-        }
-      >
-        {children ?? "This address does not match a dashboard page."}
-      </EmptyState>
+      <p className="page-lede">
+        {children ?? "This address does not match a dashboard page. The link may be old."}
+      </p>
+      <div className="btn-row">
+        <Link to="/apps" className="btn btn-primary">
+          Go to your apps
+        </Link>
+      </div>
     </div>
   );
 }

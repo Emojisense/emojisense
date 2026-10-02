@@ -6,9 +6,28 @@ const numberFormat = new Intl.NumberFormat("en");
 const dateFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 const monthFormat = new Intl.DateTimeFormat("en", { month: "long", year: "numeric", timeZone: "UTC" });
 
+const dateTimeFormat = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" });
+const relativeFormat = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+const compactFormat = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+
 export const formatNumber = (value: number) => numberFormat.format(value);
+/** 15000000 → "15M"; numbers under 10,000 stay exact. */
+export const formatCompact = (value: number) =>
+  value < 10_000 ? numberFormat.format(value) : compactFormat.format(value);
 export const formatDate = (time: number) => dateFormat.format(time);
+export const formatDateTime = (time: number) => dateTimeFormat.format(time);
 export const isoDate = (time: number) => new Date(time).toISOString();
+
+/** "just now", "5 minutes ago", "in 6 days" */
+export function formatRelative(time: number, now = Date.now()): string {
+  const seconds = Math.round((time - now) / 1000);
+  const abs = Math.abs(seconds);
+  if (abs < 45) return "just now";
+  if (abs < 3600) return relativeFormat.format(Math.round(seconds / 60), "minute");
+  if (abs < 86_400) return relativeFormat.format(Math.round(seconds / 3600), "hour");
+  return relativeFormat.format(Math.round(seconds / 86_400), "day");
+}
 
 export function formatLimit(limit: number | null): string {
   return limit === null ? "Unlimited" : formatNumber(limit);
@@ -42,9 +61,9 @@ export function recentPeriods(since: number, now: number, max = 12): string[] {
 export const METRIC_COPY: Record<Metric, { label: string; hint: string }> = {
   semantic_calls: {
     label: "Semantic calls",
-    hint: "Calls to /v1/search and /v1/suggest-reactions that reached the API, cached answers included.",
+    hint: "Search and reaction calls that reached the API, edge-cached answers included.",
   },
-  image_classifications: { label: "Image classifications", hint: "Calls to /v1/classify-image." },
+  image_classifications: { label: "Image classifications", hint: "Photo to emoji calls." },
   custom_emoji: { label: "Custom emoji", hint: "Custom emoji stored for this app." },
 };
 

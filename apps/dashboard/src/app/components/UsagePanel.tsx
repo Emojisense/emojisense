@@ -1,8 +1,9 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import type { AppMetricUsage, AppSummary, UsageResponse } from "../../shared/contract";
+import type { AppSummary, UsageResponse } from "../../shared/contract";
 import { api, errorMessage } from "../api";
-import { formatNumber, formatPeriod, METRIC_COPY, recentPeriods } from "../format";
-import { EmptyState } from "./EmptyState";
+import { formatPeriod, recentPeriods } from "../format";
+import { ErrorState, LoadingState } from "../ui/Feedback";
+import { UsageMeter } from "../ui/UsageMeter";
 
 export function UsagePanel({ app }: { app: AppSummary }) {
   const periods = useMemo(() => recentPeriods(app.createdAt, Date.now()), [app.createdAt]);
@@ -36,10 +37,15 @@ export function UsagePanel({ app }: { app: AppSummary }) {
   return (
     <section className="card" aria-labelledby={headingId} aria-busy={loading}>
       <div className="card-head">
-        <h2 id={headingId} className="section-title">
-          Usage
-        </h2>
-        <div className="field">
+        <div>
+          <h2 id={headingId} className="card-title">
+            Usage
+          </h2>
+          <p className="card-sub">
+            Counted per calendar month (UTC) against your {usage?.plan.name ?? ""} plan.
+          </p>
+        </div>
+        <div>
           <label htmlFor={selectId} className="visually-hidden">
             Month
           </label>
@@ -57,18 +63,16 @@ export function UsagePanel({ app }: { app: AppSummary }) {
           </select>
         </div>
       </div>
-      <div className="card-body">
-        {error && (
-          <p className="notice notice-error" role="alert">
-            {error}
-          </p>
-        )}
-        {!usage && !error && (
-          <p className="hint" role="status">
-            Loading usage…
-          </p>
-        )}
+      <div className="card-body stack">
+        {error && <ErrorState message={error} />}
+        {!usage && !error && <LoadingState label="Loading usage…" rows={2} />}
         {usage && <UsageReport usage={usage} />}
+      </div>
+      <div className="card-foot">
+        <span>
+          Over a limit, the API answers with <code className="code-inline">overLimit: true</code> and search
+          keeps working on the device. Counters can lag a few minutes.
+        </span>
       </div>
     </section>
   );
@@ -79,85 +83,24 @@ function UsageReport({ usage }: { usage: UsageResponse }) {
   return (
     <>
       {idle && (
-        <EmptyState emoji="🌱" title={`No calls in ${formatPeriod(usage.period)}`}>
-          Usage shows up after your app calls the API with one of its keys. On-device and shard results are
-          free and never counted.
-        </EmptyState>
+        <div className="usage-idle">
+          <span className="emoji" aria-hidden="true">
+            🌱
+          </span>
+          <div>
+            <h3 className="usage-idle-title">No calls in {formatPeriod(usage.period)}</h3>
+            <p className="hint">
+              Usage shows up after your app calls the API with one of its keys. On-device and shard results
+              are free and never counted.
+            </p>
+          </div>
+        </div>
       )}
       <div className="meters">
         {usage.metrics.map((metric) => (
           <UsageMeter key={metric.metric} usage={metric} planName={usage.plan.name} />
         ))}
       </div>
-      <p className="hint">
-        Plan limits count the calls of every app of the account. Over a limit, the API answers with{" "}
-        <code>overLimit: true</code> and search keeps working on the device. Counters can lag a few minutes,
-        because the API writes them in batches.
-      </p>
     </>
-  );
-}
-
-function meterNote(usage: AppMetricUsage, planName: string): string {
-  const { hint } = METRIC_COPY[usage.metric];
-  switch (usage.status) {
-    case "not_included":
-      return `Not included in the ${planName} plan.`;
-    case "over_limit":
-      return `Limit reached. The API answers with overLimit: true for every app of the account until next month. ${hint}`;
-    case "near_limit":
-      return `${usage.percent}% used: close to the limit. ${hint}`;
-    default:
-      return usage.limit === null ? hint : `${usage.percent}% used. ${hint}`;
-  }
-}
-
-/** Only when other apps of the account used the metric too; otherwise the figure says it all. */
-function appShare(usage: AppMetricUsage): string | null {
-  if (usage.appUsed === usage.used) return null;
-  return `This app: ${formatNumber(usage.appUsed)} of ${formatNumber(usage.used)}.`;
-}
-
-function UsageMeter({ usage, planName }: { usage: AppMetricUsage; planName: string }) {
-  const labelId = useId();
-  const noteId = useId();
-  const { label } = METRIC_COPY[usage.metric];
-  const used = formatNumber(usage.used);
-  const note = [appShare(usage), meterNote(usage, planName)].filter(Boolean).join(" ");
-  const figure = usage.limit === null ? `${used} used` : `${used} / ${formatNumber(usage.limit)}`;
-  const showTrack = usage.limit !== null && usage.status !== "not_included";
-
-  return (
-    <div className="meter" data-status={usage.status}>
-      <div className="meter-head">
-        <span id={labelId} className="meter-label">
-          {label}
-        </span>
-        {usage.status !== "not_included" && <span className="meter-figure">{figure}</span>}
-      </div>
-      {showTrack && (
-        // A native <meter> cannot take this pill track the same way in every browser.
-        // biome-ignore lint/a11y/useSemanticElements: role="meter" keeps the semantics
-        <div
-          className="meter-track"
-          role="meter"
-          aria-labelledby={labelId}
-          aria-describedby={noteId}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={usage.percent}
-          aria-valuetext={`${used} of ${formatNumber(usage.limit ?? 0)} (${usage.percent}%)`}
-        >
-          {/* Any use shows a sliver, so 0.1% does not look like nothing. */}
-          <div
-            className="meter-fill"
-            style={{ width: usage.used > 0 ? `max(0.625rem, ${usage.percent}%)` : "0" }}
-          />
-        </div>
-      )}
-      <p id={noteId} className="hint meter-note">
-        {note}
-      </p>
-    </div>
   );
 }

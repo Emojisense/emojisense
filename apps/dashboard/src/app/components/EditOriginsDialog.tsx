@@ -2,7 +2,7 @@ import { type FormEvent, useId, useState } from "react";
 import type { Environment, KeySummary } from "../../shared/contract";
 import { ApiError, api, errorMessage } from "../api";
 import { splitOrigins } from "../format";
-import { Dialog } from "./Dialog";
+import { Dialog } from "../ui/Dialog";
 import { OriginsField } from "./OriginsField";
 
 interface EditOriginsDialogProps {
@@ -54,8 +54,8 @@ function EditOriginsForm({ apiKey, environment, onCancel, onSaved }: EditOrigins
   return (
     <form className="form" onSubmit={submit} noValidate>
       <p>
-        Key <code>{apiKey.prefix}…</code> answers only browser requests whose <code>Origin</code> is in this
-        list.
+        Key <code className="code-inline">{apiKey.prefix}…</code> answers only browser requests whose{" "}
+        <code className="code-inline">Origin</code> is in this list.
       </p>
       <OriginsField
         value={origins}
@@ -70,10 +70,10 @@ function EditOriginsForm({ apiKey, environment, onCancel, onSaved }: EditOrigins
         </p>
       )}
       <div className="dialog-actions">
-        <button type="button" className="button" onClick={onCancel}>
+        <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="button button-primary" disabled={busy}>
+        <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? "Saving…" : "Save origins"}
         </button>
       </div>
