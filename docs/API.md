@@ -199,14 +199,15 @@ the perceptual hash, the vision model and the prompt version.
 | Path | Content | Cache |
 | ---- | ------- | ----- |
 | `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>[.<locale>].bin` | data packs | `public, max-age=31536000, immutable` |
-| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards) | immutable |
+| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards), rebuilt nightly | `public, max-age=3600` (index), `public, max-age=86400` (key files) |
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
-These are static asset requests: free, and they do not run the Worker. All send
+These are free and need no key. Packs and culture files are static assets and do not run the
+Worker; shards run it, which serves the nightly build from R2 through the edge cache. All send
 `Access-Control-Allow-Origin: *`. A `/v1/pack/` path that is not a published file answers `404`
-with `Cache-Control: no-store`, so a browser does not keep the miss. The hosted API does not
-publish layer 2 shards yet (`/p/0.1.0/index.json` answers `404`); the SDK's shard provider then
-answers nothing and the query goes on to `/v1/search`.
+with `Cache-Control: no-store`, so a browser does not keep the miss. Until the first nightly
+shard build exists, `/p/<v>/index.json` answers `404` (no static shards are deployed); the SDK's
+shard provider then answers nothing and the query goes on to `/v1/search`.
 
 ### Culture files
 
