@@ -429,9 +429,9 @@ describe("languages", () => {
     expect(hero).toContain("feliz cumpleaños");
     const demos = doc.querySelector('astro-island[component-url*="UseCases"]')?.getAttribute("props") ?? "";
     expect(demos).toContain('"lang":[0,"es"]');
-    // Only the English pack is preloaded: the page language's pack would compete with the first paint.
-    expect(doc.querySelector(`link[rel="preload"][href="${API}/v1/pack/0.1.0/pack.en.json"]`)).not.toBeNull();
-    expect(doc.querySelector(`link[rel="preload"][href="${API}/v1/pack/0.1.0/pack.es.json"]`)).toBeNull();
+    // No pack is preloaded in the HTML: Lighthouse counted a preloaded pack in the first paint.
+    expect(doc.querySelector(`link[rel="preload"][href*="/v1/pack/"]`)).toBeNull();
+    expect(doc.querySelector(`link[rel="preconnect"][href="${API}"]`)).not.toBeNull();
   });
 
   it("shows prices and limits in the page's number format, from PLANS", () => {
