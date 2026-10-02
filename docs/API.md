@@ -289,7 +289,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
 | `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. (developer+) |
 | `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke (developer+) |
-| `GET /api/apps/:id/usage?period=YYYY-MM` | Per metric: the account's total over all of its apps vs the owner's plan limit (`used`, `limit`, `percent`, `status`), and this app's part (`appUsed`) (viewer+) |
+| `GET /api/apps/:id/usage?period=YYYY-MM` | Per metric: the account's total over all of its apps vs the owner's plan limit (`used`, `limit`, `percent`, `status`), and this app's part (`appUsed`). `custom_emoji` is the emoji stored now, in every period. (viewer+) |
 | `GET /api/apps/:id/analytics?days=7\|30\|90` | Search analytics (Pro and Scale, viewer+), see below |
 | `GET /api/apps/:id/tenants?limit=&cursor=` | `{ tenants: [{ id, externalId, name, createdAt, emojiCount }], nextCursor }` (Scale, viewer+) |
 | `POST /api/apps/:id/tenants` | `{ externalId, name? }` → `201 { tenant }`; a taken `externalId` is `409 tenant_exists` (Scale, developer+) |
