@@ -32,6 +32,7 @@
     "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",
     "./paths": "./src/paths.ts",
+    "./shards": "./src/shards/index.ts",
     "./vector-files": "./src/vector-files.ts"
   },
   "devDependencies": {

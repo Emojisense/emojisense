@@ -24,7 +24,7 @@ import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
 import { bootstrapQueries } from "./shards/bootstrap.ts";
 import { buildShards } from "./shards/build.ts";
 import { cachedEmbedder, workersAiEmbedder } from "./shards/embedders.ts";
-import { loadShardEntries, readShardIndex, writeShardDir } from "./shards/files.ts";
+import { gzipBytes, loadShardEntries, readShardIndex, writeShardDir } from "./shards/files.ts";
 import { aggregateQueries, createWorkerGate, parseQueryLog, type QueryLogRow } from "./shards/queries.ts";
 import { createFakeResolver, createVectorResolver } from "./shards/resolvers.ts";
 import type { ShardResolver } from "./shards/types.ts";
@@ -116,6 +116,7 @@ try {
     packVersion: config.packVersion,
     resultsPerQuery,
     maxShardBytes: Number(args["max-kb"]) * 1024,
+    shardBytes: gzipBytes,
     ...(reusable
       ? { previous: (wanted, store) => loadShardEntries(outDir, wanted, resultsPerQuery, store) }
       : {}),

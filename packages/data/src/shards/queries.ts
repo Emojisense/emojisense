@@ -1,4 +1,5 @@
 import { type AliasEngine, normalize, shouldUseSemantic } from "emojisense";
+import { privacyReason } from "./privacy.ts";
 import type { QueryCount } from "./types.ts";
 
 /** One row of the analytics export: `{"q": "...", "n": 12}`, optionally with `"locale"`. */
@@ -35,14 +36,15 @@ export interface AggregateOptions {
 }
 
 /**
- * Normalize, merge the rows that normalize to the same text, drop rare queries and keep the
- * most frequent ones. Ties are broken by text, so the output is deterministic.
+ * Normalize, merge the rows that normalize to the same text, drop text that may be personal
+ * (privacyReason, checked before and after normalization), drop rare queries and keep the most
+ * frequent ones. Ties are broken by text, so the output is deterministic.
  */
 export function aggregateQueries(rows: Iterable<QueryLogRow>, options: AggregateOptions): QueryCount[] {
   const merged = new Map<string, QueryCount>();
   for (const row of rows) {
     const q = normalize(row.q);
-    if (q === "") continue;
+    if (q === "" || privacyReason(row.q) || privacyReason(q)) continue;
     const current = merged.get(q);
     const locale = row.locale ?? "en";
     if (!current) merged.set(q, { q, n: row.n, locales: [locale] });

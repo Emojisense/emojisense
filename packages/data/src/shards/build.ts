@@ -1,4 +1,4 @@
-import { gzipBytes, shardJson } from "./files.ts";
+import { SHARD_INDEX_FILE, shardFileName, shardJson, utf8Bytes } from "./json.ts";
 import { planShards, type ShardPlan } from "./split.ts";
 import { createResultStore, type ResultStore } from "./store.ts";
 import type { QueryCount, ShardIndex, ShardResolver } from "./types.ts";
@@ -12,8 +12,13 @@ export interface BuildShardsOptions {
   packVersion: string;
   /** Results stored per query. The API's default `limit` is 24. */
   resultsPerQuery: number;
-  /** Budget per shard file, gzip bytes. */
+  /** Budget per shard file, in the unit of `shardBytes`. */
   maxShardBytes: number;
+  /**
+   * Size of one shard file as served. The CLI passes gzip (files.ts `gzipBytes`). Default: raw
+   * UTF-8 bytes, for the Worker, which has no synchronous gzip.
+   */
+  shardBytes?: (json: string) => number;
   /** Queries per resolver call. Default 1000. */
   batchSize?: number;
   /** Fills `store` with reusable entries of the previous build; returns how many it added. */
@@ -62,12 +67,18 @@ export async function buildShards(options: BuildShardsOptions): Promise<BuiltSha
     options.onProgress?.(Math.min(start + batchSize, todo.length), todo.length);
   }
 
-  const { plans, oversized } = planShards([...store.queries()], {
+  const measure = options.shardBytes ?? utf8Bytes;
+  const planned = planShards([...store.queries()], {
     maxBytes: options.maxShardBytes,
     // +1 for the comma between entries.
-    entryBytes: (q) => Buffer.byteLength(store.entryJson(q)) + 1,
-    measure: (key, queries) => gzipBytes(shardJson(key, queries, store)),
+    entryBytes: (q) => utf8Bytes(store.entryJson(q)) + 1,
+    measure: (key, queries) => measure(shardJson(key, queries, store)),
+    // Raw bytes need no measurement: the cheap sum decides alone.
+    ...(options.shardBytes ? {} : { maxRatio: 1 }),
   });
+  // The key "index" would be written over index.json. Its queries stay on the API.
+  const plans = planned.plans.filter((p) => shardFileName(p.key) !== SHARD_INDEX_FILE);
+  const { oversized } = planned;
   const index: ShardIndex = {
     format: "emojisense-shards",
     formatVersion: 1,

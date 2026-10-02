@@ -1,22 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
+import { SHARD_INDEX_FILE, shardFileName, shardJson } from "./json.ts";
 import type { ShardPlan } from "./split.ts";
 import type { ResultStore } from "./store.ts";
 import type { Shard, ShardIndex } from "./types.ts";
-
-/** The JSON text of one shard file; equal to `JSON.stringify(shard)` for the same entries. */
-export function shardJson(key: string, queries: readonly string[], store: ResultStore): string {
-  return `{"key":${JSON.stringify(key)},"entries":{${queries.map((q) => store.entryJson(q)).join(",")}}}`;
-}
 
 /**
  * The budget is defined at gzip level 6, the usual level of on-the-fly HTTP compression. It is
  * ~4× faster than level 9, which matters for ~13k shards per 1M queries, and ~2.5% larger.
  */
 export const gzipBytes = (text: string) => gzipSync(text, { level: 6 }).length;
-
-export const shardFileName = (key: string) => `${encodeURIComponent(key)}.json`;
 
 /**
  * Replace `dir` with index.json and one file per key. The directory is cleared first, so keys
@@ -30,7 +24,7 @@ export function writeShardDir(
 ): { gzip: number[] } {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "index.json"), JSON.stringify(index));
+  writeFileSync(join(dir, SHARD_INDEX_FILE), JSON.stringify(index));
   const gzip: number[] = [];
   for (const plan of plans) {
     const text = shardJson(plan.key, plan.queries, store);
@@ -41,7 +35,7 @@ export function writeShardDir(
 }
 
 export function readShardIndex(dir: string): ShardIndex | undefined {
-  const path = join(dir, "index.json");
+  const path = join(dir, SHARD_INDEX_FILE);
   return existsSync(path) ? (JSON.parse(readFileSync(path, "utf8")) as ShardIndex) : undefined;
 }
 
