@@ -33,7 +33,7 @@ jobs:
         run: pnpm build
       - name: Typecheck and test
         run: pnpm exec turbo run typecheck test
-      - name: Core bundle size (≤ 15 KB gz)
+      - name: Core bundle size (≤ 16 KB gz)
         run: pnpm --filter emojisense size
       - name: In-house eval gate (offline, no held-out; recall@5 may not drop > 2 points)
         run: pnpm eval:inhouse

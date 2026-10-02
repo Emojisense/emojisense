@@ -19,10 +19,11 @@ function memoryBucket() {
 }
 
 /**
- * Tables of k-anonymous aggregates over many accounts (migration 0004): no row belongs to one
- * account, so a deletion has nothing to remove there. They must not have an app or account column.
+ * Tables of k-anonymous aggregates over many accounts (migration 0004) and the concept tier's
+ * shared answers and daily call count (migration 0007): no row belongs to one account, so a
+ * deletion has nothing to remove there. They must not have an app or account column.
  */
-const AGGREGATE_TABLES = ["trends_daily"];
+const AGGREGATE_TABLES = ["trends_daily", "concept_cache", "concept_daily"];
 
 /**
  * One row in every table that belongs to `login`, with ids that start with `<login>_`, plus its
