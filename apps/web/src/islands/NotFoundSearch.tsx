@@ -5,6 +5,8 @@ import { FALLBACK_QUERY, MAX_QUERY_LENGTH, queryFromPath } from "../lib/not-foun
 import "./not-found.css";
 
 const LIMIT = 8;
+/** The places in the results list; cells are keyed by place (see the list below). */
+const CELLS = Array.from({ length: LIMIT }, (_, i) => `cell-${i}`);
 const MAX_PATH_SHOWN = 40;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -166,27 +168,32 @@ export function NotFoundSearch() {
           )}
         </div>
 
+        {/*
+          Always LIMIT cells, keyed by place: the list keeps its height while the words are typed,
+          and a new answer replaces a cell instead of moving the others (no layout shift).
+        */}
         <ul className="nf-results" aria-label="Emoji results. Select one to copy it.">
-          {!engine &&
-            ready !== "failed" &&
-            // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders that never reorder.
-            Array.from({ length: LIMIT }, (_, i) => <li key={i} className="nf-tile nf-skeleton" />)}
-          {search.results.map((result, i) => (
-            <li key={result.id}>
-              <button
-                type="button"
-                className="nf-tile"
-                aria-label={`Copy ${label(result)}`}
-                data-active={i === active ? "" : undefined}
-                style={{ animationDelay: `${i * 28}ms` }}
-                onMouseEnter={() => setHighlight({ query, index: i })}
-                onFocus={() => setHighlight({ query, index: i })}
-                onClick={() => copy(result)}
-              >
-                <span className="emoji">{result.emoji}</span>
-              </button>
-            </li>
-          ))}
+          {CELLS.map((cell, i) => {
+            const result = search.results[i];
+            if (!engine && ready !== "failed") return <li key={cell} className="nf-tile nf-skeleton" />;
+            if (!result) return <li key={cell} className="nf-empty" aria-hidden="true" />;
+            return (
+              <li key={`${cell}-${result.id}`}>
+                <button
+                  type="button"
+                  className="nf-tile"
+                  aria-label={`Copy ${label(result)}`}
+                  data-active={i === active ? "" : undefined}
+                  style={{ animationDelay: `${i * 28}ms` }}
+                  onMouseEnter={() => setHighlight({ query, index: i })}
+                  onFocus={() => setHighlight({ query, index: i })}
+                  onClick={() => copy(result)}
+                >
+                  <span className="emoji">{result.emoji}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
         <p className="nf-status" id={`${id}-status`} aria-live="polite">

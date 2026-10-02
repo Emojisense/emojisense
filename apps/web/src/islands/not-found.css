@@ -137,6 +137,10 @@
   transform: scale(0.94);
 }
 
+.nf-empty {
+  aspect-ratio: 1;
+}
+
 .nf-skeleton {
   border-radius: var(--radius);
   background: var(--bg-soft);
