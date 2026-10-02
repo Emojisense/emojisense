@@ -13,7 +13,8 @@ const HOOK_URL = "https://hooks.example.com/emojisense";
 
 async function setup(plan: "scale" | "pro" = "scale") {
   const h = createHarness();
-  const cookie = await h.signIn("ada");
+  // A Clerk session, so the SSRF tests can switch ENVIRONMENT to production (dev sign-in stops there).
+  const cookie = await h.clerkSignIn("ada");
   setPlan(h, "ada", plan);
   const appId = await createAppFor(h, cookie);
   const webhooks = `/api/apps/${appId}/webhooks`;

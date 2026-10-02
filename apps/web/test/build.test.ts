@@ -548,8 +548,7 @@ describe("legal pages", () => {
     expect(terms).toContain("DELETE /api/me");
     expect(terms).toContain("we have no payment provider");
     const subprocessors = page("/legal/subprocessors/").body.textContent ?? "";
-    for (const name of ["Cloudflare, Inc.", "GitHub, Inc.", "Payments"])
-      expect(subprocessors).toContain(name);
+    for (const name of ["Cloudflare, Inc.", "Clerk, Inc.", "Payments"]) expect(subprocessors).toContain(name);
     expect(subprocessors).toContain("not on sale");
   });
 

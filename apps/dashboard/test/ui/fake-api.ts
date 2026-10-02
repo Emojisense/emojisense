@@ -31,7 +31,7 @@ export const KEY: KeySummary = {
 
 export function me(overrides: Partial<MeResponse> = {}): MeResponse {
   return {
-    account: { id: "acc_1", name: "Ada", email: "ada@example.com", githubLinked: true, createdAt: NOW },
+    account: { id: "acc_1", name: "Ada", email: "ada@example.com", signIn: "clerk", createdAt: NOW },
     plan: toPlanSummary(PLANS.free),
     appCount: 1,
     waitlistPlan: null,
@@ -70,6 +70,8 @@ export interface Call {
   method: string;
   path: string;
   body?: unknown;
+  /** The Authorization header, when the request had one (Clerk's bearer token). */
+  authorization?: string;
 }
 
 /** Stubs fetch with "METHOD /path" routes and records every call. */
@@ -84,7 +86,13 @@ export function stubApi(routes: Record<string, Route>): { calls: Call[] } {
         : init.body
           ? (JSON.parse(String(init.body)) as unknown)
           : undefined;
-    calls.push({ method, path: url.pathname + url.search, ...(body === undefined ? {} : { body }) });
+    const authorization = new Headers(init.headers).get("authorization");
+    calls.push({
+      method,
+      path: url.pathname + url.search,
+      ...(body === undefined ? {} : { body }),
+      ...(authorization ? { authorization } : {}),
+    });
     const route = routes[`${method} ${url.pathname}`];
     const result: FakeResult = !route
       ? {

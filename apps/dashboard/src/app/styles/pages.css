@@ -154,9 +154,16 @@
   letter-spacing: -0.04em;
 }
 
-.github-mark {
-  width: 1.125rem;
-  height: 1.125rem;
+/* Clerk's sign-in (flush) inside the auth card. The height is kept while Clerk's UI loads. */
+.auth-clerk {
+  display: grid;
+  min-height: 18rem;
+}
+
+.auth-clerk-loading {
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  animation: boot-pulse 1.2s var(--ease-out) infinite alternate;
 }
 
 .auth-dev {

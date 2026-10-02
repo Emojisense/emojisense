@@ -1,4 +1,5 @@
 import type { AccountRow, EmojiBucket } from "@emojisense/platform";
+import type { ClerkFactory } from "./clerk";
 import type { D1Database } from "./d1";
 
 export interface RateLimiter {
@@ -14,8 +15,14 @@ export interface Env {
   ASSETS?: AssetsBinding;
   /** "development" enables the dev sign-in (on localhost only). Any other value is production. */
   ENVIRONMENT?: string;
-  GITHUB_CLIENT_ID?: string;
-  GITHUB_CLIENT_SECRET?: string;
+  /** Clerk publishable key (public): the token issuer is derived from it. */
+  CLERK_PUBLISHABLE_KEY?: string;
+  /** The Clerk instance's JWT public key, PEM (public). Verifies sessions without a network call. */
+  CLERK_JWT_KEY?: string;
+  /** Comma-separated origins whose session tokens are accepted (`azp`). Default: the dashboard's own origin. */
+  CLERK_AUTHORIZED_PARTIES?: string;
+  /** Optional secret. When set, `DELETE /api/me` also deletes the Clerk user. Nothing else needs it. */
+  CLERK_SECRET_KEY?: string;
   /** Comma-separated website origins that may POST /api/waitlist from a browser. */
   WEBSITE_ORIGINS?: string;
   WAITLIST_LIMITER?: RateLimiter;
@@ -33,6 +40,8 @@ export interface Deps {
   waitUntil?: (promise: Promise<unknown>) => void;
   /** The wait between webhook retries. Tests replace it. */
   sleep?: (ms: number) => Promise<void>;
+  /** Clerk session verification. Tests inject a fake; without it Clerk sign-in is off. */
+  clerk?: ClerkFactory;
 }
 
 export interface RequestContext {
@@ -45,4 +54,9 @@ export interface RequestContext {
 
 export interface AuthedContext extends RequestContext {
   account: AccountRow;
+  /**
+   * The caller's verified email for this request, in lower case: the Clerk session's verified
+   * email claim, or the dev account's email. `null` when there is none.
+   */
+  verifiedEmail: string | null;
 }

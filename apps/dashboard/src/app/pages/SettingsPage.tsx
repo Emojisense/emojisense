@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useId, useState } from "react";
 import { ApiError, type App, api, errorMessage } from "../api";
+import { useAuthAdapter } from "../auth/context";
 import { DeleteAccountDialog } from "../components/DeleteAccountDialog";
 import { ENVIRONMENT_LABELS, formatDate } from "../format";
 import { appEmoji, initials } from "../lib/identity";
@@ -13,6 +14,7 @@ import { useToast } from "../ui/Toast";
 
 export function SettingsPage() {
   const { me, signOut } = useSession();
+  const { openProfile } = useAuthAdapter();
   const { apps } = useApps();
   const list = apps.status === "ready" ? apps.data : [];
   const [busy, setBusy] = useState(false);
@@ -36,11 +38,18 @@ export function SettingsPage() {
           <dl className="facts card-body">
             <div>
               <dt>Sign-in</dt>
-              <dd>
-                {me.account.githubLinked
-                  ? "GitHub. Your name and email follow your GitHub profile."
-                  : "Development sign-in (local only)."}
-              </dd>
+              {me.account.signIn === "clerk" ? (
+                <dd className="inline-copy">
+                  <span>Email or social sign-in through Clerk. Your name and email follow that profile.</span>
+                  {openProfile && (
+                    <button type="button" className="btn btn-sm" onClick={openProfile}>
+                      Manage sign-in
+                    </button>
+                  )}
+                </dd>
+              ) : (
+                <dd>Development sign-in (local only).</dd>
+              )}
             </div>
             <div>
               <dt>Member since</dt>

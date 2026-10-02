@@ -353,14 +353,22 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | 413 | Image larger than 256 KB |
 | 429 | Rate limited (per second). Retry after the seconds in `Retry-After`. |
 
-## Dashboard API (`apps/dashboard`, cookie session)
+## Dashboard API (`apps/dashboard`, Clerk session)
+
+Clerk signs people in, in the browser. Every signed-in route needs `Authorization: Bearer
+<Clerk session token>` (from Clerk's `getToken()`); cookies are not read. The Worker verifies the
+token without a network call (Clerk's JWT public key, `azp` in `CLERK_AUTHORIZED_PARTIES`, issuer,
+expiry, session not pending) and reads `email`, `email_verified` and `name` from the custom session
+claims. The first request of a new Clerk user creates the account; without a verified email the
+answer is `403 email_required` and no account. Without a valid token the answer is
+`401 unauthorized`; a token while Clerk is not configured gets `503 clerk_unconfigured`.
 
 | Method + path | Purpose |
 | ------------- | ------- |
-| `GET /api/auth/github` → callback `/api/auth/github/callback` | Sign in with GitHub (local dev: `/api/auth/dev`) |
-| `POST /api/auth/logout` | End session |
+| `GET /api/auth/dev?login=<name>` | Local development only (`ENVIRONMENT=development` and localhost): sign in as `<name>@dev.localhost` with a cookie |
+| `POST /api/auth/logout` | Clears the dev sign-in cookie. Clerk sessions end in the browser. |
 | `GET /api/me` | Account, its own `plan`, `appCount`, `waitlistPlan`, `teams: [{ ownerId, ownerName, role }]` |
-| `DELETE /api/me` | `{ confirm }` → `{ ok: true }` and a cleared session cookie. Deletes the account and everything it owns, see below (the account itself) |
+| `DELETE /api/me` | `{ confirm }` → `{ ok: true, clerkUserDeleted }`. Deletes the account and everything it owns, see below (the account itself) |
 | `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`) / create an app in the own account (`name`, `environment`) |
 | `GET /api/apps/:id` | App + keys (viewer+) |
 | `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
@@ -389,7 +397,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `DELETE /api/team/invites/:id` | Withdraw an open invite (admin+) |
 | `PATCH /api/team/members/:id` | `{ role }` (admin+). The owner cannot change. |
 | `DELETE /api/team/members/:id` | Remove a member (admin+), or leave the team (the member) |
-| `POST /api/invites/:token/accept` | Signed in: join the owner's team → `{ team: { ownerId, ownerName, role } }` |
+| `POST /api/invites/:token/accept` | Signed in: join the owner's team → `{ team: { ownerId, ownerName, role } }`. An invite with an email works only when the caller's verified email (the `email` claim with `email_verified: true`) is that email; otherwise `403 invite_email_mismatch`. |
 | `GET /api/billing` | `{ plan, period, usage, limits, appCount, provider: null, waitlistPlan }` (owner, admin) |
 | `POST /api/billing/upgrade` | `{ plan, email? }` → `{ status: "waitlist", plan }`. Never charges (owner only) |
 | `POST /api/waitlist` | Public: `{ email, plan }` (`plan` defaults to `pro`) as JSON, or the same fields as an HTML form (`application/x-www-form-urlencoded`). A form post without `Accept: application/json` gets `303` to `<website>/waitlist/?status=ok#waitlist-joined` or `?status=error#waitlist-failed` (the website is the posting `WEBSITE_ORIGINS` entry, or the first one when there is no `Origin`). Other origins get `403`; 5 posts per minute per IP. |
@@ -415,7 +423,10 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | 409 | `tenant_exists`, `webhook_limit` | A tenant with this `externalId` exists; the app has 10 webhooks |
 | 410 | `invite_used`, `invite_expired` | The invite was accepted already, or is older than 7 days |
 | 400 | `confirmation_required` | `DELETE /api/me` without the right `confirm` value |
+| 403 | `invite_email_mismatch` | The invite names another email than the caller's verified one |
+| 403 | `email_required` | A new Clerk user whose session token has no verified email (or no custom claims) |
 | 503 | `storage_unavailable` | `DELETE /api/me` could not delete the custom emoji images. Nothing was deleted; try again. |
+| 503 | `clerk_unconfigured` | A bearer token reached a Worker without `CLERK_PUBLISHABLE_KEY` and `CLERK_JWT_KEY` |
 
 ### `DELETE /api/me` (account deletion)
 
@@ -428,7 +439,14 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 - One request deletes the account and everything it owns: its apps with their API keys, monthly
   usage, search analytics (`query_daily`), tenants, custom emoji (rows and R2 images) and
   webhooks with their deliveries; its own team members and invites; its memberships in other
-  teams; all its sessions; and the waitlist entry of its email.
+  teams; legacy session rows; and the waitlist entry of its email.
+- The Clerk user goes too. With `CLERK_SECRET_KEY` the Worker deletes it (best effort, logged
+  without ids) and answers `clerkUserDeleted: true`. Without the secret key it answers `false`,
+  and the dashboard deletes the Clerk user with Clerk JS (`user.delete()`, which needs "allow users
+  to delete their accounts" in Clerk).
+- A session token is checked without a network call, so one issued before the deletion stays
+  valid for up to a minute. For 10 minutes the Worker keeps the Clerk user id in
+  `deleted_clerk_users`, and such a token gets `401` instead of a new, empty account.
 - The R2 images go first. When R2 fails, the answer is `503 storage_unavailable` and no row is
   deleted. Then one D1 batch (one transaction) deletes the rows.
 - The API Worker caches key lookups for 60 s per isolate, so a deleted key can work for up to a
@@ -690,7 +708,7 @@ What the hosted service collects, and for how long:
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
 | Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji, its tenant or the account is deleted (edge copies of the image until evicted) |
 | Waitlist: email, plan, date of the first sign-up | D1 `waitlist` | 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS`). The same daily cron deletes older rows. Also deleted with an account of the same email. |
-| Accounts, sessions, apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Sessions expire after 30 days; expired rows go at the next sign-in. Revoked keys stay, marked as revoked. |
+| Accounts (Clerk user id, name, verified email), apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Revoked keys stay, marked as revoked. Sign-in sessions live at Clerk; the dashboard stores none. |
 | Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
 
 - Never logged or stored: IP addresses (only an in-memory rate-limit key), user identifiers,

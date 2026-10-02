@@ -1,6 +1,7 @@
 /**
- * An invite opened while signed out. Sign-in leaves the page (GitHub, dev sign-in), so the token
- * waits in sessionStorage and the app returns to it afterwards. It stays in this tab only.
+ * An invite opened while signed out. Sign-in may leave the page (a social sign-in through Clerk,
+ * dev sign-in), so the token waits in sessionStorage and the app returns to it afterwards. It stays
+ * in this tab only.
  */
 const KEY = "emojisense:invite";
 

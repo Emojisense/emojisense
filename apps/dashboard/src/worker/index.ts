@@ -1,4 +1,5 @@
 import { handleRequest } from "./app";
+import { createClerkGateway } from "./clerk";
 import type { Env } from "./env";
 
 export default {
@@ -8,6 +9,7 @@ export default {
       fetch: (input, init) => fetch(input, init),
       now: Date.now,
       waitUntil: (promise) => ctx.waitUntil(promise),
+      clerk: createClerkGateway,
     });
   },
 };

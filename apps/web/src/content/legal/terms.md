@@ -25,7 +25,8 @@ Their licenses continue to apply to that material.
 
 ## Accounts
 
-- You sign in with GitHub. Keep your GitHub account secure. Give us accurate information.
+- You sign in through Clerk, our sign-in provider. Keep your sign-in secure. Give us accurate
+  information.
 - You must be at least [Minimum age] years old and able to make a binding contract.
 - You are responsible for all activity in your account and your apps. This includes the actions
   of the team members that you invite.

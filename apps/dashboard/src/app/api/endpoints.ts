@@ -11,6 +11,7 @@ import type {
   CustomEmoji,
   CustomEmojiListResponse,
   DeleteAccountRequest,
+  DeleteAccountResponse,
   DeletedTenantResponse,
   EmojiImportResponse,
   Environment,
@@ -40,9 +41,9 @@ const ownerQuery = (owner?: string) => (owner ? `?owner=${segment(owner)}` : "")
 export const api = {
   me: () => request<MeResponse>("GET", "/api/me"),
   logout: () => request<OkResponse>("POST", "/api/auth/logout"),
-  /** Deletes the signed-in account and everything it owns. The server also ends the session. */
+  /** Deletes the signed-in account and everything it owns, and the Clerk user if the Worker can. */
   deleteAccount: (confirm: string) =>
-    request<OkResponse>("DELETE", "/api/me", { confirm } satisfies DeleteAccountRequest),
+    request<DeleteAccountResponse>("DELETE", "/api/me", { confirm } satisfies DeleteAccountRequest),
 
   listApps: () => request<AppsResponse>("GET", "/api/apps"),
   createApp: (input: { name: string; environment: Environment }) =>

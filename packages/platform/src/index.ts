@@ -104,6 +104,7 @@ export {
   type CustomEmojiContentType,
   type CustomEmojiRow,
   type CustomEmojiSource,
+  type DeletedClerkUserRow,
   EMOJI_SETS,
   type EmojiSet,
   type QueryDailyRow,

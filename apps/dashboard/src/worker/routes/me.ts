@@ -1,17 +1,17 @@
 import type { AccountRow } from "@emojisense/platform";
 import {
   DELETE_ACCOUNT_PHRASE,
+  type DeleteAccountResponse,
   isDeleteAccountConfirmed,
   type MeResponse,
-  type OkResponse,
 } from "../../shared/contract";
 import { listMemberships } from "../access";
 import { deleteAccount } from "../account-deletion";
+import { clearDevCookie, clerkGateway } from "../auth";
 import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { loadAccountPlan, toPlanSummary } from "../plans";
 import { toAccountSummary } from "../records";
-import { clearSessionCookie } from "../session";
 import { readWaitlistPlan } from "./billing";
 
 export async function getMe({ env, account }: AuthedContext): Promise<Response> {
@@ -44,15 +44,43 @@ function assertConfirmed(account: AccountRow, confirm: unknown): void {
 }
 
 /**
- * `DELETE /api/me { confirm }`: deletes the signed-in account and everything it owns, then clears
- * the session cookie. Only the account itself can do this; team roles do not apply.
+ * Server-side deletion of the Clerk user, only when CLERK_SECRET_KEY is set. Best effort: the
+ * account is already gone, and without it the SPA deletes the Clerk user with Clerk JS.
  */
-export async function deleteMe({ request, url, env, account }: AuthedContext): Promise<Response> {
+async function deleteClerkUser(ctx: AuthedContext): Promise<boolean> {
+  const userId = ctx.account.clerk_user_id;
+  const deleteUser = clerkGateway(ctx)?.deleteUser;
+  if (!userId || !deleteUser) return false;
+  try {
+    await deleteUser(userId);
+    return true;
+  } catch (error) {
+    const status = (error as { status?: unknown }).status;
+    console.error(
+      JSON.stringify({
+        level: "error",
+        event: "clerk_user_delete_failed",
+        error: (error as Error).name,
+        ...(typeof status === "number" ? { status } : {}),
+      }),
+    );
+    return false;
+  }
+}
+
+/**
+ * `DELETE /api/me { confirm }`: deletes the signed-in account and everything it owns, and the
+ * Clerk user when the Worker has the secret key. Only the account itself can do this; team roles
+ * do not apply.
+ */
+export async function deleteMe(ctx: AuthedContext): Promise<Response> {
+  const { request, url, env, account } = ctx;
   const body = await readJsonObject(request);
   assertConfirmed(account, body.confirm);
-  const deleted = await deleteAccount(env.DB, env.EMOJI, account);
+  const deleted = await deleteAccount(env.DB, env.EMOJI, account, ctx.deps.now());
+  const clerkUserDeleted = await deleteClerkUser(ctx);
   // Counts only: no ids or emails in logs (docs/API.md, Privacy).
-  console.log(JSON.stringify({ event: "account_deleted", ...deleted }));
-  const response: OkResponse = { ok: true };
-  return json(response, 200, { "set-cookie": clearSessionCookie(url) });
+  console.log(JSON.stringify({ event: "account_deleted", ...deleted, clerkUserDeleted }));
+  const response: DeleteAccountResponse = { ok: true, clerkUserDeleted };
+  return json(response, 200, { "set-cookie": clearDevCookie(url) });
 }

@@ -163,7 +163,7 @@ export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
         id: "acc_maya",
         name: "Maya Chen",
         email: "maya@relay.chat",
-        githubLinked: true,
+        signIn: "clerk",
         createdAt: Date.UTC(2026, 2, 2),
       },
       teams: [{ ownerId: "acc_ada", ownerName: "Ada Park", role: "developer" }],

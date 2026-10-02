@@ -1,40 +1,18 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+import { clerkFrontendApi } from "./src/shared/clerk";
+import { headersFor } from "./static-headers";
 
-/**
- * Static asset headers of the SPA (`_headers`). API responses set their own headers in the
- * Worker. Fonts are bundled, so font-src is 'self'. The search API (VITE_API_URL) serves the
- * packs and the live search (connect-src) and the custom emoji and hosted set images (img-src);
- * blob: is the upload preview.
- */
-function headersFor(apiOrigin: string): string {
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self'",
-    "font-src 'self'",
-    `img-src 'self' data: blob: ${apiOrigin}`,
-    `connect-src 'self' ${apiOrigin}`,
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "base-uri 'none'",
-    "object-src 'none'",
-  ].join("; ");
-  return `/*
-  Content-Security-Policy: ${csp}
-  Strict-Transport-Security: max-age=31536000
-  Referrer-Policy: strict-origin-when-cross-origin
-  X-Content-Type-Options: nosniff
-  Permissions-Policy: camera=(), microphone=(), geolocation=()
-`;
-}
-
-function staticHeaders(apiUrl: string): Plugin {
+function staticHeaders(apiUrl: string, clerkHost: string | null): Plugin {
   return {
     name: "emojisense-static-headers",
     apply: "build",
     generateBundle() {
-      this.emitFile({ type: "asset", fileName: "_headers", source: headersFor(new URL(apiUrl).origin) });
+      this.emitFile({
+        type: "asset",
+        fileName: "_headers",
+        source: headersFor(new URL(apiUrl).origin, clerkHost),
+      });
     },
   };
 }
@@ -51,8 +29,17 @@ export default defineConfig(({ command, mode }) => {
   }
   // Same default as src/app/lib/config.ts: the local API Worker.
   const apiUrl = env.VITE_API_URL ?? "http://localhost:8788";
+  // The CSP allows exactly the Clerk instance the build signs in with.
+  const clerkKey = mock ? "" : (env.VITE_CLERK_PUBLISHABLE_KEY ?? "").trim();
+  const clerkHost = clerkFrontendApi(clerkKey);
+  if (clerkKey && !clerkHost) {
+    throw new Error("VITE_CLERK_PUBLISHABLE_KEY is not a Clerk publishable key (pk_test_… or pk_live_…).");
+  }
+  if (command === "build" && !clerkHost) {
+    console.warn("Building without VITE_CLERK_PUBLISHABLE_KEY: only the localhost dev sign-in will work.");
+  }
   return {
-    plugins: [react(), staticHeaders(apiUrl)],
+    plugins: [react(), staticHeaders(apiUrl, clerkHost)],
     build: { outDir: "dist/client", emptyOutDir: true },
     server: {
       // Without mock mode, the dev server sends /api to `wrangler dev` (pnpm dev, port 8790).

@@ -23,11 +23,20 @@ export type CustomEmojiSource = (typeof CUSTOM_EMOJI_SOURCES)[number];
 export interface AccountRow {
   id: string;
   email: string | null;
+  /** Legacy (GitHub sign-in before 0003). Kept, never written. */
   github_id: string | null;
+  /** The Clerk user that signs in to this account (0003). Null for dev sign-in accounts. */
+  clerk_user_id: string | null;
   name: string | null;
   /** The plan of the paying account. Every app of the account gets it (0002). */
   plan: PlanId;
   created_at: number;
+}
+
+/** A Clerk user whose account was deleted in the last 10 minutes (0003). */
+export interface DeletedClerkUserRow {
+  clerk_user_id: string;
+  deleted_at: number;
 }
 
 /**

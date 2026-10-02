@@ -56,25 +56,31 @@ only. It never writes the address to logs or storage.
 
 ### Dashboard accounts
 
-You sign in with GitHub. We ask GitHub for the scopes `read:user` and `user:email`. We use the
-GitHub access token once, to read your profile, and we never store it.
+Clerk, Inc. signs you in to the dashboard (see [Subprocessors](/legal/subprocessors/)). You sign in
+with your email address or with a social account that we turn on in Clerk. [Sign-in methods: to
+be confirmed.] Clerk keeps your sign-in profile and your sign-in sessions. To protect sign-in
+from abuse, Clerk and Cloudflare Turnstile check your browser and your IP address. We never see
+your password.
+
+At each request, the dashboard gets a signed token from Clerk that is valid for one minute. It
+holds your Clerk user id, your name, your primary email address and whether that address is
+verified. We check the token and do not store it.
 
 | What | Why | How long |
 | --- | --- | --- |
-| GitHub user id, your name (or your GitHub username), your primary email address if GitHub marks it as verified | To identify your account and to contact you about the Service | Until you delete your account |
+| Your Clerk user id, your name, your primary email address if Clerk marks it as verified | To identify your account and to contact you about the Service | Until you delete your account |
 | Your plan | To apply the right limits | Until you delete your account |
-| Sessions: a SHA-256 hash of the session token and its expiry time | To keep you signed in | A session works for 30 days at most. Signing out deletes it. Expired sessions are deleted at your next sign-in, and all sessions when you delete your account. |
 | Apps: names, environments (dev, staging, prod), emoji set choice | To operate your apps | Until you delete your account |
 | API keys: the first 12 characters and a SHA-256 hash. The full key is shown to you once and never stored. Allowed origins, and the time of revocation. | To check requests | Until you delete your account. A revoked key stops working within one minute and stays in your list, marked as revoked. |
 | Team members and their roles | To give your team access | Until the member is removed or leaves, or until the owner or the member deletes their account |
-| Invites: the email address that you enter (optional), a hash of the invite token, the role, the expiry time and the time of acceptance | To give your team access | Until you withdraw an open invite, or until you delete your account. Used and expired invites stay, but they no longer work. |
+| Invites: the email address that you enter (optional: only a person who signs in with that verified address can use the invite), a hash of the invite token, the role, the expiry time and the time of acceptance | To give your team access | Until you withdraw an open invite, or until you delete your account. Used and expired invites stay, but they no longer work. |
 | Webhooks: the address, the signing secret, the events, and the last 50 deliveries (event, HTTP status, duration, time) | To send events to your systems and show their status | Until you delete the webhook or your account |
 | Monthly usage counts per app: AI calls, photo classifications, custom emoji | To apply plan limits and, later, to bill | Until you delete your account |
 
-The dashboard sets two cookies. Both are strictly necessary, so they need no consent:
-
-- `es_session`: keeps you signed in for up to 30 days. HttpOnly, Secure, SameSite=Lax.
-- `es_oauth_state`: protects the GitHub sign-in from forged requests. It lasts 10 minutes.
+The dashboard itself sets no cookies. Clerk sets the cookies that keep you signed in, on the
+dashboard's domain (for example `__session` and `__client_uat`) and on its own sign-in domain
+(`__client`). They are strictly necessary, so they need no consent. [Full list of Clerk's
+cookies: to be confirmed in legal review.]
 
 ### Deleting your account
 
@@ -83,11 +89,13 @@ account" and type your account's email address to confirm. The dashboard API doe
 `DELETE /api/me` (see the [HTTP API](/docs/api/) reference). You can also write to
 [Privacy email].
 
-One request deletes, at once, from the live database: your account and its sessions, your apps
+One request deletes, at once, from the live database: your account, your apps
 with their API keys, usage counts, search analytics, tenants, custom emoji (records and images)
 and webhooks with their deliveries, your team members and invites, your memberships in other
-teams, and the waitlist entry of your email address. The API keeps a cache of key lookups for one
-minute, so a deleted key can work for up to one more minute.
+teams, and the waitlist entry of your email address. Then the dashboard deletes your sign-in
+profile at Clerk. For 10 minutes we keep only your Clerk user id, so that a sign-in from before
+the deletion cannot create the account again. The API keeps a cache of key lookups for one minute, so a deleted key can work
+for up to one more minute.
 
 Not deleted, because they are not linked to your account: the search records in Analytics Engine
 (they have no app, key or account and expire after three months), and the invites that other
@@ -173,7 +181,7 @@ requires it.
 ## International transfers
 
 Cloudflare operates the Service on its global network, so data can be processed in any country
-where Cloudflare has servers. GitHub is in the United States. [Transfer safeguards, for example
+where Cloudflare has servers. Clerk is in the United States. [Transfer safeguards, for example
 EU Standard Contractual Clauses: to be confirmed in legal review.]
 
 ## Deletion and backups
@@ -184,8 +192,8 @@ images are deleted from object storage before the records. Copies can stay in da
 
 ## Security
 
-We store hashes instead of keys, session tokens and invite tokens. All traffic uses HTTPS.
-Dashboard cookies are HttpOnly and Secure. We collect as little data as the Service needs.
+We store hashes instead of keys and invite tokens. We do not store sign-in tokens. All traffic
+uses HTTPS. We collect as little data as the Service needs.
 
 ## Your rights
 

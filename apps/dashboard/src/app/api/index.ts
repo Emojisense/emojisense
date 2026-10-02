@@ -4,6 +4,7 @@ export {
   isPlanRequired,
   PlanRequiredError,
   request,
+  setTokenSource,
   toApiError,
   UNAUTHORIZED_EVENT,
 } from "./client";

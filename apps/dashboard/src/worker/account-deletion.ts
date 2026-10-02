@@ -1,8 +1,9 @@
 /**
  * Deletes an account and everything it owns (docs/API.md, `DELETE /api/me`): its apps with their
  * keys, usage, search analytics, tenants, custom emoji (rows and R2 images) and webhooks; its own
- * team (members and invites) and its memberships in other teams; its sessions; and the waitlist
- * entry of its email.
+ * team (members and invites) and its memberships in other teams; legacy session rows; and the
+ * waitlist entry of its email. A Clerk account leaves its Clerk user id in `deleted_clerk_users`
+ * for 10 minutes (migration 0003), so a session token from before the deletion cannot recreate it.
  */
 import type { AccountRow, EmojiBucket } from "@emojisense/platform";
 import type { D1Database, D1PreparedStatement } from "./d1";
@@ -10,6 +11,9 @@ import { HttpError } from "./http";
 
 /** R2 deletes at most this many keys per call. */
 const R2_DELETE_MAX_KEYS = 1000;
+
+/** Longer than a Clerk session token lives (60 s), with room for clock skew. */
+export const DELETED_CLERK_USER_TTL_MS = 10 * 60 * 1000;
 
 const OWNED_APPS = "SELECT id FROM apps WHERE account_id = ?";
 
@@ -32,7 +36,7 @@ export interface AccountDeletion {
  * Children before parents, so the batch does not depend on ON DELETE CASCADE. D1 runs a batch as
  * one transaction: either every row goes or none does.
  */
-function deleteStatements(db: D1Database, account: AccountRow): D1PreparedStatement[] {
+function deleteStatements(db: D1Database, account: AccountRow, now: number): D1PreparedStatement[] {
   const id = account.id;
   return [
     db
@@ -50,6 +54,14 @@ function deleteStatements(db: D1Database, account: AccountRow): D1PreparedStatem
       ? [db.prepare("DELETE FROM waitlist WHERE email = ? COLLATE NOCASE").bind(account.email)]
       : []),
     db.prepare("DELETE FROM accounts WHERE id = ?").bind(id),
+    db.prepare("DELETE FROM deleted_clerk_users WHERE deleted_at <= ?").bind(now - DELETED_CLERK_USER_TTL_MS),
+    ...(account.clerk_user_id
+      ? [
+          db
+            .prepare("INSERT OR REPLACE INTO deleted_clerk_users (clerk_user_id, deleted_at) VALUES (?, ?)")
+            .bind(account.clerk_user_id, now),
+        ]
+      : []),
   ];
 }
 
@@ -85,6 +97,7 @@ export async function deleteAccount(
   db: D1Database,
   bucket: EmojiBucket | undefined,
   account: AccountRow,
+  now: number,
 ): Promise<AccountDeletion> {
   const [{ results: images }, apps] = await Promise.all([
     db
@@ -97,6 +110,6 @@ export async function deleteAccount(
     bucket,
     images.map((row) => row.image_key),
   );
-  await db.batch(deleteStatements(db, account));
+  await db.batch(deleteStatements(db, account, now));
   return { apps: apps?.n ?? 0, customEmoji: images.length };
 }

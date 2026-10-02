@@ -31,7 +31,8 @@ export interface AccountSummary {
   id: string;
   name: string | null;
   email: string | null;
-  githubLinked: boolean;
+  /** How the account signs in: Clerk, or the local dev sign-in. */
+  signIn: "clerk" | "dev";
   createdAt: number;
 }
 
@@ -74,10 +75,19 @@ export const DELETE_ACCOUNT_PHRASE = "delete my account";
 
 /**
  * `DELETE /api/me` body. `confirm` is the account's email (any case), or DELETE_ACCOUNT_PHRASE
- * when the account has no email. The answer is `OkResponse`.
+ * when the account has no email. The answer is `DeleteAccountResponse`.
  */
 export interface DeleteAccountRequest {
   confirm: string;
+}
+
+export interface DeleteAccountResponse {
+  ok: true;
+  /**
+   * The Worker deleted the Clerk user too (only when it has CLERK_SECRET_KEY). When `false`, the
+   * SPA deletes the Clerk user with Clerk JS.
+   */
+  clerkUserDeleted: boolean;
 }
 
 /** The text that confirms the deletion of an account with this email. */

@@ -19,6 +19,8 @@ const INVITE_ERRORS: Record<string, string> = {
   invite_expired: "This invite link expired. Links work for 7 days: ask for a new one.",
   invite_own_team: "This invite is for your own team. Send the link to the person you want to invite.",
   already_member: "You are already on this team. Its apps are in your app switcher.",
+  invite_email_mismatch:
+    "This invite is for another email address. Sign in with the email it was sent to, or ask for a new invite.",
 };
 
 export function InvitePage({ token }: { token: string }) {

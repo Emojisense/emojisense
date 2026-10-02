@@ -1,5 +1,14 @@
-import { type ComponentType, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ComponentType,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ApiError, api, errorMessage, type Me, UNAUTHORIZED_EVENT } from "./api";
+import { useAuthAdapter } from "./auth/context";
 import { forgetPendingInvite, pendingInvite, rememberPendingInvite } from "./lib/pendingInvite";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AppsPage } from "./pages/AppsPage";
@@ -11,7 +20,7 @@ import { KeysPage } from "./pages/KeysPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { SettingsPage } from "./pages/SettingsPage";
-import { SignInPage } from "./pages/SignInPage";
+import { SessionRejectedPage, SignInPage } from "./pages/SignInPage";
 import { TeamPage } from "./pages/TeamPage";
 import { TenantsPage } from "./pages/TenantsPage";
 import { WebhooksPage } from "./pages/WebhooksPage";
@@ -27,6 +36,8 @@ type AuthState =
   | { status: "loading" }
   | { status: "signed-out" }
   | { status: "signed-in"; me: Me }
+  /** Clerk has a session, but the API does not accept it (a setup problem, or a deleted account). */
+  | { status: "rejected"; message?: string }
   | { status: "error"; message: string };
 
 const SECTION_PAGES: Record<AppSection, ComponentType> = {
@@ -78,29 +89,58 @@ export function App() {
   const path = usePath();
   const route = parseRoute(path);
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
+  const provider = useAuthAdapter();
+  const providerUser = useRef(provider.userId);
+  useLayoutEffect(() => {
+    providerUser.current = provider.userId;
+  }, [provider.userId]);
+
+  /** A 401 with a Clerk session is a problem to show; without one it means "signed out". */
+  const unauthorized = useCallback(
+    (): AuthState => (providerUser.current ? { status: "rejected" } : { status: "signed-out" }),
+    [],
+  );
 
   const loadMe = useCallback(async () => {
     try {
       setAuth({ status: "signed-in", me: await api.me() });
     } catch (error) {
-      setAuth(
-        error instanceof ApiError && error.status === 401
-          ? { status: "signed-out" }
-          : { status: "error", message: errorMessage(error) },
-      );
+      if (error instanceof ApiError && error.status === 401) setAuth(unauthorized());
+      // Signed in with Clerk, but without a verified email: only signing out helps.
+      else if (error instanceof ApiError && error.code === "email_required")
+        setAuth({ status: "rejected", message: error.message });
+      else setAuth({ status: "error", message: errorMessage(error) });
     }
-  }, []);
+  }, [unauthorized]);
 
+  // Ask the API who is signed in once Clerk has loaded, and again when Clerk's user changes.
+  // Without Clerk, the dev sign-in cookie decides.
+  const sessionKey = provider.loaded ? (provider.userId ?? "no-clerk-session") : null;
   useEffect(() => {
+    if (sessionKey === null) return;
+    setAuth({ status: "loading" });
     void loadMe();
-  }, [loadMe]);
+  }, [sessionKey, loadMe]);
 
-  // Any 401 (an expired session, a sign-out in another tab) returns to the sign-in page.
+  // Any 401 (an ended session, a sign-out in another tab) returns to the sign-in page.
   useEffect(() => {
-    const onUnauthorized = () => setAuth({ status: "signed-out" });
+    const onUnauthorized = () => setAuth(unauthorized());
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
-  }, []);
+  }, [unauthorized]);
+
+  const signOut = useCallback(async () => {
+    // Clears the dev sign-in cookie, then ends the Clerk session.
+    await api.logout().catch(() => undefined);
+    const ended = await provider.signOut().then(
+      () => true,
+      () => false,
+    );
+    forgetPendingInvite();
+    // If Clerk kept the session, the sign-in form would face a signed-in user: offer sign-out again.
+    setAuth(ended ? { status: "signed-out" } : { status: "rejected" });
+    navigate("/", { replace: true });
+  }, [provider]);
 
   // After sign-in, "/" goes to the apps, or back to an invite opened while signed out.
   useEffect(() => {
@@ -122,15 +162,20 @@ export function App() {
         setAuth((current) =>
           current.status === "signed-in" ? { ...current, me: change(current.me) } : current,
         ),
-      signOut: async () => {
-        await api.logout().catch(() => undefined);
-        forgetPendingInvite();
-        setAuth({ status: "signed-out" });
-        navigate("/", { replace: true });
-      },
+      signOut,
     };
-  }, [auth, loadMe]);
+  }, [auth, loadMe, signOut]);
 
+  if (provider.failed) {
+    return (
+      <main className="boot">
+        <ErrorState
+          message="The sign-in service did not load. Check your connection or a content blocker, then try again."
+          onRetry={() => window.location.reload()}
+        />
+      </main>
+    );
+  }
   if (auth.status === "loading") {
     return (
       <div className="boot" role="status">
@@ -139,6 +184,15 @@ export function App() {
         </span>
         <span className="visually-hidden">Loading the dashboard…</span>
       </div>
+    );
+  }
+  if (auth.status === "rejected") {
+    return (
+      <SessionRejectedPage
+        message={auth.message}
+        onRetry={() => void loadMe()}
+        onSignOut={() => void signOut()}
+      />
     );
   }
   if (auth.status === "error") {

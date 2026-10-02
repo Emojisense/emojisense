@@ -86,7 +86,7 @@ pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
   </ol>
 
   <h2 id="dashboard">Keys and usage</h2>
-  <p>The dashboard, <code>apps/dashboard</code>, issues keys, binds them to origins and shows usage per month. It is a second Worker that uses the same D1 database. Its README explains the GitHub sign-in setup.</p>
+  <p>The dashboard, <code>apps/dashboard</code>, issues keys, binds them to origins and shows usage per month. It is a second Worker that uses the same D1 database. Its README explains the sign-in setup with Clerk.</p>
 
   <h2 id="without-cloudflare">Try it without a Cloudflare account</h2>
   <p>Workers AI has no local emulator. The offline mode starts the Worker with an empty vector file, so it answers with dictionary results only and marks them <code>"degraded": true</code>. The development keys <code>pk_demo</code> and <code>sk_live_local</code> work without a database row.</p>

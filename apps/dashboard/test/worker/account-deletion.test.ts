@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DELETE_ACCOUNT_PHRASE, type MeResponse } from "../../src/shared/contract";
+import { FakeClerk } from "./clerk-fake";
 import { accountIdOf, body, createHarness, type Harness, NOW, setCookies, setPlan } from "./harness";
 
 /** An R2 stand-in that keeps objects in a Map. */
@@ -81,6 +82,14 @@ function seedAccount(h: Harness, login: string, bucket?: ReturnType<typeof memor
       "INSERT INTO waitlist (email, plan, created_at) VALUES (?, 'pro', 0)",
       `${login}@dev.localhost`.toUpperCase(),
     ],
+    // A legacy GitHub-era session row: sign-in no longer writes them, deletion still removes them.
+    ["INSERT INTO sessions (id, account_id, expires_at) VALUES (?, ?, 0)", `${login}_session`, accountId],
+    // Not owned by the account: every deletion prunes rows older than 10 minutes. ada's is old.
+    [
+      "INSERT INTO deleted_clerk_users (clerk_user_id, deleted_at) VALUES (?, ?)",
+      `${login}_clerk_user`,
+      login === "ada" ? 0 : NOW,
+    ],
   ];
   for (const [statement, ...params] of sql) h.db.exec(statement, ...params);
   bucket?.objects.set(image, new Uint8Array([1, 2, 3, 4]));
@@ -143,11 +152,13 @@ describe("DELETE /api/me", () => {
 
     const response = await remove(" ADA@dev.localhost ");
     expect(response.status).toBe(200);
-    expect(await body(response)).toEqual({ ok: true });
-    expect(setCookies(response).some((c) => c.startsWith("es_session=;") && c.includes("Max-Age=0"))).toBe(
-      true,
+    expect(await body(response)).toEqual({ ok: true, clerkUserDeleted: false });
+    expect(
+      setCookies(response).some((c) => c.startsWith("es_dev_account=;") && c.includes("Max-Age=0")),
+    ).toBe(true);
+    expect(log).toHaveBeenCalledWith(
+      JSON.stringify({ event: "account_deleted", apps: 1, customEmoji: 1, clerkUserDeleted: false }),
     );
-    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: "account_deleted", apps: 1, customEmoji: 1 }));
 
     const isAda = (row: string) => row.includes(adaId) || /ada[_@]|ADA@/.test(row);
     const expected = Object.fromEntries(
@@ -273,5 +284,85 @@ describe("DELETE /api/me", () => {
     expect((await remove("ada@dev.localhost")).status).toBe(200);
     expect(bucket.delete.mock.calls.map(([keys]) => keys.length)).toEqual([1000, 501]);
     expect(h.db.rows("SELECT id FROM accounts WHERE id = ?", adaId)).toEqual([]);
+  });
+});
+
+describe("DELETE /api/me with a Clerk account", () => {
+  async function clerkSetup(clerk: FakeClerk) {
+    const h = createHarness({}, { clerk });
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const token = clerk.token({ userId: "user_ada", email: "ada@example.com" });
+    expect((await h.call("GET", "/api/me", { token })).status).toBe(200);
+    const remove = () => h.call("DELETE", "/api/me", { token, body: { confirm: "ada@example.com" } });
+    return { h, remove };
+  }
+
+  it("leaves the Clerk user to the SPA when the Worker has no secret key", async () => {
+    const clerk = new FakeClerk();
+    const { h, remove } = await clerkSetup(clerk);
+    const response = await remove();
+    expect(await body(response)).toEqual({ ok: true, clerkUserDeleted: false });
+    expect(h.db.rows("SELECT id FROM accounts")).toEqual([]);
+    expect(clerk.deletedUsers).toEqual([]);
+  });
+
+  it("deletes the Clerk user too when the Worker has the secret key", async () => {
+    const clerk = new FakeClerk({ secretKey: true });
+    const { h, remove } = await clerkSetup(clerk);
+    const response = await remove();
+    expect(await body(response)).toEqual({ ok: true, clerkUserDeleted: true });
+    expect(clerk.deletedUsers).toEqual(["user_ada"]);
+    expect(h.db.rows("SELECT id FROM accounts")).toEqual([]);
+  });
+
+  it("still deletes the account when Clerk fails, and logs no ids", async () => {
+    const clerk = new FakeClerk({ secretKey: true });
+    clerk.deleteError = Object.assign(new Error("Clerk said no for user_ada"), { status: 502 });
+    const { h, remove } = await clerkSetup(clerk);
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await remove();
+    expect(response.status).toBe(200);
+    expect(await body(response)).toEqual({ ok: true, clerkUserDeleted: false });
+    expect(h.db.rows("SELECT id FROM accounts")).toEqual([]);
+    expect(error).toHaveBeenCalledWith(
+      JSON.stringify({ level: "error", event: "clerk_user_delete_failed", error: "Error", status: 502 }),
+    );
+    expect(JSON.stringify(error.mock.calls)).not.toContain("user_ada");
+  });
+
+  it("keeps a token from before the deletion from creating a new account", async () => {
+    const clerk = new FakeClerk();
+    const { h, remove } = await clerkSetup(clerk);
+    const before = clerk.token({ userId: "user_ada", email: "ada@example.com" });
+    h.clock.now = NOW + 5_000;
+    expect((await remove()).status).toBe(200);
+    expect(h.db.rows("SELECT * FROM deleted_clerk_users")).toEqual([
+      { clerk_user_id: "user_ada", deleted_at: NOW + 5_000 },
+    ]);
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect((await h.call("GET", "/api/me", { token: before })).status).toBe(401);
+    expect(h.db.rows("SELECT id FROM accounts")).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(
+      JSON.stringify({ level: "warn", event: "clerk_session_rejected", reason: "account_deleted" }),
+    );
+
+    // The Clerk user can still sign in again (when Clerk kept it): a new token makes a new account.
+    const after = clerk.token({ userId: "user_ada", email: "ada@example.com", issuedAt: NOW + 6_000 });
+    expect((await h.call("GET", "/api/me", { token: after })).status).toBe(200);
+    expect(h.db.rows("SELECT clerk_user_id FROM accounts")).toEqual([{ clerk_user_id: "user_ada" }]);
+  });
+
+  it("does not ask Clerk for a dev account", async () => {
+    const clerk = new FakeClerk({ secretKey: true });
+    const h = createHarness({}, { clerk });
+    const ada = await h.signIn("ada");
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const response = await h.call("DELETE", "/api/me", {
+      cookie: ada,
+      body: { confirm: "ada@dev.localhost" },
+    });
+    expect(await body(response)).toEqual({ ok: true, clerkUserDeleted: false });
+    expect(clerk.deletedUsers).toEqual([]);
   });
 });

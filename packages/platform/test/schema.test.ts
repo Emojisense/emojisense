@@ -4,9 +4,11 @@ import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import { isHigherPlan, lowestPlanWith, PLAN_IDS } from "../src/plans.js";
 import {
+  type AccountRow,
   CUSTOM_EMOJI_CONTENT_TYPES,
   CUSTOM_EMOJI_SOURCES,
   type CustomEmojiRow,
+  type DeletedClerkUserRow,
   EMOJI_SETS,
   type QueryDailyRow,
   TEAM_ROLES,
@@ -99,6 +101,47 @@ describe("row types of migration 0002", () => {
     const db = migratedDb();
     expect(columns(db, "accounts")).toContain("plan");
     expect(columns(db, "apps")).toContain("emoji_set");
+  });
+});
+
+describe("migration 0003 (Clerk sign-in)", () => {
+  it("gives accounts exactly the typed columns", () => {
+    const keys = Object.keys({
+      id: "",
+      email: null,
+      github_id: null,
+      clerk_user_id: null,
+      name: null,
+      plan: "free",
+      created_at: 0,
+    } satisfies Record<keyof AccountRow, unknown>);
+    expect(columns(migratedDb(), "accounts")).toEqual(keys.sort());
+  });
+
+  it("keeps legacy GitHub accounts and allows one account per Clerk user", () => {
+    const db = new DatabaseSync(":memory:");
+    for (const file of ["0001_init.sql", "0002_product.sql"]) {
+      db.exec(readFileSync(new URL(file, MIGRATIONS), "utf8"));
+    }
+    db.exec(`INSERT INTO accounts (id, email, github_id, name, created_at)
+             VALUES ('legacy', 'octo@example.com', '42', 'Octo', 0)`);
+    db.exec(readFileSync(new URL("0003_clerk.sql", MIGRATIONS), "utf8"));
+
+    expect(db.prepare("SELECT id, email, github_id, clerk_user_id FROM accounts").all()).toEqual([
+      { id: "legacy", email: "octo@example.com", github_id: "42", clerk_user_id: null },
+    ]);
+    db.exec(`INSERT INTO accounts (id, clerk_user_id, created_at) VALUES ('a', 'user_1', 0), ('b', NULL, 0)`);
+    expect(() =>
+      db.exec(`INSERT INTO accounts (id, clerk_user_id, created_at) VALUES ('c', 'user_1', 0)`),
+    ).toThrow(/UNIQUE/);
+  });
+
+  it("adds deleted_clerk_users with exactly the typed columns", () => {
+    const keys = Object.keys({ clerk_user_id: "", deleted_at: 0 } satisfies Record<
+      keyof DeletedClerkUserRow,
+      unknown
+    >);
+    expect(columns(migratedDb(), "deleted_clerk_users")).toEqual(keys.sort());
   });
 });
 
