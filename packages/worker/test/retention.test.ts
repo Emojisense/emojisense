@@ -1,0 +1,145 @@
+import type { DatabaseSync } from "node:sqlite";
+import { addDays, dayOf } from "@emojisense/platform";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Env } from "../src/env.ts";
+import { handleScheduled, pruneQueryDaily, retentionCutoffs } from "../src/retention.ts";
+import type { D1Like } from "../src/store.ts";
+import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
+
+/** The cron's scheduled time: 2026-10-15 03:17 UTC. */
+const NOW = Date.UTC(2026, 9, 15, 3, 17);
+const TODAY = dayOf(NOW);
+const daysAgo = (n: number) => addDays(TODAY, -n);
+
+describe("retentionCutoffs", () => {
+  it("keeps today plus N − 1 days, 7 days for plans without analytics", () => {
+    expect(retentionCutoffs(NOW)).toEqual({
+      byPlan: { free: daysAgo(6), solo: daysAgo(6), pro: daysAgo(29), scale: daysAgo(364) },
+      fallback: daysAgo(6),
+    });
+  });
+});
+
+describe("pruneQueryDaily", () => {
+  let db: DatabaseSync;
+  let d1: D1Like;
+
+  /** One account on `plan` with one app (whose own plan column says "free", to prove it is ignored). */
+  const account = (id: string, plan: string) =>
+    db.exec(`
+      INSERT INTO accounts (id, created_at, plan) VALUES ('${id}', 0, '${plan}');
+      INSERT INTO apps (id, account_id, name, plan, created_at) VALUES ('app_${id}', '${id}', 'App', 'free', 0);`);
+  const row = (appId: string, day: string, query = "ship it") =>
+    db
+      .prepare("INSERT INTO query_daily (app_id, day, query, searches, misses) VALUES (?, ?, ?, 1, 0)")
+      .run(appId, day, query);
+  const remaining = (appId: string) =>
+    db
+      .prepare("SELECT day FROM query_daily WHERE app_id = ? ORDER BY day")
+      .all(appId)
+      .map((r) => r.day);
+
+  beforeEach(() => {
+    db = migratedDatabase();
+    d1 = sqliteD1(db);
+  });
+
+  it("deletes each app's rows older than its account plan's retention", async () => {
+    for (const [id, plan] of [
+      ["free", "free"],
+      ["solo", "solo"],
+      ["pro", "pro"],
+      ["scale", "scale"],
+      ["legacy", "enterprise"],
+    ]) {
+      account(id as string, plan as string);
+      for (const n of [0, 6, 7, 29, 30, 364, 365]) row(`app_${id}`, daysAgo(n));
+    }
+
+    const result = await pruneQueryDaily(d1, NOW);
+
+    expect(remaining("app_free")).toEqual([daysAgo(6), daysAgo(0)]);
+    expect(remaining("app_solo")).toEqual([daysAgo(6), daysAgo(0)]);
+    expect(remaining("app_legacy")).toEqual([daysAgo(6), daysAgo(0)]);
+    expect(remaining("app_pro")).toEqual([daysAgo(29), daysAgo(7), daysAgo(6), daysAgo(0)]);
+    expect(remaining("app_scale")).toEqual([
+      daysAgo(364),
+      daysAgo(30),
+      daysAgo(29),
+      daysAgo(7),
+      daysAgo(6),
+      daysAgo(0),
+    ]);
+    expect(result).toEqual({ deleted: 3 * 5 + 3 + 1, batches: 1, complete: true });
+  });
+
+  it("follows a plan change on the next run", async () => {
+    account("acc", "pro");
+    row("app_acc", daysAgo(20));
+    await pruneQueryDaily(d1, NOW);
+    expect(remaining("app_acc")).toEqual([daysAgo(20)]);
+
+    db.exec("UPDATE accounts SET plan = 'free' WHERE id = 'acc'");
+    await pruneQueryDaily(d1, NOW);
+    expect(remaining("app_acc")).toEqual([]);
+  });
+
+  it("deletes in batches and stops at the batch cap, leaving the rest to the next run", async () => {
+    account("acc", "free");
+    for (let i = 0; i < 5; i++) row("app_acc", daysAgo(10), `query ${i}`);
+
+    expect(await pruneQueryDaily(d1, NOW, { batchSize: 2, maxBatches: 2 })).toEqual({
+      deleted: 4,
+      batches: 2,
+      complete: false,
+    });
+    expect(await pruneQueryDaily(d1, NOW, { batchSize: 2, maxBatches: 2 })).toEqual({
+      deleted: 1,
+      batches: 1,
+      complete: true,
+    });
+    expect(remaining("app_acc")).toEqual([]);
+  });
+
+  it("does nothing when no row has expired", async () => {
+    account("acc", "free");
+    row("app_acc", TODAY);
+    expect(await pruneQueryDaily(d1, NOW)).toEqual({ deleted: 0, batches: 1, complete: true });
+  });
+});
+
+describe("handleScheduled", () => {
+  it("prunes and logs counts only", async () => {
+    const db = migratedDatabase();
+    db.exec(`
+      INSERT INTO accounts (id, created_at) VALUES ('acc', 0);
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_acc', 'acc', 'App', 0);
+      INSERT INTO query_daily (app_id, day, query, searches, misses) VALUES ('app_acc', '2026-01-01', 'secret', 1, 0);`);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    await handleScheduled({ DB: sqliteD1(db) as unknown as D1Database }, NOW);
+    expect(log).toHaveBeenCalledWith(
+      JSON.stringify({ event: "query_daily_pruned", deleted: 1, batches: 1, complete: true }),
+    );
+    log.mockRestore();
+  });
+
+  it("rethrows a failure so the cron run is marked as failed", async () => {
+    const env = {
+      DB: {
+        prepare: () => {
+          throw new TypeError("D1 down");
+        },
+      },
+    } as unknown as Env;
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(handleScheduled(env, NOW)).rejects.toThrow("D1 down");
+    expect(error).toHaveBeenCalledWith(
+      JSON.stringify({ event: "query_daily_prune_failed", error: "TypeError" }),
+    );
+    error.mockRestore();
+  });
+
+  it("does nothing without a database", async () => {
+    await expect(handleScheduled({}, NOW)).resolves.toBeUndefined();
+  });
+});
