@@ -4,6 +4,7 @@ import {
   createEngine,
   createLayeredSemantic,
   createSearchSession,
+  type EmojiSet,
   loadPacks,
   type Pack,
   type SearchResult,
@@ -29,6 +30,11 @@ export interface EmojisenseOptions {
   publishableKey?: string;
   /** Load the extension packs (more aliases, typos) when the browser is idle. Default true. */
   extended?: boolean;
+  /**
+   * How pickers draw emoji. Default "native" (the system font). "twemoji", "noto" and "fluent"
+   * draw images hosted at `${endpoint}/v1/sets/<set>/<hexcode>.svg`, so they need `endpoint`.
+   */
+  emojiSet?: EmojiSet;
 }
 
 export interface Emojisense {
@@ -40,12 +46,24 @@ export interface Emojisense {
   status: "loading" | "ready" | "error";
   /** True once the idle-time extension packs are in the engine. */
   extended: boolean;
+  /** How pickers draw emoji; see `EmojisenseOptions.emojiSet`. Undefined = "native". */
+  emojiSet?: EmojiSet;
+  /** The API base URL, for hosted emoji set images. */
+  endpoint?: string;
   error?: unknown;
 }
 
 /** Load the data packs once and build the alias engine (and the semantic layers, if configured). */
 export function useEmojisense(options: EmojisenseOptions): Emojisense {
-  const { packBaseUrl, locale = "en", shardsUrl, endpoint, publishableKey, extended = true } = options;
+  const {
+    packBaseUrl,
+    locale = "en",
+    shardsUrl,
+    endpoint,
+    publishableKey,
+    extended = true,
+    emojiSet = "native",
+  } = options;
   const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
     packs: [],
     extended: false,
@@ -97,6 +115,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     locale,
     status: state.error ? "error" : engine ? "ready" : "loading",
     extended: state.extended,
+    emojiSet,
+    ...(endpoint ? { endpoint } : {}),
     ...(state.error ? { error: state.error } : {}),
   };
 }

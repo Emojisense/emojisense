@@ -22,6 +22,10 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | `locale` | `"tr"` loads the Turkish pack next to English. |
 | `shardsUrl` | Precomputed results. Omit it when no shards are deployed. |
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
+| `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |
+
+For your own components, `<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />`
+draws one emoji the same way (a 1em image, or the text).
 
 `useEmojiSearch` returns alias results synchronously on every keystroke. Semantic results arrive
 after a debounce and are fused in without moving confident alias hits.

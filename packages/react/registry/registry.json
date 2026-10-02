@@ -16,7 +16,7 @@
         }
       ],
       "categories": ["emoji", "picker", "search"],
-      "docs": "Load the packs once with `useEmojisense({ packBaseUrl, shardsUrl, endpoint })` from `@emojisense/react`, then compose `<EmojiPicker emojisense={sense}>` with `<EmojiPickerSearch />`, `<EmojiPickerContent />` and `<EmojiPickerFooter />`. Omit `shardsUrl` and `endpoint` for fully offline search."
+      "docs": "Load the packs once with `useEmojisense({ packBaseUrl, shardsUrl, endpoint })` from `@emojisense/react`, then compose `<EmojiPicker emojisense={sense}>` with `<EmojiPickerSearch />`, `<EmojiPickerContent />` and `<EmojiPickerFooter />`. Omit `shardsUrl` and `endpoint` for fully offline search. Pass `emojiSet: \"twemoji\" | \"noto\" | \"fluent\"` (with `endpoint`) to draw hosted emoji images instead of the system font."
     }
   ]
 }
