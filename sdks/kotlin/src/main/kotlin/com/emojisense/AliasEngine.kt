@@ -26,6 +26,14 @@ public data class AliasSearchOutput<out R : SearchResult>(
     val results: List<R>,
     /** Score of the best canonical result, 0 when there is none. */
     val confidence: Double,
+    /**
+     * 0–1, rounded to 3 decimals: the largest IDF-weighted share of the query that one phrase
+     * matches with whole tokens (exact, a typo of the token, or a completion of the token being
+     * typed into a word of the preferred locale). A prefix completion into another locale's word is
+     * a partial match and does not count. Below [Confidence.WHOLE_COVERAGE] the dictionary does not
+     * explain the query: "kendrick lamar" matches at most "lamar". PACK_FORMAT.md §4.
+     */
+    val coverage: Double = 0.0,
 )
 
 /**
@@ -97,7 +105,7 @@ public class AliasEngine private constructor(
                 engine = this,
             ),
         )
-        return AliasSearchOutput(output.query, output.tokens, results, output.confidence)
+        return AliasSearchOutput(output.query, output.tokens, results, output.confidence, output.coverage)
     }
 
     /** The canonical ranking only, as alias results (the culture option is ignored). */
@@ -117,6 +125,9 @@ public class AliasEngine private constructor(
 /** The ranking of PACK_FORMAT.md §4 over one index, with its reusable scratch space. */
 internal class Searcher(val index: AliasIndex, private val minCoverage: Double) {
     private val quality = FloatArray(index.phraseCount * MAX_QUERY_TOKENS)
+
+    /** Bit i set = query token i matches the phrase by a whole-token candidate (not a partial one). */
+    private val phraseWhole = ByteArray(index.phraseCount)
     private val phraseStamp = IntArray(index.phraseCount)
     private val touchedPhrases = IntArray(index.phraseCount)
     private val emojiStamp = IntArray(index.entries.size)
@@ -131,28 +142,33 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
 
     /** The emoji's best phrase is an exact whole-query match. */
     private val emojiBestExact = BooleanArray(index.entries.size)
+
+    /** The emoji's best phrase needs a partial match (a prefix completion into another locale's word). */
+    private val emojiBestPartial = BooleanArray(index.entries.size)
     private val touchedEmoji = IntArray(index.entries.size)
     private val editDistance = EditDistance()
     private var generation = 0
 
     private class Scored(val emoji: Int, val phrase: Int, var score: Double)
 
+    /** The ranked emoji, and the largest share of the query one phrase matches with whole tokens. */
+    private class Ranking(val scored: List<Scored>, val wholeCoverage: Double)
+
     fun search(query: String, options: AliasSearchOptions): AliasSearchOutput<AliasResult> {
         val normalized = Normalizer.normalize(query)
         val lastIsPrefix = options.prefix && !endsWithJavaScriptWhitespace(query)
         val functionWords = FunctionWords.active(options.locale ?: index.primary.locale)
         val tokens = queryTokens(normalized, lastIsPrefix, functionWords)
-        if (tokens.isEmpty()) return AliasSearchOutput(normalized, tokens, emptyList(), 0.0)
-        val results = synchronized(this) {
-            rank(tokens, lastIsPrefix, functionWords, options.locale)
-                .take(maxOf(0, options.limit))
-                .map { result(it, options.locale) }
+        if (tokens.isEmpty()) return AliasSearchOutput(normalized, tokens, emptyList(), 0.0, 0.0)
+        val (results, wholeCoverage) = synchronized(this) {
+            val ranking = rank(tokens, lastIsPrefix, functionWords, options.locale)
+            ranking.scored.take(maxOf(0, options.limit)).map { result(it, options.locale) } to ranking.wholeCoverage
         }
-        return AliasSearchOutput(normalized, tokens, results, results.firstOrNull()?.score ?: 0.0)
+        return AliasSearchOutput(normalized, tokens, results, results.firstOrNull()?.score ?: 0.0, roundScore(wholeCoverage))
     }
 
     /** Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds the lock. */
-    private fun rank(tokens: List<String>, lastIsPrefix: Boolean, functionWords: Set<String>, locale: String?): List<Scored> {
+    private fun rank(tokens: List<String>, lastIsPrefix: Boolean, functionWords: Set<String>, locale: String?): Ranking {
         val count = tokens.size
         val preferredMask = (index.preferredMasks[locale ?: index.primary.locale] ?: 1) or index.customMask
         fun isPreferred(phrase: Int) = (index.phraseLocaleMask[phrase] and preferredMask) != 0
@@ -162,27 +178,39 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         // Next to a content word, a function word neither completes as a prefix ("了" is not "了解")
         // nor stands for a typo. A query of function words only ("я тоже") is searched as typed.
         val hasContentWord = false in isFunctionWord
+        // Query tokens without any candidate: the dictionary does not know them.
+        var unknownTokens = 0
         var touchedPhraseCount = 0
         val weights = DoubleArray(count)
         tokens.forEachIndexed { position, token ->
+            val partial = HashSet<Int>()
+            val candidates = if (hasContentWord && isFunctionWord[position]) {
+                exactly(token)
+            } else {
+                expand(token, lastIsPrefix && position == count - 1, preferredMask, partial)
+            }
+            // A function word the vocabulary lacks is not an unknown word of the query.
+            if (candidates.isEmpty() && !isFunctionWord[position]) unknownTokens++
+            val bit = 1 shl position
             var bestQuality = 0.0
             var weight = index.maxIdf
-            val candidates =
-                if (hasContentWord && isFunctionWord[position]) exactly(token) else expand(token, lastIsPrefix && position == count - 1)
             for ((id, candidateQuality) in candidates) {
                 if (candidateQuality > bestQuality) {
                     bestQuality = candidateQuality
                     weight = index.idf[id]
                 }
+                val whole = id !in partial
                 for (posting in index.postingStart[id] until index.postingStart[id + 1]) {
                     val phrase = index.postings[posting]
                     val base = phrase * MAX_QUERY_TOKENS
                     if (phraseStamp[phrase] != generation) {
                         phraseStamp[phrase] = generation
                         quality.fill(0f, base, base + count)
+                        phraseWhole[phrase] = 0
                         touchedPhrases[touchedPhraseCount++] = phrase
                     }
                     if (candidateQuality > quality[base + position]) quality[base + position] = candidateQuality.toFloat()
+                    if (whole) phraseWhole[phrase] = (phraseWhole[phrase].toInt() or bit).toByte()
                 }
             }
             weights[position] = if (isFunctionWord[position]) minOf(weight, FUNCTION_WORD_WEIGHT_CAP) else weight
@@ -191,20 +219,33 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         for (weight in weights) totalWeight += weight
 
         var touchedEmojiCount = 0
+        var bestWholeCoverage = 0.0
         for (t in 0 until touchedPhraseCount) {
             val phrase = touchedPhrases[t]
             val base = phrase * MAX_QUERY_TOKENS
+            val wholeBits = phraseWhole[phrase].toInt() and 0xFF
             var covered = 0.0
+            var wholeCovered = 0.0
             var matched = 0
-            var allExact = true
+            var exactTokens = 0
+            var partialMatch = false
             for (i in 0 until count) {
                 val value = quality[base + i].toDouble()
-                if (value > 0) matched++
-                if (value != 1.0) allExact = false
+                if (value > 0) {
+                    matched++
+                    if (((wholeBits shr i) and 1) != 0) wholeCovered += weights[i] else partialMatch = true
+                }
+                if (value == 1.0) exactTokens++
                 covered += value * weights[i]
             }
+            val allExact = exactTokens == count
             val coverage = covered / totalWeight
             if (coverage < minCoverage) continue
+            // A prefix or typo match of one token cannot stand for a query whose other words the
+            // dictionary does not know: en "kendrick lamar" is not 💍 (id "lamaran") or 🦙 ("lama").
+            if (unknownTokens > 0 && matched == 1 && exactTokens == 0) continue
+            val wholeCoverage = wholeCovered / totalWeight
+            if (wholeCoverage > bestWholeCoverage) bestWholeCoverage = wholeCoverage
 
             val length = index.phraseLength[phrase]
             val preferred = isPreferred(phrase)
@@ -223,11 +264,13 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 emojiPreferred[emoji] = 0
                 emojiExactPreferred[emoji] = false
                 emojiBestExact[emoji] = exact
+                emojiBestPartial[emoji] = partialMatch
                 touchedEmoji[touchedEmojiCount++] = emoji
             } else if (score > emojiScore[emoji]) {
                 emojiScore[emoji] = score
                 emojiPhrase[emoji] = phrase
                 emojiBestExact[emoji] = exact
+                emojiBestPartial[emoji] = partialMatch
             }
             if (preferred) {
                 emojiPreferred[emoji]++
@@ -262,6 +305,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 }
             }
         }
+        capForeignPrefixBelowPreferred(scored, ::isPreferred)
         // Equal scores: the more used emoji first (pack `popularity`), then row order (PACK_FORMAT.md §4).
         val popularity = index.entryPopularity
         scored.sortWith { a, b ->
@@ -269,7 +313,26 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 ?: popularity[b.emoji].compareTo(popularity[a.emoji]).takeIf { it != 0 }
                 ?: a.emoji.compareTo(b.emoji)
         }
-        return scored
+        return Ranking(scored, bestWholeCoverage)
+    }
+
+    /**
+     * A prefix completion into another locale's word never outranks a preferred-locale match: an
+     * emoji whose best phrase needs one scores at most [CAP_MARGIN] below the lowest emoji whose
+     * best phrase is in a preferred-locale pack and needs none (PACK_FORMAT.md §4).
+     */
+    private fun capForeignPrefixBelowPreferred(scored: List<Scored>, isPreferred: (Int) -> Boolean) {
+        var lowestPreferred = Double.POSITIVE_INFINITY
+        for (candidate in scored) {
+            if (!emojiBestPartial[candidate.emoji] && isPreferred(candidate.phrase) && candidate.score < lowestPreferred) {
+                lowestPreferred = candidate.score
+            }
+        }
+        if (lowestPreferred == Double.POSITIVE_INFINITY) return
+        val cap = maxOf(0.0, lowestPreferred - CAP_MARGIN)
+        for (candidate in scored) {
+            if (emojiBestPartial[candidate.emoji]) candidate.score = minOf(candidate.score, cap)
+        }
     }
 
     /**
@@ -381,13 +444,16 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
 
     /**
      * Vocabulary tokens a query token may stand for, with a match quality in (0, 1], in the order
-     * the reference engine finds them (the order breaks ties for the token weight).
+     * the reference engine finds them (the order breaks ties for the token weight). [partial] gets
+     * the prefix completions into words that no preferred-locale pack has: they match with less
+     * quality and never count as whole-token coverage.
      */
-    private fun expand(token: String, asPrefix: Boolean): Map<Int, Double> {
+    private fun expand(token: String, asPrefix: Boolean, preferredMask: Int, partial: MutableSet<Int>): Map<Int, Double> {
         val candidates = LinkedHashMap<Int, Double>()
         fun add(id: Int, quality: Double) {
             if (quality > (candidates[id] ?: 0.0)) candidates[id] = quality
         }
+        fun isPreferredToken(id: Int) = (index.tokenLocaleMask[id] and preferredMask) != 0
         val exact = index.tokenIds[token]
         if (exact != null) add(exact, 1.0)
 
@@ -399,7 +465,13 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 val candidate = index.vocabulary[position]
                 if (!candidate.startsWith(token)) break
                 if (candidate.length > token.length) {
-                    add(position, 0.6 + (0.35 * token.length) / candidate.length)
+                    val quality = 0.6 + (0.35 * token.length) / candidate.length
+                    if (isPreferredToken(position)) {
+                        add(position, quality)
+                    } else {
+                        add(position, quality * FOREIGN_PREFIX_QUALITY)
+                        partial.add(position)
+                    }
                     prefixMatches++
                 }
                 position++
@@ -413,10 +485,14 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         val maxEdits = Fuzzy.maxEdits(token.length)
         // With no edits allowed only an exact match could qualify, and there is none.
         if (maxEdits == 0) return candidates
+        val short = token.length <= SHORT_TYPO_LENGTH
         for (length in token.length - maxEdits..token.length + maxEdits) {
             for (id in index.tokenIdsByLength[length] ?: continue) {
                 val candidate = index.vocabulary[id]
                 if (!Fuzzy.isPlausibleTypo(token, candidate)) continue
+                // A short token is a typo only of a preferred-locale word, and never of a word it
+                // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
+                if (short && (token.startsWith(candidate) || !isPreferredToken(id))) continue
                 val distance = editDistance.compute(token, candidate, maxEdits)
                 if (distance <= maxEdits) add(id, if (distance == 1) 0.8 else 0.65)
             }
@@ -456,6 +532,15 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         const val DOMINANT_FIELDS = 2
         /** The most a function word ([FunctionWords]) weighs, so it never blocks a match. */
         const val FUNCTION_WORD_WEIGHT_CAP = 0.3
+
+        /**
+         * Quality factor of a prefix completion into a word that only other locales' packs have: en
+         * "lamar" → id "lamaran" (💍) is a partial match, not the word the user is typing.
+         */
+        const val FOREIGN_PREFIX_QUALITY = 0.7
+
+        /** Tokens up to this length (UTF-16 units) need stronger evidence for a typo match (PACK_FORMAT.md §4). */
+        const val SHORT_TYPO_LENGTH = 5
 
         /** Longest piece (code points) tried when a run of an unspaced script is split. */
         const val MAX_PIECE_LENGTH = 16

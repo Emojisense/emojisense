@@ -3,12 +3,14 @@ package com.emojisense
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import java.net.URLDecoder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -109,6 +111,44 @@ class SemanticClientTest {
         val error = assertFailsWith<EmojisenseException.HttpStatus> { client(StubTransport.json("nope", status = 429)).search("x y z") }
         assertEquals(429, error.status)
         assertTrue("HTTP 429" in error.message.orEmpty())
+    }
+
+    @Test
+    fun `does not cache an answer whose concept is pending or unavailable`() = runBlocking {
+        var status = "pending"
+        val transport = StubTransport {
+            val body = SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"unsure\":true,\"concept\":{\"status\":\"$status\"}")
+            HttpResponse(200, body.encodeToByteArray())
+        }
+        val client = client(transport)
+        assertEquals(ConceptStatus.PENDING, client.search("kendrick lamar")?.concept?.status)
+        status = "unavailable"
+        client.search("kendrick lamar")
+        status = "ok"
+        client.search("kendrick lamar")
+        assertEquals(ConceptStatus.OK, client.search("kendrick lamar")?.concept?.status)
+        assertEquals(3, transport.requests.size)
+    }
+
+    @Test
+    fun `decodes the verdict, the concept info and concept results`() {
+        val response = SemanticResponse.fromJson(
+            """{"results":[{"emoji":"🎤","id":"1F3A4","score":0.9,"source":"concept"},{"emoji":"🌋","id":"1F30B","score":0.4,"source":"semantic"}],
+            "packVersion":"test","confidence":0.412,"unsure":true,"concept":{"status":"ok","kind":"person","terms":["rapper","hip hop"]}}""",
+        )
+        assertEquals(listOf(ResultSource.CONCEPT, ResultSource.SEMANTIC), response.results.map { it.source })
+        assertEquals(0.412, response.confidence)
+        assertEquals(true, response.unsure)
+        assertEquals(ConceptInfo(ConceptStatus.OK, "person", listOf("rapper", "hip hop")), response.concept)
+        assertTrue(response.concept?.isFinal == true)
+
+        val older = SemanticResponse.fromJson(SEMANTIC_BODY)
+        assertNull(older.confidence)
+        assertNull(older.unsure)
+        assertNull(older.concept)
+        // A status this version does not know is ignored, so the answer counts as final.
+        assertNull(SemanticResponse.fromJson("""{"results":[],"concept":{"status":"later"}}""").concept)
+        assertNull(SemanticResponse.fromJson("""{"results":[],"concept":null}""").concept)
     }
 
     @Test
@@ -293,6 +333,8 @@ class SearchSessionTest {
         runCurrent()
         assertEquals(0, transport.requests.size)
         assertEquals(SessionStatus.ALIAS, states.last().status)
+        assertFalse(states.last().unsure)
+        assertEquals(1.0, states.last().confidence)
     }
 
     @Test
@@ -304,5 +346,91 @@ class SearchSessionTest {
         runCurrent()
         assertEquals(SessionStatus.ERROR, states.last().status)
         assertEquals("down", states.last().error?.message)
+    }
+}
+
+/** Ports "unsure queries and the concept tier" of packages/core/test/client-session.test.ts. */
+@OptIn(ExperimentalCoroutinesApi::class)
+class ConceptSessionTest {
+    private val engine = AliasEngine(listOf(Fixtures.english))
+
+    /** The API's answer for an unsure query: concept results first, then a flat semantic list. */
+    private fun unsureBody(concept: String): String {
+        val conceptResult = if ("\"ok\"" in concept) """{"emoji":"🎤","id":"1F3A4","score":0.9,"source":"concept"},""" else ""
+        return """{"packVersion":"test","cached":false,"unsure":true,"confidence":0,"concept":$concept,"results":[$conceptResult""" +
+            """{"emoji":"🌋","id":"1F30B","score":0.4,"source":"semantic"},{"emoji":"🐐","id":"1F410","score":0.39,"source":"semantic"}]}"""
+    }
+
+    private fun answer(concept: () -> String) = StubTransport { HttpResponse(200, unsureBody(concept()).encodeToByteArray()) }
+
+    private fun TestScope.start(transport: StubTransport, states: MutableList<SessionState>) = SearchSession(
+        engine = engine,
+        scope = this,
+        semantic = SemanticClient(SemanticClient.Configuration("https://api.test"), transport),
+        debounceMillis = 10,
+        conceptRetryMillis = 100,
+        onChange = { states.add(it) },
+    )
+
+    private fun TestScope.advance(millis: Long) {
+        advanceTimeBy(millis)
+        runCurrent()
+    }
+
+    @Test
+    fun `calls a query unsure while it waits, and merges concept results first`() = runTest {
+        val transport = answer { """{"status":"ok","kind":"person","terms":["rapper"]}""" }
+        val states = mutableListOf<SessionState>()
+        start(transport, states).update("kendrick lamar")
+        assertEquals(SessionStatus.LOADING, states.last().status)
+        assertTrue(states.last().unsure)
+        advance(50)
+        val last = states.last()
+        assertEquals(SessionStatus.FUSED, last.status)
+        assertTrue(last.unsure)
+        assertEquals(ConceptInfo(ConceptStatus.OK, "person", listOf("rapper")), last.concept)
+        assertEquals("🎤", last.results.first().emoji)
+        assertEquals(ResultSource.CONCEPT, last.results.first().source)
+    }
+
+    @Test
+    fun `asks again while the concept answer is pending, and stops when it is final`() = runTest {
+        var calls = 0
+        val transport = answer { if (++calls == 1) """{"status":"pending"}""" else """{"status":"ok"}""" }
+        val states = mutableListOf<SessionState>()
+        start(transport, states).update("kendrick lamar")
+        advance(50)
+        assertEquals(ConceptInfo(ConceptStatus.PENDING), states.last().concept)
+        advance(150)
+        assertEquals(2, transport.requests.size)
+        assertEquals(ResultSource.CONCEPT, states.last().results.first().source)
+        advance(1000)
+        assertEquals(2, transport.requests.size)
+    }
+
+    @Test
+    fun `gives up after two retries and keeps the unsure guesses`() = runTest {
+        val transport = answer { """{"status":"pending"}""" }
+        val states = mutableListOf<SessionState>()
+        start(transport, states).update("kendrick lamar")
+        advance(1000)
+        assertEquals(3, transport.requests.size)
+        val last = states.last()
+        assertEquals(SessionStatus.FUSED, last.status)
+        assertTrue(last.unsure)
+        assertEquals(ConceptInfo(ConceptStatus.PENDING), last.concept)
+    }
+
+    @Test
+    fun `drops the retry when the query changes`() = runTest {
+        val transport = answer { """{"status":"pending"}""" }
+        val states = mutableListOf<SessionState>()
+        val session = start(transport, states)
+        session.update("kendrick lamar")
+        advance(50)
+        session.update("rocket")
+        advance(1000)
+        assertEquals(1, transport.requests.size)
+        assertEquals("rocket", states.last().query)
     }
 }
