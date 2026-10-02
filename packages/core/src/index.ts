@@ -12,7 +12,9 @@ export {
 } from "./engine.js";
 export { type FuseOptions, fuse, fuseResults, shouldUseSemantic } from "./fusion.js";
 export { boundedEditDistance } from "./fuzzy.js";
+export { groupLabel } from "./groups.js";
 export { baseId } from "./ids.js";
+export { createLayeredSemantic, type LayeredSemanticOptions } from "./layered.js";
 export { type LoadPacksOptions, loadPacks } from "./loader.js";
 export { MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
 export {
