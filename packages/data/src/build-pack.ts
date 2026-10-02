@@ -1,11 +1,13 @@
 /**
- * Step 4: base + validated aliases → dist/packs/<packVersion>/{pack.en.json, pack.tr.json, manifest.json}
- * and build/documents.json (the text each embedding model sees per emoji).
+ * Step 4: base + validated aliases → dist/packs/<packVersion>/ and build/documents.json
+ * (the text each embedding model sees per emoji).
  *
- *   tsx src/build-pack.ts [--max-aliases N] [--out DIR]
+ *   tsx src/build-pack.ts [--initial-aliases N] [--out DIR]
  *
- * --max-aliases caps generated aliases per emoji and locale in the client pack (size budget).
- * Documents for embeddings always use the full alias list.
+ * Per locale, two client files:
+ *   pack.<locale>.json      core: label, shortcodes, keywords + the first N aliases (size budget)
+ *   pack.<locale>.ext.json  ext:  the remaining aliases, typos and low-confidence phrases
+ * Clients render with core and load ext when idle. Embedding documents use the full alias list.
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -19,12 +21,12 @@ import type { Validated } from "./validate.ts";
 const { values: args } = parseArgs({
   // pnpm forwards a literal "--"; drop it so flags after it still parse.
   args: process.argv.slice(2).filter((a) => a !== "--"),
-  options: { "max-aliases": { type: "string" }, out: { type: "string" } },
+  options: { "initial-aliases": { type: "string" }, out: { type: "string" } },
 });
-const maxAliases = args["max-aliases"] ? Number(args["max-aliases"]) : Number.POSITIVE_INFINITY;
-const config: { packVersion: string; emojiVersion: string } = JSON.parse(
+const config: { packVersion: string; emojiVersion: string; initialAliases: number } = JSON.parse(
   readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8"),
 );
+const initialAliases = Number(args["initial-aliases"] ?? config.initialAliases);
 const { source, emoji }: { source: Record<string, string>; emoji: BaseEmoji[] } = JSON.parse(
   readFileSync(BASE_FILE, "utf8"),
 );
@@ -42,41 +44,43 @@ function fields(lists: string[][]): string[] {
   );
 }
 
-function buildPack(locale: "en" | "tr"): Pack {
-  const rows = emoji.map((e): PackRow => {
+function buildPacks(locale: "en" | "tr"): { core: Pack; ext: Pack } {
+  const core: PackRow[] = [];
+  const ext: PackRow[] = [];
+  for (const e of emoji) {
     const v = validated[e.hexcode]?.[locale];
     const label = locale === "en" ? e.label : (e.tr.label ?? e.label);
-    const [, shortcode, keyword, alias, typo, low] = fields([
+    const aliases = v?.alias ?? [];
+    const [, shortcode, keyword, alias, typo, low, extAlias] = fields([
       [label],
       locale === "en" ? e.shortcodes : [],
       locale === "en" ? e.tags : e.tr.tags,
-      (v?.alias ?? []).slice(0, maxAliases),
+      aliases.slice(0, initialAliases),
       v?.typo ?? [],
       v?.low ?? [],
+      aliases.slice(initialAliases),
     ]) as string[];
-    return [
+    const head = [
       e.emoji,
       e.hexcode,
       groups.indexOf(e.group),
       e.version,
       e.skins.length > 0 ? 1 : 0,
-      label,
-      shortcode as string,
-      keyword as string,
-      alias as string,
-      typo as string,
-      low as string,
-    ];
-  });
-  return {
+    ] as const;
+    core.push([...head, label, shortcode as string, keyword as string, alias as string, "", ""]);
+    ext.push([...head, "", "", "", extAlias as string, typo as string, low as string]);
+  }
+  const pack = (part: "core" | "ext", rows: PackRow[]): Pack => ({
     format: PACK_FORMAT,
     formatVersion: PACK_FORMAT_VERSION,
     packVersion: config.packVersion,
     locale,
+    ...(part === "ext" ? { part } : {}),
     emojiVersion: config.emojiVersion,
     groups,
     emoji: rows,
-  };
+  });
+  return { core: pack("core", core), ext: pack("ext", ext) };
 }
 
 /** Aliases per document, so en + tr stay well under the 512-token limit of some models. */
@@ -99,7 +103,9 @@ const outDir = args.out ?? join(DATA_ROOT, "dist", "packs", config.packVersion);
 rmSync(outDir, { recursive: true, force: true });
 mkdirSync(outDir, { recursive: true });
 for (const locale of ["en", "tr"] as const) {
-  writeFileSync(join(outDir, `pack.${locale}.json`), JSON.stringify(buildPack(locale)));
+  const { core, ext } = buildPacks(locale);
+  writeFileSync(join(outDir, `pack.${locale}.json`), JSON.stringify(core));
+  writeFileSync(join(outDir, `pack.${locale}.ext.json`), JSON.stringify(ext));
 }
 writeFileSync(join(BUILD_DIR, "documents.json"), `${JSON.stringify(buildDocuments(), null, 1)}\n`);
 
@@ -113,4 +119,4 @@ const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
 for (const [name, f] of Object.entries(manifest.files)) {
   console.log(`pack: ${name.padEnd(16)} ${kb(f.bytes).padStart(10)} raw  ${kb(f.gzipBytes).padStart(9)} gz`);
 }
-console.log(`pack: wrote ${outDir}${Number.isFinite(maxAliases) ? ` (max ${maxAliases} aliases)` : ""}`);
+console.log(`pack: wrote ${outDir} (core keeps ${initialAliases} aliases per emoji and locale)`);

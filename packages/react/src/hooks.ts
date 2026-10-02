@@ -20,6 +20,8 @@ export interface EmojisenseOptions {
   /** Semantic API base URL. Omit for offline alias search only. */
   endpoint?: string;
   publishableKey?: string;
+  /** Load the extension packs (more aliases, typos) when the browser is idle. Default true. */
+  extended?: boolean;
 }
 
 export interface Emojisense {
@@ -28,25 +30,47 @@ export interface Emojisense {
   packs: Pack[];
   locale: string;
   status: "loading" | "ready" | "error";
+  /** True once the idle-time extension packs are in the engine. */
+  extended: boolean;
   error?: unknown;
 }
 
 /** Load the data packs once and build the alias engine (and the semantic client, if configured). */
 export function useEmojisense(options: EmojisenseOptions): Emojisense {
-  const { packBaseUrl, locale = "en", endpoint, publishableKey } = options;
-  const [state, setState] = useState<{ packs: Pack[]; error?: unknown }>({ packs: [] });
+  const { packBaseUrl, locale = "en", endpoint, publishableKey, extended = true } = options;
+  const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
+    packs: [],
+    extended: false,
+  });
 
   useEffect(() => {
     const controller = new AbortController();
-    setState({ packs: [] });
-    loadPacks({ baseUrl: packBaseUrl, locales: [locale], signal: controller.signal }).then(
-      (packs) => setState({ packs }),
+    const { signal } = controller;
+    let idle: number | undefined;
+    setState({ packs: [], extended: false });
+    loadPacks({ baseUrl: packBaseUrl, locales: [locale], signal }).then(
+      (core) => {
+        setState({ packs: core, extended: false });
+        if (!extended) return;
+        // Core packs answer right away; the extension (≈ 2× the size) waits for an idle moment.
+        idle = whenIdle(() => {
+          loadPacks({ baseUrl: packBaseUrl, locales: [locale], signal, part: "ext" }).then(
+            (ext) => setState({ packs: [...core, ...ext], extended: true }),
+            () => {
+              // The core packs keep working; the extension is an optional upgrade.
+            },
+          );
+        });
+      },
       (error: unknown) => {
-        if (!controller.signal.aborted) setState({ packs: [], error });
+        if (!signal.aborted) setState({ packs: [], extended: false, error });
       },
     );
-    return () => controller.abort();
-  }, [packBaseUrl, locale]);
+    return () => {
+      controller.abort();
+      if (idle !== undefined) cancelIdle(idle);
+    };
+  }, [packBaseUrl, locale, extended]);
 
   const engine = useMemo(
     () => (state.packs.length > 0 ? createEngine(state.packs) : undefined),
@@ -71,6 +95,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     packs: state.packs,
     locale,
     status: state.error ? "error" : engine ? "ready" : "loading",
+    extended: state.extended,
     ...(state.error ? { error: state.error } : {}),
   };
 }
@@ -146,4 +171,17 @@ export function useEmojiSearch(
   }, [query, engine]);
 
   return query.trim() === "" ? IDLE : state;
+}
+
+const IDLE_TIMEOUT_MS = 2000;
+
+function whenIdle(callback: () => void): number {
+  return typeof requestIdleCallback === "function"
+    ? requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS })
+    : (setTimeout(callback, 1) as unknown as number);
+}
+
+function cancelIdle(handle: number) {
+  if (typeof cancelIdleCallback === "function") cancelIdleCallback(handle);
+  else clearTimeout(handle);
 }

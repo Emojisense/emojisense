@@ -9,8 +9,9 @@ A **pack version** (e.g. `0.1.0`) is a directory of immutable files:
 ```
 /v1/pack/<packVersion>/
   manifest.json                       versions, hashes, sizes
-  pack.en.json                        Tier 0 data, English (always load first)
-  pack.tr.json                        Tier 0 data, Turkish (load when the UI locale is tr)
+  pack.en.json                        Tier 0 core, English (always load first; ≤ 200 KB gz)
+  pack.en.ext.json                    Tier 0 extension, English (load when idle)
+  pack.tr.json / pack.tr.ext.json     Turkish core / extension (load when the UI locale is tr)
   vectors.<model>.<dims>.bin          Tier 1 emoji vectors, one file per model × dims
 ```
 
@@ -60,6 +61,20 @@ Files never change after publication. A change produces a new pack version. Serv
 ```
 
 A client MUST reject a pack whose `format` differs or whose `formatVersion` it does not support.
+
+### Core and extension parts
+
+Each locale ships in two parts with the same row layout and row order:
+
+| Part | File | `part` key | Holds |
+| ---- | ---- | ---------- | ----- |
+| core | `pack.<locale>.json` | absent or `"core"` | label, shortcodes, keywords, the first N aliases (`pack.config.json` → `initialAliases`) |
+| ext | `pack.<locale>.ext.json` | `"ext"` | the remaining aliases, all typos, all low-confidence phrases. `label`, `shortcode` and `keyword` are empty. |
+
+Render with the core parts. Load the ext parts when the device is idle and rebuild the index with
+all parts. Index order: every core part first (English first), then the ext parts. All parts of
+one locale count as that locale for the preferred-locale factor (§4). An empty `label` MUST NOT
+replace a label from another part.
 
 ### Rows
 

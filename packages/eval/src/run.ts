@@ -23,6 +23,7 @@ import {
   fuse,
   l2normalize,
   type Pack,
+  ROW_INDEX,
   type SearchResult,
   searchVectors,
   shouldUseSemantic,
@@ -41,7 +42,7 @@ const { values: args } = parseArgs({
     ci: { type: "boolean", default: false },
     "write-baseline": { type: "boolean", default: false },
     models: { type: "string" },
-    "alias-caps": { type: "string", default: "10,20,30" },
+    "alias-caps": { type: "string", default: "8,16,24" },
     "min-coverage": { type: "string", default: "0.5,0.6" },
   },
 });
@@ -52,9 +53,11 @@ if (!existsSync(join(packDir, "pack.en.json"))) {
   console.error(`No pack in ${packDir}. Run: pnpm data:build`);
   process.exit(2);
 }
-const readPack = (locale: string): Pack =>
-  JSON.parse(readFileSync(join(packDir, `pack.${locale}.json`), "utf8"));
-const packs = [readPack("en"), readPack("tr")];
+const readPack = (name: string): Pack => JSON.parse(readFileSync(join(packDir, `pack.${name}.json`), "utf8"));
+const corePacks = [readPack("en"), readPack("tr")];
+const extPacks = [readPack("en.ext"), readPack("tr.ext")];
+/** What a client has after the idle-time load: core + ext. All fused engines use this. */
+const packs = [corePacks[0], extPacks[0], corePacks[1], extPacks[1]] as Pack[];
 const queries = loadQueries(join(EVAL_ROOT, "queries", "queries.jsonl"));
 const scored = queries.filter((q) => q.answers.length > 0);
 const noise = queries.filter((q) => q.cat === "noise");
@@ -87,13 +90,15 @@ function evaluate(
 }
 
 // ── Tier 0 ────────────────────────────────────────────────────────────────────────────────
-function capPack(pack: Pack, maxAliases: number, dropLow: boolean): Pack {
+/** Simulate a core pack that keeps `maxAliases` aliases (from the merged core + ext order). */
+function simulateCore(core: Pack, ext: Pack, maxAliases: number): Pack {
   return {
-    ...pack,
-    emoji: pack.emoji.map((row) => {
+    ...core,
+    emoji: core.emoji.map((row, i) => {
+      const extRow = ext.emoji[i] as typeof row;
+      const merged = [row[ROW_INDEX.alias], extRow[ROW_INDEX.alias]].filter(Boolean).join("|");
       const copy = [...row] as typeof row;
-      copy[8] = row[8].split("|").slice(0, maxAliases).join("|");
-      if (dropLow) copy[10] = "";
+      copy[ROW_INDEX.alias] = merged.split("|").slice(0, maxAliases).join("|");
       return copy;
     }),
   };
@@ -103,6 +108,7 @@ const gz = (value: unknown) => gzipSync(JSON.stringify(value), { level: 9 }).len
 const buildStarted = performance.now();
 const engine = createEngine(packs);
 const buildMs = performance.now() - buildStarted;
+const coreEngine = createEngine(corePacks);
 
 const aliasOutputs = new Map<string, AliasSearchOutput>();
 const aliasSearch = (e: AliasEngine, q: EvalQuery) => e.search(q.q, { locale: q.locale, limit: 24 });
@@ -110,27 +116,31 @@ for (const q of queries) aliasOutputs.set(q.id, aliasSearch(engine, q));
 
 const results: EngineResult[] = [];
 const sizes: { variant: string; enGz: number; trGz: number }[] = [
-  { variant: "full", enGz: gz(packs[0]), trGz: gz(packs[1]) },
+  { variant: "core (shipped)", enGz: gz(corePacks[0]), trGz: gz(corePacks[1]) },
+  { variant: "ext (loaded when idle)", enGz: gz(extPacks[0]), trGz: gz(extPacks[1]) },
 ];
 results.push(
-  evaluate("alias (full pack)", "alias", (q) =>
+  evaluate("alias (core + ext)", "alias", (q) =>
     (aliasOutputs.get(q.id) as AliasSearchOutput).results.slice(0, LIMIT).map((r) => r.emoji),
+  ),
+  evaluate("alias (core only, first load)", "alias", (q) =>
+    aliasSearch(coreEngine, q)
+      .results.slice(0, LIMIT)
+      .map((r) => r.emoji),
   ),
 );
 for (const cap of (args["alias-caps"] ?? "").split(",").filter(Boolean).map(Number)) {
-  for (const dropLow of [false, true]) {
-    const capped = packs.map((p) => capPack(p, cap, dropLow));
-    const variant = `≤${cap} aliases${dropLow ? ", no low" : ""}`;
-    sizes.push({ variant, enGz: gz(capped[0]), trGz: gz(capped[1]) });
-    const cappedEngine = createEngine(capped);
-    results.push(
-      evaluate(`alias (${variant})`, "alias", (q) =>
-        aliasSearch(cappedEngine, q)
-          .results.slice(0, LIMIT)
-          .map((r) => r.emoji),
-      ),
-    );
-  }
+  const simulated = [0, 1].map((i) => simulateCore(corePacks[i] as Pack, extPacks[i] as Pack, cap));
+  const variant = `core with ≤${cap} aliases`;
+  sizes.push({ variant, enGz: gz(simulated[0]), trGz: gz(simulated[1]) });
+  const simulatedEngine = createEngine(simulated);
+  results.push(
+    evaluate(`alias (${variant})`, "alias", (q) =>
+      aliasSearch(simulatedEngine, q)
+        .results.slice(0, LIMIT)
+        .map((r) => r.emoji),
+    ),
+  );
 }
 
 for (const minCoverage of (args["min-coverage"] ?? "").split(",").filter(Boolean).map(Number)) {

@@ -45,7 +45,8 @@ if (index.model !== model.id || (index.ids.length > 0 && index.dims !== dims)) {
 const workerRoot = new URL("..", import.meta.url).pathname;
 const generated = join(workerRoot, "src", "generated");
 mkdirSync(generated, { recursive: true });
-for (const file of ["pack.en.json", "pack.tr.json"]) copyFileSync(join(source, file), join(generated, file));
+const PACK_FILES = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
+for (const file of PACK_FILES) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
 writeFileSync(
   join(generated, "config.json"),
@@ -60,7 +61,7 @@ const publicPack = join(workerRoot, "public", "v1", "pack");
 rmSync(publicPack, { recursive: true, force: true });
 mkdirSync(join(publicPack, packVersion), { recursive: true });
 const manifest = JSON.parse(readFileSync(join(source, "manifest.json"), "utf8"));
-const published = ["pack.en.json", "pack.tr.json", ...(index.ids.length > 0 ? [vectorFile] : [])];
+const published = [...PACK_FILES, ...(index.ids.length > 0 ? [vectorFile] : [])];
 manifest.files = Object.fromEntries(published.map((f) => [f, manifest.files[f]]));
 for (const file of published) copyFileSync(join(source, file), join(publicPack, packVersion, file));
 writeFileSync(join(publicPack, packVersion, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);

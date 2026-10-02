@@ -40,6 +40,12 @@ export interface Pack {
   formatVersion: number;
   packVersion: string;
   locale: string;
+  /**
+   * "core" (default): loaded first, within the size budget. "ext": the remaining aliases, typos
+   * and low-confidence phrases of the same locale, loaded when the browser is idle. Ext rows may
+   * have an empty label.
+   */
+  part?: "core" | "ext";
   emojiVersion: string;
   groups: string[];
   weights?: Partial<Record<Field, number>>;

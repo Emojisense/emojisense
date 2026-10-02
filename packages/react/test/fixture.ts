@@ -37,3 +37,23 @@ export function packFetch() {
   return async (url: string | URL | Request) =>
     new Response(JSON.stringify(String(url).endsWith("pack.tr.json") ? tr : en));
 }
+
+export const enExt: Pack = {
+  ...en,
+  part: "ext",
+  emoji: [["🚀", "1F680", 0, 1, 0, "", "", "", "to infinity and beyond", "", ""]],
+};
+
+export function packFetchWithExt() {
+  return async (url: string | URL | Request) => {
+    const u = String(url);
+    const body = u.endsWith("pack.en.ext.json")
+      ? enExt
+      : u.includes(".ext.")
+        ? { ...tr, part: "ext", emoji: [] }
+        : u.endsWith("pack.tr.json")
+          ? tr
+          : en;
+    return new Response(JSON.stringify(body));
+  };
+}

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useEmojiSearch, useEmojisense } from "../src/hooks.js";
-import { packFetch } from "./fixture.js";
+import { packFetch, packFetchWithExt } from "./fixture.js";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -9,7 +9,7 @@ describe("useEmojisense + useEmojiSearch", () => {
   it("loads packs, then searches as the query changes", async () => {
     vi.stubGlobal("fetch", packFetch());
     const { result: sense } = renderHook(() =>
-      useEmojisense({ packBaseUrl: "https://x.test/v1/pack/test", locale: "tr" }),
+      useEmojisense({ packBaseUrl: "https://x.test/v1/pack/test", locale: "tr", extended: false }),
     );
     expect(sense.current.status).toBe("loading");
     await waitFor(() => expect(sense.current.status).toBe("ready"));
@@ -25,6 +25,14 @@ describe("useEmojisense + useEmojiSearch", () => {
     await waitFor(() => expect(result.current.results[0]?.emoji).toBe("🚀"));
     rerender({ q: "  " });
     expect(result.current.results).toEqual([]);
+  });
+
+  it("adds the extension packs when idle", async () => {
+    vi.stubGlobal("fetch", packFetchWithExt());
+    const { result: sense } = renderHook(() => useEmojisense({ packBaseUrl: "https://x.test" }));
+    await waitFor(() => expect(sense.current.extended).toBe(true));
+    const { result } = renderHook(() => useEmojiSearch("to infinity and beyond", sense.current));
+    await waitFor(() => expect(result.current.results[0]?.emoji).toBe("🚀"));
   });
 
   it("reports load errors", async () => {
@@ -47,7 +55,7 @@ describe("useEmojisense + useEmojiSearch", () => {
         : pack(url),
     );
     const { result: sense } = renderHook(() =>
-      useEmojisense({ packBaseUrl: "https://x.test", endpoint: "https://api.test" }),
+      useEmojisense({ packBaseUrl: "https://x.test", endpoint: "https://api.test", extended: false }),
     );
     await waitFor(() => expect(sense.current.status).toBe("ready"));
     const { result } = renderHook(() =>

@@ -23,6 +23,17 @@ and moderated aliases.
 | 🇨🇾 (tr) | Republic of Cyprus flag. Uses "güney kıbrıs", "kıbrıs rum kesimi". "kktc" and north-only places are left out (political). |
 | 🇧🇦 (tr) | "srebrenitsa" is in `low` (remembrance posts). |
 | 🇪🇭 🇫🇰 | Disputed territories. Both names are given (Falklands / Malvinas), with neutral wording. |
+| 🇮🇱 | "jerusalem"/"kudüs" and "holy land" are in `low`. The desc is neutral. |
+| 🇳🇪 | No typo aliases, so that no misspelling looks like a slur. Tags overlap with Nigeria. |
+| 🇰🇵 | "best korea" and "supreme leader" are in `low`. |
+| 🇰🇿 | "borat" (fictional) and catchphrases. A reviewer may see a stereotype. |
+| 🔱 | "slava ukraini" and "har har mahadev" (national/religious) are in `low`. |
+| ♂️ | "alpha male" and "sigma male" are in `low`. |
+| ☪️ (tr) | Heavy bayram/kandil coverage. "türk bayrağı" is in `low` (collides with 🇹🇷). |
+| 🦯 | Joking "i can't see" uses are in `low`. |
+| 🗜️ (tr) | "işkence" is the carpenters' word for a clamp, but also means "torture". It is in `low`. |
+| 🌈 | Identity slang such as "fruity" is in `low` (can read as an insult). |
+| 🔫 | Water-gun play only; "james bond" and "sniper" may pull in real-gun searches. |
 | 🫏 🐘 | US party symbols ("democratic party", "republican party") are in `low`. |
 
 ## Accuracy unsure
@@ -43,6 +54,13 @@ and moderated aliases.
 | 🕴️ 💂 🛀 | Reaction meanings are niche or guessed. |
 | 😇 (tr) | Condolence phrases ("rahmetli", "nur içinde yatsın") are in `low`. They fit 🤲 better. |
 | 🤑 🤗 | "unicorn" collides with 🦄. "hugging face" (AI company) is in `dev`. |
+| ☸️ | Kubernetes/helm aliases (from the logo) next to the Buddhist meaning. |
+| 🗿 🔑 | Short-lived meme slang (sigma, aura, mog; lowkey/highkey). |
+| 🇬🇪 | Aliases cover the country only, not the US state. |
+| 🪊 🪎 | Emoji 17; usage guessed ("sad trombone", "loot"). |
+| 📘 💴 🎷 | "facebook" (low), yuan via ¥, "epic sax guy" (meme nickname of a real performer). |
+| 🎍 🎏 🎋 | Niche Japanese terms and Turkish cultural stretches ("23 nisan", "hıdırellez") are in `low`. |
+| 🔥 (tr) | Source of the meme "yanıyorsun fuat abi" is unclear. It is in `low`. |
 | 🗼 | "eiffel tower" and "paris" are figurative matches (people use 🗼 for Paris). |
 | 🎡 🎢 (tr) | It is not clear that people search for the theme parks "isfanbul" and "vialand" by name. |
 | 🕋 🕌 | General religious phrases ("inshallah", "allah kabul etsin") are in `low`. |

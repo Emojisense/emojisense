@@ -5,6 +5,8 @@ export interface LoadPacksOptions {
   baseUrl: string;
   /** Locales to load. English is always loaded first: it carries shortcodes. */
   locales?: string[];
+  /** "core" (default) = first-render packs; "ext" = the idle-time extension packs. */
+  part?: "core" | "ext";
   fetch?: typeof fetch;
   signal?: AbortSignal;
   /**
@@ -34,12 +36,12 @@ async function viaCrossOriginStorage(sha256: string): Promise<Pack | undefined> 
 
 /** Fetch and validate locale packs. Files are immutable, so the HTTP cache does the rest. */
 export async function loadPacks(options: LoadPacksOptions): Promise<Pack[]> {
-  const { baseUrl, locales = ["en"], signal } = options;
+  const { baseUrl, locales = ["en"], signal, part = "core" } = options;
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const ordered = ["en", ...locales.filter((l) => l !== "en")];
   return Promise.all(
     ordered.map(async (locale) => {
-      const file = `pack.${locale}.json`;
+      const file = part === "ext" ? `pack.${locale}.ext.json` : `pack.${locale}.json`;
       const hash = options.crossOriginStorage?.hashes[file];
       const shared = hash ? await viaCrossOriginStorage(hash) : undefined;
       const pack: unknown =

@@ -1,4 +1,5 @@
 {
   "packVersion": "0.1.0",
-  "emojiVersion": "17.0"
+  "emojiVersion": "17.0",
+  "initialAliases": 16
 }

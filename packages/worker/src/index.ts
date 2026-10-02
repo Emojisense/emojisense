@@ -2,7 +2,9 @@ import { getModel } from "@emojisense/data/models";
 import { type AliasEngine, createEngine, decodeVectors, type Pack, type VectorIndex } from "emojisense";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
+import packEnExt from "./generated/pack.en.ext.json";
 import packEn from "./generated/pack.en.json";
+import packTrExt from "./generated/pack.tr.ext.json";
 import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
 import { type Catalog, corsHeaders, handleSearch, json } from "./search.ts";
@@ -15,7 +17,7 @@ const catalog: Catalog = {
   config: config as GeneratedConfig,
   model: getModel(config.modelKey),
   engine: () => {
-    engine ??= createEngine([packEn as unknown as Pack, packTr as unknown as Pack]);
+    engine ??= createEngine([packEn, packTr, packEnExt, packTrExt] as unknown as Pack[]);
     return engine;
   },
   index: () => {

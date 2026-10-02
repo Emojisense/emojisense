@@ -69,6 +69,20 @@ describe("alias engine", () => {
     expect(engine.search("f", { limit: 1 }).results).toHaveLength(1);
   });
 
+  it("merges an extension pack of the same locale without a locale penalty", () => {
+    const ext = {
+      ...en,
+      part: "ext" as const,
+      emoji: [["🐐", "1F410", 0, 1, 0, "", "", "", "the goat", "", ""] as (typeof en.emoji)[number]],
+    };
+    const withExt = createEngine([en, ext, tr]);
+    const [goat] = withExt.search("the goat", { locale: "en" }).results;
+    expect(goat?.emoji).toBe("🐐");
+    expect(goat?.score).toBeGreaterThan(0.75);
+    expect(withExt.get("1F410")?.labels.en).toBe("goat");
+    expect(withExt.locales).toEqual(["en", "tr"]);
+  });
+
   it("looks up entries by id", () => {
     expect(engine.get("1F680")?.emoji).toBe("🚀");
     expect(engine.get("1F680")?.labels).toEqual({ en: "rocket" });

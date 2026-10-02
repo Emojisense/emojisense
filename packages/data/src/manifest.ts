@@ -34,7 +34,7 @@ export function writeManifest(dir: string, meta: Record<string, unknown>): Manif
       bytes: bytes.length,
       gzipBytes: gzipSync(bytes, { level: 9 }).length,
     };
-    const pack = /^pack\.([\w-]+)\.json$/.exec(name);
+    const pack = /^pack\.([\w-]+?)(?:\.ext)?\.json$/.exec(name);
     if (pack) entry.locale = pack[1] as string;
     const vectors = /^vectors\.([\w-]+)\.(\d+)\.bin$/.exec(name);
     if (vectors) {

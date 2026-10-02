@@ -90,7 +90,10 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   if (packs.length === 0) throw new Error("emojisense: createEngine needs at least one pack");
   for (const pack of packs) assertPack(pack);
   const primary = packs[0] as Pack;
-  const locales = packs.map((p) => p.locale);
+  const locales = [...new Set(packs.map((p) => p.locale))];
+  // Core and extension packs of one locale count as one locale for the preference factor.
+  const preferredMasks = new Map<string, number>();
+  packs.forEach((p, i) => preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i)));
 
   const entries: EmojiEntry[] = [];
   const indexById = new Map<string, number>();
@@ -119,7 +122,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     for (const row of pack.emoji) {
       const emojiIndex = indexById.get(row[ROW.hexcode]);
       if (emojiIndex === undefined) continue;
-      (entries[emojiIndex] as EmojiEntry).labels[pack.locale] = row[ROW.label];
+      if (row[ROW.label]) (entries[emojiIndex] as EmojiEntry).labels[pack.locale] = row[ROW.label];
       const seen = seenByEmoji[emojiIndex] as Map<string, number>;
       const fieldValues = [normalize(row[ROW.label]), ...row.slice(ROW.shortcode)] as string[];
       fieldValues.forEach((value, fieldIndex) => {
@@ -276,7 +279,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
     if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0 };
 
-    const preferredPack = locale === undefined ? 0 : Math.max(0, locales.indexOf(locale));
+    const preferredMask = preferredMasks.get(locale ?? primary.locale) ?? 1;
     const lastIsPrefix = prefix && !/\s$/.test(query);
     const n = tokens.length;
     const weights: number[] = [];
@@ -330,7 +333,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         coverage *
         (0.6 + 0.4 * Math.min(1, matched / length)) *
         (allExact && length === n ? 1 : NON_EXACT_FACTOR) *
-        (mask & (1 << preferredPack) ? 1 : FOREIGN_LOCALE_FACTOR);
+        (mask & preferredMask ? 1 : FOREIGN_LOCALE_FACTOR);
 
       const emoji = phraseEmoji[phrase] as number;
       if (emojiStamp[emoji] !== generation) {

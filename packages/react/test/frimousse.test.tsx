@@ -21,6 +21,7 @@ describe("EmojisensePicker", () => {
     packs: [en, tr],
     locale: "en",
     status: "ready" as const,
+    extended: false,
   };
 
   it("shows ranked results as a listbox and selects with Enter", async () => {
