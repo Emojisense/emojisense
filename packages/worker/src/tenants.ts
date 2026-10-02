@@ -133,7 +133,8 @@ export async function handleTenants(context: TenantsContext): Promise<Response> 
     });
   }
 
-  const scoped: Scoped = { ...context, db, owner };
+  // The custom emoji limit counts the account the key belongs to (every app it owns).
+  const scoped: Scoped = { ...context, db, owner, accountId: principal.key.accountId };
   const [externalId = "", , shortcode = ""] = route.params;
   switch (route.name) {
     case "list":
@@ -151,7 +152,7 @@ export async function handleTenants(context: TenantsContext): Promise<Response> 
   }
 }
 
-type Scoped = TenantsContext & { db: D1Database; owner: AppOwner };
+type Scoped = TenantsContext & { db: D1Database; owner: AppOwner; accountId: string };
 
 async function withTenant(
   scoped: Scoped,
@@ -211,7 +212,7 @@ const apiUrl = (scoped: Scoped) => scoped.env.API_URL || scoped.url.origin;
 async function listEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response> {
   if (!scoped.env.EMOJI) return storageUnavailable();
   const rows = await listCustomEmoji(scoped.db, tenant.app_id, { tenantId: tenant.id, order: "shortcode" });
-  const used = await countAccountCustomEmoji(scoped.db, scoped.owner.accountId);
+  const used = await countAccountCustomEmoji(scoped.db, scoped.accountId);
   return json(
     {
       emoji: rows.map((row) => toCustomEmoji(row, apiUrl(scoped), tenant.external_id)),
@@ -246,7 +247,7 @@ async function uploadEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response>
 
   const result = await createCustomEmoji(scoped.db, bucket, {
     appId: tenant.app_id,
-    accountId: scoped.owner.accountId,
+    accountId: scoped.accountId,
     limit: scoped.owner.plan.limits.custom_emoji,
     tenantId: tenant.id,
     shortcode: shortcode.value,

@@ -189,12 +189,20 @@ describe("GET /api/apps/:id/emoji", () => {
     expect(list).toEqual({ emoji: [], used: 0, limit: 0 });
   });
 
-  it("feeds the custom_emoji meter of this month's usage", async () => {
-    const { h, appId, cookie, upload } = await emojiHarness("solo");
-    h.db.exec("UPDATE apps SET plan = 'solo' WHERE id = ?", appId);
+  it("feeds the custom_emoji meter of the usage page: the account's stored emoji, this app's part", async () => {
+    const { h, appId, cookie, upload, fill } = await emojiHarness("pro");
+    fill(2);
+    const otherApp = await createAppFor(h, cookie, { name: "Second" });
+    await uploadTo(h, otherApp, cookie, { file: file(IMAGES.png), shortcode: "elsewhere" });
     await upload({ file: file(IMAGES.png), shortcode: "a" });
-    const usage = await body<UsageResponse>(await h.call("GET", `/api/apps/${appId}/usage`, { cookie }));
-    expect(usage.metrics.find((m) => m.metric === "custom_emoji")).toMatchObject({ used: 1, limit: 500 });
+    const meter = async (period = "") => {
+      const path = `/api/apps/${appId}/usage${period}`;
+      const usage = await body<UsageResponse>(await h.call("GET", path, { cookie }));
+      return usage.metrics.find((m) => m.metric === "custom_emoji");
+    };
+    expect(await meter()).toMatchObject({ used: 4, appUsed: 3, limit: 2000 });
+    // A stock, not a monthly counter: an earlier month shows the same rows.
+    expect(await meter("?period=2026-09")).toMatchObject({ used: 4, appUsed: 3 });
   });
 });
 
