@@ -1,3 +1,4 @@
+import type { BillingInterval, BillingStatus } from "./billing.js";
 import type { KeyKind } from "./keys.js";
 import type { Metric, PlanId } from "./plans.js";
 
@@ -31,6 +32,25 @@ export interface AccountRow {
   /** The plan of the paying account. Every app of the account gets it (0002). */
   plan: PlanId;
   created_at: number;
+  /** The Whop membership that pays for the plan (0004). */
+  whop_membership_id: string | null;
+  billing_status: BillingStatus;
+  billing_interval: BillingInterval | null;
+  /** End of the paid period, epoch ms. */
+  current_period_end: number | null;
+  /** While `past_due`: when the account moves to Free, epoch ms. */
+  billing_grace_until: number | null;
+  /** Whop's page where the buyer manages the subscription. */
+  whop_manage_url: string | null;
+  /** Time of the newest Whop event applied, epoch ms. */
+  billing_event_at: number | null;
+}
+
+/** A Whop webhook delivery already applied, by its `webhook-id` (0004). */
+export interface WhopEventRow {
+  id: string;
+  type: string;
+  received_at: number;
 }
 
 /** A Clerk user whose account was deleted in the last 10 minutes (0003). */
