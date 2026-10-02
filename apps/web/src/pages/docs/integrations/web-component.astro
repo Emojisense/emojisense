@@ -2,8 +2,10 @@
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import CodeTabs from "../../../components/docs/CodeTabs.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
-import { API_HOST, PACK_URL, SHARDS_URL } from "../../../components/docs/facts";
+import { API_HOST, PACK_URL, PACK_VERSION, SHARDS_URL } from "../../../components/docs/facts";
 import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const CULTURE_URL = `${API_HOST}/v1/culture/${PACK_VERSION}`;
 
 const html = `<emojisense-picker
   pack-url="${PACK_URL}"
@@ -122,13 +124,19 @@ defineEmojisensePicker("my-emoji-picker");`;
         <tr><td><code>skin-tone</code></td><td><code>skinTone</code></td><td><code>none</code></td><td><code>none</code>, <code>light</code>, <code>medium-light</code>, <code>medium</code>, <code>medium-dark</code>, <code>dark</code></td></tr>
         <tr><td><code>emoji-set</code></td><td><code>emojiSet</code></td><td><code>native</code></td><td><code>native</code> draws the system font. <code>twemoji</code>, <code>noto</code> and <code>fluent</code> draw images of a <a href="/docs/guides/emoji-sets/">hosted set</a> and need <code>endpoint</code>.</td></tr>
         <tr><td><code>placeholder</code></td><td><code>placeholder</code></td><td><code>Search emoji…</code></td><td>Input placeholder and accessible name</td></tr>
+        <tr><td><code>custom-emoji</code></td><td><code>customEmoji</code></td><td>off</td><td>Load the key’s <a href="/docs/guides/custom-emoji/">custom emoji</a> from <code>endpoint</code> (<code>GET /v1/custom-pack</code>). They are searched on the device and drawn as images.</td></tr>
+        <tr><td><code>tenant</code></td><td><code>tenant</code></td><td>—</td><td>Your id for one of your customers: adds that <a href="/docs/guides/tenants/">tenant’s</a> custom emoji.</td></tr>
+        <tr><td><code>culture-url</code></td><td><code>cultureUrl</code></td><td>—</td><td>The culture files, for example <code>{CULTURE_URL}</code>. Emoji for the culture and the moment join the results after the top result, never above it. Without it the ranking is the canonical one.</td></tr>
+        <tr><td><code>region</code></td><td><code>region</code></td><td>the browser’s</td><td>An ISO 3166-1 code such as <code>BR</code>, for regional culture entries. Without the attribute, the region of the browser’s language, read on the device and never sent. <code>region=""</code> turns regional entries off.</td></tr>
+        <tr><td><code>show-relevant-now</code></td><td><code>showRelevantNow</code></td><td>off</td><td>Show a row of seasonal and event emoji from the culture file above the browse view.</td></tr>
         <tr><td>—</td><td><code>packs</code></td><td>—</td><td>Pack objects to use instead of fetching <code>pack-url</code></td></tr>
+        <tr><td>—</td><td><code>culture</code></td><td>—</td><td>A culture file to use instead of fetching <code>culture-url</code></td></tr>
         <tr><td>—</td><td><code>query</code></td><td><code>""</code></td><td>Read or set the search text</td></tr>
         <tr><td>—</td><td><code>status</code>, <code>engine</code></td><td>—</td><td><code>idle</code>, <code>loading</code>, <code>ready</code> or <code>error</code>; the engine once ready</td></tr>
       </tbody>
     </table>
   </div>
-  <p>The <code>emoji-select</code> event bubbles and crosses shadow roots. Its <code>detail</code> is <code>{"{ emoji, label, id }"}</code>, with the skin tone applied to <code>emoji</code>.</p>
+  <p>The <code>emoji-select</code> event bubbles and crosses shadow roots. Its <code>detail</code> is <code>{"{ emoji, label, id }"}</code>, with the skin tone applied to <code>emoji</code>. A custom emoji has <code>emoji</code> <code>:shortcode:</code> and <code>id</code> <code>C-&lt;id&gt;</code>, and adds <code>imageUrl</code> and <code>shortcode</code>.</p>
   <p><strong>Keyboard:</strong> focus stays in the input. Arrow keys move through the grid by visual rows, Enter selects, the first Escape clears the query and the next Escape reaches your page, for example to close a popover.</p>
 
   <h2 id="frameworks">Frameworks</h2>
@@ -148,7 +156,7 @@ defineEmojisensePicker("my-emoji-picker");`;
   <h2 id="theme">Theme</h2>
   <p>The default theme follows <code>prefers-color-scheme</code> or the host’s <code>color-scheme</code>, and animates only when the person allows motion. Change it with CSS custom properties and parts:</p>
   <CodeBlock code={theme} lang="css" />
-  <p>Parts: <code>root</code>, <code>search</code>, <code>pill</code>, <code>viewport</code>, <code>listbox</code>, <code>group</code>, <code>group-label</code>, <code>option</code>, <code>image</code> (an image of a hosted set), <code>active</code>, <code>message</code>, <code>sticker</code>.</p>
+  <p>Parts: <code>root</code>, <code>search</code>, <code>pill</code>, <code>viewport</code>, <code>listbox</code>, <code>group</code>, <code>relevant-now</code> (the relevant-now row), <code>group-label</code>, <code>option</code>, <code>image</code> (an image of a hosted set), <code>active</code>, <code>message</code>, <code>sticker</code>.</p>
 
   <h2 id="tag-name">Another tag name</h2>
   <CodeBlock code={tagName} lang="ts" />

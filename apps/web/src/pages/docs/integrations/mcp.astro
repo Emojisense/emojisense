@@ -2,7 +2,7 @@
 import Callout from "../../../components/docs/Callout.astro";
 import CodeTabs from "../../../components/docs/CodeTabs.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
-import { API_HOST, shown } from "../../../components/docs/facts";
+import { API_HOST, LOCALES, shown } from "../../../components/docs/facts";
 
 const offline = `{
   "mcpServers": {
@@ -39,7 +39,7 @@ const goat = shown("greatest of all time", { part: "full", locale: "en", prefix:
 ---
 
 <DocsLayout path="/docs/integrations/mcp/">
-  <p><code>@emojisense/mcp</code> is an MCP server (stdio) that gives an AI assistant three emoji tools. It works offline: the engine and the English and Turkish packs ship inside the package. With a secret key, it also adds meaning results from the API.</p>
+  <p><code>@emojisense/mcp</code> is an MCP server (stdio) that gives an AI assistant three emoji tools. It works offline: the engine and the packs of all {LOCALES.length} languages ship inside the package. With a secret key, it also adds meaning results from the API.</p>
 
   <h2 id="tools">Tools</h2>
   <div class="table-scroll" tabindex="0">
@@ -52,7 +52,7 @@ const goat = shown("greatest of all time", { part: "full", locale: "en", prefix:
       </tbody>
     </table>
   </div>
-  <p><code>locale</code> is <code>en</code> or <code>tr</code>. Every tool returns a short text and the same data as structured content. Each result has a <code>source</code>: <code>alias</code> (offline), <code>semantic</code> (API) or <code>default</code> (a generic reaction such as 👍 that fills a short list).</p>
+  <p><code>locale</code> is one of the bundled languages: <code>{LOCALES.join(", ")}</code> (default <code>en</code>). Every tool returns a short text and the same data as structured content. Each result has a <code>source</code>: <code>alias</code> (offline), <code>semantic</code> (API) or <code>default</code> (a generic reaction such as 👍, or 👀 for a question, that fills a short list). Offline reaction suggestions prefer the emoji people react with, the <code>COMMON_REACTIONS</code> list that the hosted API uses too.</p>
 
   <h2 id="configure">Configure your client</h2>
   <p>Most MCP clients read a JSON file with an <code>mcpServers</code> object. Some call it <code>servers</code> and want <code>"type": "stdio"</code> on each entry.</p>
@@ -70,7 +70,7 @@ const goat = shown("greatest of all time", { part: "full", locale: "en", prefix:
   <ul>
     <li><code>search_emoji</code> calls <code>GET /v1/search</code> in semantic mode only when the offline engine is unsure, with the same rule as the browser SDK. Confident queries cost nothing.</li>
     <li><code>emoji_for_text</code> and <code>suggest_reactions</code> send the text, at most 256 characters, to <code>POST /v1/suggest-reactions</code>. Message text never goes to the search endpoint, because the reactions endpoint never logs or caches text.</li>
-    <li>On a network error, a 4-second timeout, an HTTP error or <code>overLimit</code>, a tool returns the offline results. After <code>overLimit</code>, the server stops calling the API for one hour.</li>
+    <li>On a network error, a 4-second timeout, an HTTP error or <code>overLimit</code>, a tool returns the offline results. After <code>overLimit</code>, the server keeps asking: the shared edge cache still answers popular queries.</li>
   </ul>
   <Callout type="warning" title="Keep the secret key secret">
     <p>The server sends the key as <code>Authorization: Bearer</code>. Keep it in your client’s config, out of repositories and away from browsers.</p>

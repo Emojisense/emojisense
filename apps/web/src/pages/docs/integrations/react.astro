@@ -2,8 +2,10 @@
 import Callout from "../../../components/docs/Callout.astro";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
-import { API_HOST, PACK_URL, SHARDS_URL } from "../../../components/docs/facts";
+import { API_HOST, PACK_URL, PACK_VERSION, SHARDS_URL } from "../../../components/docs/facts";
 import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const CULTURE_URL = `${API_HOST}/v1/culture/${PACK_VERSION}`;
 
 const picker = `import { useEmojisense } from "@emojisense/react";
 import { EmojisensePicker } from "@emojisense/react/frimousse";
@@ -86,11 +88,13 @@ export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) 
       <thead><tr><th scope="col">Prop</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
       <tbody>
         <tr><td><code>emojisense</code></td><td>—</td><td>Required. The value of <code>useEmojisense</code>.</td></tr>
-        <tr><td><code>onEmojiSelect</code></td><td>—</td><td>Required. Gets <code>{"{ emoji, label }"}</code>, with the skin tone applied.</td></tr>
+        <tr><td><code>onEmojiSelect</code></td><td>—</td><td>Required. Gets <code>{"{ emoji, label }"}</code>, with the skin tone applied. A custom emoji has <code>emoji</code> <code>:shortcode:</code> and adds <code>imageUrl</code> and <code>shortcode</code>.</td></tr>
         <tr><td><code>placeholder</code></td><td><code>"Search emoji…"</code></td><td>Search input placeholder</td></tr>
         <tr><td><code>empty</code></td><td>—</td><td>Rendered when a query has no results</td></tr>
         <tr><td><code>limit</code></td><td><code>24</code></td><td>Number of ranked results</td></tr>
         <tr><td><code>columns</code></td><td><code>9</code></td><td>Emoji per row</td></tr>
+        <tr><td><code>showRelevantNow</code></td><td><code>false</code></td><td>Show a row of seasonal and event emoji from the culture file above the browse list. Needs <code>cultureUrl</code>.</td></tr>
+        <tr><td><code>relevantNowLabel</code></td><td><code>"Relevant now"</code></td><td>Heading of that row</td></tr>
       </tbody>
     </table>
   </div>
@@ -107,29 +111,37 @@ export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) 
       <tbody>
         <tr><td><code>packBaseUrl</code></td><td>Required. The pack version directory. The core pack renders first.</td></tr>
         <tr><td><code>locale</code></td><td>Default <code>"en"</code>. Another locale, such as <code>"es"</code>, loads that pack next to English.</td></tr>
-        <tr><td><code>shardsUrl</code></td><td>Precomputed results (layer 2), asked before the API. Omit it when no shards are deployed.</td></tr>
+        <tr><td><code>shardsUrl</code></td><td>Precomputed results (layer 2), asked before the API. The hosted API does not publish shards yet; without a shard index the SDK asks the API.</td></tr>
         <tr><td><code>endpoint</code></td><td>The API (layer 3). Omit <code>shardsUrl</code> and <code>endpoint</code> for fully offline search.</td></tr>
         <tr><td><code>publishableKey</code></td><td>Your <code>pk_live_…</code> key for the API.</td></tr>
         <tr><td><code>extended</code></td><td>Default <code>true</code>: load the extension packs when the browser is idle.</td></tr>
         <tr><td><code>emojiSet</code></td><td>How the pickers draw emoji. <code>"native"</code> (default) uses the system font. <code>"twemoji"</code>, <code>"noto"</code> and <code>"fluent"</code> draw images of a <a href="/docs/guides/emoji-sets/">hosted set</a> and need <code>endpoint</code>.</td></tr>
+        <tr><td><code>customEmoji</code></td><td>Default <code>false</code>. <code>true</code> loads the app’s <a href="/docs/guides/custom-emoji/">custom emoji</a> from <code>GET /v1/custom-pack</code>, so they are searched on the device and drawn as images. Needs <code>endpoint</code> and <code>publishableKey</code>.</td></tr>
+        <tr><td><code>tenant</code></td><td>Your id for one of your customers: adds that <a href="/docs/guides/tenants/">tenant’s</a> custom emoji.</td></tr>
+        <tr><td><code>cultureUrl</code></td><td>The culture files, for example <code>{CULTURE_URL}</code>. Emoji for the culture and the moment join the results after the top result, never above it (<code>source: "culture"</code>). Omit it for the canonical ranking.</td></tr>
+        <tr><td><code>region</code></td><td>An ISO 3166-1 code such as <code>"BR"</code>, for regional culture entries. Default: the region of the browser’s language, read on the device and never sent. <code>""</code> = no region.</td></tr>
       </tbody>
     </table>
   </div>
-  <p>It returns <code>{"{ engine, semantic, packs, locale, status, extended, emojiSet, endpoint, error }"}</code>. <code>status</code> is <code>loading</code>, <code>ready</code> or <code>error</code>. To draw one emoji the same way as the pickers in your own components, use <code>{"<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />"}</code>.</p>
+  <p>It returns <code>{"{ engine, semantic, packs, customPack, locale, status, extended, emojiSet, endpoint, culture, region, error }"}</code>. <code>status</code> is <code>loading</code>, <code>ready</code> or <code>error</code>. To draw one emoji the same way as the pickers in your own components, use <code>{"<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />"}</code>.</p>
 
   <h3 id="use-emoji-search"><code>useEmojiSearch(query, sense, options)</code></h3>
-  <p>Searches as the query changes. Dictionary results update on every keystroke. Meaning results arrive after <code>debounceMs</code> (default 200) and merge in without moving confident hits. Options: <code>limit</code> (default 24) and <code>debounceMs</code>.</p>
+  <p>Searches as the query changes. Dictionary results update on every keystroke. Meaning results arrive after <code>debounceMs</code> (default 200) and merge in without moving confident hits. Options: <code>limit</code> (default 24), <code>debounceMs</code> and <code>culture</code> (<code>false</code> keeps the canonical ranking even when a culture file is loaded).</p>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead>
       <tbody>
-        <tr><td><code>results</code></td><td><code>{"{ emoji, id, score, source }[]"}</code></td></tr>
+        <tr><td><code>results</code></td><td><code>{"{ emoji, id, score, source }[]"}</code>. Custom emoji add <code>imageUrl</code> and <code>shortcode</code>; culture results add <code>context</code> and <code>cultureId</code>.</td></tr>
         <tr><td><code>status</code></td><td><code>idle</code>, <code>alias</code>, <code>loading</code>, <code>fused</code> or <code>error</code></td></tr>
         <tr><td><code>layer</code></td><td>Which layer produced the results: <code>device</code>, <code>shard</code> or <code>api</code>. <code>undefined</code> while idle or loading.</td></tr>
+        <tr><td><code>alias</code></td><td>The on-device dictionary answer for the query, with its <code>confidence</code>, before fusion and culture</td></tr>
         <tr><td><code>aliasMs</code>, <code>semanticMs</code>, <code>semanticCached</code></td><td>Timings, for latency displays</td></tr>
       </tbody>
     </table>
   </div>
+
+  <h3 id="use-relevant-now"><code>useRelevantNow(sense, options)</code></h3>
+  <p>The emoji for an optional “relevant now” shelf: the featured seasonal and event entries of the culture file that are active on the device’s day, in the person’s region. It returns <code>{"{ emoji, hexcode, context, cultureId }[]"}</code>, empty without <code>cultureUrl</code>. Options: <code>limit</code> (default 8) and <code>now</code>.</p>
 
   <h2 id="shadcn">shadcn/ui</h2>
   <Callout type="experimental" title="The registry is in progress">

@@ -7,18 +7,29 @@ import InstallTabs from "../../components/docs/InstallTabs.astro";
 
 const engine = `function createEngine(
   input: Pack | Pack[],
-  options?: { minCoverage?: number },
+  options?: { minCoverage?: number; culture?: Culture },
 ): AliasEngine;
 
 interface AliasEngine {
-  search(
-    query: string,
-    options?: { limit?: number; locale?: string; prefix?: boolean },
-  ): AliasSearchOutput;
+  search(query: string, options?: AliasSearchOptions): AliasSearchOutput;
+  // culture: false gives the canonical ranking, typed as alias results only
+  search(query: string, options: AliasSearchOptions & { culture: false }): CanonicalSearchOutput;
   get(id: string): EmojiEntry | undefined;
+  withCulture(culture: Culture | undefined): AliasEngine; // shares the index
+  readonly culture: Culture | undefined;
   readonly entries: readonly EmojiEntry[];
   readonly locales: readonly string[];
   readonly packVersion: string;
+}
+
+interface AliasSearchOptions {
+  limit?: number; // default 24
+  locale?: string;
+  prefix?: boolean; // default true
+  culture?: boolean; // false = canonical ranking only
+  region?: string; // ISO 3166-1 alpha-2, for regional culture entries
+  now?: Date | number; // the day culture windows are checked against
+  day?: string; // "YYYY-MM-DD", wins over now
 }`;
 
 const engineExample = `const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
@@ -29,24 +40,38 @@ engine.search("greatest of all time").results;
 const types = `type ResultSource = "alias" | "semantic" | "custom" | "culture";
 
 interface SearchResult {
-  emoji: string; // "🦖"
-  id: string; // Emojibase hexcode of the base emoji, "1F996"
+  emoji: string; // "🦖", or ":shortcode:" for a custom emoji
+  id: string; // Emojibase hexcode of the base emoji, "1F996"; "C-<id>" for a custom emoji
   score: number; // 0–1, comparable within one source only
   source: ResultSource;
+  imageUrl?: string; // custom emoji: the image to draw
+  shortcode?: string; // custom emoji: the shortcode without colons
 }
 
 interface AliasResult extends SearchResult {
-  source: "alias";
+  source: "alias" | "custom";
   label: string; // the emoji's name
   match: string; // the phrase that matched best
   field: "name" | "shortcode" | "keyword" | "alias" | "typo" | "low";
 }
 
+interface CultureResult extends SearchResult {
+  source: "culture";
+  context: string; // why the emoji fits, in the culture file's language
+  cultureId: string; // e.g. "goat-football"
+  match: string; // the trigger that matched
+  field: "culture";
+}
+
 interface AliasSearchOutput {
   query: string; // normalized
   tokens: string[];
+  results: (AliasResult | CultureResult)[]; // culture results only with a culture file
+  confidence: number; // score of the best canonical result, 0 when nothing matched
+}
+
+interface CanonicalSearchOutput extends AliasSearchOutput {
   results: AliasResult[];
-  confidence: number; // the top score, 0 when nothing matched
 }
 
 interface EmojiEntry {
@@ -56,6 +81,8 @@ interface EmojiEntry {
   version: number;
   hasSkinTones: boolean;
   labels: Record<string, string>; // per loaded locale
+  imageUrl?: string; // custom emoji only
+  shortcode?: string; // custom emoji only
 }`;
 
 const loader = `function loadPacks(options: {
@@ -82,13 +109,15 @@ const session = `function createSearchSession(options: {
   limit?: number; // default 24
   debounceMs?: number; // default 200
   shouldUseSemantic?: (alias: AliasSearchOutput) => boolean;
+  culture?: Culture | false; // default: the engine's; false = canonical ranking only
+  region?: string; // for regional culture entries, e.g. "BR"
   onChange: (state: SessionState) => void;
 }): { update(query: string): void; dispose(): void };
 
 interface SessionState {
   query: string;
-  results: SearchResult[];
-  alias: AliasSearchOutput;
+  results: SearchResult[]; // with culture results after the top result
+  alias: CanonicalSearchOutput; // the dictionary answer, no culture
   status: "idle" | "alias" | "loading" | "fused" | "error";
   aliasMs: number;
   semanticMs?: number;
@@ -154,6 +183,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
     <li><code>limit</code> defaults to 24. <code>prefix</code> (default <code>true</code>) treats the last word as a prefix while someone types. Pass <code>false</code> for complete queries.</li>
     <li><code>locale</code> prefers phrases from that language’s pack when ranking.</li>
     <li><code>minCoverage</code> (default 0.34) is the share of a multi-word query a phrase must cover.</li>
+    <li><code>culture</code>, <code>region</code>, <code>now</code> and <code>day</code> control the <a href="#culture">culture layer</a>. Without a culture file they change nothing.</li>
   </ul>
 
   <h3 id="types">Result types</h3>

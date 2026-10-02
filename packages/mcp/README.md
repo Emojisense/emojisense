@@ -24,7 +24,9 @@ structured content (`outputSchema`):
 
 `match` is the alias phrase that matched. The text tools also return `window`, the part of the input
 that matched. `source` is `alias` (offline), `semantic` (API) or `default` (a generic reaction
-such as 👍 that fills a short list).
+such as 👍, or 👀 for a question, that fills a short list). Offline reaction suggestions prefer
+the emoji people react with: `COMMON_REACTIONS` from `emojisense`, the list the hosted reaction
+ranking uses too.
 
 ## Client configuration
 
@@ -90,8 +92,8 @@ offline.
   `POST /v1/suggest-reactions`. Message text never goes to `/v1/search`, because the search
   endpoint logs normalized query text and the reactions endpoint never logs or caches text.
 - On a network error, a timeout (4 s), an HTTP error or `overLimit: true`, the tool returns the
-  offline results. After `overLimit`, the server stops calling the API for one hour. Errors go to
-  stderr only.
+  offline results. After `overLimit`, the server keeps asking, because the shared edge cache
+  still answers popular queries without counting them. Errors go to stderr only.
 
 ## Develop
 

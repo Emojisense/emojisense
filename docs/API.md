@@ -2,29 +2,54 @@
 
 Two services, both Cloudflare Workers:
 
-| Service | Package | Base (local) | Purpose |
-| ------- | ------- | ------------ | ------- |
-| Search API | `packages/worker` | `http://localhost:8788` | search, reactions, image → emoji, static packs and shards |
-| Dashboard | `apps/dashboard` | `http://localhost:8790` | accounts, apps, keys, usage, waitlist (`/api/*`) |
+| Service | Package | Hosted | Local (`wrangler dev`) | Purpose |
+| ------- | ------- | ------ | ---------------------- | ------- |
+| Search API | `packages/worker` | `https://api.emojisense.com` | `http://localhost:8788` | search, reactions, image → emoji, static packs and shards |
+| Dashboard | `apps/dashboard` | `https://app.emojisense.com` | `http://localhost:8790` | accounts, apps, keys, usage, waitlist (`/api/*`) |
 
 Shared contracts: `@emojisense/platform` (D1 schema, plans, key helpers) and
 [PACK_FORMAT.md](PACK_FORMAT.md) (packs, vectors, shards).
+
+- **HTTPS only.** The hosted API answers a Worker route over plain `http://` with `403` and
+  `{ "error": "use https://api.emojisense.com: …" }`, so a client set to `http` fails at once
+  instead of sending keys and text unencrypted. Local `wrangler dev` (and any `localhost` host)
+  keeps plain `http`.
+- **JSON responses** are `application/json; charset=utf-8` with `X-Content-Type-Options: nosniff`
+  and CORS for every origin (`Access-Control-Allow-Origin: *`). Errors of the search, reaction,
+  image and custom pack routes are `{ "error": "<message>" }` with `Cache-Control: no-store`.
 
 ## Authentication
 
 | Key | Where | Sent as | Checks |
 | --- | ----- | ------- | ------ |
-| Publishable `pk_live_…` | browsers, extensions | `?key=` query parameter (no CORS preflight) | `Origin` must match the key's allowed origins (empty list = any; dev keys only) |
-| Secret `sk_live_…` | servers only (MCP, bots, tenant writes) | `Authorization: Bearer sk_live_…` | never accepted with an `Origin` header (blocks use from browsers) |
-| none | demos, local dev | — | stricter anonymous rate limit per IP |
+| Publishable `pk_live_…` | browsers, extensions | `?key=` query parameter (no CORS preflight) | `Origin` must match the key's allowed origins (an empty list allows any origin; only `dev` apps may have such keys) |
+| Secret `sk_live_…` | servers only (MCP, bots, tenant writes) | `Authorization: Bearer sk_live_…` | never accepted with an `Origin` header (blocks use from browsers) or in the URL |
+| none (anonymous) | demos, trials, local dev | — | stricter rate limit per IP |
 
 The `Origin` check stops misuse from other websites. It does not stop servers, which can forge
-headers. Every key also has per-second rate limits.
+headers, so every caller is also rate limited:
+
+| Caller | Limit | Counted per |
+| ------ | ----- | ----------- |
+| A key | 120 requests a minute | key and IP address |
+| Anonymous | 30 requests a minute | IP address |
+
+Over the limit the answer is `429` with `Retry-After: 60`. The IP address is only an in-memory
+limiter key; it is never logged or stored. Static files, `/v1/health` and the emoji image routes
+(`/v1/sets/…`, `/v1/custom/…`) are not limited.
+
+**Anonymous calls** (no key) work on `/v1/search`, `/v1/suggest-reactions` and
+`/v1/classify-image`. They are never metered and never over a plan limit, they get no custom
+emoji, and they are not in any app's analytics. `/v1/custom-pack` answers them with `401`, the
+tenants API with `401 unauthorized`. When the key store cannot be read and a key is not in the
+per-isolate cache, the call is served as anonymous rather than failed.
 
 ## Metering and plan limits
 
 - Metered: each Worker call to `/v1/search` and `/v1/suggest-reactions` (`semantic_calls`, also
   when the response comes from the Cache API) and each `/v1/classify-image` (`image_classifications`).
+  Calls with a key only: anonymous calls are never metered. An answer without a model call
+  (Workers AI down, or over the limit and not in the cache) is not counted.
 - Not metered: static packs and shards, hosted emoji set images, custom emoji images and custom
   packs, on-device search.
 - Monthly UTC periods, no daily caps. Limits come from `PLANS` in `@emojisense/platform`.
@@ -38,7 +63,8 @@ headers. Every key also has per-second rate limits.
 - **One shared cache.** The cache key is the embedded query text, locale, limit, mode, index
   version and a hash of the served packs, vector files and engine (written by the Worker's
   `sync` step), so a data fix under the same pack version is not answered from older entries. It has
-  no key, app or origin in it, so every app warms the same edge cache.
+  no key, app or origin in it, so every app warms the same edge cache. Entries stay for 7 days.
+  Custom emoji and culture are applied after the cache, per request, and never stored in it.
 - **Over the limit, the API never fails.** A query that is in the shared cache is still answered
   (`"cached": true`, not metered). Other queries return `200` with `"overLimit": true` and
   alias-only (hybrid) or empty (semantic) results. The SDK keeps asking (the edge cache may know
@@ -49,7 +75,7 @@ headers. Every key also has per-second rate limits.
 
 | Param | Default | Notes |
 | ----- | ------- | ----- |
-| `q` | — | Required, max 64 characters. The semantic tier embeds it with its accents and punctuation (PACK_FORMAT.md §3, "Embedding text"); aliases, custom emoji and analytics use its normalized form. |
+| `q` | — | Required. Cut to 64 characters. The semantic tier embeds it with its accents and punctuation (PACK_FORMAT.md §3, "Embedding text"); aliases, custom emoji and analytics use its normalized form. |
 | `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). Semantic search covers the English and this locale's emoji vectors (PACK_FORMAT.md §5). |
 | `limit` | `24` | 1–50 |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
@@ -64,21 +90,35 @@ headers. Every key also has per-second rate limits.
   "query": "jurassic park",
   "results": [{ "emoji": "🦖", "id": "1F996", "score": 0.82, "source": "alias" }],
   "packVersion": "0.1.0",
-  "model": "embeddinggemma@256",
+  "model": "bge-m3@1024",
   "cached": false,
   "degraded": false,
   "overLimit": false,
-  "aliasLocale": "en"
+  "aliasLocale": "en",
+  "culture": null
 }
 ```
 
-`source`: `alias` | `semantic` | `custom` | `culture` (only with `culture=1`). `degraded: true` = Workers AI was unavailable, so the
-results are alias-only (and not cached). `overLimit: true` = the key's account has used its monthly
-`semantic_calls` limit (see "Metering and plan limits"). `aliasLocale`: the locale whose aliases
-were fused into the results; `null` in `semantic` mode, or when that locale's pack could not be
-loaded (the results are then semantic-only and not cached). `culture`: `{ "from": "2026-10-02",
-"region": "GB" }`, the culture file applied (its first day) and the region, or `null` when culture
-is off or the locale has no culture file. Header: `Server-Timing: embed;dur=…, total;dur=…`.
+| Field | Meaning |
+| ----- | ------- |
+| `query` | The normalized query (PACK_FORMAT.md §3) |
+| `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below) or `culture` (only with `culture=1`, with `context` and `cultureId`, see [Culture in search](#culture-in-search)) |
+| `packVersion`, `model` | The data the Worker serves, e.g. `0.1.0` and `bge-m3@1024` (model key @ dims) |
+| `cached` | The answer came from the shared edge cache |
+| `degraded` | Workers AI was unavailable, so the results are alias-only (and not cached) |
+| `overLimit` | The key's account has used its monthly `semantic_calls` limit (see "Metering and plan limits") |
+| `aliasLocale` | The locale whose aliases were fused into the results. `null` in `semantic` mode, or when that locale's pack could not be loaded (the results are then semantic-only and not cached) |
+| `culture` | With `culture=1`: `{ "from": "2026-10-01", "day": "2026-10-02", "region": "GB" }`, the culture file's first day, the UTC day its windows were checked against, and the region (`null` without one). `null` when culture is off or the locale has no culture file |
+
+Headers: `Server-Timing: embed;dur=…, total;dur=…` (only `total` on a cache hit or over the
+limit) and `Cache-Control`:
+
+| Answer | `Cache-Control` |
+| ------ | --------------- |
+| Normal answer | `public, max-age=3600, s-maxage=86400` |
+| With `culture=1` | `public, max-age=3600` (no longer than the culture file) |
+| The app has custom emoji | `private, max-age=60` |
+| Over the limit (not from the cache), degraded, or a locale pack or vector file did not load | `no-store` |
 
 **Custom emoji.** With a key, the app's custom emoji (app-wide, plus the tenant's with `tenant=`)
 are matched against the query and put first, in both modes, within `limit`:
@@ -107,14 +147,20 @@ are matched against the query and put first, in both modes, within `limit`:
   English matches still count, slightly below the locale's own.
 - `en` and `tr` are built into the Worker. The other locales load their core and ext packs on
   the first request in a Worker instance (≈ 0.2–0.4 s once), then answer as fast as `en`.
+- Semantic search scores each emoji by its best match over the shared (English) vectors and the
+  locale's own vector file, `vectors.<model>.<dims>.<locale>.bin` (PACK_FORMAT.md §5). The shared
+  file is built into the Worker; a locale's file loads on its first query in an instance. When a
+  pack or vector file cannot be loaded, the answer uses what is there and is not cached; the next
+  request tries again.
 
 ## `POST /v1/suggest-reactions`
 
 Request `{ "text": "we just shipped the new onboarding!", "locale": "en", "limit": 8 }`. The text
 is truncated to 256 characters (≈ 64 tokens). `locale` follows the [search rules](#locales) and
-picks the alias pack. The response has the same shape as search, with the caller's custom emoji
-first (`tenant` in the body or the query). **The text is never logged or cached:** it is chat
-content.
+picks the alias pack. The response has the same shape as search (`aliasLocale` included, no
+`culture`), with the caller's custom emoji first (`tenant` in the body or the query), and
+`Cache-Control: no-store`. The body must be JSON of at most 16 KB (`400` for other JSON, `413`
+for a larger body). **The text is never logged or cached:** it is chat content.
 
 Results are reactions, not topics: "we just shipped the new onboarding!" gives 🎉 🙌 👏, not 📦.
 The ranking fuses the emoji in the text, intent cues (thanks, congratulations, condolences,
@@ -130,7 +176,8 @@ embedding call per request, no LLM. `source` is `semantic` for the embedding sig
 Request: `Content-Type: image/jpeg` or `image/webp`, max 256 KB. Clients downscale to ~384 px
 first. Optional header `X-Image-Hash: <16 hex>` (64-bit perceptual hash) enables the cache, so the
 same meme shared many times costs one call. Query: `?locale=&limit=` (`locale` is checked as in
-[search](#locales); the label is English, so the keywords are ranked with English aliases).
+[search](#locales); the label is English, so the keywords are ranked with English aliases;
+`limit` 1–50, default 8). Answers are `Cache-Control: no-store`.
 
 ```json
 { "caption": "a puppy asleep on a sofa", "reaction": "aww, so cute", "keywords": ["puppy", "sofa", "sleeping"], "results": [{ "emoji": "🐶", "id": "1F436", "score": 0.92, "source": "semantic" }], "cached": false, "degraded": false, "overLimit": false }
@@ -157,7 +204,9 @@ the perceptual hash, the vision model and the prompt version.
 
 These are static asset requests: free, and they do not run the Worker. All send
 `Access-Control-Allow-Origin: *`. A `/v1/pack/` path that is not a published file answers `404`
-with `Cache-Control: no-store`, so a browser does not keep the miss.
+with `Cache-Control: no-store`, so a browser does not keep the miss. The hosted API does not
+publish layer 2 shards yet (`/p/0.1.0/index.json` answers `404`); the SDK's shard provider then
+answers nothing and the query goes on to `/v1/search`.
 
 ### Culture files
 
@@ -273,7 +322,8 @@ on the device (`loadCustomPack` in `emojisense`). Not metered.
 
 ## `GET /v1/health`
 
-`{ "ok": true, "packVersion": "0.1.0", "model": "embeddinggemma@256", "semantic": true }`
+`{ "ok": true, "packVersion": "0.1.0", "model": "bge-m3@1024", "semantic": true }`. No key, not
+metered, not rate limited. `semantic: false` = the Worker has no Workers AI binding (alias-only).
 
 ## Tenants API (Scale, secret key)
 
@@ -300,7 +350,7 @@ Browsers cannot call them (a request with an `Origin` header is refused, and COR
   "id": "h7Q2mXn4Lw9pRt0sVb1c",
   "shortcode": "party_parrot",
   "aliases": ["party time", "dance"],
-  "imageUrl": "https://api.emojisense.dev/v1/custom/<appId>/h7Q2mXn4Lw9pRt0sVb1c",
+  "imageUrl": "https://api.emojisense.com/v1/custom/<appId>/h7Q2mXn4Lw9pRt0sVb1c",
   "tenantId": "Qm3xV0aT9cLr2PzK8wYe",
   "tenantExternalId": "acme",
   "source": "api",
@@ -310,11 +360,11 @@ Browsers cannot call them (a request with an `Origin` header is refused, and COR
 ```
 
 ```bash
-curl -X POST https://api.emojisense.dev/v1/tenants \
+curl -X POST https://api.emojisense.com/v1/tenants \
   -H "Authorization: Bearer $EMOJISENSE_SECRET_KEY" -H "Content-Type: application/json" \
   -d '{"externalId":"acme","name":"Acme Inc"}'
 
-curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
+curl -X POST https://api.emojisense.com/v1/tenants/acme/emoji \
   -H "Authorization: Bearer $EMOJISENSE_SECRET_KEY" \
   -F file=@party_parrot.gif -F shortcode=party_parrot -F aliases="party time, dance"
 ```
@@ -347,12 +397,16 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 
 | Status | Meaning |
 | ------ | ------- |
-| 400 | Missing or empty `q` / `text`, a `locale` without a pack, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
-| 401 | Unknown or revoked key, or no key for `/v1/custom-pack` |
+| 200 | Also over a plan limit (`"overLimit": true`) and when Workers AI is down (`"degraded": true`): search never fails hard |
+| 400 | Missing or empty `q` / `text`, a body that is not JSON (reactions), a `locale` without a pack, a `culture` other than `0`/`1`/`true`/`false`, a `region` that is not an ISO 3166-1 alpha-2 region, a wrong image `Content-Type`, a bad `X-Image-Hash`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
+| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/custom-pack` and the tenants API |
 | 402 | The account's plan does not include the feature (tenants API) |
-| 403 | Origin not allowed for this publishable key, or a secret key sent from a browser |
-| 413 | Image larger than 256 KB |
-| 429 | Rate limited (per second). Retry after the seconds in `Retry-After`. |
+| 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key, a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
+| 404 | No such route, emoji set, emoji or custom emoji |
+| 405 | Wrong method; `Allow` names the right one |
+| 413 | Image larger than 256 KB, or a reaction body larger than 16 KB |
+| 429 | Rate limited (per minute, see [Authentication](#authentication)). Retry after the seconds in `Retry-After` (60). |
+| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read (`503`, with `Retry-After`) |
 
 ## Dashboard API (`apps/dashboard`, Clerk session)
 
@@ -363,6 +417,9 @@ expiry, session not pending) and reads `email`, `email_verified` and `name` from
 claims. The first request of a new Clerk user creates the account; without a verified email the
 answer is `403 email_required` and no account. Without a valid token the answer is
 `401 unauthorized`; a token while Clerk is not configured gets `503 clerk_unconfigured`.
+
+The dashboard at `https://app.emojisense.com` calls these routes. API keys do not work here; from
+your own server, use the Search API and the tenants API.
 
 | Method + path | Purpose |
 | ------------- | ------- |

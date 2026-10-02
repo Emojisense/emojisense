@@ -1,5 +1,7 @@
 ---
 import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { API_HOST } from "../../components/docs/facts";
+import { DASHBOARD_URL } from "../../config";
 import { DOCS_PAGES } from "../../lib/docs-nav";
 
 const next = DOCS_PAGES.filter((page) => page.status === "next");
@@ -56,5 +58,6 @@ const experimental = DOCS_PAGES.filter((page) => page.status === "experimental")
   }
 
   <h2 id="available">Available now</h2>
-  <p>Everything else in these docs works today: search on the device and at the edge, reaction suggestions, photo to emoji, keys and limits, and every integration. Integrations that are not in a store yet, such as the Chrome extension and Raycast, say so on their page.</p>
+  <p>Everything else in these docs works today on the hosted API (<code>{API_HOST}</code>) and the <a href={`${DASHBOARD_URL}/`}>dashboard</a>: search on the device and at the edge, reaction suggestions, photo to emoji, keys and limits, custom emoji, hosted emoji sets, analytics, teams, tenants, webhooks and every integration. Integrations that are not in a store yet, such as the Chrome extension and Raycast, say so on their page.</p>
+  <p>A feature of a paid plan works for accounts on that plan. Paid plans are not on sale yet: the <a href="/pricing/">pricing page</a> has a waitlist for each one.</p>
 </DocsLayout>

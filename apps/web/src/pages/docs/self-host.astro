@@ -35,7 +35,7 @@ pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
   <p>The Emojisense API is open source (MIT). You can run it on your own Cloudflare account, with your own Workers AI calls and your own database.</p>
 
   <h2 id="what-you-run">What you run</h2>
-  <p>The API is one Cloudflare Worker, <code>packages/worker</code>. It serves the data packs as static files, keeps the emoji vectors in its own bundle, embeds queries with Workers AI, caches answers in each data center and stores keys and usage in D1. There are no containers, load balancers or vector databases to run.</p>
+  <p>The API is one Cloudflare Worker, <code>packages/worker</code>. It serves the data packs, culture files and per-language vector files as static files, keeps the shared (English) emoji vectors in its own bundle and loads a language’s vectors on its first query, embeds queries with Workers AI, caches answers in each data center and stores keys and usage in D1. There are no containers, load balancers or vector databases to run.</p>
   <p>You call the embedding model on your own account, under the model’s license. Model weights are never part of the repository.</p>
 
   <h2 id="requirements">Requirements</h2>
@@ -54,12 +54,13 @@ pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
     </li>
     <li>
       <h3 id="embed">Embed the emoji on your account</h3>
-      <p>This sends the emoji descriptions to Workers AI in batches and writes the vector file. Queries and emoji must use the same model at the same size, so keep your choice. <code>bge-m3</code> at 1,024 dimensions is the production model.</p>
+      <p>This sends the emoji descriptions to Workers AI in batches and writes the vector files: one shared file from the English descriptions and one per other language. Queries and emoji must use the same model at the same size, so keep your choice. <code>bge-m3</code> at 1,024 dimensions is the production model.</p>
       <CodeBlock code={embed} lang="bash" />
     </li>
     <li>
       <h3 id="sync">Copy the packs and vectors into the Worker</h3>
       <CodeBlock code={sync} lang="bash" />
+      <p>It also builds the culture files and writes a content hash of the packs, vectors and engine into the Worker config. The search cache key holds that hash, so run it again after every data or engine change.</p>
     </li>
     <li>
       <h3 id="database">Create the database</h3>
@@ -72,7 +73,8 @@ pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
       <ul>
         <li><code>name</code>: the Worker name, which is also its <code>workers.dev</code> subdomain.</li>
         <li><code>vars.DEV_KEYS</code>: keys that need no database row, as <code>key</code> or <code>key:plan</code>, comma-separated. They allow any origin.</li>
-        <li><code>ratelimits</code>: requests per minute for keyed and anonymous callers.</li>
+        <li><code>ratelimits</code>: requests per minute for keyed callers (default 120 per key and IP address) and anonymous callers (default 30 per IP address).</li>
+        <li><code>vars.ENVIRONMENT</code>: <code>staging</code> or <code>production</code> makes the API refuse plain <code>http://</code> on a public host with <code>403</code>. Leave it out, or set <code>development</code>, for local runs.</li>
       </ul>
     </li>
     <li>

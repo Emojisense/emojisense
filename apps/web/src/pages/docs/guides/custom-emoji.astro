@@ -10,10 +10,11 @@ const shape = `type CustomEmoji = {
   shortcode: string;
   aliases: string[];
   imageUrl: string; // ${API_HOST}/v1/custom/<appId>/<emojiId>
-  tenantId: string | null;
-  source: string;
+  tenantId: string | null; // null = app-wide
+  tenantExternalId?: string | null; // tenants API and webhooks only
+  source: "upload" | "slack" | "discord" | "api";
   bytes: number;
-  createdAt: number;
+  createdAt: number; // epoch ms
 };`;
 
 const result = `// A custom match in /v1/search, /v1/suggest-reactions or on the device:
@@ -63,7 +64,7 @@ const plans = PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
     <li><strong>Import from Slack</strong> (Pro and Scale): paste a Slack user token. Emojisense reads the workspace’s emoji list, downloads the images and never stores the token.</li>
     <li><strong>Import from Discord</strong> (Pro and Scale): give a bot token and a server (guild) id. The token is not stored either.</li>
   </ul>
-  <p>Imports skip aliases of aliases and anything over your plan’s limit, and report how many emoji they imported and skipped.</p>
+  <p>One import call stores at most 50 new emoji and reports <code>imported</code>, <code>skipped</code> and <code>remaining</code>. The dashboard calls again until nothing remains. Imports skip Slack aliases of other emoji, shortcodes you already have, images that fail the upload checks and anything over your plan’s limit. The full contract is in the <a href="/docs/api/#slack-and-discord-import">HTTP API reference</a>.</p>
   <p>Each emoji has this shape in the dashboard API:</p>
   <CodeBlock code={shape} lang="ts" />
 
