@@ -1,0 +1,16 @@
+{
+  "name": "@emojisense/eval",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "eval": "tsx src/run.ts",
+    "eval:ci": "tsx src/run.ts --offline --ci",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@emojisense/data": "workspace:*",
+    "emojisense": "workspace:*"
+  }
+}

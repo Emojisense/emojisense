@@ -1,0 +1,217 @@
+{"id":"exact-01","q":"thumbs up","locale":"en","cat":"exact","answers":["👍"]}
+{"id":"exact-02","q":"fire","locale":"en","cat":"exact","answers":["🔥"]}
+{"id":"exact-03","q":"rocket","locale":"en","cat":"exact","answers":["🚀"]}
+{"id":"exact-04","q":"red heart","locale":"en","cat":"exact","answers":["❤️"]}
+{"id":"exact-05","q":"pizza","locale":"en","cat":"exact","answers":["🍕"]}
+{"id":"exact-06","q":"dog","locale":"en","cat":"exact","answers":["🐶","🐕"]}
+{"id":"exact-07","q":"cat face","locale":"en","cat":"exact","answers":["🐱"]}
+{"id":"exact-08","q":"tada","locale":"en","cat":"exact","answers":["🎉"],"note":"shortcode"}
+{"id":"exact-09","q":"party popper","locale":"en","cat":"exact","answers":["🎉"]}
+{"id":"exact-10","q":"skull","locale":"en","cat":"exact","answers":["💀","☠️"]}
+{"id":"exact-11","q":"eyes","locale":"en","cat":"exact","answers":["👀"]}
+{"id":"exact-12","q":"jack-o-lantern","locale":"en","cat":"exact","answers":["🎃"]}
+{"id":"exact-13","q":"coffee","locale":"en","cat":"exact","answers":["☕"]}
+{"id":"exact-14","q":"unicorn","locale":"en","cat":"exact","answers":["🦄"]}
+{"id":"exact-15","q":"sparkles","locale":"en","cat":"exact","answers":["✨"]}
+{"id":"exact-16","q":"check mark","locale":"en","cat":"exact","answers":["✅","✔️","☑️"]}
+{"id":"exact-17","q":"loudly crying face","locale":"en","cat":"exact","answers":["😭"]}
+{"id":"exact-18","q":"turtle","locale":"en","cat":"exact","answers":["🐢"]}
+{"id":"exact-19","q":"avocado","locale":"en","cat":"exact","answers":["🥑"]}
+{"id":"exact-20","q":"trophy","locale":"en","cat":"exact","answers":["🏆"]}
+{"id":"exact-21","q":"+1","locale":"en","cat":"exact","answers":["👍"],"note":"shortcode"}
+{"id":"exact-22","q":"100","locale":"en","cat":"exact","answers":["💯"]}
+{"id":"exact-23","q":"rainbow","locale":"en","cat":"exact","answers":["🌈"]}
+{"id":"exact-24","q":"ghost","locale":"en","cat":"exact","answers":["👻"]}
+{"id":"exact-25","q":"rocke","locale":"en","cat":"exact","answers":["🚀"],"note":"prefix while typing"}
+{"id":"exact-26","q":"thum","locale":"en","cat":"exact","answers":["👍","👎"],"note":"prefix while typing"}
+{"id":"typo-01","q":"hallowelen","locale":"en","cat":"typo","answers":["🎃"]}
+{"id":"typo-02","q":"pizaa","locale":"en","cat":"typo","answers":["🍕"]}
+{"id":"typo-03","q":"rockt","locale":"en","cat":"typo","answers":["🚀"]}
+{"id":"typo-04","q":"thumbs upp","locale":"en","cat":"typo","answers":["👍"]}
+{"id":"typo-05","q":"brocoli","locale":"en","cat":"typo","answers":["🥦"]}
+{"id":"typo-06","q":"dinosuar","locale":"en","cat":"typo","answers":["🦖","🦕"]}
+{"id":"typo-07","q":"unicron","locale":"en","cat":"typo","answers":["🦄"]}
+{"id":"typo-08","q":"avacado","locale":"en","cat":"typo","answers":["🥑"]}
+{"id":"typo-09","q":"chrismas tree","locale":"en","cat":"typo","answers":["🎄"]}
+{"id":"typo-10","q":"tounge","locale":"en","cat":"typo","answers":["👅","😛","😜","😝"]}
+{"id":"typo-11","q":"elephnat","locale":"en","cat":"typo","answers":["🐘"]}
+{"id":"typo-12","q":"potatoe","locale":"en","cat":"typo","answers":["🥔"]}
+{"id":"typo-13","q":"banna","locale":"en","cat":"typo","answers":["🍌"]}
+{"id":"typo-14","q":"sandwhich","locale":"en","cat":"typo","answers":["🥪"]}
+{"id":"typo-15","q":"giraff","locale":"en","cat":"typo","answers":["🦒"]}
+{"id":"typo-16","q":"strawbery","locale":"en","cat":"typo","answers":["🍓"]}
+{"id":"typo-17","q":"hambuger","locale":"en","cat":"typo","answers":["🍔"]}
+{"id":"typo-18","q":"cofee","locale":"en","cat":"typo","answers":["☕"]}
+{"id":"typo-19","q":"penguine","locale":"en","cat":"typo","answers":["🐧"]}
+{"id":"typo-20","q":"calender","locale":"en","cat":"typo","answers":["📅","📆","🗓️"]}
+{"id":"typo-21","q":"umbrela","locale":"en","cat":"typo","answers":["☂️","☔","🌂","⛱️"]}
+{"id":"typo-22","q":"watermellon","locale":"en","cat":"typo","answers":["🍉"]}
+{"id":"typo-23","q":"octapus","locale":"en","cat":"typo","answers":["🐙"]}
+{"id":"typo-24","q":"hapy birthday","locale":"en","cat":"typo","answers":["🎂","🥳","🎉","🎁","🎈","🍰","🧁"]}
+{"id":"slang-01","q":"lgtm","locale":"en","cat":"slang","answers":["✅","👍","👌","✔️"]}
+{"id":"slang-02","q":"ship it","locale":"en","cat":"slang","answers":["🚀","🚢","🛳️"]}
+{"id":"slang-03","q":"nit","locale":"en","cat":"slang","answers":["🤏","🧐","🔍","🔎","💅"],"review":true,"note":"code-review nitpick; no canonical emoji"}
+{"id":"slang-04","q":"wfh","locale":"en","cat":"slang","answers":["🏠","🏡","💻","🧑‍💻","👨‍💻","👩‍💻"]}
+{"id":"slang-05","q":"goat","locale":"en","cat":"slang","answers":["🐐"]}
+{"id":"slang-06","q":"on fire","locale":"en","cat":"slang","answers":["🔥"]}
+{"id":"slang-07","q":"no cap","locale":"en","cat":"slang","answers":["🧢"]}
+{"id":"slang-08","q":"sus","locale":"en","cat":"slang","answers":["🤨","🧐","👀","🤔","📮"],"review":true}
+{"id":"slang-09","q":"im dead","locale":"en","cat":"slang","answers":["💀","☠️","😂","🤣"]}
+{"id":"slang-10","q":"lol","locale":"en","cat":"slang","answers":["😂","🤣","😆","😹"]}
+{"id":"slang-11","q":"lmao","locale":"en","cat":"slang","answers":["🤣","😂","💀","😆"]}
+{"id":"slang-12","q":"big brain","locale":"en","cat":"slang","answers":["🧠"]}
+{"id":"slang-13","q":"spill the tea","locale":"en","cat":"slang","answers":["🍵","☕","🫖","👀"]}
+{"id":"slang-14","q":"bug","locale":"en","cat":"slang","answers":["🐛","🐞","🪲"]}
+{"id":"slang-15","q":"hotfix","locale":"en","cat":"slang","answers":["🔥","🚑","🩹","🛠️","🔧"],"review":true}
+{"id":"slang-16","q":"deploy","locale":"en","cat":"slang","answers":["🚀","🚢"]}
+{"id":"slang-17","q":"merge conflict","locale":"en","cat":"slang","answers":["⚔️","💥","😱","🤼","🔀"],"review":true}
+{"id":"slang-18","q":"rubber duck","locale":"en","cat":"slang","answers":["🦆"]}
+{"id":"slang-19","q":"touch grass","locale":"en","cat":"slang","answers":["🌱","🌿","☘️","🌳","🌾"],"review":true}
+{"id":"slang-20","q":"rip","locale":"en","cat":"slang","answers":["🪦","💀","⚰️","🙏","🕊️"]}
+{"id":"slang-21","q":"slay","locale":"en","cat":"slang","answers":["💅","👑","🔥","💃"]}
+{"id":"slang-22","q":"facepalm","locale":"en","cat":"slang","answers":["🤦","🤦‍♂️","🤦‍♀️"]}
+{"id":"slang-23","q":"shrug","locale":"en","cat":"slang","answers":["🤷","🤷‍♂️","🤷‍♀️"]}
+{"id":"slang-24","q":"mind blown","locale":"en","cat":"slang","answers":["🤯"]}
+{"id":"slang-25","q":"fingers crossed","locale":"en","cat":"slang","answers":["🤞"]}
+{"id":"slang-26","q":"smh","locale":"en","cat":"slang","answers":["🤦","🙄","😒","😑","🤦‍♂️","🤦‍♀️"]}
+{"id":"slang-27","q":"brb","locale":"en","cat":"slang","answers":["🏃","⏳","🔜","🚶","🏃‍♂️","🏃‍♀️"],"review":true}
+{"id":"slang-28","q":"ooo","locale":"en","cat":"slang","answers":["🌴","🏖️","✈️","🏝️","😮"],"review":true,"note":"out of office vs surprised 'ooo'"}
+{"id":"slang-29","q":"ack","locale":"en","cat":"slang","answers":["👍","✅","👌","👀","🫡"],"review":true}
+{"id":"slang-30","q":"stonks","locale":"en","cat":"slang","answers":["📈","💹"]}
+{"id":"slang-31","q":"this is fine","locale":"en","cat":"slang","answers":["🔥","🙃","🫠","🙂","🐶"],"review":true,"note":"meme: dog in burning room"}
+{"id":"slang-32","q":"yolo","locale":"en","cat":"slang","answers":["🤪","🎲","😜","🙌","🤘"],"review":true}
+{"id":"slang-33","q":"salty","locale":"en","cat":"slang","answers":["🧂","😒","😤","🙄"]}
+{"id":"pop-01","q":"jurassic park","locale":"en","cat":"pop","answers":["🦖","🦕"]}
+{"id":"pop-02","q":"the office","locale":"en","cat":"pop","answers":["🏢","💼","🧑‍💼","📎","🖨️","📄"],"review":true,"note":"TV show; no canonical emoji"}
+{"id":"pop-03","q":"harry potter","locale":"en","cat":"pop","answers":["⚡","🧙","🧙‍♂️","🪄","🦉","🧹","👓"]}
+{"id":"pop-04","q":"star wars","locale":"en","cat":"pop","answers":["🌌","⚔️","🤖","⭐","🚀","🪐","🌟"],"review":true}
+{"id":"pop-05","q":"lord of the rings","locale":"en","cat":"pop","answers":["💍","🧙","🧙‍♂️","🧝","🌋"]}
+{"id":"pop-06","q":"titanic","locale":"en","cat":"pop","answers":["🚢","🧊","🛳️"]}
+{"id":"pop-07","q":"finding nemo","locale":"en","cat":"pop","answers":["🐠","🐟"]}
+{"id":"pop-08","q":"the lion king","locale":"en","cat":"pop","answers":["🦁","👑"]}
+{"id":"pop-09","q":"shrek","locale":"en","cat":"pop","answers":["🧌","👹","🟢"],"review":true}
+{"id":"pop-10","q":"barbie","locale":"en","cat":"pop","answers":["💅","👱‍♀️","💖","🩷","🎀","👸"],"review":true}
+{"id":"pop-11","q":"game of thrones","locale":"en","cat":"pop","answers":["🐉","⚔️","👑","❄️","🐺","🗡️"],"review":true}
+{"id":"pop-12","q":"pokemon","locale":"en","cat":"pop","answers":["⚡","🐭","🎮","🔴"],"review":true}
+{"id":"pop-13","q":"batman","locale":"en","cat":"pop","answers":["🦇"]}
+{"id":"pop-14","q":"spiderman","locale":"en","cat":"pop","answers":["🕷️","🕸️"]}
+{"id":"pop-15","q":"super mario","locale":"en","cat":"pop","answers":["🍄","🎮","🪠","🔧"],"review":true}
+{"id":"pop-16","q":"star trek","locale":"en","cat":"pop","answers":["🖖","🚀","🌌"]}
+{"id":"pop-17","q":"the matrix","locale":"en","cat":"pop","answers":["💊","🕶️","💻","🟩","🐇"],"review":true}
+{"id":"pop-18","q":"frozen","locale":"en","cat":"pop","answers":["⛄","☃️","❄️","👸","🥶","🧊"]}
+{"id":"pop-19","q":"baby shark","locale":"en","cat":"pop","answers":["🦈"]}
+{"id":"pop-20","q":"toy story","locale":"en","cat":"pop","answers":["🤠","🚀","🧸","🦖"],"review":true}
+{"id":"pop-21","q":"minecraft","locale":"en","cat":"pop","answers":["⛏️","🧱","🟩","🎮","🧟"],"review":true}
+{"id":"pop-22","q":"wizard of oz","locale":"en","cat":"pop","answers":["🌪️","👠","🦁","🧙","🧙‍♀️","🌈"],"review":true}
+{"id":"pop-23","q":"jaws","locale":"en","cat":"pop","answers":["🦈"]}
+{"id":"pop-24","q":"ghostbusters","locale":"en","cat":"pop","answers":["👻","🚫"]}
+{"id":"pop-25","q":"pirates of the caribbean","locale":"en","cat":"pop","answers":["🏴‍☠️","☠️","🦜","⚓","🦑"]}
+{"id":"pop-26","q":"squid game","locale":"en","cat":"pop","answers":["🦑","🟢","🔺","⭕","🍪"],"review":true}
+{"id":"pop-27","q":"stranger things","locale":"en","cat":"pop","answers":["🧇","🚲","🔦","💡","👾"],"review":true}
+{"id":"pop-28","q":"olympics","locale":"en","cat":"pop","answers":["🏅","🥇","🏟️","🏃","🔥"]}
+{"id":"pop-29","q":"world cup","locale":"en","cat":"pop","answers":["⚽","🏆"]}
+{"id":"pop-30","q":"super bowl","locale":"en","cat":"pop","answers":["🏈","🏆"]}
+{"id":"pop-31","q":"christmas","locale":"en","cat":"pop","answers":["🎄","🎅","🎁","🤶","⛄"]}
+{"id":"pop-32","q":"halloween","locale":"en","cat":"pop","answers":["🎃","👻","🦇","🕷️","🧙"]}
+{"id":"pop-33","q":"thanksgiving","locale":"en","cat":"pop","answers":["🦃","🥧","🍂","🌽"]}
+{"id":"pop-34","q":"new years eve","locale":"en","cat":"pop","answers":["🎆","🎇","🥂","🎉","🍾","🎊"]}
+{"id":"pop-35","q":"among us","locale":"en","cat":"pop","answers":["📮","🔪","🚀","🤨"],"review":true}
+{"id":"idiom-01","q":"break a leg","locale":"en","cat":"idiom","answers":["🍀","🎭","🤞","🌟"],"forbid":["🦵","🦴","💔"]}
+{"id":"idiom-02","q":"piece of cake","locale":"en","cat":"idiom","answers":["🍰","🎂","😎","👌"]}
+{"id":"idiom-03","q":"spill the beans","locale":"en","cat":"idiom","answers":["🫘","🤫","🗣️","👀"],"review":true}
+{"id":"idiom-04","q":"cold feet","locale":"en","cat":"idiom","answers":["😰","😬","🥶","🦶","😨"],"review":true}
+{"id":"idiom-05","q":"elephant in the room","locale":"en","cat":"idiom","answers":["🐘"]}
+{"id":"idiom-06","q":"when pigs fly","locale":"en","cat":"idiom","answers":["🐷","🐖","🐽","🪽"]}
+{"id":"idiom-07","q":"raining cats and dogs","locale":"en","cat":"idiom","answers":["🌧️","☔","⛈️","🐱","🐶","🌂"]}
+{"id":"idiom-08","q":"hit the sack","locale":"en","cat":"idiom","answers":["😴","🛌","💤","🥱"]}
+{"id":"idiom-09","q":"under the weather","locale":"en","cat":"idiom","answers":["🤒","🤧","😷","🤢","🤕"]}
+{"id":"idiom-10","q":"cost an arm and a leg","locale":"en","cat":"idiom","answers":["💸","💰","🤑","💵","😱"],"review":true}
+{"id":"idiom-11","q":"on cloud nine","locale":"en","cat":"idiom","answers":["☁️","😊","🥰","😍","😁","🤩"],"review":true}
+{"id":"idiom-12","q":"bite the bullet","locale":"en","cat":"idiom","answers":["😬","💪","😤"],"review":true}
+{"id":"idiom-13","q":"hold your horses","locale":"en","cat":"idiom","answers":["🐎","✋","⏳","🐴","🛑"]}
+{"id":"idiom-14","q":"ball is in your court","locale":"en","cat":"idiom","answers":["🎾","🏀","👉","🫵"],"review":true}
+{"id":"idiom-15","q":"break the ice","locale":"en","cat":"idiom","answers":["🧊","🔨","🤝","👋"]}
+{"id":"idiom-16","q":"fish out of water","locale":"en","cat":"idiom","answers":["🐟","🐠","😳","🐡"]}
+{"id":"idiom-17","q":"let the cat out of the bag","locale":"en","cat":"idiom","answers":["🐈","🙀","🤫","🐱","👜"],"review":true}
+{"id":"idiom-18","q":"night owl","locale":"en","cat":"idiom","answers":["🦉","🌙","🌃"]}
+{"id":"idiom-19","q":"early bird","locale":"en","cat":"idiom","answers":["🐦","🌅","🐤","⏰","🐓"]}
+{"id":"idiom-20","q":"couch potato","locale":"en","cat":"idiom","answers":["🛋️","🥔","📺"]}
+{"id":"idiom-21","q":"butterflies in my stomach","locale":"en","cat":"idiom","answers":["🦋","😳","🥰","😬","😍"]}
+{"id":"intent-01","q":"congrats on the launch","locale":"en","cat":"intent","answers":["🚀","🎉","🥳","🎊","👏","🍾"]}
+{"id":"intent-02","q":"i'm exhausted","locale":"en","cat":"intent","answers":["😩","😫","😴","🥱","😮‍💨","🫠"]}
+{"id":"intent-03","q":"greatest of all time","locale":"en","cat":"intent","answers":["🐐"]}
+{"id":"intent-04","q":"good luck","locale":"en","cat":"intent","answers":["🍀","🤞","🌟"]}
+{"id":"intent-05","q":"thank you so much","locale":"en","cat":"intent","answers":["🙏","🥰","💖","❤️","🤗","🥹"]}
+{"id":"intent-06","q":"happy birthday","locale":"en","cat":"intent","answers":["🎂","🥳","🎉","🎁","🎈","🍰","🧁"]}
+{"id":"intent-07","q":"i love you","locale":"en","cat":"intent","answers":["❤️","🥰","😍","😘","💕","💖","🤟","💘","💗"]}
+{"id":"intent-08","q":"so proud of you","locale":"en","cat":"intent","answers":["🥹","👏","💪","🏆","🥲","❤️","🙌"],"review":true}
+{"id":"intent-09","q":"get well soon","locale":"en","cat":"intent","answers":["🤒","💐","🩹","🙏","❤️‍🩹","🤕"]}
+{"id":"intent-10","q":"sorry for your loss","locale":"en","cat":"intent","answers":["🙏","💔","🕊️","🖤","😢","🥀"]}
+{"id":"intent-11","q":"i'm so confused","locale":"en","cat":"intent","answers":["😕","🤔","😵‍💫","🤷","🫤","❓","😵"]}
+{"id":"intent-12","q":"that's hilarious","locale":"en","cat":"intent","answers":["😂","🤣","💀","😆"]}
+{"id":"intent-13","q":"this is awkward","locale":"en","cat":"intent","answers":["😬","😅","🫣","😳"]}
+{"id":"intent-14","q":"can't wait","locale":"en","cat":"intent","answers":["🤩","😍","🥳","⏳","😆","🙌"],"review":true}
+{"id":"intent-15","q":"running late","locale":"en","cat":"intent","answers":["🏃","⏰","🏃‍♂️","🏃‍♀️","⌛","⏳"]}
+{"id":"intent-16","q":"good morning","locale":"en","cat":"intent","answers":["☀️","🌅","🌞","☕","🌄"]}
+{"id":"intent-17","q":"good night","locale":"en","cat":"intent","answers":["🌙","😴","💤","🌃","🛌","🌛","🌜"]}
+{"id":"intent-18","q":"let's celebrate","locale":"en","cat":"intent","answers":["🎉","🥳","🍾","🥂","🎊"]}
+{"id":"intent-19","q":"i'm so angry","locale":"en","cat":"intent","answers":["😡","🤬","😠","💢","😤"]}
+{"id":"intent-20","q":"none of my business","locale":"en","cat":"intent","answers":["🐸","☕","🍵","👀","🤷"],"review":true,"note":"Kermit tea meme"}
+{"id":"intent-21","q":"it's so hot outside","locale":"en","cat":"intent","answers":["🥵","☀️","🔥","🌡️","😓"]}
+{"id":"intent-22","q":"freezing cold","locale":"en","cat":"intent","answers":["🥶","❄️","🧊","☃️"]}
+{"id":"intent-23","q":"payday","locale":"en","cat":"intent","answers":["💰","💸","🤑","💵","💲"]}
+{"id":"intent-24","q":"time to party","locale":"en","cat":"intent","answers":["🥳","🎉","🪩","💃","🕺","🎊"]}
+{"id":"intent-25","q":"deep in thought","locale":"en","cat":"intent","answers":["🤔","🧐","💭"]}
+{"id":"intent-26","q":"hang in there","locale":"en","cat":"intent","answers":["💪","🙏","🫂","❤️","🤗"],"review":true}
+{"id":"intent-27","q":"you got this","locale":"en","cat":"intent","answers":["💪","🙌","👊","🔥","👏"]}
+{"id":"intent-28","q":"sending hugs","locale":"en","cat":"intent","answers":["🤗","🫂","❤️","🥰"]}
+{"id":"intent-29","q":"on my way","locale":"en","cat":"intent","answers":["🏃","🚗","🚶","🔜","🏃‍♂️","🏃‍♀️","🚶‍♂️","🚶‍♀️"]}
+{"id":"intent-30","q":"high five","locale":"en","cat":"intent","answers":["🙌","✋","🖐️","👏"]}
+{"id":"intent-31","q":"i need coffee","locale":"en","cat":"intent","answers":["☕","😴","🥱"]}
+{"id":"intent-32","q":"weekend vibes","locale":"en","cat":"intent","answers":["😎","🏖️","🍹","🥳","🛋️","🌴","🍻"],"review":true}
+{"id":"tr-01","q":"doğum günü","locale":"tr","cat":"tr","answers":["🎂","🥳","🎉","🎁","🎈","🍰","🧁"]}
+{"id":"tr-02","q":"kolay gelsin","locale":"tr","cat":"tr","answers":["💪","🙏","👷","🛠️","🧑‍🔧","☕"],"review":true,"note":"said to someone at work: may it be easy"}
+{"id":"tr-03","q":"maşallah","locale":"tr","cat":"tr","answers":["🧿","🤲","😍","🙏","🥰"],"review":true}
+{"id":"tr-04","q":"nazar","locale":"tr","cat":"tr","answers":["🧿"]}
+{"id":"tr-05","q":"çay","locale":"tr","cat":"tr","answers":["🍵","☕","🫖"]}
+{"id":"tr-06","q":"afiyet olsun","locale":"tr","cat":"tr","answers":["😋","🍽️","🍲","🤤","🥘"]}
+{"id":"tr-07","q":"geçmiş olsun","locale":"tr","cat":"tr","answers":["🤒","🙏","💐","❤️‍🩹","🩹","🤕"]}
+{"id":"tr-08","q":"iyi ki doğdun","locale":"tr","cat":"tr","answers":["🎂","🥳","🎉","🎁","🎈"]}
+{"id":"tr-09","q":"kalp","locale":"tr","cat":"tr","answers":["❤️","💖","💕","💗","🫀"]}
+{"id":"tr-10","q":"gülmekten öldüm","locale":"tr","cat":"tr","answers":["😂","🤣","💀"]}
+{"id":"tr-11","q":"aşk","locale":"tr","cat":"tr","answers":["❤️","😍","🥰","💘","💕","💖"]}
+{"id":"tr-12","q":"teşekkürler","locale":"tr","cat":"tr","answers":["🙏","🤗","💐","🥰"]}
+{"id":"tr-13","q":"tebrikler","locale":"tr","cat":"tr","answers":["🎉","👏","🥳","🎊","🏆"]}
+{"id":"tr-14","q":"çok yorgunum","locale":"tr","cat":"tr","answers":["😩","😫","😴","🥱","😮‍💨"]}
+{"id":"tr-15","q":"kahve","locale":"tr","cat":"tr","answers":["☕"]}
+{"id":"tr-16","q":"bayram","locale":"tr","cat":"tr","answers":["🎉","🍬","🕌","🌙","🤲","🎊"],"review":true}
+{"id":"tr-17","q":"ramazan","locale":"tr","cat":"tr","answers":["🌙","🕌","☪️","🌛","🤲"]}
+{"id":"tr-18","q":"kedi","locale":"tr","cat":"tr","answers":["🐱","🐈"]}
+{"id":"tr-19","q":"köpek","locale":"tr","cat":"tr","answers":["🐶","🐕"]}
+{"id":"tr-20","q":"ateş","locale":"tr","cat":"tr","answers":["🔥"]}
+{"id":"tr-21","q":"roket","locale":"tr","cat":"tr","answers":["🚀"]}
+{"id":"tr-22","q":"dondurma","locale":"tr","cat":"tr","answers":["🍦","🍨"]}
+{"id":"tr-23","q":"başın sağ olsun","locale":"tr","cat":"tr","answers":["🙏","🖤","💔","🕊️","😢","🥀"]}
+{"id":"tr-24","q":"harika","locale":"tr","cat":"tr","answers":["👏","🤩","✨","😍","🔥","👌","💯"],"review":true}
+{"id":"tr-25","q":"uyku","locale":"tr","cat":"tr","answers":["😴","💤","🛌","🥱"]}
+{"id":"tr-26","q":"türkiye","locale":"tr","cat":"tr","answers":["🇹🇷"]}
+{"id":"tr-27","q":"eline sağlık","locale":"tr","cat":"tr","answers":["👏","😋","🙏","🤤","👌"],"review":true}
+{"id":"tr-28","q":"hayırlı olsun","locale":"tr","cat":"tr","answers":["🙏","🎉","🤲","👏","🎊"],"review":true}
+{"id":"tr-29","q":"simit","locale":"tr","cat":"tr","answers":["🥯","🥨"],"review":true}
+{"id":"tr-30","q":"efsane","locale":"tr","cat":"tr","answers":["🔥","🐐","💯","🤩","👑"],"review":true}
+{"id":"tr-31","q":"dogum gunu","locale":"tr","cat":"tr","answers":["🎂","🥳","🎉","🎁","🎈","🍰","🧁"],"note":"ASCII-folded Turkish"}
+{"id":"tr-32","q":"masallah","locale":"tr","cat":"tr","answers":["🧿","🤲","😍","🙏","🥰"],"review":true,"note":"ASCII-folded Turkish"}
+{"id":"tr-33","q":"kutlama","locale":"tr","cat":"tr","answers":["🎉","🥳","🎊","🍾","🥂"]}
+{"id":"neg-01","q":"hot dog","locale":"en","cat":"negative","answers":["🌭"],"forbid":["🐶","🐕","🥵"]}
+{"id":"neg-02","q":"pineapple","locale":"en","cat":"negative","answers":["🍍"],"forbid":["🍎","🌲"]}
+{"id":"neg-03","q":"butterfly","locale":"en","cat":"negative","answers":["🦋"],"forbid":["🧈"]}
+{"id":"neg-04","q":"watermelon","locale":"en","cat":"negative","answers":["🍉"],"forbid":["💧","🌊"]}
+{"id":"neg-05","q":"firefighter","locale":"en","cat":"negative","answers":["🧑‍🚒","👨‍🚒","👩‍🚒","🚒"],"forbid":["🔥"]}
+{"id":"neg-06","q":"black cat","locale":"en","cat":"negative","answers":["🐈‍⬛"]}
+{"id":"neg-07","q":"cold sweat","locale":"en","cat":"negative","answers":["😰","😓","😥"],"forbid":["🥶","❄️"]}
+{"id":"neg-08","q":"honey bee","locale":"en","cat":"negative","answers":["🐝"],"forbid":["🍯"]}
+{"id":"neg-09","q":"heart broken","locale":"en","cat":"negative","answers":["💔","😢","😭"],"forbid":["🫀"]}
+{"id":"neg-10","q":"pie chart","locale":"en","cat":"negative","answers":["📊","📈"],"forbid":["🥧"],"review":true,"note":"no pie-chart emoji; bar chart is the closest"}
+{"id":"neg-11","q":"qxzvbn","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}
+{"id":"neg-12","q":"asdfgh","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}
+{"id":"neg-13","q":"zzzzqqq","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}
