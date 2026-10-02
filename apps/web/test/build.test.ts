@@ -3,6 +3,7 @@
  * pages the way a crawler or a visitor without JavaScript would see them.
  */
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
@@ -570,5 +571,60 @@ describe("404 page", () => {
       a.getAttribute("href"),
     );
     expect(links).toEqual(["/", "/docs/", "/playground/", "/pricing/"]);
+  });
+});
+
+describe("security headers", () => {
+  const rules = () => readFileSync(file("/_headers"), "utf8").split(/\n\s*\n/);
+  const allPaths = () => rules().filter((rule) => rule.split("\n").some((line) => line.trim() === "/*"));
+  const policy = () => /^\s*Content-Security-Policy: (.+)$/m.exec(allPaths()[0] ?? "")?.[1] ?? "";
+  const directive = (name: string) =>
+    policy()
+      .split("; ")
+      .find((d) => d.startsWith(`${name} `)) ?? "";
+  const htmlPages = () =>
+    readdirSync(outDir, { recursive: true, encoding: "utf8" })
+      .filter((path) => path.endsWith(".html"))
+      .map((path) => `/${path}`);
+  const sha256 = (text: string) => `'sha256-${createHash("sha256").update(text).digest("base64")}'`;
+
+  it("sends HSTS and the Content-Security-Policy in one rule for every path", () => {
+    expect(allPaths()).toHaveLength(1);
+    expect(allPaths()[0]).toContain("Strict-Transport-Security: max-age=31536000; includeSubDomains");
+    expect(policy()).toContain("default-src 'self'");
+    // Cloudflare ignores longer header lines in _headers.
+    expect(`Content-Security-Policy: ${policy()}`.length).toBeLessThanOrEqual(2000);
+  });
+
+  it("allows the API and the dashboard of this build, and no framing", () => {
+    expect(directive("connect-src")).toBe(`connect-src 'self' ${API} ${DASHBOARD}`);
+    expect(directive("form-action")).toBe(`form-action 'self' ${DASHBOARD}`);
+    expect(directive("frame-ancestors")).toBe("frame-ancestors 'none'");
+  });
+
+  it("allows every inline script and style of every page by its hash", () => {
+    const scripts = directive("script-src").split(" ");
+    const styles = directive("style-src").split(" ");
+    expect(scripts).not.toContain("'unsafe-inline'");
+    expect(styles).not.toContain("'unsafe-inline'");
+    for (const path of htmlPages()) {
+      const doc = page(path);
+      for (const script of Array.from(doc.querySelectorAll("script:not([src])"))) {
+        if (script.getAttribute("type") === "application/ld+json") continue;
+        expect(scripts, `inline script on ${path}`).toContain(sha256(script.textContent ?? ""));
+      }
+      for (const style of Array.from(doc.querySelectorAll("style"))) {
+        expect(styles, `inline style on ${path}`).toContain(sha256(style.textContent ?? ""));
+      }
+    }
+  });
+
+  it("has no inline event handlers, which the policy would block", () => {
+    for (const path of htmlPages()) {
+      for (const element of Array.from(page(path).querySelectorAll("*"))) {
+        const handlers = element.getAttributeNames().filter((name) => name.startsWith("on"));
+        expect(handlers, `<${element.localName}> on ${path}`).toEqual([]);
+      }
+    }
   });
 });
