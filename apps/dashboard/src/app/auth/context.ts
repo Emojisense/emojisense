@@ -8,6 +8,8 @@ export interface AuthAdapter {
   provider: "clerk" | "local";
   /** False until Clerk has loaded. */
   loaded: boolean;
+  /** Clerk's scripts did not load (network, a content blocker, a wrong key). */
+  failed: boolean;
   /** The Clerk user id while Clerk has a session. */
   userId: string | null;
   /** Ends the Clerk session. */
@@ -21,6 +23,7 @@ export interface AuthAdapter {
 export const LOCAL_AUTH: AuthAdapter = {
   provider: "local",
   loaded: true,
+  failed: false,
   userId: null,
   signOut: async () => {},
   deleteUser: async () => {},

@@ -131,14 +131,15 @@ describe("createClerkGateway (networkless, public values only)", () => {
   it("verifies a session token and reads the claims without any network call", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const gateway = createClerkGateway(publicEnv() as Env);
-    const token = await sign(instance.privateKey, sessionClaims());
+    const claims = sessionClaims();
+    const token = await sign(instance.privateKey, claims);
     expect(await gateway?.verifySession(token, ["https://app.emojisense.com"])).toEqual({
       ok: true,
       identity: {
         userId: "user_ada",
         email: "ada@example.com",
         name: "Ada Lovelace",
-        issuedAt: Number(sessionClaims().iat) * 1000,
+        issuedAt: Number(claims.iat) * 1000,
       },
     });
     expect(fetchSpy).not.toHaveBeenCalled();

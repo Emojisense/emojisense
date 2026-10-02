@@ -60,6 +60,8 @@ function clerkNavigate(to: string, replace: boolean): void {
 function ClerkBridge({ children }: { children: ReactNode }) {
   const { isLoaded, userId, getToken, signOut } = useAuth();
   const clerk = useClerk();
+  // Read here, so the adapter changes when Clerk's status does (the clerk object stays the same).
+  const failed = clerk.status === "error";
 
   // A layout effect runs before the app's effects, so the first API call already has the token.
   useLayoutEffect(() => {
@@ -71,6 +73,7 @@ function ClerkBridge({ children }: { children: ReactNode }) {
     () => ({
       provider: "clerk",
       loaded: isLoaded,
+      failed,
       userId: userId ?? null,
       signOut: () => signOut(),
       deleteUser: async () => {
@@ -83,7 +86,7 @@ function ClerkBridge({ children }: { children: ReactNode }) {
       },
       openProfile: () => clerk.openUserProfile(),
     }),
-    [isLoaded, userId, signOut, clerk],
+    [isLoaded, failed, userId, signOut, clerk],
   );
 
   return <AuthContext.Provider value={adapter}>{children}</AuthContext.Provider>;

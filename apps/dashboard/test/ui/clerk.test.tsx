@@ -16,6 +16,7 @@ const clerk = vi.hoisted(() => {
     version: 0,
     providerProps: {} as Record<string, unknown>,
     deleteSelfEnabled: true,
+    status: "ready",
     deleteUser: async () => {},
     openUserProfile: () => {},
   };
@@ -58,6 +59,7 @@ vi.mock("@clerk/react", async () => {
       };
     },
     useClerk: () => ({
+      status: clerk.state.status,
       user: clerk.state.userId
         ? { deleteSelfEnabled: clerk.state.deleteSelfEnabled, delete: () => clerk.state.deleteUser() }
         : null,
@@ -81,6 +83,7 @@ function renderWithClerk() {
 beforeEach(() => {
   clerk.state.isLoaded = true;
   clerk.state.userId = null;
+  clerk.state.status = "ready";
   clerk.state.deleteSelfEnabled = true;
   clerk.state.deleteUser = vi.fn(async () => {});
   clerk.state.openUserProfile = vi.fn();
@@ -119,6 +122,15 @@ describe("Clerk sign-in", () => {
     // Signed out, so no bearer token; localhost still offers the dev sign-in.
     expect(calls).toEqual([{ method: "GET", path: "/api/me" }]);
     expect(screen.getByRole("button", { name: "Sign in as dev user" })).toBeTruthy();
+  });
+
+  it("says so when Clerk's scripts do not load", async () => {
+    clerk.state.isLoaded = false;
+    clerk.state.status = "error";
+    const { calls } = stubApi({ "GET /api/me": unauthorized });
+    renderWithClerk();
+    expect((await screen.findByRole("alert")).textContent).toContain("The sign-in service did not load");
+    expect(calls).toEqual([]);
   });
 
   it("sends the Clerk session token with every API call after sign-in", async () => {

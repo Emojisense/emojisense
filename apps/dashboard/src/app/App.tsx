@@ -162,6 +162,16 @@ export function App() {
     };
   }, [auth, loadMe, signOut]);
 
+  if (provider.failed) {
+    return (
+      <main className="boot">
+        <ErrorState
+          message="The sign-in service did not load. Check your connection or a content blocker, then try again."
+          onRetry={() => window.location.reload()}
+        />
+      </main>
+    );
+  }
   if (auth.status === "loading") {
     return (
       <div className="boot" role="status">
