@@ -14,7 +14,7 @@ const base = (hexcode: string, label: string, trLabel: string, subgroup: string)
   order: 0,
   version: 1,
   skins: [],
-  tr: { label: trLabel, tags: [] },
+  i18n: { tr: { label: trLabel, tags: [] } },
 });
 
 const emoji = [

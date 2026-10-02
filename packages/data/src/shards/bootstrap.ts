@@ -93,7 +93,7 @@ export function bootstrapQueries(
     }
     const animals = emoji
       .filter((e) => e.subgroup.startsWith("animal-"))
-      .map((e) => (locale === "en" ? e.label : (e.tr.label ?? "")))
+      .map((e) => (locale === "en" ? e.label : (e.i18n[locale]?.label ?? "")))
       .filter((label) => label !== "" && !label.includes(" "));
     for (const m of ANIMAL_MOODS[locale]) {
       for (const animal of animals) {
