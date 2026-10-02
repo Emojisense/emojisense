@@ -892,10 +892,11 @@ choice through sign-in, and its Upgrade button calls `POST /api/billing/checkout
   `https://*.whop.com` URL is passed on). The plan does not change here.
 - **Webhook.** `POST /api/whop/webhook` checks `webhook-signature` (`v1,<base64>`): HMAC-SHA256
   over `{webhook-id}.{webhook-timestamp}.{raw body}`, keyed with the UTF-8 bytes of the whole
-  `ws_…` secret; timestamps more than 5 minutes off are refused. Each `webhook-id` is applied
-  once (`whop_events`, written in the same D1 batch as the change). The D1 change runs before the
-  answer (a failure is a `500`, and Whop retries); cancelling a replaced membership and cleanup
-  run in `waitUntil`.
+  `ws_…` secret; timestamps more than 5 minutes off are refused. Each applied `webhook-id` is
+  remembered (`whop_events`, written in the same D1 batch as the change), so a retry changes
+  nothing; an ignored event is not remembered, so Whop's retry works after a configuration fix.
+  The D1 change runs before the answer (a failure is a `500`, and Whop retries); cancelling
+  retired memberships and cleanup run in `waitUntil`.
 - **Events.** `payment.succeeded` and `membership.activated` set the plan: the plan always comes
   from the Whop variant id through `WHOP_PLAN_IDS`. A membership the account already pays with
   needs no metadata; a new one needs metadata that names an existing account, this Worker's
@@ -917,9 +918,17 @@ choice through sign-in, and its Upgrade button calls `POST /api/billing/checkout
   memberships with its event time, also when no account pays with it yet. An activation older
   than a stored deactivation grants nothing; one older than a stored cancellation grants a
   cancelled plan (`canceling`, with the stored period end).
-- **Lapses.** A grace or a cancelled period that ran out moves the account to Free on the next
-  Whop event, when the owner opens the dashboard, and in the optional daily cron of the
-  dashboard Worker.
+- **Refunds and disputes.** Whop does not document that they end a membership, so the Worker
+  acts on them: a full, succeeded refund of a payment of the current period (`refund.created`,
+  `refund.updated`) or a lost dispute (`lost`, `prevented`) moves the account to Free at once and
+  retires the membership; an open dispute (`needs_response`, `under_review`) is the 7-day
+  past-due grace; a won dispute ends that grace. Partial refunds, pending refunds, refunds of
+  older payments and inquiries (`warning_…`) change nothing.
+- **Lapses.** A grace or a cancelled period that ran out, or an active period that ended 7 days
+  ago without a renewal payment (a lost final event), moves the account to Free: on the next Whop
+  event, when the owner opens the dashboard, and in the dashboard Worker's daily cron
+  (`17 4 * * *`), which also retries Whop cancels (with a backoff of 1 hour up to a day per
+  failing membership). A later payment of the same membership restores the plan.
 - **Delay.** The API Worker reads the plan from `accounts.plan` with each key lookup and caches
   lookups for 60 s per isolate, so a plan change reaches every search within a minute. There is
   no cross-isolate invalidation.
