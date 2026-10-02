@@ -1,6 +1,7 @@
 import { DAY_MS, PAST_DUE_GRACE_DAYS } from "@emojisense/platform";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import type { Env } from "../../src/worker/env";
+import { parseWhopEvent, planWhopEvent, type WhopEvent } from "../../src/worker/whop/events";
 import { accountIdOf, body, createHarness, type Harness, NOW } from "./harness";
 import {
   checkoutMetadata,
@@ -38,6 +39,12 @@ function billingOf(h: Harness, accountId: string): BillingRow {
   );
   if (!row) throw new Error("no account");
   return row;
+}
+
+function parsed(h: Harness, payload: unknown): WhopEvent {
+  const event = parseWhopEvent(payload, h.clock.now);
+  if (!event) throw new Error("not a handled event");
+  return event;
 }
 
 const eventIds = (h: Harness) => h.db.rows<{ id: string }>("SELECT id FROM whop_events").map((r) => r.id);
@@ -628,6 +635,39 @@ describe("POST /api/whop/webhook: failed payments, cancellation and the end", ()
       paymentEvent(h, "payment.failed", { membershipId: "mem_other", whopPlanId: WHOP_PLANS.pro.month }),
     );
     expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", billing_status: "active" });
+  });
+
+  it("an older event planned at the same time as a newer one cannot overwrite it", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId);
+    const context = { db: h.db, planIds: WHOP_PLANS, environment: "development" };
+    // Both read the account before either writes, as two parallel deliveries would.
+    const older = await planWhopEvent(
+      context,
+      parsed(
+        h,
+        paymentEvent(h, "payment.failed", {
+          membershipId: "mem_1",
+          whopPlanId: WHOP_PLANS.pro.month,
+          at: NOW + DAY_MS,
+        }),
+      ),
+    );
+    const newer = await planWhopEvent(
+      context,
+      parsed(
+        h,
+        membershipEvent(h, "membership.deactivated", {
+          membershipId: "mem_1",
+          whopPlanId: WHOP_PLANS.pro.month,
+          at: NOW + 2 * DAY_MS,
+        }),
+      ),
+    );
+    assert(older.result === "applied" && newer.result === "applied");
+    await h.db.batch(newer.statements);
+    await h.db.batch(older.statements);
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "free", billing_status: "canceled" });
   });
 
   it("an event older than the last one applied changes nothing (Whop does not keep order)", async () => {

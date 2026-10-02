@@ -170,6 +170,12 @@ async function accountFromMetadata(
 const isStale = (account: AccountRow, event: WhopEvent) =>
   account.billing_event_at !== null && event.at < account.billing_event_at;
 
+/**
+ * The same rule inside each UPDATE, so two events of one account handled at the same time cannot
+ * let the older one win. Binds: the event time.
+ */
+const NOT_OLDER = "(billing_event_at IS NULL OR billing_event_at <= ?)";
+
 /** payment.succeeded and membership.activated: the account gets the paid plan. */
 async function activate(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
   if (!event.membershipId || !event.whopPlanId) return ignored("missing_fields");
@@ -209,7 +215,7 @@ async function activate(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEv
     .prepare(
       `UPDATE accounts SET plan = ?, billing_status = ?, billing_interval = ?, whop_membership_id = ?,
          current_period_end = ?, billing_grace_until = NULL, whop_manage_url = ?, billing_event_at = ?
-       WHERE id = ?`,
+       WHERE id = ? AND ${NOT_OLDER}`,
     )
     .bind(
       bought.plan,
@@ -220,6 +226,7 @@ async function activate(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEv
       manageUrl,
       event.at,
       account.id,
+      event.at,
     );
   return { result: "applied", accountId: account.id, status, statements: [update], replacedMembershipId };
 }
@@ -251,9 +258,9 @@ async function pastDue(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEve
   const update = ctx.db
     .prepare(
       `UPDATE accounts SET billing_status = 'past_due', billing_grace_until = ?, billing_event_at = ?
-       WHERE id = ?`,
+       WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
     )
-    .bind(graceUntil, event.at, account.id);
+    .bind(graceUntil, event.at, account.id, account.whop_membership_id, event.at);
   return {
     result: "applied",
     accountId: account.id,
@@ -274,9 +281,9 @@ async function deactivate(ctx: WhopEventContext, event: WhopEvent): Promise<Whop
     .prepare(
       `UPDATE accounts SET plan = 'free', billing_status = 'canceled', billing_grace_until = NULL,
          current_period_end = COALESCE(?, current_period_end), billing_event_at = ?
-       WHERE id = ?`,
+       WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
     )
-    .bind(event.periodEnd, event.at, found.account.id);
+    .bind(event.periodEnd, event.at, found.account.id, found.account.whop_membership_id, event.at);
   return {
     result: "applied",
     accountId: found.account.id,
@@ -302,9 +309,17 @@ async function cancelAtPeriodEnd(ctx: WhopEventContext, event: WhopEvent): Promi
     .prepare(
       `UPDATE accounts SET billing_status = ?, current_period_end = COALESCE(?, current_period_end),
          whop_manage_url = COALESCE(?, whop_manage_url), billing_event_at = ?
-       WHERE id = ?`,
+       WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
     )
-    .bind(status, event.periodEnd, event.manageUrl, event.at, account.id);
+    .bind(
+      status,
+      event.periodEnd,
+      event.manageUrl,
+      event.at,
+      account.id,
+      account.whop_membership_id,
+      event.at,
+    );
   return {
     result: "applied",
     accountId: account.id,
