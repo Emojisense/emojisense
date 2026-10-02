@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/wp-env.json",
+  "plugins": ["."],
+  "port": 8850,
+  "mysqlPort": 8852,
+  "testsPort": 8851,
+  "config": {
+    "WP_DEBUG": true,
+    "SCRIPT_DEBUG": false
+  },
+  "env": {
+    "tests": {
+      "mysqlPort": 8853
+    }
+  }
+}

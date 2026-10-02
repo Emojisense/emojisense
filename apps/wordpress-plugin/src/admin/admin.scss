@@ -1,0 +1,36 @@
+.emojisense-settings__lead {
+  max-width: 44rem;
+  font-size: 0.875rem;
+}
+
+.emojisense-settings__choice {
+  display: block;
+  margin-bottom: 0.375rem;
+}
+
+.emojisense-settings__emoji {
+  font-size: 1.125rem;
+  letter-spacing: 0.125rem;
+}
+
+.emojisense-settings__origins code {
+  user-select: all;
+}
+
+// API settings stay editable without the connection, but read as inactive.
+.emojisense-settings__row--off th,
+.emojisense-settings__row--off td {
+  opacity: 0.6;
+}
+
+.emojisense-settings__test-result {
+  margin-left: 0.5rem;
+}
+
+.emojisense-settings__test-result.is-ok {
+  color: #00a32a;
+}
+
+.emojisense-settings__test-result.is-error {
+  color: #d63638;
+}

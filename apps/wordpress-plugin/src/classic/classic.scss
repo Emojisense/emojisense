@@ -1,0 +1,6 @@
+@use "../shared/popover";
+
+// TinyMCE draws `image` buttons at 20px; keep the smiley crisp at that size.
+.mce-toolbar .mce-btn button .mce-ico[style*="image/svg"] {
+  background-size: 1.25rem 1.25rem;
+}

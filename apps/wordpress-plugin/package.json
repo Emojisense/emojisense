@@ -1,0 +1,25 @@
+{
+  "name": "@emojisense/wordpress-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WordPress plugin: emoji by meaning in the block editor, the classic editor, comments and post reactions.",
+  "license": "GPL-2.0-or-later",
+  "scripts": {
+    "build": "wp-scripts build && node scripts/copy-data.mjs",
+    "dev": "wp-scripts start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "release": "node scripts/release.mjs"
+  },
+  "dependencies": {
+    "@emojisense/web-component": "workspace:*",
+    "emojisense": "workspace:*"
+  },
+  "devDependencies": {
+    "@emojisense/data": "workspace:*",
+    "@types/node": "24.13.6",
+    "@wordpress/scripts": "36.0.0",
+    "happy-dom": "20.14.5",
+    "playwright-core": "1.63.0"
+  }
+}
