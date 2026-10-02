@@ -36,7 +36,15 @@ export {
   type ResultSource,
   type SearchResult,
 } from "./engine.js";
-export { type FuseOptions, fuse, fuseResults, shouldUseSemantic } from "./fusion.js";
+export {
+  DEFAULT_SEMANTIC_CALIBRATION,
+  type FuseOptions,
+  fuse,
+  fuseResults,
+  type SemanticCalibration,
+  semanticConfidence,
+  shouldUseSemantic,
+} from "./fusion.js";
 export { boundedEditDistance } from "./fuzzy.js";
 export { groupLabel } from "./groups.js";
 export { baseId, hexcodeOf } from "./ids.js";

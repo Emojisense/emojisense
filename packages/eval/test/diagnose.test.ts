@@ -11,6 +11,7 @@ import {
   renderCounts,
   vocabularyOf,
 } from "../src/diagnose.ts";
+import { calibrateSemantic } from "../src/metrics.ts";
 
 /** Synthetic evidence: a miss in every mode unless a test says otherwise. */
 const evidence = (fields: Partial<QueryEvidence> = {}): QueryEvidence => ({
@@ -26,6 +27,23 @@ const evidence = (fields: Partial<QueryEvidence> = {}): QueryEvidence => ({
   gateCalled: true,
   disputed: false,
   ...fields,
+});
+
+describe("semantic calibration", () => {
+  it("takes the misses' 25th percentile as floor and the hits' median as ceiling", () => {
+    const misses = [0.3, 0.4, 0.42, 0.5].map((best) => ({ best, hit: false }));
+    const hits = [0.5, 0.55, 0.6, 0.7].map((best) => ({ best, hit: true }));
+    expect(calibrateSemantic([...misses, ...hits])).toEqual({ floor: 0.4, ceiling: 0.6 });
+  });
+
+  it("keeps the floor below the ceiling and gives no trust without hits", () => {
+    const close = [
+      { best: 0.6, hit: false },
+      { best: 0.58, hit: true },
+    ];
+    expect(calibrateSemantic(close)).toEqual({ floor: 0.53, ceiling: 0.58 });
+    expect(calibrateSemantic([{ best: 0.9, hit: false }])).toEqual({ floor: 1, ceiling: 1.05 });
+  });
 });
 
 describe("ranks", () => {

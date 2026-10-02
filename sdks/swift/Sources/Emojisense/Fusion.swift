@@ -53,13 +53,43 @@ public enum Fusion {
     return Array((pinned + rest).prefix(max(0, options.limit)))
   }
 
-  /// Fusion with weights derived from how sure the alias engine is.
+  /// Cosine range of the semantic model over which its top match goes from "rarely right" to
+  /// "usually right".
+  public struct SemanticCalibration: Sendable, Equatable {
+    public var floor: Double
+    public var ceiling: Double
+
+    public init(floor: Double, ceiling: Double) {
+      self.floor = floor
+      self.ceiling = ceiling
+    }
+
+    /// bge-m3 @1024, the production model. Same values as `DEFAULT_SEMANTIC_CALIBRATION` in
+    /// packages/core/src/fusion.ts; another model or dims needs its own (`pnpm eval` measures them).
+    public static let standard = SemanticCalibration(floor: 0.44, ceiling: 0.58)
+  }
+
+  /// How sure the semantic tier is, 0–1, from its best cosine score.
+  public static func semanticConfidence(
+    _ semantic: [SearchResult], calibration: SemanticCalibration = .standard
+  ) -> Double {
+    let best = semantic.reduce(0) { max($0, $1.score) }
+    let value = (best - calibration.floor) / (calibration.ceiling - calibration.floor)
+    return min(1, max(0, value))
+  }
+
+  /// Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when
+  /// its best match is strong, down to 0.4 when it is weak, so a weak semantic list no longer
+  /// outranks an alias hit.
   public static func fuse(
-    alias: AliasSearchOutput, semantic: [SearchResult], limit: Int = 24
+    alias: AliasSearchOutput, semantic: [SearchResult], limit: Int = 24,
+    calibration: SemanticCalibration = .standard
   ) -> [SearchResult] {
     fuseResults(
       alias: alias.results.map(\.searchResult), semantic: semantic,
-      options: Options(limit: limit, aliasWeight: 0.4 + alias.confidence, semanticWeight: 1))
+      options: Options(
+        limit: limit, aliasWeight: 0.4 + alias.confidence,
+        semanticWeight: 0.4 + 0.6 * semanticConfidence(semantic, calibration: calibration)))
   }
 
   /// Should this query also go to the semantic tier? Yes when the alias engine is unsure, or when

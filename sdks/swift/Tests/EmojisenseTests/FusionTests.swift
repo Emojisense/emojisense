@@ -38,6 +38,40 @@ final class FusionTests: XCTestCase {
       Fusion.fuseResults(alias: [], semantic: many, options: Fusion.Options(limit: 10)).count, 10)
   }
 
+  private func aliasOutput(_ confidence: Double, _ emoji: [String]) -> AliasSearchOutput {
+    let results = emoji.enumerated().map { index, value in
+      AliasResult(
+        emoji: value, id: value, score: confidence - Double(index) * 0.01, label: value, match: "q",
+        field: .alias)
+    }
+    return AliasSearchOutput(query: "q", tokens: ["q"], results: results, confidence: confidence)
+  }
+
+  private func semanticList(_ best: Double) -> [SearchResult] {
+    ["S1", "S2", "S3", "S4"].enumerated().map { result($1, best - Double($0) * 0.01, .semantic) }
+  }
+
+  func testMapsTheBestCosineBetweenTheCalibrationFloorAndCeiling() {
+    XCTAssertEqual(Fusion.semanticConfidence([]), 0)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.4)), 0)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.51)), 0.5, accuracy: 1e-9)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.8)), 1)
+    XCTAssertEqual(
+      Fusion.semanticConfidence(
+        semanticList(0.5), calibration: Fusion.SemanticCalibration(floor: 0.2, ceiling: 0.6)),
+      0.75, accuracy: 1e-9)
+  }
+
+  func testKeepsAnUnsureAliasHitAboveAWeakSemanticList() {
+    let fused = Fusion.fuse(alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.42), limit: 4)
+    XCTAssertEqual(fused.map(\.emoji), ["A1", "A2", "S1", "S2"])
+  }
+
+  func testStillLetsASureSemanticListLeadAnUnsureAliasList() {
+    let fused = Fusion.fuse(alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.7), limit: 4)
+    XCTAssertEqual(fused.map(\.emoji), ["S1", "S2", "S3", "S4"])
+  }
+
   func testAsksTheSemanticTierOnlyWhenTheAliasTierIsUnsure() {
     let output = { (tokens: [String], confidence: Double) in
       AliasSearchOutput(query: "", tokens: tokens, results: [], confidence: confidence)

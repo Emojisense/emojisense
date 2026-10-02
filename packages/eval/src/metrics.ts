@@ -67,6 +67,25 @@ export function macroAverage(groups: readonly Summary[]): Summary {
   };
 }
 
+/**
+ * Semantic calibration from labelled queries: `floor` = 25th percentile of the best cosine of
+ * the semantic misses, `ceiling` = median best cosine of the hits (2 decimals). The scale differs
+ * per model and per truncation, so every vector file gets its own (DECISIONS.md, quality diagnosis).
+ */
+export function calibrateSemantic(queries: readonly { best: number; hit: boolean }[]): {
+  floor: number;
+  ceiling: number;
+} {
+  const round = (n: number) => Math.round(n * 100) / 100;
+  const misses = queries.filter((q) => !q.hit).map((q) => q.best);
+  const hits = queries.filter((q) => q.hit).map((q) => q.best);
+  // A model that never hits earns no trust: its confidence stays 0 below a cosine of 1.
+  if (hits.length === 0) return { floor: 1, ceiling: 1.05 };
+  const ceiling = round(percentile(hits, 50));
+  const floor = misses.length ? round(percentile(misses, 25)) : ceiling - 0.15;
+  return { floor: round(Math.min(floor, ceiling - 0.05)), ceiling };
+}
+
 export function percentile(values: number[], p: number): number {
   if (values.length === 0) return Number.NaN;
   const sorted = [...values].sort((a, b) => a - b);
