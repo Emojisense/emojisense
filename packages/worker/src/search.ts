@@ -1,7 +1,14 @@
 import { normalize, type SearchResult } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
-import { BROWSER_CACHE, EDGE_CACHE_SECONDS, MAX_LIMIT, SEARCH_DEFAULT_LIMIT } from "./config.ts";
+import {
+  BROWSER_CACHE,
+  CULTURE_BROWSER_CACHE,
+  EDGE_CACHE_SECONDS,
+  MAX_LIMIT,
+  SEARCH_DEFAULT_LIMIT,
+} from "./config.ts";
 import type { Handler } from "./context.ts";
+import { type ApiCultureResult, applyServerCulture, parseCultureParams } from "./culture.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
 import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
@@ -9,7 +16,8 @@ import { indexTag, modelTag, rank } from "./semantic.ts";
 /** Response of /v1/search and /v1/suggest-reactions (docs/API.md). */
 export interface SearchBody {
   query: string;
-  results: SearchResult[];
+  /** With `culture=1`, culture results (`source: "culture"`) carry `context` and `cultureId`. */
+  results: (SearchResult | ApiCultureResult)[];
   packVersion: string;
   model: string;
   cached: boolean;
@@ -22,6 +30,11 @@ export interface SearchBody {
    * mode), or the locale's pack could not be loaded and the results are semantic-only.
    */
   aliasLocale: string | null;
+  /**
+   * Search only. The culture file applied with `culture=1`: its first day and the caller's
+   * region. null when culture is off, or no culture file could be loaded for the locale.
+   */
+  culture?: { from: string; region: string | null } | null;
 }
 
 function parseParams(url: URL) {
@@ -55,6 +68,21 @@ export const handleSearch: Handler = async (
   if (!locale) return unknownLocale(url.searchParams.get("locale"));
   const tenant = parseTenant(url.searchParams.get("tenant"));
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
+  const cultureParams = parseCultureParams(url);
+  if (cultureParams instanceof Response) return cultureParams;
+  // Culture is applied per request after the shared cache (never stored in it), like custom emoji.
+  const cultureFile = cultureParams.enabled ? await catalog.culture?.(locale, env) : undefined;
+  const withCulture = (results: SearchResult[]): SearchResult[] =>
+    cultureFile
+      ? applyServerCulture(results, cultureFile, params.query, {
+          engine: catalog.engine(),
+          locale,
+          region: cultureParams.region,
+          limit: params.limit,
+          now: Date.now(),
+        })
+      : results;
+  const culture = cultureFile ? { from: cultureFile.from, region: cultureParams.region ?? null } : null;
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
   const customSet = await custom.forCaller(caller, tenant);
   const customResults = customSet.search(imageOrigin(env, url), params.query, {
@@ -62,7 +90,10 @@ export const handleSearch: Handler = async (
     prefix: true,
   });
   const withCustom = (results: SearchResult[]) => mergeCustom(customResults, results, params.limit);
-  const browserCache = customSet.rows.length > 0 ? CUSTOM_BROWSER_CACHE : BROWSER_CACHE;
+  /** What the caller sees: culture on the canonical ranking, then their custom emoji first. */
+  const present = (results: SearchResult[]) => withCustom(withCulture(results));
+  const browserCache =
+    customSet.rows.length > 0 ? CUSTOM_BROWSER_CACHE : cultureFile ? CULTURE_BROWSER_CACHE : BROWSER_CACHE;
   const log = (outcome: Outcome, scores: { aliasConfidence?: number; semanticTop?: number } = {}) =>
     record(env, indexTag(catalog), {
       endpoint: "search",
@@ -94,10 +125,11 @@ export const handleSearch: Handler = async (
     log(overLimit ? "hit_over_limit" : "hit");
     const body: SearchBody = {
       ...cached,
-      results: withCustom(cached.results),
+      results: present(cached.results),
       cached: true,
       degraded: false,
       overLimit: false,
+      culture,
     };
     metering.recordSearch(params.query, body.results.length);
     return json(body, 200, {
@@ -115,11 +147,12 @@ export const handleSearch: Handler = async (
     log("over_limit", { aliasConfidence: ranked?.aliasConfidence });
     const body: SearchBody = {
       ...base,
-      results: withCustom(ranked?.results ?? []),
+      results: present(ranked?.results ?? []),
       cached: false,
       degraded: false,
       overLimit: true,
       aliasLocale: ranked?.aliasLocale ?? null,
+      culture,
     };
     metering.recordSearch(params.query, body.results.length);
     return json(body, 200, {
@@ -149,7 +182,7 @@ export const handleSearch: Handler = async (
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }
-  const answer: SearchBody = { ...body, results: withCustom(body.results) };
+  const answer: SearchBody = { ...body, results: present(body.results), culture };
   metering.recordSearch(params.query, answer.results.length);
   log(ranked.degraded ? "degraded" : "miss", {
     aliasConfidence: ranked.aliasConfidence,
