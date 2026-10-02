@@ -1,6 +1,10 @@
 import type { EmojiSuggestion, EmojiSuggestionProps, EmojiSuggestionRenderer } from "@emojisense/tiptap";
 import type { AliasEngine } from "emojisense";
+import type { DemoMessages } from "../../i18n/demos";
+import { interpolate, splitTags } from "../../i18n/translate";
 import { describeEmoji, matchesFor } from "./describe";
+
+export type DocMenuWords = DemoMessages["doc"]["menu"];
 
 export interface DocMenuController {
   isOpen(): boolean;
@@ -23,12 +27,6 @@ export interface DocMenu {
 
 let menuCount = 0;
 
-const KEY_HINTS: [keys: string[], action: string][] = [
-  [["↑", "↓"], "move"],
-  [["↵"], "insert"],
-  [["esc"], "close"],
-];
-
 function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string) {
   const node = document.createElement(tag);
   node.className = className;
@@ -40,7 +38,17 @@ function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: strin
  * The `:` menu in the site's style: emoji, `:code:` and why it matched. Same contract and
  * keys as the package's default menu (an ARIA listbox; focus stays in the editor).
  */
-export function createDocMenu(getEngine: () => AliasEngine | undefined, onPointerDown: () => void): DocMenu {
+export function createDocMenu(
+  getEngine: () => AliasEngine | undefined,
+  onPointerDown: () => void,
+  words: DocMenuWords,
+  locale: string,
+): DocMenu {
+  const keyHints: [keys: string[], action: string][] = [
+    [["↑", "↓"], words.move],
+    [["↵"], words.insert],
+    [["esc"], words.close],
+  ];
   const id = `doc-menu-${++menuCount}`;
   let root: HTMLElement | undefined;
   let heading: HTMLElement | undefined;
@@ -61,10 +69,10 @@ export function createDocMenu(getEngine: () => AliasEngine | undefined, onPointe
     listbox = element("div", "doc-menu-list");
     listbox.id = id;
     listbox.setAttribute("role", "listbox");
-    listbox.setAttribute("aria-label", "Emoji suggestions");
+    listbox.setAttribute("aria-label", words.label);
     const foot = element("div", "doc-menu-foot");
     foot.setAttribute("aria-hidden", "true");
-    for (const [keys, action] of KEY_HINTS) {
+    for (const [keys, action] of keyHints) {
       const hint = element("span", "");
       hint.append(...keys.map((key) => element("kbd", "", key)), ` ${action}`);
       foot.append(hint);
@@ -93,11 +101,18 @@ export function createDocMenu(getEngine: () => AliasEngine | undefined, onPointe
   function renderRows() {
     if (!listbox || !heading) return;
     const engine = getEngine();
-    const matches = engine && query ? matchesFor(engine, query) : new Map();
-    heading.replaceChildren("Emoji matching ", element("code", "", `:${query ?? ""}`));
+    const matches = engine && query ? matchesFor(engine, query, locale) : new Map();
+    heading.replaceChildren(
+      ...splitTags(words.matching).map((part) => {
+        const text = interpolate(part.text, { query: query ?? "" });
+        return part.tag === "code" ? element("code", "", text) : text;
+      }),
+    );
     listbox.replaceChildren(
       ...items.map((item, index) => {
-        const info = engine ? describeEmoji(engine, item.id, item.source, matches.get(item.id)) : undefined;
+        const info = engine
+          ? describeEmoji(engine, item.id, item.source, matches.get(item.id), words, locale)
+          : undefined;
         const row = element("div", "doc-menu-row");
         row.id = optionId(index);
         row.setAttribute("role", "option");

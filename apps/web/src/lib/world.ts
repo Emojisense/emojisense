@@ -730,8 +730,22 @@ export function project(lon: number, lat: number): { x: number; y: number } {
   return { x: (wrapped - MAP.west) * SCALE, y: (MAP.north - lat) * SCALE };
 }
 
-/** One SVG path of zero-length segments: with round caps, each segment draws a dot. */
+const dotsCache = new Map<number, string>();
+
+/**
+ * One SVG path of zero-length segments: with round caps, each segment draws a dot. Computed once
+ * per step: every language version of the landing page draws the same map.
+ */
 export function landDots(step = 2.4): string {
+  let dots = dotsCache.get(step);
+  if (dots === undefined) {
+    dots = computeLandDots(step);
+    dotsCache.set(step, dots);
+  }
+  return dots;
+}
+
+function computeLandDots(step: number): string {
   const parts: string[] = [];
   let row = 0;
   for (let lat = MAP.north - step / 2; lat > MAP.south; lat -= step, row++) {

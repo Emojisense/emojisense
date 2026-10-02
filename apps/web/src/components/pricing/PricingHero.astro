@@ -1,18 +1,23 @@
 ---
+import { i18nFor } from "../../i18n/page";
 import Pricing from "../Pricing.astro";
 
-const assurances = ["No card for the free plan", "Never a hard failure at a limit", "MIT-licensed core"];
+const { t, parts } = i18nFor(Astro);
+const assurances = [
+  t("pricing.hero.assurances.card"),
+  t("pricing.hero.assurances.failure"),
+  t("pricing.hero.assurances.mit"),
+];
 ---
 
 <section class="pricing-hero" aria-labelledby="pricing-title">
   <div class="container">
     <div class="pricing-hero-head">
-      <p class="kicker"><span class="emoji" aria-hidden="true">💸</span> Pricing</p>
-      <h1 id="pricing-title">Free to start. <span>Fair when you grow.</span></h1>
-      <p class="lead">
-        The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for
-        volume, photos, custom emoji and team features.
-      </p>
+      <p class="kicker"><span class="emoji" aria-hidden="true">💸</span> {t("pricing.hero.kicker")}</p>
+      <h1 id="pricing-title">
+        {parts("pricing.hero.title").map((part) => (part.tag === "line" ? <span>{part.text}</span> : part.text))}
+      </h1>
+      <p class="lead">{t("pricing.hero.lead")}</p>
     </div>
     <Pricing headingLevel={2} />
     <ul class="pricing-assurances">

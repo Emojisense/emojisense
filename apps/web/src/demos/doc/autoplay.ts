@@ -2,7 +2,7 @@ import { EmojiAutocompletePluginKey } from "@emojisense/tiptap";
 import { TextSelection } from "@tiptap/pm/state";
 import type { EditorView } from "@tiptap/pm/view";
 import type { AliasEngine } from "emojisense";
-import { finalLines, SCRIPT, type ScriptLine, SUMMARY_HEADING } from "./content";
+import { finalLines, type ScriptLine } from "./content";
 import type { DocEditor } from "./editor";
 import { presenceKey } from "./presence";
 import { sleep } from "./sleep";
@@ -91,7 +91,7 @@ export async function playScript(doc: DocEditor, scroller: HTMLElement, name: st
   follow(view, scroller);
   await sleep(900, signal);
 
-  for (const [index, line] of SCRIPT.entries()) {
+  for (const [index, line] of doc.copy.script.entries()) {
     if (index > 0) {
       newLine(view);
       follow(view, scroller);
@@ -127,11 +127,11 @@ export function finishScript(doc: DocEditor) {
   if (!paragraph) return;
   let start = -1;
   state.doc.forEach((node, offset) => {
-    if (node.type.name === "heading" && node.textContent === SUMMARY_HEADING) start = offset + node.nodeSize;
+    if (node.type.name === "heading" && node.textContent === doc.copy.summary) start = offset + node.nodeSize;
   });
   if (start < 0) return;
   const lines = [
-    ...finalLines().map((text) => paragraph.create(null, state.schema.text(text))),
+    ...finalLines(doc.copy).map((text) => paragraph.create(null, state.schema.text(text))),
     paragraph.create(),
   ];
   view.dispatch(

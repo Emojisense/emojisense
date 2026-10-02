@@ -6,36 +6,68 @@ import "@fontsource/dm-mono/latin-ext-400.css";
 import "@fontsource-variable/bricolage-grotesque/opsz.css";
 import "@fontsource-variable/hanken-grotesk/index.css";
 import "../styles/global.css";
+import "../i18n/scripts.css";
 import Footer from "../components/Footer.astro";
 import Nav from "../components/Nav.astro";
 import { INDEXABLE, SITE_URL } from "../config";
-import { shareImageFor } from "../lib/og";
+import { DEFAULT_LOCALE, isLocalizedPath, LOCALE_INFO, LOCALES, localizePath } from "../i18n/locales";
+import { i18nFor } from "../i18n/page";
+import { SHARE_IMAGES, shareImageFor } from "../lib/og";
 
 interface Props {
   /** Page title without the site name. Omit on the home page. */
   title?: string;
   description: string;
-  /** Path of this page, e.g. "/pricing/". Used for the canonical URL and the active nav item. */
+  /**
+   * English path of this page, e.g. "/pricing/". Used for the canonical URL, the language
+   * alternates and the active nav item. The page's language comes from its URL.
+   */
   path: string;
   /** Structured data (schema.org) for search engines. */
   jsonLd?: Record<string, unknown>;
 }
 
 const { title, description, path, jsonLd } = Astro.props;
-const fullTitle = title ? `${title} · Emojisense` : "Emojisense: the emoji platform for every app";
-const canonical = `${SITE_URL}${path}`;
+const { t, locale } = i18nFor(Astro);
+const info = LOCALE_INFO[locale];
+const fullTitle = title ? `${title} · Emojisense` : t("meta.homeTitle");
+const canonical = `${SITE_URL}${localizePath(path, locale)}`;
 const shareImage = shareImageFor(path);
 const shareImageUrl = `${SITE_URL}${shareImage.path}`;
+// The cards themselves are English images; their descriptions follow the page (docs are English).
+const shareAlt =
+  shareImage === SHARE_IMAGES.home
+    ? t("meta.shareAlt.home")
+    : shareImage === SHARE_IMAGES.pricing
+      ? t("meta.shareAlt.pricing")
+      : shareImage.alt;
+// Pages in every language list each other; English-only pages have no alternates.
+const alternates = isLocalizedPath(path)
+  ? LOCALES.map((code) => ({
+      hreflang: LOCALE_INFO[code].tag,
+      href: `${SITE_URL}${localizePath(path, code)}`,
+    }))
+  : [];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={info.tag} dir={info.dir}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {
+      alternates.length > 0 && (
+        <>
+          {alternates.map((alternate) => (
+            <link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+          ))}
+          <link rel="alternate" hreflang="x-default" href={`${SITE_URL}${localizePath(path, DEFAULT_LOCALE)}`} />
+        </>
+      )
+    }
     {!INDEXABLE && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -46,6 +78,13 @@ const shareImageUrl = `${SITE_URL}${shareImage.path}`;
     <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Emojisense" />
+    <meta property="og:locale" content={info.og} />
+    {
+      alternates.length > 0 &&
+        LOCALES.filter((code) => code !== locale).map((code) => (
+          <meta property="og:locale:alternate" content={LOCALE_INFO[code].og} />
+        ))
+    }
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
@@ -53,28 +92,28 @@ const shareImageUrl = `${SITE_URL}${shareImage.path}`;
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content={String(shareImage.width)} />
     <meta property="og:image:height" content={String(shareImage.height)} />
-    <meta property="og:image:alt" content={shareImage.alt} />
+    <meta property="og:image:alt" content={shareAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={shareImageUrl} />
-    <meta name="twitter:image:alt" content={shareImage.alt} />
+    <meta name="twitter:image:alt" content={shareAlt} />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
   </head>
   <body>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">{t("meta.skipLink")}</a>
     <Nav path={path} />
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    <Footer />
+    <Footer path={path} />
   </body>
 </html>
 
 <style is:global>
   .skip-link {
     position: absolute;
-    left: 1rem;
+    inset-inline-start: 1rem;
     top: -4rem;
     z-index: 100;
     padding: 0.5rem 1rem;

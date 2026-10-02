@@ -31,7 +31,7 @@
   flex-direction: column;
   align-items: center;
   padding: 1rem 0;
-  border-right: 0.0625rem solid var(--line);
+  border-inline-end: 0.0625rem solid var(--line);
   background: var(--bg-soft);
 }
 
@@ -47,7 +47,7 @@
 .ws-glide {
   position: absolute;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   width: var(--ws-tile);
   height: var(--ws-tile);
   border-radius: var(--radius);
@@ -62,7 +62,7 @@
   position: absolute;
   top: 28%;
   bottom: 28%;
-  left: -0.875rem;
+  inset-inline-start: -0.875rem;
   width: 0.25rem;
   border-radius: 0 var(--pill) var(--pill) 0;
   background: var(--ink);
@@ -144,7 +144,7 @@
 }
 
 .ws-channel span {
-  margin-right: 0.125rem;
+  margin-inline-end: 0.125rem;
 }
 
 .ws-tenant {
@@ -392,7 +392,7 @@
 }
 
 .ws-chips-label {
-  margin-right: 0.125rem;
+  margin-inline-end: 0.125rem;
   color: var(--ink-3);
   font: 400 0.75rem / 1 var(--font-mono);
 }
@@ -460,7 +460,7 @@
 
 .ws-group-from::before {
   content: "·";
-  margin-right: 0.4375rem;
+  margin-inline-end: 0.4375rem;
   color: var(--ink-3);
 }
 
@@ -641,7 +641,7 @@
 
 .ws-timing {
   flex: none;
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--ink-3);
   font: 400 0.6875rem / 1 var(--font-mono);
   white-space: nowrap;
@@ -655,7 +655,7 @@
   min-height: 0;
   padding: 1rem 1.125rem 1.125rem;
   overflow-y: auto;
-  border-left: 0.0625rem solid var(--line);
+  border-inline-start: 0.0625rem solid var(--line);
   background: var(--bg-soft);
 }
 
@@ -885,7 +885,7 @@
   .ws-rail {
     flex-direction: row;
     padding: 0.75rem 1rem;
-    border-right: 0;
+    border-inline-end: 0;
     border-bottom: 0.0625rem solid var(--line);
   }
 
@@ -899,11 +899,15 @@
     transform: translateX(calc(var(--ws-index) * (var(--ws-tile) + var(--ws-gap))));
   }
 
+  .ws-glide:dir(rtl) {
+    transform: translateX(calc(var(--ws-index) * -1 * (var(--ws-tile) + var(--ws-gap))));
+  }
+
   .ws-glide::before {
     top: auto;
-    right: 28%;
+    inset-inline-end: 28%;
     bottom: -0.75rem;
-    left: 28%;
+    inset-inline-start: 28%;
     width: auto;
     height: 0.1875rem;
     border-radius: var(--pill) var(--pill) 0 0;
@@ -941,7 +945,7 @@
   .ws-aside {
     overflow: visible;
     border-top: 0.0625rem solid var(--line);
-    border-left: 0;
+    border-inline-start: 0;
   }
 
   .ws-set {

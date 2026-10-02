@@ -1,6 +1,9 @@
 ---
 /** A quiet "Works with" row for under the hero. Place it inside a `.container`. */
+import { i18nFor } from "../i18n/page";
 import { LOGO_VIEWBOX, LOGOS, type LogoName } from "../lib/logos";
+
+const { t } = i18nFor(Astro);
 
 const names: LogoName[] = [
   "react",
@@ -17,7 +20,7 @@ const names: LogoName[] = [
 ---
 
 <div class="strip">
-  <p class="strip-label">Works with</p>
+  <p class="strip-label">{t("home.logos.worksWith")}</p>
   <ul class="strip-list">
     {
       names.map((name) => {

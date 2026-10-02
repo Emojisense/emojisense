@@ -18,10 +18,12 @@ export const TaskList = Node.create({
 
 const CHECK_PATH = "M3.5 8.5l3 3 6-7";
 
-export const TaskItem = Node.create({
+export const TaskItem = Node.create<{ done: string; notDone: string }>({
   name: "taskItem",
   content: "paragraph",
   defining: true,
+
+  addOptions: () => ({ done: "Done", notDone: "Not done" }),
 
   addAttributes: () => ({
     checked: {
@@ -40,6 +42,7 @@ export const TaskItem = Node.create({
   },
 
   addNodeView() {
+    const { done, notDone } = this.options;
     return ({ node: initial, getPos, editor }) => {
       let node = initial;
       const item = document.createElement("li");
@@ -66,7 +69,7 @@ export const TaskItem = Node.create({
         const checked = node.attrs.checked === true;
         item.dataset.checked = String(checked);
         checkbox.checked = checked;
-        checkbox.setAttribute("aria-label", checked ? "Done" : "Not done");
+        checkbox.setAttribute("aria-label", checked ? done : notDone);
       };
       sync();
 

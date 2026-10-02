@@ -6,12 +6,21 @@ import { pricingFaqs } from "../components/pricing/faq";
 import PricingFaq from "../components/pricing/PricingFaq.astro";
 import PricingHero from "../components/pricing/PricingHero.astro";
 import { DASHBOARD_URL, SITE_URL } from "../config";
+import { LOCALE_INFO, localizePath } from "../i18n/locales";
+import { i18nFor } from "../i18n/page";
+import { pricingLocaleFor } from "../i18n/pricing";
 import Base from "../layouts/Base.astro";
 import { planViews } from "../lib/pricing";
 
-const url = `${SITE_URL}/pricing/`;
-const faqs = pricingFaqs();
-const offers = planViews(DASHBOARD_URL).map((plan) => ({
+const { t, locale, tag, messages } = i18nFor(Astro);
+const url = `${SITE_URL}${localizePath("/pricing/", locale)}`;
+const faqs = pricingFaqs(undefined, {
+  tag,
+  items: messages.pricing.faq.items,
+  unlimited: messages.plans.unlimited,
+  docsInEnglish: locale !== "en",
+});
+const offers = planViews(DASHBOARD_URL, undefined, pricingLocaleFor(locale)).map((plan) => ({
   "@type": "Offer",
   name: plan.name,
   price: plan.monthlyUsd,
@@ -25,6 +34,7 @@ const jsonLd = {
     {
       "@type": "FAQPage",
       url,
+      inLanguage: LOCALE_INFO[locale].tag,
       mainEntity: faqs.map((faq) => ({
         "@type": "Question",
         name: faq.q,
@@ -35,12 +45,7 @@ const jsonLd = {
 };
 ---
 
-<Base
-  title="Pricing"
-  description="Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume, photos, custom emoji and teams."
-  path="/pricing/"
-  jsonLd={jsonLd}
->
+<Base title={t("meta.pricing.title")} description={t("meta.pricing.description")} path="/pricing/" jsonLd={jsonLd}>
   <PricingHero />
   <ComparisonTable />
   <CallsExplainer />
@@ -50,11 +55,13 @@ const jsonLd = {
   <section class="final" aria-labelledby="final-title">
     <div class="container final-inner">
       <p class="final-emoji emoji" aria-hidden="true">🦖</p>
-      <h2 id="final-title">Start free. Grow when you are ready.</h2>
-      <p>Get a key in a minute and keep the free plan as long as it fits.</p>
+      <h2 id="final-title">{t("pricing.final.title")}</h2>
+      <p>{t("pricing.final.text")}</p>
       <div class="final-ctas">
-        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
-        <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
+        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>{t("pricing.final.ctaKey")}</a>
+        <a class="btn btn-secondary btn-lg" href="/docs/" hreflang={locale === "en" ? undefined : "en"}>
+          {t("pricing.final.ctaDocs")}
+        </a>
       </div>
     </div>
   </section>

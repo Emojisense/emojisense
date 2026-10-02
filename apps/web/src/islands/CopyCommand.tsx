@@ -1,24 +1,29 @@
 import { useEffect, useRef, useState } from "react";
+import type { Messages } from "../i18n/catalogs";
+import { useTranslator } from "../i18n/react";
 import "./copy-command.css";
 
 type CopyState = "idle" | "copied" | "selected";
 
 const RESET_MS = 1600;
 
-const ANNOUNCEMENTS: Record<CopyState, string> = {
-  idle: "",
-  copied: "Copied",
-  selected: "Command selected. Copy it with your keyboard.",
-};
-
 export interface CopyCommandProps {
   command: string;
   /** Shown before the command, e.g. "$". Pass "" for a snippet that is not a shell command. */
   prompt?: string | undefined;
+  messages: Messages["copyCommand"];
+  /** Intl tag of the page. */
+  lang: string;
 }
 
 /** A command chip: one click copies it and shows "Copied". */
-export function CopyCommand({ command, prompt = "$" }: CopyCommandProps) {
+export function CopyCommand({ command, prompt = "$", messages, lang }: CopyCommandProps) {
+  const t = useTranslator(messages, lang);
+  const announcements: Record<CopyState, string> = {
+    idle: "",
+    copied: t.t("copied"),
+    selected: t.t("selectedStatus"),
+  };
   const [state, setState] = useState<CopyState>("idle");
   const textRef = useRef<HTMLElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -45,7 +50,7 @@ export function CopyCommand({ command, prompt = "$" }: CopyCommandProps) {
         type="button"
         className="copycmd"
         data-state={state}
-        aria-label={`Copy command: ${command}`}
+        aria-label={t.t("copy", { command })}
         onClick={copy}
       >
         {prompt && (
@@ -53,7 +58,7 @@ export function CopyCommand({ command, prompt = "$" }: CopyCommandProps) {
             {prompt}
           </span>
         )}
-        <code className="copycmd-text" ref={textRef}>
+        <code className="copycmd-text" dir="ltr" ref={textRef}>
           {command}
         </code>
         <svg className="copycmd-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -64,11 +69,11 @@ export function CopyCommand({ command, prompt = "$" }: CopyCommandProps) {
           <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
             <path d="M3.5 8.5l3 3 6-7" />
           </svg>
-          {state === "selected" ? "Selected" : "Copied"}
+          {state === "selected" ? t.t("selected") : t.t("copied")}
         </span>
       </button>
       <span className="visually-hidden" role="status">
-        {ANNOUNCEMENTS[state]}
+        {announcements[state]}
       </span>
     </>
   );

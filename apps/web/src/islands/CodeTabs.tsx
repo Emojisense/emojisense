@@ -1,4 +1,6 @@
 import { type KeyboardEvent, useId, useRef, useState } from "react";
+import type { Messages } from "../i18n/catalogs";
+import { horizontalStep, useTranslator } from "../i18n/react";
 
 export interface CodeSample {
   id: string;
@@ -7,7 +9,15 @@ export interface CodeSample {
 }
 
 /** Install snippets as tabs, with a copy button. */
-export function CodeTabs({ samples }: { samples: CodeSample[] }) {
+export interface CodeTabsProps {
+  samples: CodeSample[];
+  messages: Messages["codeTabs"];
+  /** Intl tag of the page. */
+  lang: string;
+}
+
+export function CodeTabs({ samples, messages, lang }: CodeTabsProps) {
+  const t = useTranslator(messages, lang);
   const [active, setActive] = useState(samples[0]?.id ?? "");
   const [copied, setCopied] = useState(false);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -28,13 +38,9 @@ export function CodeTabs({ samples }: { samples: CodeSample[] }) {
   // WAI-ARIA tabs: one tab stop; arrows, Home and End move between tabs.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = samples.findIndex((s) => s.id === active);
-    const target: Record<string, number> = {
-      ArrowRight: (index + 1) % samples.length,
-      ArrowLeft: (index - 1 + samples.length) % samples.length,
-      Home: 0,
-      End: samples.length - 1,
-    };
-    const nextIndex = target[event.key];
+    const step = horizontalStep(event);
+    const target: Record<string, number> = { Home: 0, End: samples.length - 1 };
+    const nextIndex = step === 0 ? target[event.key] : (index + step + samples.length) % samples.length;
     const next = nextIndex === undefined ? undefined : samples[nextIndex];
     if (nextIndex === undefined || !next) return;
     event.preventDefault();
@@ -45,7 +51,7 @@ export function CodeTabs({ samples }: { samples: CodeSample[] }) {
   return (
     <div className="code-tabs">
       <div className="code-bar">
-        <div className="code-tablist" role="tablist" aria-label="Install examples" onKeyDown={onKeyDown}>
+        <div className="code-tablist" role="tablist" aria-label={t.t("label")} onKeyDown={onKeyDown}>
           {samples.map((s, i) => (
             <button
               key={s.id}
@@ -65,11 +71,11 @@ export function CodeTabs({ samples }: { samples: CodeSample[] }) {
           ))}
         </div>
         <button type="button" className="code-copy" onClick={copy}>
-          {copied ? "Copied ✓" : "Copy"}
-          <span className="visually-hidden"> {current?.label} example</span>
+          {copied ? t.t("copied") : t.t("copy")}
+          <span className="visually-hidden"> {t.t("example", { label: current?.label ?? "" })}</span>
         </button>
         <span className="visually-hidden" role="status">
-          {copied ? "Copied" : ""}
+          {copied ? t.t("copiedStatus") : ""}
         </span>
       </div>
       {current && (

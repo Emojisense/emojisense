@@ -1,42 +1,48 @@
 ---
 import { PLAN_IDS, PLANS } from "@emojisense/platform";
 import { REPO_URL } from "../../config";
+import { i18nFor } from "../../i18n/page";
 
 /** config.ts has no sales address yet, so custom requests go to GitHub Discussions. */
 const contactUrl = `${REPO_URL}/discussions`;
 const topPlan = PLANS[PLAN_IDS[PLAN_IDS.length - 1] ?? "scale"].name;
-const openParts = ["Engine", "SDKs", "Data pack", "API server", "Dashboard"];
+const { t, locale } = i18nFor(Astro);
+const openParts = [
+  t("pricing.beyond.oss.parts.engine"),
+  t("pricing.beyond.oss.parts.sdks"),
+  t("pricing.beyond.oss.parts.pack"),
+  t("pricing.beyond.oss.parts.api"),
+  t("pricing.beyond.oss.parts.dashboard"),
+];
 ---
 
 <section class="section beyond" aria-labelledby="beyond-title">
   <div class="container">
-    <h2 id="beyond-title" class="visually-hidden">Self-hosting and custom plans</h2>
+    <h2 id="beyond-title" class="visually-hidden">{t("pricing.beyond.title")}</h2>
     <div class="beyond-grid">
       <article class="beyond-card beyond-oss">
-        <p class="kicker"><span class="emoji" aria-hidden="true">🧰</span> Open source</p>
-        <h3>Prefer to run it yourself?</h3>
-        <p>
-          The core of Emojisense is MIT. Run it on your own Cloudflare account with no license fee, and pay
-          Cloudflare directly. Hosted plans add daily dictionary updates, analytics, hosted emoji sets and zero
-          operations.
-        </p>
-        <ul class="beyond-parts" aria-label="MIT-licensed parts">
+        <p class="kicker"><span class="emoji" aria-hidden="true">🧰</span> {t("pricing.beyond.oss.kicker")}</p>
+        <h3>{t("pricing.beyond.oss.title")}</h3>
+        <p>{t("pricing.beyond.oss.body")}</p>
+        <ul class="beyond-parts" aria-label={t("pricing.beyond.oss.partsLabel")}>
           {openParts.map((part) => <li>{part}</li>)}
         </ul>
         <div class="beyond-links">
-          <a class="btn btn-secondary" href="/docs/self-host/">Self-host guide</a>
-          <a class="beyond-link" href={REPO_URL}>View on GitHub <span aria-hidden="true">→</span></a>
+          <a class="btn btn-secondary" href="/docs/self-host/" hreflang={locale === "en" ? undefined : "en"}>
+            {t("pricing.beyond.oss.guide")}
+          </a>
+          <a class="beyond-link" href={REPO_URL}>
+            {t("pricing.beyond.oss.github")} <span class="flip-rtl" aria-hidden="true">→</span>
+          </a>
         </div>
       </article>
 
       <article class="beyond-card">
-        <p class="kicker"><span class="emoji" aria-hidden="true">🏗️</span> Custom</p>
-        <h3>Need more than {topPlan}?</h3>
-        <p>
-          Higher limits, many tenants, or a setup that does not fit a plan? Tell us what you are building.
-        </p>
+        <p class="kicker"><span class="emoji" aria-hidden="true">🏗️</span> {t("pricing.beyond.custom.kicker")}</p>
+        <h3>{t("pricing.beyond.custom.title", { plan: topPlan })}</h3>
+        <p>{t("pricing.beyond.custom.body")}</p>
         <div class="beyond-links">
-          <a class="btn btn-secondary" href={contactUrl}>Start a conversation</a>
+          <a class="btn btn-secondary" href={contactUrl}>{t("pricing.beyond.custom.cta")}</a>
         </div>
       </article>
     </div>

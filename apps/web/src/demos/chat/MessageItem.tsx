@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { formatClock, type Message, PEOPLE } from "./content";
+import { useDemoI18n } from "../../i18n/demos";
+import { formatClock, type Message, people } from "./content";
 
 const EMOJI_GRAPHEME = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u;
 const graphemes = new Intl.Segmenter("en", { granularity: "grapheme" });
@@ -52,8 +53,9 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, grouped, nameOf, onToggleReaction, children }: MessageItemProps) {
-  const person = PEOPLE[message.author];
-  const time = formatClock(message.minute);
+  const { t, lang } = useDemoI18n();
+  const person = people(t)[message.author];
+  const time = formatClock(message.minute, lang);
   return (
     <article
       className={`chat-msg${grouped ? " is-grouped" : ""}${message.fresh ? " is-fresh" : ""}`}
@@ -61,7 +63,7 @@ export function MessageItem({ message, grouped, nameOf, onToggleReaction, childr
     >
       {grouped ? (
         <time className="chat-msg-gutter-time" aria-hidden="true">
-          {time.replace(/ (AM|PM)$/, "")}
+          {formatClock(message.minute, lang, true)}
         </time>
       ) : (
         <Avatar initials={person.initials} tone={person.tone} />
@@ -77,7 +79,7 @@ export function MessageItem({ message, grouped, nameOf, onToggleReaction, childr
           <RichText text={message.text} />
         </p>
         {message.reactions.length > 0 && (
-          <ul className="chat-reactions" aria-label="Reactions">
+          <ul className="chat-reactions" aria-label={t.t("chat.reactionsLabel")}>
             {message.reactions.map((r) => {
               const pop = r.bump > 0 ? " is-pop" : "";
               return (
@@ -89,7 +91,7 @@ export function MessageItem({ message, grouped, nameOf, onToggleReaction, childr
                     type="button"
                     className="chat-pill"
                     aria-pressed={r.mine}
-                    aria-label={`${nameOf(r.emoji)}: ${r.count} ${r.count === 1 ? "reaction" : "reactions"}`}
+                    aria-label={t.plural("chat.reactionCount", r.count, { name: nameOf(r.emoji) })}
                     onClick={() => onToggleReaction(r.emoji)}
                   >
                     <span key={r.bump} className={`emoji chat-pill-emoji${pop}`}>

@@ -7,12 +7,17 @@ import LogoStrip from "../components/LogoStrip.astro";
 import NetworkEffect from "../components/NetworkEffect.astro";
 import Pricing from "../components/Pricing.astro";
 import { API_URL, DASHBOARD_URL, REPO_URL } from "../config";
+import { heroExamples } from "../i18n/examples";
+import { i18nFor } from "../i18n/page";
 import { CodeTabs } from "../islands/CodeTabs";
 import { HeroSearch } from "../islands/HeroSearch";
 import { UseCases } from "../islands/UseCases";
 import Base from "../layouts/Base.astro";
-import { packUrl } from "../lib/engine-client";
 import { comparisons, stats } from "../lib/showcase";
+
+const { t, locale, tag, messages } = i18nFor(Astro);
+/** English examples on a translated page are marked, so screen readers read them as English. */
+const exampleLang = locale === "en" ? undefined : "en";
 
 const samples = [
   {
@@ -28,7 +33,7 @@ const sense = useEmojisense({ packBaseUrl, endpoint, publishableKey });
   },
   {
     id: "wc",
-    label: "Any framework",
+    label: t("home.developers.anyFramework"),
     code: `<script type="module" src="https://unpkg.com/@emojisense/web-component"></script>
 
 <emojisense-picker
@@ -56,60 +61,39 @@ engine.search("ship it").results; // → 🚀 🚢 🛳️ …`,
   },
 ];
 
-const faqs = [
-  {
-    q: "What is Emojisense?",
-    a: "One platform for everything emoji in your product: search that understands people in 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets, analytics and per-customer emoji for platforms. It plugs into the app and the picker you already have.",
-  },
-  {
-    q: "Do I need a server?",
-    a: "No. The engine and dictionary run in the browser or app. The hosted API adds meaning search for unusual queries; you can also self-host it on your own Cloudflare account.",
-  },
-  {
-    q: "Which pickers and frameworks work?",
-    a: "React and the Frimousse picker today, plus a web component for Vue, Svelte, Angular and plain HTML, editor extensions for Tiptap and Lexical, a Swift SDK, a Chrome extension, Raycast and an MCP server for AI apps.",
-  },
-  {
-    q: "What happens when I reach my plan limit?",
-    a: "Nothing breaks for your users. Popular searches still get smart answers, and the on-device dictionary covers everything else until the next month.",
-  },
-  {
-    q: "Where does it run?",
-    a: "The engine runs on your users' devices. The API runs on Cloudflare's network in 300+ cities, so every search is answered close to the person typing it. There is no single region to be far from.",
-  },
-  {
-    q: "What do you know about my users?",
-    a: "Nothing personal. We never store who searched, from which app, or what they wrote in a message. Your usage and analytics stay in your account.",
-  },
-  {
-    q: "Is it open source?",
-    a: "Yes. The engine, SDKs, data pack and API server are MIT. The hosted service adds daily dictionary updates, analytics and custom emoji.",
-  },
-];
+const FAQ_KEYS = ["what", "server", "pickers", "limit", "where", "privacy", "openSource"] as const;
+const faqs = FAQ_KEYS.map((key) => ({ q: t(`home.faq.items.${key}.q`), a: t(`home.faq.items.${key}.a`) }));
+
+const COMPARE_KINDS: Record<string, "intent" | "meaning" | "typo" | "film" | "feeling" | "idiom"> = {
+  Intent: "intent",
+  Meaning: "meaning",
+  Typo: "typo",
+  Film: "film",
+  Feeling: "feeling",
+  Idiom: "idiom",
+};
+const kindLabel = (kind: string) => {
+  const key = COMPARE_KINDS[kind];
+  return key ? t(`home.compare.kinds.${key}`) : kind;
+};
 ---
 
-<Base
-  description="The emoji platform for every app: search that understands slang and 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets and analytics. Free plan, open-source core."
-  path="/"
->
+<Base description={t("meta.home.description")} path="/">
   <section class="hero">
-    {/* The hero's first answers need the English pack: fetch it while the page's scripts load. */}
+    {/* The hero's packs come from the API: open the connection early. The island fetches the packs
+        itself, after the first paint, so they never compete with it (a preload in the HTML did:
+        Lighthouse counted it in the LCP of every language). */}
     <link rel="preconnect" href={API_URL} crossorigin />
-    <link rel="preload" href={packUrl("en")} as="fetch" crossorigin fetchpriority="low" />
     <div class="container hero-inner">
-      <p class="kicker hero-kicker"><span class="live" aria-hidden="true"></span> Live · runs in your browser</p>
-      <h1>Everything emoji, for every app on&nbsp;earth.</h1>
-      <p class="hero-lead">
-        Search that understands slang, films, feelings and {stats.languages} languages. Reaction suggestions, photo
-        to emoji, custom emoji, one consistent look on every device, and analytics. One platform, plugged into the
-        app you already have.
-      </p>
-      <HeroSearch client:load />
+      <p class="kicker hero-kicker"><span class="live" aria-hidden="true"></span> {t("home.hero.kicker")}</p>
+      <h1>{t("home.hero.title")}</h1>
+      <p class="hero-lead">{t("home.hero.lead", { languages: stats.languages })}</p>
+      <HeroSearch client:load messages={messages.hero} lang={tag} examples={heroExamples(locale)} />
       <div class="hero-ctas">
-        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
-        <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
+        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>{t("home.hero.ctaKey")}</a>
+        <a class="btn btn-secondary btn-lg" href="/docs/" hreflang={exampleLang}>{t("home.hero.ctaDocs")}</a>
       </div>
-      <p class="install"><code>npm install emojisense</code><span>Free plan · no card needed · MIT core</span></p>
+      <p class="install"><code>npm install emojisense</code><span>{t("home.hero.installNote")}</span></p>
     </div>
     <div class="container hero-logos"><LogoStrip /></div>
   </section>
@@ -117,36 +101,40 @@ const faqs = [
   <section id="use-cases" class="section section-soft" aria-labelledby="uc-title">
     <div class="container">
       <div class="section-head center">
-        <p class="kicker">Use cases</p>
-        <h2 id="uc-title">One platform, everywhere people use emoji.</h2>
-        <p class="lead">Five small apps, all running the real thing. Click around — they are live.</p>
+        <p class="kicker">{t("home.useCases.kicker")}</p>
+        <h2 id="uc-title">{t("home.useCases.title")}</h2>
+        <p class="lead">{t("home.useCases.lead")}</p>
       </div>
-      <UseCases client:visible />
+      <UseCases client:visible messages={messages.demos} lang={tag} />
     </div>
   </section>
 
   <section class="section" aria-labelledby="compare-title">
     <div class="container">
       <div class="section-head">
-        <p class="kicker">Why it matters</p>
-        <h2 id="compare-title">Pickers match names. People type feelings.</h2>
-        <p class="lead">Most emoji pickers only search official names like “rocket” or “goat”. Here is the same emoji data, searched both ways.</p>
+        <p class="kicker">{t("home.compare.kicker")}</p>
+        <h2 id="compare-title">{t("home.compare.title")}</h2>
+        <p class="lead">{t("home.compare.lead")}</p>
       </div>
       <div class="compare" role="table" aria-labelledby="compare-title">
         <div class="compare-head" role="row">
-          <span role="columnheader">Someone types</span>
-          <span role="columnheader">Typical picker</span>
-          <span role="columnheader">Emojisense</span>
+          <span role="columnheader">{t("home.compare.colQuery")}</span>
+          <span role="columnheader">{t("home.compare.colPicker")}</span>
+          <span role="columnheader">{t("home.compare.colUs")}</span>
         </div>
         {
           comparisons.map((c) => (
             <div class="compare-row" role="row">
               <span class="q" role="rowheader">
-                <strong>“{c.query}”</strong>
-                <small>{c.kind}</small>
+                <strong lang={exampleLang}>“{c.query}”</strong>
+                <small>{kindLabel(c.kind)}</small>
               </span>
               <span class="them" role="cell">
-                {c.name.length > 0 ? <span class="emoji dim">{c.name.join(" ")}</span> : <span class="none">No results</span>}
+                {c.name.length > 0 ? (
+                  <span class="emoji dim">{c.name.join(" ")}</span>
+                ) : (
+                  <span class="none">{t("home.compare.noResults")}</span>
+                )}
               </span>
               <span class="us" role="cell">
                 {c.emojisense.map((e, i) => (
@@ -173,26 +161,26 @@ const faqs = [
   <section id="developers" class="section" aria-labelledby="code-title">
     <div class="container code-grid">
       <div>
-        <p class="kicker">For developers</p>
-        <h2 id="code-title" class="h2">Add it in minutes, not sprints.</h2>
-        <p class="lead">One SDK for search and pickers, one API for reactions, photos and custom emoji, and integrations for the stack you already use.</p>
+        <p class="kicker">{t("home.developers.kicker")}</p>
+        <h2 id="code-title" class="h2">{t("home.developers.title")}</h2>
+        <p class="lead">{t("home.developers.lead")}</p>
         <ul class="checks">
-          <li>Keeps your picker and your design</li>
-          <li>Works offline from the first keystroke</li>
-          <li>MIT-licensed core you can self-host</li>
+          <li>{t("home.developers.checks.picker")}</li>
+          <li>{t("home.developers.checks.offline")}</li>
+          <li>{t("home.developers.checks.mit")}</li>
         </ul>
-        <a class="btn btn-secondary" href="/docs/">Read the quickstart</a>
+        <a class="btn btn-secondary" href="/docs/" hreflang={exampleLang}>{t("home.developers.cta")}</a>
       </div>
-      <CodeTabs client:visible samples={samples} />
+      <CodeTabs client:visible samples={samples} messages={messages.codeTabs} lang={tag} />
     </div>
   </section>
 
   <section id="pricing" class="section section-soft" aria-labelledby="pricing-title">
     <div class="container">
       <div class="section-head center">
-        <p class="kicker">Pricing</p>
-        <h2 id="pricing-title">Free to start. Fair when you grow.</h2>
-        <p class="lead">Search and reaction suggestions are on every plan. Pay for volume, photos, custom emoji and team features.</p>
+        <p class="kicker">{t("home.pricing.kicker")}</p>
+        <h2 id="pricing-title">{t("home.pricing.title")}</h2>
+        <p class="lead">{t("home.pricing.lead")}</p>
       </div>
       <Pricing />
     </div>
@@ -201,8 +189,8 @@ const faqs = [
   <section id="faq" class="section" aria-labelledby="faq-title">
     <div class="container faq-wrap">
       <div class="section-head">
-        <p class="kicker">FAQ</p>
-        <h2 id="faq-title">Questions, answered.</h2>
+        <p class="kicker">{t("home.faq.kicker")}</p>
+        <h2 id="faq-title">{t("home.faq.title")}</h2>
       </div>
       <div class="faq">
         {
@@ -220,11 +208,11 @@ const faqs = [
   <section class="final" aria-labelledby="final-title">
     <div class="container final-inner">
       <p class="final-emoji emoji" aria-hidden="true" data-play-in-view>🦖</p>
-      <h2 id="final-title">Emoji, solved. Everywhere.</h2>
-      <p>Give your users emoji that just work — in every language, on every device. Free to start, ready in minutes.</p>
+      <h2 id="final-title">{t("home.final.title")}</h2>
+      <p>{t("home.final.text")}</p>
       <div class="hero-ctas">
-        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
-        <a class="btn btn-secondary btn-lg" href={REPO_URL}>Star on GitHub</a>
+        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>{t("home.final.ctaKey")}</a>
+        <a class="btn btn-secondary btn-lg" href={REPO_URL}>{t("home.final.ctaGithub")}</a>
       </div>
     </div>
   </section>
@@ -448,9 +436,13 @@ const faqs = [
   }
 
   .checks li {
-    padding-left: 1.5rem;
+    padding-inline-start: 1.5rem;
     background: no-repeat 0 0.45em / 0.75rem
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 5.5 4 8l5-6' fill='none' stroke='%230f9f74' stroke-width='1.6'/%3E%3C/svg%3E");
+  }
+
+  .checks li:dir(rtl) {
+    background-position: right 0 top 0.45em;
   }
 
   .code-grid :global(.code-tabs) {
@@ -493,7 +485,7 @@ const faqs = [
   .code-grid :global(.code-copy) {
     flex: none;
     align-self: start;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .code-grid :global(pre) {

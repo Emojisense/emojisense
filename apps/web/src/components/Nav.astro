@@ -1,34 +1,46 @@
 ---
 import { DASHBOARD_URL, REPO_URL } from "../config";
+import LanguageSwitcher from "../i18n/LanguageSwitcher.astro";
+import { DEFAULT_LOCALE, isLocalizedPath } from "../i18n/locales";
+import { i18nFor } from "../i18n/page";
 
 interface Props {
+  /** English path of the current page. */
   path: string;
 }
 
 const { path } = Astro.props;
+const { t, href, locale } = i18nFor(Astro);
 const links = [
-  { href: "/#use-cases", label: "Product" },
-  { href: "/#features", label: "Features" },
-  { href: "/#integrations", label: "Integrations" },
-  { href: "/playground/", label: "Playground" },
-  { href: "/pricing/", label: "Pricing" },
-  { href: "/docs/", label: "Docs" },
-];
+  { href: "/#use-cases", label: t("nav.product") },
+  { href: "/#features", label: t("nav.features") },
+  { href: "/#integrations", label: t("nav.integrations") },
+  { href: "/playground/", label: t("nav.playground") },
+  { href: "/pricing/", label: t("nav.pricing") },
+  { href: "/docs/", label: t("nav.docs") },
+].map((link) => ({
+  ...link,
+  url: href(link.href),
+  current: path.startsWith(link.href) && link.href !== "/" ? ("page" as const) : undefined,
+  // Translated pages mark the links that lead to English-only pages.
+  english: locale !== DEFAULT_LOCALE && !isLocalizedPath(link.href),
+}));
 ---
 
 <header class="nav">
   <div class="container nav-inner">
-    <a class="logo" href="/" aria-label="Emojisense home">
+    <a class="logo" href={href("/")} aria-label={t("nav.home")}>
       <span class="logo-mark emoji" aria-hidden="true">🦖</span>
       <span class="logo-word">emojisense</span>
     </a>
-    <nav aria-label="Main">
+    <nav class="nav-main" aria-label={t("nav.main")}>
       <ul class="links">
         {
           links.map((link) => (
             <li>
-              <a href={link.href} aria-current={path.startsWith(link.href) && link.href !== "/" ? "page" : undefined}>
+              <a href={link.url} aria-current={link.current} hreflang={link.english ? "en" : undefined}>
                 {link.label}
+                {link.english && <span class="visually-hidden"> {t("nav.inEnglish")}</span>}
               </a>
             </li>
           ))
@@ -37,23 +49,35 @@ const links = [
       </ul>
     </nav>
     <div class="actions">
-      <a class="signin" href={`${DASHBOARD_URL}/`}>Sign in</a>
-      <a class="btn btn-primary cta" href={`${DASHBOARD_URL}/`}>Get API key</a>
+      <div class="nav-lang"><LanguageSwitcher path={path} variant="menu" /></div>
+      <a class="signin" href={`${DASHBOARD_URL}/`}>{t("nav.signIn")}</a>
+      <a class="btn btn-primary cta" href={`${DASHBOARD_URL}/`}>{t("nav.getKey")}</a>
       <details class="menu">
-        <summary aria-label="Menu">
+        <summary aria-label={t("nav.menu")}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
         </summary>
-        <nav class="menu-panel" aria-label="Main (mobile)">
-          {
-            links.map((link) => (
-              <a href={link.href} aria-current={path.startsWith(link.href) && link.href !== "/" ? "page" : undefined}>
-                {link.label}
-              </a>
-            ))
-          }
-          <a href={REPO_URL}>GitHub</a>
-          <a href={`${DASHBOARD_URL}/`}>Sign in</a>
-        </nav>
+        <div class="menu-panel">
+          <nav aria-label={t("nav.mainMobile")}>
+            {
+              links.map((link) => (
+                <a href={link.url} aria-current={link.current} hreflang={link.english ? "en" : undefined}>
+                  {link.label}
+                  {link.english && (
+                    <span class="lang-hint">
+                      <span aria-hidden="true">EN</span>
+                      <span class="visually-hidden">{t("nav.inEnglish")}</span>
+                    </span>
+                  )}
+                </a>
+              ))
+            }
+            <a href={REPO_URL}>GitHub</a>
+            <a href={`${DASHBOARD_URL}/`}>{t("nav.signIn")}</a>
+          </nav>
+          <div class="menu-lang">
+            <LanguageSwitcher path={path} variant="list" />
+          </div>
+        </div>
       </details>
     </div>
   </div>
@@ -141,7 +165,7 @@ const links = [
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .cta {
@@ -202,17 +226,38 @@ const links = [
   .menu-panel {
     position: absolute;
     top: calc(100% + 0.5rem);
-    right: 0;
+    inset-inline-end: 0;
     display: grid;
     min-width: 13rem;
+    max-height: calc(100vh - 5rem);
     padding: 0.375rem;
+    overflow-y: auto;
     border: 0.0625rem solid var(--line);
     border-radius: var(--radius);
     background: var(--bg);
     box-shadow: var(--shadow-lg);
   }
 
-  .menu-panel a {
+  .menu-panel nav {
+    display: grid;
+  }
+
+  .menu-lang {
+    margin-top: 0.375rem;
+    padding: 0.75rem 0.75rem 0.5rem;
+    border-top: 0.0625rem solid var(--line);
+    font-size: 0.9375rem;
+  }
+
+  .menu-lang :global(.lang-list a) {
+    padding: 0;
+  }
+
+  .menu-lang :global(.lang-list a:hover) {
+    background: none;
+  }
+
+  .menu-panel nav a {
     padding: 0.625rem 0.75rem;
     border-radius: var(--radius-sm);
     color: var(--ink-2);
@@ -220,14 +265,14 @@ const links = [
     text-decoration: none;
   }
 
-  .menu-panel a:hover,
-  .menu-panel a[aria-current="page"] {
+  .menu-panel nav a:hover,
+  .menu-panel nav a[aria-current="page"] {
     background: var(--bg-soft);
     color: var(--ink);
   }
 
   @media (max-width: 56rem) {
-    nav[aria-label="Main"] {
+    .nav-main {
       display: none;
     }
 
@@ -238,6 +283,65 @@ const links = [
 
   @media (max-width: 26rem) {
     .signin {
+      display: none;
+    }
+  }
+
+  /*
+   * Links never wrap; when the bar gets tight, "Sign in" goes first (the key button opens the same
+   * dashboard). Translated labels are longer, so translated pages make room earlier.
+   */
+  .links a {
+    white-space: nowrap;
+  }
+
+  .actions {
+    flex: none;
+  }
+
+  @media (max-width: 62rem) {
+    .signin {
+      display: none;
+    }
+  }
+
+  @media (max-width: 84rem) {
+    :global(:root:not(:lang(en))) .signin {
+      display: none;
+    }
+  }
+
+  @media (max-width: 76rem) {
+    :global(:root:not(:lang(en))) .nav-github {
+      display: none;
+    }
+  }
+
+  /* A translated key button is long; on a small phone the dinosaur alone stands for the name. */
+  @media (max-width: 24rem) {
+    :global(:root:not(:lang(en))) .logo-word {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 62rem) {
+    :global(:root:not(:lang(en))) .nav-main {
+      display: none;
+    }
+
+    :global(:root:not(:lang(en))) .menu {
+      display: block;
+    }
+  }
+
+  /* On a phone the language list lives in the menu, so the bar keeps room for the key button. */
+  @media (max-width: 34rem) {
+    .nav-lang {
       display: none;
     }
   }

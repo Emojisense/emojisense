@@ -1,15 +1,30 @@
 ---
 import { REPO_URL } from "../config";
+import { i18nFor } from "../i18n/page";
+import { wrapTag } from "../i18n/translate";
 import { CopyCommand } from "../islands/CopyCommand";
 import { LOGO_VIEWBOX, LOGOS, type LogoName } from "../lib/logos";
 
+type ItemKey =
+  | "react"
+  | "webComponent"
+  | "engine"
+  | "tiptap"
+  | "lexical"
+  | "emojiMart"
+  | "swift"
+  | "chrome"
+  | "raycast"
+  | "mcp"
+  | "http"
+  | "selfHosted";
+
 interface Integration {
-  name: string;
+  /** Key of its name and blurb in the catalog (integrations.items). */
+  key: ItemKey;
   logos: LogoName[];
   /** A typographic mark for an integration without a brand, e.g. the HTTP API. */
   mark?: string;
-  /** One line of trusted HTML (`<code>`, `.emoji`). Every example in it is checked against the engine. */
-  blurb: string;
   command: string;
   prompt?: string;
   /** Shown when the command runs in a clone of the repository. */
@@ -18,36 +33,32 @@ interface Integration {
 }
 
 interface Group {
-  id: string;
-  title: string;
+  id: "frameworks" | "editors" | "native" | "servers";
   items: Integration[];
 }
 
+const { t, html, href, locale, tag, messages } = i18nFor(Astro);
 const readme = (path: string) => `${REPO_URL}/tree/main/${path}#readme`;
 
 const groups: Group[] = [
   {
     id: "frameworks",
-    title: "Frameworks",
     items: [
       {
-        name: "React hooks and picker",
+        key: "react",
         logos: ["react", "frimousse"],
-        blurb: "A drop-in picker built on Frimousse, or hooks for your own UI.",
         command: "npm i @emojisense/react frimousse",
         docs: "/docs/#react-frimousse",
       },
       {
-        name: "Web component",
+        key: "webComponent",
         logos: ["vue", "svelte", "angular", "javascript"],
-        blurb: "A complete picker in one tag, for any framework or none.",
         command: "npm i @emojisense/web-component",
         docs: "/docs/#web-component",
       },
       {
-        name: "JavaScript engine",
+        key: "engine",
         logos: ["javascript", "typescript"],
-        blurb: "The engine on its own: browsers, Node, Deno, Bun and Workers.",
         command: "npm i emojisense",
         docs: "/docs/#vanilla",
       },
@@ -55,27 +66,23 @@ const groups: Group[] = [
   },
   {
     id: "editors",
-    title: "Editors and pickers",
     items: [
       {
-        name: "Tiptap extension",
+        // `:fire:` → 🔥 (in the blurb) is asserted in packages/tiptap/test/extension.test.ts.
+        key: "tiptap",
         logos: ["tiptap"],
-        // `:fire:` → 🔥 is asserted in packages/tiptap/test/extension.test.ts.
-        blurb: 'Colon autocomplete. Type <code>:fire:</code>, get <span class="emoji">🔥</span>.',
         command: "npm i @emojisense/tiptap emojisense",
         docs: readme("packages/tiptap"),
       },
       {
-        name: "Lexical plugin",
+        key: "lexical",
         logos: ["lexical"],
-        blurb: "Colon autocomplete as a typeahead plugin for React.",
         command: "npm i @emojisense/lexical emojisense",
         docs: readme("packages/lexical"),
       },
       {
-        name: "emoji-mart adapter",
+        key: "emojiMart",
         logos: ["emojiMart"],
-        blurb: "Keep the emoji-mart picker. Give it search that understands people.",
         command: "npm i @emojisense/emoji-mart emojisense",
         docs: readme("packages/emoji-mart"),
       },
@@ -83,28 +90,24 @@ const groups: Group[] = [
   },
   {
     id: "native",
-    title: "Native and apps",
     items: [
       {
-        name: "Swift package",
+        key: "swift",
         logos: ["swift", "apple"],
-        blurb: "The same engine, native on iOS 16+ and macOS 13+.",
         command: "https://github.com/emojisense/emojisense-swift",
         prompt: "",
         docs: readme("sdks/swift"),
       },
       {
-        name: "Chrome extension",
+        key: "chrome",
         logos: ["chrome"],
-        blurb: "An emoji picker for every text field, one shortcut away.",
         command: "pnpm --filter @emojisense/chrome-extension build",
         fromSource: true,
         docs: readme("apps/chrome-extension"),
       },
       {
-        name: "Raycast extension",
+        key: "raycast",
         logos: ["raycast"],
-        blurb: "Search emoji by meaning from your launcher. Works offline.",
         command: "pnpm --filter emojisense-search dev",
         fromSource: true,
         docs: readme("apps/raycast"),
@@ -113,27 +116,23 @@ const groups: Group[] = [
   },
   {
     id: "servers",
-    title: "AI and servers",
     items: [
       {
-        name: "MCP server",
+        key: "mcp",
         logos: ["mcp"],
-        blurb: "Emoji search and reactions for Claude and other AI assistants.",
         command: "npx -y @emojisense/mcp",
         docs: readme("packages/mcp"),
       },
       {
-        name: "HTTP API",
+        key: "http",
         logos: [],
         mark: "GET /v1",
-        blurb: "Search, reactions and photo to emoji, from any language.",
         command: 'curl "https://api.emojisense.com/v1/search?q=ship+it"',
         docs: "/docs/api/",
       },
       {
-        name: "Self-hosted API",
+        key: "selfHosted",
         logos: ["cloudflare"],
-        blurb: "The whole API as one Worker on your own Cloudflare account.",
         command: "pnpm --filter @emojisense/worker deploy",
         fromSource: true,
         docs: "/docs/self-host/",
@@ -142,17 +141,20 @@ const groups: Group[] = [
   },
 ];
 
-const isExternal = (href: string) => /^https?:/.test(href);
+/** One line of trusted HTML: the catalog text is escaped, `<code>` and `<emoji>` become markup. */
+const blurb = (key: ItemKey) =>
+  html(`integrations.items.${key}.blurb`, {}, { code: wrapTag("code"), emoji: wrapTag("span", "emoji") });
+const isExternal = (url: string) => /^https?:/.test(url);
+/** The docs are in English; a translated page says so on its links. */
+const docsLang = locale === "en" ? undefined : "en";
 ---
 
 <section id="integrations" class="section int" aria-labelledby="integrations-title">
   <div class="container">
     <div class="section-head">
-      <p class="kicker"><span class="emoji" aria-hidden="true">🔌</span> Integrations</p>
-      <h2 id="integrations-title">Everything emoji, wherever you build.</h2>
-      <p class="lead">
-        Search, reactions, photos, custom emoji and hosted sets. Bring the whole platform to the stack you already use.
-      </p>
+      <p class="kicker"><span class="emoji" aria-hidden="true">🔌</span> {t("integrations.kicker")}</p>
+      <h2 id="integrations-title">{t("integrations.title")}</h2>
+      <p class="lead">{t("integrations.lead")}</p>
     </div>
 
     <div class="int-groups">
@@ -160,7 +162,7 @@ const isExternal = (href: string) => /^https?:/.test(href);
         groups.map((group) => (
           <div class="int-group">
             <h3 class="int-group-title" id={`int-${group.id}`}>
-              {group.title}
+              {t(`integrations.groups.${group.id}`)}
             </h3>
             <ul class="int-grid" aria-labelledby={`int-${group.id}`}>
               {group.items.map((item) => (
@@ -179,12 +181,12 @@ const isExternal = (href: string) => /^https?:/.test(href);
                         );
                       })}
                     </span>
-                    {item.fromSource && <span class="int-tag">from source</span>}
+                    {item.fromSource && <span class="int-tag">{t("integrations.fromSource")}</span>}
                   </div>
                   <h4 class="int-name">
-                    <a href={item.docs}>
-                      {item.name}
-                      <span class="visually-hidden">: docs</span>
+                    <a href={item.docs} hreflang={docsLang}>
+                      {t(`integrations.items.${item.key}.name`)}
+                      <span class="visually-hidden">{t("integrations.docsSuffix")}</span>
                       <svg
                         class:list={["int-arrow", { external: isExternal(item.docs) }]}
                         viewBox="0 0 16 16"
@@ -195,8 +197,14 @@ const isExternal = (href: string) => /^https?:/.test(href);
                       </svg>
                     </a>
                   </h4>
-                  <p class="int-blurb" set:html={item.blurb} />
-                  <CopyCommand client:visible command={item.command} prompt={item.prompt} />
+                  <p class="int-blurb" set:html={blurb(item.key)} />
+                  <CopyCommand
+                    client:visible
+                    command={item.command}
+                    prompt={item.prompt}
+                    messages={messages.copyCommand}
+                    lang={tag}
+                  />
                 </li>
               ))}
             </ul>
@@ -206,10 +214,10 @@ const isExternal = (href: string) => /^https?:/.test(href);
     </div>
 
     <p class="int-foot">
-      Custom emoji in Slack or Discord? Bring them along on Pro.
-      <a href="/pricing/">See plans</a>
+      {t("integrations.foot")}
+      <a href={href("/pricing/")}>{t("integrations.seePlans")}</a>
       <span aria-hidden="true">·</span>
-      <a href="/docs/">All docs</a>
+      <a href="/docs/" hreflang={docsLang}>{t("integrations.allDocs")}</a>
     </p>
   </div>
 </section>
@@ -380,6 +388,15 @@ const isExternal = (href: string) => /^https?:/.test(href);
 
   .int-card:hover .int-arrow.external {
     translate: 0.125rem -0.125rem;
+  }
+
+  /* A link to a page on this site points the way the text reads. */
+  .int-arrow:not(.external):dir(rtl) {
+    scale: -1 1;
+  }
+
+  .int-card:hover .int-arrow:not(.external):dir(rtl) {
+    translate: -0.1875rem 0;
   }
 
   .int-blurb {

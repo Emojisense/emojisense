@@ -1,30 +1,33 @@
 ---
+import { i18nFor } from "../i18n/page";
+
+const { t } = i18nFor(Astro);
 const layers = [
   {
     emoji: "📱",
-    title: "On the device",
-    body: "Names, slang and typos, straight from the built-in dictionary. Works offline, from the first keystroke.",
+    title: t("network.layers.device.title"),
+    body: t("network.layers.device.body"),
     speed: "< 1 ms",
     limited: false,
   },
   {
     emoji: "🗂️",
-    title: "Popular searches, ready in advance",
-    body: "Every night, the searches people use most get smart answers prepared ahead of time and placed close to your users.",
-    speed: "nearest city",
+    title: t("network.layers.popular.title"),
+    body: t("network.layers.popular.body"),
+    speed: t("network.nearestCity"),
     limited: false,
   },
   {
     emoji: "⚡",
-    title: "Recent answers, kept nearby",
-    body: "Once a new search is understood, its answer stays in the nearest city, so it comes back instantly next time.",
-    speed: "nearest city",
+    title: t("network.layers.recent.title"),
+    body: t("network.layers.recent.body"),
+    speed: t("network.nearestCity"),
     limited: false,
   },
   {
     emoji: "🧠",
-    title: "AI meaning search",
-    body: "Brand-new phrasing is understood by meaning, at the edge, in about 50 ms.",
+    title: t("network.layers.ai.title"),
+    body: t("network.layers.ai.body"),
     speed: "≈ 50 ms",
     limited: true,
   },
@@ -34,22 +37,19 @@ const layers = [
 <section id="network" class="section section-soft" aria-labelledby="network-title">
   <div class="container">
     <div class="section-head center">
-      <p class="kicker">Gets better with use</p>
-      <h2 id="network-title">The more people search, the smarter it gets.</h2>
-      <p class="lead">
-        Common searches come back instantly, new slang is learned every night, and search stays smart even when
-        your plan runs out.
-      </p>
+      <p class="kicker">{t("network.kicker")}</p>
+      <h2 id="network-title">{t("network.title")}</h2>
+      <p class="lead">{t("network.lead")}</p>
     </div>
 
     <div class="net-grid">
       <div class="ladder card">
         <div class="ladder-top">
-          <p class="ladder-title">How a search gets answered</p>
+          <p class="ladder-title">{t("network.ladderTitle")}</p>
           <label class="switch">
             <input type="checkbox" role="switch" />
             <span class="track" aria-hidden="true"><span class="thumb"></span></span>
-            <span>Plan limit reached</span>
+            <span>{t("network.limitSwitch")}</span>
           </label>
         </div>
         <ol>
@@ -64,32 +64,28 @@ const layers = [
                   <p>{l.body}</p>
                 </div>
                 <div class="rung-meta">
-                  <span class="speed">{l.speed}</span>
-                  <span class="state on">✓ answers</span>
-                  <span class="state over">{l.limited ? "⏸ until next month" : "✓ still answers"}</span>
+                  <span class="speed" dir="ltr">{l.speed}</span>
+                  <span class="state on">{t("network.answers")}</span>
+                  <span class="state over">{l.limited ? t("network.untilNextMonth") : t("network.stillAnswers")}</span>
                 </div>
               </li>
             ))
           }
         </ol>
-        <p class="ladder-note">
-          Past your plan limit, your users still get answers from the device, from popular searches and from recent
-          answers. Only brand-new phrasing waits until next month, and the device answers it meanwhile.
-        </p>
+        <p class="ladder-note">{t("network.note")}</p>
       </div>
 
       <aside class="loop card" aria-labelledby="loop-title">
-        <h3 id="loop-title">Better every day</h3>
+        <h3 id="loop-title">{t("network.loop.title")}</h3>
         <ol class="cycle">
-          <li><span class="emoji" aria-hidden="true">⌨️</span> People search</li>
-          <li><span class="emoji" aria-hidden="true">🧠</span> New slang is learned</li>
-          <li><span class="emoji" aria-hidden="true">🗂️</span> More answers ready</li>
-          <li><span class="emoji" aria-hidden="true">🚀</span> Faster, smarter results</li>
+          <li><span class="emoji" aria-hidden="true">⌨️</span> {t("network.loop.search")}</li>
+          <li><span class="emoji" aria-hidden="true">🧠</span> {t("network.loop.learn")}</li>
+          <li><span class="emoji" aria-hidden="true">🗂️</span> {t("network.loop.ready")}</li>
+          <li><span class="emoji" aria-hidden="true">🚀</span> {t("network.loop.faster")}</li>
         </ol>
-        <p class="quote">Popular searches like “congrats on the launch” come back instantly, anywhere in the world.</p>
+        <p class="quote">{t("network.loop.quote")}</p>
         <p class="privacy">
-          <span class="emoji" aria-hidden="true">🔒</span> We learn from search text only — never from who searched or
-          which app they used.
+          <span class="emoji" aria-hidden="true">🔒</span> {t("network.loop.privacy")}
         </p>
       </aside>
     </div>
@@ -158,7 +154,7 @@ const layers = [
   .thumb {
     position: absolute;
     top: 0.1875rem;
-    left: 0.1875rem;
+    inset-inline-start: 0.1875rem;
     width: 1.125rem;
     height: 1.125rem;
     border-radius: 50%;
@@ -173,6 +169,10 @@ const layers = [
 
   .switch:has(input:checked) .thumb {
     transform: translateX(1rem);
+  }
+
+  .switch:has(input:checked) .thumb:dir(rtl) {
+    transform: translateX(-1rem);
   }
 
   .switch:has(input:focus-visible) {
@@ -330,7 +330,7 @@ const layers = [
   /* Clockwise: top-left → top-right → bottom-right → bottom-left → back up. */
   .cycle li:nth-child(1)::after {
     content: "→";
-    right: -1.625rem;
+    inset-inline-end: -1.625rem;
     top: 50%;
     transform: translateY(-50%);
   }
@@ -348,7 +348,7 @@ const layers = [
 
   .cycle li:nth-child(3)::after {
     content: "←";
-    left: -1.625rem;
+    inset-inline-start: -1.625rem;
     top: 50%;
     transform: translateY(-50%);
   }
@@ -357,6 +357,15 @@ const layers = [
     order: 3;
     background: var(--ink);
     color: var(--bg);
+  }
+
+  /* Right to left the grid mirrors, so the sideways arrows swap. */
+  .cycle li:nth-child(1):dir(rtl)::after {
+    content: "←";
+  }
+
+  .cycle li:nth-child(3):dir(rtl)::after {
+    content: "→";
   }
 
   .cycle li:nth-child(4)::after {

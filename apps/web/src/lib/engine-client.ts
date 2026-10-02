@@ -1,8 +1,9 @@
 /**
- * One engine for every live demo on a page. English core loads first so the first keystroke is
- * answered at once. The other languages are heavy (all 22 packs are several MB, and indexing them
- * is seconds of main-thread work on a phone), so they load only when something asks: a demo, a
- * visitor who starts typing, or an idle page on a desktop with a fast connection. Every pack file
+ * One engine for every live demo on a page. The first engine is the English core plus the core
+ * pack of the page's language (from `<html lang>`), so the first keystroke is answered at once in
+ * the visitor's language. The other languages are heavy (all 22 packs are several MB, and indexing
+ * them is seconds of main-thread work on a phone), so they load only when something asks: a demo,
+ * a visitor who starts typing, or an idle page on a desktop with a fast connection. Every pack file
  * is fetched once and the full engine is built once, shared by all islands.
  */
 import {
@@ -27,7 +28,7 @@ type FullEngineListener = (engine: Promise<AliasEngine>) => void;
 
 const files = new Map<string, Promise<Pack>>();
 const fullEngineListeners = new Set<FullEngineListener>();
-let english: Promise<AliasEngine> | undefined;
+let first: Promise<AliasEngine> | undefined;
 let everything: Promise<AliasEngine> | undefined;
 let semantic: SemanticProvider | undefined;
 let idleUpgradeScheduled = false;
@@ -80,10 +81,35 @@ function quietFor(ms: number): Promise<void> {
   });
 }
 
-/** English core pack only: small and fast. */
-export function englishEngine(): Promise<AliasEngine> {
-  english ??= loadPack("en", "core").then((pack) => createEngine(pack));
-  return english;
+export type DemoLocale = (typeof DEMO_LOCALES)[number];
+
+/** The engine locale of the page: `<html lang="zh-Hans">` → "zh". English when unknown. */
+export function pageLocale(): DemoLocale {
+  const tag = globalThis.document?.documentElement.lang ?? "";
+  const language = tag.split("-")[0]?.toLowerCase() ?? "";
+  return DEMO_LOCALES.find((locale) => locale === language) ?? "en";
+}
+
+/** A result's label in the page's language, else English. */
+export function labelOf(
+  engine: AliasEngine | undefined,
+  id: string,
+  locale: string = pageLocale(),
+): string | undefined {
+  const labels = engine?.get(id)?.labels;
+  return labels?.[locale] ?? labels?.en;
+}
+
+/** English core plus the page language's core pack: small, fast, and in the visitor's language. */
+export function firstEngine(): Promise<AliasEngine> {
+  if (!first) {
+    const locale = pageLocale();
+    // English is the primary pack (it carries the shortcodes), so it comes first.
+    const wanted =
+      locale === "en" ? [loadPack("en", "core")] : [loadPack("en", "core"), loadPack(locale, "core")];
+    first = Promise.all(wanted).then((packs) => createEngine(packs));
+  }
+  return first;
 }
 
 /** Every language, core and extension packs. A pack that fails to load is skipped. */
@@ -97,7 +123,7 @@ export function fullEngine(): Promise<AliasEngine> {
 }
 
 async function buildFullEngine(): Promise<AliasEngine> {
-  await englishEngine();
+  await firstEngine();
   // Core packs first: the first pack is the primary one (English core, with shortcodes).
   const wanted = (["core", "ext"] as const).flatMap((part) =>
     DEMO_LOCALES.map((locale) => loadPack(locale, part)),
@@ -149,6 +175,7 @@ export function sharedSemantic(): SemanticProvider | undefined {
   return semantic;
 }
 
+/** "english" is the first engine: English, plus the page's language on a translated page. */
 export type EngineState = { engine?: AliasEngine; ready: "loading" | "english" | "all" | "failed" };
 
 export interface UseEngineOptions {
@@ -159,12 +186,12 @@ export interface UseEngineOptions {
   upgrade?: "now" | "idle";
 }
 
-/** English at once, then the full multilingual engine when it is ready. */
+/** The first engine at once, then the full multilingual engine when it is ready. */
 export function useEngine({ upgrade = "now" }: UseEngineOptions = {}): EngineState {
   const [state, setState] = useState<EngineState>({ ready: "loading" });
   useEffect(() => {
     let live = true;
-    englishEngine()
+    firstEngine()
       .then((engine) => live && setState((s) => (s.ready === "all" ? s : { engine, ready: "english" })))
       .catch(() => live && setState((s) => (s.ready === "all" ? s : { ready: "failed" })));
     const onFullEngine: FullEngineListener = (full) => {

@@ -50,7 +50,7 @@
 }
 
 .photo-hash {
-  margin-right: 0.25rem;
+  margin-inline-end: 0.25rem;
   color: var(--ink-3);
   font-weight: 500;
 }
@@ -450,7 +450,7 @@
 }
 
 .photo-picker legend {
-  float: left;
+  float: inline-start;
   width: 100%;
   padding: 0;
 }
@@ -654,7 +654,7 @@
   .photo-picker,
   .photo-upload {
     padding: 1.25rem;
-    border-left: 0.0625rem solid var(--line);
+    border-inline-start: 0.0625rem solid var(--line);
   }
 
   .photo-picker {

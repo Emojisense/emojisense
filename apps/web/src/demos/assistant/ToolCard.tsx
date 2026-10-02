@@ -1,4 +1,6 @@
 import { type CSSProperties, useId, useState } from "react";
+import { type DemoMessages, useDemoI18n } from "../../i18n/demos";
+import type { Translator } from "../../i18n/translate";
 import { Chevron, ToolIcon } from "./icons";
 import { highlightJson, inlineJson } from "./json";
 import { type EmojiSuggestion, SERVER_NAME } from "./mcp";
@@ -10,20 +12,25 @@ function preview(turn: Turn): string {
   return `“${call.name === "search_emoji" ? call.args.query : call.args.text}”`;
 }
 
-function formatMs(ms: number): string {
-  if (ms < 0.1) return "< 0.1 ms";
-  return `${ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms`;
+function formatMs(ms: number, lang: string): string {
+  const number = (value: number, digits: number) =>
+    new Intl.NumberFormat(lang, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(
+      value,
+    );
+  if (ms < 0.1) return `< ${number(0.1, 1)} ms`;
+  return `${number(ms, ms < 10 ? 1 : 0)} ms`;
 }
 
-function why(result: EmojiSuggestion): string {
-  if (result.source === "default") return "Generic reaction that fills a short list";
+function why(result: EmojiSuggestion, t: Translator<DemoMessages>): string {
+  if (result.source === "default") return t.t("assistant.tool.generic");
   const reason = result.window ?? result.match;
-  return reason ? `Matched “${reason}”` : "";
+  return reason ? t.t("assistant.tool.matched", { reason }) : "";
 }
 
 /** A tool call as a chat client shows it: request, live response, and how long it took. */
 export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void }) {
   const [view, setView] = useState<"emoji" | "json">("emoji");
+  const { t, lang } = useDemoI18n();
   const bodyId = useId();
   const { run, phase, open } = turn;
   const { call } = turn.scenario;
@@ -44,13 +51,19 @@ export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void 
           <ToolIcon name={call.name} />
         </span>
         <span className="assistant-tool-name">
-          <span className="assistant-tool-verb">{failed ? "Failed" : run ? "Used" : "Calling"}</span>{" "}
+          <span className="assistant-tool-verb">
+            {failed
+              ? t.t("assistant.tool.failed")
+              : run
+                ? t.t("assistant.tool.used")
+                : t.t("assistant.tool.calling")}
+          </span>{" "}
           <code>{call.name}</code>
         </span>
         <span className="assistant-tool-preview">{preview(turn)}</span>
         {run && results.length > 0 && (
           <span className="assistant-tool-strip">
-            <span className="visually-hidden">, {results.length} results: </span>
+            <span className="visually-hidden">{t.plural("assistant.tool.results", results.length)}</span>
             {results.slice(0, 6).map((r) => (
               <span key={r.id} className="emoji" title={r.label}>
                 {r.emoji}
@@ -60,11 +73,11 @@ export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void 
         )}
         <span className="assistant-tool-meta">
           {run ? (
-            <span title="Measured in your browser">{formatMs(run.ms)}</span>
+            <span title={t.t("assistant.tool.measured")}>{formatMs(run.ms, lang)}</span>
           ) : failed ? (
-            "error"
+            t.t("assistant.tool.error")
           ) : (
-            <span className="assistant-spinner" role="img" aria-label="Running" />
+            <span className="assistant-spinner" role="img" aria-label={t.t("assistant.tool.running")} />
           )}
         </span>
         <Chevron />
@@ -74,7 +87,7 @@ export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void 
         <div className="assistant-tool-inner">
           <div className="assistant-tool-section">
             <div className="assistant-tool-row">
-              <span className="assistant-tool-label">Request</span>
+              <span className="assistant-tool-label">{t.t("assistant.tool.request")}</span>
               <span className="assistant-tool-server">{SERVER_NAME}</span>
             </div>
             <code className="assistant-tool-args">{highlightJson(inlineJson(call.args))}</code>
@@ -82,21 +95,19 @@ export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void 
 
           <div className="assistant-tool-section">
             <div className="assistant-tool-row">
-              <span className="assistant-tool-label">Response</span>
+              <span className="assistant-tool-label">{t.t("assistant.tool.response")}</span>
               {run && (
-                <fieldset className="assistant-seg" aria-label="Response view">
+                <fieldset className="assistant-seg" aria-label={t.t("assistant.tool.view")}>
                   {(["emoji", "json"] as const).map((v) => (
                     <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)}>
-                      {v === "emoji" ? "Emoji" : "JSON"}
+                      {v === "emoji" ? t.t("assistant.tool.emoji") : "JSON"}
                     </button>
                   ))}
                 </fieldset>
               )}
             </div>
             {failed ? (
-              <p className="assistant-tool-error">
-                The emoji data did not load. Check the connection and try again.
-              </p>
+              <p className="assistant-tool-error">{t.t("assistant.tool.loadFailed")}</p>
             ) : !run ? (
               <div className="assistant-skeleton" aria-hidden="true">
                 <span />
@@ -110,11 +121,11 @@ export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void 
                 <code>{highlightJson(JSON.stringify(run.structured, null, 2))}</code>
               </pre>
             ) : results.length === 0 ? (
-              <p className="assistant-tool-error">No emoji matched.</p>
+              <p className="assistant-tool-error">{t.t("assistant.tool.none")}</p>
             ) : (
               <ul className="assistant-results">
                 {results.map((r, i) => (
-                  <li key={r.id} title={why(r)} style={{ "--i": i } as CSSProperties}>
+                  <li key={r.id} title={why(r, t)} style={{ "--i": i } as CSSProperties}>
                     <span className="emoji" aria-hidden="true">
                       {r.emoji}
                     </span>

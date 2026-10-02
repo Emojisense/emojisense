@@ -1,33 +1,37 @@
 import { createSearchSession, type SearchResult, type SessionState } from "emojisense";
 import { Fragment, type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
-import { fullEngine, sharedSemantic, useEngine } from "../lib/engine-client";
+import type { Messages } from "../i18n/catalogs";
+import type { HeroExample } from "../i18n/examples";
+import { rich, useTranslator } from "../i18n/react";
+import { fullEngine, labelOf, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
 import "./hero-search.css";
 
-/** Each example shows off one thing the engine understands. `lang` marks the non-English ones. */
-const EXAMPLES: { query: string; kind: string; lang?: string }[] = [
-  { query: "jurassic park", kind: "a film" },
-  { query: "greatest of all time", kind: "a meaning" },
-  { query: "hallowelen", kind: "a typo" },
-  { query: "feliz cumpleaños", kind: "Spanish", lang: "es" },
-  { query: "i'm exhausted", kind: "a feeling" },
-  { query: "生日快乐", kind: "Chinese", lang: "zh" },
-  { query: "congrats on the launch", kind: "an intent" },
-  { query: "kolay gelsin", kind: "Turkish", lang: "tr" },
-  { query: "break a leg", kind: "an idiom" },
-];
 const LIMIT = 9;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const reducedMotion = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-function formatMs(ms: number): string {
-  if (ms < 0.1) return "< 0.1 ms";
-  return ms < 1 ? `${ms.toFixed(2)} ms` : `${Math.round(ms)} ms`;
+function formatMs(ms: number, lang: string): string {
+  const number = (value: number, digits: number) =>
+    new Intl.NumberFormat(lang, { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(
+      value,
+    );
+  if (ms < 0.1) return `< ${number(0.1, 1)} ms`;
+  return ms < 1 ? `${number(ms, 2)} ms` : `${number(ms, 0)} ms`;
+}
+
+export interface HeroSearchProps {
+  messages: Messages["hero"];
+  /** Intl tag of the page ("es", "zh-Hans"). */
+  lang: string;
+  /** Example searches, the page's own language first. `lang` marks the others. */
+  examples: HeroExample[];
 }
 
 /** The hero: one big search box running the real engine in the visitor's browser. */
-export function HeroSearch() {
-  // English answers the first keystroke; the other languages wait for interest or an idle page.
+export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
+  const t = useTranslator(messages, lang);
+  // The page's language answers the first keystroke; the others wait for interest or an idle page.
   const { engine, ready } = useEngine({ upgrade: "idle" });
   const [query, setQuery] = useState("");
   const [state, setState] = useState<SessionState | undefined>();
@@ -39,6 +43,11 @@ export function HeroSearch() {
   const exampleRef = useRef(0);
   const id = useId();
   const multilingual = ready === "all";
+  const locale = useMemo(() => pageLocale(), []);
+  // An example in another language is ranked as that language; the visitor's own typing as the page's.
+  const searchLocale = (auto && examples[example]?.lang) || locale;
+  const firstLocales = useMemo(() => new Set(["en", locale]), [locale]);
+  const languageNames = useMemo(() => new Intl.DisplayNames([lang], { type: "language" }), [lang]);
 
   const session = useMemo(() => {
     if (!engine) return undefined;
@@ -46,11 +55,12 @@ export function HeroSearch() {
     return createSearchSession({
       engine,
       ...(semantic ? { semantic } : {}),
+      locale: searchLocale,
       limit: LIMIT,
       debounceMs: 160,
       onChange: setState,
     });
-  }, [engine]);
+  }, [engine, searchLocale]);
 
   useEffect(() => {
     session?.update(query);
@@ -59,20 +69,21 @@ export function HeroSearch() {
   useEffect(() => () => session?.dispose(), [session]);
 
   // Types the examples until the visitor takes over. Under reduced motion it shows the first one.
-  // Examples in other languages join once those packs are loaded, so none shows an English guess.
+  // Examples in a language the first engine lacks join once those packs are loaded, so none shows
+  // a guess from the wrong language.
   useEffect(() => {
     if (!auto || paused || !engine) return;
     if (reducedMotion()) {
-      setQuery(EXAMPLES[0]?.query ?? "");
+      setQuery(examples[0]?.query ?? "");
       return;
     }
     let cancelled = false;
     (async () => {
       while (!cancelled) {
         const i = exampleRef.current;
-        const current = EXAMPLES[i];
-        if (!current || (current.lang && !multilingual)) {
-          exampleRef.current = (i + 1) % EXAMPLES.length;
+        const current = examples[i];
+        if (!current || (current.lang && !firstLocales.has(current.lang) && !multilingual)) {
+          exampleRef.current = (i + 1) % examples.length;
           continue;
         }
         const chars = [...current.query];
@@ -87,13 +98,13 @@ export function HeroSearch() {
           await wait(22);
         }
         await wait(260);
-        if (!cancelled) exampleRef.current = (i + 1) % EXAMPLES.length;
+        if (!cancelled) exampleRef.current = (i + 1) % examples.length;
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [auto, paused, engine, multilingual]);
+  }, [auto, paused, engine, multilingual, examples, firstLocales]);
 
   const takeOver = (next?: string) => {
     fullEngine().catch(() => {});
@@ -108,16 +119,23 @@ export function HeroSearch() {
 
   const results: SearchResult[] = query.trim() ? (state?.results ?? []) : [];
   const current = results[active];
-  const label = (r: SearchResult) => engine?.get(r.id)?.labels.en ?? r.emoji;
+  const label = (r: SearchResult) => labelOf(engine, r.id, locale) ?? r.emoji;
   const matched = current && state?.alias.results.find((r) => r.id === current.id)?.match;
   const loading = !engine && ready !== "failed";
+  const shown = examples[example];
+  // A query in another language is named by its language ("Spanish"); the rest by what it shows.
+  const kindOf = (e: HeroExample | undefined) =>
+    !e ? "" : e.lang && e.lang !== "en" ? (languageNames.of(e.lang) ?? e.lang) : t.t(`kinds.${e.kind}`);
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     const step: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 1, ArrowUp: -1 };
+    // In a right-to-left page the arrows follow the reading direction.
+    const rtl = event.currentTarget.closest("[dir=rtl]") !== null;
     const move = step[event.key];
     if (move !== undefined && results.length > 0) {
       event.preventDefault();
-      setActive((i) => (i + move + results.length) % results.length);
+      const signed = rtl && (event.key === "ArrowRight" || event.key === "ArrowLeft") ? -move : move;
+      setActive((i) => (i + signed + results.length) % results.length);
     } else if (event.key === "Escape") {
       setQuery("");
     }
@@ -126,9 +144,11 @@ export function HeroSearch() {
   const timing = (() => {
     if (!state || !query.trim()) return undefined;
     if (state.status === "fused" && state.semanticMs !== undefined) {
-      return state.semanticCached ? "edge cache" : `${formatMs(state.semanticMs)} · edge AI`;
+      return state.semanticCached
+        ? t.t("edgeCache")
+        : t.t("edgeAi", { ms: formatMs(state.semanticMs, lang) });
     }
-    return `${formatMs(state.aliasMs)} · on your device`;
+    return t.t("onDevice", { ms: formatMs(state.aliasMs, lang) });
   })();
 
   return (
@@ -139,15 +159,16 @@ export function HeroSearch() {
           <path d="m20 20-3.5-3.5" />
         </svg>
         <label className="visually-hidden" htmlFor={`${id}-q`}>
-          Search emoji
+          {t.t("searchLabel")}
         </label>
         <input
           id={`${id}-q`}
           ref={inputRef}
           value={query}
-          placeholder="Search emoji the way people talk…"
+          placeholder={t.t("placeholder")}
           autoComplete="off"
           spellCheck={false}
+          dir="auto"
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={results.length > 0}
@@ -168,7 +189,7 @@ export function HeroSearch() {
               {timing}
             </>
           ) : ready === "failed" ? (
-            "offline"
+            t.t("offline")
           ) : null}
         </span>
       </div>
@@ -178,7 +199,7 @@ export function HeroSearch() {
           className="hs-list"
           id={`${id}-list`}
           role="listbox"
-          aria-label="Emoji results"
+          aria-label={t.t("results")}
           aria-busy={loading || undefined}
         >
           {loading &&
@@ -211,9 +232,7 @@ export function HeroSearch() {
             </button>
           ))}
         </div>
-        {engine && query.trim() && results.length === 0 && (
-          <p className="hs-empty">No match yet — keep typing.</p>
-        )}
+        {engine && query.trim() && results.length === 0 && <p className="hs-empty">{t.t("empty")}</p>}
       </div>
 
       {/* Announced only while the visitor drives: the autoplay would otherwise talk every second. */}
@@ -225,25 +244,21 @@ export function HeroSearch() {
             <span className="hs-sep" aria-hidden="true">
               ·
             </span>
-            {current.source === "semantic" ? (
-              "matched by meaning"
-            ) : matched ? (
-              <>
-                matched <q>{matched}</q>
-              </>
-            ) : (
-              "best match"
-            )}
-            {auto && <span className="hs-kind">{EXAMPLES[example]?.kind}</span>}
+            {current.source === "semantic"
+              ? t.t("byMeaning")
+              : matched
+                ? rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched })
+                : t.t("bestMatch")}
+            {auto && <span className="hs-kind">{kindOf(shown)}</span>}
           </Fragment>
         ) : (
-          <>A film, a feeling, a typo, another language — try anything.</>
+          t.t("idle")
         )}
       </p>
 
       <div className="hs-try">
-        <span className="hs-try-label">Try</span>
-        {EXAMPLES.map((e, i) => (
+        <span className="hs-try-label">{t.t("try")}</span>
+        {examples.map((e, i) => (
           <button
             key={e.query}
             type="button"
@@ -259,7 +274,7 @@ export function HeroSearch() {
         {auto && (
           // WCAG 2.2.2: moving content that starts on its own needs a way to stop it.
           <button type="button" className="hs-pause" onClick={() => setPaused((p) => !p)}>
-            {paused ? "Play demo" : "Pause demo"}
+            {paused ? t.t("play") : t.t("pause")}
           </button>
         )}
       </div>

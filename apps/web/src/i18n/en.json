@@ -1,0 +1,1181 @@
+{
+  "meta": {
+    "homeTitle": "Emojisense: the emoji platform for every app",
+    "skipLink": "Skip to content",
+    "shareAlt": {
+      "home": "Emojisense: everything emoji, for every app. Searches such as “jurassic park” and “feliz cumpleaños” with their top emoji results.",
+      "pricing": "Emojisense pricing: free to start, fair when you grow. Free, Solo, Pro and Scale plans with their monthly prices."
+    },
+    "home": {
+      "description": "The emoji platform for every app: search that understands slang and 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets and analytics. Free plan, open-source core."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "description": "Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume, photos, custom emoji and teams."
+    },
+    "waitlist": {
+      "title": "Waitlist",
+      "description": "Paid Emojisense plans are open: choose Solo, Pro or Scale on the pricing page."
+    },
+    "about": {
+      "title": "About",
+      "description": "Why Emojisense exists, how it works, how it makes money, and where it is today."
+    }
+  },
+  "nav": {
+    "home": "Emojisense home",
+    "main": "Main",
+    "mainMobile": "Main (mobile)",
+    "menu": "Menu",
+    "product": "Product",
+    "features": "Features",
+    "integrations": "Integrations",
+    "playground": "Playground",
+    "pricing": "Pricing",
+    "docs": "Docs",
+    "signIn": "Sign in",
+    "getKey": "Get API key",
+    "inEnglish": "(in English)"
+  },
+  "language": {
+    "label": "Language",
+    "current": "Language: {language}",
+    "englishOnly": "Docs, the playground and the changelog are in English for now."
+  },
+  "footer": {
+    "label": "Footer",
+    "tagline": "The complete emoji platform for every app.",
+    "ossTitle": "Open-source core",
+    "ossBody": "The engine, data packs, SDKs and API server are open source. Self-host them, or use ours.",
+    "ossMeta": "pack {pack} · Emoji {emojiVersion} · {count} emoji · {languages} languages",
+    "columns": {
+      "product": "Product",
+      "developers": "Developers",
+      "company": "Company",
+      "legal": "Legal"
+    },
+    "links": {
+      "useCases": "Use cases",
+      "features": "Features",
+      "integrations": "Integrations",
+      "playground": "Playground",
+      "pricing": "Pricing",
+      "docs": "Docs",
+      "quickstart": "Quickstart",
+      "httpApi": "HTTP API",
+      "selfHost": "Self-host",
+      "dataFlows": "How data flows",
+      "about": "About",
+      "changelog": "Changelog",
+      "reportIssue": "Report an issue",
+      "signIn": "Sign in",
+      "terms": "Terms",
+      "privacy": "Privacy",
+      "acceptableUse": "Acceptable use",
+      "subprocessors": "Subprocessors"
+    },
+    "copyright": "© {year} Emojisense",
+    "credits": "Emoji data from <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) and <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode License v3). Emoji render in your system font."
+  },
+  "home": {
+    "hero": {
+      "kicker": "Live · runs in your browser",
+      "title": "Everything emoji, for every app on\u00a0earth.",
+      "lead": "Search that understands slang, films, feelings and {languages} languages. Reaction suggestions, photo to emoji, custom emoji, one consistent look on every device, and analytics. One platform, plugged into the app you already have.",
+      "ctaKey": "Get a free API key",
+      "ctaDocs": "Read the docs",
+      "installNote": "Free plan · no card needed · MIT core"
+    },
+    "logos": {
+      "worksWith": "Works with"
+    },
+    "useCases": {
+      "kicker": "Use cases",
+      "title": "One platform, everywhere people use emoji.",
+      "lead": "Five small apps, all running the real thing. Click around — they are live."
+    },
+    "compare": {
+      "kicker": "Why it matters",
+      "title": "Pickers match names. People type feelings.",
+      "lead": "Most emoji pickers only search official names like “rocket” or “goat”. Here is the same emoji data, searched both ways.",
+      "colQuery": "Someone types",
+      "colPicker": "Typical picker",
+      "colUs": "Emojisense",
+      "noResults": "No results",
+      "kinds": {
+        "intent": "Intent",
+        "meaning": "Meaning",
+        "typo": "Typo",
+        "film": "Film",
+        "feeling": "Feeling",
+        "idiom": "Idiom"
+      }
+    },
+    "developers": {
+      "kicker": "For developers",
+      "title": "Add it in minutes, not sprints.",
+      "lead": "One SDK for search and pickers, one API for reactions, photos and custom emoji, and integrations for the stack you already use.",
+      "checks": {
+        "picker": "Keeps your picker and your design",
+        "offline": "Works offline from the first keystroke",
+        "mit": "MIT-licensed core you can self-host"
+      },
+      "cta": "Read the quickstart",
+      "anyFramework": "Any framework"
+    },
+    "pricing": {
+      "kicker": "Pricing",
+      "title": "Free to start. Fair when you grow.",
+      "lead": "Search and reaction suggestions are on every plan. Pay for volume, photos, custom emoji and team features."
+    },
+    "faq": {
+      "kicker": "FAQ",
+      "title": "Questions, answered.",
+      "items": {
+        "what": {
+          "q": "What is Emojisense?",
+          "a": "One platform for everything emoji in your product: search that understands people in 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets, analytics and per-customer emoji for platforms. It plugs into the app and the picker you already have."
+        },
+        "server": {
+          "q": "Do I need a server?",
+          "a": "No. The engine and dictionary run in the browser or app. The hosted API adds meaning search for unusual queries; you can also self-host it on your own Cloudflare account."
+        },
+        "pickers": {
+          "q": "Which pickers and frameworks work?",
+          "a": "React and the Frimousse picker today, plus a web component for Vue, Svelte, Angular and plain HTML, editor extensions for Tiptap and Lexical, a Swift SDK, a Chrome extension, Raycast and an MCP server for AI apps."
+        },
+        "limit": {
+          "q": "What happens when I reach my plan limit?",
+          "a": "Nothing breaks for your users. Popular searches still get smart answers, and the on-device dictionary covers everything else until the next month."
+        },
+        "where": {
+          "q": "Where does it run?",
+          "a": "The engine runs on your users' devices. The API runs on Cloudflare's network in 300+ cities, so every search is answered close to the person typing it. There is no single region to be far from."
+        },
+        "privacy": {
+          "q": "What do you know about my users?",
+          "a": "Nothing personal. We never store who searched, from which app, or what they wrote in a message. Your usage and analytics stay in your account."
+        },
+        "openSource": {
+          "q": "Is it open source?",
+          "a": "Yes. The engine, SDKs, data pack and API server are MIT. The hosted service adds daily dictionary updates, analytics and custom emoji."
+        }
+      }
+    },
+    "final": {
+      "title": "Emoji, solved. Everywhere.",
+      "text": "Give your users emoji that just work — in every language, on every device. Free to start, ready in minutes.",
+      "ctaKey": "Get a free API key",
+      "ctaGithub": "Star on GitHub"
+    }
+  },
+  "features": {
+    "kicker": "Features",
+    "title": "Everything emoji, in one place.",
+    "lead": "Search, reactions, photos, custom emoji, consistent emoji sets, analytics and tenants — one SDK, one API, one plan. For one app or a thousand customers.",
+    "meaning": {
+      "title": "Understands what people mean",
+      "body": "Slang, films, idioms and plain feelings — not just official names.",
+      "examples": "Examples from the real engine"
+    },
+    "typos": {
+      "title": "Forgives typos",
+      "body": "People type fast. Search keeps up."
+    },
+    "languages": {
+      "title": "{count} languages, typed the way people type",
+      "body": "Native scripts and Latin spellings: Hinglish, pinyin, Arabizi."
+    },
+    "culture": {
+      "title": "Keeps up with culture",
+      "tag": "New",
+      "body": "What an emoji means depends on where and when you are. Editors, helped by AI, add what fits right now — next to the answer, never instead of it.",
+      "more": "See how it works",
+      "examples": "Examples of cultural additions"
+    },
+    "instant": {
+      "title": "Instant, even offline",
+      "body": "Most searches never leave the device.",
+      "metric": "0.4 ms",
+      "metricLabel": "p95 per keystroke, measured"
+    },
+    "reactions": {
+      "title": "Reaction suggestions",
+      "body": "Send a message, get the reactions people would use."
+    },
+    "photo": {
+      "title": "Photo to emoji",
+      "tag": "Beta",
+      "body": "A puppy gets 🐶 and 🥹. Photos are never stored."
+    },
+    "custom": {
+      "title": "Your own custom emoji",
+      "body": "Upload a set or import it from Slack and Discord. It is searched next to the standard emoji, with your own aliases."
+    },
+    "sets": {
+      "title": "Hosted emoji sets",
+      "body": "Twemoji, Noto or Fluent, served from the edge — the same look on every device. Even flags on Windows.",
+      "windowsToday": "Windows today",
+      "withSet": "with a hosted set"
+    },
+    "analytics": {
+      "title": "Analytics",
+      "body": "See what people search for — and what they don't find.",
+      "dashboard": "Example dashboard",
+      "noMatch": "No match:",
+      "addCustom": "add a custom emoji"
+    },
+    "teams": {
+      "title": "Teams and environments",
+      "body": "Separate keys for dev, staging and production. Invite your team.",
+      "development": "Development",
+      "staging": "Staging",
+      "production": "Production"
+    },
+    "tenants": {
+      "title": "Tenants and webhooks",
+      "body": "Building a platform? Give each customer their own emoji set, managed through the API.",
+      "root": "Your platform"
+    },
+    "privacy": {
+      "title": "Private by design",
+      "ids": "No user IDs or IP addresses",
+      "text": "No message text, ever",
+      "photos": "Photos processed in memory, never stored",
+      "trends": "Only anonymous, aggregated search trends"
+    },
+    "oss": {
+      "title": "Open-source core",
+      "body": "The engine, SDKs, data pack and API server are MIT. Run it on your own Cloudflare account, or let us host it.",
+      "parts": "engine · SDKs · data · API server"
+    }
+  },
+  "culture": {
+    "kicker": "Culture",
+    "tag": "New",
+    "title": "Emoji meaning is cultural. And culture moves.",
+    "lead": "Our editors, helped by AI, map what emoji mean across cultures and moments — and keep it current. It adds to the answer; it never replaces it.",
+    "steps": {
+      "ai": {
+        "title": "AI proposes",
+        "body": "It drafts associations from holiday calendars, big events and new slang."
+      },
+      "editor": {
+        "title": "An editor decides",
+        "body": "A person reviews every one. Nothing goes live without that approval."
+      },
+      "search": {
+        "title": "Search adds it",
+        "body": "Approved emoji join the results after the top answer, and step aside when their moment ends."
+      }
+    },
+    "model": {
+      "today": "Today",
+      "everywhere": "Everywhere",
+      "everywhereLower": "everywhere",
+      "lasting": "Lasting · {where}",
+      "seasonal": "Seasonal",
+      "event": "Event",
+      "fromCalendar": "From the calendar, approved by an editor",
+      "proposedByAi": "Proposed by AI, approved by an editor",
+      "addedByEditor": "Added by an editor"
+    },
+    "lens": {
+      "tabs": "Example searches",
+      "switch": "Culture",
+      "topAnswer": "Top answer",
+      "addedByCulture": "Added by culture:",
+      "resultsFor": "Results for “{query}”",
+      "off": "Culture off: the engine's own ranking, unchanged.",
+      "nothingSeasonal": "Nothing seasonal on {day}, so “{query}” keeps its usual answer.",
+      "noAdditions": "No cultural additions here.",
+      "sameEverywhere": "Same answer everywhere, all year.",
+      "where": "Where",
+      "when": "When",
+      "whereLegend": "Where the search happens",
+      "whenLegend": "When the search happens",
+      "relevantNow": "Relevant now",
+      "today": "Today · {day}",
+      "liveNow": "Live now",
+      "calendarEmpty": "Nothing seasonal in the next few months.",
+      "calendarNote": "Seasonal picks switch on with the calendar and step aside when the moment ends."
+    }
+  },
+  "edge": {
+    "kicker": "Global edge",
+    "title": "Fast in Lagos, Lima and Lahore.",
+    "lead": "Emojisense runs on Cloudflare's network in 300+ cities. Every search is answered in the city closest to your user — never in one faraway region.",
+    "pause": "Pause animation",
+    "play": "Play animation",
+    "caption": "Real searches and the emoji our engine returns for them. The map is an illustration; dots show large cities, not exact data centers.",
+    "stats": {
+      "cities": "cities on Cloudflare's network. 95% of internet users are within 50 ms of one.",
+      "device": "for answers on the device, at every keystroke. Measured p95: 0.4 ms.",
+      "ai": "for an AI meaning search inside the edge. Measured p50: 52 ms.",
+      "zero": "servers, regions or GPUs for you to set up. It works the same everywhere."
+    }
+  },
+  "network": {
+    "kicker": "Gets better with use",
+    "title": "The more people search, the smarter it gets.",
+    "lead": "Common searches come back instantly, new slang is learned every night, and search stays smart even when your plan runs out.",
+    "ladderTitle": "How a search gets answered",
+    "limitSwitch": "Plan limit reached",
+    "nearestCity": "nearest city",
+    "layers": {
+      "device": {
+        "title": "On the device",
+        "body": "Names, slang and typos, straight from the built-in dictionary. Works offline, from the first keystroke."
+      },
+      "popular": {
+        "title": "Popular searches, ready in advance",
+        "body": "Every night, the searches people use most get smart answers prepared ahead of time and placed close to your users."
+      },
+      "recent": {
+        "title": "Recent answers, kept nearby",
+        "body": "Once a new search is understood, its answer stays in the nearest city, so it comes back instantly next time."
+      },
+      "ai": {
+        "title": "AI meaning search",
+        "body": "Brand-new phrasing is understood by meaning, at the edge, in about 50 ms."
+      }
+    },
+    "answers": "✓ answers",
+    "stillAnswers": "✓ still answers",
+    "untilNextMonth": "⏸ until next month",
+    "note": "Past your plan limit, your users still get answers from the device, from popular searches and from recent answers. Only brand-new phrasing waits until next month, and the device answers it meanwhile.",
+    "loop": {
+      "title": "Better every day",
+      "search": "People search",
+      "learn": "New slang is learned",
+      "ready": "More answers ready",
+      "faster": "Faster, smarter results",
+      "quote": "Popular searches like “congrats on the launch” come back instantly, anywhere in the world.",
+      "privacy": "We learn from search text only — never from who searched or which app they used."
+    }
+  },
+  "integrations": {
+    "kicker": "Integrations",
+    "title": "Everything emoji, wherever you build.",
+    "lead": "Search, reactions, photos, custom emoji and hosted sets. Bring the whole platform to the stack you already use.",
+    "groups": {
+      "frameworks": "Frameworks",
+      "editors": "Editors and pickers",
+      "native": "Native and apps",
+      "servers": "AI and servers"
+    },
+    "items": {
+      "react": {
+        "name": "React hooks and picker",
+        "blurb": "A drop-in picker built on Frimousse, or hooks for your own UI."
+      },
+      "webComponent": {
+        "name": "Web component",
+        "blurb": "A complete picker in one tag, for any framework or none."
+      },
+      "engine": {
+        "name": "JavaScript engine",
+        "blurb": "The engine on its own: browsers, Node, Deno, Bun and Workers."
+      },
+      "tiptap": {
+        "name": "Tiptap extension",
+        "blurb": "Colon autocomplete. Type <code>:fire:</code>, get <emoji>🔥</emoji>."
+      },
+      "lexical": {
+        "name": "Lexical plugin",
+        "blurb": "Colon autocomplete as a typeahead plugin for React."
+      },
+      "emojiMart": {
+        "name": "emoji-mart adapter",
+        "blurb": "Keep the emoji-mart picker. Give it search that understands people."
+      },
+      "swift": {
+        "name": "Swift package",
+        "blurb": "The same engine, native on iOS 16+ and macOS 13+."
+      },
+      "chrome": {
+        "name": "Chrome extension",
+        "blurb": "An emoji picker for every text field, one shortcut away."
+      },
+      "raycast": {
+        "name": "Raycast extension",
+        "blurb": "Search emoji by meaning from your launcher. Works offline."
+      },
+      "mcp": {
+        "name": "MCP server",
+        "blurb": "Emoji search and reactions for Claude and other AI assistants."
+      },
+      "http": {
+        "name": "HTTP API",
+        "blurb": "Search, reactions and photo to emoji, from any language."
+      },
+      "selfHosted": {
+        "name": "Self-hosted API",
+        "blurb": "The whole API as one Worker on your own Cloudflare account."
+      }
+    },
+    "fromSource": "from source",
+    "docsSuffix": ": docs",
+    "foot": "Custom emoji in Slack or Discord? Bring them along on Pro.",
+    "seePlans": "See plans",
+    "allDocs": "All docs"
+  },
+  "plans": {
+    "blurbs": {
+      "free": "For side projects and trying it out.",
+      "solo": "For one app with real users.",
+      "pro": "For teams shipping several apps.",
+      "scale": "For platforms with many customers."
+    },
+    "recommended": "Recommended",
+    "billingPeriod": "Billing period",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "savePercent": "−{percent}%",
+    "yearlyNote": "Yearly billing is available on {plans}. Other plans bill monthly.",
+    "perMonth": "/ month",
+    "pricePerMonth": "{price} / month",
+    "priceAMonth": "{price} a month",
+    "orYearly": "or {price} a year, save {savings}",
+    "billedYearly": "Billed {price} a year, save {savings}",
+    "noCard": "No card needed",
+    "billedMonthly": "Billed monthly",
+    "everythingIn": "Everything in {plan}, plus",
+    "includes": "Includes",
+    "getFreeKey": "Get a free key",
+    "getPlan": "Get {plan}",
+    "yearlyHint": "yearly",
+    "fine": "<strong>Search never breaks at a limit.</strong> Past your monthly AI calls, on-device, ready-made and cached answers keep working until the next month. <link>What counts as a call?</link>",
+    "unlimited": "Unlimited",
+    "groups": {
+      "core": "On every plan",
+      "usage": "Usage",
+      "emoji": "Custom emoji and sets",
+      "teams": "Insights and teams",
+      "platform": "For platforms",
+      "support": "Support"
+    },
+    "features": {
+      "search": {
+        "label": "Semantic search and reaction suggestions",
+        "hint": "Slang, films, feelings and typos, in every supported language"
+      },
+      "sdks": {
+        "label": "All SDKs and integrations",
+        "hint": "React, web component, editors, Swift, MCP. No “powered by” badge"
+      },
+      "onDevice": {
+        "label": "On-device and ready-made answers",
+        "hint": "Never counted as calls",
+        "unit": "on-device answers"
+      },
+      "semanticCalls": {
+        "label": "AI calls a month",
+        "hint": "Meaning searches and reaction suggestions that reach the edge API",
+        "unit": "AI calls a month"
+      },
+      "photos": {
+        "label": "Photo to emoji a month",
+        "hint": "Photos classified into emoji",
+        "unit": "photos to emoji a month"
+      },
+      "overLimit": {
+        "label": "Keeps working past a limit",
+        "hint": "Never a hard failure; the device answers until the next month"
+      },
+      "customEmoji": {
+        "label": "Custom emoji",
+        "hint": "One set, searched next to the standard emoji",
+        "unit": "custom emoji"
+      },
+      "emojiImport": {
+        "label": "Slack and Discord import",
+        "hint": "Bring an existing custom set along"
+      },
+      "hostedSets": {
+        "label": "Hosted emoji sets",
+        "hint": "Twemoji, Noto and Fluent, the same look on every device"
+      },
+      "analytics": {
+        "label": "Analytics history",
+        "hint": "What people search for, and what they do not find",
+        "unit": "of analytics"
+      },
+      "apps": {
+        "label": "Apps or environments",
+        "hint": "Separate keys for dev, staging and production",
+        "unit": {
+          "one": "app or environment",
+          "other": "apps or environments"
+        }
+      },
+      "team": {
+        "label": "Team members",
+        "hint": "Invite your team to one account"
+      },
+      "tenants": {
+        "label": "Tenants",
+        "hint": "One custom emoji set per customer, managed through the API"
+      },
+      "webhooks": {
+        "label": "Webhooks",
+        "hint": "Hear about tenant and emoji changes"
+      },
+      "communitySupport": {
+        "label": "Community support",
+        "hint": "GitHub Discussions and the docs"
+      },
+      "prioritySupport": {
+        "label": "Priority support"
+      }
+    }
+  },
+  "pricing": {
+    "hero": {
+      "kicker": "Pricing",
+      "title": "Free to start. <line>Fair when you grow.</line>",
+      "lead": "The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for volume, photos, custom emoji and team features.",
+      "assurances": {
+        "card": "No card for the free plan",
+        "failure": "Never a hard failure at a limit",
+        "mit": "MIT-licensed core"
+      }
+    },
+    "compare": {
+      "kicker": "Compare plans",
+      "title": "Every feature, side by side.",
+      "lead": "Every plan gets the whole emoji platform. Higher plans add volume, custom emoji, teams and tenants.",
+      "caption": "Features and limits of each Emojisense plan",
+      "included": "Included",
+      "notIncluded": "Not included"
+    },
+    "calls": {
+      "kicker": "How usage works",
+      "title": "What counts as a call?",
+      "lead": "Most emoji searches never reach our servers. The device and ready-made answers handle them, free and unlimited on every plan. A call is counted only when the edge AI does the work.",
+      "flowLabel": "How a search is answered",
+      "nearestCity": "nearest city",
+      "layers": {
+        "device": {
+          "title": "On the device",
+          "body": "Names, slang, typos and {languages} languages, from the dictionary inside your app. Works offline."
+        },
+        "ready": {
+          "title": "Ready-made answers",
+          "body": "Popular searches are answered ahead of time and served as plain files, close to your users."
+        },
+        "edge": {
+          "title": "Edge AI",
+          "body": "Brand-new phrasing and reaction suggestions go to the edge API, which understands them by meaning."
+        }
+      },
+      "countedStatus": "Counted as AI calls",
+      "freeStatus": "Free · unlimited",
+      "countedTitle": "What your plan counts",
+      "countedItem": "<strong>{title}.</strong> {body}",
+      "counted": {
+        "calls": {
+          "title": "AI calls",
+          "body": "A meaning search or a reaction suggestion that reaches the edge API. One request, one call."
+        },
+        "photos": {
+          "title": "Photos",
+          "body": "Each photo turned into emoji. Photos are processed in memory and never stored."
+        }
+      },
+      "neverCounted": "Never counted",
+      "free": {
+        "device": "On-device answers",
+        "ready": "Ready-made answers for popular searches",
+        "downloads": "Dictionary and pack downloads",
+        "failed": "Requests that fail on our side"
+      },
+      "limitTitle": "When you reach a limit",
+      "scale": {
+        "start": "1st of the month",
+        "limit": "your limit",
+        "next": "next month"
+      },
+      "atLimit": {
+        "device": "On-device answers",
+        "ready": "Ready-made answers",
+        "cached": "Cached answers at the edge",
+        "new": "New AI calls and photos",
+        "keepAnswering": "keep answering",
+        "notCounted": "still served, not counted",
+        "resume": "resume on the 1st"
+      },
+      "foot": "No errors and no broken pickers. The API answers with <code>overLimit: true</code>, and the SDK switches to the device on its own. Limits reset monthly (UTC), with no daily caps."
+    },
+    "beyond": {
+      "title": "Self-hosting and custom plans",
+      "oss": {
+        "kicker": "Open source",
+        "title": "Prefer to run it yourself?",
+        "body": "The core of Emojisense is MIT. Run it on your own Cloudflare account with no license fee, and pay Cloudflare directly. Hosted plans add daily dictionary updates, analytics, hosted emoji sets and zero operations.",
+        "partsLabel": "MIT-licensed parts",
+        "parts": {
+          "engine": "Engine",
+          "sdks": "SDKs",
+          "pack": "Data pack",
+          "api": "API server",
+          "dashboard": "Dashboard"
+        },
+        "guide": "Self-host guide",
+        "github": "View on GitHub"
+      },
+      "custom": {
+        "kicker": "Custom",
+        "title": "Need more than {plan}?",
+        "body": "Higher limits, many tenants, or a setup that does not fit a plan? Tell us what you are building.",
+        "cta": "Start a conversation"
+      }
+    },
+    "faq": {
+      "kicker": "FAQ",
+      "title": "Pricing questions.",
+      "lead": "Something missing? <link>Ask on GitHub Discussions</link>.",
+      "items": {
+        "free": {
+          "q": "Is the free plan really free?",
+          "a": "Yes, and you need no card. It includes {calls} AI calls and {photos} photo classifications a month, every SDK and integration, and unlimited on-device answers. There is no “powered by” badge on any plan."
+        },
+        "call": {
+          "q": "What counts as a call?",
+          "a": "A meaning search or a reaction suggestion that reaches our edge API. Answers from the device and ready-made answers for popular searches are free and unlimited. Photo to emoji has its own monthly count.",
+          "link": "See how a search is answered"
+        },
+        "limit": {
+          "q": "What happens when I reach a limit?",
+          "a": "Nothing breaks for your users. The API keeps answering with overLimit: true, and the SDK switches to the on-device dictionary and ready-made answers on its own. Cached answers are still served. New AI calls and photos resume on the 1st of the next month."
+        },
+        "failed": {
+          "q": "Do you count requests that fail?",
+          "a": "No. If our AI cannot answer, your users still get results from the dictionary, and the request is not counted."
+        },
+        "reset": {
+          "q": "When do limits reset?",
+          "a": "On the first day of each month, UTC. There are no daily caps."
+        },
+        "yearly": {
+          "q": "Is there a yearly price?",
+          "none": "Not yet. Every plan bills monthly for now.",
+          "item": "{plan} costs {yearly} a year instead of {monthly}",
+          "a": "{items}. The other plans bill monthly."
+        },
+        "billing": {
+          "q": "How does billing work?",
+          "a": "Choose a plan on this page, then sign in to the dashboard and pay on Whop's checkout. Whop is our payment provider: it takes the card or another local payment method and sends the receipts. The plan changes for all your apps as soon as the payment goes through."
+        },
+        "cancel": {
+          "q": "Can I cancel or change my plan?",
+          "a": "Yes, at any time. In the dashboard, Billing → Manage subscription opens Whop, where you cancel. You keep the plan until the end of the period you paid for; then the account moves to Free, and your apps keep working within the Free limits. To change plans, choose another one on the Billing page: the new plan starts when it is paid, and the old one stops renewing. Whop does not prorate."
+        },
+        "paymentFailed": {
+          "q": "What if a payment fails?",
+          "a": "Whop tries the charge again and emails you. Your plan keeps working for {days} days. Update the payment method in Billing → Manage subscription; if no payment goes through by then, the account moves to Free."
+        },
+        "refunds": {
+          "q": "Do you give refunds?",
+          "a": "[Refund policy: to be decided before launch.] Until it is published, write to [support email] about any payment."
+        },
+        "selfHost": {
+          "q": "Can I self-host instead?",
+          "a": "Yes. The engine, SDKs, data pack, API server and dashboard are MIT. Run them on your own Cloudflare account and pay Cloudflare directly. The open data pack is updated every quarter; hosted plans get daily dictionary updates.",
+          "link": "Read the self-host guide"
+        },
+        "store": {
+          "q": "What do you store about my users?",
+          "a": "Nothing personal. We never store who searched, IP addresses, message text or images. Photos are processed in memory.",
+          "link": "Read the privacy notes"
+        }
+      }
+    },
+    "final": {
+      "title": "Start free. Grow when you are ready.",
+      "text": "Get a key in a minute and keep the free plan as long as it fits.",
+      "ctaKey": "Get a free API key",
+      "ctaDocs": "Read the docs"
+    }
+  },
+  "waitlist": {
+    "hero": {
+      "title": "Paid plans are open.",
+      "lead": "Choose Solo, Pro or Scale on the <link>pricing page</link> and pay in the dashboard. This form stays for older links: it only adds your email to our list."
+    },
+    "formLabel": "Waitlist form",
+    "plansTitle": "Paid plans at a glance",
+    "compareAll": "Compare all plans",
+    "startFree": "Start free, no waitlist",
+    "returned": {
+      "okTitle": "You are on the list",
+      "okText": "We will email you once, when your plan opens.",
+      "errorTitle": "We could not add you",
+      "errorText": "Check your email address, wait a minute, then send the form again."
+    },
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "emailHint": "We use it only to tell you when the plan opens.",
+      "plan": "Plan",
+      "submit": "Join the waitlist",
+      "submitting": "Joining…",
+      "fine": "One email when your plan opens. No newsletter. <link>Privacy policy</link>",
+      "alreadyJoined": "You are already on the list",
+      "willEmail": "We will email <strong>{email}</strong> once, when {plan} opens.",
+      "untilThen": "Until then, the free plan has everything you need to start. <link>Read the quickstart</link>.",
+      "errorJoined": "{title}. {text}"
+    },
+    "errors": {
+      "empty": "Enter your email address.",
+      "invalid": "Enter a valid email address, like name@example.com.",
+      "rejected": "The waitlist did not accept this address. Check it, then try again.",
+      "rateLimited": "Too many tries from this network. Wait a minute, then try again.",
+      "server": "The waitlist is not available right now. Try again in a few minutes.",
+      "network": "We could not reach the waitlist. Check your connection, then try again."
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "About",
+      "title": "Emoji, the way people mean them.",
+      "lead": "Emojisense is the complete emoji platform for every app: search, reactions, photo to emoji, custom emoji and more, in every language."
+    },
+    "why": {
+      "title": "Why it exists",
+      "body": "Most emoji pickers match the official names of emoji. People do not type names. They type a film, a feeling, an idiom or a typo, and a name search finds nothing. We built the search that understands them, and then everything else a product needs around emoji.",
+      "tableLabel": "Name search compared with Emojisense",
+      "colQuery": "People type",
+      "colName": "Name search",
+      "colUs": "Emojisense",
+      "nothing": "nothing"
+    },
+    "how": {
+      "title": "How it works",
+      "body": "A small dictionary runs on the device and answers most searches in under a millisecond. Common searches have ready-made answers in static files. Only the unusual ones go to our API on Cloudflare's network, which finds emoji by meaning and answers close to the person typing."
+    },
+    "principles": {
+      "title": "What we hold to",
+      "neverBreaks": {
+        "title": "It never breaks",
+        "text": "Over a plan limit, search keeps working on the device. Your users never see an error because of a bill."
+      },
+      "private": {
+        "title": "Private by design",
+        "text": "Most searches never leave the device. We never store who searched, message text or photos."
+      },
+      "open": {
+        "title": "Open at the core",
+        "text": "The engine, data packs, SDKs and API server are MIT. Run them yourself if you like."
+      },
+      "languages": {
+        "title": "Every language",
+        "text": "People search in their own words and their own language, so the dictionary does too."
+      }
+    },
+    "money": {
+      "title": "How we make money",
+      "body": "Search and reaction suggestions are free on every plan. Paid plans add volume, photo to emoji, custom emoji, analytics, teams and tenants. No ads, and we do not sell data. <pricing>Choose a plan</pricing>, or <free>start free</free> today."
+    },
+    "now": {
+      "title": "Where we are",
+      "body": "Early. The engine, {pack}, the API, the dashboard and paid plans work today. The <changelog>changelog</changelog> keeps track.",
+      "pack": "the data pack ({count} emoji, Emoji {emojiVersion}, {languages} languages)",
+      "packs": "the data packs",
+      "independent": "Emojisense is an independent project. Questions, ideas and bug reports are welcome in the <issues>GitHub issues</issues>."
+    }
+  },
+  "hero": {
+    "searchLabel": "Search emoji",
+    "placeholder": "Search emoji the way people talk…",
+    "offline": "offline",
+    "results": "Emoji results",
+    "empty": "No match yet — keep typing.",
+    "byMeaning": "matched by meaning",
+    "matched": "matched <q>{match}</q>",
+    "bestMatch": "best match",
+    "idle": "A film, a feeling, a typo, another language — try anything.",
+    "try": "Try",
+    "play": "Play demo",
+    "pause": "Pause demo",
+    "edgeCache": "edge cache",
+    "edgeAi": "{ms} · edge AI",
+    "onDevice": "{ms} · on your device",
+    "kinds": {
+      "film": "a film",
+      "meaning": "a meaning",
+      "typo": "a typo",
+      "feeling": "a feeling",
+      "intent": "an intent",
+      "idiom": "an idiom",
+      "greeting": "a greeting",
+      "wish": "a wish",
+      "thanks": "thanks"
+    }
+  },
+  "codeTabs": {
+    "label": "Install examples",
+    "copy": "Copy",
+    "copied": "Copied ✓",
+    "copiedStatus": "Copied",
+    "example": "{label} example"
+  },
+  "copyCommand": {
+    "copy": "Copy command: {command}",
+    "copied": "Copied",
+    "selected": "Selected",
+    "selectedStatus": "Command selected. Copy it with your keyboard."
+  },
+  "demos": {
+    "useCases": {
+      "tabs": "Use cases",
+      "stop": "Stop demo",
+      "missing": "This demo is not built yet.",
+      "loading": "Loading the {name} demo…",
+      "cases": {
+        "chat": {
+          "label": "Chat",
+          "title": "Type a colon, find the feeling",
+          "body": "Autocomplete that understands slang and meaning, plus reaction suggestions for every message."
+        },
+        "docs": {
+          "label": "Docs",
+          "title": "Emoji inline, while you write",
+          "body": "A drop-in Tiptap extension. The same engine works in Lexical and any editor."
+        },
+        "workspaces": {
+          "label": "Workspaces",
+          "title": "Every customer, their own emoji",
+          "body": "Custom emoji are searched next to the standard set, with one set per workspace."
+        },
+        "photos": {
+          "label": "Photos",
+          "title": "Reactions for a photo",
+          "body": "Send a picture, get the emoji people would react with. Photos are never stored."
+        },
+        "assistant": {
+          "label": "AI assistant",
+          "title": "Give your AI good taste in emoji",
+          "body": "An MCP server lets any assistant search emoji by meaning, in 11 languages."
+        }
+      }
+    },
+    "chat": {
+      "window": "Demo: a team chat with Emojisense emoji autocomplete and suggested reactions",
+      "topic": "Onboarding v2 rollout, launch day",
+      "members": "Members:",
+      "messagesIn": "Messages in #{channel}",
+      "today": "Today",
+      "you": "You",
+      "seed": {
+        "rc": "RC `2.14.0-rc.3` is green on staging. All 412 end-to-end tests passed on the first run.",
+        "email": "Welcome email is final. “Get started” is now “Set up your workspace”, it won the copy test by a mile.",
+        "rollout": "Rollout hit 100%. Signups are up 18% this morning, great work everyone 📈"
+      },
+      "autoplay": {
+        "shipped": "shipped the new onboarding",
+        "thanks": "thanks team"
+      },
+      "reactionsLabel": "Reactions",
+      "reactionCount": {
+        "one": "{name}: {count} reaction",
+        "other": "{name}: {count} reactions"
+      },
+      "popTitle": "Emoji matching <b>:{query}</b>",
+      "onDevice": "{ms} ms on-device",
+      "meaning": "meaning {ms} ms",
+      "meaningPending": "meaning…",
+      "listLabel": "Emoji",
+      "byMeaning": "by meaning",
+      "loadingEmoji": "Loading emoji…",
+      "searchingMeaning": "Searching by meaning…",
+      "keyNavigate": "navigate",
+      "keySelect": "select",
+      "keyDismiss": "dismiss",
+      "messageLabel": "Message #{channel}",
+      "composeHint": "Type <kbd>:</kbd> and 2 letters for emoji",
+      "send": "Send message",
+      "sidebar": {
+        "search": "Search",
+        "threads": "Threads",
+        "channels": "Channels",
+        "direct": "Direct messages"
+      },
+      "suggested": "Suggested reactions",
+      "reactWith": "React with {name}",
+      "viaDeviceTitle": "The API did not answer, so the on-device engine searched the message",
+      "viaEdge": "edge · {ms} ms",
+      "viaDevice": "on-device"
+    },
+    "doc": {
+      "region": "Live demo: a docs editor with Emojisense emoji autocomplete",
+      "pageTitle": "Q3 launch retro",
+      "sidebar": {
+        "search": "Search",
+        "home": "Home",
+        "inbox": "Inbox",
+        "product": "Product",
+        "private": "Private",
+        "newPage": "New page",
+        "launchPlan": "Launch plan",
+        "retros": "Retros",
+        "q2": "Q2 growth retro",
+        "roadmap": "Roadmap 2027",
+        "experiments": "Experiments",
+        "drafts": "Drafts",
+        "reading": "Reading list"
+      },
+      "typing": "{name} is typing…",
+      "edited": "Edited just now",
+      "share": "Share",
+      "owner": "Owner",
+      "date": "Date",
+      "failed": "The editor did not load. Reload the page to try again.",
+      "body": {
+        "callout": "Blameless format: we talk about systems and decisions, never people.",
+        "wentWell": "What went well",
+        "well1": "Onboarding v2 shipped two weeks early, behind a flag for the first week",
+        "well2": "Setup questions to support dropped once the new checklist went live",
+        "change": "What we would change",
+        "changeBody": "Two deploys failed in launch week. Both came from the same flaky migration test, and the rollback took longer than it should have.",
+        "actions": "Action items",
+        "action1": "Quarantine the flaky migration test (Jonas)",
+        "action2": "Add a deploy freeze to the launch checklist (Priya)",
+        "action3": "Share this retro in #product (Maya)",
+        "summary": "Summary",
+        "win": "Biggest win: the new onboarding",
+        "miss": "Biggest miss: launch-week deploys were a"
+      },
+      "placeholder": "Type “:” and a word for emoji…",
+      "bodyLabel": "Document body",
+      "done": "Done",
+      "notDone": "Not done",
+      "menu": {
+        "label": "Emoji suggestions",
+        "matching": "Emoji matching <code>:{query}</code>",
+        "move": "move",
+        "insert": "insert",
+        "close": "close",
+        "similar": "similar meaning",
+        "custom": "custom emoji"
+      },
+      "picker": {
+        "dialog": "Choose a page icon",
+        "search": "Search emoji",
+        "placeholder": "Search emoji…",
+        "random": "Random",
+        "randomEmoji": "Random emoji",
+        "all": "All emoji",
+        "for": "Emoji for {query}",
+        "results": "Results",
+        "empty": "No emoji for “{query}” yet.",
+        "hint": "Try “{first}”, “{second}” or “{third}”",
+        "hintWords": {
+          "first": "launch",
+          "second": "goat",
+          "third": "on fire"
+        },
+        "pageIcon": "Page icon. Change icon",
+        "pageIconNamed": "Page icon: {label}. Change icon"
+      }
+    },
+    "workspaces": {
+      "tabs": "Workspaces",
+      "tenantTitle": "Tenant id",
+      "message": "Message",
+      "addReaction": "Add reaction",
+      "picker": "Emoji picker",
+      "searchIn": "Search emoji in {workspace}",
+      "placeholder": "Search {workspace} emoji",
+      "clear": "Clear search",
+      "try": "Try",
+      "results": "Emoji results",
+      "custom": "Custom",
+      "customEmoji": "Custom emoji",
+      "noCustom": "No custom emoji for “{query}” here. The standard set still answers.",
+      "standard": "Standard",
+      "standardFailed": "The standard set cannot load right now. Custom search still works.",
+      "noStandard": "No standard match yet. Keep typing.",
+      "kindCustom": "custom",
+      "kindStandard": "standard",
+      "customOption": "{code}, custom",
+      "matched": "matched <q>{match}</q>",
+      "byMeaning": "matched by meaning",
+      "enterToReact": "Enter or click to react",
+      "idle": "Type a word, or try a chip.",
+      "resultCount": "{workspace}: {custom} custom and {standard} standard results.",
+      "timingMeaning": "meaning · {ms} ms",
+      "timingDevice": "on-device · {ms} ms",
+      "aside": "{workspace} custom emoji",
+      "importTitle": "Slack and Discord import: Pro and Scale plans",
+      "imported": "Imported from {source}",
+      "addedByAdmins": "Added by workspace admins",
+      "set": "Custom set",
+      "reactWith": "React with {code}",
+      "inspectIdle": "Point at an emoji to see the words that find it.",
+      "tenants": "Tenants",
+      "scalePlan": "Scale plan",
+      "tenantsNote": "Each customer is a tenant with its own custom set. Your server writes it with a secret key.",
+      "presets": {
+        "shipIt": "ship it",
+        "celebrate": "celebrate",
+        "coffee": "coffee",
+        "gg": "gg"
+      },
+      "kinds": {
+        "acme": "Engineering",
+        "bloom": "Coffee shops",
+        "guild": "Gaming community"
+      },
+      "texts": {
+        "acme": "v4.2 is rolling out to 100%. Thanks to everyone who stayed for the last review.",
+        "bloom": "Oat milk delivery is in, and the almond croissants are out of the oven.",
+        "guild": "Raid starts at 9. Bring potions, we are going for the dragon this time."
+      }
+    },
+    "photo": {
+      "region": "Demo: emoji reactions for a photo",
+      "status": {
+        "scanning": "Reading photo…",
+        "failed": "API unavailable",
+        "live": "Live · {seconds} s",
+        "device": "On-device",
+        "example": "Saved API output"
+      },
+      "posts": {
+        "puppy": {
+          "label": "Corgi",
+          "alt": "A corgi puppy standing on its hind legs with its tongue out"
+        },
+        "cake": {
+          "label": "Birthday cake",
+          "alt": "A birthday cake with sprinkles, stars and a lit number 3 candle"
+        },
+        "sunset": {
+          "label": "Beach sunset",
+          "alt": "People in the shallows at sunset, one with both arms raised"
+        },
+        "pizza": {
+          "label": "Pizza",
+          "alt": "A sliced mushroom pizza on a wooden board"
+        },
+        "cat": {
+          "label": "Cat on a keyboard",
+          "alt": "A tabby cat asleep across a computer keyboard"
+        },
+        "hike": {
+          "label": "Mountain hike",
+          "alt": "A hiker on a rocky ridge above misty mountain valleys"
+        }
+      },
+      "teammate": "Teammate",
+      "yourPhoto": "Your photo",
+      "you": "You",
+      "now": "now",
+      "tagCaption": "Caption",
+      "keywords": "Keywords:",
+      "describing": "Describing the photo",
+      "fallback": "Describe it in a few words and the on-device engine will pick emoji.",
+      "describeLabel": "Describe the photo",
+      "describePlaceholder": "dog at the beach",
+      "find": "Find emoji",
+      "suggested": "Suggested reactions",
+      "reactWith": "React with {emoji}",
+      "suggestedReply": "Suggested reply",
+      "composer": "Message #{channel}",
+      "pick": "Pick a photo",
+      "credit": "Photo: <link>{author}</link>, CC0",
+      "stays": "Your photo stays on this page.",
+      "drop": "Drop to read it",
+      "try": "Try your own photo",
+      "dropHint": "Drop an image here or browse",
+      "privacy": "<strong>Photos are never stored.</strong> Your photo is resized to 384 px in your browser, captioned in memory, then dropped.",
+      "how1": "A vision model writes a caption, keywords and a reply.",
+      "how2": "Emojisense ranks the model's emoji with its own search.",
+      "engineFailed": "The on-device engine could not load. Please try again later.",
+      "errors": {
+        "unreadable": "This file is not a photo we can read. Try a JPEG, PNG or WebP.",
+        "unavailable": "Photo reactions are not available right now.",
+        "tooLarge": "This photo is too large to send.",
+        "tooMany": "Too many photos at once. Wait a few seconds, then try again.",
+        "budget": "The demo has used its photo budget for this month."
+      }
+    },
+    "assistant": {
+      "chat": "Assistant chat",
+      "name": "Assistant",
+      "newChat": "New chat",
+      "connected": "MCP server connected",
+      "toolCount": "3 tools",
+      "emptyTitle": "What should we write?",
+      "emptyBody": "Emojisense is connected, so the emoji come from a real search.",
+      "thinking": "Thinking",
+      "failed": "The emoji tool did not answer, so I can't pick emoji right now. Try again in a moment.",
+      "prompts": "Example prompts",
+      "placeholder": "Pick a prompt to run it",
+      "note": "Scripted conversation · live tool results",
+      "config": {
+        "kicker": "MCP server · stdio",
+        "title": "Add it to any MCP client",
+        "lead": "One entry in your client config. Runs offline; add an API key for semantic results.",
+        "copy": "Copy",
+        "copied": "Copied",
+        "copyFailed": "Press ⌘C / Ctrl+C",
+        "tools": "Tools",
+        "summaries": {
+          "search_emoji": "Keywords, slang, names, films",
+          "emoji_for_text": "Emoji for a sentence you write",
+          "suggest_reactions": "What a reader reacts with"
+        }
+      },
+      "tool": {
+        "failed": "Failed",
+        "used": "Used",
+        "calling": "Calling",
+        "results": {
+          "one": ", {count} result: ",
+          "other": ", {count} results: "
+        },
+        "measured": "Measured in your browser",
+        "error": "error",
+        "running": "Running",
+        "request": "Request",
+        "response": "Response",
+        "view": "Response view",
+        "emoji": "Emoji",
+        "loadFailed": "The emoji data did not load. Check the connection and try again.",
+        "none": "No emoji matched.",
+        "generic": "Generic reaction that fills a short list",
+        "matched": "Matched “{reason}”"
+      },
+      "scenarios": {
+        "tweet": {
+          "prompt": "Write a launch tweet for our dark mode",
+          "intro": "Here's a draft, with emoji from the search:",
+          "quote": "Dark mode is here {lead}\nEasier on the eyes after sunset, kinder to your battery, and it follows your system setting. Update and go dark {close}",
+          "moodier": "Want it moodier? Swap {from} for {to}."
+        },
+        "birthday": {
+          "prompt": "Birthday message for Ana, in Spanish",
+          "intro": "Here's one for Ana:",
+          "labels": "I searched in English and asked for Spanish labels, so {emoji} came back as “{label}”."
+        },
+        "react": {
+          "prompt": "React to “10k users. We did it!”",
+          "none": "Nothing in that message stands out to react to.",
+          "safe": "React with {emoji}. It's the safe default here.",
+          "matched": "React with {emoji}. It matched “{why}”, and it's an emoji people actually react with.",
+          "alsoWork": "{second} and {third} work too if the thread is celebrating.",
+          "skip": "Skip {emoji}: it matched “10k”, as in the race."
+        },
+        "status": {
+          "prompt": "Set my status: deploying on a Friday",
+          "intro": "Here's your status:",
+          "matched": "{emoji} matched “{why}”.",
+          "runnerUp": "Runner-up: {emoji}.",
+          "sideways": "Runner-up: {emoji}. If it goes sideways, {other} is right there."
+        }
+      }
+    }
+  }
+}

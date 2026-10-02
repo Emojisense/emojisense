@@ -1,73 +1,62 @@
 ---
 import PageHero from "../components/PageHero.astro";
 import { DASHBOARD_URL, REPO_URL } from "../config";
+import { i18nFor } from "../i18n/page";
 import Base from "../layouts/Base.astro";
 import { packFacts } from "../lib/pack-facts";
 import { comparisons } from "../lib/showcase";
 
+const { t, parts, href, locale, tag } = i18nFor(Astro);
 /** Real answers from the engine on the shipped packs (computed at build time). */
 const examples = comparisons.slice(0, 3);
-const number = new Intl.NumberFormat("en");
+const number = new Intl.NumberFormat(tag);
+/** The examples are English searches; a translated page marks them as such. */
+const exampleLang = locale === "en" ? undefined : "en";
 
 const principles = [
   {
     emoji: "🛟",
-    title: "It never breaks",
-    text: "Over a plan limit, search keeps working on the device. Your users never see an error because of a bill.",
+    title: t("about.principles.neverBreaks.title"),
+    text: t("about.principles.neverBreaks.text"),
   },
-  {
-    emoji: "🔏",
-    title: "Private by design",
-    text: "Most searches never leave the device. We never store who searched, message text or photos.",
-  },
-  {
-    emoji: "🧩",
-    title: "Open at the core",
-    text: "The engine, data packs, SDKs and API server are MIT. Run them yourself if you like.",
-  },
-  {
-    emoji: "🌍",
-    title: "Every language",
-    text: "People search in their own words and their own language, so the dictionary does too.",
-  },
+  { emoji: "🔏", title: t("about.principles.private.title"), text: t("about.principles.private.text") },
+  { emoji: "🧩", title: t("about.principles.open.title"), text: t("about.principles.open.text") },
+  { emoji: "🌍", title: t("about.principles.languages.title"), text: t("about.principles.languages.text") },
 ];
+
+const pack = packFacts
+  ? t("about.now.pack", {
+      count: number.format(packFacts.emojiCount),
+      emojiVersion: packFacts.emojiVersion,
+      languages: number.format(packFacts.languages),
+    })
+  : t("about.now.packs");
 ---
 
-<Base
-  title="About"
-  description="Why Emojisense exists, how it works, how it makes money, and where it is today."
-  path="/about/"
->
-  <PageHero eyebrow="About" emoji="🦖" title="Emoji, the way people mean them.">
-    <p>
-      Emojisense is the complete emoji platform for every app: search, reactions, photo to emoji, custom emoji and
-      more, in every language.
-    </p>
+<Base title={t("meta.about.title")} description={t("meta.about.description")} path="/about/">
+  <PageHero eyebrow={t("about.hero.eyebrow")} emoji="🦖" title={t("about.hero.title")}>
+    <p>{t("about.hero.lead")}</p>
   </PageHero>
 
   <div class="container about">
     <section class="about-section" aria-labelledby="why">
-      <h2 id="why">Why it exists</h2>
-      <p>
-        Most emoji pickers match the official names of emoji. People do not type names. They type a film, a feeling, an
-        idiom or a typo, and a name search finds nothing. We built the search that understands them, and then everything
-        else a product needs around emoji.
-      </p>
+      <h2 id="why">{t("about.why.title")}</h2>
+      <p>{t("about.why.body")}</p>
       {
         examples.length > 0 && (
-          <div class="about-examples" role="table" aria-label="Name search compared with Emojisense">
+          <div class="about-examples" role="table" aria-label={t("about.why.tableLabel")}>
             <div class="about-row about-row-head" role="row">
-              <span role="columnheader">People type</span>
-              <span role="columnheader">Name search</span>
-              <span role="columnheader">Emojisense</span>
+              <span role="columnheader">{t("about.why.colQuery")}</span>
+              <span role="columnheader">{t("about.why.colName")}</span>
+              <span role="columnheader">{t("about.why.colUs")}</span>
             </div>
             {examples.map((example) => (
               <div class="about-row" role="row">
-                <span role="cell" class="about-query">
+                <span role="cell" class="about-query" lang={exampleLang}>
                   {example.query}
                 </span>
                 <span role="cell" class="about-none">
-                  {example.name.length > 0 ? <span class="emoji">{example.name.join(" ")}</span> : "nothing"}
+                  {example.name.length > 0 ? <span class="emoji">{example.name.join(" ")}</span> : t("about.why.nothing")}
                 </span>
                 <span role="cell" class="about-ours">
                   <span class="emoji">{example.emojisense.join(" ")}</span>
@@ -80,16 +69,12 @@ const principles = [
     </section>
 
     <section class="about-section" aria-labelledby="how">
-      <h2 id="how">How it works</h2>
-      <p>
-        A small dictionary runs on the device and answers most searches in under a millisecond. Common searches have
-        ready-made answers in static files. Only the unusual ones go to our API on Cloudflare's network, which finds emoji
-        by meaning and answers close to the person typing.
-      </p>
+      <h2 id="how">{t("about.how.title")}</h2>
+      <p>{t("about.how.body")}</p>
     </section>
 
     <section class="about-section" aria-labelledby="believe">
-      <h2 id="believe">What we hold to</h2>
+      <h2 id="believe">{t("about.principles.title")}</h2>
       <ul class="about-principles">
         {
           principles.map((principle) => (
@@ -106,27 +91,43 @@ const principles = [
     </section>
 
     <section class="about-section" aria-labelledby="money">
-      <h2 id="money">How we make money</h2>
+      <h2 id="money">{t("about.money.title")}</h2>
       <p>
-        Search and reaction suggestions are free on every plan. Paid plans add volume, photo to emoji, custom emoji,
-        analytics, teams and tenants. No ads, and we do not sell data. <a href="/pricing/">Choose a plan</a>, or{" "}
-        <a href={`${DASHBOARD_URL}/`}>start free</a> today.
+        {
+          parts("about.money.body").map((part) =>
+            part.tag === "pricing" ? (
+              <a href={href("/pricing/")}>{part.text}</a>
+            ) : part.tag === "free" ? (
+              <a href={`${DASHBOARD_URL}/`}>{part.text}</a>
+            ) : (
+              part.text
+            ),
+          )
+        }
       </p>
     </section>
 
     <section class="about-section" aria-labelledby="now">
-      <h2 id="now">Where we are</h2>
+      <h2 id="now">{t("about.now.title")}</h2>
       <p>
-        Early. The engine, {
-          packFacts
-            ? `the data pack (${number.format(packFacts.emojiCount)} emoji, Emoji ${packFacts.emojiVersion}, ${packFacts.languages} languages)`
-            : "the data packs"
-        }, the API, the dashboard and paid plans work today. The <a href="/changelog/">changelog</a> keeps
-        track.
+        {
+          parts("about.now.body", { pack }).map((part) =>
+            part.tag === "changelog" ? (
+              <a href="/changelog/" hreflang={exampleLang}>
+                {part.text}
+              </a>
+            ) : (
+              part.text
+            ),
+          )
+        }
       </p>
       <p>
-        Emojisense is an independent project. Questions, ideas and bug reports are welcome in the{" "}
-        <a href={`${REPO_URL}/issues`}>GitHub issues</a>.
+        {
+          parts("about.now.independent").map((part) =>
+            part.tag === "issues" ? <a href={`${REPO_URL}/issues`}>{part.text}</a> : part.text,
+          )
+        }
       </p>
     </section>
   </div>

@@ -1,0 +1,1178 @@
+{
+  "meta": {
+    "homeTitle": "Emojisense：适用于每个应用的emoji平台",
+    "skipLink": "跳转到正文",
+    "shareAlt": {
+      "home": "Emojisense：每个应用所需的emoji功能。展示“jurassic park”和“feliz cumpleaños”等搜索及其排名靠前的emoji结果。",
+      "pricing": "Emojisense定价：免费起步，按需付费。展示Free、Solo、Pro和Scale套餐及其月费。"
+    },
+    "home": {
+      "description": "适用于每个应用的emoji平台：搜索理解俚语和11种语言，提供emoji回应建议、照片转emoji、自定义emoji、托管emoji集和数据分析。提供Free套餐，核心开源。"
+    },
+    "pricing": {
+      "title": "定价",
+      "description": "Emojisense定价：完整的emoji平台，免费起步。所有套餐均提供搜索和emoji回应建议；按用量、照片、自定义emoji和团队功能付费。"
+    },
+    "waitlist": {
+      "title": "候补名单",
+      "description": "Emojisense付费套餐现已开售：在定价页面选择Solo、Pro或Scale。"
+    },
+    "about": {
+      "title": "关于",
+      "description": "了解Emojisense的初衷、工作原理、收入来源和当前进展。"
+    }
+  },
+  "nav": {
+    "home": "Emojisense首页",
+    "main": "主导航",
+    "mainMobile": "主导航（移动端）",
+    "menu": "菜单",
+    "product": "产品",
+    "features": "功能",
+    "integrations": "集成",
+    "playground": "试用",
+    "pricing": "定价",
+    "docs": "文档",
+    "signIn": "登录",
+    "getKey": "获取API密钥",
+    "inEnglish": "（英文）"
+  },
+  "language": {
+    "label": "语言",
+    "current": "语言：{language}",
+    "englishOnly": "文档、试用页面和更新日志目前仅提供英文版。"
+  },
+  "footer": {
+    "label": "页脚",
+    "tagline": "适用于每个应用的完整emoji平台。",
+    "ossTitle": "核心开源",
+    "ossBody": "引擎、数据包、SDKs和API服务器均已开源。你可以自行托管，也可以使用我们的服务。",
+    "ossMeta": "数据包{pack} · Emoji {emojiVersion} · {count}个emoji · {languages}种语言",
+    "columns": {
+      "product": "产品",
+      "developers": "开发者",
+      "company": "公司",
+      "legal": "法律"
+    },
+    "links": {
+      "useCases": "使用场景",
+      "features": "功能",
+      "integrations": "集成",
+      "playground": "试用",
+      "pricing": "定价",
+      "docs": "文档",
+      "quickstart": "快速入门",
+      "httpApi": "HTTP API",
+      "selfHost": "自行托管",
+      "dataFlows": "数据流向",
+      "about": "关于",
+      "changelog": "更新日志",
+      "reportIssue": "反馈问题",
+      "signIn": "登录",
+      "terms": "服务条款",
+      "privacy": "隐私政策",
+      "acceptableUse": "使用规范",
+      "subprocessors": "数据分包处理方"
+    },
+    "copyright": "© {year} Emojisense",
+    "credits": "emoji数据来自<emojibase>Emojibase</emojibase>{emojibaseVersion}（MIT）和<cldr>Unicode CLDR</cldr>{cldrVersion}（Unicode许可证第3版）。emoji使用你的系统字体显示。"
+  },
+  "home": {
+    "hero": {
+      "kicker": "实时演示 · 在浏览器中运行",
+      "title": "每个应用的emoji，都在这里。",
+      "lead": "搜索理解俚语、电影、情感和{languages}种语言。提供emoji回应建议、照片转emoji、自定义emoji、各设备一致的外观和数据分析。一个平台，接入你现有的应用。",
+      "ctaKey": "获取免费API密钥",
+      "ctaDocs": "阅读文档",
+      "installNote": "Free套餐 · 无需银行卡 · MIT开源核心"
+    },
+    "logos": {
+      "worksWith": "支持集成"
+    },
+    "useCases": {
+      "kicker": "使用场景",
+      "title": "用到emoji的地方，一个平台就够。",
+      "lead": "五个小应用，都接入了真实服务。点击试试，每个都可以操作。"
+    },
+    "compare": {
+      "kicker": "为什么需要它",
+      "title": "选择器匹配名称，人们输入感受。",
+      "lead": "大多数emoji选择器只搜索“rocket”或“goat”这样的官方名称。下面用两种方式搜索同一份emoji数据。",
+      "colQuery": "用户输入",
+      "colPicker": "常见选择器",
+      "colUs": "Emojisense",
+      "noResults": "无结果",
+      "kinds": {
+        "intent": "意图",
+        "meaning": "含义",
+        "typo": "错别字",
+        "film": "电影",
+        "feeling": "情感",
+        "idiom": "习语"
+      }
+    },
+    "developers": {
+      "kicker": "面向开发者",
+      "title": "几分钟即可接入。",
+      "lead": "一个SDK提供搜索和选择器，一个API提供回应、照片和自定义emoji功能，还有适用于你现有技术栈的集成。",
+      "checks": {
+        "picker": "保留现有选择器和设计",
+        "offline": "从第一次输入起即可离线使用",
+        "mit": "核心采用MIT许可，可自行托管"
+      },
+      "cta": "阅读快速入门",
+      "anyFramework": "任意框架"
+    },
+    "pricing": {
+      "kicker": "定价",
+      "title": "免费起步，按需付费。",
+      "lead": "所有套餐均提供搜索和emoji回应建议。按用量、照片、自定义emoji和团队功能付费。"
+    },
+    "faq": {
+      "kicker": "常见问题",
+      "title": "你想问的，这里有答案。",
+      "items": {
+        "what": {
+          "q": "Emojisense是什么？",
+          "a": "一个平台提供产品所需的全部emoji功能：理解11种语言的搜索、emoji回应建议、照片转emoji、自定义emoji、托管emoji集、数据分析，以及面向平台的客户专属emoji。它可以接入你现有的应用和选择器。"
+        },
+        "server": {
+          "q": "需要服务器吗？",
+          "a": "不需要。引擎和词典在浏览器或应用中运行。托管API为不常见的查询提供语义搜索；你也可以在自己的Cloudflare账户中自行托管。"
+        },
+        "pickers": {
+          "q": "支持哪些选择器和框架？",
+          "a": "目前支持React和Frimousse选择器，以及适用于Vue、Svelte、Angular和原生HTML的Web组件、Tiptap和Lexical编辑器扩展、Swift SDK、Chrome扩展、Raycast和面向AI应用的MCP服务器。"
+        },
+        "limit": {
+          "q": "达到套餐限额后会怎样？",
+          "a": "用户仍可正常使用。热门搜索仍有智能答案，其他搜索由设备端词典处理，直到下个月。"
+        },
+        "where": {
+          "q": "服务在哪里运行？",
+          "a": "引擎在用户的设备上运行。API在Cloudflare覆盖300多个城市的网络中运行，因此每次搜索都在靠近用户的位置处理。服务不局限于一个可能相距很远的区域。"
+        },
+        "privacy": {
+          "q": "你们会收集哪些用户信息？",
+          "a": "我们不收集个人信息。我们从不存储搜索者身份、所用应用或消息内容。你的用量和分析数据只保留在你的账户中。"
+        },
+        "openSource": {
+          "q": "是开源的吗？",
+          "a": "是的。引擎、SDKs、数据包和API服务器均采用MIT许可。托管服务还提供词典每日更新、数据分析和自定义emoji。"
+        }
+      }
+    },
+    "final": {
+      "title": "各处的emoji需求，一并解决。",
+      "text": "让用户在每种语言、每台设备上都能顺畅使用emoji。免费起步，几分钟即可接入。",
+      "ctaKey": "获取免费API密钥",
+      "ctaGithub": "在GitHub上加星"
+    }
+  },
+  "features": {
+    "kicker": "功能",
+    "title": "emoji功能，尽在一处。",
+    "lead": "搜索、回应、照片、自定义emoji、外观一致的emoji集、数据分析和租户，一个SDK、一个API、一份套餐。适用于一个应用，也适用于上千个客户。",
+    "meaning": {
+      "title": "理解人们想表达的意思",
+      "body": "俚语、电影、习语和日常感受，不止官方名称。",
+      "examples": "真实引擎的搜索示例"
+    },
+    "typos": {
+      "title": "打错字也能搜到",
+      "body": "输入再快，搜索也能跟上。"
+    },
+    "languages": {
+      "title": "{count}种语言，按习惯输入",
+      "body": "支持原生文字和拉丁字母拼写：Hinglish、pinyin、Arabizi。"
+    },
+    "culture": {
+      "title": "跟上文化变化",
+      "tag": "新功能",
+      "body": "emoji的含义会随地点和时间变化。编辑借助AI，添加符合当下语境的结果，作为答案的补充。",
+      "more": "了解工作原理",
+      "examples": "文化补充结果示例"
+    },
+    "instant": {
+      "title": "离线也能即时响应",
+      "body": "大多数搜索无需离开设备。",
+      "metric": "0.4 ms",
+      "metricLabel": "每次输入的实测p95"
+    },
+    "reactions": {
+      "title": "emoji回应建议",
+      "body": "发送一条消息，获取人们会用的emoji回应。"
+    },
+    "photo": {
+      "title": "照片转emoji",
+      "tag": "测试版",
+      "body": "小狗照片会得到🐶和🥹。照片从不存储。"
+    },
+    "custom": {
+      "title": "你的自定义emoji",
+      "body": "上传emoji集，或从Slack和Discord导入。它们可与标准emoji一起搜索，支持你自己的别名。"
+    },
+    "sets": {
+      "title": "托管emoji集",
+      "body": "从边缘提供Twemoji、Noto或Fluent，让每台设备上的外观一致。Windows上也能显示旗帜。",
+      "windowsToday": "当前的Windows",
+      "withSet": "使用托管emoji集"
+    },
+    "analytics": {
+      "title": "数据分析",
+      "body": "了解人们搜索什么，以及哪些搜索没有结果。",
+      "dashboard": "控制台示例",
+      "noMatch": "无匹配：",
+      "addCustom": "添加自定义emoji"
+    },
+    "teams": {
+      "title": "团队与环境",
+      "body": "为开发、预发布和生产环境分配独立密钥。邀请团队成员加入。",
+      "development": "开发",
+      "staging": "预发布",
+      "production": "生产"
+    },
+    "tenants": {
+      "title": "租户与Webhook",
+      "body": "正在搭建平台？为每个客户提供专属emoji集，通过API管理。",
+      "root": "你的平台"
+    },
+    "privacy": {
+      "title": "从设计之初保护隐私",
+      "ids": "不记录用户ID或IP地址",
+      "text": "从不记录消息内容",
+      "photos": "照片仅在内存中处理，从不存储",
+      "trends": "只保留匿名汇总的搜索趋势"
+    },
+    "oss": {
+      "title": "核心开源",
+      "body": "引擎、SDKs、数据包和API服务器均采用MIT许可。你可以在自己的Cloudflare账户中运行，也可以由我们托管。",
+      "parts": "引擎 · SDKs · 数据 · API服务器"
+    }
+  },
+  "culture": {
+    "kicker": "文化",
+    "tag": "新功能",
+    "title": "emoji的含义随文化而变。文化也在变化。",
+    "lead": "编辑借助AI，梳理emoji在不同文化和时刻的含义，并持续更新。这些结果作为答案的补充。",
+    "steps": {
+      "ai": {
+        "title": "AI提出建议",
+        "body": "根据节日日历、重大事件和新俚语，提出关联建议。"
+      },
+      "editor": {
+        "title": "编辑审核决定",
+        "body": "每条建议都由人工审核。通过后才会发布。"
+      },
+      "search": {
+        "title": "搜索加入结果",
+        "body": "通过审核的emoji会排在首选答案之后，适用时段结束后退出结果。"
+      }
+    },
+    "model": {
+      "today": "今天",
+      "everywhere": "各地",
+      "everywhereLower": "各地",
+      "lasting": "长期有效 · {where}",
+      "seasonal": "时令",
+      "event": "事件",
+      "fromCalendar": "来自日历，已由编辑审核",
+      "proposedByAi": "由AI建议，已由编辑审核",
+      "addedByEditor": "由编辑添加"
+    },
+    "lens": {
+      "tabs": "搜索示例",
+      "switch": "文化",
+      "topAnswer": "首选答案",
+      "addedByCulture": "文化补充结果：",
+      "resultsFor": "“{query}”的搜索结果",
+      "off": "文化功能已关闭：保留引擎原有排序。",
+      "nothingSeasonal": "{day}没有时令结果，因此“{query}”保留通常的答案。",
+      "noAdditions": "此处没有文化补充结果。",
+      "sameEverywhere": "全年各地的答案都一样。",
+      "where": "地点",
+      "when": "时间",
+      "whereLegend": "搜索发生的地点",
+      "whenLegend": "搜索发生的时间",
+      "relevantNow": "当前相关",
+      "today": "今天 · {day}",
+      "liveNow": "当前生效",
+      "calendarEmpty": "未来几个月没有时令结果。",
+      "calendarNote": "时令结果按日历生效，适用时段结束后退出结果。"
+    }
+  },
+  "edge": {
+    "kicker": "全球边缘网络",
+    "title": "在拉各斯、利马和拉合尔，都很快。",
+    "lead": "Emojisense在Cloudflare覆盖300多个城市的网络中运行。每次搜索都在离用户最近的城市处理，无需前往远处的单一区域。",
+    "pause": "暂停动画",
+    "play": "播放动画",
+    "caption": "展示真实搜索及引擎返回的emoji。地图仅作示意；圆点代表主要城市，并非数据中心的准确位置。",
+    "stats": {
+      "cities": "座城市接入Cloudflare网络。95%的互联网用户到其中一处的延迟不超过50 ms。",
+      "device": "设备端每次输入的响应时间。实测p95：0.4 ms。",
+      "ai": "边缘AI语义搜索的响应时间。实测p50：52 ms。",
+      "zero": "需要你配置的服务器、区域或GPU。服务在各地的运行方式都一样。"
+    }
+  },
+  "network": {
+    "kicker": "越用越懂你",
+    "title": "搜索的人越多，结果越懂人。",
+    "lead": "常见搜索即时返回，每晚学习新俚语。即使达到套餐限额，搜索仍能理解你的意思。",
+    "ladderTitle": "搜索如何得到答案",
+    "limitSwitch": "已达到套餐限额",
+    "nearestCity": "最近的城市",
+    "layers": {
+      "device": {
+        "title": "设备端",
+        "body": "内置词典直接处理名称、俚语和错别字。从第一次输入起即可离线使用。"
+      },
+      "popular": {
+        "title": "热门搜索，提前准备",
+        "body": "每晚为最常见的搜索准备智能答案，存放在靠近用户的位置。"
+      },
+      "recent": {
+        "title": "近期答案，就近保留",
+        "body": "理解一次新搜索后，答案会保留在最近的城市，下次搜索即可即时返回。"
+      },
+      "ai": {
+        "title": "AI语义搜索",
+        "body": "全新表达由边缘根据含义理解，耗时约50 ms。"
+      }
+    },
+    "answers": "✓ 返回答案",
+    "stillAnswers": "✓ 仍返回答案",
+    "untilNextMonth": "⏸ 暂停至下个月",
+    "note": "达到套餐限额后，用户仍能获得设备端答案、热门搜索答案和近期答案。只有全新表达需要等到下个月，期间由设备端提供答案。",
+    "loop": {
+      "title": "每天都在改进",
+      "search": "用户搜索",
+      "learn": "学习新俚语",
+      "ready": "准备更多答案",
+      "faster": "结果更快、更懂人",
+      "quote": "“congrats on the launch”这样的热门搜索，在世界各地都能即时返回。",
+      "privacy": "我们只从搜索文本中学习，从不记录搜索者身份或所用应用。"
+    }
+  },
+  "integrations": {
+    "kicker": "集成",
+    "title": "无论用什么开发，都能接入emoji功能。",
+    "lead": "搜索、回应、照片、自定义emoji和托管emoji集。将整个平台接入你现有的技术栈。",
+    "groups": {
+      "frameworks": "框架",
+      "editors": "编辑器与选择器",
+      "native": "原生与应用",
+      "servers": "AI与服务器"
+    },
+    "items": {
+      "react": {
+        "name": "React钩子与选择器",
+        "blurb": "直接接入基于Frimousse的选择器，或用钩子构建自己的界面。"
+      },
+      "webComponent": {
+        "name": "Web组件",
+        "blurb": "一个标签就是完整选择器，适用于任意框架，也可不使用框架。"
+      },
+      "engine": {
+        "name": "JavaScript引擎",
+        "blurb": "独立使用引擎，支持浏览器、Node、Deno、Bun和Workers。"
+      },
+      "tiptap": {
+        "name": "Tiptap扩展",
+        "blurb": "冒号自动补全。输入<code>:fire:</code>，得到<emoji>🔥</emoji>。"
+      },
+      "lexical": {
+        "name": "Lexical插件",
+        "blurb": "适用于React的输入提示插件，支持冒号自动补全。"
+      },
+      "emojiMart": {
+        "name": "emoji-mart适配器",
+        "blurb": "保留emoji-mart选择器，为它接入理解用户表达的搜索。"
+      },
+      "swift": {
+        "name": "Swift包",
+        "blurb": "同一个引擎，在iOS 16+和macOS 13+上原生运行。"
+      },
+      "chrome": {
+        "name": "Chrome扩展",
+        "blurb": "一个快捷键，在任意文本框打开emoji选择器。"
+      },
+      "raycast": {
+        "name": "Raycast扩展",
+        "blurb": "从启动器按含义搜索emoji。支持离线使用。"
+      },
+      "mcp": {
+        "name": "MCP服务器",
+        "blurb": "为Claude和其他AI助手提供emoji搜索和回应功能。"
+      },
+      "http": {
+        "name": "HTTP API",
+        "blurb": "用任意语言调用搜索、回应和照片转emoji功能。"
+      },
+      "selfHosted": {
+        "name": "自行托管API",
+        "blurb": "完整API以一个Worker运行在你自己的Cloudflare账户中。"
+      }
+    },
+    "fromSource": "从源码安装",
+    "docsSuffix": "：文档",
+    "foot": "在Slack或Discord中有自定义emoji？Pro支持导入。",
+    "seePlans": "查看套餐",
+    "allDocs": "全部文档"
+  },
+  "plans": {
+    "blurbs": {
+      "free": "适合个人小项目和试用。",
+      "solo": "适合已有用户的单个应用。",
+      "pro": "适合开发多个应用的团队。",
+      "scale": "适合拥有众多客户的平台。"
+    },
+    "recommended": "推荐",
+    "billingPeriod": "计费周期",
+    "monthly": "按月",
+    "yearly": "按年",
+    "savePercent": "−{percent}%",
+    "yearlyNote": "{plans}支持按年付费。其他套餐按月计费。",
+    "perMonth": "/月",
+    "pricePerMonth": "{price}/月",
+    "priceAMonth": "每月{price}",
+    "orYearly": "或每年{price}，节省{savings}",
+    "billedYearly": "每年收取{price}，节省{savings}",
+    "noCard": "无需银行卡",
+    "billedMonthly": "按月计费",
+    "everythingIn": "包含{plan}全部功能，另加",
+    "includes": "包含",
+    "getFreeKey": "获取免费密钥",
+    "getPlan": "订购{plan}",
+    "yearlyHint": "按年计费",
+    "fine": "<strong>达到限额，搜索仍可用。</strong>用完每月AI调用额度后，设备端答案、预置答案和缓存答案仍会提供服务，直到下个月。<link>哪些请求计为调用？</link>",
+    "unlimited": "不限量",
+    "groups": {
+      "core": "所有套餐均包含",
+      "usage": "用量",
+      "emoji": "自定义emoji与emoji集",
+      "teams": "数据分析与团队",
+      "platform": "面向平台",
+      "support": "支持"
+    },
+    "features": {
+      "search": {
+        "label": "语义搜索与emoji回应建议",
+        "hint": "支持所有已提供的语言，理解俚语、电影、情感和错别字"
+      },
+      "sdks": {
+        "label": "全部SDKs与集成",
+        "hint": "React、Web组件、编辑器、Swift、MCP，无需显示“技术支持”标识"
+      },
+      "onDevice": {
+        "label": "设备端答案与预置答案",
+        "hint": "从不计入调用次数",
+        "unit": "个设备端答案"
+      },
+      "semanticCalls": {
+        "label": "每月AI调用",
+        "hint": "到达边缘API的语义搜索和emoji回应建议",
+        "unit": "次AI调用/月"
+      },
+      "photos": {
+        "label": "每月照片转emoji",
+        "hint": "将照片内容识别为emoji",
+        "unit": "张照片转emoji/月"
+      },
+      "overLimit": {
+        "label": "达到限额后仍可用",
+        "hint": "不会中断服务；设备端继续提供答案，直到下个月"
+      },
+      "customEmoji": {
+        "label": "自定义emoji",
+        "hint": "一个emoji集，与标准emoji一起搜索",
+        "unit": "个自定义emoji"
+      },
+      "emojiImport": {
+        "label": "Slack和Discord导入",
+        "hint": "导入现有自定义emoji集"
+      },
+      "hostedSets": {
+        "label": "托管emoji集",
+        "hint": "Twemoji、Noto和Fluent，在每台设备上外观一致"
+      },
+      "analytics": {
+        "label": "历史分析数据",
+        "hint": "了解人们搜索什么，以及哪些搜索没有结果",
+        "unit": "的分析数据"
+      },
+      "apps": {
+        "label": "应用或环境",
+        "hint": "为开发、预发布和生产环境分配独立密钥",
+        "unit": {
+          "other": "个应用或环境"
+        }
+      },
+      "team": {
+        "label": "团队成员",
+        "hint": "邀请团队成员加入同一个账户"
+      },
+      "tenants": {
+        "label": "租户",
+        "hint": "每个客户一个自定义emoji集，通过API管理"
+      },
+      "webhooks": {
+        "label": "Webhook",
+        "hint": "接收租户和emoji变更通知"
+      },
+      "communitySupport": {
+        "label": "社区支持",
+        "hint": "GitHub Discussions和文档"
+      },
+      "prioritySupport": {
+        "label": "优先支持"
+      }
+    }
+  },
+  "pricing": {
+    "hero": {
+      "kicker": "定价",
+      "title": "免费起步。<line>按需付费。</line>",
+      "lead": "适用于每个应用的完整emoji平台。所有套餐均提供搜索和emoji回应建议，只需为用量、照片、自定义emoji和团队功能付费。",
+      "assurances": {
+        "card": "免费套餐无需银行卡",
+        "failure": "达到限额也不中断服务",
+        "mit": "核心采用MIT许可"
+      }
+    },
+    "compare": {
+      "kicker": "套餐对比",
+      "title": "所有功能，一览对比。",
+      "lead": "每个套餐都能使用完整emoji平台。更高档套餐增加用量、自定义emoji、团队和租户功能。",
+      "caption": "Emojisense各套餐的功能和限额",
+      "included": "包含",
+      "notIncluded": "不包含"
+    },
+    "calls": {
+      "kicker": "用量如何计算",
+      "title": "哪些请求计为调用？",
+      "lead": "大多数emoji搜索不会到达我们的服务器，而是由设备端和预置答案处理。所有套餐均免费提供，且不限量。只有边缘AI实际处理的请求才计为调用。",
+      "flowLabel": "搜索如何得到答案",
+      "nearestCity": "最近的城市",
+      "layers": {
+        "device": {
+          "title": "设备端",
+          "body": "应用内词典处理名称、俚语和错别字，支持{languages}种语言。可离线使用。"
+        },
+        "ready": {
+          "title": "预置答案",
+          "body": "提前为热门搜索准备答案，以普通文件的形式从靠近用户的位置提供。"
+        },
+        "edge": {
+          "title": "边缘AI",
+          "body": "全新表达和emoji回应建议由边缘API处理，按含义理解。"
+        }
+      },
+      "countedStatus": "计入AI调用",
+      "freeStatus": "免费 · 不限量",
+      "countedTitle": "套餐计量范围",
+      "countedItem": "<strong>{title}。</strong>{body}",
+      "counted": {
+        "calls": {
+          "title": "AI调用",
+          "body": "到达边缘API的语义搜索或emoji回应建议。一个请求计为一次调用。"
+        },
+        "photos": {
+          "title": "照片",
+          "body": "每张转换为emoji的照片。照片仅在内存中处理，从不存储。"
+        }
+      },
+      "neverCounted": "从不计量",
+      "free": {
+        "device": "设备端答案",
+        "ready": "热门搜索的预置答案",
+        "downloads": "词典和数据包下载",
+        "failed": "因我们的问题而失败的请求"
+      },
+      "limitTitle": "达到限额后",
+      "scale": {
+        "start": "每月1日",
+        "limit": "你的限额",
+        "next": "下个月"
+      },
+      "atLimit": {
+        "device": "设备端答案",
+        "ready": "预置答案",
+        "cached": "边缘缓存答案",
+        "new": "新的AI调用和照片",
+        "keepAnswering": "继续提供答案",
+        "notCounted": "继续提供，不计量",
+        "resume": "1日恢复"
+      },
+      "foot": "不会报错，选择器仍可用。API返回<code>overLimit: true</code>，SDK自动切换至设备端。限额每月按UTC重置，没有每日上限。"
+    },
+    "beyond": {
+      "title": "自行托管与定制套餐",
+      "oss": {
+        "kicker": "开源",
+        "title": "想自己运行？",
+        "body": "Emojisense核心采用MIT许可。你可以在自己的Cloudflare账户中运行，无需许可费，只需直接向Cloudflare付费。托管套餐提供词典每日更新、数据分析和托管emoji集，无需自行运维。",
+        "partsLabel": "采用MIT许可的部分",
+        "parts": {
+          "engine": "引擎",
+          "sdks": "SDKs",
+          "pack": "数据包",
+          "api": "API服务器",
+          "dashboard": "控制台"
+        },
+        "guide": "自行托管指南",
+        "github": "在GitHub上查看"
+      },
+      "custom": {
+        "kicker": "定制",
+        "title": "{plan}还不够用？",
+        "body": "需要更高限额、更多租户，或现有套餐无法满足的配置？告诉我们你在开发什么。",
+        "cta": "联系我们"
+      }
+    },
+    "faq": {
+      "kicker": "常见问题",
+      "title": "定价问题。",
+      "lead": "还有疑问？<link>在GitHub Discussions提问</link>。",
+      "items": {
+        "free": {
+          "q": "免费套餐真的免费吗？",
+          "a": "是的，无需银行卡。每月包含{calls}次AI调用和{photos}次照片识别、全部SDK与集成，以及不限量的设备端答案。所有套餐都无需显示“技术支持”标识。"
+        },
+        "call": {
+          "q": "哪些请求计为调用？",
+          "a": "到达边缘API的语义搜索或emoji回应建议。设备端答案和热门搜索的预置答案免费且不限量。照片转emoji有独立的每月额度。",
+          "link": "了解搜索如何得到答案"
+        },
+        "limit": {
+          "q": "达到限额后会怎样？",
+          "a": "用户仍可正常使用。API继续返回答案，并标记overLimit: true，SDK自动切换至设备端词典和预置答案。缓存答案仍可使用。新的AI调用和照片处理在下个月1日恢复。"
+        },
+        "failed": {
+          "q": "失败的请求也计量吗？",
+          "a": "不计量。如果我们的AI无法回答，用户仍能获得词典结果，该请求不计量。"
+        },
+        "reset": {
+          "q": "限额何时重置？",
+          "a": "每月1日，按UTC计算。没有每日上限。"
+        },
+        "yearly": {
+          "q": "有年付价格吗？",
+          "none": "暂时没有。目前所有套餐都按月计费。",
+          "item": "{plan}每年{yearly}，原价{monthly}",
+          "a": "{items}。其他套餐按月计费。"
+        },
+        "billing": {
+          "q": "如何计费？",
+          "a": "在此页面选择套餐，然后登录控制台，在Whop的结账页面付款。Whop是我们的支付服务商，支持银行卡或其他本地支付方式，并发送收据。付款成功后，你所有应用的套餐会立即变更。"
+        },
+        "cancel": {
+          "q": "可以取消或更换套餐吗？",
+          "a": "可以，随时都可以。在控制台中，点击“账单 → 管理订阅”即可打开Whop，在那里取消订阅。你可以继续使用套餐，直到已付费的周期结束。之后账户会转为Free，你的应用仍可在Free的限额内正常运行。要更换套餐，请在账单页面选择其他套餐。新套餐在付款后生效，旧套餐停止续订。Whop不按使用时长比例计费。"
+        },
+        "paymentFailed": {
+          "q": "付款失败会怎样？",
+          "a": "Whop会再次尝试扣款，并向你发送邮件。你的套餐可继续使用{days}天。请在“账单 → 管理订阅”中更新支付方式。如果到期前仍未付款成功，账户会转为Free。"
+        },
+        "refunds": {
+          "q": "可以退款吗？",
+          "a": "[退款政策：将在上线前确定。] 政策公布前，如有任何付款问题，请发送邮件至[支持邮箱]。"
+        },
+        "selfHost": {
+          "q": "可以自行托管吗？",
+          "a": "可以。引擎、SDKs、数据包、API服务器和控制台均采用MIT许可。在你自己的Cloudflare账户中运行，直接向Cloudflare付费。开放数据包每季度更新，托管套餐的词典每日更新。",
+          "link": "阅读自行托管指南"
+        },
+        "store": {
+          "q": "你们会存储哪些用户信息？",
+          "a": "我们不存储个人信息。从不存储搜索者身份、IP地址、消息内容或图片。照片仅在内存中处理。",
+          "link": "阅读隐私说明"
+        }
+      }
+    },
+    "final": {
+      "title": "免费起步，按需升级。",
+      "text": "一分钟获取密钥，只要够用，就可以一直使用免费套餐。",
+      "ctaKey": "获取免费API密钥",
+      "ctaDocs": "阅读文档"
+    }
+  },
+  "waitlist": {
+    "hero": {
+      "title": "付费套餐现已开售。",
+      "lead": "在<link>定价页面</link>选择Solo、Pro或Scale，并在控制台付款。此表单保留供旧链接使用，仅将你的邮箱添加到我们的列表中。"
+    },
+    "formLabel": "候补名单表单",
+    "plansTitle": "付费套餐一览",
+    "compareAll": "对比所有套餐",
+    "startFree": "免费开始，无需候补",
+    "returned": {
+      "okTitle": "你已加入候补名单",
+      "okText": "你选择的套餐开放时，我们只发一封邮件通知你。",
+      "errorTitle": "未能将你加入候补名单",
+      "errorText": "请检查邮箱地址，等待一分钟，然后重新提交表单。"
+    },
+    "form": {
+      "email": "邮箱",
+      "emailPlaceholder": "you@company.com",
+      "emailHint": "仅用于通知你套餐开放时间。",
+      "plan": "套餐",
+      "submit": "加入候补名单",
+      "submitting": "正在加入…",
+      "fine": "套餐开放时只发一封邮件，不发送订阅资讯。<link>隐私政策</link>",
+      "alreadyJoined": "你已在候补名单中",
+      "willEmail": "{plan}开放时，我们只向<strong>{email}</strong>发送一封邮件。",
+      "untilThen": "在此之前，免费套餐已提供开始所需的全部功能。<link>阅读快速入门</link>。",
+      "errorJoined": "{title}。{text}"
+    },
+    "errors": {
+      "empty": "请输入邮箱地址。",
+      "invalid": "请输入有效的邮箱地址，例如name@example.com。",
+      "rejected": "候补名单未接受此地址。请检查后重试。",
+      "rateLimited": "此网络的尝试次数过多。请等待一分钟后重试。",
+      "server": "候补名单暂时不可用。请几分钟后重试。",
+      "network": "无法连接候补名单服务。请检查网络连接后重试。"
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "关于",
+      "title": "emoji，表达你想说的。",
+      "lead": "Emojisense是适用于每个应用的完整emoji平台：搜索、回应、照片转emoji、自定义emoji等功能，支持各种语言。"
+    },
+    "why": {
+      "title": "为什么做这个产品",
+      "body": "大多数emoji选择器匹配官方名称。人们输入的却是电影、感受、习语，甚至错别字，按名称搜索往往没有结果。我们先开发了能理解这些表达的搜索，再补齐产品所需的其他emoji功能。",
+      "tableLabel": "名称搜索与Emojisense对比",
+      "colQuery": "用户输入",
+      "colName": "名称搜索",
+      "colUs": "Emojisense",
+      "nothing": "无结果"
+    },
+    "how": {
+      "title": "工作原理",
+      "body": "小型词典在设备端运行，大多数搜索在一毫秒内返回。常见搜索的预置答案存放在静态文件中。只有不常见的搜索才会发送到Cloudflare网络上的API，按含义查找emoji，并在靠近用户的位置返回答案。"
+    },
+    "principles": {
+      "title": "我们坚持的原则",
+      "neverBreaks": {
+        "title": "搜索持续可用",
+        "text": "达到套餐限额后，搜索仍在设备端运行。用户不会因为账单问题而看到错误。"
+      },
+      "private": {
+        "title": "从设计之初保护隐私",
+        "text": "大多数搜索无需离开设备。我们从不存储搜索者身份、消息内容或照片。"
+      },
+      "open": {
+        "title": "核心开源",
+        "text": "引擎、数据包、SDKs和API服务器均采用MIT许可。你可以自行运行。"
+      },
+      "languages": {
+        "title": "各种语言",
+        "text": "人们用自己的语言和表达方式搜索，词典也支持这些表达。"
+      }
+    },
+    "money": {
+      "title": "收入来源",
+      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、照片转emoji、自定义emoji、数据分析、团队和租户功能。没有广告，也不出售数据。现在就<pricing>选择套餐</pricing>，或<free>免费开始</free>。"
+    },
+    "now": {
+      "title": "当前进展",
+      "body": "还在早期阶段。引擎、{pack}、API、控制台和付费套餐现在都可使用。进展记录在<changelog>更新日志</changelog>中。",
+      "pack": "数据包（{count}个emoji，Emoji {emojiVersion}，{languages}种语言）",
+      "packs": "数据包",
+      "independent": "Emojisense是一个独立项目。欢迎在<issues>GitHub问题区</issues>提问、分享想法或报告错误。"
+    }
+  },
+  "hero": {
+    "searchLabel": "搜索emoji",
+    "placeholder": "用日常说话的方式搜索emoji…",
+    "offline": "离线",
+    "results": "emoji搜索结果",
+    "empty": "暂无匹配，请继续输入。",
+    "byMeaning": "按含义匹配",
+    "matched": "匹配到<q>{match}</q>",
+    "bestMatch": "最佳匹配",
+    "idle": "电影、感受、错别字或其他语言，都可以试试。",
+    "try": "试试",
+    "play": "播放演示",
+    "pause": "暂停演示",
+    "edgeCache": "边缘缓存",
+    "edgeAi": "{ms} · 边缘AI",
+    "onDevice": "{ms} · 设备端",
+    "kinds": {
+      "film": "电影",
+      "meaning": "含义",
+      "typo": "错别字",
+      "feeling": "情感",
+      "intent": "意图",
+      "idiom": "习语",
+      "greeting": "问候",
+      "wish": "祝愿",
+      "thanks": "感谢"
+    }
+  },
+  "codeTabs": {
+    "label": "安装示例",
+    "copy": "复制",
+    "copied": "已复制 ✓",
+    "copiedStatus": "已复制",
+    "example": "{label}示例"
+  },
+  "copyCommand": {
+    "copy": "复制命令：{command}",
+    "copied": "已复制",
+    "selected": "已选中",
+    "selectedStatus": "命令已选中。请用键盘复制。"
+  },
+  "demos": {
+    "useCases": {
+      "tabs": "使用场景",
+      "stop": "停止演示",
+      "missing": "此演示尚未完成。",
+      "loading": "正在加载{name}演示…",
+      "cases": {
+        "chat": {
+          "label": "聊天",
+          "title": "输入冒号，找到想表达的感受",
+          "body": "自动补全理解俚语和含义，还为每条消息提供emoji回应建议。"
+        },
+        "docs": {
+          "label": "文档",
+          "title": "边写边插入emoji",
+          "body": "直接接入Tiptap扩展。同一个引擎也适用于Lexical和其他编辑器。"
+        },
+        "workspaces": {
+          "label": "工作区",
+          "title": "每个客户都有自己的emoji",
+          "body": "自定义emoji与标准emoji集一起搜索，每个工作区都有自己的emoji集。"
+        },
+        "photos": {
+          "label": "照片",
+          "title": "用emoji回应照片",
+          "body": "发送照片，获取人们会用的emoji回应。照片从不存储。"
+        },
+        "assistant": {
+          "label": "AI助手",
+          "title": "让你的AI选对emoji",
+          "body": "通过MCP服务器，任何助手都能按含义搜索emoji，支持11种语言。"
+        }
+      }
+    },
+    "chat": {
+      "window": "演示：接入Emojisense的团队聊天，支持emoji自动补全和emoji回应建议",
+      "topic": "新版上手流程v2全量上线，发布日",
+      "members": "成员：",
+      "messagesIn": "#{channel}中的消息",
+      "today": "今天",
+      "you": "你",
+      "seed": {
+        "rc": "候选版本`2.14.0-rc.3`在预发布环境通过了检查。412项端到端测试全部一次通过。",
+        "email": "欢迎邮件定稿了。“开始使用”改成了“设置你的工作区”，文案测试的结果好很多。",
+        "rollout": "已全量上线。今天上午的注册量增长了18%，大家辛苦了📈"
+      },
+      "autoplay": {
+        "shipped": "新版上手流程上线了",
+        "thanks": "谢谢大家"
+      },
+      "reactionsLabel": "回应",
+      "reactionCount": {
+        "other": "{name}：{count}次回应"
+      },
+      "popTitle": "匹配<b>:{query}</b>的emoji",
+      "onDevice": "设备端{ms} ms",
+      "meaning": "语义搜索{ms} ms",
+      "meaningPending": "语义搜索中…",
+      "listLabel": "emoji",
+      "byMeaning": "按含义匹配",
+      "loadingEmoji": "正在加载emoji…",
+      "searchingMeaning": "正在按含义搜索…",
+      "keyNavigate": "移动",
+      "keySelect": "选择",
+      "keyDismiss": "关闭",
+      "messageLabel": "发送消息到#{channel}",
+      "composeHint": "输入<kbd>:</kbd>和2个字符，查找emoji",
+      "send": "发送消息",
+      "sidebar": {
+        "search": "搜索",
+        "threads": "讨论串",
+        "channels": "频道",
+        "direct": "私信"
+      },
+      "suggested": "emoji回应建议",
+      "reactWith": "用{name}回应",
+      "viaDeviceTitle": "API未返回答案，已由设备端引擎搜索消息",
+      "viaEdge": "边缘 · {ms} ms",
+      "viaDevice": "设备端"
+    },
+    "doc": {
+      "region": "实时演示：接入Emojisense的文档编辑器，支持emoji自动补全",
+      "pageTitle": "Q3发布复盘",
+      "sidebar": {
+        "search": "搜索",
+        "home": "首页",
+        "inbox": "收件箱",
+        "product": "产品",
+        "private": "私人",
+        "newPage": "新建页面",
+        "launchPlan": "发布计划",
+        "retros": "复盘",
+        "q2": "Q2增长复盘",
+        "roadmap": "2027路线图",
+        "experiments": "实验",
+        "drafts": "草稿",
+        "reading": "阅读清单"
+      },
+      "typing": "{name}正在输入…",
+      "edited": "刚刚编辑",
+      "share": "分享",
+      "owner": "负责人",
+      "date": "日期",
+      "failed": "编辑器加载失败。请刷新页面重试。",
+      "body": {
+        "callout": "复盘不追责：只讨论系统和决策，不针对个人。",
+        "wentWell": "做得好的地方",
+        "well1": "新版上手流程v2提前两周上线，第一周通过功能开关控制开放范围",
+        "well2": "新的设置清单上线后，咨询客服的设置问题减少了",
+        "change": "需要改进的地方",
+        "changeBody": "发布周有两次部署失败，都由同一个不稳定的迁移测试引起，回滚耗时也比预期长。",
+        "actions": "待办事项",
+        "action1": "隔离不稳定的迁移测试（Jonas）",
+        "action2": "在发布清单中加入部署冻结步骤（Priya）",
+        "action3": "在#product中分享这份复盘（Maya）",
+        "summary": "总结",
+        "win": "最大收获：新版上手流程顺利上线",
+        "miss": "最大问题：发布周一直在为部署救火"
+      },
+      "placeholder": "输入“:”和一个词，查找emoji…",
+      "bodyLabel": "文档正文",
+      "done": "已完成",
+      "notDone": "未完成",
+      "menu": {
+        "label": "emoji建议",
+        "matching": "匹配<code>:{query}</code>的emoji",
+        "move": "移动",
+        "insert": "插入",
+        "close": "关闭",
+        "similar": "含义相近",
+        "custom": "自定义emoji"
+      },
+      "picker": {
+        "dialog": "选择页面图标",
+        "search": "搜索emoji",
+        "placeholder": "搜索emoji…",
+        "random": "随机",
+        "randomEmoji": "随机emoji",
+        "all": "全部emoji",
+        "for": "与{query}相关的emoji",
+        "results": "结果",
+        "empty": "暂时没有与“{query}”匹配的emoji。",
+        "hint": "试试“{first}”、“{second}”或“{third}”",
+        "hintWords": {
+          "first": "发射",
+          "second": "山羊",
+          "third": "着火"
+        },
+        "pageIcon": "页面图标。更换图标",
+        "pageIconNamed": "页面图标：{label}。更换图标"
+      }
+    },
+    "workspaces": {
+      "tabs": "工作区",
+      "tenantTitle": "租户ID",
+      "message": "消息",
+      "addReaction": "添加回应",
+      "picker": "emoji选择器",
+      "searchIn": "在{workspace}中搜索emoji",
+      "placeholder": "搜索{workspace}的emoji",
+      "clear": "清除搜索",
+      "try": "试试",
+      "results": "emoji搜索结果",
+      "custom": "自定义",
+      "customEmoji": "自定义emoji",
+      "noCustom": "此处没有与“{query}”匹配的自定义emoji。标准emoji集仍会提供结果。",
+      "standard": "标准",
+      "standardFailed": "标准emoji集暂时无法加载。自定义emoji搜索仍可用。",
+      "noStandard": "暂无标准emoji匹配，请继续输入。",
+      "kindCustom": "自定义",
+      "kindStandard": "标准",
+      "customOption": "{code}，自定义",
+      "matched": "匹配到<q>{match}</q>",
+      "byMeaning": "按含义匹配",
+      "enterToReact": "按Enter或点击以回应",
+      "idle": "输入一个词，或试试快捷词。",
+      "resultCount": "{workspace}：{custom}个自定义emoji结果和{standard}个标准emoji结果。",
+      "timingMeaning": "语义搜索 · {ms} ms",
+      "timingDevice": "设备端 · {ms} ms",
+      "aside": "{workspace}的自定义emoji",
+      "importTitle": "Slack和Discord导入：Pro和Scale套餐",
+      "imported": "从{source}导入",
+      "addedByAdmins": "由工作区管理员添加",
+      "set": "自定义emoji集",
+      "reactWith": "用{code}回应",
+      "inspectIdle": "将指针移到emoji上，查看哪些词能搜到它。",
+      "tenants": "租户",
+      "scalePlan": "Scale套餐",
+      "tenantsNote": "每个客户都是一个租户，拥有独立的自定义emoji集。你的服务器使用私密密钥写入数据。",
+      "presets": {
+        "shipIt": "发布",
+        "celebrate": "庆祝",
+        "coffee": "咖啡",
+        "gg": "gg"
+      },
+      "kinds": {
+        "acme": "工程团队",
+        "bloom": "咖啡店",
+        "guild": "游戏社区"
+      },
+      "texts": {
+        "acme": "v4.2正在全量上线。谢谢留下来完成最后一轮评审的各位。",
+        "bloom": "燕麦奶到货了，杏仁可颂也出炉了。",
+        "guild": "9点开团。带好药水，这次我们去打龙。"
+      }
+    },
+    "photo": {
+      "region": "演示：用emoji回应照片",
+      "status": {
+        "scanning": "正在读取照片…",
+        "failed": "API不可用",
+        "live": "实时 · {seconds}秒",
+        "device": "设备端",
+        "example": "已保存的API结果"
+      },
+      "posts": {
+        "puppy": {
+          "label": "柯基",
+          "alt": "一只柯基幼犬用后腿站立，吐着舌头"
+        },
+        "cake": {
+          "label": "生日蛋糕",
+          "alt": "生日蛋糕上有彩色糖粒、星星和点燃的数字3蜡烛"
+        },
+        "sunset": {
+          "label": "海边日落",
+          "alt": "日落时人们站在浅水中，其中一人举起双臂"
+        },
+        "pizza": {
+          "label": "披萨",
+          "alt": "木板上放着切好的蘑菇披萨"
+        },
+        "cat": {
+          "label": "键盘上的猫",
+          "alt": "一只虎斑猫横躺在电脑键盘上睡觉"
+        },
+        "hike": {
+          "label": "山间徒步",
+          "alt": "一名徒步者站在岩石山脊上，下方是云雾笼罩的山谷"
+        }
+      },
+      "teammate": "队友",
+      "yourPhoto": "你的照片",
+      "you": "你",
+      "now": "现在",
+      "tagCaption": "图片描述",
+      "keywords": "关键词：",
+      "describing": "正在描述照片",
+      "fallback": "用几个词描述照片，设备端引擎就能选择emoji。",
+      "describeLabel": "描述照片",
+      "describePlaceholder": "海边的小狗",
+      "find": "查找emoji",
+      "suggested": "emoji回应建议",
+      "reactWith": "用{emoji}回应",
+      "suggestedReply": "回复建议",
+      "composer": "发送消息到#{channel}",
+      "pick": "选择照片",
+      "credit": "照片：<link>{author}</link>，CC0",
+      "stays": "你的照片保留在此页面上。",
+      "drop": "放开以读取照片",
+      "try": "试试你自己的照片",
+      "dropHint": "将图片拖到此处，或选择文件",
+      "privacy": "<strong>照片从不存储。</strong>浏览器将照片缩小至384 px，在内存中生成描述后将其丢弃。",
+      "how1": "视觉模型生成图片描述、关键词和回复。",
+      "how2": "Emojisense用自己的搜索为模型给出的emoji排序。",
+      "engineFailed": "设备端引擎加载失败。请稍后重试。",
+      "errors": {
+        "unreadable": "无法读取此文件中的照片。请试试JPEG、PNG或WebP。",
+        "unavailable": "照片回应功能暂时不可用。",
+        "tooLarge": "照片太大，无法发送。",
+        "tooMany": "一次发送的照片过多。请等待几秒后重试。",
+        "budget": "演示已用完本月的照片处理额度。"
+      }
+    },
+    "assistant": {
+      "chat": "助手聊天",
+      "name": "助手",
+      "newChat": "新建对话",
+      "connected": "MCP服务器已连接",
+      "toolCount": "3个工具",
+      "emptyTitle": "我们写点什么？",
+      "emptyBody": "已连接Emojisense，emoji来自真实搜索。",
+      "thinking": "正在思考",
+      "failed": "emoji工具未返回结果，暂时无法选择emoji。请稍后重试。",
+      "prompts": "提示词示例",
+      "placeholder": "选择提示词开始运行",
+      "note": "预设对话 · 实时工具结果",
+      "config": {
+        "kicker": "MCP服务器 · stdio",
+        "title": "接入任意MCP客户端",
+        "lead": "在客户端配置中添加一项即可。支持离线运行，添加API密钥即可获得语义搜索结果。",
+        "copy": "复制",
+        "copied": "已复制",
+        "copyFailed": "按⌘C / Ctrl+C",
+        "tools": "工具",
+        "summaries": {
+          "search_emoji": "关键词、俚语、名称、电影",
+          "emoji_for_text": "为你写的句子选择emoji",
+          "suggest_reactions": "读者会用的emoji回应"
+        }
+      },
+      "tool": {
+        "failed": "失败",
+        "used": "已使用",
+        "calling": "正在调用",
+        "results": {
+          "other": "，{count}个结果："
+        },
+        "measured": "在你的浏览器中测量",
+        "error": "错误",
+        "running": "运行中",
+        "request": "请求",
+        "response": "响应",
+        "view": "响应视图",
+        "emoji": "emoji",
+        "loadFailed": "emoji数据加载失败。请检查网络连接后重试。",
+        "none": "没有匹配的emoji。",
+        "generic": "结果较少时补充的通用回应",
+        "matched": "匹配到“{reason}”"
+      },
+      "scenarios": {
+        "tweet": {
+          "prompt": "为我们的深色模式写一条发布推文",
+          "intro": "这是草稿，emoji来自搜索结果：",
+          "quote": "深色模式来了{lead}\n天黑后看着更舒服，也更省电，还会跟随系统设置。更新后就能开启深色模式{close}",
+          "moodier": "想更有氛围感？把{from}换成{to}。"
+        },
+        "birthday": {
+          "prompt": "用西班牙语给Ana写生日祝福",
+          "intro": "这是给Ana的祝福：",
+          "labels": "我用英语搜索，并指定返回西班牙语标签，所以{emoji}的标签是“{label}”。"
+        },
+        "react": {
+          "prompt": "回应“10k users. We did it!”",
+          "none": "这条消息没有特别适合用emoji回应的内容。",
+          "safe": "用{emoji}回应，在这里比较稳妥。",
+          "matched": "用{emoji}回应。它匹配到“{why}”，也是大家会用来回应的emoji。",
+          "alsoWork": "如果大家在讨论串里庆祝，{second}和{third}也合适。",
+          "skip": "跳过{emoji}：它匹配到的是“10k”，也就是10公里比赛。"
+        },
+        "status": {
+          "prompt": "设置我的状态：周五部署中",
+          "intro": "你的状态可以这样写：",
+          "matched": "{emoji}匹配到“{why}”。",
+          "runnerUp": "备选：{emoji}。",
+          "sideways": "备选：{emoji}。如果出了问题，还可以用{other}。"
+        }
+      }
+    }
+  }
+}

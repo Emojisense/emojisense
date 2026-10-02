@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDemoI18n } from "../i18n/demos";
 import { fullEngine } from "../lib/engine-client";
 import { ConfigPanel } from "./assistant/ConfigPanel";
 import { AssistantMark, SendArrow } from "./assistant/icons";
 import type { EmojiSuggestion } from "./assistant/mcp";
 import { Reply } from "./assistant/Reply";
-import { SCENARIOS, type Scenario } from "./assistant/scenarios";
+import { type Scenario, scenarios } from "./assistant/scenarios";
 import { ToolCard } from "./assistant/ToolCard";
 import { pause, prefersReducedMotion, useConversation } from "./assistant/useConversation";
 import assistantCss from "./assistant.css?url";
@@ -18,6 +19,8 @@ const NO_RESULTS: readonly EmojiSuggestion[] = [];
  * tool result is computed live in the browser by the MCP server's own handlers on the real engine.
  */
 export default function AssistantDemo() {
+  const { t } = useDemoI18n();
+  const SCENARIOS = useMemo(() => scenarios(t), [t]);
   const { turns, send, toggle, finish } = useConversation();
   const [draft, setDraft] = useState("");
   /** The autoplay types the first prompt, then its answer plays. */
@@ -93,7 +96,7 @@ export default function AssistantDemo() {
       observer.disconnect();
       autoplay.current?.abort();
     };
-  }, [choose, send]);
+  }, [choose, send, SCENARIOS]);
 
   // Keep the newest words in view while the visitor has not scrolled up.
   useEffect(() => {
@@ -124,19 +127,19 @@ export default function AssistantDemo() {
   return (
     <div className="assistant">
       <link rel="stylesheet" href={assistantCss} precedence="demo" />
-      <section className="assistant-chat" ref={chatRef} aria-label="Assistant chat">
+      <section className="assistant-chat" ref={chatRef} aria-label={t.t("assistant.chat")}>
         <header className="assistant-head">
           <span className="assistant-avatar">
             <AssistantMark />
           </span>
           <span className="assistant-title">
-            <strong>Assistant</strong>
-            <span>New chat</span>
+            <strong>{t.t("assistant.name")}</strong>
+            <span>{t.t("assistant.newChat")}</span>
           </span>
-          <span className="assistant-connected" title="MCP server connected">
+          <span className="assistant-connected" title={t.t("assistant.connected")}>
             <span className="assistant-live" aria-hidden="true" />
             emojisense
-            <span className="assistant-connected-count">3 tools</span>
+            <span className="assistant-connected-count">{t.t("assistant.toolCount")}</span>
           </span>
         </header>
 
@@ -147,8 +150,8 @@ export default function AssistantDemo() {
                 <span className="assistant-avatar assistant-avatar-lg">
                   <AssistantMark />
                 </span>
-                <p>What should we write?</p>
-                <span>Emojisense is connected, so the emoji come from a real search.</span>
+                <p>{t.t("assistant.emptyTitle")}</p>
+                <span>{t.t("assistant.emptyBody")}</span>
               </div>
             )}
             {turns.map((turn) => (
@@ -162,7 +165,7 @@ export default function AssistantDemo() {
                   </span>
                   <div className="assistant-bot-body">
                     {turn.phase === "sent" ? (
-                      <span className="assistant-typing" role="img" aria-label="Thinking">
+                      <span className="assistant-typing" role="img" aria-label={t.t("assistant.thinking")}>
                         <i />
                         <i />
                         <i />
@@ -180,10 +183,7 @@ export default function AssistantDemo() {
                     )}
                     {turn.phase === "failed" && (
                       <div className="assistant-reply">
-                        <p>
-                          The emoji tool did not answer, so I can't pick emoji right now. Try again in a
-                          moment.
-                        </p>
+                        <p>{t.t("assistant.failed")}</p>
                       </div>
                     )}
                   </div>
@@ -195,7 +195,7 @@ export default function AssistantDemo() {
 
         <div className="assistant-dock">
           <fieldset className="assistant-prompts">
-            <legend className="visually-hidden">Example prompts</legend>
+            <legend className="visually-hidden">{t.t("assistant.prompts")}</legend>
             {SCENARIOS.map((scenario) => (
               <button
                 key={scenario.id}
@@ -210,14 +210,14 @@ export default function AssistantDemo() {
           </fieldset>
           <div className="assistant-composer" aria-hidden="true">
             <span className={draft ? "assistant-draft" : "assistant-placeholder"}>
-              {draft || "Pick a prompt to run it"}
+              {draft || t.t("assistant.placeholder")}
               {draft && <span className="assistant-caret" />}
             </span>
             <span className="assistant-send" data-ready={draft !== ""}>
               <SendArrow />
             </span>
           </div>
-          <p className="assistant-note">Scripted conversation · live tool results</p>
+          <p className="assistant-note">{t.t("assistant.note")}</p>
         </div>
       </section>
 

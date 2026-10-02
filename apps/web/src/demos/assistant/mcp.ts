@@ -26,10 +26,11 @@ export type ToolCall =
 export type ToolName = ToolCall["name"];
 
 /** The tools the server registers, in its order (packages/mcp/src/server.ts). */
-export const TOOLS: { name: ToolName; summary: string }[] = [
-  { name: "search_emoji", summary: "Keywords, slang, names, films" },
-  { name: "emoji_for_text", summary: "Emoji for a sentence you write" },
-  { name: "suggest_reactions", summary: "What a reader reacts with" },
+/** Their one-line summaries are in the catalog (demos.assistant.config.summaries). */
+export const TOOLS: { name: ToolName }[] = [
+  { name: "search_emoji" },
+  { name: "emoji_for_text" },
+  { name: "suggest_reactions" },
 ];
 
 export interface ToolRun {

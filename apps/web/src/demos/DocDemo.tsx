@@ -1,8 +1,9 @@
 import type { AliasEngine } from "emojisense";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { englishEngine, fullEngine, sharedSemantic, useEngine } from "../lib/engine-client";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDemoI18n } from "../i18n/demos";
+import { firstEngine, fullEngine, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
 import { useAutoplayControl } from "./autoplay-control";
-import { DEFAULT_ICON, documentHtml, PAGE_TITLE, TEAMMATE } from "./doc/content";
+import { DEFAULT_ICON, docCopy, documentHtml, TEAMMATE } from "./doc/content";
 import { IconPicker } from "./doc/IconPicker";
 import { sleep } from "./doc/sleep";
 import docCss from "./doc.css?url";
@@ -22,17 +23,19 @@ interface SidebarPage {
   current?: boolean;
 }
 
-const TEAM_PAGES: SidebarPage[] = [
-  { emoji: "📣", title: "Launch plan" },
-  { emoji: "🗂️", title: "Retros" },
-  { emoji: DEFAULT_ICON, title: PAGE_TITLE, depth: 1, current: true },
-  { emoji: "🌱", title: "Q2 growth retro", depth: 1 },
-  { emoji: "🗺️", title: "Roadmap 2027" },
-  { emoji: "🧪", title: "Experiments" },
+type SidebarWords = ReturnType<typeof useDemoI18n>["messages"]["doc"]["sidebar"];
+
+const teamPages = (words: SidebarWords, pageTitle: string): SidebarPage[] => [
+  { emoji: "📣", title: words.launchPlan },
+  { emoji: "🗂️", title: words.retros },
+  { emoji: DEFAULT_ICON, title: pageTitle, depth: 1, current: true },
+  { emoji: "🌱", title: words.q2, depth: 1 },
+  { emoji: "🗺️", title: words.roadmap },
+  { emoji: "🧪", title: words.experiments },
 ];
-const PRIVATE_PAGES: SidebarPage[] = [
-  { emoji: "✍️", title: "Drafts" },
-  { emoji: "📚", title: "Reading list" },
+const privatePages = (words: SidebarWords): SidebarPage[] => [
+  { emoji: "✍️", title: words.drafts },
+  { emoji: "📚", title: words.reading },
 ];
 
 /** Resolves once enough of the element is on screen; the autoplay never runs unseen. */
@@ -75,7 +78,9 @@ const GLYPHS = {
   more: "M3.5 8h.01M8 8h.01M12.5 8h.01",
 };
 
-function Sidebar({ icon }: { icon: string }) {
+function Sidebar({ icon, pageTitle }: { icon: string; pageTitle: string }) {
+  const { messages } = useDemoI18n();
+  const words = messages.doc.sidebar;
   const row = (page: SidebarPage) => (
     <li
       key={page.title}
@@ -96,25 +101,25 @@ function Sidebar({ icon }: { icon: string }) {
       <ul className="doc-side-nav">
         <li>
           <Icon path={GLYPHS.search} />
-          Search
+          {words.search}
           <kbd>⌘K</kbd>
         </li>
         <li>
           <Icon path={GLYPHS.home} />
-          Home
+          {words.home}
         </li>
         <li>
           <Icon path={GLYPHS.inbox} />
-          Inbox
+          {words.inbox}
         </li>
       </ul>
-      <p className="doc-side-label">Product</p>
-      <ul className="doc-side-pages">{TEAM_PAGES.map(row)}</ul>
-      <p className="doc-side-label">Private</p>
-      <ul className="doc-side-pages">{PRIVATE_PAGES.map(row)}</ul>
+      <p className="doc-side-label">{words.product}</p>
+      <ul className="doc-side-pages">{teamPages(words, pageTitle).map(row)}</ul>
+      <p className="doc-side-label">{words.private}</p>
+      <ul className="doc-side-pages">{privatePages(words).map(row)}</ul>
       <p className="doc-side-new">
         <Icon path={GLYPHS.plus} />
-        New page
+        {words.newPage}
       </p>
     </aside>
   );
@@ -126,6 +131,8 @@ function Sidebar({ icon }: { icon: string }) {
  * until the visitor touches the demo.
  */
 export default function DocDemo() {
+  const { t, lang, messages } = useDemoI18n();
+  const copy = useMemo(() => docCopy(messages.doc), [messages]);
   const { engine, ready } = useEngine();
   const engineRef = useRef<AliasEngine | undefined>(undefined);
   const rootRef = useRef<HTMLElement>(null);
@@ -182,7 +189,10 @@ export default function DocDemo() {
       runtimeRef.current = runtime;
       doc = runtime.createDocEditor({
         element: host,
-        content: documentHtml(reduced),
+        copy,
+        words: messages.doc,
+        locale: pageLocale(),
+        content: documentHtml(copy, reduced),
         engine: () => engineRef.current,
         semantic: sharedSemantic,
         hint: reduced,
@@ -199,7 +209,7 @@ export default function DocDemo() {
       // The full engine knows "dumpster fire"; wait for it a little, then settle for English.
       const quiet = <T,>(promise: Promise<T>) => promise.catch(() => undefined);
       const full = await Promise.race([quiet(fullEngine()), quiet(sleep(6000, signal))]);
-      const best = full ?? (await quiet(englishEngine()));
+      const best = full ?? (await quiet(firstEngine()));
       if (!best) {
         takeOver();
         return;
@@ -221,7 +231,7 @@ export default function DocDemo() {
       doc?.destroy();
       docRef.current = undefined;
     };
-  }, [takeOver]);
+  }, [takeOver, copy, messages]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -237,29 +247,25 @@ export default function DocDemo() {
   }, [takeOver]);
 
   return (
-    <section
-      ref={rootRef}
-      className="doc"
-      aria-label="Live demo: a docs editor with Emojisense emoji autocomplete"
-    >
+    <section ref={rootRef} className="doc" aria-label={t.t("doc.region")}>
       <link rel="stylesheet" href={docCss} precedence="demo" />
-      <Sidebar icon={icon} />
+      <Sidebar icon={icon} pageTitle={copy.pageTitle} />
 
       <div className="doc-main">
         <header className="doc-bar">
           <p className="doc-crumbs" aria-hidden="true">
-            <span className="doc-crumb-parent">Product</span>
+            <span className="doc-crumb-parent">{messages.doc.sidebar.product}</span>
             <span className="doc-crumb-sep">/</span>
-            <span className="doc-crumb-parent">Retros</span>
+            <span className="doc-crumb-parent">{messages.doc.sidebar.retros}</span>
             <span className="doc-crumb-sep">/</span>
             <span className="doc-crumb-current">
               <span className="emoji">{icon}</span>
-              {PAGE_TITLE}
+              {copy.pageTitle}
             </span>
           </p>
           <div className="doc-bar-end">
             <span className="doc-status" aria-live="polite">
-              {typing ? `${TEAMMATE.name} is typing…` : "Edited just now"}
+              {typing ? t.t("doc.typing", { name: TEAMMATE.name }) : t.t("doc.edited")}
             </span>
             <span className="doc-people" aria-hidden="true">
               <span className="doc-avatar" data-active={typing || undefined} title={TEAMMATE.fullName}>
@@ -268,7 +274,7 @@ export default function DocDemo() {
               <span className="doc-avatar">JO</span>
             </span>
             <span className="doc-share" aria-hidden="true">
-              Share
+              {t.t("doc.share")}
             </span>
             <span className="doc-more" aria-hidden="true">
               <Icon path={GLYPHS.more} />
@@ -279,10 +285,10 @@ export default function DocDemo() {
         <div ref={scrollerRef} className="doc-scroll">
           <article className="doc-page">
             <IconPicker icon={icon} engine={engine} onPick={setIcon} />
-            <h1 className="doc-title">{PAGE_TITLE}</h1>
+            <h1 className="doc-title">{copy.pageTitle}</h1>
             <dl className="doc-props">
               <div>
-                <dt>Owner</dt>
+                <dt>{t.t("doc.owner")}</dt>
                 <dd>
                   <span className="doc-avatar doc-avatar-sm" aria-hidden="true">
                     {TEAMMATE.initials}
@@ -291,11 +297,15 @@ export default function DocDemo() {
                 </dd>
               </div>
               <div>
-                <dt>Date</dt>
-                <dd>September 30, 2026</dd>
+                <dt>{t.t("doc.date")}</dt>
+                <dd>
+                  {new Intl.DateTimeFormat(lang, { dateStyle: "long", timeZone: "UTC" }).format(
+                    Date.UTC(2026, 8, 30),
+                  )}
+                </dd>
               </div>
             </dl>
-            {failed && <p className="doc-failed">The editor did not load. Reload the page to try again.</p>}
+            {failed && <p className="doc-failed">{t.t("doc.failed")}</p>}
             {!loaded && !failed && (
               <div className="doc-skeleton" aria-hidden="true">
                 <span />

@@ -1,69 +1,69 @@
 ---
+import { i18nFor } from "../../i18n/page";
 import { stats } from "../../lib/showcase";
 
 /**
  * How a request is answered and what is metered, as implemented in packages/worker
  * (search.ts, reactions.ts, image.ts) and docs/PRICING.md. Keep the wording in sync with them.
  */
+const { t, parts, tag } = i18nFor(Astro);
+const stepNumber = new Intl.NumberFormat(tag);
+
 const layers = [
   {
     emoji: "📱",
-    title: "On the device",
+    title: t("pricing.calls.layers.device.title"),
     speed: "< 1 ms",
-    body: `Names, slang, typos and ${stats.languages} languages, from the dictionary inside your app. Works offline.`,
+    body: t("pricing.calls.layers.device.body", {
+      languages: new Intl.NumberFormat(tag).format(stats.languages),
+    }),
     counted: false,
   },
   {
     emoji: "🗂️",
-    title: "Ready-made answers",
-    speed: "nearest city",
-    body: "Popular searches are answered ahead of time and served as plain files, close to your users.",
+    title: t("pricing.calls.layers.ready.title"),
+    speed: t("pricing.calls.nearestCity"),
+    body: t("pricing.calls.layers.ready.body"),
     counted: false,
   },
   {
     emoji: "🧠",
-    title: "Edge AI",
+    title: t("pricing.calls.layers.edge.title"),
     speed: "≈ 50 ms",
-    body: "Brand-new phrasing and reaction suggestions go to the edge API, which understands them by meaning.",
+    body: t("pricing.calls.layers.edge.body"),
     counted: true,
   },
 ];
 
 const counted = [
-  {
-    title: "AI calls",
-    body: "A meaning search or a reaction suggestion that reaches the edge API. One request, one call.",
-  },
-  { title: "Photos", body: "Each photo turned into emoji. Photos are processed in memory and never stored." },
+  { title: t("pricing.calls.counted.calls.title"), body: t("pricing.calls.counted.calls.body") },
+  { title: t("pricing.calls.counted.photos.title"), body: t("pricing.calls.counted.photos.body") },
 ];
 
 const free = [
-  "On-device answers",
-  "Ready-made answers for popular searches",
-  "Dictionary and pack downloads",
-  "Requests that fail on our side",
+  t("pricing.calls.free.device"),
+  t("pricing.calls.free.ready"),
+  t("pricing.calls.free.downloads"),
+  t("pricing.calls.free.failed"),
 ];
 
 const atLimit = [
-  { state: "on", title: "On-device answers", note: "keep answering" },
-  { state: "on", title: "Ready-made answers", note: "keep answering" },
-  { state: "on", title: "Cached answers at the edge", note: "still served, not counted" },
-  { state: "paused", title: "New AI calls and photos", note: "resume on the 1st" },
+  { state: "on", title: t("pricing.calls.atLimit.device"), note: t("pricing.calls.atLimit.keepAnswering") },
+  { state: "on", title: t("pricing.calls.atLimit.ready"), note: t("pricing.calls.atLimit.keepAnswering") },
+  { state: "on", title: t("pricing.calls.atLimit.cached"), note: t("pricing.calls.atLimit.notCounted") },
+  { state: "paused", title: t("pricing.calls.atLimit.new"), note: t("pricing.calls.atLimit.resume") },
 ];
 ---
 
 <section id="calls" class="section section-soft" aria-labelledby="calls-title">
   <div class="container">
     <div class="section-head center">
-      <p class="kicker">How usage works</p>
-      <h2 id="calls-title">What counts as a call?</h2>
-      <p class="lead">
-        Most emoji searches never reach our servers. The device and ready-made answers handle them, free and
-        unlimited on every plan. A call is counted only when the edge AI does the work.
-      </p>
+      <p class="kicker">{t("pricing.calls.kicker")}</p>
+      <h2 id="calls-title">{t("pricing.calls.title")}</h2>
+      <p class="lead">{t("pricing.calls.lead")}</p>
     </div>
 
-    <ol class="calls-flow" aria-label="How a search is answered">
+    <ol class="calls-flow" aria-label={t("pricing.calls.flowLabel")}>
       {
         layers.map((layer, index) => (
           <li class:list={["calls-layer", { counted: layer.counted }]}>
@@ -72,7 +72,7 @@ const atLimit = [
                 {layer.emoji}
               </span>
               <span class="calls-step">
-                {index + 1} · {layer.speed}
+                {stepNumber.format(index + 1)} · <bdi>{layer.speed}</bdi>
               </span>
             </div>
             <h3>{layer.title}</h3>
@@ -80,14 +80,14 @@ const atLimit = [
             <p class="calls-status">
               {layer.counted ? (
                 <>
-                  <span class="calls-dot" aria-hidden="true" /> Counted as AI calls
+                  <span class="calls-dot" aria-hidden="true" /> {t("pricing.calls.countedStatus")}
                 </>
               ) : (
                 <>
                   <svg viewBox="0 0 16 16" aria-hidden="true">
                     <path d="m3.5 8.5 3 3 6-7" />
                   </svg>
-                  Free · unlimited
+                  {t("pricing.calls.freeStatus")}
                 </>
               )}
             </p>
@@ -105,20 +105,22 @@ const atLimit = [
 
     <div class="calls-grid">
       <article class="calls-card" aria-labelledby="calls-counted-title">
-        <h3 id="calls-counted-title">What your plan counts</h3>
+        <h3 id="calls-counted-title">{t("pricing.calls.countedTitle")}</h3>
         <ul class="calls-counted">
           {
             counted.map((item) => (
               <li>
                 <span class="calls-dot" aria-hidden="true" />
                 <span>
-                  <strong>{item.title}.</strong> {item.body}
+                  {parts("pricing.calls.countedItem", { title: item.title, body: item.body }).map((part) =>
+                    part.tag === "strong" ? <strong>{part.text}</strong> : part.text,
+                  )}
                 </span>
               </li>
             ))
           }
         </ul>
-        <h3 class="calls-subtitle">Never counted</h3>
+        <h3 class="calls-subtitle">{t("pricing.calls.neverCounted")}</h3>
         <ul class="calls-free">
           {
             free.map((item) => (
@@ -134,16 +136,16 @@ const atLimit = [
       </article>
 
       <article class="calls-card" aria-labelledby="calls-limit-title">
-        <h3 id="calls-limit-title">When you reach a limit</h3>
+        <h3 id="calls-limit-title">{t("pricing.calls.limitTitle")}</h3>
         <div class="calls-meter" aria-hidden="true">
           <div class="calls-bar">
             <span class="calls-used"></span>
             <span class="calls-past"></span>
           </div>
           <div class="calls-scale">
-            <span>1st of the month</span>
-            <span class="calls-mark">your limit</span>
-            <span>next month</span>
+            <span>{t("pricing.calls.scale.start")}</span>
+            <span class="calls-mark">{t("pricing.calls.scale.limit")}</span>
+            <span>{t("pricing.calls.scale.next")}</span>
           </div>
         </div>
         <ul class="calls-states">
@@ -168,8 +170,7 @@ const atLimit = [
           }
         </ul>
         <p class="calls-foot">
-          No errors and no broken pickers. The API answers with <code>overLimit: true</code>, and the SDK switches to
-          the device on its own. Limits reset monthly (UTC), with no daily caps.
+          {parts("pricing.calls.foot").map((part) => (part.tag === "code" ? <code>{part.text}</code> : part.text))}
         </p>
       </article>
     </div>
@@ -307,8 +308,14 @@ const atLimit = [
   @media (min-width: 56rem) {
     .calls-next {
       top: 50%;
-      left: calc(100% + 1.25rem);
+      inset-inline-start: calc(100% + 1.25rem);
       transform: translate(-50%, -50%);
+    }
+
+    /* Right to left the flow runs leftwards, and so does the arrow. */
+    .calls-next:dir(rtl) {
+      left: auto;
+      transform: translate(50%, -50%) scaleX(-1);
     }
   }
 
@@ -418,7 +425,7 @@ const atLimit = [
 
   .calls-past {
     flex: 1;
-    border-left: 0.125rem solid var(--bg);
+    border-inline-start: 0.125rem solid var(--bg);
     background: repeating-linear-gradient(
       -45deg,
       var(--line-strong) 0 0.25rem,
@@ -437,7 +444,7 @@ const atLimit = [
 
   .calls-mark {
     position: absolute;
-    left: 68%;
+    inset-inline-start: 68%;
     transform: translateX(-50%);
     color: var(--ink);
   }
@@ -479,7 +486,7 @@ const atLimit = [
   .calls-state-note {
     color: var(--ink-3);
     font-size: 0.875rem;
-    text-align: right;
+    text-align: end;
   }
 
   .calls-foot {
@@ -505,7 +512,7 @@ const atLimit = [
 
     .calls-state-note {
       grid-column: 2;
-      text-align: left;
+      text-align: start;
     }
 
     .calls-scale span:first-child,

@@ -2,6 +2,7 @@
  * Three invented customer workspaces (tenants) of one chat product. Each has its own custom emoji
  * set; the art lives in `public/demo/custom/<workspace id>/<name>.svg`.
  */
+import type { DemoMessages } from "../../i18n/demos";
 
 export interface CustomEmoji {
   /** Shortcode without colons, e.g. "shipit-rocket". Also the file name of the art. */
@@ -17,7 +18,8 @@ export type SeedReaction =
 
 export interface ChannelMessage {
   author: string;
-  time: string;
+  /** Minutes after midnight on the mock clock. */
+  minute: number;
   text: string;
   reactions: SeedReaction[];
 }
@@ -48,7 +50,7 @@ export const WORKSPACES: Workspace[] = [
     importedFrom: "Slack",
     message: {
       author: "Mara Okafor",
-      time: "4:12 PM",
+      minute: 16 * 60 + 12,
       text: "v4.2 is rolling out to 100%. Thanks to everyone who stayed for the last review.",
       reactions: [
         { custom: "shipit-rocket", count: 4 },
@@ -93,7 +95,7 @@ export const WORKSPACES: Workspace[] = [
     tenant: "bloom-cafe",
     message: {
       author: "Theo Martin",
-      time: "7:48 AM",
+      minute: 7 * 60 + 48,
       text: "Oat milk delivery is in, and the almond croissants are out of the oven.",
       reactions: [
         { custom: "fresh-bake", count: 3 },
@@ -129,7 +131,7 @@ export const WORKSPACES: Workspace[] = [
     tenant: "pixel-guild",
     message: {
       author: "Kai Ito",
-      time: "8:03 PM",
+      minute: 20 * 60 + 3,
       text: "Raid starts at 9. Bring potions, we are going for the dragon this time.",
       reactions: [
         { custom: "raid-night", count: 5 },
@@ -154,6 +156,41 @@ export const WORKSPACES: Workspace[] = [
 
 /** Queries that make the point: the same words, a different answer in every workspace. */
 export const PRESET_QUERIES = ["ship it", "celebrate", "coffee", "gg"] as const;
+
+type PresetKey = keyof DemoMessages["workspaces"]["presets"];
+const PRESET_KEYS: Record<(typeof PRESET_QUERIES)[number], PresetKey> = {
+  "ship it": "shipIt",
+  celebrate: "celebrate",
+  coffee: "coffee",
+  gg: "gg",
+};
+
+export interface LocalizedWorkspaces {
+  workspaces: Workspace[];
+  /** The preset chips in the page's language. */
+  presets: string[];
+}
+
+/**
+ * The workspaces in the page's language. The custom sets keep their English names and aliases
+ * (each workspace's admins wrote them), and every emoji found by an English preset also learns
+ * the translated preset, so a chip finds the same custom emoji in every language.
+ */
+export function localizeWorkspaces(words: DemoMessages["workspaces"]): LocalizedWorkspaces {
+  const presets = PRESET_QUERIES.map((preset) => words.presets[PRESET_KEYS[preset]]);
+  const workspaces = WORKSPACES.map((workspace) => ({
+    ...workspace,
+    kind: words.kinds[workspace.id],
+    message: { ...workspace.message, text: words.texts[workspace.id] },
+    emoji: workspace.emoji.map((item) => {
+      const extra = PRESET_QUERIES.filter((preset) => item.aliases.includes(preset)).map(
+        (preset) => words.presets[PRESET_KEYS[preset]],
+      );
+      return { ...item, aliases: [...new Set([...item.aliases, ...extra])] };
+    }),
+  }));
+  return { workspaces, presets };
+}
 
 export function customEmojiSrc(workspace: Workspace, name: string): string {
   return `/demo/custom/${workspace.id}/${name}.svg`;

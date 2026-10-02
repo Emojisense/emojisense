@@ -1,4 +1,6 @@
-import { type CSSProperties, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import type { Messages } from "../i18n/catalogs";
+import { horizontalStep, useTranslator } from "../i18n/react";
 import type { CalendarItem, DateWindow, LensOption, LensQuery, LensResult } from "../lib/culture";
 
 interface Props {
@@ -6,29 +8,33 @@ interface Props {
   calendar: CalendarItem[];
   /** Build day, "YYYY-MM-DD". Replaced by the visitor's own day after hydration. */
   today: string;
+  messages: Messages["culture"]["lens"];
+  /** Intl tag of the page. */
+  lang: string;
+  /** Language of the example searches when it differs from the page's ("en"). */
+  queryLang?: string | undefined;
 }
 
 const DAY_MS = 86_400_000;
 /** Canonical results after the top answer: enough to show the list goes on. */
 const MAX_REST = 3;
-const dayFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" });
 
 function localDay(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-const formatDay = (day: string) => dayFormat.format(new Date(`${day}T00:00:00Z`));
 const daysBetween = (from: string, to: string) =>
   Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY_MS);
 const nextWindow = (windows: DateWindow[] | undefined, day: string) => windows?.find((w) => w.to >= day);
 const isLive = (w: DateWindow | undefined, day: string) => w !== undefined && w.from <= day && day <= w.to;
 
-function untilLabel(days: number): string {
-  if (days <= 1) return days === 1 ? "tomorrow" : "today";
-  if (days < 14) return `in ${days} days`;
-  if (days < 63) return `in ${Math.round(days / 7)} weeks`;
-  return `in ${Math.round(days / 30)} months`;
+/** "tomorrow", "in 5 days", "in 3 weeks", "in 2 months", in the page's language. */
+function untilLabel(days: number, relative: Intl.RelativeTimeFormat): string {
+  if (days <= 1) return relative.format(Math.max(days, 0), "day");
+  if (days < 14) return relative.format(days, "day");
+  if (days < 63) return relative.format(Math.round(days / 7), "week");
+  return relative.format(Math.round(days / 30), "month");
 }
 
 /** "Today" shows whichever seasonal option is live on the visitor's day, else the lasting answer. */
@@ -42,7 +48,8 @@ function resolve(lens: LensQuery, option: LensOption, day: string): { key: strin
  * Search examples read through culture, region and date, plus what is relevant on the calendar.
  * Its styles (culture-lens.css) are linked by Culture.astro, so they do not block the first paint.
  */
-export function CultureLens({ queries, calendar, today: buildDay }: Props) {
+export function CultureLens({ queries, calendar, today: buildDay, messages, lang, queryLang }: Props) {
+  const t = useTranslator(messages, lang);
   const [queryIndex, setQueryIndex] = useState(0);
   const [picked, setPicked] = useState<Record<string, string>>({});
   const [cultureOn, setCultureOn] = useState(true);
@@ -50,6 +57,12 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const lensRef = useRef<HTMLDivElement>(null);
   const id = useId();
+  const dayFormat = useMemo(
+    () => new Intl.DateTimeFormat(lang, { month: "short", day: "numeric", timeZone: "UTC" }),
+    [lang],
+  );
+  const relative = useMemo(() => new Intl.RelativeTimeFormat(lang, { numeric: "auto" }), [lang]);
+  const formatDay = (day: string) => dayFormat.format(new Date(`${day}T00:00:00Z`));
 
   useEffect(() => setToday(localDay(new Date())), []);
 
@@ -73,13 +86,9 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
 
   const onTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const last = queries.length - 1;
-    const target: Record<string, number> = {
-      ArrowRight: queryIndex === last ? 0 : queryIndex + 1,
-      ArrowLeft: queryIndex === 0 ? last : queryIndex - 1,
-      Home: 0,
-      End: last,
-    };
-    const next = target[event.key];
+    const step = horizontalStep(event);
+    const target: Record<string, number> = { Home: 0, End: last };
+    const next = step === 0 ? target[event.key] : (queryIndex + step + queries.length) % queries.length;
     if (next === undefined) return;
     event.preventDefault();
     selectQuery(next);
@@ -99,8 +108,8 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
 
   const emptyNote =
     lens.dimension === "when" && option.id === "today"
-      ? `Nothing seasonal on ${formatDay(today)}, so “${lens.query}” keeps its usual answer.`
-      : "No cultural additions here.";
+      ? t.t("nothingSeasonal", { day: formatDay(today), query: lens.query })
+      : t.t("noAdditions");
 
   const calendarRows = calendar
     .map((item) => ({ item, window: nextWindow(item.windows, today) }))
@@ -111,7 +120,7 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
   return (
     <div className="culture">
       <div className="culture-lens" ref={lensRef}>
-        <div className="culture-tabs" role="tablist" aria-label="Example searches" onKeyDown={onTabKeyDown}>
+        <div className="culture-tabs" role="tablist" aria-label={t.t("tabs")} onKeyDown={onTabKeyDown}>
           {queries.map((q, i) => (
             <button
               key={q.query}
@@ -125,6 +134,7 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
               aria-controls={`${id}-panel`}
               tabIndex={i === queryIndex ? 0 : -1}
               className="culture-tab"
+              lang={queryLang}
               onClick={() => selectQuery(i)}
             >
               {q.query}
@@ -143,7 +153,9 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.5-3.5" />
             </svg>
-            <span className="culture-query">{lens.query}</span>
+            <span className="culture-query" lang={queryLang}>
+              {lens.query}
+            </span>
             <button
               type="button"
               role="switch"
@@ -154,7 +166,7 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
               <span className="culture-switch-track" aria-hidden="true">
                 <span className="culture-switch-thumb" />
               </span>
-              <span className="culture-switch-label">Culture</span>
+              <span className="culture-switch-label">{t.t("switch")}</span>
             </button>
           </div>
 
@@ -163,15 +175,15 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
             data-open={groupOpen}
             style={{ "--n": added.length } as CSSProperties}
           >
-            <ol className="culture-tiles" aria-label={`Results for “${lens.query}”`}>
+            <ol className="culture-tiles" aria-label={t.t("resultsFor", { query: lens.query })}>
               {top && (
                 <li key={`${lens.query}-top`} className="culture-item culture-top">
                   <span className="culture-box emoji">{top.emoji}</span>
-                  <span className="culture-cap">Top answer</span>
+                  <span className="culture-cap">{t.t("topAnswer")}</span>
                 </li>
               )}
               <li className="culture-item culture-group" aria-hidden={!groupOpen}>
-                <span className="visually-hidden">Added by culture:</span>
+                <span className="visually-hidden">{t.t("addedByCulture")}</span>
                 <span className="culture-group-tiles">
                   {added.map((a, i) => (
                     <span
@@ -191,13 +203,13 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
               ))}
             </ol>
             <span className="culture-cap culture-brace" aria-hidden="true">
-              Culture
+              {t.t("switch")}
             </span>
           </div>
 
           <div className="culture-why" aria-live="polite">
             {!cultureOn ? (
-              <p className="culture-why-empty">Culture off: the engine's own ranking, unchanged.</p>
+              <p className="culture-why-empty">{t.t("off")}</p>
             ) : shownNotes.length > 0 ? (
               <ul>
                 {shownNotes.map((note) => (
@@ -206,7 +218,7 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
                       {note.emoji.join("")}
                     </span>
                     <span className="culture-why-text">
-                      <strong>{note.context}</strong>
+                      <strong lang={note.lang}>{note.context}</strong>
                       <small>
                         {note.scope} · {note.provenance}
                       </small>
@@ -221,15 +233,15 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
 
           <div className="culture-context">
             {lens.dimension === null ? (
-              <p className="culture-context-note">Same answer everywhere, all year.</p>
+              <p className="culture-context-note">{t.t("sameEverywhere")}</p>
             ) : (
               <>
                 <span className="culture-context-label" aria-hidden="true">
-                  {lens.dimension === "where" ? "Where" : "When"}
+                  {lens.dimension === "where" ? t.t("where") : t.t("when")}
                 </span>
                 <fieldset className="culture-chips">
                   <legend className="visually-hidden">
-                    {lens.dimension === "where" ? "Where the search happens" : "When the search happens"}
+                    {lens.dimension === "where" ? t.t("whereLegend") : t.t("whenLegend")}
                   </legend>
                   {lens.options.map((o) => {
                     const sub = o.id === "today" ? formatDay(today) : nextWindow(o.windows, today)?.label;
@@ -246,7 +258,7 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
                             {o.flag}
                           </span>
                         )}
-                        <span>{o.label}</span>
+                        <span lang={o.lang}>{o.label}</span>
                         {sub && <small>{sub}</small>}
                       </button>
                     );
@@ -260,8 +272,8 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
 
       <aside className="culture-cal" aria-labelledby={`${id}-cal`}>
         <header className="culture-cal-head">
-          <h3 id={`${id}-cal`}>Relevant now</h3>
-          <span>Today · {formatDay(today)}</span>
+          <h3 id={`${id}-cal`}>{t.t("relevantNow")}</h3>
+          <span>{t.t("today", { day: formatDay(today) })}</span>
         </header>
         {calendarRows.length > 0 ? (
           <ol className="culture-cal-list">
@@ -273,7 +285,9 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
                   <span className="culture-cal-emoji emoji" aria-hidden="true">
                     {item.emoji.join("")}
                   </span>
-                  <strong className="culture-cal-title">{item.context}</strong>
+                  <strong className="culture-cal-title" lang={item.lang}>
+                    {item.context}
+                  </strong>
                   <small className="culture-cal-meta">
                     {w.label}
                     {item.where && ` · ${item.where}`}
@@ -282,10 +296,10 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
                     {live ? (
                       <>
                         <span className="culture-live" aria-hidden="true" />
-                        Live now
+                        {t.t("liveNow")}
                       </>
                     ) : (
-                      untilLabel(daysBetween(today, w.from))
+                      untilLabel(daysBetween(today, w.from), relative)
                     )}
                   </span>
                 </>
@@ -308,11 +322,9 @@ export function CultureLens({ queries, calendar, today: buildDay }: Props) {
             })}
           </ol>
         ) : (
-          <p className="culture-cal-empty">Nothing seasonal in the next few months.</p>
+          <p className="culture-cal-empty">{t.t("calendarEmpty")}</p>
         )}
-        <p className="culture-cal-note">
-          Seasonal picks switch on with the calendar and step aside when the moment ends.
-        </p>
+        <p className="culture-cal-note">{t.t("calendarNote")}</p>
       </aside>
     </div>
   );

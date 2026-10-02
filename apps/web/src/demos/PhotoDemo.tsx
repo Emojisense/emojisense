@@ -6,67 +6,43 @@ import {
   useCallback,
   useEffect,
   useId,
+  useMemo,
   useRef,
   useState,
 } from "react";
-import { englishEngine } from "../lib/engine-client";
-import { classifyPhoto, downscale, type PhotoReading, UNREADABLE } from "./photo/classify";
+import { type DemoMessages, useDemoI18n } from "../i18n/demos";
+import { rich } from "../i18n/react";
+import { firstEngine, pageLocale } from "../lib/engine-client";
+import { formatClock } from "./chat/content";
+import { type ClassifyFailure, classifyPhoto, downscale, type PhotoReading } from "./photo/classify";
 import credits from "./photo/credits.json";
 import fixtures from "./photo/fixtures.json";
 import photoCss from "./photo.css?url";
 
-/** How each example appears in the mock channel. Results come from fixtures.json (real API output). */
-const POSTS: Record<string, { label: string; alt: string; poster: string; initials: string; time: string }> =
-  {
-    puppy: {
-      label: "Corgi",
-      alt: "A corgi puppy standing on its hind legs with its tongue out",
-      poster: "Maya Chen",
-      initials: "MC",
-      time: "9:41 AM",
-    },
-    cake: {
-      label: "Birthday cake",
-      alt: "A birthday cake with sprinkles, stars and a lit number 3 candle",
-      poster: "Leo Park",
-      initials: "LP",
-      time: "11:02 AM",
-    },
-    sunset: {
-      label: "Beach sunset",
-      alt: "People in the shallows at sunset, one with both arms raised",
-      poster: "Ana Souza",
-      initials: "AS",
-      time: "6:47 PM",
-    },
-    pizza: {
-      label: "Pizza",
-      alt: "A sliced mushroom pizza on a wooden board",
-      poster: "Sam Okafor",
-      initials: "SO",
-      time: "7:15 PM",
-    },
-    cat: {
-      label: "Cat on a keyboard",
-      alt: "A tabby cat asleep across a computer keyboard",
-      poster: "Priya Raman",
-      initials: "PR",
-      time: "2:30 PM",
-    },
-    hike: {
-      label: "Mountain hike",
-      alt: "A hiker on a rocky ridge above misty mountain valleys",
-      poster: "Jonas Weber",
-      initials: "JW",
-      time: "8:05 AM",
-    },
-  };
+type PostId = keyof DemoMessages["photo"]["posts"];
+
+/**
+ * Who posts each example in the mock channel, and when (minutes after midnight). The label and
+ * alt text are in the catalog (demos.photo.posts). Results come from fixtures.json (real API output).
+ */
+const POSTS: Record<PostId, { poster: string; initials: string; minute: number }> = {
+  puppy: { poster: "Maya Chen", initials: "MC", minute: 9 * 60 + 41 },
+  cake: { poster: "Leo Park", initials: "LP", minute: 11 * 60 + 2 },
+  sunset: { poster: "Ana Souza", initials: "AS", minute: 18 * 60 + 47 },
+  pizza: { poster: "Sam Okafor", initials: "SO", minute: 19 * 60 + 15 },
+  cat: { poster: "Priya Raman", initials: "PR", minute: 14 * 60 + 30 },
+  hike: { poster: "Jonas Weber", initials: "JW", minute: 8 * 60 + 5 },
+};
+
+const isPostId = (id: string): id is PostId => id in POSTS;
 
 interface Photo {
   /** Example id, or "upload" for the visitor's own photo. */
   id: string;
   src: string;
   alt: string;
+  /** Short name for the thumbnail. */
+  label: string;
   width?: number;
   height?: number;
   poster: string;
@@ -76,28 +52,33 @@ interface Photo {
   credit?: { author: string; source: string };
 }
 
-const EXAMPLES: Photo[] = fixtures.photos.map((photo) => {
-  const post = POSTS[photo.id] ?? { label: photo.id, alt: "", poster: "Teammate", initials: "T", time: "" };
-  const credit = credits.photos.find((c) => c.id === photo.id);
-  return {
-    id: photo.id,
-    src: photo.src,
-    alt: post.alt,
-    width: photo.width,
-    height: photo.height,
-    poster: post.poster,
-    initials: post.initials,
-    time: post.time,
-    reading: photo.response,
-    ...(credit ? { credit: { author: credit.author.replace(/\s*\(.*\)$/, ""), source: credit.source } } : {}),
-  };
-});
-const FIRST = EXAMPLES[0] as Photo;
+function buildExamples(words: DemoMessages["photo"], lang: string): Photo[] {
+  return fixtures.photos.map((photo) => {
+    const post = isPostId(photo.id) ? POSTS[photo.id] : undefined;
+    const text = isPostId(photo.id) ? words.posts[photo.id] : undefined;
+    const credit = credits.photos.find((c) => c.id === photo.id);
+    return {
+      id: photo.id,
+      src: photo.src,
+      alt: text?.alt ?? "",
+      label: text?.label ?? photo.id,
+      width: photo.width,
+      height: photo.height,
+      poster: post?.poster ?? words.teammate,
+      initials: post?.initials ?? "T",
+      time: post ? formatClock(post.minute, lang) : "",
+      reading: photo.response,
+      ...(credit
+        ? { credit: { author: credit.author.replace(/\s*\(.*\)$/, ""), source: credit.source } }
+        : {}),
+    };
+  });
+}
 
 type Status =
   | { kind: "scanning" }
   | { kind: "done"; reading: PhotoReading; source: "example" | "live" | "device"; ms?: number }
-  | { kind: "failed"; message: string };
+  | { kind: "failed"; reason: ClassifyFailure };
 
 const SHOWN_REACTIONS = 6;
 const SCAN_MS = 950;
@@ -133,17 +114,24 @@ function EmojiText({ text }: { text: string }) {
   );
 }
 
-function statusLabel(status: Status): string {
-  if (status.kind === "scanning") return "Reading photo…";
-  if (status.kind === "failed") return "API unavailable";
-  if (status.source === "live") return `Live · ${((status.ms ?? 0) / 1000).toFixed(1)} s`;
-  if (status.source === "device") return "On-device";
-  return "Saved API output";
+function statusLabel(status: Status, words: DemoMessages["photo"]["status"], lang: string): string {
+  if (status.kind === "scanning") return words.scanning;
+  if (status.kind === "failed") return words.failed;
+  if (status.source === "live") {
+    const seconds = new Intl.NumberFormat(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    return words.live.replace("{seconds}", seconds.format((status.ms ?? 0) / 1000));
+  }
+  if (status.source === "device") return words.device;
+  return words.example;
 }
 
 /** Photo → caption → emoji: pick an example (real, saved API output) or try your own photo (live API). */
 export default function PhotoDemo() {
-  const [photo, setPhoto] = useState<Photo>(FIRST);
+  const { t, lang, messages } = useDemoI18n();
+  const words = messages.photo;
+  const examples = useMemo(() => buildExamples(words, lang), [words, lang]);
+  const first = examples[0] as Photo;
+  const [photo, setPhoto] = useState<Photo>(first);
   const [status, setStatus] = useState<Status>({ kind: "scanning" });
   const [reacted, setReacted] = useState<ReadonlySet<string>>(new Set());
   const [reply, setReply] = useState<string | undefined>();
@@ -195,7 +183,7 @@ export default function PhotoDemo() {
   useEffect(() => {
     const node = rootRef.current;
     if (!node || reducedMotion() || typeof IntersectionObserver !== "function") {
-      showExample(FIRST);
+      showExample(first);
       return;
     }
     const startRun = run.current;
@@ -203,13 +191,13 @@ export default function PhotoDemo() {
       (entries) => {
         if (!entries.some((entry) => entry.isIntersecting)) return;
         observer.disconnect();
-        if (run.current === startRun) showExample(FIRST);
+        if (run.current === startRun) showExample(first);
       },
       { threshold: 0.25 },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [showExample]);
+  }, [showExample, first]);
 
   useEffect(
     () => () => {
@@ -231,17 +219,18 @@ export default function PhotoDemo() {
     try {
       small = await downscale(file);
     } catch {
-      setNotice(UNREADABLE);
+      setNotice(words.errors.unreadable);
       return;
     }
     const src = URL.createObjectURL(file);
     const token = begin({
       id: "upload",
       src,
-      alt: "Your photo",
-      poster: "You",
-      initials: "You",
-      time: "now",
+      alt: words.yourPhoto,
+      label: words.yourPhoto,
+      poster: words.you,
+      initials: words.you,
+      time: words.now,
     });
     uploadUrl.current = src;
     setStatus({ kind: "scanning" });
@@ -252,7 +241,7 @@ export default function PhotoDemo() {
     setStatus(
       outcome.ok
         ? { kind: "done", reading: outcome.reading, source: "live", ms: outcome.ms }
-        : { kind: "failed", message: outcome.message },
+        : { kind: "failed", reason: outcome.reason },
     );
   };
 
@@ -294,13 +283,17 @@ export default function PhotoDemo() {
     if (!text) return;
     const token = run.current;
     try {
-      const engine = await englishEngine();
+      const engine = await firstEngine();
       if (run.current !== token) return;
-      const { results } = engine.search(text, { limit: SHOWN_REACTIONS, prefix: false });
+      const { results } = engine.search(text, {
+        limit: SHOWN_REACTIONS,
+        prefix: false,
+        locale: pageLocale(),
+      });
       setReacted(new Set());
       setStatus({ kind: "done", reading: { caption: text, reaction: "", results }, source: "device" });
     } catch {
-      if (run.current === token) setNotice("The on-device engine could not load. Please try again later.");
+      if (run.current === token) setNotice(words.engineFailed);
     }
   };
 
@@ -319,7 +312,7 @@ export default function PhotoDemo() {
     <section
       ref={rootRef}
       className="photo"
-      aria-label="Demo: emoji reactions for a photo"
+      aria-label={t.t("photo.region")}
       onDragEnter={onDragEnter}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
@@ -340,7 +333,7 @@ export default function PhotoDemo() {
               data-state={status.kind === "done" ? status.source : status.kind}
               aria-live="polite"
             >
-              {statusLabel(status)}
+              {statusLabel(status, words.status, lang)}
             </span>
           </header>
 
@@ -376,14 +369,16 @@ export default function PhotoDemo() {
                 {status.kind !== "failed" && (
                   <p className="photo-caption">
                     <span className="photo-tag">
-                      {status.kind === "done" && status.source === "device" ? "You" : "Caption"}
+                      {status.kind === "done" && status.source === "device"
+                        ? words.you
+                        : t.t("photo.tagCaption")}
                     </span>
                     {reading ? (
                       <span className="photo-caption-text" key={reading.caption}>
                         {reading.caption}
                         {reading.keywords && reading.keywords.length > 0 && (
                           <span className="photo-keywords">
-                            <span className="visually-hidden">Keywords: </span>
+                            <span className="visually-hidden">{t.t("photo.keywords")} </span>
                             {reading.keywords.map((keyword, i) => (
                               <Fragment key={keyword}>
                                 {i > 0 && <span aria-hidden="true"> · </span>}
@@ -394,7 +389,7 @@ export default function PhotoDemo() {
                         )}
                       </span>
                     ) : (
-                      <span className="photo-skeleton" aria-label="Describing the photo" role="img" />
+                      <span className="photo-skeleton" aria-label={t.t("photo.describing")} role="img" />
                     )}
                   </p>
                 )}
@@ -402,26 +397,25 @@ export default function PhotoDemo() {
                 {status.kind === "failed" ? (
                   <div className="photo-fallback" role="status">
                     <p>
-                      {status.message}{" "}
-                      <span>Describe it in a few words and the on-device engine will pick emoji.</span>
+                      {words.errors[status.reason]} <span>{t.t("photo.fallback")}</span>
                     </p>
                     <form className="photo-describe" onSubmit={describe}>
                       <label className="visually-hidden" htmlFor={`${id}-describe`}>
-                        Describe the photo
+                        {t.t("photo.describeLabel")}
                       </label>
                       <input
                         id={`${id}-describe`}
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
-                        placeholder="dog at the beach"
+                        placeholder={t.t("photo.describePlaceholder")}
                         autoComplete="off"
                         maxLength={64}
                       />
-                      <button type="submit">Find emoji</button>
+                      <button type="submit">{t.t("photo.find")}</button>
                     </form>
                   </div>
                 ) : (
-                  <ul className="photo-reactions" aria-label="Suggested reactions">
+                  <ul className="photo-reactions" aria-label={t.t("photo.suggested")}>
                     {status.kind === "scanning" &&
                       Array.from({ length: SHOWN_REACTIONS }, (_, i) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders.
@@ -433,7 +427,7 @@ export default function PhotoDemo() {
                           type="button"
                           className="photo-chip"
                           aria-pressed={reacted.has(result.id)}
-                          aria-label={`React with ${result.emoji}`}
+                          aria-label={t.t("photo.reactWith", { emoji: result.emoji })}
                           style={{ animationDelay: `${i * 45}ms` }}
                           onClick={() => toggleReaction(result.id)}
                         >
@@ -450,12 +444,12 @@ export default function PhotoDemo() {
             {reply && (
               <article className="photo-msg is-reply">
                 <span className="photo-avatar" aria-hidden="true">
-                  You
+                  {words.you}
                 </span>
                 <div className="photo-body">
                   <p className="photo-meta">
-                    <span className="photo-name">You</span>
-                    <span className="photo-time">now</span>
+                    <span className="photo-name">{words.you}</span>
+                    <span className="photo-time">{words.now}</span>
                   </p>
                   <p className="photo-text">
                     <EmojiText text={reply} />
@@ -468,7 +462,7 @@ export default function PhotoDemo() {
           <div className="photo-compose">
             {(status.kind === "scanning" || (reading?.reaction && !reply)) && (
               <div className="photo-suggest">
-                <span className="photo-label">Suggested reply</span>
+                <span className="photo-label">{t.t("photo.suggestedReply")}</span>
                 {reading?.reaction ? (
                   <button type="button" className="photo-reply" onClick={() => setReply(reading.reaction)}>
                     <EmojiText text={reading.reaction} />
@@ -479,7 +473,7 @@ export default function PhotoDemo() {
               </div>
             )}
             <div className="photo-composer" aria-hidden="true">
-              <span>Message #weekend-pics</span>
+              <span>{t.t("photo.composer", { channel: "weekend-pics" })}</span>
               <svg
                 viewBox="0 0 20 20"
                 width="16"
@@ -496,9 +490,9 @@ export default function PhotoDemo() {
         </div>
 
         <fieldset className="photo-picker">
-          <legend className="photo-label">Pick a photo</legend>
+          <legend className="photo-label">{t.t("photo.pick")}</legend>
           <div className="photo-thumbs">
-            {EXAMPLES.map((example) => (
+            {examples.map((example) => (
               <label key={example.id} className="photo-thumb">
                 <input
                   type="radio"
@@ -507,27 +501,24 @@ export default function PhotoDemo() {
                   checked={example.id === photo.id}
                   onChange={() => showExample(example)}
                 />
-                <img
-                  src={example.src}
-                  alt={POSTS[example.id]?.label ?? example.id}
-                  loading="lazy"
-                  decoding="async"
-                />
+                <img src={example.src} alt={example.label} loading="lazy" decoding="async" />
               </label>
             ))}
           </div>
           <p className="photo-credit">
-            {!isUpload && photo.credit ? (
-              <>
-                Photo:{" "}
-                <a href={photo.credit.source} target="_blank" rel="noopener noreferrer">
-                  {photo.credit.author}
-                </a>
-                , CC0
-              </>
-            ) : (
-              "Your photo stays on this page."
-            )}
+            {!isUpload && photo.credit
+              ? rich(
+                  t.raw("photo.credit"),
+                  {
+                    link: (text) => (
+                      <a href={photo.credit?.source} target="_blank" rel="noopener noreferrer">
+                        {text}
+                      </a>
+                    ),
+                  },
+                  { author: photo.credit.author },
+                )
+              : t.t("photo.stays")}
           </p>
         </fieldset>
 
@@ -551,8 +542,8 @@ export default function PhotoDemo() {
                 />
               </svg>
             </span>
-            <span className="photo-drop-title">{dragging ? "Drop to read it" : "Try your own photo"}</span>
-            <span className="photo-drop-hint">Drop an image here or browse</span>
+            <span className="photo-drop-title">{dragging ? t.t("photo.drop") : t.t("photo.try")}</span>
+            <span className="photo-drop-hint">{t.t("photo.dropHint")}</span>
           </label>
           {notice && (
             <p className="photo-notice" role="status">
@@ -575,14 +566,11 @@ export default function PhotoDemo() {
               />
               <path d="m7.5 10 1.8 1.8 3.2-3.6" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span>
-              <strong>Photos are never stored.</strong> Your photo is resized to 384 px in your browser,
-              captioned in memory, then dropped.
-            </span>
+            <span>{rich(t.raw("photo.privacy"), { strong: (text) => <strong>{text}</strong> })}</span>
           </p>
           <ol className="photo-how">
-            <li>A vision model writes a caption, keywords and a reply.</li>
-            <li>Emojisense ranks the model's emoji with its own search.</li>
+            <li>{t.t("photo.how1")}</li>
+            <li>{t.t("photo.how2")}</li>
           </ol>
         </div>
       </div>
