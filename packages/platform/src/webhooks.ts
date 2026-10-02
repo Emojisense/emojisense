@@ -171,8 +171,13 @@ export interface WebhookTarget {
 }
 
 export interface DeliveryAttempt {
+  /** The webhook_deliveries row of this attempt. */
+  deliveryId: string;
   webhookId: string;
+  event: WebhookEnvelopeType;
   attempt: number;
+  /** When the attempt was recorded (Unix epoch milliseconds). */
+  createdAt: number;
   /** HTTP status; null = network error, timeout or a refused target. */
   status: number | null;
   ok: boolean;
@@ -191,11 +196,10 @@ export async function deliverOnce(
   options: { attempt?: number; body?: string } = {},
 ): Promise<DeliveryAttempt> {
   const now = runtime.now ?? Date.now;
-  const attempt = options.attempt ?? 1;
   const check = checkWebhookUrl(target.url, { allowLoopback: runtime.allowLoopback });
-  let result: DeliveryAttempt;
+  let outcome: Pick<DeliveryAttempt, "status" | "ok" | "durationMs" | "refused">;
   if (!check.ok) {
-    result = { webhookId: target.id, attempt, status: null, ok: false, durationMs: 0, refused: true };
+    outcome = { status: null, ok: false, durationMs: 0, refused: true };
   } else {
     const body = options.body ?? JSON.stringify(event);
     const started = now();
@@ -225,9 +229,17 @@ export async function deliverOnce(
       clearTimeout(timer);
     }
     const ok = status !== null && status >= 200 && status < 300;
-    result = { webhookId: target.id, attempt, status, ok, durationMs: Math.max(0, now() - started) };
+    outcome = { status, ok, durationMs: Math.max(0, now() - started) };
   }
-  await recordDelivery(runtime, target.id, event.type, result);
+  const result: DeliveryAttempt = {
+    deliveryId: randomId(),
+    webhookId: target.id,
+    event: event.type,
+    attempt: options.attempt ?? 1,
+    createdAt: now(),
+    ...outcome,
+  };
+  await recordDelivery(runtime.db, result);
   return result;
 }
 
@@ -318,13 +330,7 @@ async function loadActiveTarget(db: D1DatabaseLike, id: string): Promise<Webhook
 }
 
 /** Inserts the attempt and keeps only the newest WEBHOOK_DELIVERIES_KEPT rows of the webhook. */
-async function recordDelivery(
-  runtime: WebhookRuntime,
-  webhookId: string,
-  eventType: string,
-  attempt: DeliveryAttempt,
-): Promise<void> {
-  const { db } = runtime;
+async function recordDelivery(db: D1DatabaseLike, attempt: DeliveryAttempt): Promise<void> {
   try {
     await db.batch([
       db
@@ -333,12 +339,12 @@ async function recordDelivery(
            VALUES (?, ?, ?, ?, ?, ?)`,
         )
         .bind(
-          randomId(),
-          webhookId,
-          eventType,
+          attempt.deliveryId,
+          attempt.webhookId,
+          attempt.event,
           attempt.status,
           attempt.durationMs,
-          (runtime.now ?? Date.now)(),
+          attempt.createdAt,
         ),
       db
         .prepare(
@@ -346,7 +352,7 @@ async function recordDelivery(
              SELECT id FROM webhook_deliveries WHERE webhook_id = ?
              ORDER BY created_at DESC, id DESC LIMIT ?)`,
         )
-        .bind(webhookId, webhookId, WEBHOOK_DELIVERIES_KEPT),
+        .bind(attempt.webhookId, attempt.webhookId, WEBHOOK_DELIVERIES_KEPT),
     ]);
   } catch (error) {
     // The webhook may have been deleted meanwhile (its rows cascade away). Delivery still counts.

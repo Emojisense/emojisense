@@ -158,8 +158,16 @@ describe("delivery", () => {
     ).toBe(true);
 
     expect(deliveries()).toEqual([
-      expect.objectContaining({ webhook_id: "wh_1", event: "tenant.created", status: 204, created_at: NOW }),
+      {
+        id: attempt.deliveryId,
+        webhook_id: "wh_1",
+        event: "tenant.created",
+        status: 204,
+        duration_ms: 0,
+        created_at: NOW,
+      },
     ]);
+    expect(attempt).toMatchObject({ event: "tenant.created", createdAt: NOW, durationMs: 0 });
   });
 
   it("does not follow redirects", async () => {
