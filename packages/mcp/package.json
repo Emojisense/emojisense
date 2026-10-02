@@ -1,0 +1,36 @@
+{
+  "name": "@emojisense/mcp",
+  "version": "0.0.0",
+  "description": "MCP server for emoji search, emoji for a sentence and reaction suggestions. Offline by default.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "emojisense-mcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsx scripts/bundle-packs.ts",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.1.0",
+    "emojisense": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@emojisense/data": "workspace:*"
+  }
+}
