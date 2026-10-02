@@ -19,6 +19,12 @@ function memoryBucket() {
 }
 
 /**
+ * Tables of k-anonymous aggregates over many accounts (migration 0004): no row belongs to one
+ * account, so a deletion has nothing to remove there. They must not have an app or account column.
+ */
+const AGGREGATE_TABLES = ["trends_daily"];
+
+/**
  * One row in every table that belongs to `login`, with ids that start with `<login>_`, plus its
  * custom emoji image. Returns the account id.
  */
@@ -144,6 +150,14 @@ describe("DELETE /api/me", () => {
     const before = snapshot(h);
     // The seed covers every table, so a new table fails here until the deletion handles it.
     for (const [table, rows] of Object.entries(before)) {
+      if (AGGREGATE_TABLES.includes(table)) {
+        const columns = h.db.rows<{ name: string }>(`PRAGMA table_info(${table})`).map((c) => c.name);
+        expect(
+          columns.filter((name) => /app_id|account_id|email|user/.test(name)),
+          table,
+        ).toEqual([]);
+        continue;
+      }
       expect(
         rows.some((row) => row.includes(adaId) || /ada[_@]|ADA@/.test(row)),
         table,

@@ -126,8 +126,8 @@ everyone only after it has been searched at least 5 times, because rare texts ca
 Search results are cached on Cloudflare's network for up to 7 days. The cache key holds only the
 normalized search text, the language, the number of results, the mode and the index version.
 
-For searches that use an API key of an app, we also count, per app, UTC day and normalized search
-text, how many searches there were and how many found nothing. Searches without a key, and
+For searches that use an API key of an app, we also count, per app, UTC day, normalized search
+text, language and country, how many searches there were and how many found nothing. Searches without a key, and
 searches with development keys, are not counted. The dashboard shows these counts on the Pro and
 Scale plans, and it names a search text only when the app saw it at least 5 times. We keep the
 counts for the analytics period of the plan of the account that owns the app: 30 days on Pro,
@@ -135,15 +135,29 @@ counts for the analytics period of the plan of the account that owns the app: 30
 shows the last week at once. A daily job deletes older counts. For this data, our customer is the
 controller.
 
+The country is the one that Cloudflare's network derives from the IP address of the request, at
+the edge: a two-letter code such as BR, or XX when it is unknown. We store only this code, as one
+more dimension of the counts above. We never store the IP address, and we never store the country
+with a user, a key or a single request. The dashboard shows each customer the counts of its own
+apps only. An app can also ask the API to choose regional culture results by this country
+(`region=auto`); the country then selects the results of that one answer only.
+
 We also use these counts, in aggregate, to precompute results for frequent searches. Every night
-a job selects the search texts that apps of at least 3 different accounts searched at least 10
-times in total over the last 6 full days. It leaves out every text that looks like personal data:
+a job selects, for each language, the search texts that apps of at least 3 different accounts
+searched at least 10 times in total in that language over the last 6 full days. It leaves out every text that looks like personal data:
 an email or web address, a phone, account or postal number, a user id or a long token. For each
 selected text it publishes the emoji results in files that anyone can download. These files hold
 only the search text and its emoji, with no app, account, date or count. A text is removed with
 the first nightly build after it no longer meets these rules; copies cached by browsers or by
 Cloudflare's network expire within one day. Searches without a key, and searches with
 development keys, are never counted, so they never reach these files.
+
+Every night a job also finds the search texts that become more frequent in a language and a
+country, so that we can propose new culture results for that region. It uses a search text only
+when apps of at least 3 different accounts searched it at least 10 times in that language and
+country over the last 7 full days, and only when it does not look like personal data (the same
+rules as above). The list holds the search text, the language, the country and totals, with no
+app, account, user or date of a single search. It is not public. We keep it for 90 days.
 
 ### Reaction suggestions
 

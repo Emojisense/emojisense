@@ -7,6 +7,10 @@ import {
   SHARD_MIN_ACCOUNTS,
   SHARD_MIN_SEARCHES,
   SHARD_WINDOW_DAYS,
+  TRENDS_KEEP_DAYS,
+  TRENDS_MIN_ACCOUNTS,
+  TRENDS_MIN_SEARCHES,
+  TRENDS_RECENT_DAYS,
   WAITLIST_KEEP_MONTHS,
 } from "@emojisense/platform";
 import Callout from "../../components/docs/Callout.astro";
@@ -22,6 +26,7 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
     <li>Most searches never leave the device.</li>
     <li>Emojisense never logs or stores IP addresses or the identifiers of your users. API keys are stored only as a SHA-256 hash and their first 12 characters, and never logged.</li>
     <li>Message text for reaction suggestions and images for photo to emoji are never stored.</li>
+    <li>The country of a search comes from the request’s IP address at Cloudflare’s edge. Only the two-letter country code is stored, as a count per app, day, query and language. The IP address is never stored.</li>
     <li>Query text is cut to 64 characters and stored only in its normalized form. A query is named in analytics, or used by Emojisense’s own jobs, only after it was seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times. It is published in the precomputed results only when apps of at least {SHARD_MIN_ACCOUNTS} different accounts searched it.</li>
     <li>You can delete your dashboard account, and everything it owns, with one request.</li>
   </ul>
@@ -51,9 +56,10 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
     <table>
       <thead><tr><th scope="col">Data</th><th scope="col">Where</th><th scope="col">Kept</th></tr></thead>
       <tbody>
-        <tr><td>Per app, UTC day and normalized query: the number of searches and of misses. Keyed <code>/v1/search</code> calls only.</td><td>D1 <code>query_daily</code></td><td>By the plan of the account that owns the app: {keep}. A daily job deletes older rows.</td></tr>
+        <tr><td>Per app, UTC day, normalized query, language and country: the number of searches and of misses. The country is a two-letter code that Cloudflare’s edge derives from the IP address (<code>XX</code> when unknown). Keyed <code>/v1/search</code> calls only.</td><td>D1 <code>query_daily</code></td><td>By the plan of the account that owns the app: {keep}. A daily job deletes older rows.</td></tr>
         <tr><td>Normalized query text of every search that reached the Worker, with cache status, latency and scores. No app.</td><td>Cloudflare Analytics Engine</td><td>3 months (the Analytics Engine retention)</td></tr>
         <tr><td>Precomputed results: normalized query text and its emoji, for queries that pass the rules below. No app, account, day or count.</td><td>Cloudflare R2 and edge cache, public</td><td>Rebuilt every night. A query leaves with the first build after it no longer passes.</td></tr>
+        <tr><td>Regional trends: normalized query text, language, country, score and totals, for queries that pass the rules below. No app, account or user. Not public.</td><td>D1 <code>trends_daily</code></td><td>{TRENDS_KEEP_DAYS} days</td></tr>
         <tr><td>Monthly call counts per app and metric</td><td>D1 <code>usage_monthly</code></td><td>Until the account is deleted</td></tr>
         <tr><td>Custom emoji: shortcode, aliases, size, source and the image</td><td>D1 and R2</td><td>Until the emoji, its tenant or the account is deleted. Edge caches can hold a copy of the image until it is evicted.</td></tr>
         <tr><td>Tenants: your external id and optional name for each of your customers</td><td>D1 <code>tenants</code></td><td>Until you delete the tenant or the account</td></tr>
@@ -70,7 +76,9 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
   <p>In the dashboard, Settings → “Delete account” (or <code>DELETE /api/me</code>, signed in, with the account email as <code>confirm</code>) deletes the account and everything it owns: apps, API keys, usage, search analytics, tenants, custom emoji (rows and images), webhooks, team members and invites, memberships in other teams and the waitlist entry of its email. Then the dashboard deletes the sign-in profile at Clerk, the sign-in provider. The <a href="/docs/api/">HTTP API reference</a> has the details. Analytics Engine records are not linked to an account, so they expire on their own after 3 months.</p>
 
   <h2 id="how-queries-are-used">How Emojisense uses queries</h2>
-  <p>Precomputed results: every night a job reads the per-app daily counts in aggregate. It publishes a query only when apps of at least {SHARD_MIN_ACCOUNTS} different accounts searched it at least {SHARD_MIN_SEARCHES} times in total over the last {SHARD_WINDOW_DAYS} full days, and only when it does not look like personal data: an email or web address, a phone, account or postal number, a user id or a long token. The public files hold the query text and its emoji, and nothing about apps, accounts, days or counts. Anonymous calls and development keys are never counted, so they cannot put a text there.</p>
+  <p>Precomputed results: every night a job reads the per-app daily counts in aggregate. It publishes a query for a language only when apps of at least {SHARD_MIN_ACCOUNTS} different accounts searched it at least {SHARD_MIN_SEARCHES} times in total in that language over the last {SHARD_WINDOW_DAYS} full days, and only when it does not look like personal data: an email or web address, a phone, account or postal number, a user id or a long token. The public files hold the query text and its emoji, and nothing about apps, accounts, days or counts. Anonymous calls and development keys are never counted, so they cannot put a text there.</p>
+  <p>Regional trends: every night a job finds the queries that become more frequent in a language and a country, to propose new culture results for that region. It keeps a query only when apps of at least {TRENDS_MIN_ACCOUNTS} different accounts searched it at least {TRENDS_MIN_SEARCHES} times in that language and country over the last {TRENDS_RECENT_DAYS} full days, with the same personal-data rules. The list is not public.</p>
+  <p>Regional culture: an app can ask the API to pick regional culture results by the request’s country (<code>region=auto</code>). The country then selects the results of that one answer; it is not stored with the request, the key or a user.</p>
   <p>New aliases: a job reads only the queries that were seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times. Rare strings can be personal, so they are never used. Both make search better for every app.</p>
 
   <h2 id="rate-limits">Rate limits without tracking</h2>

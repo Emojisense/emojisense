@@ -300,6 +300,62 @@ class CultureTest {
         assertEquals(listOf("⚽", "🏈"), ids(states[0].results).take(2))
     }
 
+    /** An API that answers 🏈 and finds the region of the request. */
+    private fun apiWithRegion(region: String?, requests: MutableList<SemanticSearchOptions>) = SemanticProvider { _, options ->
+        requests.add(options)
+        SemanticResponse(
+            results = listOf(EmojiResult("🏈", "1F3C8", 0.9, ResultSource.SEMANTIC)),
+            packVersion = "test",
+            layer = SemanticLayer.API,
+            region = region,
+        )
+    }
+
+    @Test
+    fun `learns the region from the API with region auto`() = runTest {
+        val requests = mutableListOf<SemanticSearchOptions>()
+        val states = mutableListOf<SessionState>()
+        val session = SearchSession(
+            regionalEngine,
+            this,
+            semantic = apiWithRegion("DE", requests),
+            debounceMillis = 10,
+            region = "auto",
+            shouldUseSemantic = { true },
+            onChange = { states.add(it) },
+        )
+        session.update("football")
+        assertEquals(listOf("🏈", "⚽"), ids(states.last().results).take(2))
+        advanceTimeBy(50)
+        runCurrent()
+        assertEquals(SessionStatus.FUSED, states.last().status)
+        assertEquals(listOf("⚽", "🏈"), ids(states.last().results).take(2))
+        assertEquals(listOf("auto"), requests.map { it.region })
+        session.update("football")
+        assertEquals(listOf("⚽", "🏈"), ids(states.last().results).take(2))
+    }
+
+    @Test
+    fun `keeps an explicit region on the device and over the API region`() = runTest {
+        val requests = mutableListOf<SemanticSearchOptions>()
+        val states = mutableListOf<SessionState>()
+        val session = SearchSession(
+            regionalEngine,
+            this,
+            semantic = apiWithRegion("DE", requests),
+            debounceMillis = 10,
+            region = "US",
+            shouldUseSemantic = { true },
+            onChange = { states.add(it) },
+        )
+        session.update("football")
+        advanceTimeBy(50)
+        runCurrent()
+        assertEquals(SessionStatus.FUSED, states.last().status)
+        assertEquals(listOf("🏈", "⚽"), ids(states.last().results).take(2))
+        assertEquals(listOf<String?>(null), requests.map { it.region })
+    }
+
     // ── Engine with culture ──────────────────────────────────────────────────────────────────
 
     private val file = culture(listOf(goat, halloween, CultureEntry(id = "x", triggers = listOf("goat"), emoji = listOf(CultureEmoji("🦄", "1F984", 1.0)))))

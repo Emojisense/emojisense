@@ -7,6 +7,7 @@ import { METRICS, type Metric, PLANS, type PlanId, periodOf } from "@emojisense/
 import type { AppMetricUsage, KeySummary, MetricUsage } from "../../shared/contract";
 import type {
   AnalyticsDay,
+  AnalyticsFilters,
   AnalyticsResponse,
   App,
   CustomEmoji,
@@ -445,8 +446,44 @@ const MISSES = [
   "mid",
 ];
 
-export function analyticsFor(appId: string, requested: number, retention: number): AnalyticsResponse {
+/** Share of an app's searches per country and per locale (each list sums to 1). */
+const COUNTRY_SHARES: [string, number][] = [
+  ["US", 0.31],
+  ["BR", 0.17],
+  ["GB", 0.11],
+  ["DE", 0.09],
+  ["IN", 0.08],
+  ["TR", 0.07],
+  ["FR", 0.06],
+  ["MX", 0.05],
+  ["JP", 0.03],
+  ["XX", 0.03],
+];
+const LOCALE_SHARES: [string, number][] = [
+  ["en", 0.52],
+  ["pt", 0.16],
+  ["es", 0.09],
+  ["tr", 0.07],
+  ["de", 0.06],
+  ["fr", 0.05],
+  ["hi", 0.03],
+  ["und", 0.02],
+];
+
+const shareOf = (shares: [string, number][], code: string | null) =>
+  code === null ? 1 : (shares.find(([key]) => key === code)?.[1] ?? 0);
+
+export function analyticsFor(
+  appId: string,
+  requested: number,
+  retention: number,
+  filters: AnalyticsFilters = { country: null, locale: null },
+): AnalyticsResponse {
   const window = Math.min(requested, retention);
+  // Countries and locales are drawn as independent, so a filter scales every count by its share.
+  const countryShare = shareOf(COUNTRY_SHARES, filters.country);
+  const localeShare = shareOf(LOCALE_SHARES, filters.locale);
+  const scale = countryShare * localeShare;
   const random = seeded(`analytics:${appId}`);
   const base = appId === RELAY ? 1_380 : appId === STAGING ? 64 : 9;
   // 90 days are generated so that a shorter window is the tail of the same series.
@@ -460,19 +497,39 @@ export function analyticsFor(appId: string, requested: number, retention: number
     const misses = Math.round(searches * (0.05 + random() * 0.035));
     return { day: date.toISOString().slice(0, 10), searches, misses };
   });
-  const days = all.slice(-window);
+  const days = all.slice(-window).map((day) => ({
+    day: day.day,
+    searches: Math.round(day.searches * scale),
+    misses: Math.round(day.misses * scale),
+  }));
   const total = days.reduce((sum, day) => sum + day.searches, 0);
   const totalMisses = days.reduce((sum, day) => sum + day.misses, 0);
   const share = (index: number, count: number) => 1 / (index + 1.6) ** 1.15 / (count / 4);
+  const unfiltered = all.slice(-window).reduce((sum, day) => sum + day.searches, 0);
+  const breakdown = (shares: [string, number][], other: number) =>
+    shares
+      .map(([code, part]) => {
+        const searches = Math.round(unfiltered * part * other);
+        return { code, searches, misses: Math.round(searches * 0.07) };
+      })
+      .filter((row) => row.searches > 0);
+  const named = (rows: { query: string; count: number }[]) => rows.filter((row) => row.count >= 5);
   return {
     days,
-    topQueries: QUERIES.map((query, index) => ({
-      query,
-      searches: Math.max(5, Math.round(total * 0.42 * share(index, QUERIES.length))),
-    })),
-    topMisses: MISSES.map((query, index) => ({
-      query,
-      misses: Math.max(5, Math.round(totalMisses * 0.6 * share(index, MISSES.length))),
-    })),
+    topQueries: named(
+      QUERIES.map((query, index) => ({
+        query,
+        count: Math.round(total * 0.42 * share(index, QUERIES.length)),
+      })),
+    ).map(({ query, count }) => ({ query, searches: count })),
+    topMisses: named(
+      MISSES.map((query, index) => ({
+        query,
+        count: Math.round(totalMisses * 0.6 * share(index, MISSES.length)),
+      })),
+    ).map(({ query, count }) => ({ query, misses: count })),
+    countries: breakdown(COUNTRY_SHARES, localeShare).map(({ code, ...row }) => ({ country: code, ...row })),
+    locales: breakdown(LOCALE_SHARES, countryShare).map(({ code, ...row }) => ({ locale: code, ...row })),
+    filters,
   };
 }

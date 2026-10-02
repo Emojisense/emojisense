@@ -11,7 +11,7 @@ import {
 import type { Env } from "../src/env.ts";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
-import { catalog, harness, keyedSearch } from "./fixtures.ts";
+import { catalog, fromCountry, harness, keyedSearch } from "./fixtures.ts";
 
 const entry = (overrides: Partial<CultureEntry> & Pick<CultureEntry, "id">): CultureEntry => ({
   kind: "lasting",
@@ -199,6 +199,51 @@ describe("GET /v1/search with culture", () => {
     expect(res.headers.get("cache-control")).toBe("public, max-age=3600, s-maxage=86400");
   });
 
+  it("with region=auto, selects regional entries by the request's country only", async () => {
+    const { h } = withCulture();
+    const gb = await h.call(fromCountry(keyedSearch("rocket", "&culture=1&region=auto"), "GB"));
+    const gbBody = await body(gb);
+    expect(glyphs(gbBody).slice(0, 2)).toEqual(["🦖", "🚀"]);
+    expect(gbBody.region).toBe("GB");
+    expect(gbBody.culture?.region).toBe("GB");
+    // The answer depends on the caller's country, which the URL does not show.
+    expect(gb.headers.get("cache-control")).toBe("private, max-age=3600");
+
+    for (const country of ["US", "XX", "T1", undefined]) {
+      const request = keyedSearch("rocket", "&culture=1&region=AUTO");
+      const b = await body(await h.call(country ? fromCountry(request, country) : request));
+      expect([country, b.results[0]?.emoji, b.region]).toEqual([
+        country,
+        "🚀",
+        country === "US" ? "US" : null,
+      ]);
+    }
+  });
+
+  it("keeps one shared cache entry for every region=auto caller", async () => {
+    const { h } = withCulture();
+    await h.call(fromCountry(keyedSearch("rocket", "&culture=1&region=auto"), "GB"));
+    await h.ctx.settle();
+    const us = await body(await h.call(fromCountry(keyedSearch("rocket", "&culture=1&region=auto"), "US")));
+    expect(us.cached).toBe(true);
+    expect(h.cache.puts).toHaveLength(1);
+    expect(h.cache.puts[0]).not.toMatch(/region|auto|GB|US/);
+    const stored = (await h.cache.store.values().next().value?.clone().json()) as SearchBody;
+    expect(stored).not.toHaveProperty("region");
+    expect(h.ai).toHaveBeenCalledTimes(1);
+  });
+
+  it("echoes the region only when the request names one", async () => {
+    const { h } = withCulture();
+    expect(await body(await h.call(keyedSearch("rocket")))).not.toHaveProperty("region");
+    const explicit = await h.call(keyedSearch("rocket", "&region=gb"));
+    expect((await body(explicit)).region).toBe("GB");
+    expect(explicit.headers.get("cache-control")).toBe("public, max-age=3600, s-maxage=86400");
+    const auto = await body(await h.call(fromCountry(keyedSearch("rocket", "&region=auto"), "BR")));
+    // Without culture=1, auto only tells an SDK its region; the ranking stays canonical.
+    expect([auto.region, auto.culture, auto.results[0]?.emoji]).toEqual(["BR", null, "🚀"]);
+  });
+
   it("rejects an unknown culture value or a region that is not ISO 3166-1 alpha-2", async () => {
     const { h } = withCulture();
     for (const extra of [
@@ -219,9 +264,30 @@ describe("culture parameters", () => {
   const parse = (query: string) => parseCultureParams(new URL(`https://api.test/v1/search?q=x${query}`));
 
   it("reads culture and region", () => {
-    expect(parse("")).toEqual({ enabled: false, region: undefined });
-    expect(parse("&culture=1&region=br")).toEqual({ enabled: true, region: "BR" });
-    expect(parse("&culture=false&region=JP")).toEqual({ enabled: false, region: "JP" });
+    expect(parse("")).toEqual({ enabled: false, region: undefined, regionRequested: false, auto: false });
+    expect(parse("&culture=1&region=br")).toEqual({
+      enabled: true,
+      region: "BR",
+      regionRequested: true,
+      auto: false,
+    });
+    expect(parse("&culture=false&region=JP")).toMatchObject({ enabled: false, region: "JP" });
+  });
+
+  it("takes the edge region for region=auto, and none when it is unknown", () => {
+    const url = (query: string) => new URL(`https://api.test/v1/search?q=x${query}`);
+    expect(parseCultureParams(url("&culture=1&region=auto"), "DE")).toEqual({
+      enabled: true,
+      region: "DE",
+      regionRequested: true,
+      auto: true,
+    });
+    expect(parseCultureParams(url("&region=Auto"))).toEqual({
+      enabled: false,
+      region: undefined,
+      regionRequested: true,
+      auto: true,
+    });
   });
 
   it("knows real regions only", () => {

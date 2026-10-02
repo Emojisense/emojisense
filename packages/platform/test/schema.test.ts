@@ -15,6 +15,7 @@ import {
   type TeamInviteRow,
   type TeamMemberRow,
   type TenantRow,
+  type TrendsDailyRow,
   type WebhookDeliveryRow,
   type WebhookRow,
 } from "../src/types.js";
@@ -86,13 +87,27 @@ const ROW_KEYS: Record<string, readonly string[]> = {
     duration_ms: null,
     created_at: 0,
   } satisfies Record<keyof WebhookDeliveryRow, unknown>),
-  query_daily: Object.keys({ app_id: "", day: "", query: "", searches: 0, misses: 0 } satisfies Record<
-    keyof QueryDailyRow,
-    unknown
-  >),
+  query_daily: Object.keys({
+    app_id: "",
+    day: "",
+    query: "",
+    locale: "",
+    country: "",
+    searches: 0,
+    misses: 0,
+  } satisfies Record<keyof QueryDailyRow, unknown>),
+  trends_daily: Object.keys({
+    day: "",
+    locale: "",
+    country: "",
+    query: "",
+    score: 0,
+    searches: 0,
+    accounts: 0,
+  } satisfies Record<keyof TrendsDailyRow, unknown>),
 };
 
-describe("row types of migration 0002", () => {
+describe("row types of migrations 0002 and 0004", () => {
   it.each(Object.entries(ROW_KEYS))("%s has exactly the typed columns", (table, keys) => {
     expect(columns(migratedDb(), table)).toEqual([...keys].sort());
   });
@@ -194,6 +209,56 @@ describe("value lists mirror the CHECK constraints", () => {
       { id: "b", plan: "free" },
       { id: "c", plan: "free" },
     ]);
+  });
+});
+
+describe("migration 0004 (regional statistics)", () => {
+  it("keeps every query_daily row, with an undetermined locale and an unknown country", () => {
+    const db = new DatabaseSync(":memory:");
+    db.exec("PRAGMA foreign_keys = ON");
+    for (const file of ["0001_init.sql", "0002_product.sql", "0003_clerk.sql"]) {
+      db.exec(readFileSync(new URL(file, MIGRATIONS), "utf8"));
+    }
+    db.exec(`INSERT INTO accounts (id, created_at) VALUES ('a', 0);
+             INSERT INTO apps (id, account_id, name, created_at) VALUES ('app', 'a', 'App', 0);
+             INSERT INTO query_daily (app_id, day, query, searches, misses) VALUES
+               ('app', '2026-10-01', 'party', 5, 1), ('app', '2026-10-02', 'party', 2, 0);`);
+    db.exec(readFileSync(new URL("0004_regional.sql", MIGRATIONS), "utf8"));
+
+    expect(db.prepare("SELECT * FROM query_daily ORDER BY day").all()).toEqual([
+      {
+        app_id: "app",
+        day: "2026-10-01",
+        query: "party",
+        locale: "und",
+        country: "XX",
+        searches: 5,
+        misses: 1,
+      },
+      {
+        app_id: "app",
+        day: "2026-10-02",
+        query: "party",
+        locale: "und",
+        country: "XX",
+        searches: 2,
+        misses: 0,
+      },
+    ]);
+    // One row per locale and country of the same query and day.
+    db.exec(`INSERT INTO query_daily (app_id, day, query, locale, country, searches) VALUES
+               ('app', '2026-10-02', 'party', 'pt', 'BR', 1), ('app', '2026-10-02', 'party', 'pt', 'PT', 1)`);
+    expect(() =>
+      db.exec(`INSERT INTO query_daily (app_id, day, query, locale, country) VALUES
+                 ('app', '2026-10-02', 'party', 'pt', 'BR')`),
+    ).toThrow(/UNIQUE|PRIMARY/);
+    const indexes = (db.prepare("PRAGMA index_list(query_daily)").all() as { name: string }[]).map(
+      (index) => index.name,
+    );
+    expect(indexes).toContain("query_daily_by_day");
+    // The foreign key still deletes an app's rows.
+    db.exec("DELETE FROM apps WHERE id = 'app'");
+    expect(db.prepare("SELECT COUNT(*) AS n FROM query_daily").get()).toEqual({ n: 0 });
   });
 });
 

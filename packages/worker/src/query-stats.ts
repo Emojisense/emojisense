@@ -9,6 +9,14 @@ import {
 import type { WaitUntil } from "./meter.ts";
 import type { QueryCount, Store } from "./store.ts";
 
+/** The regional dimensions of one search (query_daily, migration 0004). */
+export interface SearchRegion {
+  /** The pack locale the search ran in. */
+  locale: string;
+  /** ISO 3166-1 alpha-2 country of the request, or UNKNOWN_COUNTRY (region.ts `edgeCountry`). */
+  country: string;
+}
+
 export interface QueryStatsOptions {
   store?: Store | undefined;
   now?: () => number;
@@ -19,9 +27,9 @@ export interface QueryStatsOptions {
 }
 
 /**
- * Search analytics for the dashboard: per app, UTC day and normalized query, how many searches
- * and how many misses (searches that returned no result). Only the caller decides who is
- * counted (context.ts: keyed calls with an apps row); nothing here knows a user, IP or key.
+ * Search analytics for the dashboard: per app, UTC day, normalized query, locale and country, how
+ * many searches and how many misses (searches that returned no result). Only the caller decides
+ * who is counted (context.ts: keyed calls with an apps row); nothing here knows a user, IP or key.
  *
  * Counted in memory per isolate and flushed to query_daily like the Meter: a request starts the
  * flush when it is due (`flushIntervalMs` since the last one, or `flushMaxPending` searches
@@ -36,7 +44,7 @@ export class QueryStats {
   readonly #flushMaxPending: number;
   readonly #maxRowsPerFlush: number;
   readonly #maxPendingRows: number;
-  /** app|day|query → counts not yet written. The query is last, so the key is unambiguous. */
+  /** app|day|locale|country|query → counts not yet written. The query is last, so the key is unambiguous. */
   readonly #pending = new Map<string, QueryCount>();
   #pendingSearches = 0;
   #dropped = 0;
@@ -58,11 +66,12 @@ export class QueryStats {
   }
 
   /** Count one search. `query` is already normalized (≤ 64 characters); a miss has 0 results. */
-  add(appId: string, query: string, resultCount: number): void {
+  add(appId: string, query: string, resultCount: number, region: SearchRegion): void {
     if (!this.#store || query === "") return;
     const text = query.length <= MAX_QUERY_LENGTH ? query : query.slice(0, MAX_QUERY_LENGTH);
     const day = dayOf(this.#now());
-    const key = `${appId}|${day}|${text}`;
+    const { locale, country } = region;
+    const key = rowKey({ appId, day, locale, country, query: text });
     const missed = resultCount === 0 ? 1 : 0;
     const current = this.#pending.get(key);
     if (current) {
@@ -72,7 +81,7 @@ export class QueryStats {
       this.#dropped += 1;
       return;
     } else {
-      this.#pending.set(key, { appId, day, query: text, searches: 1, misses: missed });
+      this.#pending.set(key, { appId, day, query: text, locale, country, searches: 1, misses: missed });
     }
     this.#pendingSearches += 1;
   }
@@ -120,7 +129,7 @@ export class QueryStats {
   }
 
   #restore(row: QueryCount): void {
-    const key = `${row.appId}|${row.day}|${row.query}`;
+    const key = rowKey(row);
     const current = this.#pending.get(key);
     if (current) {
       current.searches += row.searches;
@@ -131,3 +140,6 @@ export class QueryStats {
     this.#pendingSearches += row.searches;
   }
 }
+
+const rowKey = (row: Pick<QueryCount, "appId" | "day" | "locale" | "country" | "query">) =>
+  `${row.appId}|${row.day}|${row.locale}|${row.country}|${row.query}`;

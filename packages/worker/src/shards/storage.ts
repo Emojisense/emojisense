@@ -13,13 +13,16 @@ import type { DayWindow } from "./select.ts";
 /**
  * R2 layout (PACK_FORMAT §6, "Nightly builds"):
  *
- *   shards/<packVersion>/<contentHash>/current.json          pointer to the served build
- *   shards/<packVersion>/<contentHash>/<build>/index.json    ShardIndex
- *   shards/<packVersion>/<contentHash>/<build>/<key>.json    Shard, file name encodeURIComponent(key)
+ *   shards/<packVersion>/<contentHash>/current.json                   pointer to the served build
+ *   shards/<packVersion>/<contentHash>/<build>/index.json             ShardIndex, English
+ *   shards/<packVersion>/<contentHash>/<build>/<key>.json             Shard, file name encodeURIComponent(key)
+ *   shards/<packVersion>/<contentHash>/<build>/<locale>/index.json    the same for another pack locale
+ *   shards/<packVersion>/<contentHash>/<build>/<locale>/<key>.json
  *
  * One store per deployed pack version and content hash: answers depend on the vectors and the
- * model, so a deploy with new data starts a new store. `<build>` is a hash of the build's content,
- * so its files never change.
+ * model, so a deploy with new data starts a new store. `<build>` is a hash of the build's content
+ * (every locale), so its files never change. English stays at the build root, where builds from
+ * before locale shards put it.
  */
 export const SHARD_ROOT = "shards/";
 export const POINTER_FILE = "current.json";
@@ -50,8 +53,11 @@ export interface ShardPointer {
   model: string;
   /** Results stored per query. */
   results: number;
+  /** Over every locale. */
   queries: number;
   shards: number;
+  /** Per locale with a directory in the build. Missing in builds from before locale shards. */
+  locales?: Record<string, { queries: number; shards: number }>;
   /** The days whose query_daily rows selected the queries. */
   window: DayWindow;
   /** UTC day of the last run that confirmed this pointer. */
@@ -62,6 +68,10 @@ const JSON_METADATA = { httpMetadata: { contentType: "application/json; charset=
 
 export const storePrefix = (packVersion: string, contentHash: string) =>
   `${SHARD_ROOT}${packVersion}/${contentHash}/`;
+
+/** The directory of a locale's files in a build: the build root for English, else `<locale>/`. */
+export const localeDir = (prefix: string, build: string, locale: string) =>
+  locale === "en" ? `${prefix}${build}/` : `${prefix}${build}/${locale}/`;
 
 export async function readPointer(bucket: ShardBucket, prefix: string): Promise<ShardPointer | undefined> {
   const object = await bucket.get(prefix + POINTER_FILE);
@@ -92,15 +102,13 @@ export async function forEachLimit<T>(
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, lane));
 }
 
-/** Copies every entry of a published build into `store`; returns how many it copied. */
+/** Copies every entry of one locale directory of a build (localeDir) into `store`; returns how many. */
 export async function loadBuild(
   bucket: ShardBucket,
-  prefix: string,
-  build: string,
+  dir: string,
   store: ResultStore,
   concurrency: number,
 ): Promise<number> {
-  const dir = `${prefix}${build}/`;
   const indexObject = await bucket.get(dir + SHARD_INDEX_FILE);
   if (!indexObject) return 0;
   const index = JSON.parse(await indexObject.text()) as ShardIndex;
@@ -122,25 +130,38 @@ async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** 16 hex digits over the index and every shard file: the same output gets the same id. */
-export async function buildId(built: BuiltShards): Promise<string> {
-  const parts = [JSON.stringify(built.index)];
-  for (const plan of built.plans) parts.push(await sha256Hex(shardJson(plan.key, plan.queries, built.store)));
+/** The shards of one locale in a build. */
+export interface LocaleShards {
+  locale: string;
+  built: BuiltShards;
+}
+
+/**
+ * 16 hex digits over every locale's index and shard files: the same output gets the same id.
+ * Locales are taken in the order given; the job sorts them.
+ */
+export async function buildId(locales: readonly LocaleShards[]): Promise<string> {
+  const parts: string[] = [];
+  for (const { locale, built } of locales) {
+    parts.push(locale, JSON.stringify(built.index));
+    for (const plan of built.plans) {
+      parts.push(await sha256Hex(shardJson(plan.key, plan.queries, built.store)));
+    }
+  }
   return (await sha256Hex(parts.join("\n"))).slice(0, 16);
 }
 
 /**
- * Writes the shard files, then index.json. A run that stops half way leaves a build that nothing
- * points to; the next run deletes it (pruneBuilds). Returns the raw bytes written.
+ * Writes the shard files of one locale directory (localeDir), then its index.json. A run that
+ * stops half way leaves a build that nothing points to; the next run deletes it (pruneBuilds).
+ * Returns the raw bytes written.
  */
 export async function writeBuild(
   bucket: ShardBucket,
-  prefix: string,
-  build: string,
+  dir: string,
   built: BuiltShards,
   concurrency: number,
 ): Promise<number> {
-  const dir = `${prefix}${build}/`;
   let bytes = 0;
   await forEachLimit(built.plans, concurrency, async (plan) => {
     const json = shardJson(plan.key, plan.queries, built.store);

@@ -88,9 +88,16 @@ Notes:
   `EmojisenseException.HttpStatus` for HTTP errors. `ShardProvider` returns `null` for network
   errors and for queries whose embedding text differs from the normalized query, so the next
   provider gets the query.
+- `ShardProvider` reads the shards of `SemanticSearchOptions.locale`. English (or no locale) uses
+  `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. If a
+  locale has no shards (404), the provider stops asking for that locale and the API answers.
 - `CultureLayer.deviceRegion()` reads the region of `Locale.getDefault()` on the device. Nothing
   sends it anywhere. Pass `culture = null` to `SearchSession` (or `culture = false` in
   `AliasSearchOptions`) for the canonical ranking only.
+- `region = "auto"` in `SearchSession` lets the API find the region. The session sends
+  `region=auto` with its semantic requests and uses the region of the first API answer that has
+  one (`SemanticResponse.region`). Until then, only the culture entries for every region apply. An
+  explicit region code (for example `"BR"`) stays on the device: the SDK never sends it.
 - Draw custom emoji (`result.source == ResultSource.CUSTOM`) from `result.imageUrl`.
 
 ## Quick start: server (JVM)

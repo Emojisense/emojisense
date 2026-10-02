@@ -91,6 +91,8 @@ session.update("a dinosaur from a movie");
 | 3. API | `createSemanticClient({ endpoint, key })` | Metered, see [pricing](https://emojisense.com/pricing/) |
 
 `createLayeredSemantic({ shardsUrl, endpoint, key })` chains layers 2 and 3, cheapest first.
+Shards are per locale: a search with `locale: "tr"` reads `<shardsUrl>/tr/…`, English reads
+`<shardsUrl>/…` as before, and a locale without shards goes to the API.
 `chainProviders(...providers)` chains any providers: a provider returns `undefined` when it has no
 answer, and the next one gets the query. Over its plan limit, the API still answers from its shared
 cache and never fails hard.
@@ -119,6 +121,8 @@ const culture = await loadCulture({ baseUrl: `${endpoint}/v1/culture/0.1.0`, loc
 const engine = createEngine(packs, { culture });
 engine.search("goat", { locale: "es", region: "AR" }); // 🐐 first, then culture results such as ⚽
 relevantNow(culture, { region: "MX", limit: 8 }); // a "relevant now" shelf
+// region: "auto" in createSearchSession: the API reports the caller's region (region=auto, from
+// the request's country), and regional entries apply after the first API answer.
 
 // Skin tones and hosted emoji sets (they need a key whose plan includes them, Solo and up).
 applySkinTone("👍", "medium"); // "👍🏽"

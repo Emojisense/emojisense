@@ -52,6 +52,23 @@ class SemanticClientTest {
     }
 
     @Test
+    fun `sends region=auto only for the value auto, never a region code`() = runBlocking {
+        val transport = StubTransport.json(SEMANTIC_BODY)
+        client(transport).search("lava", SemanticSearchOptions(region = "auto"))
+        client(transport).search("magma", SemanticSearchOptions(region = "AUTO"))
+        client(transport).search("volcano", SemanticSearchOptions(region = "BR"))
+        client(transport).search("eruption", SemanticSearchOptions())
+        assertEquals(listOf("auto", "auto", null, null), transport.requests.map { parameters(it)["region"] })
+    }
+
+    @Test
+    fun `reads the region of an API answer`() {
+        assertEquals("DE", SemanticResponse.fromJson(SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"region\":\"DE\"")).region)
+        assertNull(SemanticResponse.fromJson(SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"region\":null")).region)
+        assertNull(SemanticResponse.fromJson(SEMANTIC_BODY).region)
+    }
+
+    @Test
     fun `does not ask for a query without searchable text`() = runBlocking {
         val transport = StubTransport.json(SEMANTIC_BODY)
         assertNull(client(transport).search(" 🎉 !! "))
@@ -162,6 +179,66 @@ class ShardProviderTest {
         assertNull(failing.search("congrats"))
         val throwing = ShardProvider("https://x.test/p/1", StubTransport { throw java.io.IOException("offline") })
         assertNull(throwing.search("congrats"))
+    }
+
+    // ── Shards per locale ────────────────────────────────────────────────────────────────────
+
+    private val base = "https://x.test/p/1"
+    private val localeFiles = mapOf(
+        "$base/index.json" to files.getValue("index.json"),
+        "$base/co.json" to files.getValue("co.json"),
+        "$base/tr/index.json" to """{"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256","keys":["co","dogum "]}""",
+        "$base/tr/co.json" to """{"key":"co","entries":{"congrats on the launch":[["🎊","1F38A",0.9]]}}""",
+        "$base/tr/dogum%20.json" to """{"key":"dogum ","entries":{"dogum gunu":[["🎂","1F382",0.9]]}}""",
+    )
+
+    @Test
+    fun `uses the root files for English and for no locale`() = runBlocking {
+        val transport = StubTransport.urls(localeFiles)
+        val provider = ShardProvider("$base/", transport)
+        for (locale in listOf(null, "en", "EN", "", "en-GB")) {
+            assertEquals("🚀", provider.search("congrats on the launch", SemanticSearchOptions(locale = locale))?.results?.first()?.emoji, "$locale")
+        }
+        assertEquals(listOf("$base/index.json", "$base/co.json"), transport.requests)
+    }
+
+    @Test
+    fun `asks the folder of any other locale, in lowercase`() = runBlocking {
+        val transport = StubTransport.urls(localeFiles)
+        val provider = ShardProvider(base, transport)
+        val upper = provider.search("Dogum gunu", SemanticSearchOptions(locale = "TR"))
+        assertEquals(SemanticLayer.SHARD, upper?.layer)
+        assertEquals(listOf("🎂"), upper?.results?.map { it.emoji })
+        assertEquals(listOf("🎂"), provider.search("dogum gunu", SemanticSearchOptions(locale = "tr"))?.results?.map { it.emoji })
+        // Only the language subtag counts, like the API's locale.
+        assertEquals(listOf("🎂"), provider.search("dogum gunu", SemanticSearchOptions(locale = "tr_TR"))?.results?.map { it.emoji })
+        assertEquals(listOf("$base/tr/index.json", "$base/tr/dogum%20.json"), transport.requests)
+    }
+
+    @Test
+    fun `keeps the index and shards of each locale apart`() = runBlocking {
+        val transport = StubTransport.urls(localeFiles)
+        val provider = ShardProvider(base, transport)
+        repeat(2) {
+            assertEquals("🚀", provider.search("congrats on the launch", SemanticSearchOptions(locale = "en"))?.results?.first()?.emoji)
+            assertEquals("🎊", provider.search("congrats on the launch", SemanticSearchOptions(locale = "tr"))?.results?.first()?.emoji)
+        }
+        assertEquals(listOf("$base/index.json", "$base/co.json", "$base/tr/index.json", "$base/tr/co.json"), transport.requests)
+    }
+
+    @Test
+    fun `gives no answer for a locale without shards and does not ask again`() = runBlocking {
+        val transport = StubTransport.urls(localeFiles)
+        val shards = ShardProvider(base, transport)
+        val german = SemanticSearchOptions(locale = "de")
+        assertNull(shards.search("congrats on the launch", german))
+        assertNull(shards.search("congrats on the way", german))
+        assertEquals(listOf("$base/de/index.json"), transport.requests)
+
+        val chain = ProviderChain(shards, SemanticClient(SemanticClient.Configuration("https://api.test"), StubTransport.json(SEMANTIC_BODY)))
+        assertEquals(SemanticLayer.API, chain.search("congrats on the launch", german)?.layer)
+        assertEquals(SemanticLayer.SHARD, shards.search("congrats on the launch")?.layer)
+        assertEquals(1, transport.requests.count { it.endsWith("/de/index.json") })
     }
 }
 

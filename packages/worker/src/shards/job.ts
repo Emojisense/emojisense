@@ -2,6 +2,7 @@ import {
   buildShards,
   createResultStore,
   createWorkerGate,
+  type QueryCount,
   type ResultStore,
   type ShardResolver,
   type ShardResult,
@@ -18,10 +19,12 @@ import {
 } from "../config.ts";
 import type { Env } from "../env.ts";
 import { type Catalog, embedTexts, modelTag, semanticResults } from "../semantic.ts";
-import { selectCandidates, selectionWindow } from "./select.ts";
+import { type Candidate, selectCandidates, selectionWindow } from "./select.ts";
 import {
   buildId,
+  type LocaleShards,
   loadBuild,
+  localeDir,
   pruneBuilds,
   pruneStaleStores,
   readPointer,
@@ -36,8 +39,9 @@ export interface ShardLimits {
   minAccounts: number;
   minSearches: number;
   windowDays: number;
+  /** Queries per build, over every locale. */
   maxQueries: number;
-  /** New embeddings per run; the rest wait for the next run. */
+  /** New embeddings per run, over every locale; the rest wait for the next run. */
   maxEmbeddings: number;
   /** Raw JSON bytes per shard file. */
   maxShardBytes: number;
@@ -57,19 +61,19 @@ export const SHARD_LIMITS: ShardLimits = {
   staleDays: SHARD_STALE_DAYS,
 };
 
-/** The locales of the bundled alias engine: a query stays when a client of either would ask. */
-const GATE_LOCALES = ["en", "tr"];
+/** English: its files stay at the build root, which clients from before locale shards read. */
+const ROOT_LOCALE = "en";
 
 export interface ShardRunReport {
   /** published: a new build is served. unchanged: the same build again. empty: no build yet, none made. */
   status: "published" | "unchanged" | "empty" | "skipped";
   reason?: string;
   build?: string;
-  /** Queries over both thresholds that may be published. */
+  /** Queries over both thresholds (per locale) that may be published. */
   candidates: number;
   /** Queries over both thresholds that look personal (privacyReason). */
   privacyDropped: number;
-  /** Candidates the bundled alias engine answers with confidence, so no client asks for them. */
+  /** Candidates their locale's alias engine answers with confidence, so no client asks for them. */
   answeredOnDevice: number;
   reused: number;
   embedded: number;
@@ -81,54 +85,65 @@ export interface ShardRunReport {
   shards: number;
   bytes: number;
   pruned: number;
+  /** Queries and shard files per locale directory of the build. */
+  locales: Record<string, { queries: number; shards: number }>;
+  /** Locales with candidates whose alias engine could not be loaded: no directory this run. */
+  skippedLocales: string[];
 }
 
 interface Budget {
-  remaining: number;
   embedded: number;
-  deferred: number;
   failed: number;
   calls: number;
   failedCalls: number;
 }
 
+/** One locale's part of the run: what reaches the API there, and its entries in the served build. */
+interface LocalePlan {
+  locale: string;
+  kept: QueryCount[];
+  answeredOnDevice: number;
+  prior: ResultStore;
+}
+
 /**
- * The API's `GET /v1/search?mode=semantic&locale=en` for many queries: the same embedded text
- * (`embeddingText`, the model template), vectors and rounding (semantic.ts), one Workers AI call
- * per batch. Stops embedding when the budget is spent.
+ * The API's `GET /v1/search?mode=semantic&locale=<locale>` for many queries: the same embedded
+ * text (`embeddingText`, the model template), the locale's vectors (shared and its own), the same
+ * rounding (semantic.ts), one Workers AI call per batch. It embeds only the queries the run's
+ * budget allows for this locale; `indexes` undefined (the locale's vector file did not load)
+ * embeds none, so those queries wait for the next run.
  */
 function apiResolver(
   env: Env,
   catalog: Catalog,
-  indexes: readonly VectorIndex[],
+  indexes: readonly VectorIndex[] | undefined,
+  allowed: ReadonlySet<string>,
   budget: Budget,
 ): ShardResolver {
   return {
     model: modelTag(catalog),
     async resolve(queries, limit) {
       const out = new Map<string, ShardResult[]>();
-      const allowed = queries.slice(0, Math.max(0, budget.remaining));
-      budget.deferred += queries.length - allowed.length;
-      if (allowed.length === 0) return out;
-      budget.remaining -= allowed.length;
+      const chosen = indexes ? queries.filter((q) => allowed.has(q)) : [];
+      if (!indexes || chosen.length === 0) return out;
       budget.calls++;
       try {
         const vectors = await embedTexts(
           env,
           catalog,
-          allowed.map((q) => embeddingText(q)),
+          chosen.map((q) => embeddingText(q)),
         );
         const engine = catalog.engine();
-        allowed.forEach((q, i) => {
+        chosen.forEach((q, i) => {
           const results = semanticResults(engine, indexes, vectors[i] as Float32Array, limit);
           out.set(
             q,
             results.map((r): ShardResult => [r.emoji, r.id, r.score]),
           );
         });
-        budget.embedded += allowed.length;
+        budget.embedded += chosen.length;
       } catch (error) {
-        budget.failed += allowed.length;
+        budget.failed += chosen.length;
         budget.failedCalls++;
         console.warn(JSON.stringify({ event: "shards_embed_failed", error: (error as Error).name }));
       }
@@ -149,6 +164,33 @@ function reuse(prior: ResultStore, wanted: ReadonlySet<string>, store: ResultSto
   return copied;
 }
 
+/** Candidates per locale, English first, then in the order of each locale's most searched query. */
+function byLocale(candidates: readonly Candidate[]): Map<string, Candidate[]> {
+  const groups = new Map<string, Candidate[]>([[ROOT_LOCALE, []]]);
+  for (const candidate of candidates) {
+    const group = groups.get(candidate.locale);
+    if (group) group.push(candidate);
+    else groups.set(candidate.locale, [candidate]);
+  }
+  return groups;
+}
+
+/**
+ * Which new queries the run embeds: the most searched over every locale, up to `max`, so a busy
+ * locale cannot keep the others waiting for longer than its share of searches.
+ */
+function allowEmbeddings(plans: readonly LocalePlan[], max: number) {
+  const todo = plans.flatMap((plan) =>
+    plan.kept.filter((q) => !plan.prior.has(q.q)).map((q) => ({ locale: plan.locale, q: q.q, n: q.n })),
+  );
+  todo.sort((a, b) => b.n - a.n || compare(a.locale, b.locale) || compare(a.q, b.q));
+  const allowed = new Map(plans.map((plan) => [plan.locale, new Set<string>()]));
+  for (const { locale, q } of todo.slice(0, max)) allowed.get(locale)?.add(q);
+  return { allowed, deferred: Math.max(0, todo.length - max) };
+}
+
+const compare = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+
 const report = (status: ShardRunReport["status"], fields: Partial<ShardRunReport> = {}): ShardRunReport => ({
   status,
   candidates: 0,
@@ -162,14 +204,18 @@ const report = (status: ShardRunReport["status"], fields: Partial<ShardRunReport
   shards: 0,
   bytes: 0,
   pruned: 0,
+  locales: {},
+  skippedLocales: [],
   ...fields,
 });
 
 /**
- * The nightly layer-2 build (DECISIONS.md, "Nightly shard build"): query_daily over the window →
- * k-anonymity and privacy filters → drop what the device answers → reuse the served build's
- * entries, embed the new queries (capped) → adaptive split → R2 → pointer. Running it again on
- * the same day publishes the same build. Logs counts only, never query text.
+ * The nightly layer-2 build (DECISIONS.md, "Nightly shard build" and "Shards per locale"):
+ * query_daily over the window → k-anonymity per locale and privacy filters → drop what each
+ * locale's device answers → reuse the served build's entries, embed the new queries (one budget
+ * over every locale, most searched first) → adaptive split per locale → R2 → pointer. English
+ * stays at the build root (older clients read it), every other locale gets its own directory.
+ * Running it again on the same day publishes the same build. Logs counts only, never query text.
  */
 export async function runShardBuild(
   env: Env,
@@ -195,40 +241,73 @@ export async function runShardBuild(
     const selection = await selectCandidates(env.DB, window, limits);
 
     const served = await readPointer(bucket, prefix);
-    const prior = createResultStore();
     const reusable = served && served.model === modelTag(catalog) && served.results >= limits.results;
-    if (reusable) await loadBuild(bucket, prefix, served.build, prior, SHARD_WRITE_CONCURRENCY);
 
-    // Shards hold the `locale=en` answers: the shared vectors only (PACK_FORMAT §6).
-    const { indexes } = await catalog.vectors("en", env);
-    const budget: Budget = {
-      remaining: limits.maxEmbeddings,
-      embedded: 0,
-      deferred: 0,
-      failed: 0,
-      calls: 0,
-      failedCalls: 0,
-    };
-    const built = await buildShards({
-      queries: selection.candidates.map((c) => ({ q: c.q, n: c.searches, locales: GATE_LOCALES })),
-      reachesWorker: createWorkerGate([catalog.engine()]),
-      resolver: apiResolver(env, catalog, indexes, budget),
-      packVersion: config.packVersion,
-      resultsPerQuery: limits.results,
-      maxShardBytes: limits.maxShardBytes,
-      batchSize: catalog.model.maxBatch,
-      previous: (wanted, store) => reuse(prior, wanted, store, limits.results),
-    });
+    const plans: LocalePlan[] = [];
+    const skippedLocales: string[] = [];
+    for (const [locale, candidates] of byLocale(selection.candidates)) {
+      const queries = candidates.map((c): QueryCount => ({ q: c.q, n: c.searches, locales: [locale] }));
+      // The locale's own alias engine decides what its clients answer on the device.
+      const engine = queries.length > 0 ? await catalog.aliasEngine(locale, env) : undefined;
+      if (queries.length > 0 && !engine) {
+        skippedLocales.push(locale);
+        console.warn(JSON.stringify({ event: "shards_locale_skipped", locale, reason: "no alias engine" }));
+        continue;
+      }
+      const kept = engine ? queries.filter(createWorkerGate([engine])) : [];
+      const prior = createResultStore();
+      if (reusable && kept.length > 0) {
+        await loadBuild(bucket, localeDir(prefix, served.build, locale), prior, SHARD_WRITE_CONCURRENCY);
+      }
+      plans.push({ locale, kept, answeredOnDevice: queries.length - kept.length, prior });
+    }
+
+    const { allowed, deferred } = allowEmbeddings(plans, limits.maxEmbeddings);
+    const budget: Budget = { embedded: 0, failed: 0, calls: 0, failedCalls: 0 };
+    const builds: LocaleShards[] = [];
+    let reused = 0;
+    for (const plan of plans) {
+      const vectors = plan.kept.length > 0 ? await catalog.vectors(plan.locale, env) : undefined;
+      if (vectors && !vectors.complete) {
+        console.warn(JSON.stringify({ event: "shards_locale_vectors_unavailable", locale: plan.locale }));
+      }
+      const built = await buildShards({
+        queries: plan.kept,
+        reachesWorker: () => true,
+        resolver: apiResolver(
+          env,
+          catalog,
+          vectors?.complete ? vectors.indexes : undefined,
+          allowed.get(plan.locale) ?? new Set(),
+          budget,
+        ),
+        packVersion: config.packVersion,
+        resultsPerQuery: limits.results,
+        maxShardBytes: limits.maxShardBytes,
+        batchSize: catalog.model.maxBatch,
+        previous: (wanted, store) => reuse(plan.prior, wanted, store, limits.results),
+      });
+      reused += built.stats.reused;
+      // English always has its files, even empty: they replace a served English build.
+      if (plan.locale === ROOT_LOCALE || built.store.size > 0) builds.push({ locale: plan.locale, built });
+    }
+    builds.sort((a, b) => compare(a.locale, b.locale));
+
+    const locales = Object.fromEntries(
+      builds.map(({ locale, built }) => [locale, { queries: built.store.size, shards: built.plans.length }]),
+    );
     const counts = {
       candidates: selection.candidates.length,
       privacyDropped: selection.privacyDropped,
-      answeredOnDevice: built.stats.answeredOnDevice,
-      reused: built.stats.reused,
+      answeredOnDevice: plans.reduce((sum, plan) => sum + plan.answeredOnDevice, 0),
+      reused,
       embedded: budget.embedded,
-      deferred: budget.deferred,
+      deferred,
       failed: budget.failed,
-      queries: built.store.size,
-      shards: built.plans.length,
+      queries: builds.reduce((sum, b) => sum + b.built.store.size, 0),
+      shards: builds.reduce((sum, b) => sum + b.built.plans.length, 0),
+      locales,
+      skippedLocales,
     };
     if (budget.calls > 0 && budget.failedCalls === budget.calls) {
       // Workers AI is down: keep serving the current build rather than a smaller one.
@@ -236,23 +315,29 @@ export async function runShardBuild(
     }
     // With a build served, an empty one replaces it: a query leaves the public files once it no
     // longer passes the thresholds. Without one, the static shards stay.
-    if (built.store.size === 0 && !served) {
+    if (counts.queries === 0 && !served) {
       console.log(JSON.stringify({ event: "shards_empty", ...counts, ms: Date.now() - started }));
       return report("empty", counts);
     }
 
-    const build = await buildId(built);
+    const build = await buildId(builds);
     const unchanged = served?.build === build;
-    const bytes = unchanged ? 0 : await writeBuild(bucket, prefix, build, built, SHARD_WRITE_CONCURRENCY);
+    let bytes = 0;
+    if (!unchanged) {
+      for (const { locale, built } of builds) {
+        bytes += await writeBuild(bucket, localeDir(prefix, build, locale), built, SHARD_WRITE_CONCURRENCY);
+      }
+    }
     const pointer: ShardPointer = {
       format: "emojisense-shard-pointer",
       formatVersion: 1,
       build,
       previous: unchanged ? (served?.previous ?? null) : (served?.build ?? null),
-      model: built.index.model,
+      model: modelTag(catalog),
       results: limits.results,
-      queries: built.store.size,
-      shards: built.plans.length,
+      queries: counts.queries,
+      shards: counts.shards,
+      locales,
       window,
       checkedDay: dayOf(options.now),
     };

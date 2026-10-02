@@ -195,15 +195,44 @@ export interface AnalyticsDay {
   misses: number;
 }
 
+/** Searches of one country over the window. */
+export interface AnalyticsCountry {
+  /** ISO 3166-1 alpha-2 country of the requests (from Cloudflare's edge); "XX" = unknown. */
+  country: string;
+  searches: number;
+  misses: number;
+}
+
+/** Searches of one pack locale over the window. */
+export interface AnalyticsLocale {
+  /** A pack locale such as "pt"; "und" = searches from before the locale was counted. */
+  locale: string;
+  searches: number;
+  misses: number;
+}
+
 /**
- * `GET /api/apps/:id/analytics?days=7|30|90`. `days` has one entry per UTC day of the window,
- * oldest first, zeros included; the window is cut to the plan's retention. The top lists name
- * only queries searched at least 5 times in the window.
+ * `GET /api/apps/:id/analytics?days=7|30|90[&country=BR][&locale=pt]`. `days` has one entry per
+ * UTC day of the window, oldest first, zeros included; the window is cut to the plan's retention.
+ * The top lists name only queries searched at least 5 times in the window (and filter).
+ * `country` and `locale` filter every part except their own breakdown: `countries` follows the
+ * locale filter only, `locales` the country filter only. Only the app's own searches count.
  */
 export interface AnalyticsResponse {
   days: AnalyticsDay[];
   topQueries: { query: string; searches: number }[];
   topMisses: { query: string; misses: number }[];
+  /** At most 50, most searches first. */
+  countries: AnalyticsCountry[];
+  /** At most 50, most searches first. */
+  locales: AnalyticsLocale[];
+  /** The filters applied, normalized (country uppercase, locale lowercase). */
+  filters: AnalyticsFilters;
+}
+
+export interface AnalyticsFilters {
+  country: string | null;
+  locale: string | null;
 }
 
 export interface TeamMemberSummary {

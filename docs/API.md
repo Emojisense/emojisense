@@ -93,7 +93,7 @@ use the website's own publishable key, so they are not anonymous.
 | `key` | — | Publishable key |
 | `tenant` | — | The app owner's id for one of their customers (`tenants.external_id`, ≤ 128 characters): that tenant's custom emoji are searched too |
 | `culture` | `0` | `1` (or `true`) applies the [culture layer](#culture-in-search) to the answer. `0`, `false` or none: the canonical ranking only. Any other value answers `400`. |
-| `region` | — | ISO 3166-1 alpha-2 code of the user's region, e.g. `GB`, `BR` (case does not matter). Turns on regional culture entries; used only with `culture=1`. A code that is not a real region answers `400`. |
+| `region` | — | ISO 3166-1 alpha-2 code of the user's region, e.g. `GB`, `BR` (case does not matter), or `auto`. Turns on regional culture entries; used only with `culture=1`. `auto` uses the country of the request, which Cloudflare's edge derives from the IP address (`request.cf.country`); when it is unknown, no regional entry applies. A code that is not a real region answers `400`. See [Region auto](#region-auto). |
 
 ```json
 {
@@ -119,6 +119,7 @@ use the website's own publishable key, so they are not anonymous.
 | `overLimit` | The key's account has used its monthly `semantic_calls` limit (see "Metering and plan limits") |
 | `aliasLocale` | The locale whose aliases were fused into the results. `null` in `semantic` mode, or when that locale's pack could not be loaded (the results are then semantic-only and not cached) |
 | `culture` | With `culture=1`: `{ "from": "2026-10-01", "day": "2026-10-02", "region": "GB" }`, the culture file's first day, the UTC day its windows were checked against, and the region (`null` without one). `null` when culture is off or the locale has no culture file |
+| `region` | Only when the request has `region`: the region used for regional entries, uppercase. With `region=auto`, the request's country, or `null` when it is unknown. Also with `culture=0`, so an SDK can apply regional entries on the device |
 
 Headers: `Server-Timing: embed;dur=…, total;dur=…` (only `total` on a cache hit or over the
 limit) and `Cache-Control`:
@@ -127,6 +128,7 @@ limit) and `Cache-Control`:
 | ------ | --------------- |
 | Normal answer | `public, max-age=3600, s-maxage=86400` |
 | With `culture=1` | `public, max-age=3600` (no longer than the culture file) |
+| With `region=auto` | `private, max-age=3600` (the answer depends on the caller's country, which the URL does not show) |
 | The app has custom emoji | `private, max-age=60` |
 | Over the limit (not from the cache), degraded, or a locale pack or vector file did not load | `no-store` |
 
@@ -219,7 +221,8 @@ the SHA-256 of the image bytes, the vision model and the prompt version. A wrong
 | Path | Content | Cache |
 | ---- | ------- | ----- |
 | `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>[.<locale>].bin` | data packs | `public, max-age=31536000, immutable` |
-| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards), rebuilt nightly | `public, max-age=3600` (index), `public, max-age=86400` (key files) |
+| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards) of `locale=en`, rebuilt nightly | `public, max-age=3600` (index), `public, max-age=86400` (key files) |
+| `/p/:packVersion/:locale/index.json`, `/p/:packVersion/:locale/<key>.json` | the shards of another pack locale: the API's answers for that `locale` ([PACK_FORMAT.md §6](PACK_FORMAT.md)). `en/` serves the English files. A locale without shards answers `404` | as above |
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
 These are free and need no key. Packs and culture files are static assets and do not run the
@@ -278,6 +281,27 @@ the top canonical result, except a regional sense in the caller's region (below)
   another day's or region's culture. Culture answers send `Cache-Control: public, max-age=3600`
   (the culture file's own lifetime).
 - Metering does not change: a culture answer is one `semantic_calls` call, cached or not.
+
+### Region auto
+
+`region=auto` lets the API pick the region: the country of the request as Cloudflare's edge sees
+it (`request.cf.country`, ISO 3166-1 alpha-2, derived from the IP address). Use it when the app
+does not know the user's region.
+
+- The country only selects the regional culture entries of this one answer, and the answer
+  names it in `region` (and `culture.region`). It is not stored with the request, the key or any
+  user. Like every keyed search, the request counts in the app's analytics under its country
+  (`query_daily`, a count per app, day, query, locale and country; see [Privacy](#privacy)).
+- Unknown countries (Cloudflare's `XX`, Tor's `T1`) give `region: null`: only entries for every
+  region apply.
+- The shared cache key does not change: culture is still applied after the cache read, so every
+  caller in every country shares one cache entry per query.
+- Answers send `Cache-Control: private, max-age=3600`: a shared proxy must not give one country's
+  answer to a user in another.
+- The SDKs (`region: "auto"` in the TypeScript session, React and the web component; Kotlin
+  `SearchSession(region = "auto")`) send `region=auto` with their semantic requests and apply
+  regional entries with the `region` of the first answer that has one. They never send a region
+  code they know; until the first API answer, only entries for every region apply.
 
 ## `GET /v1/sets/:set/:hexcode.svg`
 
@@ -472,7 +496,7 @@ your own server, use the Search API and the tenants API.
 | `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. (developer+) |
 | `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke (developer+) |
 | `GET /api/apps/:id/usage?period=YYYY-MM` | Per metric: the account's total over all of its apps vs the owner's plan limit (`used`, `limit`, `percent`, `status`), and this app's part (`appUsed`). `custom_emoji` is the emoji stored now, in every period. (viewer+) |
-| `GET /api/apps/:id/analytics?days=7\|30\|90` | Search analytics (Pro and Scale, viewer+), see below |
+| `GET /api/apps/:id/analytics?days=7\|30\|90[&country=BR][&locale=pt]` | Search analytics (Pro and Scale, viewer+), see below |
 | `GET /api/apps/:id/tenants?limit=&cursor=` | `{ tenants: [{ id, externalId, name, createdAt, emojiCount }], nextCursor }` (Scale, viewer+) |
 | `POST /api/apps/:id/tenants` | `{ externalId, name? }` → `201 { tenant }`; a taken `externalId` is `409 tenant_exists` (Scale, developer+) |
 | `GET /api/apps/:id/tenants/:tenantId` | `{ tenant }` (Scale, viewer+) |
@@ -640,19 +664,29 @@ failed).
 | Param | Default | Notes |
 | ----- | ------- | ----- |
 | `days` | `30` | `7`, `30` or `90`. Cut to the plan's retention (Pro 30, Scale 365). |
+| `country` | — | ISO 3166-1 alpha-2 (any case), or `XX` for searches from an unknown country. Other values answer `400` (`field: "country"`). |
+| `locale` | — | A language code such as `pt`, or `und` for searches counted before locales were (migration 0004). Other values answer `400` (`field: "locale"`). |
 
 ```json
 {
   "days": [{ "day": "2026-10-14", "searches": 0, "misses": 0 }, { "day": "2026-10-15", "searches": 412, "misses": 9 }],
   "topQueries": [{ "query": "ship it", "searches": 120 }],
-  "topMisses": [{ "query": "lgtm", "misses": 7 }]
+  "topMisses": [{ "query": "lgtm", "misses": 7 }],
+  "countries": [{ "country": "BR", "searches": 230, "misses": 4 }, { "country": "XX", "searches": 6, "misses": 0 }],
+  "locales": [{ "locale": "pt", "searches": 180, "misses": 3 }],
+  "filters": { "country": null, "locale": null }
 }
 ```
 
 - `days`: one entry per UTC day of the window, oldest first, today last, `0` for days without
   searches. A miss is a search that returned no result.
 - `topQueries`, `topMisses`: up to 20 entries over the window. A query is named only when the app
-  saw it at least 5 times in the window. Day totals count every search.
+  saw it at least 5 times in the window (and in the filter). Day totals count every search.
+- `countries`, `locales`: up to 50 entries each, most searches first. The country is the one
+  Cloudflare's edge saw for each request (`XX` = unknown); the locale is the search's `locale`.
+- `country` and `locale` filter `days` and the top lists. Each also filters the other breakdown:
+  `countries` follows `locale`, `locales` follows `country`. `filters` echoes them, normalized.
+- Only the app's own searches count. Nothing in the dashboard reads other customers' rows.
 - The plan is the account's (team members see the owner's plan). Free and Solo get `402
   { "error": { "code": "plan_required", "plan": "pro", "message": "…" } }`.
 - Data comes from keyed `/v1/search` calls only, cache hits and over-limit answers included,
@@ -800,9 +834,10 @@ What the hosted service collects, and for how long:
 
 | Data | Where | Kept |
 | ---- | ----- | ---- |
-| Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
+| Per app, UTC day, normalized search query (≤ 64 chars), locale and country: number of searches and of misses. The country is `request.cf.country` (ISO 3166-1 alpha-2, derived from the IP address at Cloudflare's edge; `XX` when unknown). Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
 | Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below). No app, account, day or count. | R2 `emojisense-shards`, edge cache | Rebuilt nightly. The previous build is deleted after one more night; browser and edge copies expire within 1 day. |
+| Regional trends: normalized query text, locale, country (or `*`), score, searches and accounts, for queries over the trend thresholds (below). No app, account or user. Not served by any route. | D1 `trends_daily` | 90 days (`TRENDS_KEEP_DAYS`). The daily cron deletes older rows. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
@@ -811,6 +846,9 @@ What the hosted service collects, and for how long:
 | Accounts (Clerk user id, name, verified email), apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Revoked keys stay, marked as revoked. Sign-in sessions live at Clerk; the dashboard stores none. |
 | Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
 
+- The country of a request is used only as a count dimension of `query_daily` and, with
+  `region=auto`, to select the regional culture entries of that one answer. It is never stored
+  with an IP address, a key or a user, and it is not part of the cache key.
 - Never logged or stored: IP addresses (only an in-memory rate-limit key), user identifiers,
   reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens. Keys are stored
   only as a hash and a 12-character prefix, never logged.
@@ -819,11 +857,16 @@ What the hosted service collects, and for how long:
 - Anonymous calls and development keys never reach `query_daily`.
 - The dashboard names a query only when the app saw it ≥ 5 times in the window.
 - The nightly shard job reads `query_daily` in aggregate. It publishes a query in the public
-  shard files (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10 times in total
-  over the last 6 complete UTC days, and only when it does not look like personal data (an email
+  shard files of a locale (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10
+  times in total in that locale over the last 6 complete UTC days, and only when it does not look like personal data (an email
   or web address, a phone, account or postal number, a user id, a long token, blocklisted words).
   The files hold the query text and its emoji results: no app, account, day or count. A query
   leaves them with the first nightly build after it no longer passes. Alias mining reads Analytics
   Engine and uses a query only when it was seen ≥ 5 times.
+- The daily trend job reads `query_daily` in aggregate too. It keeps a query for a locale and a
+  country only when apps of ≥ 3 different accounts searched it ≥ 10 times there over the last 7
+  complete UTC days, with the same personal-data filter. Its rows (`trends_daily`) feed the
+  culture proposals and are never public. Per-customer views (the dashboard) show only the
+  customer's own apps; anything across customers is such a k-anonymous aggregate.
 - `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
   Travel can still restore the database to a point in the last 30 days (Paid plan).

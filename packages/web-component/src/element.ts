@@ -12,6 +12,7 @@ import {
   type EmojiSet,
   emojiImageUrl,
   groupLabel,
+  isAutoRegion,
   isEmojiSet,
   loadCulture,
   loadCustomPack,
@@ -326,7 +327,9 @@ export class EmojisensePickerElement extends Base {
   /**
    * ISO 3166-1 alpha-2 region (e.g. "BR") for regional culture entries. Without the attribute,
    * the picker uses the region of the browser's language (`navigator.language` "pt-BR" → "BR"),
-   * on the device only. `region=""` turns regional entries off.
+   * on the device only. `region=""` turns regional entries off. `region="auto"` asks the API for
+   * the region of the request's country (needs `endpoint`); search results use it after the
+   * first API answer, and the relevant-now row shows entries for every region only.
    */
   get region(): string {
     return this.getAttribute("region") ?? "";
@@ -496,7 +499,10 @@ export class EmojisensePickerElement extends Base {
     return [locale, from, localDay(), this.#region(), this.columns].join("|");
   }
 
-  /** The `region` attribute, else the region of the browser's language. Never sent anywhere. */
+  /**
+   * The `region` attribute, else the region of the browser's language. A region code is never
+   * sent anywhere; "auto" is sent to the API, which answers with the caller's region.
+   */
   #region(): string | undefined {
     const region = this.getAttribute("region");
     return region === null ? deviceRegion() : region || undefined;
@@ -654,7 +660,8 @@ export class EmojisensePickerElement extends Base {
     // Optional "relevant now" row: featured seasonal and event emoji, one row at most.
     this.#shelfKey = this.#currentShelfKey();
     if (this.#shelfKey && this.#culture) {
-      const region = this.#region();
+      // With "auto", only a search learns the region; the row shows entries for every region.
+      const region = isAutoRegion(this.#region()) ? undefined : this.#region();
       const shelf = relevantNow(this.#culture, {
         limit: this.columns,
         ...(region ? { region } : {}),

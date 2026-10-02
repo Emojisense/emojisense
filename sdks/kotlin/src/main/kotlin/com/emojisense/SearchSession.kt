@@ -59,7 +59,11 @@ public class SearchSession @JvmOverloads constructor(
     private val debounceMillis: Long = 200,
     /** Culture file of the culture layer. Default: the engine's. Null turns the layer off. */
     private val culture: Culture? = engine.culture,
-    /** ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". */
+    /**
+     * ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". This code stays on the
+     * device. "auto": the session sends `region=auto` to the API and uses the region of the first
+     * answer that has one. Until then, only the entries for every region apply.
+     */
     private val region: String? = null,
     private val shouldUseSemantic: (AliasSearchOutput<SearchResult>) -> Boolean = Fusion::shouldUseSemantic,
     /** Epoch milliseconds. Culture windows follow the local day of each update, also in a long-lived session. */
@@ -67,6 +71,11 @@ public class SearchSession @JvmOverloads constructor(
     private val onChange: (SessionState) -> Unit,
 ) {
     private var job: Job? = null
+    private val autoRegion = region.equals(AUTO_REGION, ignoreCase = true)
+
+    /** With region "auto": the region of the first API answer that has one. */
+    @Volatile
+    private var learnedRegion: String? = null
 
     /** Call on every keystroke. The alias results are delivered before it returns. */
     public fun update(query: String) {
@@ -87,7 +96,7 @@ public class SearchSession @JvmOverloads constructor(
             delay(debounceMillis)
             val requested = System.nanoTime()
             val response = try {
-                semantic.search(query, SemanticSearchOptions(locale = locale, limit = limit))
+                semantic.search(query, SemanticSearchOptions(locale = locale, limit = limit, region = if (autoRegion) AUTO_REGION else null))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
@@ -99,6 +108,7 @@ public class SearchSession @JvmOverloads constructor(
                 onChange(SessionState(query, present(query, alias.results), alias, SessionStatus.ALIAS, aliasMillis))
                 return@launch
             }
+            if (autoRegion && learnedRegion == null) learnedRegion = response.region
             onChange(
                 SessionState(
                     query = query,
@@ -126,7 +136,7 @@ public class SearchSession @JvmOverloads constructor(
             results,
             culture,
             query,
-            ApplyCultureOptions(region = region, now = clock(), limit = limit, locale = locale, engine = engine),
+            ApplyCultureOptions(region = if (autoRegion) learnedRegion else region, now = clock(), limit = limit, locale = locale, engine = engine),
         )
     }
 }

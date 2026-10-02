@@ -83,6 +83,11 @@ class StubTransport(private val respond: (String) -> HttpResponse) : HttpTranspo
             files[segment]?.let { HttpResponse(200, it.encodeToByteArray()) } ?: HttpResponse(404, ByteArray(0))
         }
 
+        /** Serves bodies by the full URL; anything else is a 404. */
+        fun urls(urls: Map<String, String>) = StubTransport { url ->
+            urls[url]?.let { HttpResponse(200, it.encodeToByteArray()) } ?: HttpResponse(404, ByteArray(0))
+        }
+
         fun json(body: String, status: Int = 200) = StubTransport { HttpResponse(status, body.encodeToByteArray()) }
     }
 }

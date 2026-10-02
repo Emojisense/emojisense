@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createSemanticClient } from "../src/client.js";
+import type { Culture } from "../src/culture.js";
 import { createEngine } from "../src/engine.js";
 import { createSearchSession, type SessionState } from "../src/session.js";
 import { en } from "./fixture.js";
@@ -25,6 +26,21 @@ describe("semantic client", () => {
     expect(url.pathname).toBe("/v1/search");
     expect(url.searchParams.get("q")).toBe("doğum günü!!");
     expect(url.searchParams.get("key")).toBe("pk_1");
+  });
+
+  it("asks the API for the caller's region only with region auto, and never sends a region code", async () => {
+    const fetch = fakeFetch();
+    const client = createSemanticClient({ endpoint: "https://api.test", key: "pk_1", fetch });
+    await client.search("volcano", { region: "AUTO" });
+    await client.search("lava", { region: "BR" });
+    await client.search("magma");
+    const sent = fetch.mock.calls.map(([url]) => new URL(String(url)).searchParams);
+    // The parameter order of the Kotlin client, so both share browser and proxy cache entries.
+    const names = String(sent[0])
+      .split("&")
+      .map((pair) => pair.split("=")[0]);
+    expect(names).toEqual(["q", "locale", "limit", "mode", "region", "key"]);
+    expect(sent.map((params) => params.get("region"))).toEqual(["auto", null, null]);
   });
 
   it("does not ask for a query without searchable text", async () => {
@@ -125,5 +141,77 @@ describe("search session", () => {
     await vi.advanceTimersByTimeAsync(500);
     expect(fetch).not.toHaveBeenCalled();
     expect(states.at(-1)?.status).toBe("alias");
+  });
+});
+
+describe("search session with region auto", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  /** A culture entry for Great Britain only. */
+  const culture: Culture = {
+    format: "emojisense-culture",
+    formatVersion: 1,
+    packVersion: "test",
+    locale: "en",
+    from: "2026-01-01",
+    until: "2027-12-31",
+    entries: [
+      {
+        id: "eruption-dino",
+        kind: "lasting",
+        context: "In this test region, eruptions come with dinosaurs",
+        when: null,
+        regions: ["GB"],
+        triggers: ["volcano eruption"],
+        emoji: [["🦖", "1F996", 0.9]],
+      },
+    ],
+    relevantNow: [],
+  };
+
+  function session(region: string, answerRegion: string | null) {
+    const fetch = vi.fn(
+      async (_url: string | URL | Request) =>
+        new Response(JSON.stringify({ ...semanticBody, region: answerRegion })),
+    );
+    const states: SessionState[] = [];
+    const s = createSearchSession({
+      engine: createEngine(en),
+      semantic: createSemanticClient({ endpoint: "https://api.test", fetch }),
+      culture,
+      region,
+      debounceMs: 10,
+      onChange: (state) => states.push(state),
+    });
+    const glyphs = () => states.at(-1)?.results.map((r) => r.emoji) ?? [];
+    return { fetch, s, glyphs };
+  }
+
+  it("applies regional entries once an API answer reports the caller's region", async () => {
+    const { fetch, s, glyphs } = session("auto", "GB");
+    s.update("volcano eruption");
+    expect(glyphs()).not.toContain("🦖");
+    await vi.advanceTimersByTimeAsync(50);
+    expect(new URL(String(fetch.mock.calls[0]?.[0])).searchParams.get("region")).toBe("auto");
+    expect(glyphs()).toEqual(["🌋", "🦖"]);
+    // Later keystrokes keep the learned region, before any new answer.
+    s.update("volcano eruption ");
+    expect(glyphs()).toContain("🦖");
+  });
+
+  it("keeps regional entries off while the API does not know the region", async () => {
+    const { s, glyphs } = session("auto", null);
+    s.update("volcano eruption");
+    await vi.advanceTimersByTimeAsync(50);
+    expect(glyphs()).toEqual(["🌋"]);
+  });
+
+  it("keeps an explicit region on the device, whatever the API reports", async () => {
+    const { fetch, s, glyphs } = session("US", "GB");
+    s.update("volcano eruption");
+    await vi.advanceTimersByTimeAsync(50);
+    expect(new URL(String(fetch.mock.calls[0]?.[0])).searchParams.has("region")).toBe(false);
+    expect(glyphs()).toEqual(["🌋"]);
   });
 });

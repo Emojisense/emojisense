@@ -1,4 +1,5 @@
 export {
+  ALL_COUNTRIES,
   ANALYTICS_MAX_KEEP_DAYS,
   ANALYTICS_MIN_KEEP_DAYS,
   ANALYTICS_MIN_QUERY_SEARCHES,
@@ -7,10 +8,18 @@ export {
   addDays,
   analyticsKeepDays,
   dayOf,
+  LEGACY_LOCALE,
   lowestPlanWithAnalytics,
   SHARD_MIN_ACCOUNTS,
   SHARD_MIN_SEARCHES,
   SHARD_WINDOW_DAYS,
+  TRENDS_BASELINE_DAYS,
+  TRENDS_KEEP_DAYS,
+  TRENDS_MIN_ACCOUNTS,
+  TRENDS_MIN_SEARCHES,
+  TRENDS_RECENT_DAYS,
+  TRENDS_RISING_SCORE,
+  UNKNOWN_COUNTRY,
 } from "./analytics.js";
 export {
   type CustomEmoji,
@@ -119,6 +128,7 @@ export {
   type TeamMemberRow,
   type TeamRole,
   type TenantRow,
+  type TrendsDailyRow,
   type UsageRow,
   type WebhookDeliveryRow,
   type WebhookRow,

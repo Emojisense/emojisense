@@ -5,6 +5,7 @@ import { executionContext } from "./fixtures.ts";
 
 const OCT_15 = Date.UTC(2026, 9, 15, 12);
 const DAY = "2026-10-15";
+const EN_GB = { locale: "en", country: "GB" };
 
 function setup(options: QueryStatsOptions = {}, start = OCT_15) {
   const clock = { now: start };
@@ -13,7 +14,7 @@ function setup(options: QueryStatsOptions = {}, start = OCT_15) {
   const ctx = executionContext();
   /** One search as the handler records it: add, then start a flush when one is due. */
   const search = (query: string, resultCount = 3, appId = "app") => {
-    stats.add(appId, query, resultCount);
+    stats.add(appId, query, resultCount, EN_GB);
     stats.flushIfDue(ctx);
   };
   return { clock, store, stats, ctx, search };
@@ -22,16 +23,24 @@ function setup(options: QueryStatsOptions = {}, start = OCT_15) {
 describe("QueryStats", () => {
   it("aggregates searches and misses per app, UTC day and query before writing", async () => {
     const { store, stats } = setup();
-    stats.add("app", "ship it", 5);
-    stats.add("app", "ship it", 0);
-    stats.add("app", "ship it", 2);
-    stats.add("app", "zzz", 0);
-    stats.add("other", "ship it", 1);
+    stats.add("app", "ship it", 5, EN_GB);
+    stats.add("app", "ship it", 0, EN_GB);
+    stats.add("app", "ship it", 2, EN_GB);
+    stats.add("app", "zzz", 0, EN_GB);
+    stats.add("other", "ship it", 1, EN_GB);
     await stats.flush();
     expect(store.queryCountOf("app", DAY, "ship it")).toEqual({
       appId: "app",
       day: DAY,
       query: "ship it",
+      searches: 3,
+      misses: 1,
+    });
+    expect(store.queries.get(`app|${DAY}|en|GB|ship it`)).toEqual({
+      appId: "app",
+      day: DAY,
+      query: "ship it",
+      ...EN_GB,
       searches: 3,
       misses: 1,
     });
@@ -56,8 +65,8 @@ describe("QueryStats", () => {
     await ctx.settle();
     expect(write).toHaveBeenCalledTimes(2);
     expect(write.mock.calls[1]?.[0]).toEqual([
-      { appId: "app", day: DAY, query: "party", searches: 6, misses: 1 },
-      { appId: "app", day: DAY, query: "ship it", searches: 5, misses: 0 },
+      { appId: "app", day: DAY, query: "party", ...EN_GB, searches: 6, misses: 1 },
+      { appId: "app", day: DAY, query: "ship it", ...EN_GB, searches: 5, misses: 0 },
     ]);
     expect(store.queryCountOf("app", DAY, "ship it")?.searches).toBe(6);
   });
@@ -80,7 +89,7 @@ describe("QueryStats", () => {
   it("writes at most one batch of rows per flush and leaves the rest for the next one", async () => {
     const { stats, store } = setup({ maxRowsPerFlush: 2 });
     const write = vi.spyOn(store, "addQueryCounts");
-    for (const query of ["a", "b", "c", "d", "e"]) stats.add("app", query, 1);
+    for (const query of ["a", "b", "c", "d", "e"]) stats.add("app", query, 1, EN_GB);
     await stats.flush();
     expect(write.mock.calls[0]?.[0]).toHaveLength(2);
     expect(stats.pendingSearches).toBe(3);
@@ -109,9 +118,9 @@ describe("QueryStats", () => {
 
   it("starts a new row at UTC midnight", async () => {
     const { clock, store, stats } = setup({}, Date.UTC(2026, 9, 15, 23, 59, 59));
-    stats.add("app", "ship it", 1);
+    stats.add("app", "ship it", 1, EN_GB);
     clock.now = Date.UTC(2026, 9, 16, 0, 0, 1);
-    stats.add("app", "ship it", 1);
+    stats.add("app", "ship it", 1, EN_GB);
     await stats.flush();
     expect(store.queryCountOf("app", "2026-10-15", "ship it")?.searches).toBe(1);
     expect(store.queryCountOf("app", "2026-10-16", "ship it")?.searches).toBe(1);
@@ -119,21 +128,21 @@ describe("QueryStats", () => {
 
   it("stores only the query, capped at 64 characters, and ignores empty queries", async () => {
     const { store, stats } = setup();
-    stats.add("app", "", 0);
-    stats.add("app", "x".repeat(80), 1);
+    stats.add("app", "", 0, EN_GB);
+    stats.add("app", "x".repeat(80), 1, EN_GB);
     await stats.flush();
     expect([...store.queries.values()]).toEqual([
-      { appId: "app", day: DAY, query: "x".repeat(64), searches: 1, misses: 0 },
+      { appId: "app", day: DAY, query: "x".repeat(64), ...EN_GB, searches: 1, misses: 0 },
     ]);
   });
 
   it("drops new rows past the pending cap while D1 is down, and says so once", async () => {
     const { store, stats } = setup({ maxPendingRows: 2 });
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    stats.add("app", "a", 1);
-    stats.add("app", "b", 1);
-    stats.add("app", "c", 1);
-    stats.add("app", "a", 1);
+    stats.add("app", "a", 1, EN_GB);
+    stats.add("app", "b", 1, EN_GB);
+    stats.add("app", "c", 1, EN_GB);
+    stats.add("app", "a", 1, EN_GB);
     expect(stats.pendingSearches).toBe(3);
     await stats.flush();
     expect([...store.queries.values()].map((r) => [r.query, r.searches])).toEqual([
@@ -145,9 +154,26 @@ describe("QueryStats", () => {
     warn.mockRestore();
   });
 
+  it("keeps one row per locale and country of the same query", async () => {
+    const { store, stats } = setup();
+    stats.add("app", "football", 3, { locale: "en", country: "GB" });
+    stats.add("app", "football", 3, { locale: "en", country: "US" });
+    stats.add("app", "football", 3, { locale: "en", country: "US" });
+    stats.add("app", "football", 0, { locale: "pt", country: "BR" });
+    await stats.flush();
+    expect(
+      [...store.queries.values()].map((r) => [r.locale, r.country, r.searches, r.misses]).sort(),
+    ).toEqual([
+      ["en", "GB", 1, 0],
+      ["en", "US", 2, 0],
+      ["pt", "BR", 1, 1],
+    ]);
+    expect(store.queryCountOf("app", DAY, "football")).toMatchObject({ searches: 4, misses: 1 });
+  });
+
   it("counts nothing without a store", async () => {
     const stats = new QueryStats();
-    stats.add("app", "ship it", 1);
+    stats.add("app", "ship it", 1, EN_GB);
     expect(stats.pendingSearches).toBe(0);
     await expect(stats.flush()).resolves.toBeUndefined();
   });

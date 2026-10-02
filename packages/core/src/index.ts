@@ -68,7 +68,9 @@ export {
   ROW as ROW_INDEX,
 } from "./pack.js";
 export {
+  AUTO_REGION,
   chainProviders,
+  isAutoRegion,
   type SemanticLayer,
   type SemanticProvider,
   type SemanticResponse,
@@ -96,6 +98,7 @@ export {
   type Shard,
   type ShardIndex,
   type ShardProviderOptions,
+  shardBaseFor,
   shardKeyFor,
 } from "./shards.js";
 export { applySkinTone, SKIN_TONES, type SkinTone } from "./skin.js";

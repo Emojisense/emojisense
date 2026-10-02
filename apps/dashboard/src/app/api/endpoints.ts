@@ -1,6 +1,7 @@
 import type { AnalyticsWindow, EmojiSet, KeyKind, PlanId } from "@emojisense/platform";
 import type {
   AcceptInviteResponse,
+  AnalyticsFilters,
   AnalyticsResponse,
   AppDetailResponse,
   AppResponse,
@@ -80,8 +81,13 @@ export const api = {
   importDiscord: (appId: string, input: { botToken: string; guildId: string }) =>
     request<EmojiImportResponse>("POST", `${appPath(appId)}/emoji/import/discord`, input),
 
-  analytics: (appId: string, days: AnalyticsWindow) =>
-    request<AnalyticsResponse>("GET", `${appPath(appId)}/analytics?days=${days}`),
+  /** `filters` narrow the report to one country and/or one locale of the app's own searches. */
+  analytics: (appId: string, days: AnalyticsWindow, filters: Partial<AnalyticsFilters> = {}) => {
+    const query = new URLSearchParams({ days: String(days) });
+    if (filters.country) query.set("country", filters.country);
+    if (filters.locale) query.set("locale", filters.locale);
+    return request<AnalyticsResponse>("GET", `${appPath(appId)}/analytics?${query}`);
+  },
 
   /** One page, ordered by externalId. Pass `nextCursor` back for the next one. */
   listTenants: (appId: string, cursor?: string) =>

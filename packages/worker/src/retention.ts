@@ -10,6 +10,7 @@ import {
 import { RETENTION_DELETE_BATCH, RETENTION_MAX_BATCHES } from "./config.ts";
 import type { Env } from "./env.ts";
 import type { D1Like, D1Statement } from "./store.ts";
+import { buildRegionalTrends, trendsCutoff } from "./trends.ts";
 
 /** The first UTC day each plan keeps. Rows of earlier days are deleted. */
 export interface RetentionCutoffs {
@@ -48,6 +49,10 @@ const DELETE_EXPIRED = `
  */
 const DELETE_EXPIRED_WAITLIST = `
   DELETE FROM waitlist WHERE rowid IN (SELECT rowid FROM waitlist WHERE created_at < ? LIMIT ?)`;
+
+/** One batch of trends_daily rows past TRENDS_KEEP_DAYS. The primary key starts with the day. */
+const DELETE_EXPIRED_TRENDS = `
+  DELETE FROM trends_daily WHERE rowid IN (SELECT rowid FROM trends_daily WHERE day < ? LIMIT ?)`;
 
 export interface PruneResult {
   deleted: number;
@@ -108,18 +113,39 @@ export async function pruneWaitlist(
   return deleteInBatches(statement, batchSize, options.maxBatches ?? RETENTION_MAX_BATCHES);
 }
 
+/** Deletes trends_daily rows older than TRENDS_KEEP_DAYS (DECISIONS.md, "Regional statistics"). */
+export async function pruneTrendsDaily(
+  db: D1Like,
+  now: number,
+  options: PruneOptions = {},
+): Promise<PruneResult> {
+  const batchSize = options.batchSize ?? RETENTION_DELETE_BATCH;
+  const statement = db.prepare(DELETE_EXPIRED_TRENDS).bind(trendsCutoff(now), batchSize);
+  return deleteInBatches(statement, batchSize, options.maxBatches ?? RETENTION_MAX_BATCHES);
+}
+
 const RETENTION_JOBS = [
   { table: "query_daily", prune: pruneQueryDaily },
   { table: "waitlist", prune: pruneWaitlist },
+  { table: "trends_daily", prune: pruneTrendsDaily },
 ] as const;
 
 /**
- * The daily cron (wrangler.jsonc `triggers.crons`). Each job runs even when an earlier one
- * failed. Logs counts only, never ids, emails or queries.
+ * The daily cron (wrangler.jsonc `triggers.crons`): the regional trends first, then the
+ * retention jobs. The trends read the last 7 complete days, and the first prune deletes the
+ * oldest of them on the plans that keep 7 days. Each job runs even when an earlier one failed.
+ * Logs counts only, never ids, emails or queries.
  */
 export async function handleScheduled(env: Env, scheduledTime: number): Promise<void> {
   if (!env.DB) return;
   let failure: unknown;
+  try {
+    const report = await buildRegionalTrends(env.DB, scheduledTime);
+    console.log(JSON.stringify({ event: "trends_daily_built", ...report }));
+  } catch (error) {
+    console.error(JSON.stringify({ event: "trends_daily_failed", error: (error as Error).name }));
+    failure = error;
+  }
   for (const job of RETENTION_JOBS) {
     try {
       const result = await job.prune(env.DB, scheduledTime);

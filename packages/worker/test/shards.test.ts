@@ -1,7 +1,13 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { Shard, ShardIndex } from "@emojisense/data/shards";
 import { addDays, dayOf } from "@emojisense/platform";
-import { createLayeredSemantic, createSemanticClient, createShardProvider } from "emojisense";
+import {
+  createLayeredSemantic,
+  createSemanticClient,
+  createShardProvider,
+  decodeVectors,
+  encodeVectors,
+} from "emojisense";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AiBinding, Env } from "../src/env.ts";
 import { runScheduled } from "../src/scheduled.ts";
@@ -9,7 +15,7 @@ import type { Catalog } from "../src/semantic.ts";
 import { runShardBuild, type ShardLimits } from "../src/shards/job.ts";
 import { selectCandidates, selectionWindow } from "../src/shards/select.ts";
 import { type ShardPointer, storePrefix } from "../src/shards/storage.ts";
-import { API, catalog, harness, ROW, TEST_KEY, unit } from "./fixtures.ts";
+import { API, catalog, EMBEDDING_MODEL, fixtureVectors, harness, ROW, TEST_KEY, unit } from "./fixtures.ts";
 import { memoryR2 } from "./memory-r2.ts";
 import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
 
@@ -49,28 +55,47 @@ function seededDatabase(): DatabaseSync {
   return db;
 }
 
+/** Rows without a locale are rows from before migration 0004: they count as English. */
 function searched(
   db: DatabaseSync,
   query: string,
   rows: [app: string, searches: number, daysAgo?: number][],
+  locale?: string,
 ) {
   for (const [app, searches, ago = 1] of rows) {
-    db.prepare("INSERT INTO query_daily (app_id, day, query, searches, misses) VALUES (?, ?, ?, ?, 0)").run(
-      `app_${app}`,
-      daysAgo(ago),
-      query,
-      searches,
-    );
+    db.prepare(
+      `INSERT INTO query_daily (app_id, day, query, locale, searches, misses)
+       VALUES (?, ?, ?, COALESCE(?, 'und'), ?, 0)`,
+    ).run(`app_${app}`, daysAgo(ago), query, locale ?? null, searches);
   }
 }
 
 /** Seen by three accounts, 12 times. */
-const popular = (db: DatabaseSync, query: string, extra = 0) =>
-  searched(db, query, [
-    ["a", 4 + extra],
-    ["b", 4],
-    ["c", 4, 3],
-  ]);
+const popular = (db: DatabaseSync, query: string, extra = 0, locale?: string) =>
+  searched(
+    db,
+    query,
+    [
+      ["a", 4 + extra],
+      ["b", 4],
+      ["c", 4, 3],
+    ],
+    locale,
+  );
+
+/**
+ * The fixture catalog with a Turkish alias engine and Turkish vectors: in Turkish, the lava text
+ * lands on 🐶's row, so a Turkish answer differs from the English one.
+ */
+const turkishIndex = decodeVectors(encodeVectors(EMBEDDING_MODEL, ["1F436"], [unit(ROW.volcano)]));
+const withTurkish: Catalog = {
+  ...catalog,
+  aliasEngine: async (locale, env) => (locale === "tr" ? catalog.engine() : catalog.aliasEngine(locale, env)),
+  vectors: async (locale) => ({
+    indexes: locale === "tr" ? [fixtureVectors(), turkishIndex] : [fixtureVectors()],
+    complete: true,
+  }),
+};
 
 const RULES = { minAccounts: 3, minSearches: 10, maxQueries: 100 };
 
@@ -122,8 +147,8 @@ describe("selectCandidates", () => {
     const selection = await selectCandidates(sqliteD1(db), selectionWindow(NOW, 6), RULES);
     expect(selection).toEqual({
       candidates: [
-        { q: "edges", searches: 15 },
-        { q: "lava eruption", searches: 12 },
+        { q: "edges", locale: "en", searches: 15 },
+        { q: "lava eruption", locale: "en", searches: 12 },
       ],
       privacyDropped: 0,
     });
@@ -146,7 +171,33 @@ describe("selectCandidates", () => {
     popular(db, "Lava!", 100);
     popular(db, "lava eruption");
     const selection = await selectCandidates(sqliteD1(db), selectionWindow(NOW, 6), RULES);
-    expect(selection).toEqual({ candidates: [{ q: "lava eruption", searches: 12 }], privacyDropped: 3 });
+    expect(selection).toEqual({
+      candidates: [{ q: "lava eruption", locale: "en", searches: 12 }],
+      privacyDropped: 3,
+    });
+  });
+
+  it("holds the thresholds per locale: each shard file shows its query was searched there", async () => {
+    // Three accounts in all, but only two in English and one in Portuguese.
+    searched(
+      db,
+      "football",
+      [
+        ["a", 10],
+        ["b", 10],
+      ],
+      "en",
+    );
+    searched(db, "football", [["c", 10]], "pt");
+    popular(db, "futebol", 0, "pt");
+    popular(db, "lava eruption", 0, "tr");
+    popular(db, "lava eruption", 5, "en");
+    const { candidates } = await selectCandidates(sqliteD1(db), selectionWindow(NOW, 6), RULES);
+    expect(candidates).toEqual([
+      { q: "lava eruption", locale: "en", searches: 17 },
+      { q: "futebol", locale: "pt", searches: 12 },
+      { q: "lava eruption", locale: "tr", searches: 12 },
+    ]);
   });
 });
 
@@ -354,6 +405,74 @@ describe("nightly shard build", () => {
     expect(ai).not.toHaveBeenCalled();
   });
 
+  it("builds a directory per locale with that locale's answers, English at the build root", async () => {
+    popular(db, "lava eruption", 0, "en");
+    popular(db, "lava eruption", 0, "tr");
+    popular(db, "extinct reptiles", 0, "tr");
+
+    const report = await run({}, {}, NOW, withTurkish);
+
+    expect(report).toMatchObject({
+      status: "published",
+      queries: 3,
+      locales: { en: { queries: 1, shards: 1 }, tr: { queries: 2, shards: 2 } },
+    });
+    expect(pointer().locales).toEqual(report.locales);
+    const { build } = pointer();
+    const en = r2.json<ShardIndex>(`${PREFIX}${build}/index.json`);
+    const tr = r2.json<ShardIndex>(`${PREFIX}${build}/tr/index.json`);
+    const entries = (index: ShardIndex, dir: string) =>
+      Object.assign(
+        {},
+        ...index.keys.map(
+          (key) => r2.json<Shard>(`${PREFIX}${build}/${dir}${encodeURIComponent(key)}.json`).entries,
+        ),
+      );
+    expect(Object.keys(entries(en, ""))).toEqual(["lava eruption"]);
+    expect(Object.keys(entries(tr, "tr/")).sort()).toEqual(["extinct reptiles", "lava eruption"]);
+    expect(entries(en, "")["lava eruption"][0][0]).toBe("🌋");
+    // The Turkish vectors put 🐶 level with 🌋 for this text.
+    expect(
+      entries(tr, "tr/")
+        ["lava eruption"].slice(0, 2)
+        .map((r: [string]) => r[0])
+        .sort(),
+    ).toEqual(["🌋", "🐶"]);
+    // One text, embedded once per locale that needs it.
+    expect(ai.mock.calls.flatMap(([, input]) => (input as { text: string[] }).text).sort()).toEqual([
+      "extinct reptiles",
+      "lava eruption",
+      "lava eruption",
+    ]);
+  });
+
+  it("spends one embedding budget on the most searched new queries of every locale", async () => {
+    popular(db, "lava eruption", 0, "en");
+    popular(db, "lava one", 9, "tr");
+    popular(db, "lava two", 5, "tr");
+
+    const first = await run({ maxEmbeddings: 2 }, {}, NOW, withTurkish);
+    expect(first).toMatchObject({
+      embedded: 2,
+      deferred: 1,
+      locales: { en: { queries: 0 }, tr: { queries: 2 } },
+    });
+    const second = await run({ maxEmbeddings: 2 }, {}, NOW, withTurkish);
+    expect(second).toMatchObject({ reused: 2, embedded: 1, deferred: 0, queries: 3 });
+  });
+
+  it("leaves out a locale whose alias engine does not load, and keeps the others", async () => {
+    popular(db, "lava eruption", 0, "en");
+    popular(db, "lava eruption", 0, "de");
+    const report = await run();
+    expect(report).toMatchObject({
+      status: "published",
+      skippedLocales: ["de"],
+      locales: { en: { queries: 1 } },
+    });
+    expect(r2.keys(`${PREFIX}${pointer().build}/de/`)).toEqual([]);
+  });
+
   it("runs on its own cron; the other cron runs the retention jobs", async () => {
     popular(db, "lava eruption");
     await runScheduled({ cron: "17 3 * * *", scheduledTime: NOW }, env(), catalog);
@@ -518,6 +637,55 @@ describe("GET /p/*", () => {
     const shards = createShardProvider({ baseUrl: `${API}/p/test`, fetch });
     expect(await shards.search("lavá eruption")).toBeUndefined();
     expect(calls.filter((url) => url.includes("/v1/search"))).toHaveLength(3);
+  });
+
+  it("serves each locale's directory, English also under en/, and 404 for others", async () => {
+    popular(db, "lava eruption", 0, "tr");
+    const { h, get } = setup();
+    await runShardBuild(h.env, withTurkish, { now: clock, limits: { results: 4 } });
+
+    const tr = await get("/p/test/tr/index.json");
+    expect(tr.status).toBe(200);
+    expect(tr.headers.get("cache-control")).toBe("public, max-age=3600");
+    const trIndex = (await tr.json()) as ShardIndex;
+    const key = trIndex.keys.find((k) => k.startsWith("l")) as string;
+    const shard = (await (await get(`/p/test/tr/${encodeURIComponent(key)}.json`)).json()) as Shard;
+    expect(Object.keys(shard.entries)).toEqual(["lava eruption"]);
+    // Older clients and new English clients read the same English files.
+    expect(await (await get("/p/test/en/index.json")).json()).toEqual(
+      await (await get("/p/test/index.json")).json(),
+    );
+    expect((await get("/p/test/de/index.json")).status).toBe(404);
+    expect((await get("/p/test/xx/index.json")).status).toBe(404);
+    expect((await get("/p/test/tr/a/index.json")).status).toBe(404);
+  });
+
+  it("gives the SDK of each locale the API's answers for that locale", async () => {
+    popular(db, "lava eruption", 0, "tr");
+    popular(db, "extinct reptiles", 0, "tr");
+    const h = harness({
+      now: () => clock,
+      catalog: withTurkish,
+      env: {
+        DB: sqliteD1(db) as unknown as D1Database,
+        SHARDS: r2.r2,
+        AI: { run: batchAi() },
+        ASSETS: { fetch: assets },
+        SHARDS_CRON_ENABLED: "true",
+      },
+    });
+    await runShardBuild(h.env, withTurkish, { now: clock, limits: { results: 4 } });
+    const fetch = (async (input: string | URL | Request) =>
+      h.call(new Request(String(input)))) as typeof globalThis.fetch;
+    const shards = createShardProvider({ baseUrl: `${API}/p/test`, fetch });
+    const fromShard = await shards.search("lava eruption", { locale: "tr", limit: 4 });
+    expect(fromShard?.layer).toBe("shard");
+    const api = createSemanticClient({ endpoint: API, key: TEST_KEY, fetch });
+    const fromApi = await api.search("lava eruption", { locale: "tr", limit: 4 });
+    expect(fromShard?.results).toEqual(fromApi?.results);
+    // Searched in Turkish only: an English client asks the API.
+    expect((await shards.search("extinct reptiles", { locale: "tr" }))?.layer).toBe("shard");
+    expect(await shards.search("extinct reptiles", { locale: "en" })).toBeUndefined();
   });
 
   it("needs no key and never meters", async () => {

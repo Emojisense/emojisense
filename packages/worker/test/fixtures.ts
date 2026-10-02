@@ -279,6 +279,10 @@ export const search = (q: string, extra = "", init?: RequestInit) =>
 export const keyedSearch = (q: string, extra = "", init?: RequestInit) =>
   search(q, `&key=${TEST_KEY}${extra}`, init);
 
+/** The request as Cloudflare's edge hands it over: `request.cf.country` from the caller's IP. */
+export const fromCountry = (request: Request, country: string): Request =>
+  Object.defineProperty(request, "cf", { value: { country } });
+
 export const reactions = (body: unknown, query = "", init: RequestInit = {}) =>
   new Request(`${API}/v1/suggest-reactions${query}`, {
     method: "POST",

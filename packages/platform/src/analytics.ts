@@ -34,6 +34,31 @@ export const SHARD_MIN_SEARCHES = 10;
  */
 export const SHARD_WINDOW_DAYS = ANALYTICS_MIN_KEEP_DAYS - 1;
 
+/**
+ * Regional dimensions of query_daily (migration 0004). The country comes from the request's edge
+ * location (`request.cf.country`); this code stands for an unknown country (Tor, no data)…
+ */
+export const UNKNOWN_COUNTRY = "XX";
+/** …and this locale for rows written before the table had a locale. */
+export const LEGACY_LOCALE = "und";
+/** trends_daily: the row of a locale over every country, unknown ones included. */
+export const ALL_COUNTRIES = "*";
+
+/**
+ * Regional trends (trends_daily), for the culture proposals: the last this many complete UTC
+ * days (every plan still holds them when the daily cron runs, before its prune)…
+ */
+export const TRENDS_RECENT_DAYS = 7;
+/** …against the this many days before them. */
+export const TRENDS_BASELINE_DAYS = 28;
+/** k-anonymity of a trend row, per locale and country: the thresholds of the public shards. */
+export const TRENDS_MIN_ACCOUNTS = SHARD_MIN_ACCOUNTS;
+export const TRENDS_MIN_SEARCHES = SHARD_MIN_SEARCHES;
+/** A trend row with at least this score is "rising": twice the searches per day of its baseline. */
+export const TRENDS_RISING_SCORE = 2;
+/** The daily cron deletes trends_daily rows older than this many days. */
+export const TRENDS_KEEP_DAYS = 90;
+
 const DAY_MS = 86_400_000;
 
 /** Daily key, UTC: "2026-10-15". */
