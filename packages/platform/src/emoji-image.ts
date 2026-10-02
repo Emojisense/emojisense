@@ -97,12 +97,22 @@ const unquote = (value: string) => value.replace(/^["']|["']$/g, "").trim();
 const isInternalReference = (value: string) =>
   value.startsWith("#") || /^data:image\/(png|gif|jpe?g|webp)[;,]/.test(value);
 
-const FORBIDDEN_ELEMENTS =
-  /<(script|foreignobject|iframe|embed|object|html|body|meta|link|base|handler|listener)\b/;
+/**
+ * An XML name prefix (`svg:`, `x:`, …). XML lets any prefix stand for the SVG, XHTML or XLink
+ * namespace, so `<x:script xmlns:x="http://www.w3.org/2000/svg">` is a script element and
+ * `x:href` with `xmlns:x="http://www.w3.org/1999/xlink"` is a link: names match with any prefix.
+ * Prefixes may use non-ASCII letters, so anything up to the colon counts.
+ */
+const PREFIX = String.raw`(?:[^\s<>/=:"']+:)?`;
+const FORBIDDEN_ELEMENTS = new RegExp(
+  `<${PREFIX}(script|foreignobject|iframe|embed|object|html|body|meta|link|base|handler|listener)\\b`,
+);
+/** `<?xml-stylesheet?>` can attach XSLT or CSS, inside the file or outside it. */
+const STYLESHEET_INSTRUCTION = /<\?xml-stylesheet\b/;
 const EVENT_ATTRIBUTE = /[\s"'/]on[a-z]+\s*=/;
-const LINK_ATTRIBUTE = /[\s"'/](?:xlink:)?href\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/g;
+const LINK_ATTRIBUTE = new RegExp(`[\\s"'/]${PREFIX}href\\s*=\\s*("[^"]*"|'[^']*'|[^\\s>]+)`, "g");
 const SOURCE_ATTRIBUTE = /[\s"'/]src\s*=/;
-const ANIMATED_LINK = /attributename\s*=\s*["']?(?:xlink:)?href/;
+const ANIMATED_LINK = new RegExp(`attributename\\s*=\\s*["']?${PREFIX}href`);
 const CSS_URL = /url\(\s*([^)]*)\)/g;
 
 /**
@@ -114,6 +124,7 @@ export function checkSvg(svg: string): string | undefined {
   const text = decodeReferences(svg).toLowerCase();
   const compact = text.replace(/[\s\p{Cc}]+/gu, "");
   if (FORBIDDEN_ELEMENTS.test(text)) return "SVG files cannot contain scripts or embedded documents.";
+  if (STYLESHEET_INSTRUCTION.test(text)) return "SVG files cannot attach style sheets.";
   if (/<!entity|<!doctype[^>]*\[/.test(text)) return "SVG files cannot declare entities.";
   if (EVENT_ATTRIBUTE.test(text)) return "SVG files cannot contain event handler attributes (on…=).";
   if (/(java|vb)script:/.test(compact)) return "SVG files cannot contain javascript: URLs.";

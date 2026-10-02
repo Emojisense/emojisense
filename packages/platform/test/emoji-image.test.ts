@@ -94,6 +94,18 @@ describe("checkSvg", () => {
     ["an animated href", '<a href="#x"><set attributeName="href" to="https://evil.example"/></a>'],
     ["a style import", "<style>@import url(https://evil.example/a.css);</style>"],
     ["an external CSS url", '<rect style="fill: url(https://evil.example/a.png)"/>'],
+    ["a prefixed script element", '<s:script xmlns:s="http://www.w3.org/2000/svg">alert(1)</s:script>'],
+    [
+      "an XHTML script behind a prefix",
+      '<h:script xmlns:h="http://www.w3.org/1999/xhtml">alert(1)</h:script>',
+    ],
+    ["a prefixed foreignObject", "<s:foreignObject><div>hi</div></s:foreignObject>"],
+    ["a non-ASCII prefix", '<é:script xmlns:é="http://www.w3.org/2000/svg">alert(1)</é:script>'],
+    [
+      "an external link behind another XLink prefix",
+      '<use q:href="https://evil.example/sprite.svg#a" xmlns:q="http://www.w3.org/1999/xlink"/>',
+    ],
+    ["an animated prefixed href", '<a href="#x"><set attributeName="q:href" to="https://evil.example"/></a>'],
   ] as const;
 
   it.each(unsafe)("rejects %s", (_, body) => {
@@ -111,6 +123,21 @@ describe("checkSvg", () => {
       '<rect fill="url(#g)" style="fill:url( \'#g\' )"/><use href="#g"/><use xlink:href="#g"/>' +
       '<image href="data:image/png;base64,iVBORw0KGgo="/><text>Click on me</text>';
     expect(checkSvg(new TextDecoder().decode(svg(body)))).toBeUndefined();
+  });
+
+  it("rejects a style sheet processing instruction (XSLT or CSS)", () => {
+    const text = '<?xml-stylesheet type="text/xsl" href="#t"?><svg/>';
+    expect(checkSvg(text)).toMatch(/style sheets/);
+  });
+
+  it("accepts editor metadata in other namespaces (Inkscape, RDF)", () => {
+    const text =
+      '<svg xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" ' +
+      'xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" sodipodi:docname="party.svg">' +
+      '<sodipodi:namedview id="v"/><metadata><rdf:RDF><cc:Work rdf:about="">' +
+      '<cc:license rdf:resource="http://creativecommons.org/licenses/by/4.0/"/>' +
+      '</cc:Work></rdf:RDF></metadata><use xlink:href="#g"/></svg>';
+    expect(checkSvg(text)).toBeUndefined();
   });
 
   it("accepts a DOCTYPE without an internal subset", () => {
