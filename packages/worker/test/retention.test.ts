@@ -2,7 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { addDays, dayOf } from "@emojisense/platform";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Env } from "../src/env.ts";
-import { handleScheduled, pruneQueryDaily, retentionCutoffs } from "../src/retention.ts";
+import { handleScheduled, pruneQueryDaily, pruneWaitlist, retentionCutoffs } from "../src/retention.ts";
 import type { D1Like } from "../src/store.ts";
 import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
 
@@ -108,35 +108,90 @@ describe("pruneQueryDaily", () => {
   });
 });
 
+describe("pruneWaitlist", () => {
+  let db: DatabaseSync;
+  let d1: D1Like;
+
+  const join = (email: string, createdAt: number) =>
+    db.prepare("INSERT INTO waitlist (email, plan, created_at) VALUES (?, 'pro', ?)").run(email, createdAt);
+  const emails = () =>
+    db
+      .prepare("SELECT email FROM waitlist ORDER BY email")
+      .all()
+      .map((r) => r.email);
+
+  beforeEach(() => {
+    db = migratedDatabase();
+    d1 = sqliteD1(db);
+  });
+
+  it("deletes rows whose first sign-up is more than 12 months old", async () => {
+    const twelveMonthsAgo = Date.UTC(2025, 9, 15, 3, 17);
+    join("old@example.com", twelveMonthsAgo - 1);
+    join("edge@example.com", twelveMonthsAgo);
+    join("new@example.com", NOW - 86_400_000);
+
+    expect(await pruneWaitlist(d1, NOW)).toEqual({ deleted: 1, batches: 1, complete: true });
+    expect(emails()).toEqual(["edge@example.com", "new@example.com"]);
+  });
+
+  it("deletes in batches and stops at the batch cap", async () => {
+    for (let i = 0; i < 5; i++) join(`p${i}@example.com`, 0);
+    expect(await pruneWaitlist(d1, NOW, { batchSize: 2, maxBatches: 2 })).toEqual({
+      deleted: 4,
+      batches: 2,
+      complete: false,
+    });
+    expect(await pruneWaitlist(d1, NOW, { batchSize: 2, maxBatches: 2 })).toEqual({
+      deleted: 1,
+      batches: 1,
+      complete: true,
+    });
+    expect(emails()).toEqual([]);
+  });
+});
+
 describe("handleScheduled", () => {
-  it("prunes and logs counts only", async () => {
+  it("prunes query_daily and the waitlist and logs counts only", async () => {
     const db = migratedDatabase();
     db.exec(`
       INSERT INTO accounts (id, created_at) VALUES ('acc', 0);
       INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_acc', 'acc', 'App', 0);
-      INSERT INTO query_daily (app_id, day, query, searches, misses) VALUES ('app_acc', '2026-01-01', 'secret', 1, 0);`);
+      INSERT INTO query_daily (app_id, day, query, searches, misses) VALUES ('app_acc', '2026-01-01', 'secret', 1, 0);
+      INSERT INTO waitlist (email, plan, created_at) VALUES ('ada@example.com', 'pro', 0);`);
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
     await handleScheduled({ DB: sqliteD1(db) as unknown as D1Database }, NOW);
-    expect(log).toHaveBeenCalledWith(
-      JSON.stringify({ event: "query_daily_pruned", deleted: 1, batches: 1, complete: true }),
-    );
+    expect(log.mock.calls).toEqual([
+      [JSON.stringify({ event: "query_daily_pruned", deleted: 1, batches: 1, complete: true })],
+      [JSON.stringify({ event: "waitlist_pruned", deleted: 1, batches: 1, complete: true })],
+    ]);
     log.mockRestore();
   });
 
-  it("rethrows a failure so the cron run is marked as failed", async () => {
+  it("runs every job, then rethrows the first failure so the cron run is marked as failed", async () => {
+    const db = migratedDatabase();
+    db.exec("INSERT INTO waitlist (email, plan, created_at) VALUES ('ada@example.com', 'pro', 0)");
+    const d1 = sqliteD1(db);
     const env = {
       DB: {
-        prepare: () => {
-          throw new TypeError("D1 down");
+        ...d1,
+        prepare: (sql: string) => {
+          if (sql.includes("query_daily")) throw new TypeError("D1 down");
+          return d1.prepare(sql);
         },
       },
     } as unknown as Env;
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
     await expect(handleScheduled(env, NOW)).rejects.toThrow("D1 down");
     expect(error).toHaveBeenCalledWith(
       JSON.stringify({ event: "query_daily_prune_failed", error: "TypeError" }),
     );
+    expect(log).toHaveBeenCalledWith(
+      JSON.stringify({ event: "waitlist_pruned", deleted: 1, batches: 1, complete: true }),
+    );
     error.mockRestore();
+    log.mockRestore();
   });
 
   it("does nothing without a database", async () => {

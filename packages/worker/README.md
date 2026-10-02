@@ -103,6 +103,10 @@ accepted for soft limits (DECISIONS.md, Update #2).
 | Counted in memory and flushed like usage (10 s or 100 searches), at most 100 rows per D1 batch. The UPSERT skips rows of deleted apps. | `src/query-stats.ts`, `src/store.ts` |
 | Daily cron `17 3 * * *` deletes rows past the account plan's window: Pro 30 days, Scale 365, others 7. Batches of 1,000 rows, ≤ 200 per run. | `src/retention.ts`, `wrangler.jsonc` |
 
+The same cron deletes waitlist rows 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS` in
+`@emojisense/platform`). Each job runs and logs on its own; a failure of either marks the run as
+failed.
+
 Run the cron locally: `pnpm exec wrangler dev --env offline --test-scheduled --persist-to ../../.wrangler/state`,
 then `curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*"`.
 
