@@ -16,7 +16,13 @@ export const corsHeaders = {
 export function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", ...corsHeaders, ...headers },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      // Error messages echo parts of the input; the type must never be sniffed as HTML.
+      "x-content-type-options": "nosniff",
+      ...corsHeaders,
+      ...headers,
+    },
   });
 }
 
