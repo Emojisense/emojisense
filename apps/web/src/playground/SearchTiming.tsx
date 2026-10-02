@@ -104,7 +104,7 @@ export function SearchTiming({
   return (
     <section className="pg-panel pg-timing-panel" aria-label="Timing">
       <header className="pg-panel-head">
-        <h3 className="pg-label">Timing</h3>
+        <h2 className="pg-label">Timing</h2>
         <span className="pg-count">{MODE_NAMES[mode]}</span>
       </header>
       <TimingBars rows={rows} label="Time per step for the current query" />

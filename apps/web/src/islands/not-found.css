@@ -145,7 +145,7 @@
   border-radius: var(--radius);
   background: var(--bg-soft);
   cursor: default;
-  animation: nf-pulse 1.4s ease-in-out infinite;
+  animation: nf-pulse 1.4s ease-in-out 3;
 }
 
 .nf-status {

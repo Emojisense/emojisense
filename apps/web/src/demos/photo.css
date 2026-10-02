@@ -81,7 +81,7 @@
 
 .photo-pill[data-state="scanning"]::before {
   background: var(--ink-3);
-  animation: photo-pulse 700ms ease-in-out infinite alternate;
+  animation: photo-pulse 700ms ease-in-out 6 alternate;
 }
 
 .photo-feed {
@@ -194,7 +194,7 @@
 
 .photo-frame[data-scanning]::after {
   opacity: 1;
-  animation: photo-sweep 1100ms var(--ease-out) infinite;
+  animation: photo-sweep 1100ms var(--ease-out) 4;
 }
 
 /* Viewfinder corners. */
@@ -271,7 +271,7 @@
   height: 0.625rem;
   border-radius: var(--pill);
   background: var(--bg-sunk);
-  animation: photo-pulse 800ms ease-in-out infinite alternate;
+  animation: photo-pulse 800ms ease-in-out 6 alternate;
 }
 
 .photo-reactions {
@@ -328,7 +328,7 @@
   width: 2.875rem;
   border-color: transparent;
   background: var(--bg-sunk);
-  animation: photo-pulse 800ms ease-in-out infinite alternate;
+  animation: photo-pulse 800ms ease-in-out 6 alternate;
 }
 
 .photo-count {
@@ -415,7 +415,7 @@
   border-color: transparent;
   background: var(--bg-sunk);
   box-shadow: none;
-  animation: photo-pulse 800ms ease-in-out infinite alternate;
+  animation: photo-pulse 800ms ease-in-out 6 alternate;
 }
 
 .photo-reply:hover {

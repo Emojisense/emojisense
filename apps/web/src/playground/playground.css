@@ -96,7 +96,7 @@
 }
 
 .pg-status-item[data-state="wait"]::before {
-  animation: pg-pulse 0.9s ease-in-out infinite alternate;
+  animation: pg-pulse 0.9s ease-in-out 4 alternate;
 }
 
 .pg-tabpanel {
@@ -258,7 +258,7 @@
 .pg-skeleton {
   border-radius: var(--radius-sm);
   background: var(--bg-soft);
-  animation: pg-pulse 1.1s ease-in-out infinite alternate;
+  animation: pg-pulse 1.1s ease-in-out 4 alternate;
 }
 
 .pg-skeleton-line {
@@ -727,7 +727,7 @@
 
 .pg-grid > .pg-skeleton {
   aspect-ratio: 1;
-  animation: pg-pulse 1.1s ease-in-out infinite alternate;
+  animation: pg-pulse 1.1s ease-in-out 4 alternate;
 }
 
 .pg-empty {
@@ -845,7 +845,7 @@
 }
 
 .pg-loading {
-  animation: pg-pulse 0.9s ease-in-out infinite alternate;
+  animation: pg-pulse 0.9s ease-in-out 4 alternate;
 }
 
 .pg-keys {
@@ -1349,7 +1349,7 @@ li.pg-reaction {
 
 .pg-figure[data-reading] .pg-scan {
   opacity: 1;
-  animation: pg-scan 1.3s var(--ease-out) infinite;
+  animation: pg-scan 1.3s var(--ease-out) 3;
 }
 
 .pg-meta {

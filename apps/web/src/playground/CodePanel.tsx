@@ -33,9 +33,9 @@ export function CodePanel({ title, samples, selected, onSelect }: CodePanelProps
   return (
     <section className="pg-code" aria-labelledby={`${id}-title`}>
       <header className="pg-code-head">
-        <h3 id={`${id}-title`} className="pg-label">
+        <h2 id={`${id}-title`} className="pg-label">
           {title}
-        </h3>
+        </h2>
         <div className="pg-code-tabs" role="tablist" aria-label="Language" onKeyDown={onKeyDown}>
           {samples.map((sample, index) => (
             <button

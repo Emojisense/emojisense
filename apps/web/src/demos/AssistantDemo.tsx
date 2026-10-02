@@ -8,6 +8,7 @@ import { SCENARIOS, type Scenario } from "./assistant/scenarios";
 import { ToolCard } from "./assistant/ToolCard";
 import { pause, prefersReducedMotion, useConversation } from "./assistant/useConversation";
 import assistantCss from "./assistant.css?url";
+import { useAutoplayControl } from "./autoplay-control";
 
 const TYPE_MS = 24;
 const NO_RESULTS: readonly EmojiSuggestion[] = [];
@@ -17,8 +18,10 @@ const NO_RESULTS: readonly EmojiSuggestion[] = [];
  * tool result is computed live in the browser by the MCP server's own handlers on the real engine.
  */
 export default function AssistantDemo() {
-  const { turns, send, toggle } = useConversation();
+  const { turns, send, toggle, finish } = useConversation();
   const [draft, setDraft] = useState("");
+  /** The autoplay types the first prompt, then its answer plays. */
+  const [autoplayPhase, setAutoplayPhase] = useState<"off" | "typing" | "answering">("off");
   const chatRef = useRef<HTMLElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -30,12 +33,21 @@ export default function AssistantDemo() {
     (scenario: Scenario) => {
       started.current = true;
       autoplay.current?.abort();
+      setAutoplayPhase("off");
       setDraft("");
       pinned.current = true;
       send(scenario);
     },
     [send],
   );
+
+  /** "Stop demo": the typing stops, and an answer in progress shows in full at once. */
+  const stopAutoplay = useCallback(() => {
+    autoplay.current?.abort();
+    setAutoplayPhase("off");
+    setDraft("");
+    finish();
+  }, [finish]);
 
   // Start loading the full engine now (shared with the other demos), so the first call is quick.
   useEffect(() => {
@@ -59,6 +71,7 @@ export default function AssistantDemo() {
         started.current = true;
         const controller = new AbortController();
         autoplay.current = controller;
+        setAutoplayPhase("typing");
         void (async () => {
           const chars = [...first.prompt];
           await pause(500, controller.signal);
@@ -70,6 +83,7 @@ export default function AssistantDemo() {
           if (controller.signal.aborted) return;
           setDraft("");
           send(first);
+          setAutoplayPhase("answering");
         })();
       },
       { threshold: 0.4 },
@@ -101,6 +115,7 @@ export default function AssistantDemo() {
 
   const current = turns.at(-1);
   const busy = current !== undefined && current.phase !== "done" && current.phase !== "failed";
+  useAutoplayControl(autoplayPhase === "typing" || (autoplayPhase === "answering" && busy), stopAutoplay);
   const activeTool =
     current && (current.phase === "calling" || current.phase === "answered")
       ? current.scenario.call.name

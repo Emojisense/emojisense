@@ -249,9 +249,9 @@ export function SearchInspector(props: SearchInspectorProps) {
       <div className="pg-main">
         <section className="pg-panel pg-results" aria-labelledby={`${id}-results`}>
           <header className="pg-panel-head">
-            <h3 id={`${id}-results`} className="pg-label">
+            <h2 id={`${id}-results`} className="pg-label">
               Results
-            </h3>
+            </h2>
             <span className="pg-count" aria-live="polite">
               {results.length > 0 ? `${results.length} of ${limit}` : ""}
             </span>

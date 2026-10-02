@@ -229,7 +229,7 @@ export function ReactionsLab({ engine, online, codeTab, onCodeTab, announce }: R
         <div className="pg-stack">
           <section className="pg-panel pg-preview" aria-label="Preview">
             <header className="pg-panel-head">
-              <h3 className="pg-label">Preview</h3>
+              <h2 className="pg-label">Preview</h2>
               <span className="pg-count">{previewFrom === "edge" ? "from the edge" : "from the device"}</span>
             </header>
             <article className="pg-message">
@@ -307,7 +307,7 @@ export function ReactionsLab({ engine, online, codeTab, onCodeTab, announce }: R
 
           <section className="pg-panel" aria-label="Timing">
             <header className="pg-panel-head">
-              <h3 className="pg-label">Timing</h3>
+              <h2 className="pg-label">Timing</h2>
               <span className="pg-count">never cached: chat text is private</span>
             </header>
             <TimingBars rows={rows} label="Time per step for this message" />
@@ -337,7 +337,7 @@ function ReactionList(props: {
   return (
     <section className="pg-panel pg-reaction-list" aria-label={props.title}>
       <header className="pg-panel-head">
-        <h3 className="pg-label">{props.title}</h3>
+        <h2 className="pg-label">{props.title}</h2>
         <code className="pg-count">{props.subtitle}</code>
       </header>
       {props.status ? (

@@ -560,7 +560,7 @@
   height: 1.875rem;
   border-radius: var(--pill);
   background: var(--bg-sunk);
-  animation: chat-pulse 1.2s ease-in-out infinite;
+  animation: chat-pulse 1.2s ease-in-out 3;
 }
 
 .chat-chip-skeleton:nth-child(2) {
@@ -657,7 +657,7 @@
   margin-right: -0.09375rem;
   background: var(--ink);
   vertical-align: text-bottom;
-  animation: chat-blink 1.05s step-end infinite;
+  animation: chat-blink 1.05s step-end 4;
 }
 
 .chat-toolbar {

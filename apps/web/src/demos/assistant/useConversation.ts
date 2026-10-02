@@ -133,5 +133,10 @@ export function useConversation() {
     [patch],
   );
 
-  return { turns, send, toggle };
+  /** Skips every turn in progress to its final state. */
+  const finish = useCallback(() => {
+    for (const controller of live.current) controller.abort();
+  }, []);
+
+  return { turns, send, toggle, finish };
 }

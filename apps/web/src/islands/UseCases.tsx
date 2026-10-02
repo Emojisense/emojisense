@@ -1,4 +1,5 @@
 import { type ComponentType, type KeyboardEvent, lazy, Suspense, useId, useRef, useState } from "react";
+import { AutoplayStop } from "../demos/autoplay-control";
 import "./use-cases.css";
 
 interface UseCase {
@@ -123,7 +124,7 @@ export function UseCases() {
         ))}
       </div>
 
-      {CASES.map((c) => {
+      {CASES.map((c, i) => {
         const Demo = demos.get(c.id);
         return (
           <section
@@ -139,21 +140,24 @@ export function UseCases() {
               <h3>{c.title}</h3>
               <p>{c.body}</p>
             </header>
-            <div className="uc-stage">
-              {!Demo ? (
-                <p className="uc-missing">This demo is not built yet.</p>
-              ) : opened.has(c.id) ? (
-                <Suspense
-                  fallback={
-                    <div className="uc-loading" role="status">
-                      <span className="visually-hidden">Loading the {c.label} demo…</span>
-                    </div>
-                  }
-                >
-                  <Demo />
-                </Suspense>
-              ) : null}
-            </div>
+            {/* The stop button comes first in the DOM, before the moving demo; CSS puts it below. */}
+            <AutoplayStop onStop={() => tabs.current[i]?.focus()}>
+              <div className="uc-stage">
+                {!Demo ? (
+                  <p className="uc-missing">This demo is not built yet.</p>
+                ) : opened.has(c.id) ? (
+                  <Suspense
+                    fallback={
+                      <div className="uc-loading" role="status">
+                        <span className="visually-hidden">Loading the {c.label} demo…</span>
+                      </div>
+                    }
+                  >
+                    <Demo />
+                  </Suspense>
+                ) : null}
+              </div>
+            </AutoplayStop>
           </section>
         );
       })}
