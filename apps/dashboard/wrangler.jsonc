@@ -57,6 +57,13 @@
     // Internal dev environment at app.emojisense.dev (`pnpm deploy:dev`). Same D1 and R2 as the
     // dev API Worker. Clerk values are public (publishable key, JWT public key); no secret is needed.
     "dev": {
+      // Traces record the full request URL (search text, publishable key) and the user agent, so
+      // they are on for the internal dev environment only. Production keeps logs without URLs.
+      "observability": {
+        "enabled": true,
+        "logs": { "enabled": true, "invocation_logs": false },
+        "traces": { "enabled": true, "head_sampling_rate": 1 }
+      },
       "routes": [{ "pattern": "app.emojisense.dev", "custom_domain": true }],
       "triggers": { "crons": ["17 4 * * *"] },
       "workers_dev": false,

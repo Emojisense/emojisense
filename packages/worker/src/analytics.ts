@@ -42,4 +42,17 @@ export function record(env: Env, indexTag: string, m: Measurement): void {
   } catch {
     // Analytics must never break a response.
   }
+  // Workers Logs: timings only. Never the query text or a key (the same rule as invocation logs).
+  console.log(
+    JSON.stringify({
+      event: m.endpoint,
+      outcome: m.outcome,
+      locale: m.locale,
+      mode: m.mode,
+      ms: m.ms,
+      aliasConfidence: m.aliasConfidence,
+      semanticTop: m.semanticTop,
+      index: indexTag,
+    }),
+  );
 }
