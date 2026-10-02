@@ -8,8 +8,9 @@ import {
   type ShardResult,
 } from "@emojisense/data/shards";
 import { dayOf, SHARD_MIN_ACCOUNTS, SHARD_MIN_SEARCHES, SHARD_WINDOW_DAYS } from "@emojisense/platform";
-import { embeddingText } from "emojisense";
+import { type AliasEngine, embeddingText } from "emojisense";
 import type { VectorIndex } from "emojisense/vectors";
+import { CONCEPT_NIGHTLY_MAX_CALLS } from "../concepts/config.ts";
 import {
   SEARCH_DEFAULT_LIMIT,
   SHARD_MAX_EMBEDDINGS,
@@ -20,6 +21,7 @@ import {
 } from "../config.ts";
 import type { Env } from "../env.ts";
 import { type Catalog, embedTexts, modelTag, semanticResults } from "../semantic.ts";
+import { createNightlyConcepts, type NightlyConceptStats } from "./concepts.ts";
 import { type Candidate, selectCandidates, selectionWindow } from "./select.ts";
 import {
   buildId,
@@ -49,6 +51,8 @@ export interface ShardLimits {
   /** Results per query: the API's default `limit`. */
   results: number;
   staleDays: number;
+  /** Concept model calls per run for popular unsure queries (createNightlyConcepts). */
+  maxConceptCalls: number;
 }
 
 export const SHARD_LIMITS: ShardLimits = {
@@ -60,6 +64,7 @@ export const SHARD_LIMITS: ShardLimits = {
   maxShardBytes: SHARD_MAX_RAW_BYTES,
   results: SEARCH_DEFAULT_LIMIT,
   staleDays: SHARD_STALE_DAYS,
+  maxConceptCalls: CONCEPT_NIGHTLY_MAX_CALLS,
 };
 
 /** English: its files stay at the build root, which clients from before locale shards read. */
@@ -90,6 +95,8 @@ export interface ShardRunReport {
   locales: Record<string, { queries: number; shards: number }>;
   /** Locales with candidates whose alias engine could not be loaded: no directory this run. */
   skippedLocales: string[];
+  /** The concept step: unsure queries, answers from concept_cache, model calls, merged entries. */
+  concepts?: NightlyConceptStats;
 }
 
 interface Budget {
@@ -102,6 +109,8 @@ interface Budget {
 /** One locale's part of the run: what reaches the API there, and its entries in the served build. */
 interface LocalePlan {
   locale: string;
+  /** The locale's alias engine: what its clients answer on the device, and the unsure verdict. */
+  engine: AliasEngine | undefined;
   kept: QueryCount[];
   answeredOnDevice: number;
   prior: ResultStore;
@@ -245,6 +254,13 @@ export async function runShardBuild(
     const served = await readPointer(bucket, prefix);
     const reusable = served && served.model === modelTag(catalog) && served.results >= limits.results;
 
+    // Popular unsure queries get their concept answer now (concept_cache), and their shard entry
+    // leads with it. Entries of the served build are checked before they are reused.
+    const concepts = createNightlyConcepts(env, catalog, {
+      maxCalls: limits.maxConceptCalls,
+      now: options.now,
+      limit: limits.results,
+    });
     const plans: LocalePlan[] = [];
     const skippedLocales: string[] = [];
     for (const [locale, candidates] of byLocale(selection.candidates)) {
@@ -260,8 +276,12 @@ export async function runShardBuild(
       const prior = createResultStore();
       if (reusable && kept.length > 0) {
         await loadBuild(bucket, localeDir(prefix, served.build, locale), prior, SHARD_WRITE_CONCURRENCY);
+        for (const { q } of kept) {
+          const list = prior.get(q);
+          if (list && engine) prior.set(q, await concepts.merge(q, locale, engine, list));
+        }
       }
-      plans.push({ locale, kept, answeredOnDevice: queries.length - kept.length, prior });
+      plans.push({ locale, engine, kept, answeredOnDevice: queries.length - kept.length, prior });
     }
 
     const { allowed, deferred } = allowEmbeddings(plans, limits.maxEmbeddings);
@@ -273,16 +293,28 @@ export async function runShardBuild(
       if (vectors && !vectors.complete) {
         console.warn(JSON.stringify({ event: "shards_locale_vectors_unavailable", locale: plan.locale }));
       }
+      const resolver = apiResolver(
+        env,
+        catalog,
+        vectors?.complete ? vectors.indexes : undefined,
+        allowed.get(plan.locale) ?? new Set(),
+        budget,
+      );
+      const { engine } = plan;
       const built = await buildShards({
         queries: plan.kept,
         reachesWorker: () => true,
-        resolver: apiResolver(
-          env,
-          catalog,
-          vectors?.complete ? vectors.indexes : undefined,
-          allowed.get(plan.locale) ?? new Set(),
-          budget,
-        ),
+        resolver: {
+          model: resolver.model,
+          async resolve(queries, limit) {
+            const answers = await resolver.resolve(queries, limit);
+            if (!engine) return answers;
+            for (const [q, results] of answers) {
+              answers.set(q, await concepts.merge(q, plan.locale, engine, results));
+            }
+            return answers;
+          },
+        },
         packVersion: config.packVersion,
         resultsPerQuery: limits.results,
         maxShardBytes: limits.maxShardBytes,
@@ -298,7 +330,9 @@ export async function runShardBuild(
     const locales = Object.fromEntries(
       builds.map(({ locale, built }) => [locale, { queries: built.store.size, shards: built.plans.length }]),
     );
+    await concepts.finish();
     const counts = {
+      concepts: concepts.stats,
       candidates: selection.candidates.length,
       privacyDropped: selection.privacyDropped,
       answeredOnDevice: plans.reduce((sum, plan) => sum + plan.answeredOnDevice, 0),

@@ -48,8 +48,10 @@ export interface ConceptContext {
   store?: ConceptStore | undefined;
   /** The caller's rate limiter and key, reused with a `concept:` prefix. */
   limiter?: { binding: RateLimiter | undefined; key: string } | undefined;
-  /** Tests shorten the wait. */
+  /** Tests shorten the wait; the nightly precompute waits as long as the call takes. */
   timeoutMs?: number;
+  /** An extra budget check before a model call (the nightly precompute's own cap). */
+  allowModelCall?: () => boolean;
 }
 
 /** Off with CONCEPTS_ENABLED=false, or without Workers AI. */
@@ -190,7 +192,7 @@ export async function resolveConcept(ctx: ConceptContext, query: string, locale:
   let modelCall = false;
   if (!call) {
     const unavailable = () => outcome({ info: { status: "unavailable" }, results: [] }, { cacheable: false });
-    if (running >= CONCEPT_MAX_IN_FLIGHT) return unavailable();
+    if (running >= CONCEPT_MAX_IN_FLIGHT || ctx.allowModelCall?.() === false) return unavailable();
     const { limiter } = ctx;
     if (limiter?.binding && !(await limiter.binding.limit({ key: `concept:${limiter.key}` })).success) {
       return unavailable();
