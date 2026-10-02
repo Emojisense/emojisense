@@ -251,7 +251,11 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
               ·
             </span>
             {current.source === "concept" && terms.length > 0
-              ? rich(t.raw("understoodAs"), { q: (text) => <q dir="auto">{text}</q> }, { terms: terms.join(", ") })
+              ? rich(
+                  t.raw("understoodAs"),
+                  { q: (text) => <q dir="auto">{text}</q> },
+                  { terms: terms.join(", ") },
+                )
               : current.source === "semantic" || current.source === "concept"
                 ? t.t("byMeaning")
                 : matched
