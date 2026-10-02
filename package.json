@@ -15,7 +15,9 @@
     "db:migrate": "pnpm --filter @emojisense/dashboard db:migrate",
     "data:build": "pnpm --filter @emojisense/data run build",
     "eval": "pnpm --filter @emojisense/eval run eval",
-    "eval:ci": "pnpm --filter @emojisense/eval run eval:ci"
+    "eval:ci": "pnpm --filter @emojisense/eval run eval:ci",
+    "deploy:dev": "bash scripts/deploy.sh dev",
+    "deploy:production": "bash scripts/deploy.sh production"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

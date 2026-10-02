@@ -16,6 +16,8 @@ export const DASHBOARD_URL = trimSlash(env.PUBLIC_DASHBOARD_URL ?? "http://local
 export const PACK_VERSION = env.PUBLIC_PACK_VERSION ?? "0.1.0";
 /** The website's own publishable key, bound to the site's origin in the dashboard. */
 export const PUBLISHABLE_KEY = env.PUBLIC_PUBLISHABLE_KEY ?? "pk_demo";
+/** false on internal environments (emojisense.dev): robots.txt disallows all, pages send noindex. */
+export const INDEXABLE = env.PUBLIC_INDEXABLE !== "false";
 export const REPO_URL = trimSlash(env.PUBLIC_REPO_URL ?? "https://github.com/emojisense/emojisense");
 
 export const PACK_BASE_URL = `${API_URL}/v1/pack/${PACK_VERSION}`;

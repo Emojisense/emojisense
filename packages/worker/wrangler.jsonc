@@ -74,6 +74,29 @@
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
       // ENVIRONMENT=development lets webhooks reach http://localhost receivers.
       "vars": { "DEV_KEYS": "pk_demo,sk_live_local:pro", "ENVIRONMENT": "development" }
+    },
+    // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
+    // that value unlocks localhost-only behaviour. Own D1 and R2, never shared with production.
+    "dev": {
+      "routes": [{ "pattern": "api.emojisense.dev", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "ai": { "binding": "AI" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "emojisense-dev",
+          "database_id": "6e481b34-37e5-472b-9a74-0e7bfddae494",
+          "migrations_dir": "../platform/migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" }],
+      "ratelimits": [
+        { "name": "SEARCH_LIMITER", "namespace_id": "1101", "simple": { "limit": 120, "period": 60 } },
+        { "name": "ANON_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } }
+      ],
+      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search_dev" }],
+      "vars": { "DEV_KEYS": "pk_demo", "ENVIRONMENT": "staging" }
     }
   }
 }

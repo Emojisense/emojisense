@@ -40,5 +40,31 @@
     "WEBSITE_ORIGINS": "",
     // The API Worker's origin: custom emoji imageUrl values point at it.
     "API_URL": "https://api.emojisense.com"
+  },
+  "env": {
+    // Internal dev environment at app.emojisense.dev (`pnpm deploy:dev`). Same D1 and R2 as the
+    // dev API Worker. Secrets per env: `wrangler secret put GITHUB_CLIENT_SECRET --env dev`.
+    "dev": {
+      "routes": [{ "pattern": "app.emojisense.dev", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "emojisense-dev",
+          "database_id": "6e481b34-37e5-472b-9a74-0e7bfddae494",
+          "migrations_dir": "../../packages/platform/migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" }],
+      "ratelimits": [
+        { "name": "WAITLIST_LIMITER", "namespace_id": "2101", "simple": { "limit": 5, "period": 60 } }
+      ],
+      "vars": {
+        "ENVIRONMENT": "staging",
+        "WEBSITE_ORIGINS": "https://emojisense.dev",
+        "API_URL": "https://api.emojisense.dev"
+      }
+    }
   }
 }

@@ -1,7 +1,10 @@
-import { SITE_URL } from "../config";
+import { INDEXABLE, SITE_URL } from "../config";
 
 export function GET(): Response {
-  return new Response(`User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`, {
+  const body = INDEXABLE
+    ? `User-agent: *\nAllow: /\n\nSitemap: ${SITE_URL}/sitemap.xml\n`
+    : "User-agent: *\nDisallow: /\n";
+  return new Response(body, {
     headers: { "content-type": "text/plain; charset=utf-8" },
   });
 }
