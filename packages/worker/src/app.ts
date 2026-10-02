@@ -5,7 +5,7 @@ import { CustomEmojiIndex } from "./custom.ts";
 import { CUSTOM_IMAGE_PATH, handleCustomImage, handleCustomPack } from "./custom-routes.ts";
 import type { CustomEmojiReader } from "./custom-store.ts";
 import type { Env } from "./env.ts";
-import { corsHeaders, errorResponse, json } from "./http.ts";
+import { corsHeaders, errorResponse, json, refusesPlainHttp } from "./http.ts";
 import { handleClassifyImage } from "./image.ts";
 import { Meter, type WaitUntil } from "./meter.ts";
 import { QueryStats } from "./query-stats.ts";
@@ -93,6 +93,9 @@ export function createApp(options: AppOptions) {
     },
     async fetch(request: Request, env: Env, ctx: WaitUntil): Promise<Response> {
       const url = new URL(request.url);
+      if (refusesPlainHttp(url, env.ENVIRONMENT)) {
+        return errorResponse(403, `use https://${url.host}: plain http would send keys and text unencrypted`);
+      }
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
 
       if (url.pathname === "/v1/health") {

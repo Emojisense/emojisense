@@ -22,6 +22,7 @@ function headersFor(apiOrigin: string): string {
   ].join("; ");
   return `/*
   Content-Security-Policy: ${csp}
+  Strict-Transport-Security: max-age=31536000
   Referrer-Policy: strict-origin-when-cross-origin
   X-Content-Type-Options: nosniff
   Permissions-Policy: camera=(), microphone=(), geolocation=()

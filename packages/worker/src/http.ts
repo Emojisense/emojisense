@@ -16,12 +16,31 @@ export const corsHeaders = {
 export function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", ...corsHeaders, ...headers },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      // Error messages echo parts of the input; the type must never be sniffed as HTML.
+      "x-content-type-options": "nosniff",
+      ...corsHeaders,
+      ...headers,
+    },
   });
 }
 
 export function errorResponse(status: number, error: string, headers: Record<string, string> = {}) {
   return json({ error }, status, { "Cache-Control": "no-store", ...headers });
+}
+
+const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
+
+/**
+ * True for plain http to a deployed API (ENVIRONMENT staging or production) on a public host.
+ * Such a request carries its key and text unencrypted, so the API refuses it instead of
+ * answering: a client set to http fails at once rather than leaking on every call. Local
+ * `wrangler dev` (no ENVIRONMENT, or "development") and localhost keep plain http.
+ */
+export function refusesPlainHttp(url: URL, environment: string | undefined): boolean {
+  if (url.protocol !== "http:" || environment === undefined || environment === "development") return false;
+  return !LOCAL_HOSTS.has(url.hostname) && !url.hostname.endsWith(".localhost");
 }
 
 export function parseLimit(raw: unknown, fallback: number, max: number): number {

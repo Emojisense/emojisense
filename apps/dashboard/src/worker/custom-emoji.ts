@@ -83,34 +83,3 @@ export function limitOf(plan: Plan): number | null {
   const limit = plan.limits.custom_emoji;
   return Number.isFinite(limit) ? limit : null;
 }
-
-/**
- * Reads at most `max` bytes of a body; undefined when it is larger. Stops at the limit, so an
- * oversized upload or download costs no more memory than the limit.
- */
-export async function readCapped(
-  body: ReadableStream<Uint8Array> | null,
-  max: number,
-): Promise<Uint8Array<ArrayBuffer> | undefined> {
-  if (!body) return new Uint8Array();
-  const reader = body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > max) {
-      await reader.cancel();
-      return undefined;
-    }
-    chunks.push(value);
-  }
-  const bytes = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    bytes.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return bytes;
-}
