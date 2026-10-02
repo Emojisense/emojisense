@@ -1,0 +1,169 @@
+import { describe, expect, it, vi } from "vitest";
+import type { AppDetailResponse, AppsResponse, MeResponse } from "../../src/shared/contract";
+import { body, createAppFor, createHarness } from "./harness";
+
+describe("apps", () => {
+  it("creates an app on the account's plan and lists it", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const response = await h.call("POST", "/api/apps", {
+      cookie,
+      body: { name: "  Chat app ", environment: "staging" },
+    });
+    expect(response.status).toBe(201);
+    const { app } = await body<{ app: AppsResponse["apps"][number] }>(response);
+    expect(app).toMatchObject({ name: "Chat app", environment: "staging", plan: "free", activeKeyCount: 0 });
+
+    const list = await body<AppsResponse>(await h.call("GET", "/api/apps", { cookie }));
+    expect(list.apps.map((a) => a.id)).toEqual([app.id]);
+  });
+
+  it("defaults the environment to prod", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const response = await h.call("POST", "/api/apps", { cookie, body: { name: "Bot" } });
+    expect((await body<{ app: { environment: string } }>(response)).app.environment).toBe("prod");
+  });
+
+  it.each([
+    [{}, "name"],
+    [{ name: "   " }, "name"],
+    [{ name: "x".repeat(65) }, "name"],
+    [{ name: "a\u0007b" }, "name"],
+    [{ name: "Bot", environment: "production" }, "environment"],
+  ])("rejects %j", async (input, field) => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const response = await h.call("POST", "/api/apps", { cookie, body: input });
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { code: "invalid_request", field } });
+  });
+
+  it("requires a JSON object body", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const form = await h.call("POST", "/api/apps", {
+      cookie,
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+    });
+    expect(form.status).toBe(415);
+    const broken = await h.call("POST", "/api/apps", {
+      cookie,
+      headers: { "content-type": "application/json" },
+    });
+    expect(await body(broken)).toMatchObject({ error: { code: "invalid_json" } });
+    const array = await h.call("POST", "/api/apps", { cookie, body: ["x"] });
+    expect(array.status).toBe(400);
+  });
+
+  it("enforces maxApps of the free plan", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    await createAppFor(h, cookie);
+    const response = await h.call("POST", "/api/apps", { cookie, body: { name: "Second" } });
+    expect(response.status).toBe(403);
+    expect(await body(response)).toMatchObject({
+      error: {
+        code: "plan_limit",
+        message:
+          "Your Free plan allows 1 app, and you have reached that limit. Join the Pro waitlist for up to 3 apps.",
+      },
+    });
+    expect((await body<MeResponse>(await h.call("GET", "/api/me", { cookie }))).appCount).toBe(1);
+  });
+
+  it("uses the best plan among the account's apps", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const first = await createAppFor(h, cookie);
+    h.db.exec("UPDATE apps SET plan = 'pro' WHERE id = ?", first);
+
+    await createAppFor(h, cookie, { name: "Two" });
+    await createAppFor(h, cookie, { name: "Three" });
+    const fourth = await h.call("POST", "/api/apps", { cookie, body: { name: "Four" } });
+    expect(fourth.status).toBe(403);
+    const list = await body<AppsResponse>(await h.call("GET", "/api/apps", { cookie }));
+    expect(list.apps.map((a) => a.plan)).toEqual(["pro", "pro", "pro"]);
+  });
+
+  it("refuses writes from another origin but accepts clients without Origin", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const sibling = await h.call("POST", "/api/apps", {
+      cookie,
+      origin: "https://www.emojisense.example",
+      body: { name: "Bot" },
+    });
+    expect(sibling.status).toBe(403);
+    expect(await body(sibling)).toMatchObject({ error: { code: "forbidden_origin" } });
+    const cli = await h.call("POST", "/api/apps", { cookie, origin: null, body: { name: "Bot" } });
+    expect(cli.status).toBe(201);
+  });
+});
+
+describe("ownership", () => {
+  it("hides one account's apps and keys from another", async () => {
+    const h = createHarness();
+    const ada = await h.signIn("ada");
+    const bob = await h.signIn("bob");
+    const appId = await createAppFor(h, ada, { environment: "dev" });
+    const created = await h.call("POST", `/api/apps/${appId}/keys`, {
+      cookie: ada,
+      body: { kind: "secret" },
+    });
+    const keyId = (await body<{ key: { id: string } }>(created)).key.id;
+
+    expect((await body<AppsResponse>(await h.call("GET", "/api/apps", { cookie: bob }))).apps).toEqual([]);
+    const attempts = [
+      h.call("GET", `/api/apps/${appId}`, { cookie: bob }),
+      h.call("GET", `/api/apps/${appId}/usage`, { cookie: bob }),
+      h.call("POST", `/api/apps/${appId}/keys`, { cookie: bob, body: { kind: "secret" } }),
+      h.call("PATCH", `/api/keys/${keyId}`, { cookie: bob, body: { allowedOrigins: [] } }),
+      h.call("DELETE", `/api/keys/${keyId}`, { cookie: bob }),
+    ];
+    for (const response of await Promise.all(attempts)) {
+      expect(response.status).toBe(404);
+      expect(await body(response)).toMatchObject({ error: { code: "not_found" } });
+    }
+
+    const detail = await body<AppDetailResponse>(await h.call("GET", `/api/apps/${appId}`, { cookie: ada }));
+    expect(detail.keys).toHaveLength(1);
+    expect(detail.keys[0]?.revokedAt).toBeNull();
+  });
+
+  it("answers 404 for malformed ids", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    expect((await h.call("GET", "/api/apps/%E0%A4%A", { cookie })).status).toBe(404);
+    expect((await h.call("GET", `/api/apps/${"x".repeat(65)}`, { cookie })).status).toBe(404);
+  });
+});
+
+describe("routing", () => {
+  it("answers unknown routes and wrong methods with JSON", async () => {
+    const h = createHarness();
+    const missing = await h.call("GET", "/api/nope");
+    expect(missing.status).toBe(404);
+    expect(await body(missing)).toMatchObject({ error: { code: "not_found" } });
+
+    const wrong = await h.call("PUT", "/api/apps");
+    expect(wrong.status).toBe(405);
+    expect(wrong.headers.get("allow")).toBe("GET, POST");
+  });
+
+  it("hides internal errors behind a generic message and logs no account data", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    h.db.exec("DROP TABLE waitlist");
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await h.call("GET", "/api/me", { cookie });
+    expect(response.status).toBe(500);
+    expect(await body(response)).toEqual({
+      error: { code: "internal_error", message: "Something went wrong on our side. Try again." },
+    });
+    const line = JSON.parse(String(log.mock.calls[0]?.[0])) as Record<string, string>;
+    expect(line).toMatchObject({ level: "error", event: "unhandled_error", route: "GET /api/me" });
+    expect(JSON.stringify(line)).not.toContain("ada");
+    log.mockRestore();
+  });
+});
