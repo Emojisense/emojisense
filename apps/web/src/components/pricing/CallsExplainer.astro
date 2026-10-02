@@ -7,6 +7,7 @@ import { stats } from "../../lib/showcase";
  * (search.ts, reactions.ts, image.ts) and docs/PRICING.md. Keep the wording in sync with them.
  */
 const { t, parts, tag } = i18nFor(Astro);
+const stepNumber = new Intl.NumberFormat(tag);
 
 const layers = [
   {
@@ -52,8 +53,6 @@ const atLimit = [
   { state: "on", title: t("pricing.calls.atLimit.cached"), note: t("pricing.calls.atLimit.notCounted") },
   { state: "paused", title: t("pricing.calls.atLimit.new"), note: t("pricing.calls.atLimit.resume") },
 ];
-const step = (index: number, speed: string) =>
-  t("pricing.calls.step", { step: new Intl.NumberFormat(tag).format(index + 1), speed });
 ---
 
 <section id="calls" class="section section-soft" aria-labelledby="calls-title">
@@ -72,7 +71,9 @@ const step = (index: number, speed: string) =>
               <span class="calls-emoji emoji" aria-hidden="true">
                 {layer.emoji}
               </span>
-              <span class="calls-step">{step(index, layer.speed)}</span>
+              <span class="calls-step">
+                {stepNumber.format(index + 1)} · <bdi>{layer.speed}</bdi>
+              </span>
             </div>
             <h3>{layer.title}</h3>
             <p>{layer.body}</p>

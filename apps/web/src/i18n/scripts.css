@@ -29,6 +29,15 @@
   line-height: 1.75;
 }
 
+/*
+ * In a right-to-left page, English examples and code stay left to right inside their own box,
+ * so quotes, "…" and punctuation keep their place ("“so proud of you”", "pk_live_9Xa…").
+ */
+[dir="rtl"] :is([lang="en"], code, kbd) {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 /* Arrows that point "forward" follow the reading direction. */
 [dir="rtl"] .flip-rtl {
   display: inline-block;

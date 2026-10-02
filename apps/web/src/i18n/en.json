@@ -554,7 +554,6 @@
       "title": "What counts as a call?",
       "lead": "Most emoji searches never reach our servers. The device and ready-made answers handle them, free and unlimited on every plan. A call is counted only when the edge AI does the work.",
       "flowLabel": "How a search is answered",
-      "step": "{step} · {speed}",
       "nearestCity": "nearest city",
       "layers": {
         "device": {
