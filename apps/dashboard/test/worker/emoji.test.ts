@@ -1,8 +1,8 @@
 import type { CustomEmoji } from "@emojisense/platform";
 import { describe, expect, it } from "vitest";
 import type { CustomEmojiListResponse, UsageResponse } from "../../src/shared/contract";
-import { API_URL, emojiHarness, file, IMAGES } from "./emoji-fixtures";
-import { body, createHarness } from "./harness";
+import { API_URL, emojiHarness, file, IMAGES, uploadTo } from "./emoji-fixtures";
+import { body, createAppFor, createHarness } from "./harness";
 
 describe("POST /api/apps/:id/emoji", () => {
   it("stores the image in R2 and returns the contract shape", async () => {
@@ -60,9 +60,25 @@ describe("POST /api/apps/:id/emoji", () => {
         code: "plan_required",
         plan: "pro",
         message:
-          "Your Solo plan allows 500 custom emoji per app, and this app has reached that limit. Pro allows 2,000.",
+          "Your Solo plan allows 500 custom emoji across all apps of the account, and all are used. Pro allows 2,000.",
       },
     });
+  });
+
+  it("counts the emoji of every app of the account against the limit", async () => {
+    const { h, cookie, upload, fill, appId } = await emojiHarness("pro");
+    fill(1_999);
+    const otherApp = await createAppFor(h, cookie, { name: "Second" });
+    expect((await uploadTo(h, otherApp, cookie, { file: file(IMAGES.png), shortcode: "fits" })).status).toBe(
+      201,
+    );
+    const refused = await upload({ file: file(IMAGES.png), shortcode: "too_many" });
+    expect(refused.status).toBe(402);
+    expect(await body(refused)).toMatchObject({ error: { code: "plan_required", plan: "scale" } });
+    const list = await body<CustomEmojiListResponse>(
+      await h.call("GET", `/api/apps/${appId}/emoji`, { cookie }),
+    );
+    expect(list).toMatchObject({ used: 2_000, limit: 2_000 });
   });
 
   it("answers 403 plan_limit at the limit of the top plan", async () => {
@@ -105,7 +121,7 @@ describe("POST /api/apps/:id/emoji", () => {
     large.set(IMAGES.png);
     const response = await upload({ file: file(large), shortcode: "big" });
     expect(response.status).toBe(413);
-    expect(await body(response)).toMatchObject({ error: { code: "file_too_large", field: "file" } });
+    expect(await body(response)).toMatchObject({ error: { code: "image_too_large", field: "file" } });
   });
 
   it("requires a multipart body", async () => {
@@ -263,5 +279,57 @@ describe("custom emoji access", () => {
       origin: "https://evil.example",
     });
     expect(response.status).toBe(403);
+  });
+});
+
+describe("custom emoji webhook events", () => {
+  async function withWebhook() {
+    const harness = await emojiHarness("scale");
+    const { h, cookie, appId } = harness;
+    const sent: { type: string; appId: string; data: CustomEmoji }[] = [];
+    h.fetchMock.mockImplementation(async (_url, init) => {
+      sent.push(JSON.parse(String(init?.body)));
+      return new Response(null, { status: 204 });
+    });
+    const created = await h.call("POST", `/api/apps/${appId}/webhooks`, {
+      cookie,
+      body: {
+        url: "https://hooks.example.com/emojisense",
+        events: ["custom_emoji.created", "custom_emoji.deleted"],
+      },
+    });
+    expect(created.status).toBe(201);
+    return { ...harness, sent };
+  }
+
+  it("emits custom_emoji.created on upload and custom_emoji.deleted on delete", async () => {
+    const { h, cookie, appId, upload, sent } = await withWebhook();
+    const emoji = await body<CustomEmoji>(await upload({ file: file(IMAGES.png), shortcode: "shipit" }));
+    await h.call("DELETE", `/api/apps/${appId}/emoji/${emoji.id}`, { cookie });
+    await h.settle();
+    expect(sent.map((event) => event.type)).toEqual(["custom_emoji.created", "custom_emoji.deleted"]);
+    for (const event of sent) {
+      expect(event).toMatchObject({ appId, data: { ...emoji, tenantExternalId: null } });
+    }
+  });
+
+  it("names the tenant by its external id", async () => {
+    const { h, appId, upload, sent } = await withWebhook();
+    h.db.exec("INSERT INTO tenants (id, app_id, external_id, created_at) VALUES ('t1', ?, 'acme', 0)", appId);
+    await upload({ file: file(IMAGES.png), shortcode: "logo", tenantId: "t1" });
+    await h.settle();
+    expect(sent[0]?.data).toMatchObject({ shortcode: "logo", tenantId: "t1", tenantExternalId: "acme" });
+  });
+
+  it("sends nothing when an upload is refused, or below Scale", async () => {
+    const { h, upload, sent } = await withWebhook();
+    await upload({ file: file(IMAGES.text), shortcode: "bad" });
+    await h.settle();
+    expect(sent).toEqual([]);
+
+    const pro = await emojiHarness("pro");
+    await pro.upload({ file: file(IMAGES.png), shortcode: "ok" });
+    await pro.h.settle();
+    expect(pro.h.fetchMock).not.toHaveBeenCalled();
   });
 });

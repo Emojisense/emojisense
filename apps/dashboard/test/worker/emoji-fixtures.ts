@@ -1,6 +1,5 @@
 import type { EmojiBucket } from "@emojisense/platform";
-import { handleRequest } from "../../src/worker/app";
-import { BASE, createAppFor, createHarness, type Harness } from "./harness";
+import { createAppFor, createHarness, type Harness } from "./harness";
 
 export const API_URL = "https://api.test";
 
@@ -29,12 +28,6 @@ export function memoryBucket(): EmojiBucket & { objects: Map<string, StoredObjec
     async put(key, value, options) {
       objects.set(key, { bytes: value, contentType: options?.httpMetadata?.contentType });
       return {};
-    },
-    async get(key) {
-      const object = objects.get(key);
-      return object
-        ? { body: new Blob([object.bytes.slice()]).stream(), size: object.bytes.byteLength }
-        : null;
     },
     async delete(keys) {
       for (const key of Array.isArray(keys) ? keys : [keys]) objects.delete(key);
@@ -96,17 +89,20 @@ export async function emojiHarness(plan = "solo"): Promise<EmojiHarness> {
         appId,
       );
     },
-    async upload(fields, as = cookie) {
-      const form = new FormData();
-      for (const [name, value] of Object.entries(fields)) form.set(name, value);
-      const request = new Request(`${BASE}/api/apps/${appId}/emoji`, {
-        method: "POST",
-        headers: { cookie: as, origin: BASE },
-        body: form,
-      });
-      return handleRequest(request, h.env, { fetch: h.fetchMock, now: () => h.clock.now });
-    },
+    upload: (fields, as = cookie) => uploadTo(h, appId, as, fields),
   };
+}
+
+/** A multipart upload to `POST /api/apps/:appId/emoji`. */
+export function uploadTo(
+  h: Harness,
+  appId: string,
+  cookie: string,
+  fields: Record<string, string | Blob>,
+): Promise<Response> {
+  const form = new FormData();
+  for (const [name, value] of Object.entries(fields)) form.set(name, value);
+  return h.call("POST", `/api/apps/${appId}/emoji`, { cookie, form });
 }
 
 export const file = (bytes: Uint8Array, name = "emoji.png", type = "image/png") =>

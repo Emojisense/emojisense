@@ -247,6 +247,31 @@ describe("POST /api/apps/:id/emoji/import/slack", () => {
       skippedBy: { exists: IMPORT_BATCH },
     });
   });
+
+  it("emits custom_emoji.created for each imported emoji", async () => {
+    const { h, run, cookie, appId } = await slackImport("scale");
+    const hookUrl = "https://hooks.example.com/emojisense";
+    const events: { type: string; data: { shortcode: string; source: string } }[] = [];
+    network(h, {
+      [hookUrl]: (_url, init) => {
+        events.push(JSON.parse(String(init?.body)));
+        return new Response(null, { status: 204 });
+      },
+      [SLACK_EMOJI_LIST_URL]: json({ ok: true, emoji: { a: `${CDN}/a.png`, b: `${CDN}/b.png` } }),
+      [`${CDN}/a.png`]: bytes(IMAGES.png),
+      [`${CDN}/b.png`]: bytes(IMAGES.png),
+    });
+    await h.call("POST", `/api/apps/${appId}/webhooks`, {
+      cookie,
+      body: { url: hookUrl, events: ["custom_emoji.created"] },
+    });
+    await run();
+    await h.settle();
+    expect(events.map((event) => [event.type, event.data.shortcode, event.data.source]).sort()).toEqual([
+      ["custom_emoji.created", "a", "slack"],
+      ["custom_emoji.created", "b", "slack"],
+    ]);
+  });
 });
 
 describe("POST /api/apps/:id/emoji/import/discord", () => {

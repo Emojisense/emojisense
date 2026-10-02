@@ -4,25 +4,26 @@
  *
  * One call stores at most {@link IMPORT_BATCH} new emoji, so it stays well inside the Worker's
  * subrequest and time limits. The answer says how many wait (`remaining`); the client calls
- * again, and emoji imported by an earlier call then count as `exists`.
+ * again, and emoji imported by an earlier call then count as `exists`. Each imported emoji emits
+ * custom_emoji.created, like an upload.
  */
 import {
   CUSTOM_EMOJI_MAX_BYTES,
   type CustomEmojiSource,
-  countCustomEmoji,
+  countAccountCustomEmoji,
   createCustomEmoji,
   type EmojiBucket,
-  EmojiImageError,
   hasEmojiImport,
+  inspectEmojiImage,
   listCustomEmoji,
   type Plan,
   parseShortcode,
   randomId,
-  validateEmojiImage,
+  toCustomEmoji,
 } from "@emojisense/platform";
 import type { EmojiImportResponse, EmojiImportSkipReason } from "../../shared/contract";
 import { requireAppAccess } from "../access";
-import { readCapped, requireBucket } from "../custom-emoji";
+import { apiUrlOf, emitEmojiEvent, readCapped, requireBucket } from "../custom-emoji";
 import {
   type EmojiCandidate,
   type EmojiListing,
@@ -58,42 +59,42 @@ async function download(fetch: Deps["fetch"], url: string): Promise<Uint8Array |
 interface ImportJob {
   ctx: AuthedContext;
   appId: string;
-  /** The app owner's plan. */
+  /** The account that owns the app: the limit counts all of its apps. */
+  accountId: string;
+  /** The owner's plan. */
   plan: Plan;
   bucket: EmojiBucket;
   source: CustomEmojiSource;
 }
 
 async function importOne(job: ImportJob, shortcode: string, url: string): Promise<Outcome> {
-  const { ctx, appId, plan, bucket, source } = job;
+  const { ctx, appId, accountId, plan, bucket, source } = job;
   const bytes = await download(ctx.deps.fetch, url);
   if (bytes === "failed") return "failed";
   if (bytes === "too_large") return "invalid";
-  let image: ReturnType<typeof validateEmojiImage>;
-  try {
-    image = validateEmojiImage(bytes);
-  } catch (error) {
-    if (error instanceof EmojiImageError) return "invalid";
-    throw error;
-  }
+  const checked = inspectEmojiImage(bytes);
+  if (!checked.ok) return "invalid";
   const result = await createCustomEmoji(ctx.env.DB, bucket, {
     appId,
+    accountId,
     tenantId: null,
     shortcode,
     aliases: [],
-    image,
+    image: checked.image,
     source,
     limit: plan.limits.custom_emoji,
     now: ctx.deps.now(),
     id: randomId(),
   });
-  if (result.status === "created") return "imported";
-  return result.status === "shortcode_taken" ? "exists" : "limit";
+  if (result.status === "shortcode_taken") return "exists";
+  if (result.status === "limit_reached") return "limit";
+  emitEmojiEvent(ctx, "custom_emoji.created", appId, toCustomEmoji(result.row, apiUrlOf(ctx.env), null));
+  return "imported";
 }
 
 /** Shortcode rules, duplicates and the plan limit decide what is tried; then a batch is stored. */
 export async function runImport(job: ImportJob, listing: EmojiListing): Promise<EmojiImportResponse> {
-  const { ctx, appId, plan } = job;
+  const { ctx, appId, accountId, plan } = job;
   const skippedBy: Record<EmojiImportSkipReason, number> = {
     alias: listing.aliases,
     exists: 0,
@@ -108,21 +109,17 @@ export async function runImport(job: ImportJob, listing: EmojiListing): Promise<
   // Code-unit order, not locale order: the same list imports the same way on every runtime.
   const byName = (a: EmojiCandidate, b: EmojiCandidate) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
   for (const candidate of [...listing.candidates].sort(byName)) {
-    let shortcode: string;
-    try {
-      shortcode = parseShortcode(candidate.name);
-    } catch {
-      skippedBy.invalid++;
-      continue;
-    }
-    if (existing.has(shortcode)) skippedBy.exists++;
+    const shortcode = parseShortcode(candidate.name);
+    if (!shortcode.ok) skippedBy.invalid++;
+    else if (existing.has(shortcode.value)) skippedBy.exists++;
     else {
-      existing.add(shortcode);
-      queue.push({ shortcode, url: candidate.url });
+      existing.add(shortcode.value);
+      queue.push({ shortcode: shortcode.value, url: candidate.url });
     }
   }
 
-  const room = Math.max(0, plan.limits.custom_emoji - (await countCustomEmoji(ctx.env.DB, appId)));
+  const used = await countAccountCustomEmoji(ctx.env.DB, accountId);
+  const room = Math.max(0, plan.limits.custom_emoji - used);
   const fits = queue.slice(0, room);
   skippedBy.limit += queue.length - fits.length;
   const batch = fits.slice(0, IMPORT_BATCH);
@@ -145,7 +142,7 @@ export async function runImport(job: ImportJob, listing: EmojiListing): Promise<
 async function prepare(ctx: AuthedContext, source: CustomEmojiSource): Promise<ImportJob> {
   const { app, plan } = await requireAppAccess(ctx.env.DB, ctx.account.id, ctx.params.id, "edit");
   requirePlan(plan, hasEmojiImport, "Slack and Discord import");
-  return { ctx, appId: app.id, plan, bucket: requireBucket(ctx.env), source };
+  return { ctx, appId: app.id, accountId: app.account_id, plan, bucket: requireBucket(ctx.env), source };
 }
 
 /** POST /api/apps/:id/emoji/import/slack `{ token }` → `{ imported, skipped, remaining, skippedBy }`. */

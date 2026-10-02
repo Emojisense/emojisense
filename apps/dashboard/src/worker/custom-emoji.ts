@@ -1,17 +1,22 @@
 /**
  * What every custom emoji route shares besides the access gate (access.ts): the plan limit
- * error, the R2 binding, the image URL base, and the mapping of platform validation errors.
+ * error, the R2 binding, the image URL base, the mapping of platform validation results, and the
+ * custom_emoji.* webhook events.
  */
 import {
-  CustomEmojiInputError,
+  type CustomEmoji,
   type EmojiBucket,
-  EmojiImageError,
+  type EmojiImage,
+  emitWebhookEvent,
+  inspectEmojiImage,
   lowestPlanWith,
+  type Parsed,
   PLANS,
   type Plan,
 } from "@emojisense/platform";
-import type { Env } from "./env";
+import type { Env, RequestContext } from "./env";
 import { HttpError, planRequired } from "./http";
+import { webhookRuntime } from "./webhook-runtime";
 
 /** Production API origin; `API_URL` overrides it (wrangler vars, .dev.vars). */
 export const DEFAULT_API_URL = "https://api.emojisense.com";
@@ -19,15 +24,39 @@ export const DEFAULT_API_URL = "https://api.emojisense.com";
 const count = (n: number) => n.toLocaleString("en-US");
 
 /**
- * The app is at its plan's custom emoji limit: `402 plan_required` naming the cheapest plan with
- * a higher limit, or `403 plan_limit` on the top plan.
+ * The account is at its plan's custom emoji limit (every emoji of every app counts):
+ * `402 plan_required` naming the cheapest plan with a higher limit, or `403 plan_limit` on the
+ * top plan.
  */
 export function limitReached(plan: Plan): HttpError {
   const limit = plan.limits.custom_emoji;
   const next = lowestPlanWith((p) => p.limits.custom_emoji > limit);
-  const base = `Your ${plan.name} plan allows ${count(limit)} custom emoji per app, and this app has reached that limit.`;
+  const base = `Your ${plan.name} plan allows ${count(limit)} custom emoji across all apps of the account, and all are used.`;
   if (!next) return new HttpError(403, "plan_limit", `${base} Delete some to add new ones.`);
   return planRequired(next, `${base} ${PLANS[next].name} allows ${count(PLANS[next].limits.custom_emoji)}.`);
+}
+
+/** A platform parse result, or `400 invalid_request` with its field. */
+export function valid<T>(parsed: Parsed<T>): T {
+  if (parsed.ok) return parsed.value;
+  throw new HttpError(400, "invalid_request", parsed.message, parsed.field);
+}
+
+/** The image with its real type, or the platform's refusal (400, 413 or 415) with field `file`. */
+export function checkedImage(bytes: Uint8Array): EmojiImage {
+  const checked = inspectEmojiImage(bytes);
+  if (checked.ok) return checked.image;
+  throw new HttpError(checked.status, checked.error, checked.message, checked.field);
+}
+
+/** Sends `custom_emoji.created` or `custom_emoji.deleted` to the app's webhooks (Scale), in the background. */
+export function emitEmojiEvent(
+  ctx: RequestContext,
+  type: "custom_emoji.created" | "custom_emoji.deleted",
+  appId: string,
+  emoji: CustomEmoji,
+): void {
+  emitWebhookEvent(webhookRuntime(ctx), { type, appId, data: emoji });
 }
 
 export function shortcodeTaken(shortcode: string): HttpError {
@@ -47,18 +76,6 @@ export function requireBucket(env: Env): EmojiBucket {
 
 export function apiUrlOf(env: Env): string {
   return env.API_URL || DEFAULT_API_URL;
-}
-
-/** Runs a platform parser and turns its validation errors into dashboard errors. */
-export function validated<T>(parse: () => T): T {
-  try {
-    return parse();
-  } catch (error) {
-    if (error instanceof CustomEmojiInputError || error instanceof EmojiImageError) {
-      throw new HttpError(error.status, error.code, error.message, error.field);
-    }
-    throw error;
-  }
 }
 
 /** JSON has no Infinity, so "unlimited" is `null`. */
