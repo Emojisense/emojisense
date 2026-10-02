@@ -2,11 +2,11 @@ import type { AliasSearchOutput, SearchResult } from "./engine.js";
 
 /**
  * Weights of the learned fusion (PACK_FORMAT.md §10), one per `rerankFeatures` value. Trained on
- * the in-house and dev suites (`pnpm --filter @emojisense/eval rerank:train`) for bge-m3 @1024
- * with the popularity prior in the semantic scores. The Swift and Kotlin ports use the same.
+ * the in-house and dev suites (`pnpm --filter @emojisense/eval rerank:train`) for EmbeddingGemma
+ * @768 with the popularity prior in the semantic scores. The Swift and Kotlin ports use the same.
  */
 export const RERANK_WEIGHTS: readonly number[] = [
-  0.04023, 1.781, 1.697, 0.8871, 13.72, -19.46, 2.342, 2.146, 3.891,
+  -0.3173, 1.715, 1.57, 0.4408, 12.39, -8.606, 3.18, 2.129, 1.067,
 ];
 
 export interface RerankInput {

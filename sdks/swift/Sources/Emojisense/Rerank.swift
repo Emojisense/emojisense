@@ -2,9 +2,9 @@
 /// `packages/core/src/rerank.ts`: a linear score over nine features per candidate.
 public enum Rerank {
   /// One weight per ``features(_:id:)`` value. The same as `RERANK_WEIGHTS` in packages/core,
-  /// trained for bge-m3 @1024 with the popularity prior in the semantic scores.
+  /// trained for EmbeddingGemma @768 with the popularity prior in the semantic scores.
   public static let weights: [Double] = [
-    0.04023, 1.781, 1.697, 0.8871, 13.72, -19.46, 2.342, 2.146, 3.891,
+    -0.3173, 1.715, 1.57, 0.4408, 12.39, -8.606, 3.18, 2.129, 1.067,
   ]
 
   public struct Input: Sendable {
