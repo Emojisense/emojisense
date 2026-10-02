@@ -61,3 +61,52 @@ depend on a number. ⚠ = not verified, or the sources conflict.
   There is no search override. The built-in filter does a substring match on label/tags, then
   regroups the results by category. Open request: liveblocks/frimousse#11.
 - **emoji-mart 5.6.0**: no custom search function. It has headless `SearchIndex.search` and custom data.
+
+## Update #2 checks (2026-10-02)
+
+### Cloudflare platform
+
+| Item | Value |
+| ---- | ----- |
+| Static assets | 20,000 files per version (Free), 100,000 (Paid); 25 MiB per file; asset requests free and unlimited |
+| `run_worker_first` | `false` (default) serves the matching asset; `true` = always Worker; or an array of patterns with `!` negation (negatives win, ≤ 100 entries). On Free, routes matching it get 429 when the quota runs out. |
+| `_headers` | 100 rules; **not applied to Worker responses** (default asset header `public, max-age=0, must-revalidate`) |
+| Workers limits | 128 MB memory per isolate; 64 MiB script (no compressed limit); 1 s startup; CPU per request 10 ms Free, 30 s default up to 5 min Paid |
+| Durable Objects (Paid) | 1M requests/mo incl., then $0.15/M; 400k GB-s incl., then $12.50/M GB-s; SQLite rows written 50M incl., then $1/M. Free plan: SQLite-backed only. |
+| Workers KV Instant | exists, **private beta** (announced 2026-10-01): reads $0.20/M, writes $0.10 **each**, storage $100/MB-month; ≤ 1 MB and ≤ 10k keys per namespace; 1 write/s per namespace; p99 read < 2 ms; ~250 ms replication |
+| Analytics Engine | billing **not started** ("Currently, you will not be billed"); planned Paid: 10M writes incl. then $0.25/M, 1M queries incl. then $1/M |
+| EmbeddingGemma | still Beta and **not priced** (issue #27490 open, no Cloudflare reply) |
+
+### Workers AI vision models (caption candidates)
+
+| Model ID | $/M in | $/M out | Note |
+|---|---|---|---|
+| `@cf/google/gemma-4-26b-a4b-it` | 0.10 | 0.30 | vision; no license-accept step |
+| `@cf/meta/llama-3.2-11b-vision-instruct` | 0.049 | 0.676 | needs a one-time `"prompt":"agree"` (Meta license) |
+| `@cf/moondream/moondream3.1-9B-A2B` | 0.30 | 1.00 | has a `caption` task |
+| `@cf/meta/llama-4-scout-17b-16e-instruct` | 0.27 | 0.85 | vision |
+
+Images are billed as input tokens (no per-image price). `gemma-3-12b-it` was deprecated on
+2026-05-30.
+
+### Other models
+
+- **Granite embedding R2:** `311m-multilingual-r2` (768 dims, MRL 512–128, Turkish, Apache-2.0,
+  tokenizer derived from Gemma 3) and `97m-multilingual-r2` (384 dims, no MRL). **Not on Workers
+  AI.** On HF Inference only 97m is live. → not conveniently hosted; skipped.
+- **potion-base-8M:** 29,528 × 256 fp32 (30 MB), BERT WordPiece uncased, mean pooling + L2,
+  MIT; MTEB retrieval 31.1 vs bge-small 51.7. Not used (owner decision).
+- **Gemini:** 2.5 Flash-Lite $0.10/$0.40 (only for earlier users); 3.5 Flash-Lite $0.30/$2.50.
+  The free tier uses data to improve Google products; the paid tier does not.
+
+### Licenses for output vectors
+
+Gemma ToU §3.3: Google claims no rights in Outputs, and Outputs are not Model Derivatives (but a
+model trained on outputs to behave like Gemma is). bge (MIT), Qwen3-Embedding-0.6B (Apache-2.0),
+potion (MIT): no output restrictions.
+
+### Business facts
+
+Emoji set licenses, payment-provider fees, the Google Docs insertion options, the shadcn registry,
+editor hooks, Raycast/MCP and Slack/Discourse facts are in PRICING.md and INTEGRATIONS.md (sources
+are listed in the research report from 2026-10-02).
