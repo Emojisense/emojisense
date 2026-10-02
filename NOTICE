@@ -2,7 +2,7 @@ Emojisense
 Copyright (c) 2026 Mehmet Ali Peker. Licensed under the MIT License (LICENSE).
 
 This NOTICE lists third-party works that Emojisense serves or ships, with their authors and
-licenses. Data pack sources (Emojibase, Unicode CLDR): packages/data/licenses/.
+licenses. Data pack sources (Emojibase, Unicode CLDR, Emoji-SP): packages/data/licenses/.
 
 
 HOSTED EMOJI SETS
@@ -43,6 +43,23 @@ nothing in the Emojisense terms restricts what those licenses allow.
                 commit 1ffb34c752ecf5d402f04cfb4b392c77f57c54bc ("Flat" style, assets/)
    Copyright:   Copyright (c) Microsoft Corporation.
    License:     MIT License, full text in section D.
+
+
+DATA PACKS
+==========
+
+The client packs (/v1/pack/<version>/) also carry this third-party data.
+
+1. Emoji-SP popularity ratings (pack.en.json key "popularity"; packages/data/priors/popularity.json)
+   Source:      Ferré, P., Haro, J., Pérez-Sánchez, M. Á., Moreno, I., Hinojosa, J. A. (2023).
+                Emoji-SP, the Spanish emoji database: Visual complexity, familiarity, frequency
+                of use, clarity, and emotional valence and arousal norms for 1031 emojis.
+                Behavior Research Methods 55, 1715–1733. doi:10.3758/s13428-022-01893-6.
+                Data: https://osf.io/dtfjv/ (ferre_et_al_emojis_database.xlsx).
+   License:     Creative Commons Attribution 4.0 International, full text in section A.
+   Changes:     Only the mean rated frequency of use (column "freq", 1–7) is kept, keyed by code
+                points. The data build turns it into a percentile 0–100 per pack row.
+   Attribution: "Popularity prior from Emoji-SP (Ferré et al. 2023), CC BY 4.0."
 
 
 LICENSE TEXTS

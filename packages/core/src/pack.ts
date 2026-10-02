@@ -49,6 +49,11 @@ export interface Pack {
   emojiVersion: string;
   groups: string[];
   weights?: Partial<Record<Field, number>>;
+  /**
+   * How often people use each row's emoji, percentile 0–100 (0 = unknown), in row order. English
+   * core pack only; it breaks alias score ties and feeds fusion (PACK_FORMAT.md §2).
+   */
+  popularity?: number[];
   emoji: PackRow[];
   /** Custom packs only: image URL per hexcode (`C-<emojiId>`). */
   images?: Record<string, string>;
