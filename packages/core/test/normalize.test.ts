@@ -76,7 +76,8 @@ describe("embeddingText", () => {
       const s = `A${String.fromCodePoint(point)}Σ`;
       expect(embeddingText(embeddingText(s))).toBe(embeddingText(s));
     }
-  });
+    // About 1 s alone; the whole workspace's tests in parallel can take several times longer.
+  }, 30_000);
 
   it("normalizes to what normalize() gives for the raw query", () => {
     for (const s of [
