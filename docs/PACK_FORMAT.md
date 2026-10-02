@@ -15,6 +15,7 @@ A **pack version** (e.g. `0.1.0`) is a directory of immutable files:
                                       bn, pt, ru, id, tr; load next to English for that UI locale)
   vectors.<model>.<dims>.bin          Tier 1 emoji vectors, one file per model × dims (English documents)
   vectors.<model>.<dims>.<locale>.bin Tier 1 emoji vectors of one locale's documents (optional, §5)
+  vectors.<model>.<dims>.glyph.bin    Tier 1 glyph vectors, several rows per emoji (optional, §5)
 ```
 
 Files never change after publication. A change produces a new pack version. Serve them with
@@ -52,7 +53,9 @@ Files never change after publication. A change produces a new pack version. Serv
 - `queryTemplate` is the exact string to embed for a query. `{q}` is replaced by the
   query's embedding text (§3, "Embedding text"). Only needed by clients that embed queries
   themselves.
-- A vector file with a `locale` key holds that locale's document vectors (§5).
+- A vector file with a `locale` key holds that locale's document vectors (§5). The glyph file has
+  `"glyph": true`.
+- `source.popularity` credits the popularity data of `pack.en.json` (§2), as its license asks.
 
 ## 2. pack.<locale>.json
 
@@ -72,6 +75,14 @@ Files never change after publication. A change produces a new pack version. Serv
 ```
 
 A client MUST reject a pack whose `format` differs or whose `formatVersion` it does not support.
+
+**Popularity.** The English core pack has an optional pack-level key `popularity`: one integer
+0–100 per row, in row order, the percentile of how often people use that emoji (0 = unknown). It
+breaks equal alias scores (§4) and is a feature of fusion (§10). Source: Emoji-SP (Ferré et al.
+2023, CC BY 4.0), rated frequency of use of 1,031 emoji; a gender or skin-tone variant without
+its own rating takes its family's best (`packages/data/src/popularity.ts`). A client that loads
+other packs MUST take `popularity` from whichever loaded pack has it; packs without the key rank
+as before.
 
 ### Core and extension parts
 
@@ -248,7 +259,8 @@ an `exactPhrase` match in the `name` or `shortcode` field of another pack scores
 `P − 0.01`. These two fields outweigh a preferred keyword or alias even after the foreign
 factor, so without this fr "foot" gave 🦶 (English name `foot`) before ⚽ (French alias `foot`).
 
-Sort by score (descending), then by row order. `confidence` = the top score.
+Sort by score (descending), then by `popularity` (§2, descending), then by row order.
+`confidence` = the top score. Without `popularity`, equal scores keep row order.
 
 ## 5. Vectors (`vectors.<model>.<dims>.bin`, "ESVEC1")
 
@@ -287,9 +299,30 @@ has a `locale` key; the shared file has none.
 - A query of locale `L` scores each emoji by its best row over the shared file and `L`'s file:
   `max(cos(q, shared[e]), cos(q, L[e]))`. Without a file for `L` (English, or a locale that has
   none), the shared file alone gives the ranking. Reference: `searchVectorSets` in
-  `packages/core`.
+  `emojisense/vectors` (`packages/core/src/vectors.ts`).
 - A client MAY load the shared file only. Its results stay valid; they are the English-document
   ranking.
+
+**Glyph file.** `vectors.<model>.<dims>.glyph.bin` (optional) has the same layout, but its rows are
+not one per emoji: each row embeds a short text that holds the emoji itself, and its id may
+repeat. The published file holds the bare glyph, fully qualified (`"💀"`), one row per emoji;
+a gender or skin-tone variant embeds its base glyph. A glyph the model reads as an unknown token
+embeds to the same vector as every other unknown glyph: such rows are dropped (bge-m3: 910 of
+1,914). Texts: `packages/data/src/glyph-documents.ts`; build: `pnpm --filter @emojisense/data
+embed:glyph`. Readers that know only document files ignore it (its name has no locale).
+
+**Semantic score.** The Search API ranks its semantic list (`mode=semantic`, the semantic half of
+`hybrid`, and the shards of §6) by
+
+```
+score(e) = max over the document files (above)
+         + 0.04 × popularity(e)                                   popularity: §2, 0–1
+         + 0.25 × (g(e) − mean of g over the emoji with a glyph row)   0 without a glyph row
+```
+
+where `g(e)` is the best cosine of the query to `e`'s glyph rows. Centring per query removes the
+part every lone glyph shares (a cosine ≈ 0.55 to most queries). `score` is what the API returns,
+to three decimals. Reference: `semanticBonus` in `packages/data/src/semantic-score.ts`.
 
 ## 6. Shards (layer 2: precomputed results)
 
@@ -507,3 +540,38 @@ old clients keep loading the files:
 
 The files change only at a deploy, so new or edited entries still need a sync and a deploy. A
 file whose `until` has passed still works for lasting and yearly entries but misses later events.
+
+## 10. Fusion (alias + semantic)
+
+A client that shows alias and semantic results together (a search session, the Search API in
+`mode=hybrid`, the MCP server) merges them with `fuse(alias, semantic, limit, calibration,
+{ popularity })` (`packages/core/src/fusion.ts`, `rerank.ts`; Swift `Fusion.fuse`, Kotlin
+`Fusion.fuse`). A port SHOULD give the same order; the golden file checks it on recorded lists.
+
+1. **Pinned.** Alias results with a score ≥ 0.9 come first, in alias order.
+2. **Candidates.** Every other result of the alias list (its order) and then of the semantic list,
+   each id once. A result keeps the alias object when both lists hold it.
+3. **Score.** `Σ wᵢ·xᵢ`, summed left to right, over these features of the candidate:
+
+   | i | Feature | Weight |
+   | -: | ------- | -----: |
+   | 0 | 1 when the alias list holds it, else 0 | 0.04023 |
+   | 1 | alias score `a` (0 without) | 1.781 |
+   | 2 | 1 / alias rank (1-based; 0 without) | 1.697 |
+   | 3 | `a` / alias confidence (0 without) | 0.8871 |
+   | 4 | semantic score `s`; without one, the semantic list's lowest score − 0.02 (0 for an empty list) | 13.72 |
+   | 5 | best semantic score (0 or more) − `s` | −19.46 |
+   | 6 | popularity, 0–1 (§2) | 2.342 |
+   | 7 | `a` × alias confidence | 2.146 |
+   | 8 | `s` × semantic confidence (`semanticConfidence`, the calibration of `fuse`) | 3.891 |
+
+   Sort by score, descending; equal scores keep candidate order.
+4. **Flag guard.** A country flag that the alias list does not hold and whose semantic score is
+   below the calibration ceiling moves after the other candidates (`demoteUnsupportedFlags`).
+5. Pinned results, then the candidates, cut to `limit`.
+
+The weights are learned for bge-m3 @1024 with the semantic score of §5, on the in-house suite
+and the dev sets, never on the held-out set (`pnpm --filter @emojisense/eval rerank:train`).
+Another model needs its own weights. `{ rerank: false }` selects the previous fusion:
+confidence-weighted reciprocal rank fusion (`fuseResults`, 0.4 + confidence weights, an alias
+floor of confidence − 0.1 when the alias confidence is ≥ 0.6, the same flag guard).

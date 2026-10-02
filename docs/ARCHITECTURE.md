@@ -36,10 +36,19 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (b
 | L2 precomputed prefix shards | Worker → R2, edge-cached (nightly build) | not metered; ≈ $0.30 per 1M Worker requests | 10–30 ms first fetch, then local | built; served after the first nightly build |
 | L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | live, with keys, plans and metering |
 
-**Fusion.** The client merges L0 with L2 or L3 results by reciprocal rank fusion. Confident L0
-hits stay pinned, so the list does not jump when semantic results arrive. When L0 is sure, its
-results within 0.1 of its top score stay above the rest (semantic results only reorder them), and
-semantic country flags that L0 does not also hold rank last (`packages/core/src/fusion.ts`).
+**Fusion.** The client merges L0 with L2 or L3 results with a learned reranker: confident L0 hits
+(≥ 0.9) stay pinned, so the list does not jump when semantic results arrive; every other result
+of both lists is ordered by a linear score over the L0 score, rank and confidence, the semantic
+score, its gap and confidence, and the emoji's popularity (`packages/core/src/rerank.ts`,
+PACK_FORMAT §10; Swift and Kotlin carry the same weights). Semantic country flags that L0 does not
+also hold rank last. The earlier reciprocal rank fusion stays available (`rerank: false`).
+
+**Ranking signals besides text.** The English core pack carries a popularity percentile per
+emoji (Emoji-SP, CC BY 4.0): it breaks equal L0 scores and feeds fusion. The L3 semantic score
+(and so the L2 shards) adds 0.04 × popularity and a glyph term: the query's centred cosine to the
+embedded emoji itself (`vectors.<model>.<dims>.glyph.bin`, bundled in the Worker, ≈ 5 MB in
+memory; `packages/data/src/semantic-score.ts`, PACK_FORMAT §5). The vector code is a server-side
+entry, `emojisense/vectors`, outside the picker bundle.
 
 **Layer coupling.** L2 takes the most frequent queries, so the queries that still reach L3 are
 the long tail. The L3 Cache API hit rate is therefore low. Cost estimates model the layers
@@ -51,6 +60,7 @@ together (`pnpm cost`), never with one global hit rate.
 emojibase (en) + CLDR (tr) ─▶ ingest ─▶ enrichment (aliases, descriptions) ─▶ validate
         ─▶ packs: pack.<locale>.json (core ≤ 200 KB gz) + pack.<locale>.ext.json (idle-loaded)
         ─▶ embed (chosen model × dims) ─▶ vectors.<model>.<dims>[.<locale>].bin ─▶ manifest.json
+        ─▶ embed:glyph (bare glyphs) ─▶ vectors.<model>.<dims>.glyph.bin; Emoji-SP ─▶ pack.en.json popularity
 
 query_daily (keyed calls: per app, day, normalized text, locale, country; no IP/key/user)
         ─▶ nightly in the API Worker: apps of ≥ 3 accounts, ≥ 10 searches in 6 days, no PII

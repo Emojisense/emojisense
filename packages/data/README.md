@@ -7,6 +7,8 @@ layer-2 shards. Formats: [docs/PACK_FORMAT.md](../../docs/PACK_FORMAT.md).
 | -------------------------------------------- | ------ |
 | `build` | `build/` (base, validated aliases, documents) and `dist/packs/<packVersion>/` |
 | `embed -- --models bge-m3 --dims 1024` | `dist/packs/<packVersion>/vectors.<model>.<dims>.bin` from the English documents, plus `vectors.<model>.<dims>.<locale>.bin` per other locale for a multilingual model (needs `wrangler login`; 211 Workers AI calls, cached in `.cache/`) |
+| `embed:glyph` | `dist/packs/<packVersion>/vectors.<model>.<dims>.glyph.bin`: the bare glyph of each emoji the model knows (PACK_FORMAT.md §5, "Glyph file"; `--kinds glyph,glyph-text,name,context,phrase --split DIR` writes one file per text kind for experiments) |
+| `exec tsx scripts/import-popularity.ts <emoji-sp.xlsx>` | `priors/popularity.json` from Emoji-SP (CC BY 4.0, https://osf.io/dtfjv/); the build writes it as the `popularity` of `pack.en.json` |
 | `build:shards -- --log queries.jsonl` | `dist/shards/<packVersion>/` from the analytics export |
 | `build:shards -- --bootstrap` | the same from synthetic day-one queries (see the caveat below) |
 | `culture:propose` | draft culture entries with Workers AI (needs `wrangler login`; see below) |

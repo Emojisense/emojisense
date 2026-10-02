@@ -104,5 +104,5 @@ const out = {
   sha256,
   ratings,
 };
-writeFileSync(join(DATA_ROOT, "priors", "popularity.json"), `${JSON.stringify(out, null, 1)}\n`);
+writeFileSync(join(DATA_ROOT, "priors", "popularity.json"), `${JSON.stringify(out, null, 2)}\n`);
 console.log(`import-popularity: ${Object.keys(ratings).length} emoji → priors/popularity.json`);
