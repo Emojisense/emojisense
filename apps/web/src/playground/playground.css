@@ -1559,7 +1559,9 @@ li.pg-reaction {
     padding-inline: 0.5rem;
   }
 
+  /* One line per status, so the bar keeps its height when a status changes (no layout shift). */
   .pg-status {
+    flex-direction: column;
     padding-inline: 0.375rem;
   }
 

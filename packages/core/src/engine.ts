@@ -167,69 +167,98 @@ interface PhraseIndex {
  * the engine (≈ half of its memory).
  */
 function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<string, number>): PhraseIndex {
-  // Pass 1: collect phrases, deduplicated per emoji (strongest field / first pack wins).
+  // Pass 1: collect phrases, deduplicated per emoji (strongest field / first pack wins). Each
+  // token gets an id in first-seen order at once, into one flat list: all 22 packs have ≈ 0.7 M
+  // phrases, and an array of tokens per phrase was most of the build time and garbage.
   const phraseEmojiList: number[] = [];
   const phraseField: number[] = [];
   const phraseLocaleMask: number[] = [];
+  /** The weights of the pack that added the phrase first (the lowest bit of its locale mask). */
+  const phraseFieldWeightList: number[] = [];
   const phraseText: string[] = [];
-  const phraseTokens: string[][] = [];
+  /** Tokens of phrase p: `firstSeenTokenIds[phraseTokenEnd[p - 1] … phraseTokenEnd[p])`. */
+  const phraseTokenEnd: number[] = [];
+  const firstSeenTokenIds: number[] = [];
+  const tokenId = new Map<string, number>();
   const seenByEmoji = entries.map(() => new Map<string, number>());
+
+  const addToken = (token: string) => {
+    let id = tokenId.get(token);
+    if (id === undefined) {
+      id = tokenId.size;
+      tokenId.set(token, id);
+    }
+    firstSeenTokenIds.push(id);
+  };
 
   packs.forEach((pack, packIndex) => {
     const weights = { ...DEFAULT_WEIGHTS, ...pack.weights };
+    const fieldWeights = FIELDS.map((field) => weights[field]);
+    const packBit = 1 << packIndex;
     for (const row of pack.emoji) {
       const emojiIndex = indexById.get(row[ROW.hexcode]);
       if (emojiIndex === undefined) continue;
-      if (row[ROW.label]) (entries[emojiIndex] as EmojiEntry).labels[pack.locale] = row[ROW.label];
+      const label = row[ROW.label];
+      if (label) (entries[emojiIndex] as EmojiEntry).labels[pack.locale] = label;
       const seen = seenByEmoji[emojiIndex] as Map<string, number>;
-      const fieldValues = [normalize(row[ROW.label]), ...row.slice(ROW.shortcode)] as string[];
-      fieldValues.forEach((value, fieldIndex) => {
-        if (!value || weights[FIELDS[fieldIndex] as Field] <= 0) return;
-        for (const phrase of value.split("|")) {
+      for (let fieldIndex = 0; fieldIndex < FIELDS.length; fieldIndex++) {
+        const weight = fieldWeights[fieldIndex] as number;
+        if (weight <= 0) continue;
+        // The name field is the normalized label; the other fields follow it in row order.
+        const value = fieldIndex === 0 ? label && normalize(label) : row[ROW.shortcode + fieldIndex - 1];
+        if (!value) continue;
+        for (const phrase of (value as string).split("|")) {
           if (!phrase) continue;
           const existing = seen.get(phrase);
           if (existing !== undefined) {
-            phraseLocaleMask[existing] = (phraseLocaleMask[existing] as number) | (1 << packIndex);
+            phraseLocaleMask[existing] = (phraseLocaleMask[existing] as number) | packBit;
             continue;
           }
           seen.set(phrase, phraseText.length);
           phraseEmojiList.push(emojiIndex);
           phraseField.push(fieldIndex);
-          phraseLocaleMask.push(1 << packIndex);
+          phraseLocaleMask.push(packBit);
+          phraseFieldWeightList.push(weight);
           phraseText.push(phrase);
-          phraseTokens.push(tokenize(phrase));
+          // Most phrases are one word: the phrase is its own token (and its hash is cached).
+          if (phrase.includes(" ")) tokenize(phrase).forEach(addToken);
+          else addToken(phrase);
+          phraseTokenEnd.push(firstSeenTokenIds.length);
         }
-      });
+      }
     }
   });
-  const fieldWeights = packs.map((pack) => {
-    const weights = { ...DEFAULT_WEIGHTS, ...pack.weights };
-    return FIELDS.map((f) => weights[f]);
-  });
 
-  // Pass 2: sorted vocabulary (enables prefix search by binary search) + postings.
-  const vocab = [...new Set(phraseTokens.flat())].sort();
-  const tokenId = new Map(vocab.map((token, i) => [token, i]));
-  const postingCount = new Int32Array(vocab.length + 1);
-  const phraseTokenIds = phraseTokens.map((tokens) =>
-    tokens.map((token) => {
-      const id = tokenId.get(token) as number;
-      postingCount[id + 1] = (postingCount[id + 1] as number) + 1;
-      return id;
-    }),
-  );
-  const postingStart = postingCount;
+  // Pass 2: sorted vocabulary (enables prefix search by binary search) + postings. Token ids
+  // become positions in the sorted vocabulary.
+  const vocab = [...tokenId.keys()].sort();
+  const sortedId = new Int32Array(vocab.length);
+  vocab.forEach((token, id) => {
+    sortedId[tokenId.get(token) as number] = id;
+    tokenId.set(token, id);
+  });
+  const phraseTokenIds = new Int32Array(firstSeenTokenIds.length);
+  const postingStart = new Int32Array(vocab.length + 1);
+  for (let k = 0; k < phraseTokenIds.length; k++) {
+    const id = sortedId[firstSeenTokenIds[k] as number] as number;
+    phraseTokenIds[k] = id;
+    postingStart[id + 1] = (postingStart[id + 1] as number) + 1;
+  }
   for (let i = 1; i < postingStart.length; i++) {
     postingStart[i] = (postingStart[i] as number) + (postingStart[i - 1] as number);
   }
   const postings = new Int32Array(postingStart[vocab.length] as number);
   const fill = postingStart.slice(0, vocab.length);
-  phraseTokenIds.forEach((ids, phrase) => {
-    for (const id of ids) {
+  const phraseLength = new Int32Array(phraseText.length);
+  for (let phrase = 0, k = 0; phrase < phraseText.length; phrase++) {
+    const end = phraseTokenEnd[phrase] as number;
+    phraseLength[phrase] = end - k;
+    for (; k < end; k++) {
+      const id = phraseTokenIds[k] as number;
       postings[fill[id] as number] = phrase;
       fill[id] = (fill[id] as number) + 1;
     }
-  });
+  }
 
   // IDF over emoji (not phrases), so a token repeated across one emoji's aliases stays specific.
   const idf = new Float64Array(vocab.length);
@@ -255,23 +284,13 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
     else tokensByLength.set(token.length, [id]);
   });
 
-  const phraseLength = Int32Array.from(phraseTokenIds, (ids) => ids.length);
-  const phraseFieldWeight = Float64Array.from(
-    phraseField,
-    (field, phrase) =>
-      (
-        fieldWeights[
-          Math.log2((phraseLocaleMask[phrase] as number) & -(phraseLocaleMask[phrase] as number))
-        ] as number[]
-      )[field] as number,
-  );
   return {
     phraseText,
     phraseEmoji: Int32Array.from(phraseEmojiList),
     phraseField: Uint8Array.from(phraseField),
     phraseLocaleMask: Uint32Array.from(phraseLocaleMask),
     phraseLength,
-    phraseFieldWeight,
+    phraseFieldWeight: Float64Array.from(phraseFieldWeightList),
     vocab,
     tokenId,
     postingStart,

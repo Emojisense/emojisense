@@ -867,10 +867,19 @@
 
 /* Phones and narrow panels: the rail goes on top, the custom set below the picker. */
 @container (max-width: 46rem) {
+  /* When the stage is taller than the demo, the picker takes the extra height and the custom set
+     stays at the end, so it does not move while the picker fills. */
   .ws-app,
   .ws-panel {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto;
+  }
+
+  .ws-app {
+    grid-template-rows: auto minmax(auto, 1fr);
+  }
+
+  .ws-panel {
+    grid-template-rows: minmax(auto, 1fr) auto;
   }
 
   .ws-rail {

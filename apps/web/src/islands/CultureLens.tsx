@@ -1,6 +1,5 @@
 import { type CSSProperties, type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import type { CalendarItem, DateWindow, LensOption, LensQuery, LensResult } from "../lib/culture";
-import "./culture-lens.css";
 
 interface Props {
   queries: LensQuery[];
@@ -39,7 +38,10 @@ function resolve(lens: LensQuery, option: LensOption, day: string): { key: strin
   return live ? { key: live.id, result: live.result } : { key: option.id, result: option.result };
 }
 
-/** Search examples read through culture, region and date, plus what is relevant on the calendar. */
+/**
+ * Search examples read through culture, region and date, plus what is relevant on the calendar.
+ * Its styles (culture-lens.css) are linked by Culture.astro, so they do not block the first paint.
+ */
 export function CultureLens({ queries, calendar, today: buildDay }: Props) {
   const [queryIndex, setQueryIndex] = useState(0);
   const [picked, setPicked] = useState<Record<string, string>>({});

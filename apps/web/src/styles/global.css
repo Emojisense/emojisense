@@ -1,4 +1,60 @@
 /* Emojisense website. A calm, near-monochrome page: the emoji are the only strong color. */
+
+/*
+ * Local fallbacks sized like the web fonts, so text keeps its place when the web font swaps in.
+ * size-adjust is the measured width ratio (web font ÷ Arial or Courier New, same weight, text in
+ * the site's voice); the vertical overrides are the web font's ascent and descent ÷ size-adjust.
+ * Where no fallback font is installed, the stack goes on to system-ui as before.
+ */
+@font-face {
+  font-family: "Bricolage Grotesque Fallback";
+  src: local("Arial"), local("ArialMT"), local("Arimo"), local("Liberation Sans");
+  font-weight: 100 549;
+  size-adjust: 102.85%;
+  ascent-override: 90.42%;
+  descent-override: 26.25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Arimo Bold"), local("Liberation Sans Bold");
+  font-weight: 550 1000;
+  size-adjust: 97%;
+  ascent-override: 95.88%;
+  descent-override: 27.84%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Hanken Grotesk Fallback";
+  src: local("Arial"), local("ArialMT"), local("Arimo"), local("Liberation Sans");
+  font-weight: 100 549;
+  size-adjust: 100.1%;
+  ascent-override: 99.9%;
+  descent-override: 30.27%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Hanken Grotesk Fallback";
+  src: local("Arial Bold"), local("Arial-BoldMT"), local("Arimo Bold"), local("Liberation Sans Bold");
+  font-weight: 550 1000;
+  size-adjust: 93.8%;
+  ascent-override: 106.61%;
+  descent-override: 32.3%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Mono Fallback";
+  src: local("Courier New"), local("CourierNewPSMT"), local("Cousine"), local("Liberation Mono");
+  size-adjust: 100%;
+  ascent-override: 99.2%;
+  descent-override: 31%;
+  line-gap-override: 0%;
+}
+
 :root {
   --bg: #ffffff;
   --bg-soft: #f6f6f8;
@@ -37,9 +93,9 @@
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
-  --font-body: "Hanken Grotesk Variable", system-ui, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque Fallback", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk Variable", "Hanken Grotesk Fallback", system-ui, sans-serif;
+  --font-mono: "DM Mono", "DM Mono Fallback", ui-monospace, monospace;
   --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
   --container: 72rem;

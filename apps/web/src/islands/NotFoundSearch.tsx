@@ -1,10 +1,12 @@
 import type { AliasResult } from "emojisense";
 import { useEffect, useId, useMemo, useState } from "react";
-import { useEngine } from "../lib/engine-client";
+import { fullEngine, useEngine } from "../lib/engine-client";
 import { FALLBACK_QUERY, MAX_QUERY_LENGTH, queryFromPath } from "../lib/not-found";
 import "./not-found.css";
 
 const LIMIT = 8;
+/** The places in the results list; cells are keyed by place (see the list below). */
+const CELLS = Array.from({ length: LIMIT }, (_, i) => `cell-${i}`);
 const MAX_PATH_SHOWN = 40;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,7 +33,8 @@ function displayPath(pathname: string): string {
  * engine: the address can hold private data, so it never goes to the API.
  */
 export function NotFoundSearch() {
-  const { engine, ready } = useEngine();
+  // English answers at once; every language loads on an idle desktop or when the visitor types.
+  const { engine, ready } = useEngine({ upgrade: "idle" });
   const [path, setPath] = useState<string>();
   const [target, setTarget] = useState("");
   const [query, setQuery] = useState("");
@@ -148,7 +151,10 @@ export function NotFoundSearch() {
             autoComplete="off"
             spellCheck={false}
             aria-describedby={`${id}-status`}
-            onFocus={() => setTyping(false)}
+            onFocus={() => {
+              setTyping(false);
+              fullEngine().catch(() => {});
+            }}
             onChange={(event) => {
               setTyping(false);
               setQuery(event.target.value);
@@ -162,27 +168,32 @@ export function NotFoundSearch() {
           )}
         </div>
 
+        {/*
+          Always LIMIT cells, keyed by place: the list keeps its height while the words are typed,
+          and a new answer replaces a cell instead of moving the others (no layout shift).
+        */}
         <ul className="nf-results" aria-label="Emoji results. Select one to copy it.">
-          {!engine &&
-            ready !== "failed" &&
-            // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders that never reorder.
-            Array.from({ length: LIMIT }, (_, i) => <li key={i} className="nf-tile nf-skeleton" />)}
-          {search.results.map((result, i) => (
-            <li key={result.id}>
-              <button
-                type="button"
-                className="nf-tile"
-                aria-label={`Copy ${label(result)}`}
-                data-active={i === active ? "" : undefined}
-                style={{ animationDelay: `${i * 28}ms` }}
-                onMouseEnter={() => setHighlight({ query, index: i })}
-                onFocus={() => setHighlight({ query, index: i })}
-                onClick={() => copy(result)}
-              >
-                <span className="emoji">{result.emoji}</span>
-              </button>
-            </li>
-          ))}
+          {CELLS.map((cell, i) => {
+            const result = search.results[i];
+            if (!engine && ready !== "failed") return <li key={cell} className="nf-tile nf-skeleton" />;
+            if (!result) return <li key={cell} className="nf-empty" aria-hidden="true" />;
+            return (
+              <li key={`${cell}-${result.id}`}>
+                <button
+                  type="button"
+                  className="nf-tile"
+                  aria-label={`Copy ${label(result)}`}
+                  data-active={i === active ? "" : undefined}
+                  style={{ animationDelay: `${i * 28}ms` }}
+                  onMouseEnter={() => setHighlight({ query, index: i })}
+                  onFocus={() => setHighlight({ query, index: i })}
+                  onClick={() => copy(result)}
+                >
+                  <span className="emoji">{result.emoji}</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
         <p className="nf-status" id={`${id}-status`} aria-live="polite">
