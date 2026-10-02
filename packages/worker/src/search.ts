@@ -230,7 +230,7 @@ export const handleSearch: Handler = async (
               : BROWSER_CACHE,
     };
   };
-  const serverTiming = () => timing.header(Date.now() - startedAt);
+  const serverTiming = () => timing.header();
 
   const cacheKey = cacheKeyOf(url, params, locale, catalog);
   const hit = await cache.match(cacheKey);

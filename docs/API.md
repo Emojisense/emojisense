@@ -125,8 +125,8 @@ use the website's own publishable key, so they are not anonymous.
 | `confidence`, `unsure` | How well the query was understood: see [Unsure queries](#unsure-queries). Over the limit and for anonymous calls, `unsure` is the dictionary's verdict alone |
 
 Headers: `Server-Timing` and `Cache-Control`. `Server-Timing` lists the stages of the request,
-in ms, in the order they finished, then `total` (the time in the search handler, after the key
-check):
+in ms, in the order they finished, then `total` (the whole request in the Worker, from routing to
+the answer, key check included):
 
 | Stage | What it timed |
 | ----- | ------------- |

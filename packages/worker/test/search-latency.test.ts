@@ -98,6 +98,26 @@ describe("search latency: what a request waits for", () => {
     expect(body.results[0]).toMatchObject({ emoji: "🌋" });
   });
 
+  it("counts the key check and the cache lookup in Server-Timing total", async () => {
+    const h = harness();
+    await warm(h, "lava eruption");
+    const match = h.cache.match.bind(h.cache);
+    h.cache.match = async (request) => {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      return match(request);
+    };
+    const res = await h.call(keyedSearch("lava eruption"));
+    const stages = Object.fromEntries(
+      (res.headers.get("server-timing") ?? "").split(", ").map((stage) => {
+        const [name, ms] = stage.split(";dur=");
+        return [name, Number(ms)];
+      }),
+    );
+    expect(stages.cache).toBeGreaterThanOrEqual(25);
+    expect(stages.total).toBeGreaterThanOrEqual(stages.cache as number);
+    expect(stages.total).toBeGreaterThanOrEqual(stages.auth as number);
+  });
+
   it("answers a cache hit in a new isolate without building an alias engine", async () => {
     const warmer = harness();
     await warm(warmer, "lava eruption");
