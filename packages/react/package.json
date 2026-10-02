@@ -1,0 +1,47 @@
+{
+  "name": "@emojisense/react",
+  "version": "0.0.0",
+  "description": "React hooks for Emojisense and an adapter for the Frimousse emoji picker.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./frimousse": {
+      "types": "./dist/frimousse.d.ts",
+      "default": "./dist/frimousse.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
+  },
+  "peerDependencies": {
+    "frimousse": ">=0.4.0",
+    "react": "^18 || ^19"
+  },
+  "peerDependenciesMeta": {
+    "frimousse": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "frimousse": "0.4.0",
+    "happy-dom": "20.14.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}
