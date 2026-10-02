@@ -27,6 +27,9 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (b
                                          ─▶ dot product over ≈1.9k emoji vectors, English + the query locale (3–6 ms) ─▶ fuse ▶ results
    │ key over its monthly limit
    └──▶ { overLimit: true } ─▶ client stays on L0 + L2 silently (never a hard failure)
+   │ unsure: no confident L0 coverage and a flat or low semantic list (keyed calls only)
+   ▼
+L4  concept tier ─▶ edge cache ─▶ D1 concept_cache ─▶ small LLM on Workers AI ─▶ concept results
 ```
 
 | Layer | Where | Cost | Latency | State |
@@ -35,6 +38,7 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (b
 | L1 on-device semantic | device | — | — | deferred: no small multilingual off-the-shelf model fits unchanged |
 | L2 precomputed prefix shards | Worker → R2, edge-cached (nightly build) | not metered; ≈ $0.30 per 1M Worker requests | 10–30 ms first fetch, then local | built; served after the first nightly build |
 | L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | live, with keys, plans and metering |
+| L4 concept tier for unsure queries (below) | edge: Cache API, D1, Workers AI LLM | ≈ $0.04 per 1,000 model calls; cached answers $0 | +1.5–3 s once per query, then a cache read | built |
 
 **Fusion.** The client merges L0 with L2 or L3 results with a learned reranker: confident L0 hits
 (≥ 0.9) stay pinned, so the list does not jump when semantic results arrive; every other result
@@ -53,6 +57,43 @@ entry, `emojisense/vectors`, outside the picker bundle.
 **Layer coupling.** L2 takes the most frequent queries, so the queries that still reach L3 are
 the long tail. The L3 Cache API hit rate is therefore low. Cost estimates model the layers
 together (`pnpm cost`), never with one global hit rate.
+
+## Unsure queries and the concept tier
+
+Names and pop culture are the queries no layer above understands: the dictionary has at most a
+part of one word, the semantic list is flat ("kendrick lamar" → 🦁 🤦 🧙‍♂️ at cosines
+0.38–0.40). The client and the API judge every answer the same way (`assessConfidence`), and the
+API asks a small language model only for those. (Added 2026-10-02; see DECISIONS.md.)
+
+```
+query ─▶ L0 alias (guards: no foreign prefix, no short typo of another word, no one-word
+   │       match for a query of unknown words) ─▶ coverage, confidence
+   ▼
+L2 / L3 semantic list ─▶ semanticStrength (calibrated best cosine, halved when flat)
+   ▼
+assessConfidence: covered (coverage ≥ 0.85, top ≥ 0.6)? or strength ≥ 0.5? ──yes──▶ results
+   │ unsure
+   ├──▶ client: show the results as guesses ("No strong match — try another word")
+   ▼
+L4 concept tier (API Worker, keyed calls only, src/concepts/)
+   edge cache (q, locale, model, prompt, content hash) ─▶ D1 concept_cache (sha256 of locale + q)
+   ─▶ budget: 4 in flight per isolate · caller's limiter (concept:) · CONCEPT_DAILY_CAP
+   ─▶ Workers AI Gemma 4 26B-A4B, JSON schema: {kind, concepts ≤ 6, emoji ≤ 8} (sees q + locale only)
+   ─▶ checks: emoji in the catalog, blocklist on terms, no text into the answer
+   ─▶ rank: model emoji + alias hits of the terms + semantic neighbours of the terms
+   ─▶ merge as source "concept" after confident alias hits ("understood as: rapper, hip hop")
+   │ > 3 s
+   └──▶ concept.status "pending" (not cached); the call fills the caches; the SDK asks again
+
+nightly shard build ─▶ popular unsure queries ─▶ concept_cache (≤ 500 model calls) and
+                       shard entries that lead with the concept results
+```
+
+| Part | Where | Cost | Latency |
+| ---- | ----- | ---- | ------- |
+| Guards, coverage, unsure verdict | core (TS), Swift, Kotlin | $0 | in the keystroke budget |
+| Concept tier, cold | API Worker → Workers AI | ≈ $0.04 per 1,000 model calls + one bge-m3 embedding | p50 ≈ 1.7 s, p95 3 s, then `pending` (local measure) |
+| Concept tier, cached | edge cache, then D1 | $0 (a D1 read) | ≈ 1 ms from the edge cache |
 
 ## Build and learning loop
 
@@ -198,12 +239,13 @@ parse q (embeddingText), locale (11 + BCP 47 → else 400), limit, mode, culture
    ▼
 over the account's limit? ─▶ the shared cache may still answer; else alias-only, overLimit: true
    ▼
-Cache API (key: text, locale, limit, mode, index tag, content hash; no key/app/origin)
+Cache API (key: text, locale, limit, mode, index tag, content hash, concept tag; no key/app/origin)
    │ miss
    ▼
 alias engine of the locale (en, tr bundled; others: core+ext packs via ASSETS, LRU 2)
    + embed (Workers AI) ─▶ searchVectorSets(shared index, locale index via ASSETS, LRU 2)
-   ▼ fuse ─▶ store in the shared cache (only when nothing degraded or failed to load)
+   ▼ fuse ─▶ assessConfidence ─▶ unsure + keyed? ─▶ concept tier (src/concepts/) ─▶ merge
+   ▼ store in the shared cache (only when nothing degraded or failed to load, concept final)
    ▼
 per request, never cached: culture (culture=1, UTC day, region) ─▶ custom emoji first (key's app, tenant)
    ▼
