@@ -30,6 +30,18 @@ pnpm --filter @emojisense/chrome-extension build      # → apps/chrome-extensio
 `pnpm --filter @emojisense/chrome-extension dev` rebuilds the scripts on change; reload the
 extension on `chrome://extensions` afterwards. Static files (HTML, CSS, manifest) need a new build.
 
+## Package it for the Chrome Web Store
+
+```bash
+pnpm package:chrome     # build, check the manifest, zip → release/chrome/emojisense-chrome-<version>.zip
+```
+
+The check fails when the permissions differ from the four below, when the manifest has host
+permissions, content scripts, web-accessible resources or a CSP with remote or eval'd code, or when
+a source map would ship. The zip is byte-identical for one commit (sorted entries, fixed
+timestamps). The version comes from `package.json`. The store listing text and the upload steps
+are in [RELEASING.md](../../RELEASING.md).
+
 ## Use it
 
 | Key | Action |

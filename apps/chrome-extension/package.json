@@ -8,6 +8,7 @@
   "scripts": {
     "build": "tsx scripts/build.ts",
     "dev": "tsx scripts/build.ts --watch",
+    "package": "tsx scripts/build.ts && tsx scripts/package.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
     "test": "vitest run"
   },

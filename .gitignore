@@ -23,3 +23,6 @@ apps/web/src/pages/dev/
 
 # Per-environment deploy settings (scripts/deploy.sh)
 .deploy/
+
+# Store artifacts built by `pnpm package:chrome` and `pnpm package:raycast` (RELEASING.md)
+/release/

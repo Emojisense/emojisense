@@ -25,7 +25,8 @@
     "check:readmes": "node scripts/check-readmes.mjs",
     "release:check": "node scripts/release-check.mjs",
     "release:version": "changeset version",
-    "release:publish": "node scripts/release-check.mjs --build --strict && changeset publish"
+    "release:publish": "node scripts/release-check.mjs --build --strict && changeset publish",
+    "package:chrome": "pnpm --filter @emojisense/chrome-extension package"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
