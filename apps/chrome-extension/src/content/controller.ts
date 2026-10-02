@@ -20,6 +20,8 @@ export interface ControllerDeps {
   /** Throws when the extension was reloaded or removed ("Extension context invalidated"). */
   openChannel(onMessage: (message: ServerMessage) => void, onDisconnect: () => void): SearchChannel;
   loadSettings(): Promise<Settings>;
+  /** Registers the bundled fonts; never rejects. The first open waits for it briefly. */
+  loadFonts?(): Promise<void>;
   uiLanguage: string;
   platform: string;
 }
@@ -33,6 +35,12 @@ export interface Controller {
 
 /** Containers that often trap focus; the picker mounts inside them so focus may enter it. */
 const DIALOG_SELECTOR = 'dialog[open], [aria-modal="true"], [role="dialog"]';
+
+/**
+ * How long the first open waits for the fonts, so the text does not change font in front of the
+ * user. They come from the extension package, so this is rarely reached; then the system font shows.
+ */
+export const FONT_WAIT_MS = 150;
 
 export function createController(deps: ControllerDeps): Controller {
   const view = deps.window;
@@ -50,11 +58,25 @@ export function createController(deps: ControllerDeps): Controller {
     // Capture before any await: the caret must be read while the field still has focus.
     const target = captureTarget(doc);
     try {
-      const settings = await deps.loadSettings().catch(() => DEFAULT_SETTINGS);
+      const [settings] = await Promise.all([
+        deps.loadSettings().catch(() => DEFAULT_SETTINGS),
+        deps.loadFonts ? atMost(deps.loadFonts(), FONT_WAIT_MS) : undefined,
+      ]);
       close = open(target, settings);
     } finally {
       opening = false;
     }
+  }
+
+  function atMost(task: Promise<void>, ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = view.setTimeout(resolve, ms);
+      const done = () => {
+        view.clearTimeout(timer);
+        resolve();
+      };
+      task.then(done, done);
+    });
   }
 
   function open(target: EditableTarget, settings: Settings): (restoreFocus: boolean) => void {

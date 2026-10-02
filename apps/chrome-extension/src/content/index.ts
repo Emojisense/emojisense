@@ -2,10 +2,12 @@
  * Content script, injected on demand (keyboard command or toolbar click) through activeTab.
  * It runs in the extension's isolated world: page scripts cannot see these globals.
  */
+import { FONTS_MESSAGE } from "../shared/fonts";
 import type { FrameProbe } from "../shared/frames";
 import { isServerMessage, isToggleMessage, SEARCH_PORT, type ServerMessage } from "../shared/messages";
 import { parseSettings, SETTINGS_KEY } from "../shared/settings";
 import { createController, type SearchChannel } from "./controller";
+import { createFontLoader } from "./fonts";
 import { probeFrame } from "./probe";
 
 interface ContentApi {
@@ -60,6 +62,7 @@ function boot(): void {
     window,
     openChannel,
     loadSettings: async () => parseSettings((await chrome.storage.local.get(SETTINGS_KEY))[SETTINGS_KEY]),
+    loadFonts: createFontLoader(document, () => chrome.runtime.sendMessage({ type: FONTS_MESSAGE })),
     uiLanguage: chrome.i18n.getUILanguage(),
     platform:
       (navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData?.platform ??

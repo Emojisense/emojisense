@@ -5,8 +5,10 @@
  */
 import { loadPacks } from "emojisense";
 import { ACTION_TITLE, OPEN_PICKER_COMMAND } from "../manifest";
+import { isFontsRequest } from "../shared/fonts";
 import { SEARCH_PORT } from "../shared/messages";
 import { parseSettings, SETTINGS_KEY } from "../shared/settings";
+import { createFontSource } from "./fonts";
 import { chromeInjector, openPicker } from "./inject";
 import { parseRecents, pushRecent, RECENTS_KEY } from "./recents";
 import { createSearchService } from "./search";
@@ -35,6 +37,13 @@ const search = createSearchService({
     await chrome.storage.local.set({ [RECENTS_KEY]: pushRecent(await readRecents(), id) });
   },
   uiLanguage: () => chrome.i18n.getUILanguage(),
+});
+
+/** The picker's fonts, read from the package (content scripts cannot read packaged files). */
+const pickerFonts = createFontSource(async (file) => {
+  const response = await fetch(chrome.runtime.getURL(file));
+  if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
+  return response.arrayBuffer();
 });
 
 const UNAVAILABLE_TITLE =
@@ -72,6 +81,15 @@ chrome.action.onClicked.addListener((tab) => {
 
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === SEARCH_PORT && port.sender?.id === chrome.runtime.id) search.attach(port);
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.id !== chrome.runtime.id || !isFontsRequest(message)) return false;
+  pickerFonts().then(
+    (fonts) => sendResponse({ fonts }),
+    () => sendResponse({ fonts: [] }),
+  );
+  return true; // The answer is asynchronous.
 });
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
