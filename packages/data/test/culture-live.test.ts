@@ -1,3 +1,6 @@
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { createEngine, type Pack, type PackRow } from "emojisense";
 import { describe, expect, it } from "vitest";
 import { compileCulture } from "../src/culture/compile.ts";
@@ -10,9 +13,11 @@ import {
   toDraftRecord,
 } from "../src/culture/draft.ts";
 import { mergeLiveEntries, TriggerIndex, withoutTakenTriggers } from "../src/culture/live.ts";
+import { importLiveEntries, parseLiveExport } from "../src/culture/live-import.ts";
 import { datedCandidates } from "../src/culture/occurrences.ts";
 import { parseExclusions } from "../src/culture/policy.ts";
 import { previewRecord } from "../src/culture/preview.ts";
+import { formatRecord } from "../src/culture/records.ts";
 import type { CultureRecord } from "../src/culture/types.ts";
 
 const row = (emoji: string, hexcode: string, label: string, alias = ""): PackRow => [
@@ -210,5 +215,43 @@ describe("previews", () => {
       engineFor: () => engine,
     });
     expect(bad.issues.map((i) => i.message).join()).toMatch(/excluded phrase/);
+  });
+});
+
+describe("exporting live entries to the entry files", () => {
+  const exported = {
+    format: "emojisense-culture-live-export",
+    formatVersion: 1,
+    exportedAt: 0,
+    entries: [spooky, record({ id: "bad-one", triggers: { en: ["election goat"] } })],
+  };
+
+  it("writes valid entries in the record format and reports the rest", () => {
+    const dir = mkdtempSync(join(tmpdir(), "culture-live-"));
+    try {
+      writeFileSync(join(dir, "goat-football.json"), formatRecord(record()));
+      const entries = [
+        ...parseLiveExport(JSON.stringify(exported)).entries,
+        record({ triggers: { en: ["x"] } }),
+      ];
+      const result = importLiveEntries(entries, { catalog, exclusions }, { dir });
+      expect(result.written).toEqual(["spooky-season"]);
+      expect(result.invalid.map((i) => i.id)).toEqual(["bad-one"]);
+      expect(result.conflicts).toEqual(["goat-football"]);
+      expect(readFileSync(join(dir, "spooky-season.json"), "utf8")).toBe(formatRecord(spooky));
+      // A second import changes nothing; force replaces a conflicting entry.
+      expect(importLiveEntries([spooky], { catalog, exclusions }, { dir }).unchanged).toEqual([
+        "spooky-season",
+      ]);
+      const forced = importLiveEntries(
+        [record({ triggers: { en: ["x"] } })],
+        { catalog, exclusions },
+        { dir, force: true },
+      );
+      expect(forced.written).toEqual(["goat-football"]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+    expect(() => parseLiveExport('{"format":"other"}')).toThrow(/live export/);
   });
 });
