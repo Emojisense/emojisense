@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { useEmojiSearch, useEmojisense } from "../src/hooks.js";
-import { packFetch, packFetchWithExt } from "./fixture.js";
+import { useEmojiSearch, useEmojisense, useRelevantNow } from "../src/hooks.js";
+import { packAndCultureFetch, packFetch, packFetchWithExt } from "./fixture.js";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -116,5 +116,57 @@ describe("useEmojisense + useEmojiSearch", () => {
     await waitFor(() => expect(result.current.status).toBe("fused"));
     expect(result.current.layer).toBe("shard");
     expect(result.current.results[0]?.emoji).toBe("🚀");
+  });
+});
+
+describe("culture layer", () => {
+  const options = {
+    packBaseUrl: "https://x.test/v1/pack/test",
+    cultureUrl: "https://x.test/v1/culture",
+    extended: false,
+  };
+
+  it("loads the culture file and adds its emoji after the top result", async () => {
+    vi.stubGlobal("fetch", packAndCultureFetch());
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    await waitFor(() => expect(sense.current.culture?.locale).toBe("en"));
+    expect(sense.current.engine?.culture).toBe(sense.current.culture);
+    const { result } = renderHook(() => useEmojiSearch("jurassic park", sense.current));
+    await waitFor(() => expect(result.current.results.map((r) => r.emoji)).toEqual(["🦖", "🚀"]));
+    expect(result.current.results[1]).toMatchObject({
+      source: "culture",
+      context: "The dinosaur film series",
+    });
+    expect(result.current.alias?.results.map((r) => r.emoji)).toEqual(["🦖"]);
+  });
+
+  it("opts out with culture: false", async () => {
+    vi.stubGlobal("fetch", packAndCultureFetch());
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    await waitFor(() => expect(sense.current.culture).toBeDefined());
+    const { result } = renderHook(() => useEmojiSearch("jurassic park", sense.current, { culture: false }));
+    await waitFor(() => expect(result.current.results.map((r) => r.emoji)).toEqual(["🦖"]));
+  });
+
+  it("works when the culture file cannot load", async () => {
+    vi.stubGlobal("fetch", async (url: string | URL | Request) =>
+      String(url).includes("/culture/") ? new Response("", { status: 404 }) : packFetch()(url),
+    );
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    await waitFor(() => expect(sense.current.status).toBe("ready"));
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(sense.current.culture).toBeUndefined();
+    const { result } = renderHook(() => useEmojiSearch("jurassic park", sense.current));
+    await waitFor(() => expect(result.current.results.map((r) => r.emoji)).toEqual(["🦖"]));
+  });
+
+  it("lists relevant-now emoji from featured entries", async () => {
+    vi.stubGlobal("fetch", packAndCultureFetch());
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    await waitFor(() => expect(sense.current.engine?.culture).toBeDefined());
+    const { result } = renderHook(() => useRelevantNow(sense.current, { limit: 1 }));
+    expect(result.current).toEqual([
+      { emoji: "👍", hexcode: "1F44D", context: "A season", cultureId: "season" },
+    ]);
   });
 });

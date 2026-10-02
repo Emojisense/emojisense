@@ -1,13 +1,17 @@
 import {
   type AliasEngine,
   type AliasSearchOutput,
+  type Culture,
   createEngine,
   createLayeredSemantic,
   createSearchSession,
   type EmojiSet,
+  loadCulture,
   loadCustomPack,
   loadPacks,
   type Pack,
+  type RelevantEmoji,
+  relevantNow,
   type SearchResult,
   type SemanticLayer,
   type SemanticProvider,
@@ -43,6 +47,14 @@ export interface EmojisenseOptions {
   customEmoji?: boolean;
   /** The app owner's id for one of their customers: adds that tenant's custom emoji. */
   tenant?: string;
+  /**
+   * Culture files, e.g. "https://api.emojisense.com/v1/culture/0.1.0". Editorial emoji for the
+   * moment and the culture join the results after the top result (never above it). Omit it for
+   * the canonical ranking. A failed load is ignored.
+   */
+  cultureUrl?: string;
+  /** ISO 3166-1 alpha-2 region, e.g. "BR". Regional culture entries apply only with it. */
+  region?: string;
 }
 
 export interface Emojisense {
@@ -61,6 +73,9 @@ export interface Emojisense {
   emojiSet?: EmojiSet;
   /** The API base URL, for hosted emoji set images. */
   endpoint?: string;
+  /** The loaded culture file (also attached to `engine`), once `cultureUrl` answered. */
+  culture?: Culture;
+  region?: string;
   error?: unknown;
 }
 
@@ -76,6 +91,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     emojiSet = "native",
     customEmoji = false,
     tenant,
+    cultureUrl,
+    region,
   } = options;
   const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
     packs: [],
@@ -132,13 +149,31 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     };
   }, [packBaseUrl, locale, extended]);
 
-  const engine = useMemo(
+  const [culture, setCulture] = useState<Culture | undefined>(undefined);
+  useEffect(() => {
+    setCulture(undefined);
+    if (!cultureUrl) return;
+    const controller = new AbortController();
+    loadCulture({ baseUrl: cultureUrl, locale, signal: controller.signal }).then(
+      (loaded) => {
+        if (!controller.signal.aborted) setCulture(loaded);
+      },
+      () => {
+        // The culture layer only adds results; search works the same without it.
+      },
+    );
+    return () => controller.abort();
+  }, [cultureUrl, locale]);
+
+  const baseEngine = useMemo(
     () =>
       state.packs.length > 0
         ? createEngine(customPack ? [...state.packs, customPack] : state.packs)
         : undefined,
     [state.packs, customPack],
   );
+  // withCulture shares the index, so a culture file arriving later does not rebuild it.
+  const engine = useMemo(() => baseEngine?.withCulture(culture), [baseEngine, culture]);
   const packVersion = state.packs[0]?.packVersion;
   const semantic = useMemo(
     () => createLayeredSemantic({ shardsUrl, endpoint, key: publishableKey, packVersion }),
@@ -155,6 +190,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     extended: state.extended,
     emojiSet,
     ...(endpoint ? { endpoint } : {}),
+    ...(culture ? { culture } : {}),
+    ...(region ? { region } : {}),
     ...(state.error ? { error: state.error } : {}),
   };
 }
@@ -179,6 +216,8 @@ export interface EmojiSearchState {
 export interface UseEmojiSearchOptions {
   limit?: number;
   debounceMs?: number;
+  /** `false` = canonical ranking only, even when a culture file is loaded (reproducible). */
+  culture?: boolean;
 }
 
 const IDLE: EmojiSearchState = {
@@ -198,11 +237,11 @@ const IDLE: EmojiSearchState = {
  */
 export function useEmojiSearch(
   query: string,
-  emojisense: Pick<Emojisense, "engine" | "semantic" | "locale">,
+  emojisense: Pick<Emojisense, "engine" | "semantic" | "locale" | "region">,
   options: UseEmojiSearchOptions = {},
 ): EmojiSearchState {
-  const { engine, semantic, locale } = emojisense;
-  const { limit = 24, debounceMs = 200 } = options;
+  const { engine, semantic, locale, region } = emojisense;
+  const { limit = 24, debounceMs = 200, culture = true } = options;
   const [state, setState] = useState<EmojiSearchState>(IDLE);
   const sessionRef = useRef<ReturnType<typeof createSearchSession> | undefined>(undefined);
 
@@ -214,6 +253,8 @@ export function useEmojiSearch(
       locale,
       limit,
       debounceMs,
+      ...(culture ? {} : { culture: false as const }),
+      ...(region ? { region } : {}),
       onChange: (s) =>
         setState({
           results: s.results,
@@ -230,7 +271,7 @@ export function useEmojiSearch(
       session.dispose();
       sessionRef.current = undefined;
     };
-  }, [engine, semantic, locale, limit, debounceMs]);
+  }, [engine, semantic, locale, region, limit, debounceMs, culture]);
 
   useEffect(() => {
     if (!engine) return;
@@ -238,6 +279,36 @@ export function useEmojiSearch(
   }, [query, engine]);
 
   return query.trim() === "" ? IDLE : state;
+}
+
+export interface UseRelevantNowOptions {
+  /** Default 8. */
+  limit?: number;
+  /** The day to show; default today. */
+  now?: Date | number;
+}
+
+/**
+ * Emoji for an optional "relevant now" shelf: featured seasonal and event entries of the culture
+ * file that are active today. Empty without `cultureUrl`.
+ */
+export function useRelevantNow(
+  emojisense: Pick<Emojisense, "culture" | "region" | "engine">,
+  options: UseRelevantNowOptions = {},
+): RelevantEmoji[] {
+  const { culture, region, engine } = emojisense;
+  const { limit = 8, now } = options;
+  return useMemo(() => {
+    if (!culture) return [];
+    const shelf = relevantNow(culture, { limit, ...(region ? { region } : {}), ...(now ? { now } : {}) });
+    // Only emoji the loaded packs know, drawn with the packs' glyph.
+    return engine
+      ? shelf.flatMap((item) => {
+          const entry = engine.get(item.hexcode);
+          return entry ? [{ ...item, emoji: entry.emoji }] : [];
+        })
+      : shelf;
+  }, [culture, region, engine, limit, now]);
 }
 
 function layerOf(state: SessionState): SemanticLayer | undefined {

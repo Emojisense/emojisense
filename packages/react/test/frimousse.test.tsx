@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createEngine } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import { createEmojisenseResolver, EmojisensePicker } from "../src/frimousse.js";
-import { en, tr } from "./fixture.js";
+import { culture, en, tr } from "./fixture.js";
 
 describe("createEmojisenseResolver", () => {
   it("maps packs to Frimousse data with localized labels and skin tones", async () => {
@@ -54,5 +54,42 @@ describe("EmojisensePicker", () => {
     expect(options.length).toBeGreaterThan(1);
     fireEvent.keyDown(input, { key: "ArrowRight" });
     expect(screen.getAllByRole("option")[1]?.getAttribute("aria-selected")).toBe("true");
+  });
+});
+
+describe("EmojisensePicker culture layer", () => {
+  const sense = {
+    engine: createEngine([en, tr]).withCulture(culture),
+    semantic: undefined,
+    packs: [en, tr],
+    locale: "en",
+    status: "ready" as const,
+    extended: false,
+    culture,
+  };
+
+  it("has no relevant-now row by default", () => {
+    render(<EmojisensePicker emojisense={sense} onEmojiSelect={() => {}} />);
+    expect(screen.queryByText("Relevant now")).toBeNull();
+  });
+
+  it("shows featured emoji with their reason and selects them", () => {
+    const onEmojiSelect = vi.fn();
+    render(<EmojisensePicker emojisense={sense} onEmojiSelect={onEmojiSelect} showRelevantNow />);
+    const row = screen.getByRole("group", { name: "Relevant now" });
+    const buttons = [...row.querySelectorAll("button")];
+    expect(buttons.map((b) => b.textContent)).toEqual(["👍", "🚀"]);
+    expect(buttons[0]?.title).toBe("thumbs up · A season");
+    fireEvent.click(buttons[0] as HTMLButtonElement);
+    expect(onEmojiSelect).toHaveBeenCalledWith({ emoji: "👍", label: "thumbs up" });
+  });
+
+  it("marks culture results with their reason", async () => {
+    render(<EmojisensePicker emojisense={sense} onEmojiSelect={() => {}} />);
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "jurassic park" } });
+    const options = await screen.findAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual(["🦖", "🚀"]);
+    expect(options[1]?.getAttribute("data-source")).toBe("culture");
+    expect(options[1]?.title).toBe("rocket · The dinosaur film series");
   });
 });
