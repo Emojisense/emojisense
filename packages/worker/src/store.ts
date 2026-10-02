@@ -4,6 +4,8 @@ import type { KeyKind, Metric, PlanId } from "@emojisense/platform";
 export interface ApiKey {
   id: string;
   appId: string;
+  /** The account that owns the app. Its plan, and so its limits, cover every app it owns. */
+  accountId: string;
   kind: KeyKind;
   plan: PlanId;
   /** Publishable keys only. Empty = any origin (development keys). */
@@ -73,6 +75,7 @@ export interface D1Like {
 interface KeyJoinRow {
   id: string;
   app_id: string;
+  account_id: string;
   kind: KeyKind;
   allowed_origins: string;
   revoked_at: number | null;
@@ -81,7 +84,7 @@ interface KeyJoinRow {
 
 // The plan lives on the account (migration 0002); the legacy apps.plan column is not read.
 const FIND_KEY = `
-  SELECT k.id, k.app_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan
+  SELECT k.id, k.app_id, a.account_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan
   FROM api_keys k
   JOIN apps a ON a.id = k.app_id
   JOIN accounts acc ON acc.id = a.account_id
@@ -156,6 +159,7 @@ export function createD1Store(db: D1Like): Store {
       return {
         id: row.id,
         appId: row.app_id,
+        accountId: row.account_id,
         kind: row.kind,
         plan: row.plan,
         allowedOrigins: parseOrigins(row.allowed_origins),

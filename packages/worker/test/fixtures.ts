@@ -134,6 +134,7 @@ export async function seededStore() {
     [await hashKey(KEYS.publishable)]: {
       id: "key_pub",
       appId: "app_free",
+      accountId: "acc_free",
       kind: "publishable",
       plan: "free",
       allowedOrigins: [ALLOWED_ORIGIN],
@@ -142,6 +143,7 @@ export async function seededStore() {
     [await hashKey(KEYS.wildcard)]: {
       id: "key_any",
       appId: "app_free",
+      accountId: "acc_free",
       kind: "publishable",
       plan: "free",
       allowedOrigins: [],
@@ -150,6 +152,7 @@ export async function seededStore() {
     [await hashKey(KEYS.secret)]: {
       id: "key_sec",
       appId: "app_free",
+      accountId: "acc_free",
       kind: "secret",
       plan: "free",
       allowedOrigins: [],
@@ -158,6 +161,7 @@ export async function seededStore() {
     [await hashKey(KEYS.revoked)]: {
       id: "key_rev",
       appId: "app_free",
+      accountId: "acc_free",
       kind: "publishable",
       plan: "free",
       allowedOrigins: [],
@@ -166,6 +170,7 @@ export async function seededStore() {
     [await hashKey(KEYS.pro)]: {
       id: "key_pro",
       appId: "app_pro",
+      accountId: "acc_pro",
       kind: "publishable",
       plan: "pro",
       allowedOrigins: [],

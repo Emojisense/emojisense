@@ -125,7 +125,14 @@ describe("dev keys", () => {
   it("parse `key` and `key:plan` entries, defaulting to a publishable free key", () => {
     const keys = parseDevKeys(" pk_demo , sk_live_local:pro,, pk_x:unknown");
     expect([...keys.keys()]).toEqual(["pk_demo", "sk_live_local", "pk_x"]);
-    expect(keys.get("pk_demo")).toMatchObject({ kind: "publishable", plan: "free", allowedOrigins: [] });
+    // Each dev key is its own app and its own account (no database rows).
+    expect(keys.get("pk_demo")).toMatchObject({
+      appId: "dev:0",
+      accountId: "dev:0",
+      kind: "publishable",
+      plan: "free",
+      allowedOrigins: [],
+    });
     expect(keys.get("sk_live_local")).toMatchObject({ kind: "secret", plan: "pro" });
     expect(keys.get("pk_x")?.plan).toBe("free");
   });

@@ -43,6 +43,7 @@ export function parseDevKeys(raw: string | undefined): Map<string, ApiKey> {
       keys.set(token, {
         id: `dev:${index}`,
         appId: `dev:${index}`,
+        accountId: `dev:${index}`,
         kind: keyKind(token) ?? "publishable",
         plan: getPlan(plan).id,
         allowedOrigins: [],

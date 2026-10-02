@@ -21,10 +21,11 @@ describe("D1 store on the platform schema", () => {
     store = createD1Store(sqliteD1(db));
   });
 
-  it("finds a key by hash, with its account's plan and origins", async () => {
+  it("finds a key by hash, with its owning account, the account's plan and origins", async () => {
     expect(await store.findKeyByHash(await hashKey(KEY))).toEqual({
       id: "key_1",
       appId: "app_1",
+      accountId: "acc",
       kind: "publishable",
       plan: "pro",
       allowedOrigins: ["https://app.example.com"],
