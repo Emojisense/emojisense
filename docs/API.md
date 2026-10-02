@@ -100,7 +100,7 @@ are matched against the query and put first, in both modes, within `limit`:
 - Search and reactions rank with the English pack plus the requested locale's pack, the same
   data an SDK loads on the device. English matches still count, slightly below the locale's own.
 - `en` and `tr` are built into the Worker. The other locales load their core pack on the first
-  request in a Worker instance (≈ 0.1–0.25 s once), then answer as fast as `en`.
+  request in a Worker instance (≈ 0.1–0.3 s once), then answer as fast as `en`.
 
 ## `POST /v1/suggest-reactions`
 
