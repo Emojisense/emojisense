@@ -334,5 +334,509 @@
     "alias": "धन्यवाद",
     "action": "low",
     "why": "🙏 is the canonical 'thank you' (धन्यवाद) in Hindi"
+  },
+  {
+    "hexcode": "1F418",
+    "locale": "en",
+    "alias": "republican party",
+    "action": "remove",
+    "why": "safety review: political party name"
+  },
+  {
+    "hexcode": "1F4A3",
+    "locale": "pt",
+    "alias": "hiroshima",
+    "action": "remove",
+    "why": "safety review: reduces a city to its atomic bombing (tragedy reference)"
+  },
+  {
+    "hexcode": "1F4A3",
+    "locale": "pt",
+    "alias": "chernobyl",
+    "action": "remove",
+    "why": "safety review: nuclear disaster on a bomb; tragedy reference and wrong"
+  },
+  {
+    "hexcode": "1F1F9-1F1F7",
+    "locale": "tr",
+    "alias": "15 temmuz",
+    "action": "remove",
+    "why": "safety review: 2016 coup attempt (political and tragedy reference)"
+  },
+  {
+    "hexcode": "1F1E8-1F1F4",
+    "locale": "en",
+    "alias": "narcos",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1E8-1F1F4",
+    "locale": "fr",
+    "alias": "narcos",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1E8-1F1F4",
+    "locale": "tr",
+    "alias": "narcos",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1F3-1F1EC",
+    "locale": "es",
+    "alias": "estafa nigeriana",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1F8-1F1F4",
+    "locale": "es",
+    "alias": "piratas",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1F8-1F1F4",
+    "locale": "es",
+    "alias": "piratas somalies",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1F8-1F1F4",
+    "locale": "pt",
+    "alias": "pirataria",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F1F8-1F1F4",
+    "locale": "pt",
+    "alias": "piratas somalianos",
+    "action": "remove",
+    "why": "safety review: ties a country to crime (national stereotype)"
+  },
+  {
+    "hexcode": "1F42A",
+    "locale": "es",
+    "alias": "arabe",
+    "action": "remove",
+    "why": "safety review: names an ethnic group on an animal (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F472",
+    "locale": "es",
+    "alias": "chinito",
+    "action": "remove",
+    "why": "safety review: ethnic diminutive for a person (mildly derogatory)"
+  },
+  {
+    "hexcode": "1F472",
+    "locale": "es",
+    "alias": "el chino de la esquina",
+    "action": "remove",
+    "why": "safety review: refers to a person by ethnicity (mildly derogatory)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "es",
+    "alias": "adivinando el futuro",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "es",
+    "alias": "adivina quien soy",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "es",
+    "alias": "adivino",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "es",
+    "alias": "faquir",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "es",
+    "alias": "disfraz de sultan",
+    "action": "remove",
+    "why": "safety review: a religious head covering as a costume (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2642-FE0F",
+    "locale": "es",
+    "alias": "adivinando el futuro",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2642-FE0F",
+    "locale": "es",
+    "alias": "adivina quien soy",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2642-FE0F",
+    "locale": "es",
+    "alias": "adivino",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2642-FE0F",
+    "locale": "es",
+    "alias": "faquir",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2642-FE0F",
+    "locale": "es",
+    "alias": "disfraz de sultan",
+    "action": "remove",
+    "why": "safety review: a religious head covering as a costume (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2640-FE0F",
+    "locale": "es",
+    "alias": "adivinando el futuro",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2640-FE0F",
+    "locale": "es",
+    "alias": "adivina quien soy",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2640-FE0F",
+    "locale": "es",
+    "alias": "adivino",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2640-FE0F",
+    "locale": "es",
+    "alias": "faquir",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473-200D-2640-FE0F",
+    "locale": "es",
+    "alias": "disfraz de sultan",
+    "action": "remove",
+    "why": "safety review: a religious head covering as a costume (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "fr",
+    "alias": "fakir",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F473",
+    "locale": "fr",
+    "alias": "charmeur de serpent",
+    "action": "remove",
+    "why": "safety review: fortune teller / fakir stereotype on a Sikh turban (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F1E6-1F1E8",
+    "locale": "en",
+    "alias": "falklands war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "en",
+    "alias": "1982 war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "en",
+    "alias": "falklands war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1ED-1F1F3",
+    "locale": "en",
+    "alias": "football war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "en",
+    "alias": "korean war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1FC",
+    "locale": "en",
+    "alias": "gulf war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "en",
+    "alias": "vietnam war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "chernobyl",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F2-1F1EB",
+    "locale": "en",
+    "alias": "hurricane irma",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F9-1F1F4",
+    "locale": "en",
+    "alias": "hunga tonga eruption",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FF-1F1E6",
+    "locale": "en",
+    "alias": "apartheid",
+    "action": "remove",
+    "why": "safety review: names a system of racial oppression on a country flag"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "en",
+    "alias": "nuclear missile",
+    "action": "remove",
+    "why": "safety review: military and political label on a country flag"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "es",
+    "alias": "guerra de malvinas",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "es",
+    "alias": "guerra de vietnam",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1E6-1F1F2",
+    "locale": "fr",
+    "alias": "genocide armenien",
+    "action": "remove",
+    "why": "safety review: names a genocide on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "fr",
+    "alias": "guerre des malouines",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "pt",
+    "alias": "guerra das malvinas",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1ED-1F1F9",
+    "locale": "pt",
+    "alias": "terremoto do haiti",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "pt",
+    "alias": "guerra do vietna",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "tr",
+    "alias": "1982 savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "tr",
+    "alias": "falkland savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "tr",
+    "alias": "kore savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F7",
+    "locale": "tr",
+    "alias": "kore savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1FC",
+    "locale": "tr",
+    "alias": "korfez savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F1-1F1FE",
+    "locale": "tr",
+    "alias": "trablusgarp savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F2-1F1F5",
+    "locale": "tr",
+    "alias": "saipan savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E7",
+    "locale": "tr",
+    "alias": "guadalcanal savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "tr",
+    "alias": "vietnam savasi",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FF-1F1E6",
+    "locale": "tr",
+    "alias": "apartheid",
+    "action": "remove",
+    "why": "safety review: names a system of racial oppression on a country flag"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "ru",
+    "alias": "фолклендская воина",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "zh",
+    "alias": "英阿战争",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "zh",
+    "alias": "马岛战争",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1ED-1F1F9",
+    "locale": "zh",
+    "alias": "海地地震",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EE-1F1F6",
+    "locale": "zh",
+    "alias": "伊拉克战争",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "zh",
+    "alias": "朝鲜战争",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E7",
+    "locale": "zh",
+    "alias": "瓜岛战役",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F9-1F1F4",
+    "locale": "zh",
+    "alias": "汤加海啸",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F916",
+    "locale": "zh",
+    "alias": "人工智障",
+    "action": "remove",
+    "why": "safety review: uses intellectual disability as an insult"
+  },
+  {
+    "hexcode": "1F916",
+    "locale": "zh",
+    "alias": "智障",
+    "action": "remove",
+    "why": "safety review: uses intellectual disability as an insult"
+  },
+  {
+    "hexcode": "1F34C",
+    "locale": "zh",
+    "alias": "香蕉人",
+    "action": "remove",
+    "why": "safety review: 'banana person': insult for Asians seen as culturally white"
   }
 ]
