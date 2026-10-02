@@ -1,7 +1,7 @@
 {
   "alias (core + ext)": {
-    "r5": 95.8,
-    "mrr": 0.848
+    "r5": 96.7,
+    "mrr": 0.85
   },
   "alias (core only, first load)": {
     "r5": 85.5,
@@ -19,101 +19,109 @@
     "r5": 90.2,
     "mrr": 0.796
   },
+  "alias (min coverage 0.5)": {
+    "r5": 96.3,
+    "mrr": 0.844
+  },
+  "alias (min coverage 0.6)": {
+    "r5": 93.5,
+    "mrr": 0.814
+  },
   "semantic bge-small@384": {
     "r5": 70.6,
     "mrr": 0.623
   },
   "fused bge-small@384": {
-    "r5": 96.3,
+    "r5": 96.7,
     "mrr": 0.863
   },
   "fused-gated bge-small@384": {
-    "r5": 97.2,
-    "mrr": 0.87
+    "r5": 97.7,
+    "mrr": 0.865
   },
   "semantic bge-small@256": {
     "r5": 69.2,
     "mrr": 0.606
   },
   "fused bge-small@256": {
-    "r5": 95.8,
-    "mrr": 0.863
+    "r5": 97.7,
+    "mrr": 0.872
   },
   "fused-gated bge-small@256": {
-    "r5": 96.3,
-    "mrr": 0.866
+    "r5": 98.1,
+    "mrr": 0.873
   },
   "semantic bge-small@128": {
     "r5": 60.7,
     "mrr": 0.533
   },
   "fused bge-small@128": {
-    "r5": 95.8,
-    "mrr": 0.842
+    "r5": 98.1,
+    "mrr": 0.852
   },
   "fused-gated bge-small@128": {
-    "r5": 95.8,
-    "mrr": 0.849
+    "r5": 97.7,
+    "mrr": 0.859
   },
   "semantic bge-m3@1024": {
     "r5": 85.5,
     "mrr": 0.756
   },
   "fused bge-m3@1024": {
-    "r5": 94.9,
-    "mrr": 0.893
+    "r5": 95.3,
+    "mrr": 0.887
   },
   "fused-gated bge-m3@1024": {
-    "r5": 95.3,
-    "mrr": 0.878
+    "r5": 95.8,
+    "mrr": 0.874
   },
   "semantic bge-m3@768": {
     "r5": 85,
     "mrr": 0.738
   },
   "fused bge-m3@768": {
-    "r5": 94.9,
-    "mrr": 0.891
+    "r5": 95.3,
+    "mrr": 0.889
   },
   "fused-gated bge-m3@768": {
-    "r5": 95.3,
-    "mrr": 0.876
+    "r5": 95.8,
+    "mrr": 0.874
   },
   "semantic bge-m3@512": {
     "r5": 82.7,
     "mrr": 0.696
   },
   "fused bge-m3@512": {
-    "r5": 95.3,
-    "mrr": 0.879
+    "r5": 95.8,
+    "mrr": 0.882
   },
   "fused-gated bge-m3@512": {
-    "r5": 94.9,
-    "mrr": 0.866
+    "r5": 95.8,
+    "mrr": 0.865
   },
   "semantic bge-m3@256": {
     "r5": 72,
     "mrr": 0.607
   },
   "fused bge-m3@256": {
-    "r5": 95.8,
-    "mrr": 0.855
+    "r5": 96.3,
+    "mrr": 0.869
   },
   "fused-gated bge-m3@256": {
-    "r5": 95.3,
-    "mrr": 0.858
+    "r5": 96.7,
+    "mrr": 0.869
   },
   "semantic bge-m3@128": {
     "r5": 51.9,
     "mrr": 0.432
   },
   "fused bge-m3@128": {
-    "r5": 93.9,
-    "mrr": 0.817
+    "r5": 94.9,
+    "mrr": 0.834
   },
   "fused-gated bge-m3@128": {
-    "r5": 93.5,
-    "mrr": 0.82
+    "r5": 95.8,
+    "mrr": 0.841
   },
   "semantic embeddinggemma@768": {
     "r5": 88.3,
@@ -121,11 +129,11 @@
   },
   "fused embeddinggemma@768": {
     "r5": 97.2,
-    "mrr": 0.892
+    "mrr": 0.89
   },
   "fused-gated embeddinggemma@768": {
-    "r5": 97.2,
-    "mrr": 0.881
+    "r5": 96.7,
+    "mrr": 0.875
   },
   "semantic embeddinggemma@512": {
     "r5": 90.2,
@@ -133,11 +141,11 @@
   },
   "fused embeddinggemma@512": {
     "r5": 97.2,
-    "mrr": 0.893
+    "mrr": 0.887
   },
   "fused-gated embeddinggemma@512": {
-    "r5": 97.2,
-    "mrr": 0.88
+    "r5": 96.7,
+    "mrr": 0.871
   },
   "semantic embeddinggemma@256": {
     "r5": 86.9,
@@ -145,82 +153,82 @@
   },
   "fused embeddinggemma@256": {
     "r5": 97.7,
-    "mrr": 0.891
+    "mrr": 0.889
   },
   "fused-gated embeddinggemma@256": {
-    "r5": 97.7,
-    "mrr": 0.875
+    "r5": 97.2,
+    "mrr": 0.871
   },
   "semantic embeddinggemma@128": {
     "r5": 82.2,
     "mrr": 0.747
   },
   "fused embeddinggemma@128": {
-    "r5": 96.7,
-    "mrr": 0.899
+    "r5": 97.2,
+    "mrr": 0.888
   },
   "fused-gated embeddinggemma@128": {
-    "r5": 96.3,
-    "mrr": 0.875
+    "r5": 97.2,
+    "mrr": 0.866
   },
   "semantic qwen3@1024": {
     "r5": 80.8,
     "mrr": 0.698
   },
   "fused qwen3@1024": {
-    "r5": 92.1,
-    "mrr": 0.847
+    "r5": 94.9,
+    "mrr": 0.858
   },
   "fused-gated qwen3@1024": {
-    "r5": 93,
-    "mrr": 0.855
+    "r5": 95.8,
+    "mrr": 0.862
   },
   "semantic qwen3@768": {
     "r5": 80.4,
     "mrr": 0.687
   },
   "fused qwen3@768": {
-    "r5": 92.5,
-    "mrr": 0.855
+    "r5": 94.9,
+    "mrr": 0.86
   },
   "fused-gated qwen3@768": {
-    "r5": 93.5,
-    "mrr": 0.86
+    "r5": 95.8,
+    "mrr": 0.863
   },
   "semantic qwen3@512": {
     "r5": 77.6,
     "mrr": 0.665
   },
   "fused qwen3@512": {
-    "r5": 93.5,
-    "mrr": 0.846
+    "r5": 95.8,
+    "mrr": 0.854
   },
   "fused-gated qwen3@512": {
-    "r5": 93.9,
-    "mrr": 0.851
+    "r5": 96.7,
+    "mrr": 0.858
   },
   "semantic qwen3@256": {
     "r5": 74.8,
     "mrr": 0.626
   },
   "fused qwen3@256": {
-    "r5": 93.5,
-    "mrr": 0.849
+    "r5": 95.8,
+    "mrr": 0.859
   },
   "fused-gated qwen3@256": {
-    "r5": 93.5,
-    "mrr": 0.849
+    "r5": 96.3,
+    "mrr": 0.859
   },
   "semantic qwen3@128": {
     "r5": 71,
     "mrr": 0.584
   },
   "fused qwen3@128": {
-    "r5": 93.9,
-    "mrr": 0.852
+    "r5": 96.7,
+    "mrr": 0.862
   },
   "fused-gated qwen3@128": {
-    "r5": 93.5,
-    "mrr": 0.846
+    "r5": 96.7,
+    "mrr": 0.857
   }
 }
