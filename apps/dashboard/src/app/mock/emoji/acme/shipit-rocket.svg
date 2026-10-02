@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:shipit-rocket:</title>
+  <g transform="rotate(45 32 32)">
+    <path d="M25.5 45c0 9 4 15.5 6.5 17.5 2.5-2 6.5-8.5 6.5-17.5z" fill="#ff8a3d"/>
+    <path d="M28.5 45c0 6 2 10 3.5 11.5 1.5-1.5 3.5-5.5 3.5-11.5z" fill="#ffc93c"/>
+    <path d="M24 31.5 15 42.5v6.5l9.5-4.5zM40 31.5 49 42.5v6.5l-9.5-4.5z" fill="#f25c54"/>
+    <path d="M32 4c6.5 5 9.5 14 9.5 25.5 0 6.5-.8 12-1.8 16.5H24.3c-1-4.5-1.8-10-1.8-16.5C22.5 18 25.5 9 32 4z" fill="#eef1f6"/>
+    <path d="M32 4c6.5 5 9.5 14 9.5 25.5 0 6.5-.8 12-1.8 16.5H32z" fill="#d5dbe6"/>
+    <path d="M32 4c3.6 2.8 6 6.7 7.6 11.5H24.4C26 10.7 28.4 6.8 32 4z" fill="#f25c54"/>
+    <circle cx="32" cy="27" r="6" fill="#2f6fe0"/>
+    <circle cx="32" cy="27" r="4.2" fill="#4c8dff"/>
+    <circle cx="30.4" cy="25.4" r="1.5" fill="#fff" opacity=".75"/>
+    <rect x="25.5" y="44.5" width="13" height="3.5" rx="1.5" fill="#6b7280"/>
+  </g>
+</svg>

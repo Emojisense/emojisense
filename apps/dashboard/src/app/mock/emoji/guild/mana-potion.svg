@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:mana-potion:</title>
+  <defs>
+    <clipPath id="mana-body"><circle cx="32" cy="40" r="17"/></clipPath>
+  </defs>
+  <rect x="27" y="4" width="10" height="8" rx="2" fill="#b97540"/>
+  <rect x="25" y="11" width="14" height="4" rx="2" fill="#c2cddc"/>
+  <path d="M27 14h10v10.5a17 17 0 1 1-10 0z" fill="#dfe7f2"/>
+  <g clip-path="url(#mana-body)">
+    <rect x="10" y="36" width="44" height="24" fill="#6a5ae0"/>
+    <rect x="10" y="36" width="44" height="3.5" fill="#8e82f0"/>
+  </g>
+  <circle cx="38" cy="45" r="2.4" fill="#fff" opacity=".6"/>
+  <circle cx="30" cy="50" r="1.6" fill="#fff" opacity=".6"/>
+  <circle cx="34" cy="41.5" r="1.2" fill="#fff" opacity=".6"/>
+  <path d="M20 37a13 13 0 0 1 6-8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M54 12l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z" fill="#8e82f0"/>
+</svg>

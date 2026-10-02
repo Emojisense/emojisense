@@ -1,0 +1,451 @@
+/* App shell: a quiet sidebar, a sticky top bar with breadcrumbs, and the page. */
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100dvh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  border-right: 0.0625rem solid var(--line);
+  background: var(--bg-soft);
+}
+
+.side-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  height: var(--topbar-height);
+  padding: 0 0.625rem 0 1rem;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  border-radius: var(--radius-xs);
+  text-decoration: none;
+}
+
+.wordmark-glyph {
+  font-size: 1.25rem;
+  transition: transform 240ms var(--spring);
+}
+
+.wordmark:hover .wordmark-glyph {
+  transform: rotate(-10deg) scale(1.08);
+}
+
+.wordmark-word {
+  font: 700 1.0625rem / 1 var(--font-display);
+  letter-spacing: -0.035em;
+}
+
+.side-close {
+  display: none;
+}
+
+.side-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 0;
+  padding: 0.25rem 0.625rem 1rem;
+  overflow-y: auto;
+}
+
+/* App switcher */
+.switcher {
+  position: relative;
+}
+
+.switcher-button {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.4375rem 0.5rem;
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  transition: border-color 140ms var(--ease-out);
+}
+
+.switcher-button:hover,
+.switcher-button[aria-expanded="true"] {
+  border-color: var(--line-strong);
+}
+
+.switcher-text {
+  display: grid;
+  flex: 1;
+  gap: 0.1875rem;
+  min-width: 0;
+}
+
+.switcher-name {
+  overflow: hidden;
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switcher-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+
+.switcher-chevron {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--ink-3);
+}
+
+.switcher .menu {
+  top: calc(100% + 0.375rem);
+  right: 0;
+  left: 0;
+  max-height: min(26rem, 70dvh);
+  overflow-y: auto;
+}
+
+.switcher-item-text {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.switcher-item-text > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.switcher-check {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Navigation */
+.nav-group {
+  display: grid;
+  gap: 0.0625rem;
+}
+
+.nav-label {
+  padding: 0 0.625rem 0.375rem;
+  color: var(--ink-3);
+  font: 500 var(--text-2xs) / 1 var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.5rem;
+  color: var(--ink-2);
+  font-size: var(--text-base);
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background 120ms var(--ease-out),
+    color 120ms var(--ease-out);
+}
+
+.nav-link svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--ink-3);
+  transition: color 120ms var(--ease-out);
+}
+
+.nav-link:hover {
+  background: var(--bg-sunk);
+  color: var(--ink);
+}
+
+.nav-link[aria-current="page"] {
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 0 0 0.0625rem var(--line);
+}
+
+.nav-link[aria-current="page"] svg {
+  color: var(--ink);
+}
+
+.nav-lock {
+  margin-left: auto;
+  color: var(--ink-3);
+  font: 500 var(--text-2xs) / 1 var(--font-mono);
+  letter-spacing: 0.02em;
+}
+
+/* Sidebar foot: plan and account */
+.side-foot {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0.625rem;
+  border-top: 0.0625rem solid var(--line);
+}
+
+.side-plan {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.side-plan-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.side-plan p {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+}
+
+.account {
+  position: relative;
+}
+
+.account-button {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.375rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+}
+
+.account-button:hover,
+.account-button[aria-expanded="true"] {
+  background: var(--bg-sunk);
+}
+
+.account-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.account-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.account-email {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+
+.account .menu {
+  right: 0;
+  bottom: calc(100% + 0.375rem);
+  left: 0;
+}
+
+/* Top bar */
+.shell-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  height: var(--topbar-height);
+  padding: 0 1.5rem;
+  border-bottom: 0.0625rem solid var(--line);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: saturate(1.6) blur(0.75rem);
+}
+
+.menu-toggle {
+  display: none;
+}
+
+.crumbs {
+  flex: 1;
+  min-width: 0;
+}
+
+.crumbs ol {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  font-size: var(--text-base);
+}
+
+.crumbs li {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.crumbs li + li::before {
+  content: "/";
+  color: var(--line-strong);
+}
+
+.crumbs a {
+  overflow: hidden;
+  border-radius: var(--radius-xs);
+  color: var(--ink-3);
+  text-decoration: none;
+  text-overflow: ellipsis;
+}
+
+.crumbs a:hover {
+  color: var(--ink);
+}
+
+.crumbs [aria-current="page"] {
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 550;
+  text-overflow: ellipsis;
+}
+
+.crumb-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.content {
+  width: min(100% - 3rem, var(--content-width));
+  margin-inline: auto;
+  padding: 2.25rem 0 5rem;
+}
+
+.content:focus {
+  outline: none;
+}
+
+.sidebar-scrim {
+  display: none;
+}
+
+@media (max-width: 60rem) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(18rem, 86vw);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-105%);
+    transition: transform 260ms var(--ease-out);
+    visibility: hidden;
+  }
+
+  .shell[data-nav-open] .sidebar {
+    transform: none;
+    visibility: visible;
+  }
+
+  .shell[data-nav-open] .sidebar-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    display: block;
+    background: var(--overlay);
+    animation: fade-in 200ms var(--ease-out);
+  }
+
+  .side-close {
+    display: inline-flex;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+    margin-left: -0.375rem;
+  }
+
+  .topbar {
+    padding: 0 1rem;
+  }
+
+  .content {
+    width: min(100% - 2rem, var(--content-width));
+    padding-top: 1.5rem;
+  }
+
+  .crumbs li:not(:last-child) {
+    display: none;
+  }
+
+  .crumbs li + li::before {
+    content: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

@@ -3,7 +3,8 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import type { AppSummary, CreatedKeyResponse, KeySummary } from "../../shared/contract";
 import { ApiError, api, errorMessage } from "../api";
 import { splitOrigins } from "../format";
-import { Dialog } from "./Dialog";
+import { rememberKey } from "../lib/sessionKeys";
+import { Dialog } from "../ui/Dialog";
 import { OriginsField } from "./OriginsField";
 
 interface CreateKeyDialogProps {
@@ -25,6 +26,7 @@ export function CreateKeyDialog({ app, open, onClose, onCreated }: CreateKeyDial
     <Dialog
       open={open}
       title={created ? "Copy your key now" : "Create an API key"}
+      description={created ? undefined : `For ${app.name} (${app.environment}).`}
       onClose={close}
       dismissible={created === null}
     >
@@ -35,6 +37,7 @@ export function CreateKeyDialog({ app, open, onClose, onCreated }: CreateKeyDial
           app={app}
           onCancel={close}
           onCreated={(result) => {
+            rememberKey(result.key.id, result.fullKey);
             setCreated(result);
             onCreated(result.key);
           }}
@@ -77,7 +80,7 @@ function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
     <form className="form" onSubmit={submit} noValidate>
       <fieldset className="choices">
         <legend>Key type</legend>
-        <label className="choice">
+        <label className="check">
           <input
             type="radio"
             name="kind"
@@ -85,13 +88,20 @@ function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
             checked={kind === "publishable"}
             onChange={() => setKind("publishable")}
           />
-          <span className="choice-title">Publishable key 🌐</span>
-          <span className="hint">
-            For browsers and extensions. Send it as <code>?key=</code>. It works only from the allowed
-            origins.
+          <span className="check-text">
+            <span className="check-title">
+              Publishable key{" "}
+              <span className="emoji" aria-hidden="true">
+                🌐
+              </span>
+            </span>
+            <span className="hint">
+              For browsers and extensions. Send it as <code className="code-inline">?key=</code>. It works
+              only from the allowed origins.
+            </span>
           </span>
         </label>
-        <label className="choice">
+        <label className="check">
           <input
             type="radio"
             name="kind"
@@ -99,10 +109,17 @@ function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
             checked={kind === "secret"}
             onChange={() => setKind("secret")}
           />
-          <span className="choice-title">Secret key 🔒</span>
-          <span className="hint">
-            For servers only: bots, MCP, back ends. Send it as <code>Authorization: Bearer</code>. Never put
-            it in a browser.
+          <span className="check-text">
+            <span className="check-title">
+              Secret key{" "}
+              <span className="emoji" aria-hidden="true">
+                🔒
+              </span>
+            </span>
+            <span className="hint">
+              For servers only: bots, MCP, back ends. Send it as{" "}
+              <code className="code-inline">Authorization: Bearer</code>. Never put it in a browser.
+            </span>
           </span>
         </label>
       </fieldset>
@@ -124,10 +141,10 @@ function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
       )}
 
       <div className="dialog-actions">
-        <button type="button" className="button" onClick={onCancel}>
+        <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="submit" className="button button-primary" disabled={busy}>
+        <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? "Creating…" : "Create key"}
         </button>
       </div>
@@ -160,23 +177,29 @@ function KeyReveal({ created, onDone }: { created: CreatedKeyResponse; onDone: (
   return (
     <>
       <p id={warningId} className="notice notice-warning">
-        <strong>Shown once.</strong> This is the only time you can see the full key. We keep only a hash, so
-        we cannot show it again. If you lose it, revoke it and create a new one.
+        <span className="emoji" aria-hidden="true">
+          👀
+        </span>
+        <span>
+          <strong>Shown once.</strong> This is the only time you can see the full key. We keep only a hash, so
+          we cannot show it again. If you lose it, revoke it and create a new one.
+        </span>
       </p>
       <div className="field">
-        <label htmlFor={inputId}>Your new {secret ? "secret" : "publishable"} key</label>
-        <div className="reveal-row">
+        <label htmlFor={inputId} className="label">
+          Your new {secret ? "secret" : "publishable"} key
+        </label>
+        <div className="copy-field">
           <input
             ref={inputRef}
             id={inputId}
-            className="input reveal-key"
             readOnly
             value={created.fullKey}
             spellCheck={false}
             aria-describedby={warningId}
             onFocus={(event) => event.currentTarget.select()}
           />
-          <button type="button" className="button" onClick={copyKey}>
+          <button type="button" className="btn btn-sm" onClick={copyKey}>
             Copy key
           </button>
         </div>
@@ -188,16 +211,18 @@ function KeyReveal({ created, onDone }: { created: CreatedKeyResponse; onDone: (
       <p className="hint">
         {secret ? (
           <>
-            Send it from your server as <code>Authorization: Bearer {created.key.prefix}…</code>
+            Send it from your server as{" "}
+            <code className="code-inline">Authorization: Bearer {created.key.prefix}…</code>
           </>
         ) : (
           <>
-            Send it as <code>?key={created.key.prefix}…</code> from an allowed origin.
+            Send it as <code className="code-inline">?key={created.key.prefix}…</code> from an allowed origin.
+            Until you reload, the Overview’s live search and quick start use it.
           </>
         )}
       </p>
       <div className="dialog-actions">
-        <button type="button" className="button button-primary" onClick={onDone}>
+        <button type="button" className="btn btn-primary" onClick={onDone}>
           I have saved the key
         </button>
       </div>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { KeySummary } from "../../shared/contract";
 import { api, errorMessage } from "../api";
-import { Dialog } from "./Dialog";
+import { Dialog } from "../ui/Dialog";
 
 interface RevokeKeyDialogProps {
   /** The key to revoke; `null` keeps the dialog closed. */
@@ -44,8 +44,9 @@ function RevokeConfirm({
   return (
     <>
       <p>
-        Requests with <code>{apiKey.prefix}…</code> will fail with <code>401</code> right away. You cannot
-        undo this. Create a new key first if an app still uses this one.
+        Requests with <code className="code-inline">{apiKey.prefix}…</code> will fail with{" "}
+        <code className="code-inline">401</code> right away. You cannot undo this. Create a new key first if
+        an app still uses this one.
       </p>
       {error && (
         <p className="notice notice-error" role="alert">
@@ -54,10 +55,10 @@ function RevokeConfirm({
       )}
       {/* Cancel comes first, so the dialog opens with focus on the safe choice. */}
       <div className="dialog-actions">
-        <button type="button" className="button" onClick={onCancel}>
+        <button type="button" className="btn" onClick={onCancel}>
           Cancel
         </button>
-        <button type="button" className="button button-danger" onClick={revoke} disabled={busy}>
+        <button type="button" className="btn btn-danger-solid" onClick={revoke} disabled={busy}>
           {busy ? "Revoking…" : "Revoke key"}
         </button>
       </div>

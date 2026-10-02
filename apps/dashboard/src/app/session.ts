@@ -1,11 +1,11 @@
 import { createContext, useContext } from "react";
-import type { MeResponse } from "../shared/contract";
+import type { Me } from "./api";
 
 export interface Session {
-  me: MeResponse;
+  me: Me;
   /** Reloads /api/me, e.g. after an app is created (app count, plan). */
   refresh: () => Promise<void>;
-  update: (change: (me: MeResponse) => MeResponse) => void;
+  update: (change: (me: Me) => Me) => void;
   signOut: () => Promise<void>;
 }
 

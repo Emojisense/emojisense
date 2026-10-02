@@ -6,7 +6,7 @@ import { APP, FULL_KEY, KEY, me, NOW, stubApi, usage } from "./fake-api";
 const usageRoute = { body: usage("2026-10") };
 
 beforeEach(() => {
-  window.history.replaceState(null, "", "/apps/app_1");
+  window.history.replaceState(null, "", "/apps/app_1/keys");
 });
 
 describe("keys", () => {

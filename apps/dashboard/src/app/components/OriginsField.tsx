@@ -17,17 +17,20 @@ export function OriginsField({ value, onChange, environment, invalid, errorId }:
 
   return (
     <div className="field">
-      <label htmlFor={id}>Allowed origins</label>
+      <label htmlFor={id} className="label">
+        Allowed origins
+      </label>
       <p id={hintId} className="hint">
-        One per line, like <code>https://app.example.com</code> or <code>https://*.example.com</code>. Use{" "}
-        <code>http://</code> only for localhost.{" "}
+        One per line, like <code className="code-inline">https://app.example.com</code> or{" "}
+        <code className="code-inline">https://*.example.com</code>. Use{" "}
+        <code className="code-inline">http://</code> only for localhost.{" "}
         {environment === "dev"
           ? "Leave it empty to allow any origin (dev apps only)."
           : "Add at least one: only dev apps may allow any origin."}
       </p>
       <textarea
         id={id}
-        className="input"
+        className="input input-mono"
         rows={4}
         value={value}
         onChange={(event) => onChange(event.target.value)}

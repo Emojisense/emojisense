@@ -1,8 +1,16 @@
 /**
- * A minimal history router: three routes do not need a routing library. The Worker's
- * `not_found_handling: "single-page-application"` serves index.html for every deep link.
+ * A minimal history router: a dozen flat routes do not need a routing library (routes.ts maps
+ * paths to pages). The Worker's `not_found_handling: "single-page-application"` serves
+ * index.html for every deep link.
  */
-import { type AnchorHTMLAttributes, type MouseEvent, useEffect, useRef, useSyncExternalStore } from "react";
+import {
+  type AnchorHTMLAttributes,
+  type MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 
 const NAVIGATE_EVENT = "emojisense:navigate";
 let navigated = false;
@@ -22,6 +30,12 @@ function subscribe(onChange: () => void): () => void {
 
 export function usePath(): string {
   return useSyncExternalStore(subscribe, () => window.location.pathname);
+}
+
+/** The query string as URLSearchParams; re-renders when it changes. */
+export function useSearchParams(): URLSearchParams {
+  const search = useSyncExternalStore(subscribe, () => window.location.search);
+  return useMemo(() => new URLSearchParams(search), [search]);
 }
 
 export function navigate(to: string, options: { replace?: boolean } = {}): void {

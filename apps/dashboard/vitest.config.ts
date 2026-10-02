@@ -17,7 +17,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "ui",
-          include: ["test/ui/**/*.test.tsx"],
+          include: ["test/ui/**/*.test.{ts,tsx}"],
           environment: "happy-dom",
           setupFiles: ["./test/ui/setup.ts"],
         },

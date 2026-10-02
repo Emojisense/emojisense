@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:oat-milk:</title>
+  <path d="M40 23 52 18v36l-12 5z" fill="#e3d5b8"/>
+  <path d="M28 12 40 23 52 18 40 7z" fill="#d6c39d"/>
+  <path d="M26.5 9.5 38.5 4.5l2.2 3-12 5z" fill="#c8b185"/>
+  <path d="M14 23h26v34a2 2 0 0 1-2 2H16a2 2 0 0 1-2-2z" fill="#fbf3e4"/>
+  <path d="M14 23 27 11.5 40 23z" fill="#efe1c6"/>
+  <rect x="14" y="32" width="26" height="17" fill="#e9b949"/>
+  <path d="M27 47V35" stroke="#9a5b34" stroke-width="1.8" stroke-linecap="round"/>
+  <g fill="#fff7e8">
+    <ellipse cx="24.2" cy="38" rx="1.7" ry="2.8" transform="rotate(-30 24.2 38)"/>
+    <ellipse cx="29.8" cy="38" rx="1.7" ry="2.8" transform="rotate(30 29.8 38)"/>
+    <ellipse cx="24.2" cy="42.5" rx="1.7" ry="2.8" transform="rotate(-30 24.2 42.5)"/>
+    <ellipse cx="29.8" cy="42.5" rx="1.7" ry="2.8" transform="rotate(30 29.8 42.5)"/>
+    <ellipse cx="27" cy="34" rx="1.6" ry="2.6"/>
+  </g>
+  <path d="M40 32l12-4.9v17L40 49z" fill="#d4a53a"/>
+  <circle cx="45" cy="15.5" r="3" fill="#4c8dff"/>
+</svg>

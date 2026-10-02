@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:patch-notes:</title>
+  <rect x="13" y="10" width="36" height="44" fill="#f3e2c7"/>
+  <rect x="9" y="5" width="44" height="9" rx="4.5" fill="#d7b47e"/>
+  <rect x="9" y="50" width="44" height="9" rx="4.5" fill="#d7b47e"/>
+  <circle cx="13.5" cy="9.5" r="2.4" fill="#b98f54"/>
+  <circle cx="13.5" cy="54.5" r="2.4" fill="#b98f54"/>
+  <g stroke="#b98f54" stroke-width="2.4" stroke-linecap="round">
+    <path d="M19 21h20M19 28h24M19 35h16M19 42h12"/>
+  </g>
+  <circle cx="48" cy="45" r="10" fill="#3cc48a"/>
+  <path d="M48 40v10M43 45h10" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+</svg>
