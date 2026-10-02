@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useId, useState } from "react";
 import { ApiError, type App, api, errorMessage } from "../api";
+import { DeleteAccountDialog } from "../components/DeleteAccountDialog";
 import { ENVIRONMENT_LABELS, formatDate } from "../format";
 import { appEmoji, initials } from "../lib/identity";
 import { useSession } from "../session";
@@ -15,10 +16,11 @@ export function SettingsPage() {
   const { apps } = useApps();
   const list = apps.status === "ready" ? apps.data : [];
   const [busy, setBusy] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <>
-      <PageHeader title="Settings" lede="Your profile, your apps’ names and your session." />
+      <PageHeader title="Settings" lede="Your profile, your apps’ names, your session and your account." />
       <div className="stack-lg">
         <section className="card" aria-label="Profile">
           <div className="profile">
@@ -80,7 +82,29 @@ export function SettingsPage() {
             </button>
           </div>
         </section>
+
+        <section className="card" aria-label="Delete account">
+          <div className="card-head">
+            <div>
+              <h2 className="card-title">Delete account</h2>
+              <p className="card-sub">
+                Deletes your account and everything it owns: apps, keys, custom emoji, tenants, webhooks and
+                your team. You cannot undo this.
+              </p>
+            </div>
+            <button type="button" className="btn btn-danger" onClick={() => setDeleting(true)}>
+              <Icon name="trash" />
+              Delete account…
+            </button>
+          </div>
+        </section>
       </div>
+      <DeleteAccountDialog
+        open={deleting}
+        email={me.account.email}
+        onClose={() => setDeleting(false)}
+        onDeleted={() => void signOut()}
+      />
     </>
   );
 }

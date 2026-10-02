@@ -8,7 +8,7 @@ import { getBilling, requestUpgrade } from "./routes/billing";
 import { deleteEmoji, listEmoji, updateEmoji, uploadEmoji } from "./routes/emoji";
 import { importDiscordEmoji, importSlackEmoji } from "./routes/emoji-import";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
-import { getMe } from "./routes/me";
+import { deleteMe, getMe } from "./routes/me";
 import { acceptInvite, createInvite, deleteInvite, getTeam, removeMember, updateMember } from "./routes/team";
 import { createAppTenant, deleteAppTenant, getAppTenant, listAppTenants } from "./routes/tenants";
 import { getUsage } from "./routes/usage";
@@ -39,6 +39,7 @@ const route = createRouter([
   { method: "GET", path: "/api/auth/dev", handler: devSignIn },
   { method: "POST", path: "/api/auth/logout", handler: logout },
   { method: "GET", path: "/api/me", handler: authed(getMe) },
+  { method: "DELETE", path: "/api/me", handler: authed(deleteMe) },
   { method: "GET", path: "/api/apps", handler: authed(listApps) },
   { method: "POST", path: "/api/apps", handler: authed(createApp) },
   { method: "GET", path: "/api/apps/:id", handler: authed(getApp) },

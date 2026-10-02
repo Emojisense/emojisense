@@ -3,10 +3,13 @@
 ## The short version
 
 - Most searches never leave the device. The engine and its dictionary run inside your app.
-- Our API code never writes IP addresses, keys or user ids to logs, analytics or storage.
+- Our code never writes IP addresses, API keys or the ids of your users to logs or analytics,
+  and it never stores IP addresses. We store API keys only as a hash and their first 12
+  characters.
 - We never store the message text that is sent for reaction suggestions, or the images that are
   sent for photo to emoji.
 - This website sets no cookies and runs no analytics and no third-party scripts.
+- You can delete your dashboard account, and everything in it, at any time.
 - We do not sell personal data, and we do not use it for advertising.
 
 ## Who is responsible
@@ -39,11 +42,17 @@ browser. The address is not sent to us.
 
 ### The waitlist
 
+You join the waitlist with the form on this website. Account holders also join it when they ask
+for a paid plan in the dashboard; then we use the email address of the account.
+
 | What | Why | How long |
 | --- | --- | --- |
-| Your email address, the plan that you chose, the date | To email you once, when that plan opens | Until we send that email, then deleted within [Deletion period]. Earlier, when you ask. |
+| Your email address, the plan that you chose, the date of your first sign-up | To email you once, when that plan opens | 12 months after your first sign-up at most: a daily job deletes older entries. When you join again, we change the plan but keep the first date. After we send the email, we delete the entry within [Deletion period]. Earlier, when you ask, or when you delete a dashboard account with the same email address. |
 
 The legal basis is your consent. You can withdraw it at any time: write to [Privacy email].
+
+To limit the number of sign-ups, the waitlist uses your IP address as a rate-limit key in memory
+only. It never writes the address to logs or storage.
 
 ### Dashboard accounts
 
@@ -52,43 +61,69 @@ GitHub access token once, to read your profile, and we never store it.
 
 | What | Why | How long |
 | --- | --- | --- |
-| GitHub user id, your name (or your GitHub username), your primary email address if GitHub marks it as verified | To identify your account and to contact you about the Service | While your account exists. Deleted within [Deletion period] after you close it. |
-| Your plan | To apply the right limits | While your account exists |
-| Sessions: a SHA-256 hash of the session token and its expiry time | To keep you signed in | 30 days at most |
-| Apps: names, environments (dev, staging, prod), emoji set choice | To operate your apps | While your account exists |
-| API keys: the first 12 characters and a SHA-256 hash. The full key is shown to you once and never stored. Allowed origins. | To check requests | Until you revoke the key or close your account |
-| Team members and their roles. Invites: the email address that you enter (optional), a hash of the invite token, the expiry time | To give your team access | Until removed, or until the invite expires or is accepted |
-| Webhooks: the address, the signing secret, and the last 50 deliveries (event, HTTP status, duration, time) | To send events to your systems and show their status | Until you delete the webhook |
-| Monthly usage counts per app: AI calls, photo classifications, custom emoji | To apply plan limits and, later, to bill | [Usage retention period] |
+| GitHub user id, your name (or your GitHub username), your primary email address if GitHub marks it as verified | To identify your account and to contact you about the Service | Until you delete your account |
+| Your plan | To apply the right limits | Until you delete your account |
+| Sessions: a SHA-256 hash of the session token and its expiry time | To keep you signed in | A session works for 30 days at most. Signing out deletes it. Expired sessions are deleted at your next sign-in, and all sessions when you delete your account. |
+| Apps: names, environments (dev, staging, prod), emoji set choice | To operate your apps | Until you delete your account |
+| API keys: the first 12 characters and a SHA-256 hash. The full key is shown to you once and never stored. Allowed origins, and the time of revocation. | To check requests | Until you delete your account. A revoked key stops working within one minute and stays in your list, marked as revoked. |
+| Team members and their roles | To give your team access | Until the member is removed or leaves, or until the owner or the member deletes their account |
+| Invites: the email address that you enter (optional), a hash of the invite token, the role, the expiry time and the time of acceptance | To give your team access | Until you withdraw an open invite, or until you delete your account. Used and expired invites stay, but they no longer work. |
+| Webhooks: the address, the signing secret, the events, and the last 50 deliveries (event, HTTP status, duration, time) | To send events to your systems and show their status | Until you delete the webhook or your account |
+| Monthly usage counts per app: AI calls, photo classifications, custom emoji | To apply plan limits and, later, to bill | Until you delete your account |
 
 The dashboard sets two cookies. Both are strictly necessary, so they need no consent:
 
 - `es_session`: keeps you signed in for up to 30 days. HttpOnly, Secure, SameSite=Lax.
 - `es_oauth_state`: protects the GitHub sign-in from forged requests. It lasts 10 minutes.
 
+### Deleting your account
+
+You can delete your account at any time. In the dashboard, open Settings, choose "Delete
+account" and type your account's email address to confirm. The dashboard API does the same:
+`DELETE /api/me` (see the [HTTP API](/docs/api/) reference). You can also write to
+[Privacy email].
+
+One request deletes, at once, from the live database: your account and its sessions, your apps
+with their API keys, usage counts, search analytics, tenants, custom emoji (records and images)
+and webhooks with their deliveries, your team members and invites, your memberships in other
+teams, and the waitlist entry of your email address. The API keeps a cache of key lookups for one
+minute, so a deleted key can work for up to one more minute.
+
+Not deleted, because they are not linked to your account: the search records in Analytics Engine
+(they have no app, key or account and expire after three months), and the invites that other
+owners sent to your email address (they belong to those owners). Copies of custom emoji images
+that Cloudflare's edge cache or a browser already holds stay there until they are evicted or
+expire. For backups, see "Deletion and backups" below.
+
 ### Custom emoji and tenants
 
 Custom emoji images are kept in object storage on Cloudflare (R2), with their names, search
 phrases, file type, size and source (upload, Slack import, Discord import or API). Tenant records
 hold the id and the name that you give each of your customers. We keep this data until you delete
-it or close your account. For this data, our customer is the controller.
+it or your account. For this data, our customer is the controller. A Slack or Discord token that
+you give us for an import is used once and never stored or logged.
 
 ### Searches that reach the API
 
 Most searches are answered on the device or from static files. We do not see those searches.
 
 When a search reaches the API, we record the search text after normalization (lower case, at most
-64 characters), the language, the mode, the outcome and the response time. We record no IP
-address, key, app or user id with it. These records go to Cloudflare Workers Analytics Engine,
-which keeps them for three months. We use a search text to improve search for everyone only after
-it has been searched at least 5 times, because rare texts can be personal.
+64 characters), the language, the mode, the outcome, the match scores and the response time. We
+record no IP address, key, app or user id with it. These records go to Cloudflare Workers
+Analytics Engine, which keeps them for three months. We use a search text to improve search for
+everyone only after it has been searched at least 5 times, because rare texts can be personal.
 
 Search results are cached on Cloudflare's network for up to 7 days. The cache key holds only the
 normalized search text, the language, the number of results, the mode and the index version.
 
-On the Pro and Scale plans, your dashboard shows search analytics for your apps: daily counts of
-searches and of searches without a result, per normalized search text. We keep them for the
-analytics period of your plan: 30 days on Pro, 1 year on Scale.
+For searches that use an API key of an app, we also count, per app, UTC day and normalized search
+text, how many searches there were and how many found nothing. Searches without a key, and
+searches with development keys, are not counted. The dashboard shows these counts on the Pro and
+Scale plans, and it names a search text only when the app saw it at least 5 times. We keep the
+counts for the analytics period of the plan of the account that owns the app: 30 days on Pro,
+1 year on Scale. On Free and Solo we keep them for 7 days and do not show them, so that an upgrade
+shows the last week at once. A daily job deletes older counts. For this data, our customer is the
+controller.
 
 ### Reaction suggestions
 
@@ -98,14 +133,29 @@ logged, cached or stored. We record only the outcome and the response time, with
 ### Photo to emoji
 
 Your app sends a small, downscaled image. The image is processed in memory and dropped. It is
-never stored. The short description that the model writes is cached for up to 7 days, keyed by a
-64-bit perceptual hash of the image, so that the same image shared many times is processed once.
+never stored. When your app also sends a 64-bit perceptual hash of the image, the short
+description that the model writes is cached for up to 7 days, keyed by that hash, so that the
+same image shared many times is processed once.
+
+### Logs
+
+Cloudflare's automatic request logs (Workers invocation logs) are turned off for our API and our
+dashboard, because they would record full request addresses, which can hold search text and keys.
+Our code writes its own short log records instead: event names, error types and counts. They
+never contain search text, message text, images, API keys, IP addresses or email addresses.
+Cloudflare Workers Logs keeps these records for up to 7 days.
 
 ### Rate limits and security
 
-To limit the number of requests, the API uses the IP address as a key in memory only. It never
-writes the address to logs or storage. Cloudflare, our infrastructure provider, processes IP
-addresses to route traffic and to block attacks.
+To limit the number of requests, the API and the waitlist use the IP address as a key in memory
+only. They never write the address to logs or storage. Cloudflare, our infrastructure provider,
+processes IP addresses to route traffic and to block attacks.
+
+### Payments
+
+We have no payment provider yet. The paid plans are not on sale, and we process no payment data.
+Before a payment provider processes any data, we will add it to the
+[Subprocessors](/legal/subprocessors/) page and update this policy.
 
 ## Legal bases
 
@@ -128,8 +178,9 @@ EU Standard Contractual Clauses: to be confirmed in legal review.]
 
 ## Deletion and backups
 
-When you delete data or close your account, we delete it from the live systems. Copies can stay in
-database backups for up to [Backup retention period], and then they are gone too.
+When you delete data or your account, we delete it from the live database at once. Custom emoji
+images are deleted from object storage before the records. Copies can stay in database backups
+(Cloudflare D1 Time Travel) for up to [Backup retention period], and then they are gone too.
 
 ## Security
 
@@ -140,8 +191,9 @@ Dashboard cookies are HttpOnly and Secure. We collect as little data as the Serv
 
 Depending on where you live, you can ask to see, correct, delete or export your personal data,
 and you can object to or restrict its use. When we process data based on your consent, you can
-withdraw it at any time. Write to [Privacy email]. We answer within 30 days. You can also complain
-to your data protection authority.
+withdraw it at any time. You can delete your account yourself (see "Deleting your account"). For
+everything else, write to [Privacy email]. We answer within 30 days. You can also complain to your
+data protection authority.
 
 If you use an app that is built with Emojisense, ask the company that makes the app. We help it to
 answer.

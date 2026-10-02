@@ -42,7 +42,9 @@ depend on a number. ⚠ = not verified, or the sources conflict.
 | Cache API | Local to each data center. Works on `*.workers.dev` (fixed 2025). GET only. No `stale-while-revalidate`. A request served from cache still bills the Worker request. |
 | Workers Cache (`[cache] enabled`) | Tiered. A hit skips the Worker (no CPU, no rate limiter, no analytics). The request is still billed. |
 | Rate limiting binding | `[[ratelimits]]`, `simple = { limit, period = 10 \| 60 }`. Per location. Eventually consistent. ⚠ price not documented. |
-| Analytics Engine | ≤ 20 blobs, 20 doubles, 1 index per point. 10M writes/month included on Paid. Billing has not started yet. |
+| Analytics Engine | ≤ 20 blobs, 20 doubles, 1 index per point. 10M writes/month included on Paid. Billing has not started yet. "Data written to Workers Analytics Engine is stored for three months" (/analytics/analytics-engine/limits/, checked 2026-10-02). |
+| Workers Logs | Retention 3 days (Free), 7 days (Paid). `observability.logs.invocation_logs: false` turns off the per-request log (request URL, response, metadata); `console.*` logs stay (/workers/observability/logs/workers-logs/, checked 2026-10-02). |
+| D1 | "By default, D1 enforces that foreign key constraints are valid within all queries and migrations" (/d1/sql-api/foreign-keys/). Time Travel restores up to 30 days back (Paid) or 7 days (Free) (/d1/reference/time-travel/). Both checked 2026-10-02. |
 | Script size | 64 MiB uncompressed. Global scope must start in ≤ 1 s. A `.bin` import gives an `ArrayBuffer`. |
 | KV | 1 write/s per key. Propagation is up to 60 s or more. Writes $5 per 1M (Paid). |
 | Static sites | Pages docs: "Start new projects with Workers". Static asset requests are free. |

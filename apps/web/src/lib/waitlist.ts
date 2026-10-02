@@ -45,6 +45,18 @@ const MESSAGES: Record<Exclude<WaitlistFailure, "invalid">, string> = {
 };
 
 /**
+ * What the page says after a form post that the browser sent without JavaScript. The dashboard
+ * answers it with a redirect to `/waitlist/?status=ok|error` (docs/API.md, `POST /api/waitlist`).
+ */
+export const RETURN_MESSAGES = {
+  ok: { title: "You are on the list", text: "We will email you once, when your plan opens." },
+  error: {
+    title: "We could not add you",
+    text: "Check your email address, wait a minute, then send the form again.",
+  },
+} as const;
+
+/**
  * POST `{ email, plan }` to the dashboard (docs/API.md, `POST /api/waitlist`). Never throws:
  * every outcome maps to a result the form can show inline.
  */

@@ -33,7 +33,7 @@ export const FLUSH_MAX_PENDING = 100;
 export const QUERY_FLUSH_MAX_ROWS = 100;
 /** Distinct rows an isolate holds while D1 is down. New rows past it are dropped (best effort). */
 export const QUERY_MAX_PENDING_ROWS = 10_000;
-/** The retention cron deletes query_daily rows in batches of this size… */
+/** The retention cron deletes query_daily and waitlist rows in batches of this size… */
 export const RETENTION_DELETE_BATCH = 1_000;
 /** …and at most this many batches per run. A larger backlog is finished by the next runs. */
 export const RETENTION_MAX_BATCHES = 200;

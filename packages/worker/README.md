@@ -90,7 +90,7 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | Limits are per account: `overLimit` compares the account's total over all of its apps with the limit. `usage_monthly` rows stay per app. | `src/context.ts`, `src/meter.ts` |
 | The account total is cached per isolate: read at most once a minute, replaced by the totals each flush reads in its own batch. No limit check costs a D1 query of its own. | `src/meter.ts`, `src/store.ts` |
 | Over the limit: `200` with `overLimit: true`; semantic mode returns no results, hybrid returns alias results only | handlers |
-| Usage is counted in memory and flushed as one UPSERT batch into `usage_monthly` after 10 s or 100 calls | `src/meter.ts` |
+| Usage is counted in memory and flushed as one UPSERT batch into `usage_monthly` after 10 s or 100 calls. The UPSERT skips rows of deleted apps (account deletion). | `src/meter.ts`, `src/store.ts` |
 
 Unflushed counts are lost when an isolate is evicted. The error favors the customer and is
 accepted for soft limits (DECISIONS.md, Update #2).
@@ -102,6 +102,10 @@ accepted for soft limits (DECISIONS.md, Update #2).
 | Each keyed `/v1/search` adds 1 search (and 1 miss when it returned no result) to its app, UTC day and normalized query. Cache hits and over-limit answers count. Anonymous calls, dev keys and reactions never do. | `src/context.ts`, `src/search.ts` |
 | Counted in memory and flushed like usage (10 s or 100 searches), at most 100 rows per D1 batch. The UPSERT skips rows of deleted apps. | `src/query-stats.ts`, `src/store.ts` |
 | Daily cron `17 3 * * *` deletes rows past the account plan's window: Pro 30 days, Scale 365, others 7. Batches of 1,000 rows, ≤ 200 per run. | `src/retention.ts`, `wrangler.jsonc` |
+
+The same cron deletes waitlist rows 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS` in
+`@emojisense/platform`). Each job runs and logs on its own; a failure of either marks the run as
+failed.
 
 Run the cron locally: `pnpm exec wrangler dev --env offline --test-scheduled --persist-to ../../.wrangler/state`,
 then `curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*"`.

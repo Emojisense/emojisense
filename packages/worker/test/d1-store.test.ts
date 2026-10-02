@@ -127,10 +127,21 @@ describe("D1 store on the platform schema", () => {
     await expect(
       store.addUsage([
         { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 1 },
-        { appId: "missing_app", period: "2026-10", metric: "semantic_calls", count: 1 },
+        { appId: "app_1", period: "2026-10", metric: "not_a_metric" as never, count: 1 },
       ]),
     ).rejects.toThrow();
     expect(await store.readAccountUsage("acc", "2026-10")).toEqual({});
+  });
+
+  it("skips usage of a deleted app instead of failing the batch", async () => {
+    const totals = await store.addUsage([
+      { appId: "deleted_app", period: "2026-10", metric: "semantic_calls", count: 5 },
+      { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 1 },
+    ]);
+    expect(totals.map((t) => t.appId)).toEqual(["app_1"]);
+    expect(db.prepare("SELECT app_id, count FROM usage_monthly").all()).toEqual([
+      { app_id: "app_1", count: 1 },
+    ]);
   });
 
   it("upserts query counts per app, day and query", async () => {

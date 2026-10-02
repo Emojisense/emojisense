@@ -9,20 +9,21 @@ import {
   periodOf,
   WEBHOOK_EVENTS,
 } from "@emojisense/platform";
-import type {
-  CreatedWebhookResponse,
-  DeletedTenantResponse,
-  KeySummary,
-  PlanSummary,
-  TenantResponse,
-  TenantSummary,
-  TenantsResponse,
-  WebhookDeliveriesResponse,
-  WebhookDeliverySummary,
-  WebhookResponse,
-  WebhookSummary,
-  WebhooksResponse,
-  WebhookTestResponse,
+import {
+  type CreatedWebhookResponse,
+  type DeletedTenantResponse,
+  isDeleteAccountConfirmed,
+  type KeySummary,
+  type PlanSummary,
+  type TenantResponse,
+  type TenantSummary,
+  type TenantsResponse,
+  type WebhookDeliveriesResponse,
+  type WebhookDeliverySummary,
+  type WebhookResponse,
+  type WebhookSummary,
+  type WebhooksResponse,
+  type WebhookTestResponse,
 } from "../../shared/contract";
 import type {
   AcceptInviteResponse,
@@ -150,6 +151,17 @@ const SHORTCODE = /^[a-z0-9_+-]{1,64}$/;
 
 const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
   ["GET", /^\/api\/me$/, (db) => ok(me(db))],
+  // Mock mode keeps its data, so a reload shows the fixtures again.
+  [
+    "DELETE",
+    /^\/api\/me$/,
+    (db, req) =>
+      isDeleteAccountConfirmed(db.me.account.email, req.json.confirm)
+        ? ok({ ok: true })
+        : fail(400, "confirmation_required", "To delete the account, send its email address in confirm.", {
+            field: "confirm",
+          }),
+  ],
   ["POST", /^\/api\/auth\/logout$/, () => ok({ ok: true })],
 
   ["GET", /^\/api\/apps$/, (db) => ok({ apps: db.apps.map((app) => appView(db, app)) })],

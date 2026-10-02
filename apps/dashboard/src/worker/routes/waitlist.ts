@@ -1,10 +1,25 @@
 /**
  * Public Pro waitlist. The dashboard posts same-origin; the marketing website posts
  * cross-origin, so its origins (WEBSITE_ORIGINS) get CORS headers. No cookies are involved.
+ *
+ * Without JavaScript, the website's form posts application/x-www-form-urlencoded. Browsers send
+ * it without a CORS preflight, so the Origin check is what keeps other websites out. Such a post
+ * (no `Accept: application/json`) is answered with a 303 back to the website's waitlist page,
+ * `?status=ok|error`, because a JSON answer would replace the page.
  */
+import { type WaitlistStatus, waitlistReturnUrl } from "@emojisense/platform";
 import type { WaitlistResponse } from "../../shared/contract";
 import type { Env, RequestContext } from "../env";
-import { errorJson, HttpError, json, readJsonObject } from "../http";
+import {
+  errorJson,
+  HttpError,
+  isFormBody,
+  isJsonBody,
+  json,
+  readFormObject,
+  readJsonObject,
+  seeOther,
+} from "../http";
 import { parseEmail, parseWaitlistPlan } from "../validate";
 
 function websiteOrigins(env: Env): string[] {
@@ -19,6 +34,30 @@ function corsHeaders(origin: string | null, env: Env): Record<string, string> {
     return { "access-control-allow-origin": origin, vary: "Origin" };
   }
   return { vary: "Origin" };
+}
+
+/**
+ * The website to send a form post back to: the posting website, or the first configured one when
+ * a client sends no Origin. Undefined means "answer with JSON", which is also the answer to an
+ * origin that may not post.
+ */
+function formReturnOrigin(request: Request, origin: string | null, env: Env): string | undefined {
+  if (!isFormBody(request) || /\bapplication\/json\b/i.test(request.headers.get("accept") ?? "")) {
+    return undefined;
+  }
+  const websites = websiteOrigins(env);
+  if (origin === null) return websites[0];
+  return websites.includes(origin) ? origin : undefined;
+}
+
+async function readWaitlistBody(request: Request): Promise<Record<string, unknown>> {
+  if (isFormBody(request)) return readFormObject(request);
+  if (isJsonBody(request)) return readJsonObject(request);
+  throw new HttpError(
+    415,
+    "unsupported_media_type",
+    "Send JSON (Content-Type: application/json) or a form (application/x-www-form-urlencoded).",
+  );
 }
 
 export async function waitlistPreflight({ request, env }: RequestContext): Promise<Response> {
@@ -44,6 +83,9 @@ export async function waitlistPreflight({ request, env }: RequestContext): Promi
 export async function joinWaitlist({ request, url, env, deps }: RequestContext): Promise<Response> {
   const origin = request.headers.get("origin");
   const cors = corsHeaders(origin, env);
+  const returnTo = formReturnOrigin(request, origin, env);
+  const backToWebsite = (website: string, status: WaitlistStatus) =>
+    seeOther(waitlistReturnUrl(website, status), { vary: "Origin" });
   try {
     if (origin !== null && origin !== url.origin && !websiteOrigins(env).includes(origin)) {
       throw new HttpError(403, "forbidden_origin", "This website may not add emails to the waitlist.");
@@ -54,7 +96,7 @@ export async function joinWaitlist({ request, url, env, deps }: RequestContext):
       });
       if (!success) throw new HttpError(429, "rate_limited", "Too many requests. Try again in a minute.");
     }
-    const body = await readJsonObject(request);
+    const body = await readWaitlistBody(request);
     const email = parseEmail(body.email);
     const plan = parseWaitlistPlan(body.plan);
     await env.DB.prepare(
@@ -63,9 +105,24 @@ export async function joinWaitlist({ request, url, env, deps }: RequestContext):
     )
       .bind(email, plan, deps.now())
       .run();
+    if (returnTo) return backToWebsite(returnTo, "ok");
     const response: WaitlistResponse = { ok: true, plan };
     return json(response, 200, cors);
   } catch (error) {
+    if (returnTo) {
+      if (!(error instanceof HttpError)) {
+        // The same record as app.ts: the route and the error only, never the email.
+        console.error(
+          JSON.stringify({
+            level: "error",
+            event: "unhandled_error",
+            route: "POST /api/waitlist",
+            message: error instanceof Error ? error.message : String(error),
+          }),
+        );
+      }
+      return backToWebsite(returnTo, "error");
+    }
     if (error instanceof HttpError) return errorJson(error, cors);
     throw error;
   }

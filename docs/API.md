@@ -284,6 +284,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `GET /api/auth/github` → callback `/api/auth/github/callback` | Sign in with GitHub (local dev: `/api/auth/dev`) |
 | `POST /api/auth/logout` | End session |
 | `GET /api/me` | Account, its own `plan`, `appCount`, `waitlistPlan`, `teams: [{ ownerId, ownerName, role }]` |
+| `DELETE /api/me` | `{ confirm }` → `{ ok: true }` and a cleared session cookie. Deletes the account and everything it owns, see below (the account itself) |
 | `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`) / create an app in the own account (`name`, `environment`) |
 | `GET /api/apps/:id` | App + keys (viewer+) |
 | `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
@@ -315,7 +316,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `POST /api/invites/:token/accept` | Signed in: join the owner's team → `{ team: { ownerId, ownerName, role } }` |
 | `GET /api/billing` | `{ plan, period, usage, limits, appCount, provider: null, waitlistPlan }` (owner, admin) |
 | `POST /api/billing/upgrade` | `{ plan, email? }` → `{ status: "waitlist", plan }`. Never charges (owner only) |
-| `POST /api/waitlist` | Public: `{ email, plan }` for the Pro waitlist |
+| `POST /api/waitlist` | Public: `{ email, plan }` (`plan` defaults to `pro`) as JSON, or the same fields as an HTML form (`application/x-www-form-urlencoded`). A form post without `Accept: application/json` gets `303` to `<website>/waitlist/?status=ok#waitlist-joined` or `?status=error#waitlist-failed` (the website is the posting `WEBSITE_ORIGINS` entry, or the first one when there is no `Origin`). Other origins get `403`; 5 posts per minute per IP. |
 
 ### Roles, plans and errors
 
@@ -337,6 +338,32 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | 409 | `invite_own_team`, `already_member`, `owner_immutable`, `plan_not_higher` | Invite for the own team, a second membership, a change to the owner, an upgrade to the same or a lower plan |
 | 409 | `tenant_exists`, `webhook_limit` | A tenant with this `externalId` exists; the app has 10 webhooks |
 | 410 | `invite_used`, `invite_expired` | The invite was accepted already, or is older than 7 days |
+| 400 | `confirmation_required` | `DELETE /api/me` without the right `confirm` value |
+| 503 | `storage_unavailable` | `DELETE /api/me` could not delete the custom emoji images. Nothing was deleted; try again. |
+
+### `DELETE /api/me` (account deletion)
+
+```json
+{ "confirm": "ada@example.com" }
+```
+
+- `confirm` is the account's email (any case, spaces trimmed). An account without an email sends
+  `"delete my account"`. Only the signed-in account can delete itself. Team roles do not apply.
+- One request deletes the account and everything it owns: its apps with their API keys, monthly
+  usage, search analytics (`query_daily`), tenants, custom emoji (rows and R2 images) and
+  webhooks with their deliveries; its own team members and invites; its memberships in other
+  teams; all its sessions; and the waitlist entry of its email.
+- The R2 images go first. When R2 fails, the answer is `503 storage_unavailable` and no row is
+  deleted. Then one D1 batch (one transaction) deletes the rows.
+- The API Worker caches key lookups for 60 s per isolate, so a deleted key can work for up to a
+  minute, as after a revocation. Usage that an isolate has not flushed yet for a deleted app is
+  dropped.
+- Not deleted: invites that other owners sent to this email (their data), anonymous Analytics
+  Engine points (they have no app, key or account), copies of custom emoji images that an edge
+  cache or a browser already holds (until evicted), and D1 Time Travel history (see
+  [Privacy](#privacy)).
+- The dashboard's Settings page has a "Delete account" dialog that asks for the same `confirm`
+  text (`isDeleteAccountConfirmed` in `apps/dashboard/src/shared/contract.ts`).
 
 Custom emoji routes add these codes:
 
@@ -582,13 +609,22 @@ What the hosted service collects, and for how long:
 | ---- | ----- | ---- |
 | Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
-| Monthly call counts per app and metric | D1 `usage_monthly` | while the app exists |
-| Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the app |
+| Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
+| Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
-| Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji is deleted (edge copies of the image until evicted) |
+| Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji, its tenant or the account is deleted (edge copies of the image until evicted) |
+| Waitlist: email, plan, date of the first sign-up | D1 `waitlist` | 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS`). The same daily cron deletes older rows. Also deleted with an account of the same email. |
+| Accounts, sessions, apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Sessions expire after 30 days; expired rows go at the next sign-in. Revoked keys stay, marked as revoked. |
+| Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
 
-- Never logged or stored: IP addresses (only an in-memory rate-limit key), keys, user
-  identifiers, reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens.
+- Never logged or stored: IP addresses (only an in-memory rate-limit key), user identifiers,
+  reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens. Keys are stored
+  only as a hash and a 12-character prefix, never logged.
+- Logs never hold query or message text, keys, IP addresses or emails. Workers AI failures log
+  the error type only, because a message could quote the input.
 - Anonymous calls and development keys never reach `query_daily`.
 - The dashboard names a query only when the app saw it ≥ 5 times in the window. Emojisense's own
-  downstream jobs (shards, alias mining) use a query only when it was seen ≥ 5 times.
+  downstream jobs (shards, alias mining) read Analytics Engine, never `query_daily`, and use a
+  query only when it was seen ≥ 5 times.
+- `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
+  Travel can still restore the database to a point in the last 30 days (Paid plan).

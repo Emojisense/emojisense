@@ -111,3 +111,56 @@ describe("apps page", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+describe("settings page", () => {
+  function renderSettings(deleteRoute: Parameters<typeof stubApi>[0][string]) {
+    window.history.replaceState(null, "", "/settings");
+    const api = stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps": { body: { apps: [APP] } },
+      "DELETE /api/me": deleteRoute,
+      "POST /api/auth/logout": { body: { ok: true } },
+    });
+    render(<App />);
+    return api;
+  }
+
+  async function openDialog() {
+    fireEvent.click(await screen.findByRole("button", { name: "Delete account…" }));
+    const dialog = await screen.findByRole("dialog", { name: "Delete your account?" });
+    const input = within(dialog).getByLabelText(/to confirm/) as HTMLInputElement;
+    const submit = within(dialog).getByRole("button", { name: "Delete account" }) as HTMLButtonElement;
+    return { dialog, input, submit };
+  }
+
+  it("deletes the account only after the email is typed, then shows the sign-in page", async () => {
+    const { calls } = renderSettings({ body: { ok: true } });
+    const { input, submit } = await openDialog();
+    expect(submit.disabled).toBe(true);
+
+    fireEvent.change(input, { target: { value: "someone@example.com" } });
+    expect(submit.disabled).toBe(true);
+    fireEvent.change(input, { target: { value: " ADA@example.com " } });
+    expect(submit.disabled).toBe(false);
+    fireEvent.click(submit);
+
+    expect(await screen.findByRole("link", { name: "Sign in with GitHub" })).toBeTruthy();
+    expect(calls).toContainEqual({ method: "DELETE", path: "/api/me", body: { confirm: "ADA@example.com" } });
+    expect(window.location.pathname).toBe("/");
+  });
+
+  it("keeps the dialog open and shows the server's message when the deletion fails", async () => {
+    renderSettings({
+      status: 503,
+      body: { error: { code: "storage_unavailable", message: "Your account was not deleted. Try again." } },
+    });
+    const { dialog, input, submit } = await openDialog();
+    fireEvent.change(input, { target: { value: "ada@example.com" } });
+    fireEvent.click(submit);
+
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "Your account was not deleted. Try again.",
+    );
+    expect(screen.queryByRole("link", { name: "Sign in with GitHub" })).toBeNull();
+  });
+});

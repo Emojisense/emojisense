@@ -8,6 +8,7 @@ import type {
   BillingResponse,
   CreatedInviteResponse,
   CreatedKeyResponse,
+  DeleteAccountRequest,
   DeletedTenantResponse,
   Environment,
   KeyResponse,
@@ -52,6 +53,9 @@ function normalizeEmoji(emoji: CustomEmoji): CustomEmoji {
 export const api = {
   me: () => request<MeResponse>("GET", "/api/me"),
   logout: () => request<OkResponse>("POST", "/api/auth/logout"),
+  /** Deletes the signed-in account and everything it owns. The server also ends the session. */
+  deleteAccount: (confirm: string) =>
+    request<OkResponse>("DELETE", "/api/me", { confirm } satisfies DeleteAccountRequest),
 
   listApps: () => request<AppsResponse>("GET", "/api/apps"),
   createApp: (input: { name: string; environment: Environment }) =>

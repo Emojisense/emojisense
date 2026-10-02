@@ -10,9 +10,12 @@ export const WEBSITE = "https://www.emojisense.example";
 export const NOW = Date.UTC(2026, 9, 15, 12);
 
 interface CallOptions {
+  /** Sent as JSON with Content-Type: application/json. */
   body?: unknown;
   /** A multipart body (custom emoji uploads) instead of JSON. */
   form?: FormData;
+  /** Sent as an HTML form (application/x-www-form-urlencoded), like a post without JavaScript. */
+  urlencoded?: Record<string, string>;
   cookie?: string;
   /** Defaults to the dashboard origin on writes (as browsers send it) and to none on GET. */
   origin?: string | null;
@@ -61,6 +64,9 @@ export function createHarness(overrides: Partial<Env> = {}): Harness {
     if (options.body !== undefined) {
       headers.set("content-type", "application/json");
       body = JSON.stringify(options.body);
+    } else if (options.urlencoded !== undefined) {
+      headers.set("content-type", "application/x-www-form-urlencoded");
+      body = new URLSearchParams(options.urlencoded).toString();
     }
     return handleRequest(new Request(`${base}${path}`, { method, headers, body }), env, deps);
   }

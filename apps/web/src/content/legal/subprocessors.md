@@ -8,7 +8,7 @@ process and for how long.
 
 | Company | What it does for us | Data | Where |
 | --- | --- | --- | --- |
-| Cloudflare, Inc. | Hosts the website and the API (Workers), the database (D1), custom emoji storage (R2), the AI models (Workers AI), anonymous search statistics (Workers Analytics Engine), the edge cache and the rate limits | All data in the Privacy Policy, including IP addresses while requests are in transit | Global network. Company in the United States. |
+| Cloudflare, Inc. | Hosts the website, the API and the dashboard (Workers), the database (D1), custom emoji storage (R2), the AI models (Workers AI), anonymous search statistics (Workers Analytics Engine, kept three months), our own short logs without search text, keys or IP addresses (Workers Logs, kept up to 7 days), the edge cache and the rate limits | All data in the Privacy Policy, including IP addresses while requests are in transit | Global network. Company in the United States. |
 | GitHub, Inc. | Sign-in to the dashboard (OAuth) | GitHub user id, name, verified primary email address, at sign-in | United States |
 
 The AI models that we use, for example EmbeddingGemma or bge-m3 for search and a Gemma model for

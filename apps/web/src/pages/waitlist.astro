@@ -1,5 +1,5 @@
 ---
-import { PLANS } from "@emojisense/platform";
+import { PLANS, WAITLIST_STATUS_ANCHORS } from "@emojisense/platform";
 import PageHero from "../components/PageHero.astro";
 import { PLAN_COPY } from "../components/pricing/plan-copy";
 import { DASHBOARD_URL, WAITLIST_ENDPOINT } from "../config";
@@ -7,7 +7,7 @@ import { WaitlistForm } from "../islands/WaitlistForm";
 import Base from "../layouts/Base.astro";
 import { formatUsd } from "../lib/format";
 import { type PlanFeature, planViews } from "../lib/pricing";
-import { WAITLIST_PLANS, type WaitlistPlan } from "../lib/waitlist";
+import { RETURN_MESSAGES, WAITLIST_PLANS, type WaitlistPlan } from "../lib/waitlist";
 
 const plans = Object.fromEntries(
   WAITLIST_PLANS.map((id) => [
@@ -52,13 +52,25 @@ function describe(feature: PlanFeature): string {
 
   <div class="container wl-layout">
     <section class="card wl-panel" aria-label="Waitlist form">
-      <WaitlistForm client:load endpoint={WAITLIST_ENDPOINT} plans={plans} initialPlan="pro" />
+      {/* Without JavaScript the dashboard redirects back to /waitlist/?status=…#<anchor>; the anchor
+          makes the matching message the :target, so CSS alone shows it. */}
       <noscript>
-        <p class="wl-noscript">
-          Without JavaScript the form still sends your address, but you will see the server’s plain reply instead of a
-          confirmation here.
-        </p>
+        <div id={WAITLIST_STATUS_ANCHORS.ok} class="wl-result" role="status" tabindex="-1">
+          <p class="wl-result-title">
+            <span class="emoji" aria-hidden="true">🎟️</span>
+            {RETURN_MESSAGES.ok.title}
+          </p>
+          <p>{RETURN_MESSAGES.ok.text}</p>
+        </div>
+        <div id={WAITLIST_STATUS_ANCHORS.error} class="wl-result wl-result-error" role="alert" tabindex="-1">
+          <p class="wl-result-title">
+            <span class="emoji" aria-hidden="true">😬</span>
+            {RETURN_MESSAGES.error.title}
+          </p>
+          <p>{RETURN_MESSAGES.error.text}</p>
+        </div>
       </noscript>
+      <WaitlistForm client:load endpoint={WAITLIST_ENDPOINT} plans={plans} initialPlan="pro" />
     </section>
 
     <aside class="wl-plans" aria-labelledby="wl-plans-title">
@@ -113,10 +125,35 @@ function describe(feature: PlanFeature): string {
     box-shadow: var(--shadow-lg);
   }
 
-  .wl-noscript {
-    margin-top: 1rem;
-    color: var(--ink-3);
-    font-size: 0.875rem;
+  .wl-result {
+    display: none;
+    margin-bottom: 1.25rem;
+    padding: 0.875rem 1rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .wl-result:target {
+    display: block;
+  }
+
+  .wl-result:focus {
+    outline: none;
+  }
+
+  .wl-result-error {
+    border-color: color-mix(in srgb, var(--bad) 45%, var(--line));
+  }
+
+  .wl-result-title {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+    color: var(--ink);
+    font-weight: 600;
   }
 
   .wl-plans-title {
