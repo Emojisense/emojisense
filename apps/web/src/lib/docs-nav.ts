@@ -87,7 +87,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
         description:
           "Upload your own emoji, import them from Slack or Discord, and search them next to Unicode.",
         plan: "solo",
-        status: "next",
         routes: ["/v1/custom-pack", "/emoji/import/slack"],
       },
       {
@@ -95,7 +94,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Hosted emoji sets",
         description: "Show Twemoji, Noto or Fluent emoji from the edge, so every device looks the same.",
         plan: "solo",
-        status: "next",
         routes: ["/v1/sets/"],
       },
       {
@@ -103,7 +101,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Analytics",
         description: "See what people search for, and which searches find nothing.",
         plan: "pro",
-        status: "next",
         routes: ["/api/apps/:id/analytics"],
       },
       {
@@ -111,7 +108,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Teams",
         description: "Invite people to your apps with owner, admin, developer and viewer roles.",
         plan: "pro",
-        status: "next",
         routes: ["/api/team"],
       },
       {
@@ -119,7 +115,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Tenants",
         description: "Give each of your customers their own custom emoji set, from one app.",
         plan: "scale",
-        status: "next",
         routes: ["/v1/tenants"],
       },
       {
@@ -127,7 +122,6 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Webhooks",
         description: "Get signed events when custom emoji, tenants or usage change.",
         plan: "scale",
-        status: "next",
         routes: ["/api/apps/:id/webhooks"],
       },
     ],
