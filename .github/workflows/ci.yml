@@ -26,3 +26,5 @@ jobs:
         run: pnpm data:build
       - name: Eval gate (recall@5 may not drop > 2 points)
         run: pnpm eval:ci
+      - name: Culture gate (no top-1 change with every approved entry active)
+        run: pnpm --filter @emojisense/eval culture:gate
