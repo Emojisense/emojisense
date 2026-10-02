@@ -212,6 +212,33 @@ describe("POST /api/apps/:id/emoji/import/slack", () => {
     });
   });
 
+  it("follows image redirects only to the providers' CDNs", async () => {
+    const { h, run } = await slackImport();
+    const redirect = (location: string) => () => new Response(null, { status: 302, headers: { location } });
+    network(h, {
+      [SLACK_EMOJI_LIST_URL]: json({
+        ok: true,
+        emoji: {
+          moved: `${CDN}/moved/a.png`,
+          away: `${CDN}/away/a.png`,
+          loop: `${CDN}/loop/a.png`,
+        },
+      }),
+      [`${CDN}/moved/a.png`]: redirect("/T0001/moved/b.png"),
+      [`${CDN}/moved/b.png`]: bytes(IMAGES.png),
+      [`${CDN}/away/a.png`]: redirect("http://169.254.169.254/latest/meta-data"),
+      [`${CDN}/loop/a.png`]: redirect(`${CDN}/loop/a.png`),
+    });
+    expect(await body<EmojiImportResponse>(await run())).toMatchObject({
+      imported: 1,
+      skippedBy: { failed: 2 },
+    });
+    expect(fetchedUrls(h)).not.toContain("http://169.254.169.254/latest/meta-data");
+    expect(fetchedUrls(h).filter((url) => url === `${CDN}/loop/a.png`)).toHaveLength(3);
+    const downloads = h.fetchMock.mock.calls.filter(([url]) => url !== SLACK_EMOJI_LIST_URL);
+    expect(downloads.every(([, init]) => init?.redirect === "manual")).toBe(true);
+  });
+
   it("stops at the plan limit", async () => {
     const { h, run, fill } = await slackImport("pro");
     fill(1999);

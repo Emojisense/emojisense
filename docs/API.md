@@ -617,6 +617,8 @@ type CustomEmoji = {
   (`*.slack-edge.com` over HTTPS only). `alias:` entries are not imported.
 - Discord: `{ botToken, guildId }`. The dashboard calls `GET /api/v10/guilds/:guildId/emojis` with
   `Authorization: Bot …` and downloads `https://cdn.discordapp.com/emojis/<id>.gif|png?size=128`.
+- Image downloads follow at most 2 redirects, each only to these CDN hosts; a redirect anywhere
+  else counts the emoji as `failed`.
 - Names become shortcodes by the rules above (Discord names are lowercased). Emoji whose
   shortcode exists already, whose image fails the upload checks, or that do not fit the plan
   limit are skipped.
