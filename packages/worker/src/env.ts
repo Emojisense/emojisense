@@ -37,11 +37,19 @@ export interface Env {
   EMOJI?: R2Bucket;
   /**
    * R2 bucket `emojisense-shards`: layer-2 shard builds of the nightly job (src/shards/), served
-   * at /p/<packVersion>/…. Without it, /p/* serves the static shards in public/p (if any).
+   * at /p/<packVersion>/…. Without it, /p/* serves the static shards in public/p (if any). Its
+   * `culture/` prefix holds the published culture builds (src/culture-admin/storage.ts).
    */
   SHARDS?: R2Bucket;
   /** "true" runs the nightly shard build; any other value skips it (wrangler.jsonc). */
   SHARDS_CRON_ENABLED?: string;
+  /**
+   * "true" runs the nightly culture proposal job (culture-admin/propose.ts); any other value skips
+   * it. Publishing approved live entries runs either way.
+   */
+  CULTURE_CRON_ENABLED?: string;
+  /** Workers AI calls per night for culture proposals (default 12, at most 100). */
+  CULTURE_PROPOSE_BUDGET?: string;
   /** Public base URL of this API, for custom emoji `imageUrl`. Defaults to the request's origin. */
   API_URL?: string;
   /** "development" allows webhook deliveries to http://localhost. Any other value is production. */

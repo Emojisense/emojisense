@@ -1,6 +1,12 @@
 import type { WebhookRuntime } from "@emojisense/platform";
 import { authenticate, KeyResolver } from "./auth.ts";
 import { type CacheLike, createMetering, type Handler } from "./context.ts";
+import {
+  CULTURE_PATH_PREFIX,
+  type CultureOverride,
+  createCultureOverride,
+  createCultureRoute,
+} from "./culture-admin/route.ts";
 import { CustomEmojiIndex } from "./custom.ts";
 import { CUSTOM_IMAGE_PATH, handleCustomImage, handleCustomPack } from "./custom-routes.ts";
 import type { CustomEmojiReader } from "./custom-store.ts";
@@ -34,6 +40,8 @@ export interface AppOptions {
   fetch?: (url: string, init: RequestInit) => Promise<Response>;
   /** The wait between webhook retries. Tests replace it. */
   sleep?: (ms: number) => Promise<void>;
+  /** The published culture build (R2) to serve at /v1/culture/*; shared with the search API's reader. */
+  cultureOverride?: CultureOverride;
 }
 
 const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
@@ -51,6 +59,13 @@ export function createApp(options: AppOptions) {
   const { catalog } = options;
   const emojiSets = options.emojiSets ? createEmojiSetsRoute(options.emojiSets) : undefined;
   const shards = createShardRoute({ config: catalog.config, ...(options.now ? { now: options.now } : {}) });
+  const { packVersion } = catalog.config;
+  const culture = createCultureRoute({
+    packVersion,
+    override:
+      options.cultureOverride ??
+      createCultureOverride({ packVersion, ...(options.now ? { now: options.now } : {}) }),
+  });
   let services:
     | { resolver: KeyResolver; meter: Meter; queryStats: QueryStats; custom: CustomEmojiIndex }
     | undefined;
@@ -119,6 +134,9 @@ export function createApp(options: AppOptions) {
       }
       // Layer-2 shards: public files like the images, edge-cached.
       if (url.pathname.startsWith(SHARDS_PATH_PREFIX)) return shards(request, url, env, ctx, options.cache());
+      // Culture files: the published R2 build, else the deployed files. Public, edge-cached.
+      if (url.pathname.startsWith(CULTURE_PATH_PREFIX))
+        return culture(request, url, env, ctx, options.cache());
       // Custom emoji images are `<img src>` targets too, edge-cached.
       const image = CUSTOM_IMAGE_PATH.exec(url.pathname);
       if (image) {

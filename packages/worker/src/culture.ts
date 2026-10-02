@@ -61,7 +61,15 @@ export interface CultureFiles {
  * Reading it again each day keeps the stale check below running. A missing file is remembered for
  * the day; a failed load is not, so the next request tries again.
  */
-export function createCultureFiles(options: { read: CultureReader; now?: () => number }): CultureFiles {
+export function createCultureFiles(options: {
+  read: CultureReader;
+  now?: () => number;
+  /**
+   * What is published now (culture-admin/route.ts: the R2 build id, or undefined for the deployed
+   * files). A new value loads the files again, so a publish reaches `culture=1` within minutes.
+   */
+  version?: (env: Env) => Promise<string | undefined>;
+}): CultureFiles {
   const now = options.now ?? Date.now;
   const files = new Map<string, { day: string; file: Promise<Culture | undefined> }>();
 
@@ -70,9 +78,16 @@ export function createCultureFiles(options: { read: CultureReader; now?: () => n
       if (culture && culture.locale !== locale) {
         throw new Error(`culture.${locale}.json holds locale "${culture.locale}"`);
       }
-      if (culture && culture.until < day) {
+      if (culture && culture.until < day.slice(0, 10)) {
         // No sync and deploy since the file's last day: later events may be missing from it.
-        console.warn(JSON.stringify({ event: "culture_file_stale", locale, until: culture.until, day }));
+        console.warn(
+          JSON.stringify({
+            event: "culture_file_stale",
+            locale,
+            until: culture.until,
+            day: day.slice(0, 10),
+          }),
+        );
       }
       return culture;
     });
@@ -93,8 +108,9 @@ export function createCultureFiles(options: { read: CultureReader; now?: () => n
   }
 
   return {
-    get(locale, env) {
-      const day = utcDay(now());
+    async get(locale, env) {
+      const version = options.version ? ((await options.version(env)) ?? "deployed") : "";
+      const day = `${utcDay(now())}${version ? `@${version}` : ""}`;
       const cached = files.get(locale);
       return cached && cached.day === day ? cached.file : load(locale, env, day);
     },

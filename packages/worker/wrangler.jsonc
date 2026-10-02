@@ -13,11 +13,12 @@
     // src/locale-engines.ts reads pack.<locale>.json of locales outside the bundle through it.
     // `assets` is inherited by the offline env, binding included.
     "binding": "ASSETS",
-    // Packs (/v1/pack/*) and culture files (/v1/culture/*) are static assets: free, and they never
-    // run the Worker. Only the API routes run it first; the negative rules keep packs and culture
-    // files on the asset path. Cache headers: public/_headers (sync-pack.ts). Shards (/p/*) run the
-    // Worker: it serves the nightly build from R2 (SHARDS), else the static ones in public/p.
-    "run_worker_first": ["/v1/*", "!/v1/pack/*", "!/v1/culture/*", "/p/*"]
+    // Packs (/v1/pack/*) are static assets: free, and they never run the Worker. Only the API
+    // routes run it first; the negative rule keeps packs on the asset path. Cache headers:
+    // public/_headers (sync-pack.ts). Shards (/p/*) and culture files (/v1/culture/*) run the
+    // Worker: it serves the published build from R2 (SHARDS: nightly shards, culture entries
+    // approved in the dashboard), else the deployed static files (DECISIONS.md, "Culture Phase 2").
+    "run_worker_first": ["/v1/*", "!/v1/pack/*", "/p/*"]
   },
   // Workers AI has no local emulator: even `wrangler dev` calls Cloudflare (needs `wrangler login`).
   // Without it the Worker degrades to alias-only results.
@@ -57,10 +58,17 @@
   // their plan's retention, waitlist rows older than 12 months and trends older than 90 days
   // (src/retention.ts). Daily, 04:23 UTC: build the layer-2 shards from
   // query_daily (src/shards/job.ts, SHARD_BUILD_CRON in src/config.ts; SHARDS_CRON_ENABLED).
+  // Daily, 04:41 UTC: culture proposals (Workers AI drafts for editors) and a publish of the
+  // approved live entries; every 10 minutes: publish again after a deploy or an approval
+  // (src/culture-admin/, CULTURE_*_CRON; CULTURE_CRON_ENABLED, CULTURE_PROPOSE_BUDGET).
   // Inherited by the offline env. Locally: `wrangler dev --test-scheduled`, then
-  // curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*" (or cron=23+4+*+*+*).
-  "triggers": { "crons": ["17 3 * * *", "23 4 * * *"] },
-  "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }],
+  // curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*" (or cron=23+4+*+*+*, 41+4+*+*+*).
+  "triggers": { "crons": ["17 3 * * *", "23 4 * * *", "41 4 * * *", "*/10 * * * *"] },
+  // Text modules: the culture prompt and the in-house eval suite (src/culture-admin/bundle.ts).
+  "rules": [
+    { "type": "Data", "globs": ["**/*.bin"], "fallthrough": true },
+    { "type": "Text", "globs": ["**/*.md", "**/*.jsonl"], "fallthrough": true }
+  ],
   "vars": {
     // Keys accepted without a database row (`key` or `key:plan`, comma-separated), metered in
     // memory only. pk_demo is the demo app's key; remove it once the demo has a real key.
@@ -69,7 +77,11 @@
     "SHARDS_CRON_ENABLED": "true",
     // Our own pages (src/auth.ts, src/sets/access.ts): the website (astro dev) and the dashboard
     // (vite, wrangler dev).
-    "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790"
+    "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790",
+    // "true" runs the nightly culture proposals (drafts only; editors approve in the dashboard).
+    // CULTURE_PROPOSE_BUDGET caps the Workers AI calls per night (≈ $0.0005 each).
+    "CULTURE_CRON_ENABLED": "true",
+    "CULTURE_PROPOSE_BUDGET": "12"
   },
   "env": {
     // `wrangler dev --env offline`: no Workers AI binding, so it runs with no Cloudflare login.
@@ -100,7 +112,9 @@
         "DEV_KEYS": "pk_demo,sk_live_local:pro",
         "ENVIRONMENT": "development",
         "SHARDS_CRON_ENABLED": "true",
-        "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790"
+        "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790",
+        "CULTURE_CRON_ENABLED": "true",
+        "CULTURE_PROPOSE_BUDGET": "12"
       }
     },
     // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
@@ -133,7 +147,9 @@
         "DEV_KEYS": "pk_demo",
         "ENVIRONMENT": "staging",
         "SHARDS_CRON_ENABLED": "true",
-        "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev"
+        "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev",
+        "CULTURE_CRON_ENABLED": "true",
+        "CULTURE_PROPOSE_BUDGET": "12"
       }
     },
     // Production at api.emojisense.com (`pnpm deploy:production`). No dev keys: every key is a
@@ -166,7 +182,9 @@
         "DEV_KEYS": "",
         "ENVIRONMENT": "production",
         "SHARDS_CRON_ENABLED": "true",
-        "FIRST_PARTY_ORIGINS": "https://emojisense.com,https://www.emojisense.com,https://app.emojisense.com"
+        "FIRST_PARTY_ORIGINS": "https://emojisense.com,https://www.emojisense.com,https://app.emojisense.com",
+        "CULTURE_CRON_ENABLED": "true",
+        "CULTURE_PROPOSE_BUDGET": "12"
       }
     }
   }

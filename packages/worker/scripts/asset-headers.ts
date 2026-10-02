@@ -5,8 +5,9 @@
  * same header are joined with a comma); `! Name` detaches a header that an earlier rule set
  * (developers.cloudflare.com/workers/static-assets/headers/).
  *
- * /v1/pack/* and /v1/culture/* are asset-only (negative patterns in wrangler.jsonc
- * `run_worker_first`): a missing file is a 404 of the asset layer with these headers. So only the
+ * /v1/pack/* is asset-only (a negative pattern in wrangler.jsonc `run_worker_first`): a missing
+ * file is a 404 of the asset layer with these headers. (/v1/culture/* runs the Worker, which sets
+ * the same headers on the R2 build and on the deployed files: src/culture-admin/route.ts.) So only the
  * files this sync publishes are immutable: the /v1/pack/* rule comes first and gives `no-store`,
  * and one rule per published file detaches it and sets the year-long cache. A browser then never
  * keeps a 404 for a pack path, and a file published later is visible at once.

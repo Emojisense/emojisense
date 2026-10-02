@@ -1,5 +1,12 @@
+import { WorkerEntrypoint } from "cloudflare:workers";
+import exclusionsText from "@emojisense/data/culture/exclusions.txt";
+import promptText from "@emojisense/data/culture/prompts/propose.v2.md";
+import calendarSource from "@emojisense/data/culture/sources/calendar.json";
+import eventsSource from "@emojisense/data/culture/sources/events.json";
+import type { DatedSource, SlangSource, SourceFile } from "@emojisense/data/culture-core";
 import { getModel } from "@emojisense/data/models";
 import { vectorFileName } from "@emojisense/data/vector-files";
+import type { CultureAdminRpc } from "@emojisense/platform";
 import {
   type AliasEngine,
   createEngine,
@@ -8,9 +15,14 @@ import {
   type PackRow,
   type VectorIndex,
 } from "emojisense";
+// The in-house eval suite (never the held-out one): the canonical answers the culture gate keeps.
+import gateQueriesText from "../../eval/queries/queries.jsonl";
 import { createApp } from "./app.ts";
 import { LOCALE_ENGINE_CACHE_SIZE, LOCALE_VECTOR_CACHE_SIZE } from "./config.ts";
 import { assetCultureReader, createCultureFiles } from "./culture.ts";
+import { createCultureRuntime } from "./culture-admin/bundle.ts";
+import { createCultureOverride, overrideCultureReader } from "./culture-admin/route.ts";
+import { createCultureAdmin } from "./culture-admin/service.ts";
 import { createD1CustomEmojiReader } from "./custom-store.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
@@ -41,8 +53,14 @@ const localeEngines = createLocaleEngines({
   maxEngines: LOCALE_ENGINE_CACHE_SIZE,
 });
 
-// Culture files are static assets too, read on first use per locale and kept for the UTC day.
-const cultureFiles = createCultureFiles({ read: assetCultureReader(config.packVersion) });
+// Culture files: the published R2 build (approved live entries merged in) when there is one for
+// this deployment, else the static assets. Read on first use per locale, kept for the UTC day or
+// until the next publish.
+const cultureOverride = createCultureOverride({ packVersion: config.packVersion });
+const cultureFiles = createCultureFiles({
+  read: overrideCultureReader(config.packVersion, cultureOverride, assetCultureReader(config.packVersion)),
+  version: (env) => cultureOverride.build(env),
+});
 
 const sharedIndex = () => {
   if (!index) {
@@ -75,8 +93,20 @@ const catalog: Catalog = {
   vectors: (locale, env) => localeVectors.get(locale, env),
 };
 
+// Culture Phase 2: the nightly proposal job, publishing and the admin RPC (culture-admin/).
+const cultureRuntime = createCultureRuntime({
+  packVersion: config.packVersion,
+  packRows: packEn.emoji as unknown as PackRow[],
+  exclusions: exclusionsText,
+  prompt: promptText,
+  gateQueries: gateQueriesText,
+  sources: [calendarSource, eventsSource] as unknown as SourceFile<DatedSource | SlangSource>[],
+  engine: (locale, env) => localeEngines.get(locale, env),
+});
+
 const app = createApp({
   catalog,
+  cultureOverride,
   cache: () => caches.default,
   store: (env) => (env.DB ? createD1Store(env.DB) : undefined),
   emojiSets: { rows: () => packEn.emoji as unknown as PackRow[] },
@@ -85,5 +115,41 @@ const app = createApp({
 
 export default {
   fetch: (request, env, ctx) => app.fetch(request, env, ctx),
-  scheduled: (controller, env) => runScheduled(controller, env, catalog),
+  scheduled: (controller, env) => runScheduled(controller, env, catalog, cultureRuntime),
 } satisfies ExportedHandler<Env>;
+
+const cultureAdmin = (env: Env) => createCultureAdmin(env, cultureRuntime);
+
+/**
+ * The culture admin RPC entrypoint. Only a service binding reaches it (the dashboard's
+ * CULTURE_ADMIN, after its ADMIN_EMAILS check); it has no URL.
+ */
+export class CultureAdmin extends WorkerEntrypoint<Env> implements CultureAdminRpc {
+  overview(query: Parameters<CultureAdminRpc["overview"]>[0]) {
+    return cultureAdmin(this.env).overview(query);
+  }
+  proposal(id: string) {
+    return cultureAdmin(this.env).proposal(id);
+  }
+  preview(record: Parameters<CultureAdminRpc["preview"]>[0]) {
+    return cultureAdmin(this.env).preview(record);
+  }
+  update(...args: Parameters<CultureAdminRpc["update"]>) {
+    return cultureAdmin(this.env).update(...args);
+  }
+  approve(...args: Parameters<CultureAdminRpc["approve"]>) {
+    return cultureAdmin(this.env).approve(...args);
+  }
+  reject(...args: Parameters<CultureAdminRpc["reject"]>) {
+    return cultureAdmin(this.env).reject(...args);
+  }
+  retire(...args: Parameters<CultureAdminRpc["retire"]>) {
+    return cultureAdmin(this.env).retire(...args);
+  }
+  publish() {
+    return cultureAdmin(this.env).publish();
+  }
+  exportLive(input: Parameters<CultureAdminRpc["exportLive"]>[0]) {
+    return cultureAdmin(this.env).exportLive(input);
+  }
+}
