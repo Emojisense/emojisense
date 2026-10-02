@@ -1,0 +1,47 @@
+{
+  "id": "carro-car",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In much of Latin America, carro means car",
+    "es": "En gran parte de América Latina, carro significa coche"
+  },
+  "when": null,
+  "regions": [
+    "MX",
+    "CO",
+    "VE",
+    "PE",
+    "EC",
+    "CR",
+    "GT",
+    "HN",
+    "SV",
+    "NI",
+    "PA",
+    "CU",
+    "DO",
+    "PR",
+    "US"
+  ],
+  "locales": [
+    "es"
+  ],
+  "triggers": {
+    "es": [
+      "carro"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F697",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F6D2"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

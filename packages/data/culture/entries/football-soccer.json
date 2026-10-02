@@ -1,0 +1,55 @@
+{
+  "id": "football-soccer",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "Outside North America and Australia, football means soccer",
+    "hi": "उत्तरी अमेरिका के बाहर फ़ुटबॉल का मतलब सॉकर होता है",
+    "bn": "উত্তর আমেরিকার বাইরে ফুটবল মানে সকার"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "exceptRegions": [
+    "US",
+    "CA",
+    "AU",
+    "AS",
+    "GU",
+    "MP",
+    "PR",
+    "VI",
+    "UM"
+  ],
+  "locales": [
+    "en",
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "en": [
+      "football",
+      "play football",
+      "football game"
+    ],
+    "hi": [
+      "football"
+    ],
+    "bn": [
+      "football"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "26BD",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F3C8"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

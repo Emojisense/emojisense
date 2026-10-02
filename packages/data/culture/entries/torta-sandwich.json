@@ -1,0 +1,33 @@
+{
+  "id": "torta-sandwich",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In Mexico, a torta is a sandwich",
+    "es": "En México, una torta es un sándwich"
+  },
+  "when": null,
+  "regions": [
+    "MX"
+  ],
+  "locales": [
+    "es"
+  ],
+  "triggers": {
+    "es": [
+      "torta"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F96A",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F382"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

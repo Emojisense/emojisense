@@ -1,0 +1,35 @@
+{
+  "id": "kereta-car",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In Malaysia, kereta means car",
+    "id": "Di Malaysia, kereta berarti mobil"
+  },
+  "when": null,
+  "regions": [
+    "MY",
+    "BN",
+    "SG"
+  ],
+  "locales": [
+    "id"
+  ],
+  "triggers": {
+    "id": [
+      "kereta"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F697",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F686"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

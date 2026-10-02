@@ -1,0 +1,36 @@
+{
+  "id": "aish-rice",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In the Gulf, عيش means rice",
+    "ar": "في الخليج، كلمة عيش تعني الأرز"
+  },
+  "when": null,
+  "regions": [
+    "KW",
+    "BH",
+    "QA",
+    "AE"
+  ],
+  "locales": [
+    "ar"
+  ],
+  "triggers": {
+    "ar": [
+      "عيش"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F35A",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F35E"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

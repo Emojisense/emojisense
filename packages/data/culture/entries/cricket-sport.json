@@ -1,0 +1,63 @@
+{
+  "id": "cricket-sport",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In cricket-playing countries, cricket means the sport",
+    "hi": "क्रिकेट खेलने वाले देशों में क्रिकेट का मतलब यह खेल है",
+    "bn": "ক্রিকেট খেলার দেশগুলোতে ক্রিকেট মানে খেলাটি"
+  },
+  "when": null,
+  "regions": [
+    "IN",
+    "PK",
+    "BD",
+    "LK",
+    "AF",
+    "NP",
+    "GB",
+    "IE",
+    "AU",
+    "NZ",
+    "ZA",
+    "ZW",
+    "JM",
+    "TT",
+    "BB",
+    "GY",
+    "AG",
+    "DM",
+    "GD",
+    "KN",
+    "LC",
+    "VC"
+  ],
+  "locales": [
+    "en",
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "en": [
+      "cricket"
+    ],
+    "hi": [
+      "cricket"
+    ],
+    "bn": [
+      "cricket"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3CF",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F997"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}
