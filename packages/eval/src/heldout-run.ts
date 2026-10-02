@@ -50,6 +50,10 @@ export interface HeldoutRun {
   modes: HeldoutMode[];
   /** Modes that could not run, with the reason (e.g. query vectors not cached with --offline). */
   skipped: string[];
+  /** Per query id: the alias output and, when the vectors exist, the semantic ranking. */
+  details: { alias: Map<string, AliasSearchOutput>; semantic?: Map<string, SearchResult[]> };
+  /** The packs each locale's engine was built from. */
+  packsFor(locale: string): Pack[];
 }
 
 export async function runHeldoutSuite(options: {
@@ -63,9 +67,11 @@ export async function runHeldoutSuite(options: {
     JSON.parse(readFileSync(join(packDir, `pack.${name}.json`), "utf8"));
   const locales = localesOf(queries);
   const en = [readPack("en"), readPack("en.ext")];
-  const engines = new Map<string, AliasEngine>(
-    locales.map((l) => [l, createEngine(l === "en" ? en : [...en, readPack(l), readPack(`${l}.ext`)])]),
+  const packs = new Map(
+    locales.map((l) => [l, l === "en" ? en : [...en, readPack(l), readPack(`${l}.ext`)]]),
   );
+  const packsFor = (locale: string) => packs.get(locale) ?? [];
+  const engines = new Map<string, AliasEngine>(locales.map((l) => [l, createEngine(packsFor(l))]));
   const engineFor = (q: HeldoutQuery) => engines.get(q.locale) as AliasEngine;
   const alias = new Map<string, AliasSearchOutput>(
     queries.map((q) => [q.id, engineFor(q).search(q.q, { locale: q.locale, limit: 24 })]),
@@ -86,13 +92,14 @@ export async function runHeldoutSuite(options: {
   const vectorPath = join(packDir, `vectors.${model.key}.${options.model.dims}.bin`);
   if (!existsSync(vectorPath)) {
     skipped.push(`fused ${tag}: no ${vectorPath.split("/").at(-1)} in the pack directory`);
-    return { queries, locales, modes, skipped };
+    return { queries, locales, modes, skipped, details: { alias }, packsFor };
   }
+  let semantic: Map<string, SearchResult[]> | undefined;
   try {
     const texts = queries.map((q) => formatQuery(model, q.q));
     const { vectors } = await embedTexts(model, texts, "query", { offline });
     const index = decodeVectors(readFileSync(vectorPath));
-    const semantic = new Map<string, SearchResult[]>(
+    const ranked = new Map<string, SearchResult[]>(
       queries.map((q, i) => {
         const query = l2normalize((vectors[i] as Float32Array).slice(0, options.model.dims));
         const results = searchVectors(index, query, 24).map((m) => ({
@@ -106,17 +113,25 @@ export async function runHeldoutSuite(options: {
     );
     modes.push(
       evaluate(`fused ${tag}`, "fused", (q) =>
-        fuse(alias.get(q.id) as AliasSearchOutput, semantic.get(q.id) as SearchResult[], LIMIT).map(
+        fuse(alias.get(q.id) as AliasSearchOutput, ranked.get(q.id) as SearchResult[], LIMIT).map(
           (r) => r.emoji,
         ),
       ),
     );
+    semantic = ranked;
   } catch (error) {
     skipped.push(`fused ${tag}: ${(error as Error).message}`);
   } finally {
     await disposeEmbeddings();
   }
-  return { queries, locales, modes, skipped };
+  return {
+    queries,
+    locales,
+    modes,
+    skipped,
+    details: { alias, ...(semantic ? { semantic } : {}) },
+    packsFor,
+  };
 }
 
 /** Write a GitHub Actions annotation in CI, a plain line elsewhere. */
