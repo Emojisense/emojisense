@@ -139,22 +139,24 @@ function PlanCard({ planId, currentId }: { planId: PlanId; currentId: PlanId }) 
           </li>
         ))}
       </ul>
-      <div className="plan-card-action">
-        {isCurrent ? (
-          <button type="button" className="btn btn-block" disabled>
-            Your plan
-          </button>
-        ) : higher ? (
-          <button
-            type="button"
-            className="btn btn-primary btn-block"
-            disabled={joined || pending !== null}
-            onClick={() => upgrade(planId)}
-          >
-            {joined ? "On the waitlist" : pending === planId ? "Joining…" : `Upgrade to ${plan.name}`}
-          </button>
-        ) : null}
-      </div>
+      {(isCurrent || higher) && (
+        <div className="plan-card-action">
+          {isCurrent ? (
+            <button type="button" className="btn btn-block" disabled>
+              Your plan
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary btn-block"
+              disabled={joined || pending !== null}
+              onClick={() => upgrade(planId)}
+            >
+              {joined ? "On the waitlist" : pending === planId ? "Joining…" : `Upgrade to ${plan.name}`}
+            </button>
+          )}
+        </div>
+      )}
     </li>
   );
 }

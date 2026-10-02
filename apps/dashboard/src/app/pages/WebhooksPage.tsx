@@ -284,7 +284,7 @@ function DeliveriesTable({ deliveries }: { deliveries: WebhookDelivery[] }) {
   return (
     // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region needs keyboard access
     <section className="table-wrap" aria-label="Recent deliveries" tabIndex={0}>
-      <table className="table">
+      <table className="table table-nowrap">
         <thead>
           <tr>
             <th scope="col">Event</th>

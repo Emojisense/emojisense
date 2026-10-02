@@ -125,19 +125,27 @@ emojiImageUrl("🎉", { endpoint: "${API_URL}", emojiSet: "${example}" });
   );
 }
 
-/** A hosted glyph, or the native one when the set has no image for it (a 404). */
+/**
+ * A hosted glyph. The native glyph shows until the image arrives, and stays when the set has
+ * no image for it (a 404) or the API is slow, so a tile is never blank.
+ */
 function SetGlyph({ set, emoji }: { set: EmojiSet; emoji: string }) {
-  const [failed, setFailed] = useState(false);
+  const [image, setImage] = useState<"loading" | "loaded" | "failed">("loading");
   const src = setImageUrl(set, emoji);
-  if (!src || failed) return <span className="set-glyph emoji">{emoji}</span>;
   return (
-    <img
-      className="set-glyph"
-      src={src}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      onError={() => setFailed(true)}
-    />
+    <span className="set-glyph" data-image={src ? image : "failed"}>
+      <span className="set-glyph-native emoji">{emoji}</span>
+      {src && image !== "failed" && (
+        <img
+          className="set-glyph-image"
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setImage("loaded")}
+          onError={() => setImage("failed")}
+        />
+      )}
+    </span>
   );
 }

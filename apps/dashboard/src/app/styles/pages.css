@@ -772,6 +772,13 @@
   gap: 0.625rem;
 }
 
+@media (max-width: 40rem) {
+  .emoji-grid {
+    grid-template-columns: repeat(auto-fill, minmax(6.25rem, 1fr));
+    gap: 0.5rem;
+  }
+}
+
 .emoji-tile {
   position: relative;
   display: grid;
@@ -1252,8 +1259,30 @@
   line-height: 1;
 }
 
-img.set-glyph {
+/* The native glyph and the hosted image share one cell; the image fades in once it loads. */
+.set-glyph > * {
+  grid-area: 1 / 1;
+}
+
+.set-glyph-image {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.set-glyph[data-image="loaded"] .set-glyph-image {
+  opacity: 1;
+}
+
+/* Until the image arrives, a faint native glyph holds the place without claiming the style. */
+.set-glyph[data-image="loading"] .set-glyph-native {
+  opacity: 0.25;
+}
+
+.set-glyph[data-image="loaded"] .set-glyph-native {
+  visibility: hidden;
 }
 
 .set-card[data-locked] .set-preview {
@@ -1563,7 +1592,7 @@ img.set-glyph {
 .plan-features {
   display: grid;
   gap: 0.4375rem;
-  margin: 0.75rem 0 1.25rem;
+  margin: 0.75rem 0 0;
   font-size: var(--text-sm);
 }
 
@@ -1586,6 +1615,7 @@ img.set-glyph {
 
 .plan-card-action {
   margin-top: auto;
+  padding-top: 1.25rem;
 }
 
 .plan-card-lower {

@@ -1,4 +1,4 @@
-import { getPlan, PLANS } from "@emojisense/platform";
+import { getPlan, PLANS, type PlanId } from "@emojisense/platform";
 import { useId, useState } from "react";
 import type { App } from "../api";
 import { DOCS_URL } from "../lib/config";
@@ -108,6 +108,14 @@ function LockHint({ feature }: { feature: Feature }) {
   );
 }
 
+/** What the next plan adds, in a line. Scale has no next plan and shows no nudge. */
+const NEXT_PLAN_PITCH: Record<PlanId, string> = {
+  free: "Custom emoji, analytics and a team come with paid plans.",
+  solo: "Analytics, Slack import and a team come with Pro.",
+  pro: "Tenants and webhooks come with Scale.",
+  scale: "",
+};
+
 function PlanNudge() {
   const { me } = useSession();
   return (
@@ -121,7 +129,7 @@ function PlanNudge() {
       <p>
         {me.waitlistPlan
           ? `You are on the ${getPlan(me.waitlistPlan).name} waitlist.`
-          : "Custom emoji, analytics and a team come with paid plans."}
+          : NEXT_PLAN_PITCH[me.plan.id]}
       </p>
     </div>
   );
