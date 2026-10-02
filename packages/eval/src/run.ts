@@ -22,12 +22,14 @@ import {
   type AliasEngine,
   type AliasSearchOutput,
   createEngine,
+  DEFAULT_SEMANTIC_CALIBRATION,
   decodeVectors,
   fuse,
   l2normalize,
   type Pack,
   ROW_INDEX,
   type SearchResult,
+  type SemanticCalibration,
   searchVectors,
   shouldUseSemantic,
 } from "emojisense";
@@ -35,7 +37,14 @@ import { computeLayeredCost, type MeasuredRate, withValue } from "./cost.ts";
 import { ASSUMPTIONS_PATH, loadCostInputs } from "./cost-inputs.ts";
 import { renderCostReport, usd } from "./cost-report.ts";
 import { runAndReportHeldout } from "./heldout-run.ts";
-import { judge, percentile, type QueryOutcome, type Summary, summarize } from "./metrics.ts";
+import {
+  calibrateSemantic,
+  judge,
+  percentile,
+  type QueryOutcome,
+  type Summary,
+  summarize,
+} from "./metrics.ts";
 import { type EvalQuery, loadQueries } from "./queries.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
@@ -191,6 +200,12 @@ const vectorFiles = readdirSync(packDir)
 const latency: { model: string; p50: number; p95: number; n: number }[] = [];
 const queryTokens: Record<string, number> = {};
 const skipped: string[] = [];
+const calibrations: {
+  tag: string;
+  measured: SemanticCalibration;
+  used: SemanticCalibration;
+  shipped: boolean;
+}[] = [];
 
 try {
   const queryVectors = new Map<string, Float32Array[]>();
@@ -230,6 +245,21 @@ try {
     const tag = `${model.key}@${dims}`;
     const note = !model.mrl && dims < model.nativeDims ? "truncated, model not MRL-trained" : undefined;
     const base = { model: model.id, dims, ...(note ? { note } : {}) };
+    // Cosine scales differ per model and dims. The shipped model fuses with the client's
+    // default; every other vector file with its own measurement, so the rows compare fairly.
+    const measured = calibrateSemantic(
+      scored.map((q) => {
+        const list = semantic.get(q.id) as SearchResult[];
+        const { rank } = judge(
+          q,
+          list.slice(0, LIMIT).map((r) => r.emoji),
+        );
+        return { best: list[0]?.score ?? 0, hit: rank > 0 && rank <= 5 };
+      }),
+    );
+    const shipped = model.key === packConfig.model.key && dims === packConfig.model.dims;
+    const calibration = shipped ? DEFAULT_SEMANTIC_CALIBRATION : measured;
+    calibrations.push({ tag, measured, used: calibration, shipped });
     results.push(
       evaluate(
         `semantic ${tag}`,
@@ -243,9 +273,12 @@ try {
         `fused ${tag}`,
         "fused",
         (q) =>
-          fuse(aliasOutputs.get(q.id) as AliasSearchOutput, semantic.get(q.id) as SearchResult[], LIMIT).map(
-            (r) => r.emoji,
-          ),
+          fuse(
+            aliasOutputs.get(q.id) as AliasSearchOutput,
+            semantic.get(q.id) as SearchResult[],
+            LIMIT,
+            calibration,
+          ).map((r) => r.emoji),
         base,
       ),
     );
@@ -258,7 +291,7 @@ try {
           const alias = aliasOutputs.get(q.id) as AliasSearchOutput;
           if (!shouldUseSemantic(alias)) return alias.results.slice(0, LIMIT).map((r) => r.emoji);
           gated++;
-          return fuse(alias, semantic.get(q.id) as SearchResult[], LIMIT).map((r) => r.emoji);
+          return fuse(alias, semantic.get(q.id) as SearchResult[], LIMIT, calibration).map((r) => r.emoji);
         },
         base,
       ),
@@ -346,6 +379,24 @@ for (const r of results) {
   ]);
 }
 if (skipped.length) lines.push("", ...skipped.map((s) => `> Skipped ${s}`));
+
+if (calibrations.length) {
+  lines.push(
+    "",
+    "### Semantic calibration",
+    "",
+    "Fusion weights the semantic list by its best cosine, from 0 at `floor` to 1 at `ceiling`. " +
+      "Measured here: floor = 25th percentile of the semantic misses' best cosine, ceiling = median " +
+      "of the hits'. The shipped model uses the client default (`DEFAULT_SEMANTIC_CALIBRATION`).",
+    "",
+  );
+  row(["Vectors", "Measured floor–ceiling", "Used"]);
+  row(["---", "--:", "--:"]);
+  const range = (c: SemanticCalibration) => `${c.floor.toFixed(2)}–${c.ceiling.toFixed(2)}`;
+  for (const c of calibrations) {
+    row([c.tag, range(c.measured), c.shipped ? `${range(c.used)} (client default)` : range(c.used)]);
+  }
+}
 
 lines.push(
   "",
@@ -461,6 +512,7 @@ const json = {
   },
   sizes,
   skipped,
+  calibrations,
   heldout: {
     queries: heldout.queries.length,
     modes: heldout.modes.map((m) => ({ name: m.name, overall: m.scores.overall, macro: m.scores.macro })),

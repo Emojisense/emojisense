@@ -140,7 +140,8 @@ Apply to every query, and to `label` to get the `name` field. In order:
 12. Truncate to 64 UTF-16 code units, then trim the end.
 
 Scripts without spaces between words (Chinese, Japanese, Thai) form one token per run. Prefix
-matching still completes them while the user types.
+matching still completes them while the user types. A query run that is not one indexed token is
+split at search time (§4, "Unspaced scripts").
 
 Examples: `"İYİ Kİ DOĞDUN"` → `"iyi ki dogdun"`, `"¡Feliz cumpleaños!"` → `"feliz cumpleanos"`,
 `"Ёлка"` → `"елка"`, `"مَرْحَبًا"` → `"مرحبا"`, `"नमस्ते"` → `"नमस्ते"` (unchanged), `"i'm exhausted"` → `"im exhausted"`,
@@ -158,8 +159,18 @@ vocabulary of all tokens, postings token → phrases, and for each token
 `idf = ln(1 + E / df)`, where `E` is the emoji count and `df` is the number of distinct emoji
 that have the token in any phrase.
 
-**Query.** Normalize and tokenize the query, keeping at most 8 tokens. For each query token, find
-candidate vocabulary tokens with a match quality:
+**Query.** Normalize and tokenize the query, keeping at most 8 tokens.
+
+**Unspaced scripts.** A query token that holds a code point in U+0E00–0EFF (Thai, Lao),
+U+1000–109F (Myanmar), U+1780–17FF (Khmer), U+3040–30FF (kana), U+3400–4DBF, U+4E00–9FFF,
+U+F900–FAFF or U+20000–3134F (Han) is split when it is not a vocabulary token, unless it is the
+last token while typing and a longer vocabulary token starts with it. Split from the left: at each
+code point take the longest vocabulary token (at most 16 code points) that starts there. Code
+points where no vocabulary token starts form one unknown piece together with the unknown code
+points next to them. The pieces replace the token, in order; keep at most 8 tokens again. The
+pieces are the query's `tokens`. Example, with 生日快乐 indexed: 今天生日快乐 → 今天 · 生日快乐.
+
+For each query token, find candidate vocabulary tokens with a match quality:
 
 | Match | Quality |
 | ----- | ------: |

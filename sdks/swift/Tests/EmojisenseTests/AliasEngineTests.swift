@@ -123,6 +123,46 @@ final class AliasEngineTests: XCTestCase {
     }
   }
 
+  // MARK: Unspaced scripts
+
+  private func chinese() throws -> AliasEngine {
+    var zh = Fixtures.english
+    zh.locale = "zh"
+    zh.emoji = [
+      PackRow(emoji: "🎂", hexcode: "1F382", label: "生日蛋糕", keyword: "生日|蛋糕", alias: "生日快乐"),
+      PackRow(emoji: "🚀", hexcode: "1F680", label: "火箭", keyword: "火箭", alias: "发射"),
+    ]
+    return try AliasEngine(packs: [Fixtures.english, zh])
+  }
+
+  func testSplitsARunThatIsNotOneTokenLongestFirst() throws {
+    let engine = try chinese()
+    let search = { (query: String) in engine.search(query, options: AliasSearchOptions(locale: "zh")) }
+    XCTAssertEqual(search("今天生日快乐").tokens, ["今天", "生日快乐"])
+    XCTAssertEqual(search("今天生日快乐").results.first?.emoji, "🎂")
+    XCTAssertEqual(search("火箭发射").tokens, ["火箭", "发射"])
+    XCTAssertEqual(search("火箭发射").results.first?.emoji, "🚀")
+  }
+
+  func testKeepsUnknownCharactersTogetherAsOneToken() throws {
+    let engine = try chinese()
+    let search = { (query: String) in engine.search(query, options: AliasSearchOptions(locale: "zh")) }
+    XCTAssertEqual(search("今天的蛋糕").tokens, ["今天的", "蛋糕"])
+    XCTAssertEqual(search("今天的蛋糕").results.first?.emoji, "🎂")
+    XCTAssertEqual(search("今天的蛋糕呀").tokens, ["今天的", "蛋糕", "呀"])
+    XCTAssertEqual(search("今天的蛋糕呀").results, [])
+  }
+
+  func testDoesNotSplitAnIndexedTokenOrOneStillBeingTyped() throws {
+    let engine = try chinese()
+    let search = { (query: String) in engine.search(query, options: AliasSearchOptions(locale: "zh")) }
+    XCTAssertEqual(search("生日快乐").tokens, ["生日快乐"])
+    XCTAssertEqual(search("生日快").tokens, ["生日快"])
+    XCTAssertEqual(search("生日快").results.first?.emoji, "🎂")
+    XCTAssertEqual(search("生日快 ").tokens, ["生日", "快"])
+    XCTAssertEqual(self.engine.search("rockets").tokens, ["rockets"])
+  }
+
   func testIsSafeToSearchConcurrently() async {
     let engine = engine
     let expected = engine.search("jurassic park").results

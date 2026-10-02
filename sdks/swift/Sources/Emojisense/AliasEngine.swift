@@ -56,11 +56,11 @@ public final class AliasEngine: @unchecked Sendable {
     -> AliasSearchOutput
   {
     let normalized = Normalizer.normalize(query)
-    let tokens = Array(Normalizer.tokenize(normalized).prefix(Scoring.maxQueryTokens))
+    let lastIsPrefix = options.prefix && !JavaScriptWhitespace.endsWithWhitespace(query)
+    let tokens = queryTokens(normalized, lastIsPrefix: lastIsPrefix)
     if tokens.isEmpty {
       return AliasSearchOutput(query: normalized, tokens: tokens, results: [], confidence: 0)
     }
-    let lastIsPrefix = options.prefix && !JavaScriptWhitespace.endsWithWhitespace(query)
 
     lock.lock()
     defer { lock.unlock() }
@@ -162,6 +162,63 @@ public final class AliasEngine: @unchecked Sendable {
       field: index.phraseField[Int(candidate.phrase)])
   }
 
+  // MARK: Query tokens
+
+  /// Query tokens (PACK_FORMAT.md §4). A token of an unspaced script that is not in the
+  /// vocabulary (and, while typing, is not the start of one) is split into the tokens it holds.
+  private func queryTokens(_ normalized: String, lastIsPrefix: Bool) -> [String] {
+    let tokens = Array(Normalizer.tokenize(normalized).prefix(Scoring.maxQueryTokens))
+    var result: [String] = []
+    for (position, token) in tokens.enumerated() {
+      let units = UTF16Text(token.utf16)
+      if index.tokenIds[units] != nil || !UnspacedScript.contains(token) {
+        result.append(token)
+      } else if lastIsPrefix && position == tokens.count - 1 && completes(units) {
+        result.append(token)
+      } else {
+        result.append(contentsOf: segment(token))
+      }
+    }
+    return Array(result.prefix(Scoring.maxQueryTokens))
+  }
+
+  /// Does a longer vocabulary token start with `prefix`?
+  private func completes(_ prefix: UTF16Text) -> Bool {
+    let position = lowerBound(prefix)
+    return position < index.vocabulary.count && index.vocabulary[position].starts(with: prefix)
+  }
+
+  /// Splits a run into vocabulary tokens, longest match first from the left. Code points where no
+  /// vocabulary token starts stay together as one unknown piece.
+  private func segment(_ run: String) -> [String] {
+    let scalars = Array(run.unicodeScalars)
+    let text = { (range: Range<Int>) in
+      var view = String.UnicodeScalarView()
+      view.append(contentsOf: scalars[range])
+      return String(view)
+    }
+    var pieces: [String] = []
+    var unknownStart: Int?
+    var start = 0
+    while start < scalars.count {
+      var length = min(Scoring.maxPieceLength, scalars.count - start)
+      while length > 0 && index.tokenIds[UTF16Text(text(start..<start + length).utf16)] == nil {
+        length -= 1
+      }
+      if length == 0 {
+        unknownStart = unknownStart ?? start
+        start += 1
+        continue
+      }
+      if let unknown = unknownStart { pieces.append(text(unknown..<start)) }
+      unknownStart = nil
+      pieces.append(text(start..<start + length))
+      start += length
+    }
+    if let unknown = unknownStart { pieces.append(text(unknown..<scalars.count)) }
+    return pieces
+  }
+
   // MARK: Query expansion
 
   /// Vocabulary tokens a query token may stand for, with a match quality in (0, 1], in the order
@@ -234,12 +291,27 @@ enum Scoring {
   static let evidenceBonus = 0.02
   static let maxEvidenceBonus = 0.06
   static let stopwordWeightCap = 0.3
+  /// Longest piece (code points) tried when a run of an unspaced script is split.
+  static let maxPieceLength = 16
 
   /// Function words that carry little meaning in a query (en + folded tr).
   static let stopwords: Set<String> = Set(
     ("a an the of to in on at for from by is are am be im i me my you your u it its this that "
       + "so and or with just very really too we our they them he she his her bir ve ile bu su cok "
       + "da de mi ben sen o icin gibi").split(separator: " ").map(String.init))
+}
+
+/// Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han
+/// (PACK_FORMAT.md §4, the same ranges as `UNSPACED_SCRIPT` in packages/core/src/engine.ts).
+enum UnspacedScript {
+  private static let ranges: [ClosedRange<UInt32>] = [
+    0x0E00...0x0EFF, 0x1000...0x109F, 0x1780...0x17FF, 0x3040...0x30FF, 0x3400...0x4DBF,
+    0x4E00...0x9FFF, 0xF900...0xFAFF, 0x20000...0x3134F,
+  ]
+
+  static func contains(_ text: String) -> Bool {
+    text.unicodeScalars.contains { scalar in ranges.contains { $0.contains(scalar.value) } }
+  }
 }
 
 /// Vocabulary candidates of one query token in insertion order; a better quality for a known id

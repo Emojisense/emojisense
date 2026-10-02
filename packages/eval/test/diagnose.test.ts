@@ -1,0 +1,177 @@
+import type { Pack } from "emojisense";
+import { describe, expect, it } from "vitest";
+import {
+  classifyMiss,
+  countFailures,
+  foldGender,
+  isRomanized,
+  parseCollisions,
+  parseReviewIds,
+  type QueryEvidence,
+  rankOf,
+  renderCounts,
+  vocabularyOf,
+} from "../src/diagnose.ts";
+import { calibrateSemantic } from "../src/metrics.ts";
+
+/** Synthetic evidence: a miss in every mode unless a test says otherwise. */
+const evidence = (fields: Partial<QueryEvidence> = {}): QueryEvidence => ({
+  id: "x",
+  locale: "en",
+  q: "rainy monday",
+  answers: ["🌧️"],
+  normalized: "rainy monday",
+  tokens: ["rainy", "monday"],
+  unknownTokens: [],
+  aliasTopMatch: "monday",
+  lists: { alias: ["📅"], semantic: ["☀️"], fused: ["📅"], gated: ["📅"] },
+  gateCalled: true,
+  disputed: false,
+  cappedForLabel: false,
+  ...fields,
+});
+
+describe("semantic calibration", () => {
+  it("takes the misses' 25th percentile as floor and the hits' median as ceiling", () => {
+    const misses = [0.3, 0.4, 0.42, 0.5].map((best) => ({ best, hit: false }));
+    const hits = [0.5, 0.55, 0.6, 0.7].map((best) => ({ best, hit: true }));
+    expect(calibrateSemantic([...misses, ...hits])).toEqual({ floor: 0.4, ceiling: 0.6 });
+  });
+
+  it("keeps the floor below the ceiling and gives no trust without hits", () => {
+    const close = [
+      { best: 0.6, hit: false },
+      { best: 0.58, hit: true },
+    ];
+    expect(calibrateSemantic(close)).toEqual({ floor: 0.53, ceiling: 0.58 });
+    expect(calibrateSemantic([{ best: 0.9, hit: false }])).toEqual({ floor: 1, ceiling: 1.05 });
+  });
+});
+
+describe("ranks", () => {
+  it("ignores U+FE0F, and folds ♂/♀ only when asked", () => {
+    expect(rankOf(["🙂", "🌧"], ["🌧️"])).toBe(2);
+    expect(rankOf(["🤦"], ["🤦‍♂️"])).toBe(0);
+    expect(rankOf(["🤦"], ["🤦‍♂️"], foldGender)).toBe(1);
+    expect(foldGender("🙋‍♀️")).toBe("🙋");
+  });
+});
+
+describe("classifyMiss", () => {
+  it("returns nothing for a hit, or for a mode without a list", () => {
+    expect(classifyMiss(evidence({ lists: { alias: ["🌧️"] } }), "alias")).toBeUndefined();
+    expect(classifyMiss(evidence({ lists: { alias: ["📅"] } }), "fused")).toBeUndefined();
+  });
+
+  it("puts label-side causes first", () => {
+    expect(classifyMiss(evidence({ q: "rain 🌧️" }), "alias")).toBe("emoji-in-query");
+    expect(classifyMiss(evidence({ answers: ["🤦‍♀️"], lists: { alias: ["🤦"] } }), "alias")).toBe(
+      "gendered-label",
+    );
+    expect(classifyMiss(evidence({ disputed: true }), "alias")).toBe("disputed-label");
+  });
+
+  it("blames fusion only in the fused and gated modes", () => {
+    const aliasHad = evidence({ lists: { alias: ["🌧️"], semantic: ["☀️"], fused: ["☀️"], gated: ["☀️"] } });
+    expect(classifyMiss(aliasHad, "alias")).toBeUndefined();
+    expect(classifyMiss(aliasHad, "fused")).toBe("fusion-dropped-alias");
+    const semanticHad = evidence({ lists: { alias: ["📅"], semantic: ["🌧️"], fused: ["📅"], gated: ["📅"] } });
+    expect(classifyMiss(semanticHad, "alias")).toBe("phrase-partial");
+    expect(classifyMiss(semanticHad, "fused")).toBe("fusion-dropped-semantic");
+    const skipped = evidence({ gateCalled: false, lists: { alias: ["📅"], fused: ["🌧️"], gated: ["📅"] } });
+    expect(classifyMiss(skipped, "gated")).toBe("gate-skipped");
+  });
+
+  it("names the query form, then the vocabulary cause", () => {
+    expect(classifyMiss(evidence({ locale: "hi", q: "baarish hai" }), "alias")).toBe("romanized");
+    expect(classifyMiss(evidence({ locale: "zh", q: "晴天", unknownTokens: ["晴天"] }), "alias")).toBe(
+      "unsegmented-script",
+    );
+    const { aliasTopMatch: _, ...nothing } = evidence();
+    expect(classifyMiss(nothing, "alias")).toBe("no-match");
+    expect(classifyMiss(evidence({ unknownTokens: ["rainy"] }), "alias")).toBe("unknown-word");
+    expect(classifyMiss(evidence({ aliasTopMatch: "rainy monday" }), "alias")).toBe(
+      "exact-phrase-other-emoji",
+    );
+    expect(classifyMiss(evidence(), "alias")).toBe("phrase-partial");
+    expect(
+      classifyMiss(evidence({ normalized: "rainy", tokens: ["rainy"], aliasTopMatch: "rainy day" }), "alias"),
+    ).toBe("word-sense");
+  });
+
+  it("treats only Latin text of a locale with a romanized form as romanized", () => {
+    expect(isRomanized("ar", "marhaba")).toBe(true);
+    expect(isRomanized("ar", "مرحبا")).toBe(false);
+    expect(isRomanized("ru", "privet")).toBe(true);
+    expect(isRomanized("es", "hola")).toBe(false);
+    expect(isRomanized("hi", "123")).toBe(false);
+  });
+});
+
+describe("counts", () => {
+  it("counts per type and locale, and renders only the types that occur", () => {
+    const all = [
+      evidence({ id: "a" }),
+      evidence({ id: "b", locale: "tr" }),
+      evidence({ id: "c", disputed: true }),
+    ];
+    const counts = countFailures(all, "alias");
+    expect(counts["phrase-partial"]).toEqual({ en: 1, tr: 1, all: 2 });
+    expect(counts["disputed-label"]).toEqual({ en: 1, all: 1 });
+    const table = renderCounts(counts, ["en", "tr"], { en: 2, tr: 1, all: 3 });
+    expect(table).toContain("| disputed-label | 1 | 0 | 1 |");
+    expect(table).toContain("| **misses** | 2 | 1 | 3 |");
+    expect(table).not.toContain("romanized");
+  });
+});
+
+describe("collision cap", () => {
+  it("names a miss whose phrase the cap took from a label, after the query form", () => {
+    expect(classifyMiss(evidence({ cappedForLabel: true }), "alias")).toBe("collision-capped");
+    expect(classifyMiss(evidence({ cappedForLabel: true, locale: "hi", q: "baarish hai" }), "alias")).toBe(
+      "romanized",
+    );
+  });
+
+  it("reads the owners that lost each collided alias from review.csv", () => {
+    const csv = [
+      "reason,locale,emoji,hexcode,alias,field,emoji_count",
+      "blocked,en,😎,1F60E,x,alias,1",
+      "collision_demoted,en,🌧🌦,1F327 1F326,rainy day,alias,9",
+      'collision_dropped,fr,🌧,1F327,"averse, drizzle",alias,21',
+    ].join("\n");
+    const capped = parseCollisions(csv);
+    expect([...capped.keys()]).toEqual(["en\trainy day", "fr\taverse, drizzle"]);
+    expect([...(capped.get("en\trainy day") ?? [])]).toEqual(["1F327", "1F326"]);
+  });
+});
+
+describe("inputs", () => {
+  it("reads single ids and both range forms from the review file", () => {
+    const ids = parseReviewIds("| held-en-030 | … held-ar-006 to held-ar-008, held-zh-068 to 070 |");
+    expect([...ids].sort()).toEqual([
+      "held-ar-006",
+      "held-ar-007",
+      "held-ar-008",
+      "held-en-030",
+      "held-zh-068",
+      "held-zh-069",
+      "held-zh-070",
+    ]);
+  });
+
+  it("collects the tokens of labels and every phrase field", () => {
+    const pack = {
+      emoji: [["🌧️", "1F327", 0, 1, 0, "Cloud With Rain", "rain", "", "rainy day|drizzle", "", "wet"]],
+    } as unknown as Pack;
+    expect([...vocabularyOf([pack])].sort()).toEqual([
+      "cloud",
+      "day",
+      "drizzle",
+      "rain",
+      "rainy",
+      "wet",
+      "with",
+    ]);
+  });
+});

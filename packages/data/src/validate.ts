@@ -5,14 +5,15 @@
  * - drop aliases that repeat an indexed name / shortcode / keyword of the same emoji
  * - curation.json (curation.ts): remove an alias, demote it to `low`, or add a missed phrase
  * - moderation: block or demote, per locale (blocklist.ts)
- * - collision cap: an alias on more than COLLISION_DEMOTE emoji is demoted to `low`,
- *   on more than COLLISION_DROP emoji it is dropped (it no longer discriminates)
+ * - collision cap (collisions.ts): an alias on more than 8 emoji stays at full weight on its 8
+ *   strongest owners; the others get it as `low` (up to 20 owners) or lose it (more)
  * - review.csv lists low-confidence, collided and moderated aliases for a human pass
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { normalize } from "emojisense";
 import { moderate } from "./blocklist.ts";
+import { capCollisions } from "./collisions.ts";
 import { curatedAdditions, curationAction, loadCurations } from "./curation.ts";
 import { COMBINED_LOCALES, LOCALE_CODES } from "./locales.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
@@ -25,8 +26,6 @@ import type {
   MinedAlias,
 } from "./types.ts";
 
-export const COLLISION_DEMOTE = 8;
-export const COLLISION_DROP = 20;
 const LOCALES = LOCALE_CODES;
 type Locale = string;
 
@@ -158,42 +157,25 @@ for (const e of emoji) {
   draft.set(e.hexcode, perLocale);
 }
 
-// Collision cap, per locale, over generated aliases only (names/keywords are curated CLDR data).
+// Collision cap, per locale, over generated aliases only (collisions.ts).
 let demoted = 0;
 let dropped = 0;
 for (const locale of LOCALES) {
-  const owners = new Map<string, string[]>();
-  for (const [hexcode, perLocale] of draft) {
-    const v = perLocale[locale];
-    if (!v) continue;
-    for (const a of [...v.alias, ...v.typo, ...v.low]) {
-      const list = owners.get(a);
-      if (list) list.push(hexcode);
-      else owners.set(a, [hexcode]);
-    }
-  }
-  for (const [alias, hexcodes] of owners) {
-    if (hexcodes.length <= COLLISION_DEMOTE) continue;
-    const drop = hexcodes.length > COLLISION_DROP;
-    for (const hexcode of hexcodes) {
-      const v = draft.get(hexcode)?.[locale];
-      if (!v) continue;
-      const wasLow = v.low.includes(alias);
-      v.alias = v.alias.filter((a) => a !== alias);
-      v.typo = v.typo.filter((a) => a !== alias);
-      v.low = v.low.filter((a) => a !== alias);
-      if (!drop) v.low.push(alias);
-      if (drop) dropped++;
-      else if (!wasLow) demoted++;
-    }
+  const lists = new Map<string, ValidatedLocale>();
+  for (const [hexcode, perLocale] of draft) if (perLocale[locale]) lists.set(hexcode, perLocale[locale]);
+  const capped = capCollisions(lists);
+  demoted += capped.demoted;
+  dropped += capped.dropped;
+  for (const c of capped.collisions) {
+    // The row names the owners that lost the alias; emoji_count is every owner.
     review.push({
-      hexcode: hexcodes.join(" "),
-      emoji: hexcodes.map((h) => emoji.find((x) => x.hexcode === h)?.emoji ?? "").join(""),
+      hexcode: c.losers.join(" "),
+      emoji: c.losers.map((h) => emoji.find((x) => x.hexcode === h)?.emoji ?? "").join(""),
       locale,
-      alias,
+      alias: c.alias,
       field: "alias",
-      reason: drop ? `collision_dropped` : `collision_demoted`,
-      emojiCount: hexcodes.length,
+      reason: c.dropped ? "collision_dropped" : "collision_demoted",
+      emojiCount: c.owners.length,
     });
   }
 }

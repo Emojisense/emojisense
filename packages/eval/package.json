@@ -7,6 +7,7 @@
     "eval": "tsx src/run.ts",
     "eval:ci": "tsx src/run.ts --offline --ci",
     "eval:heldout": "tsx src/heldout-cli.ts",
+    "eval:diagnose": "tsx src/diagnose-cli.ts",
     "culture:gate": "tsx src/culture-gate-cli.ts",
     "heldout:generate": "tsx scripts/make-heldout.ts",
     "photos": "tsx src/photos.ts",

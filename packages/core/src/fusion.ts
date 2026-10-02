@@ -41,12 +41,45 @@ export function fuseResults(
   return [...pinned, ...rest].slice(0, limit);
 }
 
-/** Fusion with weights derived from how sure the alias engine is. */
-export function fuse(alias: AliasSearchOutput, semantic: readonly SearchResult[], limit = 24) {
+/** Cosine range of the semantic model over which its top match goes from "rarely right" to "usually right". */
+export interface SemanticCalibration {
+  floor: number;
+  ceiling: number;
+}
+
+/**
+ * bge-m3 @1024 (the production model) on the in-house set: `floor` = 25th percentile of the best
+ * cosine of the semantic misses, `ceiling` = median best cosine of the hits (under a tenth of the
+ * hits are below the floor). Another model or dims needs its own values; `pnpm eval` measures them
+ * (DECISIONS.md, 2026-10-02 quality diagnosis).
+ */
+export const DEFAULT_SEMANTIC_CALIBRATION: SemanticCalibration = { floor: 0.44, ceiling: 0.58 };
+
+/** How sure the semantic tier is, 0–1, from its best cosine score. */
+export function semanticConfidence(
+  semantic: readonly SearchResult[],
+  calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
+): number {
+  const best = semantic.reduce((max, r) => Math.max(max, r.score), 0);
+  const { floor, ceiling } = calibration;
+  return Math.min(1, Math.max(0, (best - floor) / (ceiling - floor)));
+}
+
+/**
+ * Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when its
+ * best match is strong, down to 0.4 when it is weak (unknown slang, romanized text, a language
+ * the model handles poorly), so a weak semantic list no longer outranks an alias hit.
+ */
+export function fuse(
+  alias: AliasSearchOutput,
+  semantic: readonly SearchResult[],
+  limit = 24,
+  calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
+) {
   return fuseResults(alias.results, semantic, {
     limit,
     aliasWeight: 0.4 + alias.confidence,
-    semanticWeight: 1,
+    semanticWeight: 0.4 + 0.6 * semanticConfidence(semantic, calibration),
   });
 }
 
