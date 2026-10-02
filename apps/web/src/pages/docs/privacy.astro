@@ -9,6 +9,7 @@ import Docs from "../../layouts/Docs.astro";
     <li>We never log IP addresses, keys or user identifiers.</li>
     <li>We never store reaction text or images.</li>
     <li>We use a search query only after at least 5 searches for the same text.</li>
+    <li>Search analytics keep daily counts per app and query, for 30 days (Pro) or 365 days (Scale).</li>
   </ul>
 
   <h2 id="where-searches-go">Where each search goes</h2>
@@ -35,7 +36,10 @@ import Docs from "../../layouts/Docs.astro";
         <tr>
           <td>Worker search</td>
           <td>The query, normalized and cut to 64 characters</td>
-          <td>The normalized query text, with counts, cache status and latency. No IP, key or user id.</td>
+          <td>
+            The normalized query text, with cache status and latency, for 3 months. With an API key, also a daily
+            count of searches and misses for your app and that query (see below). No IP, key or user id.
+          </td>
         </tr>
         <tr>
           <td>Reaction suggestions</td>
@@ -57,6 +61,43 @@ import Docs from "../../layouts/Docs.astro";
     job reads only the queries that appear at least 5 times. Rare strings can be personal, so they are never used.
   </p>
   <p>The frequent queries become precomputed results and new aliases, which make search better for everyone.</p>
+  <p>Cloudflare keeps this data for 3 months and then deletes it.</p>
+
+  <h2 id="search-analytics">Search analytics for your app</h2>
+  <p>
+    When a search comes with your API key, the Worker adds it to a daily count. Each row holds exactly these fields:
+    your app, the UTC day, the normalized query (at most 64 characters), the number of searches and the number of
+    misses. A miss is a search that returned no emoji. A row holds no IP address, key or user id. Searches without a
+    key are never counted.
+  </p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Plan</th>
+          <th scope="col">How long we keep the rows</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scale</td>
+          <td>365 days</td>
+        </tr>
+        <tr>
+          <td>Pro</td>
+          <td>30 days</td>
+        </tr>
+        <tr>
+          <td>Free and Solo</td>
+          <td>7 days. The dashboard does not show them. If you upgrade, you see the last week at once.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p>
+    A job deletes older rows every day. When you delete an app, its rows are deleted with it. The dashboard shows a
+    query by name only after your app saw it at least 5 times in the chosen period. Daily totals include every search.
+  </p>
 
   <h2 id="rate-limits">Rate limits without tracking</h2>
   <p>

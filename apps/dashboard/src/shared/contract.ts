@@ -102,3 +102,30 @@ export interface WaitlistResponse {
   ok: true;
   plan: string;
 }
+
+/** `402` body of a feature the account's plan does not include (product contract). */
+export interface PlanRequiredBody {
+  error: "plan_required";
+  /** The lowest plan that has the feature. */
+  plan: PlanId;
+  message: string;
+}
+
+export interface AnalyticsDay {
+  /** "YYYY-MM-DD", UTC. */
+  day: string;
+  searches: number;
+  /** Searches that returned no result. */
+  misses: number;
+}
+
+/**
+ * `GET /api/apps/:id/analytics?days=7|30|90`. `days` has one entry per UTC day of the window,
+ * oldest first, zeros included; the window is cut to the plan's retention. The top lists name
+ * only queries searched at least 5 times in the window.
+ */
+export interface AnalyticsResponse {
+  days: AnalyticsDay[];
+  topQueries: { query: string; searches: number }[];
+  topMisses: { query: string; misses: number }[];
+}

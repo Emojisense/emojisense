@@ -1,44 +1,8 @@
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
 import { hashKey } from "@emojisense/platform";
 import { beforeEach, describe, expect, it } from "vitest";
-import { createD1Store, type D1Like, type D1Statement, type Store } from "../src/store.ts";
-
-/** Every migration of the shared schema, in file-name order (what `wrangler d1 migrations apply` runs). */
-const migrations = Object.entries(
-  import.meta.glob<string>("../../platform/migrations/*.sql", {
-    query: "?raw",
-    import: "default",
-    eager: true,
-  }),
-)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([, sql]) => sql);
-
-type Executable = D1Statement & { run(): void };
-
-/** The D1 calls the store makes, mapped onto node:sqlite (same SQLite dialect as D1). */
-function sqliteD1(db: DatabaseSync): D1Like {
-  const statement = (sql: string, params: unknown[] = []): Executable => ({
-    bind: (...values) => statement(sql, values),
-    first: async <T>() => (db.prepare(sql).get(...params) ?? null) as T | null,
-    all: async <T>() => ({ results: db.prepare(sql).all(...params) as T[] }),
-    run: () => void db.prepare(sql).run(...params),
-  });
-  return {
-    prepare: (sql) => statement(sql),
-    // D1 runs a batch as one transaction.
-    batch: async (statements) => {
-      db.exec("BEGIN");
-      try {
-        for (const s of statements) (s as Executable).run();
-        db.exec("COMMIT");
-      } catch (error) {
-        db.exec("ROLLBACK");
-        throw error;
-      }
-    },
-  };
-}
+import { createD1Store, type Store } from "../src/store.ts";
+import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
 
 describe("D1 store on the platform schema", () => {
   let db: DatabaseSync;
@@ -46,8 +10,7 @@ describe("D1 store on the platform schema", () => {
   const KEY = "pk_live_storetest000000000000000000";
 
   beforeEach(async () => {
-    db = new DatabaseSync(":memory:");
-    for (const sql of migrations) db.exec(sql);
+    db = migratedDatabase();
     db.exec(`
       INSERT INTO accounts (id, email, created_at) VALUES ('acc', 'dev@example.com', 0);
       INSERT INTO apps (id, account_id, name, plan, created_at) VALUES ('app_1', 'acc', 'Demo', 'pro', 0);`);
@@ -99,5 +62,33 @@ describe("D1 store on the platform schema", () => {
       ]),
     ).rejects.toThrow();
     expect(await store.readUsage("app_1", "2026-10")).toEqual({});
+  });
+
+  it("upserts query counts per app, day and query", async () => {
+    const day = "2026-10-15";
+    await store.addQueryCounts([
+      { appId: "app_1", day, query: "ship it", searches: 3, misses: 0 },
+      { appId: "app_1", day, query: "zzz", searches: 2, misses: 2 },
+    ]);
+    await store.addQueryCounts([
+      { appId: "app_1", day, query: "ship it", searches: 1, misses: 1 },
+      { appId: "app_1", day: "2026-10-16", query: "ship it", searches: 1, misses: 0 },
+    ]);
+    await store.addQueryCounts([]);
+    expect(db.prepare("SELECT * FROM query_daily ORDER BY day, query").all()).toEqual([
+      { app_id: "app_1", day, query: "ship it", searches: 4, misses: 1 },
+      { app_id: "app_1", day, query: "zzz", searches: 2, misses: 2 },
+      { app_id: "app_1", day: "2026-10-16", query: "ship it", searches: 1, misses: 0 },
+    ]);
+  });
+
+  it("skips query counts of a deleted app instead of failing the batch", async () => {
+    await store.addQueryCounts([
+      { appId: "deleted_app", day: "2026-10-15", query: "ship it", searches: 1, misses: 0 },
+      { appId: "app_1", day: "2026-10-15", query: "ship it", searches: 1, misses: 0 },
+    ]);
+    expect(db.prepare("SELECT app_id, searches FROM query_daily").all()).toEqual([
+      { app_id: "app_1", searches: 1 },
+    ]);
   });
 });

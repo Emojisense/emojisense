@@ -1,6 +1,7 @@
 import type { AuthedContext, Deps, Env, RequestContext } from "./env";
 import { assertSameOrigin, errorJson, HttpError, json } from "./http";
 import { createRouter, type Handler } from "./router";
+import { getAnalytics } from "./routes/analytics";
 import { createApp, getApp, listApps } from "./routes/apps";
 import { devSignIn, finishGitHubSignIn, logout, startGitHubSignIn } from "./routes/auth";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
@@ -30,6 +31,7 @@ const route = createRouter([
   { method: "GET", path: "/api/apps/:id", handler: authed(getApp) },
   { method: "POST", path: "/api/apps/:id/keys", handler: authed(createKey) },
   { method: "GET", path: "/api/apps/:id/usage", handler: authed(getUsage) },
+  { method: "GET", path: "/api/apps/:id/analytics", handler: authed(getAnalytics) },
   { method: "PATCH", path: "/api/keys/:id", handler: authed(updateKey) },
   { method: "DELETE", path: "/api/keys/:id", handler: authed(revokeKey) },
   { method: "POST", path: "/api/waitlist", handler: joinWaitlist },

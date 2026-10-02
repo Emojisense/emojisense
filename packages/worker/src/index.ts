@@ -8,6 +8,7 @@ import packEn from "./generated/pack.en.json";
 import packTrExt from "./generated/pack.tr.ext.json";
 import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
+import { handleScheduled } from "./retention.ts";
 import type { Catalog } from "./semantic.ts";
 import { createD1Store } from "./store.ts";
 
@@ -44,4 +45,5 @@ const app = createApp({
 
 export default {
   fetch: (request, env, ctx) => app.fetch(request, env, ctx),
+  scheduled: (controller, env) => handleScheduled(env, controller.scheduledTime),
 } satisfies ExportedHandler<Env>;

@@ -25,6 +25,10 @@
     { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
+  // Daily, 03:17 UTC: delete query_daily rows past their plan's retention (src/retention.ts).
+  // Inherited by the offline env. Locally: `wrangler dev --test-scheduled`, then
+  // curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*".
+  "triggers": { "crons": ["17 3 * * *"] },
   "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }],
   "vars": {
     // Keys accepted without a database row (`key` or `key:plan`, comma-separated), metered in

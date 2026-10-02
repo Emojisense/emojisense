@@ -27,7 +27,10 @@ function parseParams(url: URL) {
   };
 }
 
-/** GET /v1/search. Metered as semantic_calls, Cache API hits included. */
+/**
+ * GET /v1/search. Metered as semantic_calls, Cache API hits included. Every answered search of a
+ * key, cached and over-limit ones included, also goes to the app's analytics (query_daily).
+ */
 export const handleSearch: Handler = async (request, env, ctx, { catalog, cache }, metering) => {
   const started = Date.now();
   const url = new URL(request.url);
@@ -62,6 +65,7 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
   if (hit) {
     const cached = (await hit.json()) as SearchBody;
     if (!overLimit) metering.count("semantic_calls");
+    metering.recordSearch(params.query, cached.results.length);
     log(overLimit ? "hit_over_limit" : "hit");
     return json({ ...cached, cached: true, degraded: false, overLimit: false } satisfies SearchBody, 200, {
       "Cache-Control": BROWSER_CACHE,
@@ -83,6 +87,7 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
       degraded: false,
       overLimit: true,
     };
+    metering.recordSearch(params.query, body.results.length);
     return json(body, 200, {
       "Cache-Control": "no-store",
       "Server-Timing": `total;dur=${Date.now() - started}`,
@@ -107,6 +112,7 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }
+  metering.recordSearch(params.query, body.results.length);
   log(ranked.degraded ? "degraded" : "miss", {
     aliasConfidence: ranked.aliasConfidence,
     semanticTop: ranked.semanticTop,
