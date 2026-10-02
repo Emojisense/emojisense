@@ -138,5 +138,180 @@
     "alias": "chink",
     "action": "remove",
     "why": "Hinglish for sneeze, but the same spelling is an English slur; never show it"
+  },
+  {
+    "hexcode": "1F3C5",
+    "locale": "zh",
+    "phrase": "奥运会",
+    "action": "add",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F93D",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F93D-200D-2642-FE0F",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F93D-200D-2640-FE0F",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F93E",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F93E-200D-2642-FE0F",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F93E-200D-2640-FE0F",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F3DF",
+    "locale": "zh",
+    "alias": "奥运会",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (water polo first)"
+  },
+  {
+    "hexcode": "1F3CA",
+    "locale": "ru",
+    "alias": "олимпиада",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (swimmer first)"
+  },
+  {
+    "hexcode": "1F3CA-200D-2642-FE0F",
+    "locale": "ru",
+    "alias": "олимпиада",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (swimmer first)"
+  },
+  {
+    "hexcode": "1F3CA-200D-2640-FE0F",
+    "locale": "ru",
+    "alias": "олимпиада",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (swimmer first)"
+  },
+  {
+    "hexcode": "1F3DF",
+    "locale": "ru",
+    "alias": "олимпиада",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (swimmer first)"
+  },
+  {
+    "hexcode": "23F1",
+    "locale": "ru",
+    "alias": "олимпиада",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (swimmer first)"
+  },
+  {
+    "hexcode": "26F8",
+    "locale": "ru",
+    "alias": "олимпиада",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (swimmer first)"
+  },
+  {
+    "hexcode": "23F1",
+    "locale": "en",
+    "alias": "olympics",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (stopwatch first)"
+  },
+  {
+    "hexcode": "1F3C6",
+    "locale": "en",
+    "alias": "olympics",
+    "action": "low",
+    "why": "🏅 is the Olympic medal; equal alias scores fell to catalog order (stopwatch first)"
+  },
+  {
+    "hexcode": "1F44D",
+    "locale": "zh",
+    "phrase": "666",
+    "action": "add",
+    "why": "chat slang for 'awesome, well played'; only the keycap 6 had it"
+  },
+  {
+    "hexcode": "1F525",
+    "locale": "zh",
+    "phrase": "666",
+    "action": "add",
+    "why": "chat slang for 'awesome, well played'; only the keycap 6 had it"
+  },
+  {
+    "hexcode": "1F61C",
+    "locale": "ru",
+    "phrase": "день дурака",
+    "action": "add",
+    "why": "April Fools' Day; the query matched the card game 'дурак' (♠️)"
+  },
+  {
+    "hexcode": "1F921",
+    "locale": "ru",
+    "phrase": "день дурака",
+    "action": "add",
+    "why": "April Fools' Day; the query matched the card game 'дурак' (♠️)"
+  },
+  {
+    "hexcode": "1F337",
+    "locale": "ru",
+    "phrase": "навруз",
+    "action": "add",
+    "why": "Nowruz (spring new year): tulips and sprouts; only a flag matched"
+  },
+  {
+    "hexcode": "1F331",
+    "locale": "ru",
+    "phrase": "навруз",
+    "action": "add",
+    "why": "Nowruz (spring new year): tulips and sprouts; only a flag matched"
+  },
+  {
+    "hexcode": "1F337",
+    "locale": "en",
+    "phrase": "nowruz",
+    "action": "add",
+    "why": "Nowruz (spring new year): tulips and sprouts; only flags matched"
+  },
+  {
+    "hexcode": "1F331",
+    "locale": "en",
+    "phrase": "nowruz",
+    "action": "add",
+    "why": "Nowruz (spring new year): tulips and sprouts; only flags matched"
+  },
+  {
+    "hexcode": "1F383",
+    "locale": "ar",
+    "phrase": "الهالوين",
+    "action": "add",
+    "why": "the definite form of هالوين; it matched only 🧛 through a longer phrase"
   }
 ]
