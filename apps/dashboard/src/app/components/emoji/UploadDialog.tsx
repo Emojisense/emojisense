@@ -1,6 +1,14 @@
 import { type FormEvent, useEffect, useId, useMemo, useState } from "react";
-import { ApiError, api, type CustomEmoji, errorMessage, isPlanRequired, type Tenant } from "../../api";
-import { fileProblem, formatBytes, parseAliases, shortcodeProblem, toShortcode } from "../../lib/emoji";
+import { type ApiError, api, type CustomEmoji, isPlanRequired, type Tenant } from "../../api";
+import {
+  type FieldError,
+  fileProblem,
+  formatBytes,
+  parseAliases,
+  shortcodeProblem,
+  toShortcode,
+  uploadError,
+} from "../../lib/emoji";
 import { Dialog } from "../../ui/Dialog";
 import { PlanGate } from "../../ui/PlanGate";
 import { DropZone } from "./DropZone";
@@ -52,7 +60,7 @@ function UploadForm({
   const [shortcode, setShortcode] = useState(request.shortcode ?? (file ? toShortcode(file.name) : ""));
   const [aliases, setAliases] = useState(request.aliases ?? "");
   const [tenantId, setTenantId] = useState("");
-  const [error, setError] = useState<{ message: string; field?: string } | null>(null);
+  const [error, setError] = useState<FieldError | null>(null);
   const [planRequired, setPlanRequired] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
   const shortcodeId = useId();
@@ -73,6 +81,19 @@ function UploadForm({
     setError(null);
     const first = files[0];
     if (first && !request.shortcode) setShortcode(toShortcode(first.name));
+  }
+
+  /** On to the next image of a multi-file upload; the dialog closes after the last one. */
+  function advance() {
+    const rest = queue.slice(1);
+    if (rest.length === 0) {
+      onClose();
+      return;
+    }
+    setQueue(rest);
+    setShortcode(toShortcode(rest[0]?.name ?? ""));
+    setAliases("");
+    setError(null);
   }
 
   async function submit(event: FormEvent) {
@@ -101,21 +122,10 @@ function UploadForm({
         ...(tenantId ? { tenantId } : {}),
       });
       onUploaded(emoji);
-      const rest = queue.slice(1);
-      if (rest.length === 0) {
-        onClose();
-        return;
-      }
-      setQueue(rest);
-      setShortcode(toShortcode(rest[0]?.name ?? ""));
-      setAliases("");
+      advance();
     } catch (caught) {
       if (isPlanRequired(caught)) setPlanRequired(caught);
-      else
-        setError({
-          message: errorMessage(caught),
-          field: caught instanceof ApiError ? caught.field : undefined,
-        });
+      else setError(uploadError(caught, file));
     } finally {
       setBusy(false);
     }
@@ -221,6 +231,11 @@ function UploadForm({
         <button type="button" className="btn" onClick={onClose}>
           Cancel
         </button>
+        {error?.field === "file" && queue.length > 1 && (
+          <button type="button" className="btn" onClick={advance}>
+            Skip this image
+          </button>
+        )}
         <button type="submit" className="btn btn-primary" disabled={busy}>
           {busy ? "Uploading…" : queue.length > 1 ? "Upload and next" : "Upload emoji"}
         </button>

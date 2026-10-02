@@ -1,7 +1,16 @@
+import { CUSTOM_EMOJI_CONTENT_TYPES, CUSTOM_EMOJI_MAX_BYTES } from "@emojisense/platform";
+import { ApiError, errorMessage } from "../api";
+
 /** Upload rules from the contract. The API checks them again; these give an answer before upload. */
-export const ACCEPTED_TYPES = ["image/png", "image/gif", "image/webp", "image/svg+xml"] as const;
-export const MAX_IMAGE_BYTES = 256 * 1024;
+export const ACCEPTED_TYPES = CUSTOM_EMOJI_CONTENT_TYPES;
+export const MAX_IMAGE_BYTES = CUSTOM_EMOJI_MAX_BYTES;
+const MAX_IMAGE_KB = MAX_IMAGE_BYTES / 1024;
 export const SHORTCODE_PATTERN = /^[a-z0-9_+-]{1,64}$/;
+
+export interface FieldError {
+  message: string;
+  field?: string;
+}
 
 /** "Ship it!.png" → "ship_it" */
 export function toShortcode(text: string): string {
@@ -29,9 +38,21 @@ export function fileProblem(file: File): string | null {
     return `${file.name} is not a PNG, GIF, WebP or SVG image.`;
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return `${file.name} is ${Math.ceil(file.size / 1024)} KB. The limit is 256 KB.`;
+    return `${file.name} is ${Math.ceil(file.size / 1024)} KB. The limit is ${MAX_IMAGE_KB} KB.`;
   }
   return null;
+}
+
+/**
+ * A failed upload as a form error. `image_too_large` (and a bare 413 from a proxy, which has no
+ * JSON code) names the file, so the right image of a multi-file upload gets the blame.
+ */
+export function uploadError(error: unknown, file: File): FieldError {
+  if (!(error instanceof ApiError)) return { message: errorMessage(error) };
+  if (error.code === "image_too_large" || error.status === 413) {
+    return { field: "file", message: `${file.name} is too large. The limit is ${MAX_IMAGE_KB} KB.` };
+  }
+  return { message: error.message, field: error.field };
 }
 
 export function shortcodeProblem(shortcode: string): string | null {

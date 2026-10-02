@@ -78,7 +78,12 @@ export function stubApi(routes: Record<string, Route>): { calls: Call[] } {
   vi.stubGlobal("fetch", async (input: string, init: RequestInit = {}) => {
     const url = new URL(input, window.location.origin);
     const method = init.method ?? "GET";
-    const body = init.body ? (JSON.parse(String(init.body)) as unknown) : undefined;
+    const body =
+      init.body instanceof FormData
+        ? init.body
+        : init.body
+          ? (JSON.parse(String(init.body)) as unknown)
+          : undefined;
     calls.push({ method, path: url.pathname + url.search, ...(body === undefined ? {} : { body }) });
     const route = routes[`${method} ${url.pathname}`];
     const result: FakeResult = !route
