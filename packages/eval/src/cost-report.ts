@@ -59,8 +59,8 @@ export function renderCostReport(a: CostAssumptions, options: CostReportOptions 
       `L0 share ${pct(a.deviceShare)} (${deviceSource}), L2 share ${pct(a.shardHitShare)} of semantic requests, ` +
       `L3 Cache API hit rate ${pct(a.cacheHitRate)}, ${a.requestsPerSemanticSearch} requests per semantic search.`,
     "",
-    `- **Effective: ${usd(cost.marginalPerMillion)} per 1M searches** across all layers (usage beyond the included quotas). ` +
-      `Search alone (L0–L3): ${usd(cost.searchPerMillion)}; the rest is reaction suggestions and images.`,
+    `- **Search, all layers L0–L3: ${usd(cost.searchPerMillion)} per 1M searches** (usage beyond the included quotas).`,
+    `- With reaction suggestions and images: ${usd(cost.marginalPerMillion)} per 1M searches.`,
     `- All-in at ${count(v.searches)} searches / month: ${usd(cost.allInMonthly)} / month = ` +
       `${usd(cost.allInPerMillion)} per 1M (plan fee and included quotas counted).`,
     ...warnings.map((w) => `- ⚠ ${w}.`),

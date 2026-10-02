@@ -184,7 +184,7 @@ describe("cost report", () => {
   it("renders the headline, the per-layer table and the sensitivity table", () => {
     const text = renderCostReport(base, { level: 2 }).join("\n");
     expect(text).toContain("## Layered cost per 1M searches");
-    expect(text).toContain("**Effective: $0.218 per 1M searches**");
+    expect(text).toContain("**Search, all layers L0–L3: $0.218 per 1M searches**");
     expect(text).toContain("| L3 Worker, embed + search |");
     expect(text).toContain("### Sensitivity");
   });
