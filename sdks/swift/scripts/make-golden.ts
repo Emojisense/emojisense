@@ -267,9 +267,9 @@ function searchCases(engine: AliasEngine, list: Query[] = queries) {
 /** A prefix that ends inside a surrogate pair is not a string Swift can hold. */
 const endsInsideSurrogatePair = (text: string) => /[\ud800-\udbff]$/.test(text);
 
-function keystrokeCases(engine: AliasEngine, list: Query[] = queries) {
+function keystrokeCases(engine: AliasEngine, list: Query[] = queries, every = KEYSTROKE_SAMPLE_EVERY) {
   return list
-    .filter((_, i) => i % KEYSTROKE_SAMPLE_EVERY === 0)
+    .filter((_, i) => i % every === 0)
     .flatMap((q) =>
       Array.from({ length: q.q.length }, (_, i) => q.q.slice(0, i + 1))
         .filter((typed) => !endsInsideSurrogatePair(typed))
@@ -356,7 +356,8 @@ const entityEngines = entityLocales.map((locale) => {
     locale,
     files,
     engine: createEngine(files.map(pack)),
-    list: entities.filter((q) => q.locale === locale),
+    // Every English entity, every other one of the other locales: the file stays under 1 MiB.
+    list: entities.filter((q) => q.locale === locale).filter((_, i) => locale === "en" || i % 2 === 0),
   };
 });
 const allEngine = createEngine(allFiles.map(pack));
@@ -371,7 +372,7 @@ const round3 = (n: number) => Math.round(n * 1000) / 1000;
 function confidenceCases() {
   const next = random(20261002);
   const ids = ["1F600", "1F525", "1F680", "1F3A4", "1F3B5", "1F451", "1F98E", "2B50", "1F30B", "1F436"];
-  return Array.from({ length: 80 }, (_, n) => {
+  return Array.from({ length: 44 }, (_, n) => {
     const tokens = n % 11 === 0 ? [] : n % 3 === 0 ? ["a", "b"] : ["a"];
     const confidence = round3(next());
     const coverage = n % 4 === 0 ? 1 : round3(next());
@@ -464,20 +465,12 @@ const golden = {
     packs: files,
     cases: keystrokeCases(engine, list),
   })),
-  /** Per entity locale, and the guard queries with every locale: keystroke by keystroke. */
-  entityKeystrokes: [
-    ...entityEngines.map(({ files, engine, list }) => ({
-      packs: files,
-      cases: keystrokeCases(engine, list),
-    })),
-    {
-      packs: allFiles,
-      cases: keystrokeCases(
-        allEngine,
-        GUARD_QUERIES.filter((_, i) => i % 2 === 0),
-      ),
-    },
-  ],
+  /**
+   * Every other guard query with every locale, keystroke by keystroke (prefix completions into other
+   * locales' words happen while typing). Entity queries per locale are checked whole, above:
+   * their keystrokes would take the file past the 1 MiB that Biome checks.
+   */
+  entityKeystrokes: [{ packs: allFiles, cases: keystrokeCases(allEngine, GUARD_QUERIES, 2) }],
   /**
    * The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
    * `alias` / `semantic` null = not given. Results are `[id, score]` (alias, concept) or
