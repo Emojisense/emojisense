@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@emojisense/data": "workspace:*",
+    "@emojisense/platform": "workspace:*",
     "emojisense": "workspace:*"
   },
   "devDependencies": {

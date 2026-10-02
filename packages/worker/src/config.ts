@@ -1,0 +1,34 @@
+/** Tunables of the API Worker. Plan limits live in @emojisense/platform (`PLANS`), not here. */
+
+/**
+ * Workers AI vision model for /v1/classify-image. It takes OpenAI-style chat messages with
+ * `image_url` content parts and answers in `choices[0].message.content` (checked against the
+ * model's published sync-input/sync-output schemas, 2026-10-02).
+ */
+export const VISION_MODEL = "@cf/google/gemma-4-26b-a4b-it";
+/** Bump when the vision prompt changes, so cached captions from the old prompt are not reused. */
+export const VISION_PROMPT_VERSION = 1;
+
+export const SEARCH_DEFAULT_LIMIT = 24;
+export const REACTIONS_DEFAULT_LIMIT = 8;
+export const MAX_LIMIT = 50;
+
+/** Reaction text is cut to this many characters (≈ 64 tokens) before it reaches any model. */
+export const MAX_REACTION_CHARS = 256;
+/** Reaction request bodies above this size are refused before JSON parsing. */
+export const MAX_REACTION_BODY_BYTES = 16 * 1024;
+export const MAX_IMAGE_BYTES = 256 * 1024;
+
+/** Revocations and plan changes reach a running isolate within this time. */
+export const KEY_CACHE_TTL_MS = 60_000;
+/** Upper bound on cached key lookups per isolate, so a flood of random keys cannot grow memory. */
+export const KEY_CACHE_MAX_ENTRIES = 10_000;
+/** How long an isolate trusts its usage snapshot before it reads usage_monthly again. */
+export const USAGE_SNAPSHOT_TTL_MS = 60_000;
+/** Usage is flushed to D1 when this much time has passed since the last flush… */
+export const FLUSH_INTERVAL_MS = 10_000;
+/** …or when this many calls are waiting, whichever comes first. */
+export const FLUSH_MAX_PENDING = 100;
+
+export const BROWSER_CACHE = "public, max-age=3600, s-maxage=86400";
+export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;
