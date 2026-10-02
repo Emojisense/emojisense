@@ -850,6 +850,7 @@ What the hosted service collects, and for how long:
 | Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji, its tenant or the account is deleted (edge copies of the image until evicted) |
 | Paid plans: Whop membership id, plan, interval, subscription status, end of the paid period, grace end, manage link, time of the last Whop event applied. Card data stays at Whop. | D1 `accounts` | until the account is deleted |
 | Whop webhook ids already processed: id, event type, time (no personal data) | D1 `whop_events` | 30 days |
+| Whop memberships seen by the webhook: membership id, the account id, state, end of the period, time of the newest event, retired and cancel-confirmed times | D1 `whop_memberships` | Rows of an account: until the account is deleted. Then a membership that still renews stays without the account id, so it is cancelled and never grants a plan again. Rows of no account: 30 days. |
 | Waitlist: email, plan, date of the first sign-up | D1 `waitlist` | 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS`). The same daily cron deletes older rows. Also deleted with an account of the same email. |
 | Accounts (Clerk user id, name, verified email), apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Revoked keys stay, marked as revoked. Sign-in sessions live at Clerk; the dashboard stores none. |
 | Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
@@ -904,9 +905,18 @@ choice through sign-in, and its Upgrade button calls `POST /api/billing/checkout
   Free (except a deactivation while past due, which is the grace). An event older than the last
   one applied to the account changes nothing. Everything else answers `200` and logs
   `whop_event` with `result: "ignored"` and a reason, without changing anything.
-- **Plan changes.** A change between paid plans is a new checkout. When it is paid, the Worker
-  cancels the old membership at the end of its period (Whop does not prorate). Down to Free is a
-  cancel in Whop (Billing → Manage subscription).
+- **Plan changes.** A change between paid plans is a new checkout. When it is paid, the old
+  membership is retired (`whop_memberships.retired_at`): it never gives the account a plan again,
+  even with valid metadata, and the Worker asks Whop to cancel it at the end of its period
+  (`POST /memberships/{id}/cancel` with `cancellation_mode: "at_period_end"` and
+  `cancel_at_period_end: true`) until Whop confirms. It retries after each Whop event and in the
+  daily cron, and cancels again when Whop reports that the membership renews or was resumed.
+  Whop does not prorate. Down to Free is a cancel in Whop (Billing → Manage subscription). A
+  deleted account's membership is retired the same way.
+- **Events before the activation.** `whop_memberships` keeps the newest state of each of our
+  memberships with its event time, also when no account pays with it yet. An activation older
+  than a stored deactivation grants nothing; one older than a stored cancellation grants a
+  cancelled plan (`canceling`, with the stored period end).
 - **Lapses.** A grace or a cancelled period that ran out moves the account to Free on the next
   Whop event, when the owner opens the dashboard, and in the optional daily cron of the
   dashboard Worker.
