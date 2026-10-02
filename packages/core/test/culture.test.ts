@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  assertCulture,
   type Culture,
   type CultureEntry,
   deviceRegion,
@@ -11,6 +12,7 @@ import {
   matchRegionalLead,
   regionOf,
   relevantNow,
+  scopeDay,
 } from "../src/culture.js";
 import { createEngine, type SearchResult } from "../src/engine.js";
 import type { Pack, PackRow } from "../src/pack.js";
@@ -152,6 +154,116 @@ describe("windows", () => {
   it("uses the local calendar day", () => {
     expect(localDay(new Date(2026, 11, 31, 23, 59))).toBe("2026-12-31");
     expect(localDay(new Date(2027, 0, 1, 0, 1))).toBe("2027-01-01");
+  });
+
+  it("handles leap days in yearly and dated windows", () => {
+    expect(localDay(new Date(2028, 1, 29, 12))).toBe("2028-02-29");
+    const aroundMarch = { from: "02-25", to: "03-03", recurs: "yearly" as const };
+    expect(isActiveOn(aroundMarch, "2028-02-29")).toBe(true);
+    expect(isActiveOn(aroundMarch, "2027-02-28")).toBe(true);
+    expect(isActiveOn(aroundMarch, "2027-03-01")).toBe(true);
+    const toFebruary28 = { from: "02-20", to: "02-28", recurs: "yearly" as const };
+    expect(isActiveOn(toFebruary28, "2028-02-28")).toBe(true);
+    expect(isActiveOn(toFebruary28, "2028-02-29")).toBe(false);
+    const fromMarch = { from: "03-01", to: "03-08", recurs: "yearly" as const };
+    expect(isActiveOn(fromMarch, "2028-02-29")).toBe(false);
+    expect(isActiveOn(fromMarch, "2028-03-01")).toBe(true);
+    const leapEvent = { from: "2028-02-28", to: "2028-03-01" };
+    expect(isActiveOn(leapEvent, "2028-02-29")).toBe(true);
+    expect(isActiveOn(leapEvent, "2028-03-02")).toBe(false);
+  });
+
+  it("checks an explicit day before now, and only a YYYY-MM-DD day", () => {
+    expect(scopeDay({ now: OCT_20 })).toBe("2026-10-20");
+    expect(scopeDay({ now: OCT_20, day: "2026-11-01" })).toBe("2026-11-01");
+    expect(() => scopeDay({ day: "2026-11-1" })).toThrow("YYYY-MM-DD");
+    const file = culture([halloween]);
+    expect(matchCulture(file, "halloween", { now: OCT_20, day: "2026-11-01" })).toEqual([]);
+    expect(matchCulture(file, "halloween", { now: new Date(2026, 4, 1), day: "2026-10-31" })).toHaveLength(2);
+  });
+});
+
+describe("one culture file for twelve months", () => {
+  const diwali = entry({
+    id: "diwali-2026",
+    kind: "event",
+    context: "Diwali 2026",
+    when: { from: "2026-10-30", to: "2026-11-11" },
+    triggers: ["diwali"],
+    emoji: [["🪔", "1FA94", 0.9]],
+    featured: true,
+  });
+  /** Built on 2026-10-02 for 366 days: every yearly entry, events of the next 12 months, no snapshot. */
+  const yearFile: Culture = {
+    ...culture([diwali, halloween, newYear, goat]),
+    from: "2026-10-02",
+    until: "2027-10-03",
+  };
+  const at = (year: number, month: number, day: number, hour = 12) => new Date(year, month - 1, day, hour);
+  const on = (now: Date) =>
+    yearFile.entries
+      .filter((e) => matchCulture(yearFile, e.triggers[0] ?? "", { now, prefix: false }).length > 0)
+      .map((e) => e.id);
+  const shelf = (now: Date) => [...new Set(relevantNow(yearFile, { now }).map((r) => r.cultureId))];
+
+  it("switches a seasonal entry on the day it starts, with the same file", () => {
+    expect(on(at(2026, 10, 14))).toEqual(["goat-football"]);
+    expect(on(at(2026, 10, 15))).toEqual(["halloween", "goat-football"]);
+    expect(shelf(at(2026, 10, 14))).toEqual([]);
+    expect(shelf(at(2026, 10, 15))).toEqual(["halloween"]);
+    expect(on(at(2026, 11, 1))).toEqual(["diwali-2026", "goat-football"]);
+  });
+
+  it("follows the device's local day, not the hour", () => {
+    expect(on(at(2026, 10, 14, 23))).not.toContain("halloween");
+    expect(on(new Date(2026, 9, 15, 0, 1))).toContain("halloween");
+  });
+
+  it("drops an event the day after it ends", () => {
+    expect(on(at(2026, 11, 11))).toContain("diwali-2026");
+    expect(shelf(at(2026, 11, 11))).toEqual(["diwali-2026"]);
+    expect(on(at(2026, 11, 12))).not.toContain("diwali-2026");
+    expect(shelf(at(2026, 11, 12))).toEqual([]);
+  });
+
+  it("crosses the year end and starts the next season again", () => {
+    expect(on(at(2026, 12, 25))).toEqual(["goat-football"]);
+    expect(on(new Date(2026, 11, 31, 23, 59))).toEqual(["new-year", "goat-football"]);
+    expect(on(at(2027, 1, 2))).toEqual(["new-year", "goat-football"]);
+    expect(on(at(2027, 1, 3))).toEqual(["goat-football"]);
+    expect(on(at(2027, 10, 15))).toEqual(["halloween", "goat-football"]);
+  });
+
+  it("follows the day in a long-lived session", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      const states: SessionState[] = [];
+      const session = createSearchSession({
+        engine: createEngine(pack).withCulture(yearFile),
+        onChange: (s) => states.push(s),
+      });
+      vi.setSystemTime(new Date(2026, 9, 14, 23, 59));
+      session.update("halloween");
+      vi.setSystemTime(new Date(2026, 9, 15, 0, 1));
+      session.update("halloween");
+      expect(states.map((s) => s.results.some((r) => r.source === "culture"))).toEqual([false, true]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stays a format v1 file, so released SDKs load it", async () => {
+    expect(() => assertCulture(yearFile)).not.toThrow();
+    const fetch = async () => new Response(JSON.stringify(yearFile));
+    const loaded = await loadCulture({ baseUrl: "https://x.test/v1/culture/0.1.0", locale: "en", fetch });
+    expect(relevantNow(loaded, { now: at(2026, 11, 5) }).map((r) => r.cultureId)).toEqual(["diwali-2026"]);
+  });
+
+  it("checks the windows of a file built the old way and ignores its relevantNow list", () => {
+    const oldStyle: Culture = { ...culture([halloween]), from: "2026-10-20", until: "2026-11-03" };
+    oldStyle.relevantNow = ["halloween"];
+    expect(relevantNow(oldStyle, { now: at(2026, 10, 20) })).toHaveLength(2);
+    expect(relevantNow(oldStyle, { now: at(2026, 11, 5) })).toEqual([]);
   });
 });
 
