@@ -119,7 +119,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Tenants",
         description: "Give each of your customers their own custom emoji set, from one app.",
         plan: "scale",
-        status: "planned",
+        status: "next",
         routes: ["/v1/tenants"],
       },
       {
@@ -127,7 +127,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Webhooks",
         description: "Get signed events when custom emoji, tenants or usage change.",
         plan: "scale",
-        status: "planned",
+        status: "next",
         routes: ["/api/apps/:id/webhooks"],
       },
     ],
