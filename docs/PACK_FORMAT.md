@@ -211,6 +211,13 @@ preferred-locale pack (at most +0.06), capped at 1. Phrases of other locales nev
 bonus, so many loaded languages that share a loanword ("halloween") cannot lift every emoji to
 the cap.
 
+**Whole query before a partial match.** The bonus breaks near-ties only. For each emoji whose
+best phrase is not an `exactPhrase` match, let `W` be the lowest emoji score among the emoji
+whose best phrase is an `exactPhrase` match in a preferred-locale pack and has a higher phrase
+score (before the bonus). When there is one, the emoji scores at most `W − 0.01`. Without this,
+en "ship it" gave 🚢 (name `ship`, the stopword uncovered, plus +0.06 from its other ship
+phrases) before 🚀 (alias `ship it`).
+
 **Preferred exact match first.** Let `P` be the highest emoji score among the emoji that have
 an `exactPhrase` match in the `name`, `shortcode`, `keyword` or `alias` field of a
 preferred-locale pack. When there is one, every emoji without such a match whose best phrase is

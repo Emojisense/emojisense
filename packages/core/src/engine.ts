@@ -107,8 +107,8 @@ const NON_EXACT_FACTOR = 0.9;
 const EXACT_PHRASE_BONUS = 1.1;
 const FOREIGN_LOCALE_FACTOR = 0.92;
 const EVIDENCE_BONUS = 0.02;
-/** How far below the best preferred-locale exact match a foreign-only exact match is capped. */
-const FOREIGN_EXACT_MARGIN = 0.01;
+/** How far below the match it must not pass a capped emoji scores. */
+const CAP_MARGIN = 0.01;
 /** Fields (FIELDS order) whose exact preferred-locale match outranks a foreign name or shortcode. */
 const STRONG_FIELDS = 4; // name, shortcode, keyword, alias
 /** Fields whose weight beats a preferred alias even after the foreign factor: name, shortcode. */
@@ -468,6 +468,38 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       .slice(0, MAX_QUERY_TOKENS);
   }
 
+  /**
+   * The evidence bonus breaks near-ties. It never lifts an emoji whose best phrase matches only
+   * part of the query above one whose best phrase is the whole query, in a preferred-locale pack,
+   * with a higher phrase score: en "ship it" is 🚀 (alias "ship it"), not 🚢 (name "ship", lifted
+   * by its other ship phrases). Such an emoji scores at most `CAP_MARGIN` below the lowest of
+   * those (PACK_FORMAT.md §4).
+   */
+  function capPartialBelowWhole(
+    scored: { emoji: number; phrase: number; score: number }[],
+    isPreferred: (phrase: number) => boolean,
+  ): void {
+    const whole = scored
+      .filter(({ emoji, phrase }) => emojiBestExact[emoji] === 1 && isPreferred(phrase))
+      .sort((a, b) => (emojiScore[b.emoji] as number) - (emojiScore[a.emoji] as number));
+    if (whole.length === 0) return;
+    // lowest[i] = the lowest score among the i + 1 whole-query matches with the highest phrase scores.
+    const lowest: number[] = [];
+    for (const { score } of whole) lowest.push(Math.min(score, lowest.at(-1) ?? score));
+    for (const candidate of scored) {
+      if (emojiBestExact[candidate.emoji] === 1) continue;
+      const phraseScore = emojiScore[candidate.emoji] as number;
+      let above = 0;
+      let end = whole.length;
+      while (above < end) {
+        const mid = (above + end) >>> 1;
+        if ((emojiScore[(whole[mid] as { emoji: number }).emoji] as number) > phraseScore) above = mid + 1;
+        else end = mid;
+      }
+      if (above > 0) candidate.score = Math.min(candidate.score, (lowest[above - 1] as number) - CAP_MARGIN);
+    }
+  }
+
   function search(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
@@ -564,6 +596,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         (emojiScore[emoji] as number) + Math.min(MAX_EVIDENCE_BONUS, support(emoji) * EVIDENCE_BONUS),
       ),
     }));
+    capPartialBelowWhole(scored, isPreferred);
     // An exact name, shortcode, keyword or alias match in a preferred-locale pack beats an exact
     // name or shortcode match that only another pack has: fr "foot" is ⚽ by its French alias,
     // not 🦶 by its English name (field weights differ more than the foreign factor). Such a
@@ -581,7 +614,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
           (phraseField[phrase] as number) < DOMINANT_FIELDS &&
           !isPreferred(phrase)
         ) {
-          candidate.score = Math.min(candidate.score, topExactPreferred - FOREIGN_EXACT_MARGIN);
+          candidate.score = Math.min(candidate.score, topExactPreferred - CAP_MARGIN);
         }
       }
     }

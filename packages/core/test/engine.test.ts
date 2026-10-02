@@ -137,6 +137,26 @@ describe("alias engine", () => {
     expect(top("foot", "en")[0]).toBe("🦶 1");
   });
 
+  it("keeps the whole-query alias above a partial name match that the evidence bonus lifts", () => {
+    // en "ship it": 🚢's name "ship" covers all but the stopword (0.9 × 0.95 ≈ 0.86) and its other
+    // ship phrases add +0.06; 🚀's alias "ship it" is the whole query (0.8 × 1.1 = 0.88). A rare
+    // word needs a large catalog, as in the real packs: hence the filler rows.
+    const filler = Array.from({ length: 1000 }, (_, i) => row(`f${i}`, `F${i}`, `filler ${i}`, {}));
+    const english = {
+      ...en,
+      emoji: [
+        row("🚢", "1F6A2", "ship", { alias: "cargo ship|cruise ship|container ship|i ship it" }),
+        row("🚀", "1F680", "rocket", { alias: "ship it|rocket ship" }),
+        row("📦", "1F4E6", "package", { alias: "ship it" }),
+        ...filler,
+      ],
+    };
+    const ships = createEngine([english]);
+    const top = (q: string) => ships.search(q, { prefix: false }).results.map((r) => `${r.emoji} ${r.score}`);
+    expect(top("ship it").slice(0, 3)).toEqual(["🚀 0.9", "📦 0.88", "🚢 0.87"]);
+    expect(top("ship")[0]).toBe("🚢 1");
+  });
+
   it("looks up entries by id", () => {
     expect(engine.get("1F680")?.emoji).toBe("🚀");
     expect(engine.get("1F680")?.labels).toEqual({ en: "rocket" });

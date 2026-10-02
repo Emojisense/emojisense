@@ -139,6 +139,25 @@ final class AliasEngineTests: XCTestCase {
     XCTAssertEqual(top("foot", "en").first, "🦶 1.0")
   }
 
+  func testKeepsTheWholeQueryAliasAboveAPartialNameMatchTheEvidenceLifts() throws {
+    var english = Fixtures.english
+    english.emoji =
+      [
+        PackRow(
+          emoji: "🚢", hexcode: "1F6A2", label: "ship",
+          alias: "cargo ship|cruise ship|container ship|i ship it"),
+        PackRow(emoji: "🚀", hexcode: "1F680", label: "rocket", alias: "ship it|rocket ship"),
+        PackRow(emoji: "📦", hexcode: "1F4E6", label: "package", alias: "ship it"),
+      ] + (0..<1000).map { PackRow(emoji: "f\($0)", hexcode: "F\($0)", label: "filler \($0)") }
+    let ships = try AliasEngine(packs: [english])
+    let top = { (query: String) in
+      ships.search(query, options: AliasSearchOptions(prefix: false)).results
+        .map { "\($0.emoji) \($0.score)" }
+    }
+    XCTAssertEqual(Array(top("ship it").prefix(3)), ["🚀 0.9", "📦 0.88", "🚢 0.87"])
+    XCTAssertEqual(top("ship").first, "🚢 1.0")
+  }
+
   func testLooksUpEntriesById() {
     XCTAssertEqual(engine.entry(id: "1F680")?.emoji, "🚀")
     XCTAssertEqual(engine.entry(id: "1F680")?.labels, ["en": "rocket"])
