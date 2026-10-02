@@ -1,9 +1,10 @@
+import { findCaller } from "./auth";
 import type { AuthedContext, Deps, Env, RequestContext } from "./env";
 import { assertSameOrigin, errorJson, HttpError, json } from "./http";
 import { createRouter, type Handler } from "./router";
 import { getAnalytics } from "./routes/analytics";
 import { createApp, getApp, listApps, updateApp } from "./routes/apps";
-import { devSignIn, finishGitHubSignIn, logout, startGitHubSignIn } from "./routes/auth";
+import { devSignIn, logout } from "./routes/auth";
 import { getBilling, requestUpgrade } from "./routes/billing";
 import { deleteEmoji, listEmoji, updateEmoji, uploadEmoji } from "./routes/emoji";
 import { importDiscordEmoji, importSlackEmoji } from "./routes/emoji-import";
@@ -21,21 +22,18 @@ import {
   testWebhook,
   updateWebhook,
 } from "./routes/webhooks";
-import { findSessionAccount } from "./session";
 
-/** Session-only routes: same-origin writes, then a valid session, then the handler. */
+/** Signed-in routes: same-origin writes, then a valid Clerk session (or dev sign-in), then the handler. */
 function authed(handler: (ctx: AuthedContext) => Promise<Response>): Handler {
   return async (ctx) => {
     assertSameOrigin(ctx.request, ctx.url);
-    const account = await findSessionAccount(ctx.env.DB, ctx.request, ctx.deps.now());
-    if (!account) throw new HttpError(401, "unauthorized", "Sign in to continue.");
-    return handler({ ...ctx, account });
+    const caller = await findCaller(ctx);
+    if (!caller) throw new HttpError(401, "unauthorized", "Sign in to continue.");
+    return handler({ ...ctx, ...caller });
   };
 }
 
 const route = createRouter([
-  { method: "GET", path: "/api/auth/github", handler: startGitHubSignIn },
-  { method: "GET", path: "/api/auth/github/callback", handler: finishGitHubSignIn },
   { method: "GET", path: "/api/auth/dev", handler: devSignIn },
   { method: "POST", path: "/api/auth/logout", handler: logout },
   { method: "GET", path: "/api/me", handler: authed(getMe) },

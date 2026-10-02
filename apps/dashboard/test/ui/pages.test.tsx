@@ -3,19 +3,25 @@ import { describe, expect, it } from "vitest";
 import { App } from "../../src/app/App";
 import { APP, me, stubApi, unauthorized, usage } from "./fake-api";
 
-describe("sign-in", () => {
-  it("offers GitHub sign-in and explains a failed callback", async () => {
-    window.history.replaceState(null, "", "/?error=github_state");
+describe("sign-in without Clerk (no publishable key in the build)", () => {
+  it("explains the missing setup and offers the dev sign-in on localhost", async () => {
     stubApi({ "GET /api/me": unauthorized });
     render(<App />);
 
-    const github = await screen.findByRole("link", { name: "Sign in with GitHub" });
-    expect(github.getAttribute("href")).toBe("/api/auth/github");
-    expect(screen.getByRole("alert").textContent).toBe(
-      "The sign-in expired or started in another tab. Try again.",
-    );
+    expect(await screen.findByRole("heading", { name: "Sign in to Emojisense" })).toBeTruthy();
+    expect(screen.getByText(/Clerk is not set up in this build/)).toBeTruthy();
     // The test page runs on localhost, so the dev sign-in form is shown.
     expect(screen.getByRole("button", { name: "Sign in as dev user" })).toBeTruthy();
+    expect(screen.queryByTestId("clerk-sign-in")).toBeNull();
+  });
+
+  it("keeps an invite opened while signed out", async () => {
+    window.history.replaceState(null, "", "/invite/abc");
+    stubApi({ "GET /api/me": unauthorized });
+    render(<App />);
+    expect(await screen.findByText(/Your invite is waiting/)).toBeTruthy();
+    expect(sessionStorage.getItem("emojisense:invite")).toBe("abc");
+    sessionStorage.clear();
   });
 });
 
@@ -134,7 +140,7 @@ describe("settings page", () => {
   }
 
   it("deletes the account only after the email is typed, then shows the sign-in page", async () => {
-    const { calls } = renderSettings({ body: { ok: true } });
+    const { calls } = renderSettings({ body: { ok: true, clerkUserDeleted: false } });
     const { input, submit } = await openDialog();
     expect(submit.disabled).toBe(true);
 
@@ -144,7 +150,7 @@ describe("settings page", () => {
     expect(submit.disabled).toBe(false);
     fireEvent.click(submit);
 
-    expect(await screen.findByRole("link", { name: "Sign in with GitHub" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Sign in to Emojisense" })).toBeTruthy();
     expect(calls).toContainEqual({ method: "DELETE", path: "/api/me", body: { confirm: "ADA@example.com" } });
     expect(window.location.pathname).toBe("/");
   });
@@ -161,6 +167,6 @@ describe("settings page", () => {
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
       "Your account was not deleted. Try again.",
     );
-    expect(screen.queryByRole("link", { name: "Sign in with GitHub" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Sign in to Emojisense" })).toBeNull();
   });
 });

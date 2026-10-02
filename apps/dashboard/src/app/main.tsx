@@ -10,7 +10,8 @@ import "./styles/pages.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
-import { MOCK_MODE } from "./lib/config";
+import { ClerkAuth } from "./auth/ClerkAuth";
+import { CLERK_PUBLISHABLE_KEY, MOCK_MODE } from "./lib/config";
 
 async function start() {
   const root = document.getElementById("root");
@@ -23,7 +24,13 @@ async function start() {
   }
   createRoot(root).render(
     <StrictMode>
-      <App />
+      {CLERK_PUBLISHABLE_KEY ? (
+        <ClerkAuth publishableKey={CLERK_PUBLISHABLE_KEY}>
+          <App />
+        </ClerkAuth>
+      ) : (
+        <App />
+      )}
     </StrictMode>,
   );
 }

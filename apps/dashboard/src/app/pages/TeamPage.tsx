@@ -379,7 +379,10 @@ function InviteDialog({ open, owner, onClose, onCreated }: InviteDialogProps) {
               👀
             </span>
             <span>
-              <strong>Shown once.</strong> Copy the link now. The first person to open it joins as{" "}
+              <strong>Shown once.</strong> Copy the link now.{" "}
+              {created.invite.email
+                ? `It works once, for ${created.invite.email} only, who joins as`
+                : "The first person to open it joins as"}{" "}
               {roleLabel(created.invite.role).toLowerCase()}.
             </span>
           </p>
@@ -412,7 +415,7 @@ function InviteDialog({ open, owner, onClose, onCreated }: InviteDialogProps) {
           </fieldset>
           <div className="field">
             <label htmlFor={emailId} className="label">
-              Label <span className="label-optional">optional</span>
+              Email <span className="label-optional">optional</span>
             </label>
             <input
               id={emailId}
@@ -423,7 +426,10 @@ function InviteDialog({ open, owner, onClose, onCreated }: InviteDialogProps) {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
-            <p className="hint">An email to remember who the link is for. Anyone with the link can use it.</p>
+            <p className="hint">
+              With an email, only a person who signs in with that verified email can use the link. Without
+              one, anyone with the link can.
+            </p>
           </div>
           {error && (
             <p className="notice notice-error" role="alert">

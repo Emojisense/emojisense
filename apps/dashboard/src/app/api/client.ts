@@ -33,6 +33,31 @@ export function isPlanRequired(error: unknown): error is PlanRequiredError {
 /** Fired on any 401, so the app can show the sign-in page when a session ends mid-use. */
 export const UNAUTHORIZED_EVENT = "emojisense:unauthorized";
 
+type TokenSource = () => Promise<string | null>;
+let tokenSource: TokenSource | null = null;
+
+/**
+ * Clerk's `getToken` while ClerkProvider is mounted (auth/ClerkAuth.tsx): every request then
+ * carries `Authorization: Bearer <session token>`. `null` for the dev sign-in and mock mode.
+ */
+export function setTokenSource(source: TokenSource | null): void {
+  tokenSource = source;
+}
+
+async function authorization(): Promise<string | null> {
+  if (!tokenSource) return null;
+  try {
+    const token = await tokenSource();
+    return token ? `Bearer ${token}` : null;
+  } catch {
+    throw new ApiError(
+      0,
+      "network_error",
+      "Cannot reach the sign-in service. Check your connection and try again.",
+    );
+  }
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const text = (value: unknown): string | undefined =>
@@ -72,6 +97,8 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   const headers: Record<string, string> = { accept: "application/json" };
   if (body !== undefined && !isForm) headers["content-type"] = "application/json";
+  const auth = await authorization();
+  if (auth) headers.authorization = auth;
 
   let response: Response;
   try {

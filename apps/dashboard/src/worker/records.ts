@@ -50,7 +50,7 @@ export function toAccountSummary(row: AccountRow): AccountSummary {
     id: row.id,
     name: row.name,
     email: row.email,
-    githubLinked: row.github_id !== null,
+    signIn: row.clerk_user_id !== null ? "clerk" : "dev",
     createdAt: row.created_at,
   };
 }

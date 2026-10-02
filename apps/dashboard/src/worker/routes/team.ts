@@ -1,7 +1,8 @@
 /**
  * Team (Pro and Scale): other accounts that work on the owner's apps. Routes act on the team of
  * `?owner=<accountId>`, by default the caller's own. Invites are links with a random token that is
- * shown once; D1 stores only its SHA-256. The invite email is a label and is not checked.
+ * shown once; D1 stores only its SHA-256. An invite with an email works only for a caller whose
+ * verified email (the Clerk session's claim) is that email; without one, anyone with the link joins.
  */
 import { getPlan, type Plan, randomId, type TeamInviteRow, type TeamRole } from "@emojisense/platform";
 import type {
@@ -196,7 +197,13 @@ interface InviteWithOwner extends TeamInviteRow {
  * `POST /api/invites/:token/accept`: the signed-in account joins the owner's team with the
  * invite's role. An invite works once and for 7 days.
  */
-export async function acceptInvite({ env, deps, account, params }: AuthedContext): Promise<Response> {
+export async function acceptInvite({
+  env,
+  deps,
+  account,
+  params,
+  verifiedEmail,
+}: AuthedContext): Promise<Response> {
   const token = params.token ?? "";
   const invite = INVITE_TOKEN.test(token)
     ? await env.DB.prepare(
@@ -216,6 +223,13 @@ export async function acceptInvite({ env, deps, account, params }: AuthedContext
   }
   if (invite.owner_id === account.id) {
     throw new HttpError(409, "invite_own_team", "This invite is for your own team.");
+  }
+  if (invite.email !== null && invite.email.toLowerCase() !== verifiedEmail) {
+    throw new HttpError(
+      403,
+      "invite_email_mismatch",
+      "This invite is for another email address. Sign in with the email it was sent to, or ask for a new invite.",
+    );
   }
   requireTeamPlan(getPlan(invite.owner_plan));
   const membership = env.DB.prepare(

@@ -15,3 +15,9 @@ export const DOCS_URL = trimSlash(env.VITE_DOCS_URL ?? "https://emojisense.com/d
  * `VITE_MOCK` cannot turn it on there.
  */
 export const MOCK_MODE = import.meta.env.DEV && env.VITE_MOCK === "1";
+
+/**
+ * Clerk signs people in when the build has a publishable key (`VITE_CLERK_PUBLISHABLE_KEY`).
+ * Mock mode never uses Clerk, so UI work needs no Clerk keys.
+ */
+export const CLERK_PUBLISHABLE_KEY = MOCK_MODE ? "" : (env.VITE_CLERK_PUBLISHABLE_KEY ?? "").trim();

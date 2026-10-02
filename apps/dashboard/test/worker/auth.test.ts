@@ -1,47 +1,59 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MeResponse } from "../../src/shared/contract";
-import { sha256Hex } from "../../src/worker/crypto";
-import { SESSION_TTL_MS } from "../../src/worker/session";
-import { BASE, body, createHarness, NOW, sessionCookieFrom, setCookies } from "./harness";
+import { body, createHarness, devCookieFrom, type Harness, setCookies } from "./harness";
 
-const GITHUB_ENV = { GITHUB_CLIENT_ID: "client-id", GITHUB_CLIENT_SECRET: "client-secret" };
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+const accounts = (h: Harness) =>
+  h.db.rows<{ id: string; email: string | null; name: string | null; clerk_user_id: string | null }>(
+    "SELECT id, email, name, clerk_user_id FROM accounts ORDER BY created_at, clerk_user_id",
+  );
+
+function clerkOf(h: Harness) {
+  if (!h.clerk) throw new Error("the harness runs without Clerk");
+  return h.clerk;
+}
 
 describe("dev sign-in", () => {
-  it("creates a session cookie and stores only the token's SHA-256", async () => {
+  it("sets a dev cookie and creates <login>@dev.localhost", async () => {
     const h = createHarness();
     const response = await h.call("GET", "/api/auth/dev?login=ada");
 
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("/apps");
-    const [cookie] = setCookies(response);
-    expect(cookie).toMatch(
-      /^es_session=[A-Za-z0-9_-]{43}; Path=\/; Max-Age=2592000; HttpOnly; SameSite=Lax$/,
-    );
-
-    const token = sessionCookieFrom(response).split("=")[1] ?? "";
-    const sessions = h.db.rows<{ id: string; expires_at: number }>("SELECT id, expires_at FROM sessions");
-    expect(sessions).toHaveLength(1);
-    expect(sessions[0]?.id).toBe(await sha256Hex(token));
-    expect(sessions[0]?.id).not.toContain(token);
-    expect(sessions[0]?.expires_at).toBe(NOW + SESSION_TTL_MS);
+    const [ada] = accounts(h);
+    expect(ada).toMatchObject({ email: "ada@dev.localhost", name: "ada", clerk_user_id: null });
+    expect(setCookies(response)).toEqual([
+      `es_dev_account=${ada?.id}; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax`,
+    ]);
+    expect(h.db.rows("SELECT id FROM sessions")).toEqual([]);
   });
 
   it("reuses the account for the same login", async () => {
     const h = createHarness();
     await h.signIn("ada");
     await h.signIn("ada");
-    expect(h.db.rows("SELECT id FROM accounts")).toHaveLength(1);
-    expect(h.db.rows("SELECT id FROM sessions")).toHaveLength(2);
+    expect(accounts(h)).toHaveLength(1);
   });
 
-  it("is off outside development and outside localhost", async () => {
+  it("is off outside development and outside localhost, for the route and the cookie", async () => {
     const production = createHarness({ ENVIRONMENT: "production" });
     expect((await production.call("GET", "/api/auth/dev")).status).toBe(404);
 
     const remote = createHarness();
     const response = await remote.call("GET", "/api/auth/dev", { base: "https://dash.emojisense.example" });
     expect(response.status).toBe(404);
-    expect(remote.db.rows("SELECT id FROM accounts")).toHaveLength(0);
+    expect(accounts(remote)).toHaveLength(0);
+
+    // A cookie made by hand does not work on a real host either.
+    const h = createHarness();
+    const cookie = await h.signIn("ada");
+    const elsewhere = await h.call("GET", "/api/me", { cookie, base: "https://app.emojisense.dev" });
+    expect(elsewhere.status).toBe(401);
+    h.env.ENVIRONMENT = "staging";
+    expect((await h.call("GET", "/api/me", { cookie })).status).toBe(401);
   });
 
   it("rejects a login name that is not a simple handle", async () => {
@@ -50,191 +62,220 @@ describe("dev sign-in", () => {
     expect(response.status).toBe(400);
     expect(await body(response)).toMatchObject({ error: { code: "invalid_request", field: "login" } });
   });
+
+  it("returns the account for the dev cookie and works without Clerk", async () => {
+    const h = createHarness({}, { clerk: null });
+    const cookie = await h.signIn("ada");
+    const me = await body<MeResponse>(await h.call("GET", "/api/me", { cookie }));
+    expect(me.account).toMatchObject({ name: "ada", email: "ada@dev.localhost", signIn: "dev" });
+    expect(me.plan).toMatchObject({ id: "free", maxApps: 1, limits: { semantic_calls: 100_000 } });
+    expect(me.appCount).toBe(0);
+    expect(me.waitlistPlan).toBeNull();
+  });
+
+  it("signs out: clears the dev cookie", async () => {
+    const h = createHarness();
+    await h.signIn();
+    const response = await h.call("POST", "/api/auth/logout");
+    expect(response.status).toBe(200);
+    expect(setCookies(response)).toEqual(["es_dev_account=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax"]);
+  });
+
+  it("refuses a sign-out posted from another origin", async () => {
+    const h = createHarness();
+    const response = await h.call("POST", "/api/auth/logout", { origin: "https://evil.example" });
+    expect(response.status).toBe(403);
+  });
+
+  it("ignores malformed and unknown dev cookies, and never opens a Clerk account", async () => {
+    const h = createHarness();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    await h.clerkSignIn("cleo");
+    const [cleo] = accounts(h);
+    for (const value of ["", "../ada", "nobody", cleo?.id]) {
+      expect((await h.call("GET", "/api/me", { cookie: `es_dev_account=${value}` })).status).toBe(401);
+    }
+    // The login is case-insensitive: "Ada" signs in to ada's account.
+    const ada = await h.signIn("ada");
+    expect(devCookieFrom(await h.call("GET", "/api/auth/dev?login=Ada"))).toBe(ada);
+  });
 });
 
-describe("sessions", () => {
-  it("answers 401 without a valid session", async () => {
+describe("Clerk sessions", () => {
+  it("answers 401 when signed out", async () => {
     const h = createHarness();
     const anonymous = await h.call("GET", "/api/me");
     expect(anonymous.status).toBe(401);
     expect(await body(anonymous)).toEqual({
       error: { code: "unauthorized", message: "Sign in to continue." },
     });
-    expect((await h.call("GET", "/api/me", { cookie: "es_session=forged" })).status).toBe(401);
-    expect((await h.call("GET", "/api/me", { cookie: `es_session=${"a".repeat(43)}` })).status).toBe(401);
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect((await h.call("GET", "/api/me", { token: "not.a.token" })).status).toBe(401);
+    expect(warn).toHaveBeenCalledWith(
+      JSON.stringify({ level: "warn", event: "clerk_session_rejected", reason: "token-invalid" }),
+    );
   });
 
-  it("returns the account and plan for a valid session", async () => {
+  it("creates the account at the first sign-in, from the verified claims", async () => {
+    const h = createHarness();
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const token = clerkOf(h).token({ userId: "user_ada", email: "Ada@Example.com", name: "Ada Lovelace" });
+
+    const response = await h.call("GET", "/api/me", { token });
+    expect(response.status).toBe(200);
+    const me = await body<MeResponse>(response);
+    expect(me.account).toMatchObject({ name: "Ada Lovelace", email: "ada@example.com", signIn: "clerk" });
+    expect(log).toHaveBeenCalledWith(JSON.stringify({ event: "account_created", verifiedEmail: true }));
+
+    // Later requests find the same account by the Clerk user id.
+    expect((await h.call("GET", "/api/apps", { token })).status).toBe(200);
+    expect(accounts(h)).toEqual([
+      expect.objectContaining({ clerk_user_id: "user_ada", email: "ada@example.com", name: "Ada Lovelace" }),
+    ]);
+  });
+
+  it("accepts only the authorized parties", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const foreign = clerk.token({ userId: "user_ada", azp: "https://evil.example" });
+    expect((await h.call("GET", "/api/me", { token: foreign })).status).toBe(401);
+    expect(accounts(h)).toEqual([]);
+
+    // CLERK_AUTHORIZED_PARTIES replaces the default (the dashboard's own origin).
+    const dev = createHarness({
+      CLERK_AUTHORIZED_PARTIES: "https://app.emojisense.dev/, http://localhost:8790",
+    });
+    const devClerk = clerkOf(dev);
+    for (const azp of ["https://app.emojisense.dev", "http://localhost:8790"]) {
+      const token = devClerk.token({ userId: "user_ada", azp });
+      expect((await dev.call("GET", "/api/me", { token, base: "https://app.emojisense.dev" })).status).toBe(
+        200,
+      );
+    }
+    const production = devClerk.token({ userId: "user_ada", azp: "https://app.emojisense.com" });
+    expect((await dev.call("GET", "/api/me", { token: production })).status).toBe(401);
+  });
+
+  it("treats pending sessions, other issuers and non-session tokens as signed out", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const tokens = [
+      clerk.token({ userId: "user_ada", claims: { sts: "pending" } }),
+      clerk.token({ userId: "user_ada", claims: { iss: "https://clerk.other.example" } }),
+      clerk.token({ userId: "user_ada", claims: { sid: undefined } }),
+    ];
+    for (const token of tokens) expect((await h.call("GET", "/api/me", { token })).status).toBe(401);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)).reason)).toEqual([
+      "session_pending",
+      "issuer_mismatch",
+      "not_a_session_token",
+    ]);
+    expect(accounts(h)).toEqual([]);
+  });
+
+  it("keeps an unverified or missing email out of the account", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const unverified = clerk.token({ userId: "user_a", email: "a@example.com", emailVerified: false });
+    await h.call("GET", "/api/me", { token: unverified });
+    // No custom claims at all: the Clerk session token was not customized.
+    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_b" }) });
+    expect(accounts(h)).toEqual([
+      expect.objectContaining({ clerk_user_id: "user_a", email: null, name: null }),
+      expect.objectContaining({ clerk_user_id: "user_b", email: null, name: null }),
+    ]);
+  });
+
+  it("follows name and email changes in the claims, but never takes another account's email", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_ada", email: "ada@example.com" }) });
+    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_bob", email: "bob@example.com" }) });
+
+    const renamed = clerk.token({ userId: "user_ada", email: "ada@lovelace.dev", name: "Ada" });
+    expect(
+      (await body<MeResponse>(await h.call("GET", "/api/me", { token: renamed }))).account,
+    ).toMatchObject({
+      name: "Ada",
+      email: "ada@lovelace.dev",
+    });
+    const taken = clerk.token({ userId: "user_ada", email: "bob@example.com", name: "Ada L." });
+    expect((await body<MeResponse>(await h.call("GET", "/api/me", { token: taken }))).account).toMatchObject({
+      name: "Ada L.",
+      email: "ada@lovelace.dev",
+    });
+  });
+
+  it("starts without an email when another account already has it", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_old", email: "ada@example.com" }) });
+    await h.call("GET", "/api/me", { token: clerk.token({ userId: "user_new", email: "ada@example.com" }) });
+    expect(accounts(h).map((row) => [row.clerk_user_id, row.email])).toEqual([
+      ["user_new", null],
+      ["user_old", "ada@example.com"],
+    ]);
+    expect(log).toHaveBeenLastCalledWith(JSON.stringify({ event: "account_created", verifiedEmail: false }));
+  });
+
+  it("moves a legacy GitHub account to Clerk once, by its verified email", async () => {
+    const h = createHarness();
+    const clerk = clerkOf(h);
+    h.db.exec(
+      `INSERT INTO accounts (id, email, github_id, name, plan, created_at)
+       VALUES ('legacy', 'octo@example.com', '42', 'Octo Cat', 'pro', 1)`,
+    );
+    vi.spyOn(console, "log").mockImplementation(() => {});
+
+    // An unverified email does not link.
+    const unverified = clerk.token({ userId: "user_x", email: "octo@example.com", emailVerified: false });
+    await h.call("GET", "/api/me", { token: unverified });
+    const token = clerk.token({ userId: "user_octo", email: "Octo@Example.com" });
+    const me = await body<MeResponse>(await h.call("GET", "/api/me", { token }));
+    expect(me.account).toMatchObject({ id: "legacy", name: "Octo Cat", email: "octo@example.com" });
+    expect(me.plan.id).toBe("pro");
+    expect(accounts(h).map((row) => row.clerk_user_id)).toEqual(["user_octo", "user_x"]);
+  });
+
+  it("creates one account when the first requests run in parallel", async () => {
+    const h = createHarness();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const token = clerkOf(h).token({ userId: "user_ada", email: "ada@example.com" });
+    const responses = await Promise.all(Array.from({ length: 4 }, () => h.call("GET", "/api/me", { token })));
+    expect(responses.map((response) => response.status)).toEqual([200, 200, 200, 200]);
+    expect(accounts(h)).toHaveLength(1);
+  });
+
+  it("uses the bearer token only: a bad token is not rescued by a dev cookie", async () => {
     const h = createHarness();
     const cookie = await h.signIn("ada");
-    const response = await h.call("GET", "/api/me", { cookie });
-    expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe("no-store");
-    const me = await body<MeResponse>(response);
-    expect(me.account).toMatchObject({ name: "ada", email: "ada@dev.localhost", githubLinked: false });
-    expect(me.plan).toMatchObject({ id: "free", maxApps: 1, limits: { semantic_calls: 100_000 } });
-    expect(me.appCount).toBe(0);
-    expect(me.waitlistPlan).toBeNull();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect((await h.call("GET", "/api/me", { cookie, token: "forged" })).status).toBe(401);
   });
 
-  it("expires after 30 days", async () => {
-    const h = createHarness();
-    const cookie = await h.signIn();
-    h.clock.now = NOW + SESSION_TTL_MS - 1;
-    expect((await h.call("GET", "/api/me", { cookie })).status).toBe(200);
-    h.clock.now = NOW + SESSION_TTL_MS;
-    expect((await h.call("GET", "/api/me", { cookie })).status).toBe(401);
+  it("answers 503 to a bearer token when Clerk is not configured", async () => {
+    const h = createHarness({}, { clerk: null });
+    const response = await h.call("GET", "/api/me", { token: "some.session.token" });
+    expect(response.status).toBe(503);
+    expect(await body(response)).toMatchObject({ error: { code: "clerk_unconfigured" } });
   });
 
-  it("logs out: deletes the session and clears the cookie", async () => {
+  it("still blocks writes from another origin", async () => {
     const h = createHarness();
-    const cookie = await h.signIn();
-    const response = await h.call("POST", "/api/auth/logout", { cookie });
-    expect(response.status).toBe(200);
-    expect(setCookies(response)[0]).toMatch(/^es_session=; Path=\/; Max-Age=0; HttpOnly; SameSite=Lax$/);
-    expect(h.db.rows("SELECT id FROM sessions")).toHaveLength(0);
-    expect((await h.call("GET", "/api/me", { cookie })).status).toBe(401);
-  });
-
-  it("refuses a logout posted from another origin", async () => {
-    const h = createHarness();
-    const cookie = await h.signIn();
-    const response = await h.call("POST", "/api/auth/logout", { cookie, origin: "https://evil.example" });
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const token = clerkOf(h).token({ userId: "user_ada", email: "ada@example.com" });
+    const response = await h.call("POST", "/api/apps", {
+      token,
+      origin: "https://evil.example",
+      body: { name: "App", environment: "prod" },
+    });
     expect(response.status).toBe(403);
-    expect(h.db.rows("SELECT id FROM sessions")).toHaveLength(1);
-  });
-});
-
-describe("GitHub OAuth", () => {
-  function githubFetch(options: { emails?: unknown; tokenBody?: unknown } = {}) {
-    return async (input: string, init?: RequestInit): Promise<Response> => {
-      if (input === "https://github.com/login/oauth/access_token") {
-        const sent = JSON.parse(String(init?.body)) as Record<string, string>;
-        expect(sent).toMatchObject({
-          client_id: "client-id",
-          client_secret: "client-secret",
-          code: "the-code",
-        });
-        return Response.json(options.tokenBody ?? { access_token: "gho_secret_token", token_type: "bearer" });
-      }
-      expect(new Headers(init?.headers).get("authorization")).toBe("Bearer gho_secret_token");
-      if (input === "https://api.github.com/user")
-        return Response.json({ id: 42, login: "octo", name: "Octo Cat" });
-      if (input === "https://api.github.com/user/emails") {
-        return Response.json(
-          options.emails ?? [
-            { email: "old@example.com", primary: false, verified: true },
-            { email: "Octo@Example.com", primary: true, verified: true },
-          ],
-        );
-      }
-      throw new Error(`unexpected fetch ${input}`);
-    };
-  }
-
-  async function start(h: ReturnType<typeof createHarness>, base = BASE) {
-    const response = await h.call("GET", "/api/auth/github", { base });
-    const location = new URL(response.headers.get("location") ?? "");
-    const state = location.searchParams.get("state") ?? "";
-    return { response, location, state, cookie: `es_oauth_state=${state}` };
-  }
-
-  it("explains when GitHub is not configured", async () => {
-    const h = createHarness();
-    const response = await h.call("GET", "/api/auth/github");
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("/?error=github_unconfigured");
-  });
-
-  it("redirects to GitHub with a state bound to a short-lived cookie", async () => {
-    const h = createHarness(GITHUB_ENV);
-    const { response, location, state } = await start(h, "https://dash.emojisense.example");
-    expect(response.status).toBe(302);
-    expect(location.origin + location.pathname).toBe("https://github.com/login/oauth/authorize");
-    expect(location.searchParams.get("client_id")).toBe("client-id");
-    expect(location.searchParams.get("redirect_uri")).toBe(
-      "https://dash.emojisense.example/api/auth/github/callback",
-    );
-    expect(state).toMatch(/^[A-Za-z0-9_-]{22}$/);
-    expect(setCookies(response)[0]).toBe(
-      `es_oauth_state=${state}; Path=/api/auth/github; Max-Age=600; HttpOnly; SameSite=Lax; Secure`,
-    );
-  });
-
-  it("rejects a callback whose state does not match the cookie", async () => {
-    const h = createHarness(GITHUB_ENV);
-    const { state } = await start(h);
-    for (const cookie of [undefined, "es_oauth_state=other"]) {
-      const response = await h.call("GET", `/api/auth/github/callback?code=the-code&state=${state}`, {
-        cookie,
-      });
-      expect(response.headers.get("location")).toBe("/?error=github_state");
-      expect(setCookies(response)[0]).toMatch(/^es_oauth_state=; Path=\/api\/auth\/github; Max-Age=0/);
-    }
-    expect(h.fetchMock).not.toHaveBeenCalled();
-    expect(h.db.rows("SELECT id FROM accounts")).toHaveLength(0);
-  });
-
-  it("reports a cancelled authorization", async () => {
-    const h = createHarness(GITHUB_ENV);
-    const { state, cookie } = await start(h);
-    const response = await h.call("GET", `/api/auth/github/callback?error=access_denied&state=${state}`, {
-      cookie,
-    });
-    expect(response.headers.get("location")).toBe("/?error=github_denied");
-  });
-
-  it("signs in, stores the verified primary email and never the access token", async () => {
-    const h = createHarness(GITHUB_ENV);
-    h.fetchMock.mockImplementation(githubFetch());
-    const { state, cookie } = await start(h);
-    const response = await h.call("GET", `/api/auth/github/callback?code=the-code&state=${state}`, {
-      cookie,
-    });
-
-    expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("/apps");
-    const session = sessionCookieFrom(response);
-    const accounts = h.db.rows<{ github_id: string; email: string; name: string }>("SELECT * FROM accounts");
-    expect(accounts).toEqual([
-      expect.objectContaining({ github_id: "42", email: "octo@example.com", name: "Octo Cat" }),
-    ]);
-    const dump = JSON.stringify([h.db.rows("SELECT * FROM accounts"), h.db.rows("SELECT * FROM sessions")]);
-    expect(dump).not.toContain("gho_secret_token");
-
-    const me = await body<MeResponse>(await h.call("GET", "/api/me", { cookie: session }));
-    expect(me.account).toMatchObject({ name: "Octo Cat", githubLinked: true });
-
-    // A second sign-in finds the same account by GitHub id.
-    const again = await start(h);
-    await h.call("GET", `/api/auth/github/callback?code=the-code&state=${again.state}`, {
-      cookie: again.cookie,
-    });
-    expect(h.db.rows("SELECT id FROM accounts")).toHaveLength(1);
-  });
-
-  it("leaves out an unverified email", async () => {
-    const h = createHarness(GITHUB_ENV);
-    h.fetchMock.mockImplementation(
-      githubFetch({ emails: [{ email: "x@example.com", primary: true, verified: false }] }),
-    );
-    const { state, cookie } = await start(h);
-    await h.call("GET", `/api/auth/github/callback?code=the-code&state=${state}`, { cookie });
-    expect(h.db.rows<{ email: string | null }>("SELECT email FROM accounts")).toEqual([{ email: null }]);
-  });
-
-  it("redirects with an error when GitHub rejects the code", async () => {
-    const h = createHarness(GITHUB_ENV);
-    h.fetchMock.mockImplementation(githubFetch({ tokenBody: { error: "bad_verification_code" } }));
-    const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    const { state, cookie } = await start(h);
-    const response = await h.call("GET", `/api/auth/github/callback?code=the-code&state=${state}`, {
-      cookie,
-    });
-    expect(response.headers.get("location")).toBe("/?error=github_failed");
-    expect(h.db.rows("SELECT id FROM sessions")).toHaveLength(0);
-    expect(log.mock.calls[0]?.[0]).toContain("bad_verification_code");
-    expect(log.mock.calls[0]?.[0]).not.toContain("the-code");
-    log.mockRestore();
   });
 });

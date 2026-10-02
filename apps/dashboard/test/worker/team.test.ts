@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   AcceptInviteResponse,
   CreatedInviteResponse,
@@ -8,6 +8,7 @@ import type {
 } from "../../src/shared/contract";
 import { sha256Hex } from "../../src/worker/crypto";
 import { INVITE_TTL_MS } from "../../src/worker/routes/team";
+import type { FakeSession } from "./clerk-fake";
 import {
   accountIdOf,
   BASE,
@@ -225,6 +226,62 @@ describe("POST /api/invites/:token/accept", () => {
     const { h, ada } = await setup();
     const token = await createInvite(h, ada, { role: "viewer" });
     expect((await h.call("POST", `/api/invites/${token}/accept`)).status).toBe(401);
+  });
+});
+
+describe("invites by email", () => {
+  async function emailSetup() {
+    const { h, ada } = await setup();
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const clerk = h.clerk;
+    if (!clerk) throw new Error("needs the fake Clerk");
+    const acceptAs = (invite: string, session: FakeSession) =>
+      h.call("POST", `/api/invites/${invite}/accept`, { token: clerk.token(session) });
+    return { h, ada, acceptAs };
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("lets in the Clerk user whose verified email matches, in any case", async () => {
+    const { h, ada, acceptAs } = await emailSetup();
+    const invite = await createInvite(h, ada, { role: "developer", email: "Sam@Example.com" });
+    const response = await acceptAs(invite, { userId: "user_sam", email: "SAM@example.COM" });
+    expect(response.status).toBe(200);
+    expect(await body<AcceptInviteResponse>(response)).toMatchObject({ team: { role: "developer" } });
+  });
+
+  it("refuses another email and an unverified one, and keeps the invite open", async () => {
+    const { h, ada, acceptAs } = await emailSetup();
+    const invite = await createInvite(h, ada, { role: "viewer", email: "sam@example.com" });
+    const sessions: FakeSession[] = [
+      { userId: "user_eve", email: "eve@example.com" },
+      { userId: "user_sam", email: "sam@example.com", emailVerified: false },
+      { userId: "user_anon" },
+    ];
+    for (const session of sessions) {
+      const response = await acceptAs(invite, session);
+      expect(response.status).toBe(403);
+      expect(await body(response)).toMatchObject({ error: { code: "invite_email_mismatch" } });
+    }
+    expect(h.db.rows("SELECT accepted_at FROM team_invites")).toEqual([{ accepted_at: null }]);
+    expect((await acceptAs(invite, { userId: "user_sam", email: "sam@example.com" })).status).toBe(200);
+  });
+
+  it("lets anyone with the link in when the invite has no email", async () => {
+    const { h, ada, acceptAs } = await emailSetup();
+    const invite = await createInvite(h, ada, { role: "viewer" });
+    expect((await acceptAs(invite, { userId: "user_anon" })).status).toBe(200);
+  });
+
+  it("matches a dev account by its dev email", async () => {
+    const { h, ada, accept } = await setup();
+    const bob = await h.signIn("bob");
+    const wrong = await createInvite(h, ada, { role: "viewer", email: "carol@dev.localhost" });
+    expect((await accept(wrong, bob)).status).toBe(403);
+    const right = await createInvite(h, ada, { role: "viewer", email: "bob@dev.localhost" });
+    expect((await accept(right, bob)).status).toBe(200);
   });
 });
 

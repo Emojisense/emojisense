@@ -67,7 +67,7 @@ export async function getBilling(ctx: AuthedContext): Promise<Response> {
 
 /**
  * `POST /api/billing/upgrade { plan, email? }` (owner only). Records the account on the waitlist
- * for a higher plan. `email` is used only when the account has none (GitHub may not share one).
+ * for a higher plan. `email` is used only when the account has none (no verified email at sign-in).
  */
 export async function requestUpgrade(ctx: AuthedContext): Promise<Response> {
   const { owner } = await requireTeamAccess(ctx, "change_plan");
