@@ -605,3 +605,22 @@ and the dev sets, never on the held-out set (`pnpm --filter @emojisense/eval rer
 Another model needs its own weights. `{ rerank: false }` selects the previous fusion:
 confidence-weighted reciprocal rank fusion (`fuseResults`, 0.4 + confidence weights, an alias
 floor of confidence − 0.1 when the alias confidence is ≥ 0.6, the same flag guard).
+
+## 11. Prebuilt alias index (`alias-index.<locale>.bin`, "ESIDX1")
+
+The phrase index that `createEngine` builds from one list of packs (§4), stored so a new process
+loads it instead (`buildEngineIndex` / `readEngineIndex` in `emojisense/engine-index`). Search
+results are identical: the file holds what the build computes, and the engine derives the rest
+(phrase lengths and weights, IDF, token masks) with the same code.
+
+- Layout, little-endian, every section padded to 4 bytes: a u32 header length, a JSON header,
+  then `postingStart` (i32 × vocab + 1), `postings` (i32), the start of each phrase's text
+  (u32 × phrases + 1), `phraseEmoji` (u16, or i32 above 65,535 emoji), `phraseLocaleMask` (u8 for
+  up to 8 packs, else u32), `phraseField` (u8, index into the §2 field list), the phrase texts
+  (UTF-8, back to back) and the sorted vocabulary (UTF-8, one token per line).
+- The header names the format version, the field list, a normalization probe and, per pack in
+  order: locale, part, pack version, rows, the number of characters in its text cells and its
+  weights. A reader that finds any difference ignores the file and builds the index.
+- The API Worker bundles the index of `[pack.en.json, pack.en.ext.json]` and publishes
+  `alias-index.<locale>.bin` for every other pack locale next to the packs, built from
+  `[pack.en.json, pack.<locale>.json, pack.<locale>.ext.json]` (`scripts/sync-pack.ts`).

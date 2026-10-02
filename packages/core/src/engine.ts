@@ -99,6 +99,11 @@ export interface EngineOptions {
    * true; packs without the key keep row order (PACK_FORMAT.md §4).
    */
   popularity?: boolean;
+  /**
+   * The phrase index of exactly these packs, built ahead of time (`readEngineIndex` in
+   * `emojisense/engine-index`): the engine loads it instead of indexing the packs. Same results.
+   */
+  prebuilt?: StoredIndex;
 }
 
 export interface AliasEngine {
@@ -163,20 +168,34 @@ function entryOf(pack: Pack, row: PackRow): EmojiEntry {
   return { ...entry, shortcode, ...(imageUrl ? { imageUrl } : {}) };
 }
 
-/** What search needs from the packs: phrases, vocabulary, postings and IDF. */
-interface PhraseIndex {
-  phraseText: string[];
-  phraseEmoji: Int32Array;
+/**
+ * The part of the phrase index that takes time to build: phrases, the sorted vocabulary and the
+ * postings. A prebuilt index stores exactly this (engine-index.ts); the rest is derived from it.
+ */
+export interface StoredIndex {
+  /** A prebuilt index decodes a phrase only when a result shows it (`match`). */
+  phraseText: PhraseTexts;
+  phraseEmoji: Int32Array | Uint16Array;
   phraseField: Uint8Array;
   /** Bit i set = the phrase is in packs[i]. */
-  phraseLocaleMask: Uint32Array;
-  phraseLength: Int32Array;
-  phraseFieldWeight: Float64Array;
+  phraseLocaleMask: Uint32Array | Uint8Array;
   /** Sorted, so prefix search is a binary search. */
   vocab: string[];
-  tokenId: Map<string, number>;
+  /** Phrases of vocabulary token t: `postings[postingStart[t] … postingStart[t + 1])`, ascending. */
   postingStart: Int32Array;
   postings: Int32Array;
+}
+
+/** Phrase texts by phrase index: an array, or a prebuilt index's lazily decoded texts. */
+export interface PhraseTexts {
+  readonly length: number;
+  at(index: number): string | undefined;
+}
+
+/** What search needs from the packs: phrases, vocabulary, postings and IDF. */
+interface PhraseIndex extends StoredIndex {
+  phraseLength: Int32Array;
+  phraseFieldWeight: Float64Array;
   idf: Float64Array;
   maxIdf: number;
   tokensByLength: Map<number, number[]>;
@@ -185,20 +204,55 @@ interface PhraseIndex {
 }
 
 /**
+ * The emoji of the packs: the primary pack's rows, then the rows custom packs add. Labels are
+ * filled per locale by `assignLabels`.
+ */
+export function collectEntries(packs: Pack[]): {
+  primary: Pack;
+  entries: EmojiEntry[];
+  indexById: Map<string, number>;
+} {
+  const primary = packs.find((p) => !isCustomPack(p)) ?? (packs[0] as Pack);
+  const entries: EmojiEntry[] = [];
+  const indexById = new Map<string, number>();
+  for (const pack of [primary, ...packs.filter((p) => p !== primary && isCustomPack(p))]) {
+    for (const row of pack.emoji) {
+      if (indexById.has(row[ROW.hexcode])) continue;
+      indexById.set(row[ROW.hexcode], entries.length);
+      entries.push(entryOf(pack, row));
+    }
+  }
+  return { primary, entries, indexById };
+}
+
+/** Each entry's label per locale; a later pack of the same locale wins. */
+function assignLabels(packs: Pack[], entries: EmojiEntry[], indexById: Map<string, number>): void {
+  for (const pack of packs) {
+    for (const row of pack.emoji) {
+      const emojiIndex = indexById.get(row[ROW.hexcode]);
+      const label = row[ROW.label];
+      if (emojiIndex !== undefined && label) (entries[emojiIndex] as EmojiEntry).labels[pack.locale] = label;
+    }
+  }
+}
+
+/**
  * Index the phrases of all packs. A separate function on purpose: its build-time structures
  * (per-emoji dedup maps, token lists) are captured by the closures here, so they are freed when
  * it returns. Inside createEngine they would share the context of `search` and live as long as
  * the engine (≈ half of its memory).
  */
-function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<string, number>): PhraseIndex {
+export function indexPhrases(
+  packs: Pack[],
+  entries: readonly EmojiEntry[],
+  indexById: Map<string, number>,
+): StoredIndex & { phraseText: string[] } {
   // Pass 1: collect phrases, deduplicated per emoji (strongest field / first pack wins). Each
   // token gets an id in first-seen order at once, into one flat list: all 22 packs have ≈ 0.7 M
   // phrases, and an array of tokens per phrase was most of the build time and garbage.
   const phraseEmojiList: number[] = [];
   const phraseField: number[] = [];
   const phraseLocaleMask: number[] = [];
-  /** The weights of the pack that added the phrase first (the lowest bit of its locale mask). */
-  const phraseFieldWeightList: number[] = [];
   const phraseText: string[] = [];
   /** Tokens of phrase p: `firstSeenTokenIds[phraseTokenEnd[p - 1] … phraseTokenEnd[p])`. */
   const phraseTokenEnd: number[] = [];
@@ -223,7 +277,6 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
       const emojiIndex = indexById.get(row[ROW.hexcode]);
       if (emojiIndex === undefined) continue;
       const label = row[ROW.label];
-      if (label) (entries[emojiIndex] as EmojiEntry).labels[pack.locale] = label;
       const seen = seenByEmoji[emojiIndex] as Map<string, number>;
       for (let fieldIndex = 0; fieldIndex < FIELDS.length; fieldIndex++) {
         const weight = fieldWeights[fieldIndex] as number;
@@ -242,7 +295,6 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
           phraseEmojiList.push(emojiIndex);
           phraseField.push(fieldIndex);
           phraseLocaleMask.push(packBit);
-          phraseFieldWeightList.push(weight);
           phraseText.push(phrase);
           // Most phrases are one word: the phrase is its own token (and its hash is cached).
           if (phrase.includes(" ")) tokenize(phrase).forEach(addToken);
@@ -259,7 +311,6 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
   const sortedId = new Int32Array(vocab.length);
   vocab.forEach((token, id) => {
     sortedId[tokenId.get(token) as number] = id;
-    tokenId.set(token, id);
   });
   const phraseTokenIds = new Int32Array(firstSeenTokenIds.length);
   const postingStart = new Int32Array(vocab.length + 1);
@@ -273,10 +324,8 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
   }
   const postings = new Int32Array(postingStart[vocab.length] as number);
   const fill = postingStart.slice(0, vocab.length);
-  const phraseLength = new Int32Array(phraseText.length);
   for (let phrase = 0, k = 0; phrase < phraseText.length; phrase++) {
     const end = phraseTokenEnd[phrase] as number;
-    phraseLength[phrase] = end - k;
     for (; k < end; k++) {
       const id = phraseTokenIds[k] as number;
       postings[fill[id] as number] = phrase;
@@ -284,10 +333,45 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
     }
   }
 
+  return {
+    phraseText,
+    phraseEmoji: Int32Array.from(phraseEmojiList),
+    phraseField: Uint8Array.from(phraseField),
+    phraseLocaleMask: Uint32Array.from(phraseLocaleMask),
+    vocab,
+    postingStart,
+    postings,
+  };
+}
+
+/**
+ * The derived part of the index, the same for a fresh and a prebuilt one: phrase lengths and
+ * weights, IDF, tokens by length.
+ */
+function completeIndex(stored: StoredIndex, packs: Pack[], entryCount: number): PhraseIndex {
+  const { phraseText, phraseEmoji, phraseField, phraseLocaleMask, vocab, postingStart, postings } = stored;
+  // A phrase has the field weights of the pack that added it first: the lowest bit of its mask.
+  const packFieldWeights = packs.map((pack) => {
+    const weights = { ...DEFAULT_WEIGHTS, ...pack.weights };
+    return FIELDS.map((field) => weights[field]);
+  });
+  const phraseFieldWeight = new Float64Array(phraseText.length);
+  for (let phrase = 0; phrase < phraseText.length; phrase++) {
+    const mask = phraseLocaleMask[phrase] as number;
+    const firstPack = 31 - Math.clz32(mask & -mask);
+    phraseFieldWeight[phrase] = packFieldWeights[firstPack]?.[phraseField[phrase] as number] as number;
+  }
+  // Each token of a phrase has one posting, so a phrase's length is its number of postings.
+  const phraseLength = new Int32Array(phraseText.length);
+  for (let k = 0; k < postings.length; k++) {
+    const phrase = postings[k] as number;
+    phraseLength[phrase] = (phraseLength[phrase] as number) + 1;
+  }
+
   // IDF over emoji (not phrases), so a token repeated across one emoji's aliases stays specific.
   const idf = new Float64Array(vocab.length);
   const tokenLocaleMask = new Uint32Array(vocab.length);
-  const lastSeen = new Int32Array(entries.length).fill(-1);
+  const lastSeen = new Int32Array(entryCount).fill(-1);
   let maxIdf = 0;
   for (let t = 0; t < vocab.length; t++) {
     let df = 0;
@@ -295,14 +379,14 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
     for (let k = postingStart[t] as number; k < (postingStart[t + 1] as number); k++) {
       const phrase = postings[k] as number;
       mask |= phraseLocaleMask[phrase] as number;
-      const e = phraseEmojiList[phrase] as number;
+      const e = phraseEmoji[phrase] as number;
       if (lastSeen[e] !== t) {
         lastSeen[e] = t;
         df++;
       }
     }
     tokenLocaleMask[t] = mask;
-    idf[t] = Math.log(1 + entries.length / df);
+    idf[t] = Math.log(1 + entryCount / df);
     if ((idf[t] as number) > maxIdf) maxIdf = idf[t] as number;
   }
 
@@ -314,21 +398,24 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
   });
 
   return {
-    phraseText,
-    phraseEmoji: Int32Array.from(phraseEmojiList),
-    phraseField: Uint8Array.from(phraseField),
-    phraseLocaleMask: Uint32Array.from(phraseLocaleMask),
+    ...stored,
     phraseLength,
-    phraseFieldWeight: Float64Array.from(phraseFieldWeightList),
-    vocab,
-    tokenId,
-    postingStart,
-    postings,
+    phraseFieldWeight,
     idf,
     maxIdf,
     tokensByLength,
     tokenLocaleMask,
   };
+}
+
+/** The packs' phrase index: the prebuilt one when given, else built now. */
+function phraseIndexFor(
+  packs: Pack[],
+  entries: readonly EmojiEntry[],
+  indexById: Map<string, number>,
+  prebuilt: StoredIndex | undefined,
+): PhraseIndex {
+  return completeIndex(prebuilt ?? indexPhrases(packs, entries, indexById), packs, entries.length);
 }
 
 /**
@@ -340,7 +427,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   const packs = Array.isArray(input) ? input : [input];
   if (packs.length === 0) throw new Error("emojisense: createEngine needs at least one pack");
   for (const pack of packs) assertPack(pack);
-  const primary = packs.find((p) => !isCustomPack(p)) ?? (packs[0] as Pack);
+  const { primary, entries, indexById } = collectEntries(packs);
   const locales = [...new Set(packs.filter((p) => !isCustomPack(p)).map((p) => p.locale))];
   // Core and extension packs of one locale count as one locale for the preference factor.
   const preferredMasks = new Map<string, number>();
@@ -350,15 +437,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     else preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
   });
 
-  const entries: EmojiEntry[] = [];
-  const indexById = new Map<string, number>();
-  for (const pack of [primary, ...packs.filter((p) => p !== primary && isCustomPack(p))]) {
-    for (const row of pack.emoji) {
-      if (indexById.has(row[ROW.hexcode])) continue;
-      indexById.set(row[ROW.hexcode], entries.length);
-      entries.push(entryOf(pack, row));
-    }
-  }
+  assignLabels(packs, entries, indexById);
   const entryPopularity = new Uint8Array(entries.length);
   for (const pack of options.popularity === false ? [] : packs) {
     pack.popularity?.forEach((value, row) => {
@@ -375,14 +454,13 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     phraseLength,
     phraseFieldWeight,
     vocab,
-    tokenId,
     postingStart,
     postings,
     idf,
     maxIdf,
     tokensByLength,
     tokenLocaleMask,
-  } = indexPhrases(packs, entries, indexById);
+  } = phraseIndexFor(packs, entries, indexById, options.prebuilt);
 
   // Per-phrase / per-emoji scratch space, reused by every search (no allocation per keystroke:
   // common words touch thousands of phrases and per-phrase objects caused GC pauses).
@@ -417,6 +495,12 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     return lo;
   }
 
+  /** The vocabulary id of `token`, by binary search (no token map to build or keep). */
+  function idOf(token: string): number | undefined {
+    const id = lowerBound(token);
+    return vocab[id] === token ? id : undefined;
+  }
+
   /**
    * Vocabulary tokens a query token may stand for, with a match quality in (0, 1]. `partial`
    * gets the prefix completions into words that no preferred-locale pack has: they match with
@@ -433,7 +517,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       if (quality > (candidates.get(id) ?? 0)) candidates.set(id, quality);
     };
     const preferredToken = (id: number) => ((tokenLocaleMask[id] as number) & preferredMask) !== 0;
-    const exact = tokenId.get(token);
+    const exact = idOf(token);
     if (exact !== undefined) add(exact, 1);
 
     let prefixMatches = 0;
@@ -458,7 +542,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     if (exact === undefined && prefixMatches === 0) {
       // "upp" → "up", "happpy" → "happy": a repeated final letter is the most common slip.
       const squeezed = token.replace(/(.)\1+$/, "$1");
-      const squeezedId = squeezed !== token ? tokenId.get(squeezed) : undefined;
+      const squeezedId = squeezed !== token ? idOf(squeezed) : undefined;
       if (squeezedId !== undefined) add(squeezedId, 0.85);
 
       const maxEdits = maxEditsFor(token.length);
@@ -492,7 +576,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const pieces: string[] = [];
     let unknown = "";
     let i = 0;
-    const isPiece = (piece: string) => tokenId.has(piece) || functionWords.has(piece);
+    const isPiece = (piece: string) => idOf(piece) !== undefined || functionWords.has(piece);
     while (i < chars.length) {
       let length = Math.min(MAX_PIECE_LENGTH, chars.length - i);
       while (length > 0 && !isPiece(chars.slice(i, i + length).join(""))) length--;
@@ -522,7 +606,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
     return tokens
       .flatMap((token, i) => {
-        if (tokenId.has(token) || !UNSPACED_SCRIPT.test(token)) return [token];
+        if (idOf(token) !== undefined || !UNSPACED_SCRIPT.test(token)) return [token];
         if (lastIsPrefix && i === tokens.length - 1 && completes(token)) return [token];
         return segment(token, functionWords);
       })
@@ -531,7 +615,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
 
   /** The vocabulary token equal to `token`, if any: a function word next to content words matches only itself. */
   function exactly(token: string): Map<number, number> {
-    const id = tokenId.get(token);
+    const id = idOf(token);
     return new Map(id === undefined ? [] : [[id, 1]]);
   }
 
@@ -759,7 +843,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         score: Math.round(score * 1000) / 1000,
         source: shortcode === undefined ? "alias" : "custom",
         label: entry.labels[locale ?? ""] ?? entry.labels[primary.locale] ?? shortcode ?? "",
-        match: phraseText[phrase] as string,
+        match: phraseText.at(phrase) as string,
         field: FIELDS[phraseField[phrase] as number] as Field,
         ...(imageUrl ? { imageUrl } : {}),
         ...(shortcode ? { shortcode } : {}),

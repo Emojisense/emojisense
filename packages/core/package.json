@@ -38,6 +38,10 @@
       "types": "./dist/vectors.d.ts",
       "default": "./dist/vectors.js"
     },
+    "./engine-index": {
+      "types": "./dist/engine-index.d.ts",
+      "default": "./dist/engine-index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
