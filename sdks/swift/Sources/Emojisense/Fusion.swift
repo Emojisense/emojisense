@@ -92,7 +92,7 @@ public enum Fusion {
   /// `demoteUnsupportedFlags` in packages/core/src/fusion.ts. A flag is supported when the alias
   /// results hold the same flag or its cosine reaches the calibration ceiling. Short Latin-script
   /// queries the model does not know (romanized text, slang) land near the flag documents.
-  public static func demoteUnsupportedFlags(
+  static func demoteUnsupportedFlags(
     _ semantic: [SearchResult], alias: [SearchResult],
     calibration: SemanticCalibration = .standard
   ) -> [SearchResult] {

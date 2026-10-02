@@ -41,7 +41,6 @@ export {
 } from "./engine.js";
 export {
   DEFAULT_SEMANTIC_CALIBRATION,
-  demoteUnsupportedFlags,
   type FuseOptions,
   fuse,
   fuseResults,
