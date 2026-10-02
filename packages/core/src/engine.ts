@@ -63,9 +63,10 @@ export interface AliasSearchOutput {
    * (exact, a typo of the token, or a completion of the token being typed into a word of the
    * preferred locale). A prefix completion into another locale's word is a partial match and
    * does not count. Below `WHOLE_COVERAGE` (confidence.ts) the dictionary does not explain the
-   * query: "kendrick lamar" matches at most "lamar". PACK_FORMAT.md §4.
+   * query: "kendrick lamar" matches at most "lamar". PACK_FORMAT.md §4. The engine always sets
+   * it; an output built by hand without it counts as 0 (nothing covered).
    */
-  coverage: number;
+  coverage?: number;
 }
 
 /** The canonical ranking only (`culture: false`). */

@@ -53,7 +53,7 @@ export function semanticStrength(
  * A whole match in a weak field ("drake" → 🦆 by a keyword, 0.58) is not enough on its own.
  */
 export function aliasCovers(alias: AliasSearchOutput): boolean {
-  return alias.coverage >= WHOLE_COVERAGE && alias.confidence >= ALIAS_SURE;
+  return (alias.coverage ?? 0) >= WHOLE_COVERAGE && alias.confidence >= ALIAS_SURE;
 }
 
 /**
@@ -68,7 +68,7 @@ export function assessConfidence(
   calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
 ): QueryConfidence {
   if (alias && alias.tokens.length === 0) return { confidence: 0, unsure: false };
-  const aliasPart = alias ? alias.confidence * Math.min(1, alias.coverage / WHOLE_COVERAGE) : 0;
+  const aliasPart = alias ? alias.confidence * Math.min(1, (alias.coverage ?? 0) / WHOLE_COVERAGE) : 0;
   const covered = alias ? aliasCovers(alias) : false;
   if (semantic === undefined)
     return { confidence: round(aliasPart), unsure: alias !== undefined && !covered };
