@@ -14,14 +14,22 @@ import { CACHE_DIR, DATA_ROOT } from "./paths.ts";
 
 type Run = (model: string, input: Record<string, unknown>) => Promise<unknown>;
 
-let runner: { run: Run; dispose: () => Promise<void> } | undefined;
+type Runner = { run: Run; dispose: () => Promise<void> };
 
-async function getRunner() {
-  if (runner) return runner;
+// A promise, not the runner: concurrent first calls must share one wrangler proxy, or the extra
+// proxies are never disposed and keep the process alive.
+let runner: Promise<Runner> | undefined;
+
+function getRunner(): Promise<Runner> {
+  runner ??= createRunner();
+  return runner;
+}
+
+async function createRunner(): Promise<Runner> {
   const token = process.env.CLOUDFLARE_API_TOKEN;
   const account = process.env.CLOUDFLARE_ACCOUNT_ID;
   if (token && account) {
-    runner = {
+    return {
       run: async (model, input) => {
         const response = await fetch(
           `https://api.cloudflare.com/client/v4/accounts/${account}/ai/run/${model}`,
@@ -37,19 +45,20 @@ async function getRunner() {
       },
       dispose: async () => {},
     };
-  } else {
-    const { getPlatformProxy } = await import("wrangler");
-    const proxy = await getPlatformProxy<{ AI: { run: Run } }>({
-      configPath: join(DATA_ROOT, "wrangler.embed.jsonc"),
-    });
-    runner = { run: (m, i) => proxy.env.AI.run(m, i), dispose: () => proxy.dispose() };
   }
-  return runner;
+  const { getPlatformProxy } = await import("wrangler");
+  const proxy = await getPlatformProxy<{ AI: { run: Run } }>({
+    configPath: join(DATA_ROOT, "wrangler.embed.jsonc"),
+  });
+  return { run: (m, i) => proxy.env.AI.run(m, i), dispose: () => proxy.dispose() };
 }
 
 export async function disposeEmbeddings() {
-  await runner?.dispose();
+  const current = runner;
   runner = undefined;
+  // A runner that failed to start has nothing to dispose; its error already reached the caller.
+  const started = await current?.catch(() => undefined);
+  await started?.dispose();
 }
 
 const hash = (model: EmbeddingModel, kind: string, text: string) =>

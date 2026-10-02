@@ -6,6 +6,8 @@
   "scripts": {
     "eval": "tsx src/run.ts",
     "eval:ci": "tsx src/run.ts --offline --ci",
+    "eval:heldout": "tsx src/heldout-cli.ts",
+    "heldout:generate": "tsx scripts/make-heldout.ts",
     "eval:images": "tsx src/images.ts",
     "cost": "tsx src/cost-cli.ts",
     "typecheck": "tsc --noEmit",
