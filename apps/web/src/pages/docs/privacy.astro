@@ -54,7 +54,7 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
         <tr><td>Custom emoji: shortcode, aliases, size, source and the image</td><td>D1 and R2</td><td>Until the emoji, its tenant or the account is deleted. Edge caches can hold a copy of the image until it is evicted.</td></tr>
         <tr><td>Tenants: your external id and optional name for each of your customers</td><td>D1 <code>tenants</code></td><td>Until you delete the tenant or the account</td></tr>
         <tr><td>Webhook deliveries: event type, HTTP status, duration and time. No body and no response.</td><td>D1 <code>webhook_deliveries</code></td><td>The last 50 per webhook</td></tr>
-        <tr><td>Accounts, sessions, apps, keys (a hash and the first 12 characters), team members and webhooks</td><td>D1</td><td>Until the account is deleted. Revoked keys stay, marked as revoked.</td></tr>
+        <tr><td>Accounts (name and verified email), apps, keys (a hash and the first 12 characters), team members and webhooks</td><td>D1</td><td>Until the account is deleted. Revoked keys stay, marked as revoked. Sign-in sessions live at the sign-in provider; the dashboard stores none.</td></tr>
         <tr><td>Waitlist: email address, plan and the date of the first sign-up</td><td>D1 <code>waitlist</code></td><td>{WAITLIST_KEEP_MONTHS} months after the first sign-up. A daily job deletes older rows.</td></tr>
         <tr><td>Our own log records: event names, error types and counts. No query or message text, keys, IP addresses or emails.</td><td>Cloudflare Workers Logs</td><td>Up to 7 days. Invocation logs (full request URLs) are turned off.</td></tr>
       </tbody>
