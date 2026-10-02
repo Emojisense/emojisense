@@ -114,12 +114,44 @@ These are static asset requests: free, and they do not run the Worker.
 | `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. |
 | `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke |
 | `GET /api/apps/:id/usage?period=YYYY-MM` | Usage per metric vs plan limits |
+| `GET /api/apps/:id/analytics?days=7\|30\|90` | Search analytics (Pro and Scale), see below |
 | `POST /api/waitlist` | Public: `{ email, plan }` for the Pro waitlist |
+
+### `GET /api/apps/:id/analytics`
+
+| Param | Default | Notes |
+| ----- | ------- | ----- |
+| `days` | `30` | `7`, `30` or `90`. Cut to the plan's retention (Pro 30, Scale 365). |
+
+```json
+{
+  "days": [{ "day": "2026-10-14", "searches": 0, "misses": 0 }, { "day": "2026-10-15", "searches": 412, "misses": 9 }],
+  "topQueries": [{ "query": "ship it", "searches": 120 }],
+  "topMisses": [{ "query": "lgtm", "misses": 7 }]
+}
+```
+
+- `days`: one entry per UTC day of the window, oldest first, today last, `0` for days without
+  searches. A miss is a search that returned no result.
+- `topQueries`, `topMisses`: up to 20 entries over the window. A query is named only when the app
+  saw it at least 5 times in the window. Day totals count every search.
+- The plan is the account's (team members see the owner's plan). Free and Solo get `402
+  { "error": "plan_required", "plan": "pro", "message": "…" }`.
+- Data comes from keyed `/v1/search` calls only, cache hits and over-limit answers included,
+  flushed in batches (≈ 10 s delay).
 
 ## Privacy
 
-- Never logged: IP addresses (only an in-memory rate-limit key), keys, user identifiers,
-  reaction text, images.
-- Analytics Engine receives counts, cache status, latency, and the normalized text (≤ 64 chars) of
-  search queries that reached the Worker. Downstream jobs use a query only when it was seen ≥ 5
-  times.
+What the hosted service collects, and for how long:
+
+| Data | Where | Kept |
+| ---- | ----- | ---- |
+| Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
+| Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
+| Monthly call counts per app and metric | D1 `usage_monthly` | while the app exists |
+
+- Never logged or stored: IP addresses (only an in-memory rate-limit key), keys, user
+  identifiers, reaction text, images.
+- Anonymous calls and development keys never reach `query_daily`.
+- The dashboard names a query only when the app saw it ≥ 5 times in the window. Emojisense's own
+  downstream jobs (shards, alias mining) use a query only when it was seen ≥ 5 times.

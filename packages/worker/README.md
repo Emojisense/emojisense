@@ -67,6 +67,17 @@ curl -H 'Origin: http://localhost:5173' "http://localhost:8788/v1/search?q=ship%
 Unflushed counts are lost when an isolate is evicted. The error favors the customer and is
 accepted for soft limits (DECISIONS.md, Update #2).
 
+## Search analytics (`query_daily`)
+
+| Rule | Where |
+| ---- | ----- |
+| Each keyed `/v1/search` adds 1 search (and 1 miss when it returned no result) to its app, UTC day and normalized query. Cache hits and over-limit answers count. Anonymous calls, dev keys and reactions never do. | `src/context.ts`, `src/search.ts` |
+| Counted in memory and flushed like usage (10 s or 100 searches), at most 100 rows per D1 batch. The UPSERT skips rows of deleted apps. | `src/query-stats.ts`, `src/store.ts` |
+| Daily cron `17 3 * * *` deletes rows past the account plan's window: Pro 30 days, Scale 365, others 7. Batches of 1,000 rows, ≤ 200 per run. | `src/retention.ts`, `wrangler.jsonc` |
+
+Run the cron locally: `pnpm exec wrangler dev --env offline --test-scheduled --persist-to ../../.wrangler/state`,
+then `curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*"`.
+
 ## Analytics Engine (`EVENTS`)
 
 One data point per request that reaches a handler. No IP, key, app or user id.
@@ -82,8 +93,9 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 
 | Path | Purpose |
 | ---- | ------- |
-| `src/index.ts` | Worker entry: bundled packs and vectors, D1 store |
-| `src/app.ts` | Routing, CORS, per-isolate key cache and meter |
+| `src/index.ts` | Worker entry: bundled packs and vectors, D1 store, daily cron |
+| `src/app.ts` | Routing, CORS, per-isolate key cache, meter and search analytics |
+| `src/query-stats.ts`, `src/retention.ts` | Search analytics: batched `query_daily` writes, retention cron |
 | `src/search.ts`, `src/reactions.ts`, `src/image.ts` | Route handlers |
 | `src/semantic.ts`, `src/vision.ts` | Workers AI calls (embedding, `@cf/google/gemma-4-26b-a4b-it` vision) |
 | `src/store.ts` | `Store` interface; D1 and in-memory implementations |

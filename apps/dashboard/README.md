@@ -79,6 +79,7 @@ email. It uses the access token once and never stores it.
 | Keys | The create response is the only place the full key appears. D1 stores its SHA-256 and the first 12 characters. |
 | Allowed origins | `https://host[:port]` or `https://*.example.com`; `http://` only for localhost; at most 20. A publishable key with no origins (any origin) is allowed only in `dev` apps. Secret keys have none. |
 | Usage | `GET /api/apps/:id/usage?period=YYYY-MM` (UTC, default current month, no future months). `status` is `ok`, `near_limit` (≥ 80%), `over_limit` (used ≥ limit) or `not_included` (limit 0). `limit: null` means unlimited. |
+| Analytics | `GET /api/apps/:id/analytics?days=7\|30\|90` (default 30) from `query_daily`. The window is cut to the owner account's `analyticsRetentionDays` and zero-filled. Top lists: 20 entries, only queries searched ≥ 5 times in the window. Plans without analytics get `402 { "error": "plan_required", "plan": "pro", "message" }`. |
 | Waitlist | Public and idempotent. New and known emails get the same answer. A repeat updates the plan and keeps the first date. |
 
 `GET /api/apps/:id` (app + keys) is an addition to docs/API.md: the app page needs it to list keys.
