@@ -2,6 +2,7 @@ import type { EmbeddingModel } from "@emojisense/data/models";
 import {
   type AliasEngine,
   type AliasSearchOutput,
+  type Culture,
   fuse,
   l2normalize,
   type SearchResult,
@@ -22,6 +23,11 @@ export interface Catalog {
    */
   aliasEngine(locale: string, env: Env): Promise<AliasEngine | undefined>;
   index(): VectorIndex;
+  /**
+   * The published culture file of a pack locale (culture.ts), for `/v1/search?culture=1`.
+   * Undefined (or a missing member) = no culture layer: the answer is the canonical ranking.
+   */
+  culture?(locale: string, env: Env): Promise<Culture | undefined>;
 }
 
 export function modelTag(catalog: Catalog): string {

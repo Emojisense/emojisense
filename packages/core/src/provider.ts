@@ -12,6 +12,11 @@ export interface SemanticResponse {
   degraded?: boolean;
   /** Server: the key is over its monthly limit; no semantic results until the next period. */
   overLimit?: boolean;
+  /**
+   * Server, `/v1/search?culture=1` only (the SDK applies culture on the device instead): the
+   * culture file applied (its first day) and the region, or null when none was applied.
+   */
+  culture?: { from: string; region: string | null } | null;
   /** Set by the provider that answered. */
   layer?: SemanticLayer;
 }

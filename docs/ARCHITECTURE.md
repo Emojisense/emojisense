@@ -67,8 +67,9 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
    ▼ culture:check   ── schema, catalog hexcodes, windows, neutral context, exclusions.txt
    ▼ culture:build --date d ──▶ dist/culture/<packVersion>/culture.<locale>.json
    │                             lasting entries + seasonal/event entries active in [d, d+14], exact windows
-   ▼ Worker sync ──▶ /v1/culture/<packVersion>/… static assets, max-age=3600 (rebuilt daily)
+   ▼ Worker sync (runs culture:build for today, UTC) ──▶ /v1/culture/<packVersion>/… static assets, max-age=3600
    ▼ SDK: loadCulture → engine.withCulture(culture) → session applies it after fusion
+   ▼ API: /v1/search?culture=1&region=XX → same file through ASSETS, applied after the shared cache
 ```
 
 | Rule | Where |
@@ -82,6 +83,8 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
 | `culture: false` keeps the canonical ranking (tests, benchmarks). Without a culture file nothing changes. | engine, session, React, web component |
 | A "relevant now" shelf (featured seasonal and event emoji) is off by default. | `relevantNow`, `showRelevantNow` |
 | CI gate: with every approved entry active, no top-1 answer of the eval suites changes, and each trigger brings its entry's strongest emoji into the top 3. | `packages/eval/src/culture-gate.ts` |
+| **Regional senses** (`kind: "regional"`, e.g. "football" → ⚽ outside North America) are the one exception to "never above": the app names a region in scope, the query equals a trigger, and the canonical top is one the entry `outranks`. The canonical answer moves to second place. The gate checks the lead in scope, no change out of scope, and no other in-house query changing its top answer with the region. | `matchRegionalLead`, `culture-gate.ts` |
+| The search API applies culture only with `culture=1` (off by default: SDKs already apply it on the device). It uses the UTC day and never stores culture in the shared cache. | `packages/worker/src/culture.ts` |
 
 The culture file is optional and small (≤ 1.5 KB gz per locale today). A failed load leaves
 search unchanged, and the engine index is shared, not rebuilt, when the file arrives.

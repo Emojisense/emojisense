@@ -357,10 +357,12 @@ A client MUST reject a file whose `format` differs or whose `formatVersion` it d
 | Key | Meaning |
 | --- | ------- |
 | `from`, `until` | Days the build covered: the file holds every lasting entry, plus the seasonal and event entries active on any day of [`from`, `until`]. |
-| `entries[].kind` | `lasting`, `seasonal` (a yearly window) or `event` (one dated window, ≤ 60 days). A festival on a lunar calendar is one event entry per year (`diwali-2026`). |
+| `entries[].kind` | `lasting`, `seasonal` (a yearly window), `event` (one dated window, ≤ 60 days) or `regional` (a word whose main sense differs by region, always active; see step 3). A festival on a lunar calendar is one event entry per year (`diwali-2026`). |
 | `entries[].context` | The reason, in this file's locale. Neutral, ≤ 90 characters. |
 | `entries[].when` | `null` (always), `{ from: "MM-DD", to: "MM-DD", recurs: "yearly" }` (may wrap the year end, e.g. `12-26` → `01-02`) or `{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`. Days are inclusive and compared with the user's **local** calendar day. |
 | `entries[].regions` | ISO 3166-1 alpha-2 codes, or `["*"]`. Without a region from the app, only `"*"` entries apply. |
+| `entries[].exceptRegions` | Optional, with `regions: ["*"]`: codes where the entry does not apply when the app names one of them. |
+| `entries[].outranks` | `regional` entries only: hexcodes of the canonical top answers the regional sense may move to second place. |
 | `entries[].triggers` | Normalized phrases (§3) that people of this locale type. |
 | `entries[].emoji` | `[emoji, hexcode, weight]`, strongest first; weight in (0, 1]. Base hexcodes only. |
 | `entries[].featured` | May appear on an optional "relevant now" shelf (seasonal and event entries only). |
@@ -377,9 +379,17 @@ A client MUST reject a file whose `format` differs or whose `formatVersion` it d
 3. Insert them right after the **canonical top result** (after fusion with semantic results),
    skipping the top result's own emoji; an emoji that is already lower in the list moves up.
    Never put a culture emoji above the canonical top result, except when the canonical list is
-   empty. Cut the list to the requested limit.
+   empty, or for a **regional sense**: when the app names a region in a `regional` entry's scope,
+   the normalized query equals one of its triggers (not a prefix) and the canonical top result is
+   one of its `outranks`, its strongest emoji goes first and the canonical top result second
+   (several qualify: the strongest wins). Cut the list to the requested limit.
 4. Mark them `source: "culture"` with `context` and `cultureId`. An option to turn the layer off
    (`culture: false`) MUST exist for reproducible ranking.
+
+`regional`, `exceptRegions` and `outranks` came after the first files, under the same
+`formatVersion: 1`. A client that does not know them treats a regional entry as a lasting one and
+ignores `exceptRegions`: it adds the emoji after the top result (also in an excluded region), never
+above it. That is safe under the add-never-replace rule.
 
 The **relevant now** shelf lists the featured seasonal and event entries active today (in file
 order, which puts events first), taking one emoji from each entry in turn.

@@ -61,6 +61,7 @@ const response = await fetch(url);`;
   <p>The real answer for “{q}”, captured on {API_FIXTURES.madeOn}:</p>
   <CodeBlock code={prettyResponse(search.response)} lang="json" title="200 OK" />
   <p>The default <code>mode</code> is <code>hybrid</code>: the server merges dictionary and meaning results for you. Use <code>mode=semantic</code> only when you merge with your own on-device results, as the SDKs do. The <code>Server-Timing</code> header shows where the time went, for example <code>{search.serverTiming}</code>.</p>
+  <p>Add <code>culture=1</code> for the culture layer (off by default): editorial emoji for the moment and the culture join the results after the top answer, with <code>source: "culture"</code>, <code>context</code> and <code>cultureId</code>. Add <code>region=GB</code> (an ISO 3166-1 code) for regional entries, for example “football” as ⚽ outside North America. See the <a href="/docs/api/#culture-in-search">API reference</a>.</p>
 
   <h2 id="other-routes">Other routes</h2>
   <div class="table-scroll" tabindex="0">

@@ -21,6 +21,7 @@ export {
   localDay,
   type MatchCultureOptions,
   matchCulture,
+  matchRegionalLead,
   type RelevantEmoji,
   type RelevantNowOptions,
   regionOf,

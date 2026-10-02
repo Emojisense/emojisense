@@ -54,6 +54,8 @@ headers. Every key also has per-second rate limits.
 | `pack` | — | Client pack version (informational) |
 | `key` | — | Publishable key |
 | `tenant` | — | The app owner's id for one of their customers (`tenants.external_id`, ≤ 128 characters): that tenant's custom emoji are searched too |
+| `culture` | `0` | `1` (or `true`) applies the [culture layer](#culture-in-search) to the answer. `0`, `false` or none: the canonical ranking only. Any other value answers `400`. |
+| `region` | — | ISO 3166-1 alpha-2 code of the user's region, e.g. `GB`, `BR` (case does not matter). Turns on regional culture entries; used only with `culture=1`. A code that is not a real region answers `400`. |
 
 ```json
 {
@@ -68,12 +70,13 @@ headers. Every key also has per-second rate limits.
 }
 ```
 
-`source`: `alias` | `semantic` | `custom`. `degraded: true` = Workers AI was unavailable, so the
+`source`: `alias` | `semantic` | `custom` | `culture` (only with `culture=1`). `degraded: true` = Workers AI was unavailable, so the
 results are alias-only (and not cached). `overLimit: true` = the key's account has used its monthly
 `semantic_calls` limit (see "Metering and plan limits"). `aliasLocale`: the locale whose aliases
 were fused into the results; `null` in `semantic` mode, or when that locale's pack could not be
-loaded (the results are then semantic-only and not cached). Header:
-`Server-Timing: embed;dur=…, total;dur=…`.
+loaded (the results are then semantic-only and not cached). `culture`: `{ "from": "2026-10-02",
+"region": "GB" }`, the culture file applied (its first day) and the region, or `null` when culture
+is off or the locale has no culture file. Header: `Server-Timing: embed;dur=…, total;dur=…`.
 
 **Custom emoji.** With a key, the app's custom emoji (app-wide, plus the tenant's with `tenant=`)
 are matched against the query and put first, in both modes, within `limit`:
@@ -166,8 +169,39 @@ then search without the culture layer.
 | `context` | Why the emoji fits, in the file's locale |
 | `cultureId` | The entry id, e.g. `goat-football` |
 
-The search API (`/v1/search`) does not apply the culture layer in Phase 1; the SDK applies it on
-the device after fusion. Culture results never rank above the top canonical result.
+The SDK applies the culture layer on the device after fusion. Thin clients can ask the search API
+for it with `culture=1` ([Culture in search](#culture-in-search)). Culture results never rank above
+the top canonical result, except a regional sense in the caller's region (below).
+
+### Culture in search
+
+`GET /v1/search?q=goat&culture=1` (and `&region=AR` for regional entries):
+
+```json
+{ "query": "goat",
+  "results": [
+    { "emoji": "🐐", "id": "1F410", "score": 1, "source": "alias" },
+    { "emoji": "⚽", "id": "26BD", "score": 0.6, "source": "culture",
+      "context": "Football's greatest-of-all-time debate", "cultureId": "goat-football" }
+  ],
+  "culture": { "from": "2026-10-02", "region": "AR" }, "…": "…" }
+```
+
+- **Off by default.** The SDKs ask for `mode=semantic` and apply the culture file on the device;
+  a default-on server would apply it twice. Existing callers keep the ranking they tested.
+- Culture results go right after the canonical (fused) top result, at most 5, cut to `limit`;
+  `score` is the entry's weight (0–1). Custom emoji still come first.
+- **Regional senses** (`kind: "regional"`, [PACK_FORMAT.md §9](PACK_FORMAT.md)) are the only
+  exception: with a `region` in the entry's scope, a query equal to its trigger puts its emoji
+  first and the canonical answer second (`football` with `region=GB`: ⚽ then 🏈). Without
+  `region`, or with a region outside the scope, the canonical answer stays first.
+- Windows are checked against the server's UTC day, so a seasonal entry can start or end a few
+  hours early or late for a user. The SDK uses the user's local day.
+- Culture is applied to each answer after the shared cache, like custom emoji. The cache holds
+  the canonical answer only, so `culture` and `region` do not split it and no answer carries
+  another day's or region's culture. Culture answers send `Cache-Control: public, max-age=3600`
+  (the culture file's own lifetime).
+- Metering does not change: a culture answer is one `semantic_calls` call, cached or not.
 
 ## `GET /v1/sets/:set/:hexcode.svg`
 

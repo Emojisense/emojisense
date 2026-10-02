@@ -9,7 +9,12 @@ import { normalize } from "./normalize.js";
 export const CULTURE_FORMAT = "emojisense-culture";
 export const CULTURE_FORMAT_VERSION = 1;
 
-export type CultureKind = "lasting" | "seasonal" | "event";
+/**
+ * `regional`: a word whose main sense differs by region ("football" is ⚽ outside North America).
+ * It is the only kind that may put its emoji first, and only under the rules of
+ * {@link matchRegionalLead}. Everywhere else it adds after the top result like a lasting entry.
+ */
+export type CultureKind = "lasting" | "seasonal" | "event" | "regional";
 
 /**
  * Inclusive days: "MM-DD" with `recurs: "yearly"` (may wrap the year end), else "YYYY-MM-DD".
@@ -35,11 +40,18 @@ export interface CultureEntry {
   when: CultureWhen;
   /** ISO 3166-1 alpha-2 codes, or `["*"]` for every region. */
   regions: string[];
+  /** With `regions: ["*"]`: regions where the entry does not apply when the app names one. */
+  exceptRegions?: string[];
   /** Normalized phrases (docs/PACK_FORMAT.md §3) that people of this locale type. */
   triggers: string[];
   emoji: CultureEmoji[];
   /** May appear on a "relevant now" shelf (seasonal and event entries only). */
   featured?: boolean;
+  /**
+   * Regional entries only: hexcodes of the canonical top answers this regional sense may move to
+   * second place (the other region's reading of the same word, e.g. 🏈 for "football").
+   */
+  outranks?: string[];
 }
 
 /** One locale's culture file: `culture.<locale>.json`. */
@@ -180,9 +192,10 @@ export function isActiveOn(when: CultureWhen, day: string): boolean {
 }
 
 function inScope(entry: CultureEntry, region: string | undefined, day: string): boolean {
-  const regionOk =
-    entry.regions.includes("*") || (region !== undefined && entry.regions.includes(region.toUpperCase()));
-  return regionOk && isActiveOn(entry.when, day);
+  const code = region?.toUpperCase();
+  const listed = entry.regions.includes("*") || (code !== undefined && entry.regions.includes(code));
+  const excepted = code !== undefined && (entry.exceptRegions?.includes(code) ?? false);
+  return listed && !excepted && isActiveOn(entry.when, day);
 }
 
 /** How well a normalized query hits a trigger: 1 exact, < 1 a prefix being typed, 0 no match. */
@@ -239,23 +252,68 @@ export function matchCulture(
 }
 
 /**
+ * The regional sense that leads the list, if any. All of these must hold:
+ * - the entry is `regional` and the app named a region in its scope (no region, no lead);
+ * - the normalized query equals one of its triggers (a prefix being typed is not enough);
+ * - the canonical top result is one of its `outranks` hexcodes, the reading the editor saw.
+ * The lead is the entry's strongest emoji. When several entries qualify, the strongest wins.
+ */
+export function matchRegionalLead(
+  culture: Culture,
+  query: string,
+  canonicalTopId: string | undefined,
+  options: CultureScope = {},
+): CultureResult | undefined {
+  if (!options.region || canonicalTopId === undefined) return undefined;
+  const normalized = normalize(query);
+  const day = localDay(options.now);
+  let lead: CultureResult | undefined;
+  for (const entry of culture.entries) {
+    if (entry.kind !== "regional" || !entry.outranks?.includes(canonicalTopId)) continue;
+    if (!entry.triggers.includes(normalized) || !inScope(entry, options.region, day)) continue;
+    const strongest = entry.emoji.reduce<CultureEmoji | undefined>(
+      (best, item) => (best === undefined || item[2] > best[2] ? item : best),
+      undefined,
+    );
+    if (!strongest || strongest[1] === canonicalTopId || (lead && lead.score >= strongest[2])) continue;
+    const [emoji, id, score] = strongest;
+    lead = {
+      emoji,
+      id,
+      score,
+      source: "culture",
+      context: entry.context,
+      cultureId: entry.id,
+      match: normalized,
+      field: "culture",
+      label: "",
+    };
+  }
+  return lead;
+}
+
+/**
  * Add culture results right after the canonical top result. They never go above it, unless the
- * canonical list is empty. An emoji that is already lower in the list moves up and carries its
- * cultural context.
+ * canonical list is empty or a regional `lead` ({@link matchRegionalLead}) is given: the lead goes
+ * first and the canonical top result second. An emoji that is already lower in the list moves up
+ * and carries its cultural context.
  */
 export function insertCulture<T extends SearchResult>(
   results: readonly T[],
   matches: readonly CultureResult[],
-  limit = results.length + matches.length,
+  limit = results.length + matches.length + 1,
+  lead?: CultureResult,
 ): (T | CultureResult)[] {
   const [top, ...rest] = results;
   if (!top) return matches.slice(0, limit);
-  const added = matches.filter((m) => m.id !== top.id);
-  const ids = new Set(added.map((m) => m.id));
-  return [top, ...added, ...rest.filter((r) => !ids.has(r.id))].slice(0, limit);
+  const head: (T | CultureResult)[] = lead && lead.id !== top.id ? [lead, top] : [top];
+  const ids = new Set(head.map((r) => r.id));
+  const added = matches.filter((m) => !ids.has(m.id));
+  for (const m of added) ids.add(m.id);
+  return [...head, ...added, ...rest.filter((r) => !ids.has(r.id))].slice(0, limit);
 }
 
-/** {@link matchCulture} + {@link insertCulture} in one step. */
+/** {@link matchCulture}, {@link matchRegionalLead} and {@link insertCulture} in one step. */
 export function applyCulture<T extends SearchResult>(
   results: readonly T[],
   culture: Culture,
@@ -263,16 +321,16 @@ export function applyCulture<T extends SearchResult>(
   options: ApplyCultureOptions = {},
 ): (T | CultureResult)[] {
   const { engine, locale, limit } = options;
-  let matches = matchCulture(culture, query, { ...options, limit: MAX_CULTURE_RESULTS });
-  if (engine) {
-    matches = matches.flatMap((match) => {
-      const entry = engine.get(match.id);
-      if (!entry) return [];
-      const label = entry.labels[locale ?? ""] ?? entry.labels.en ?? Object.values(entry.labels)[0] ?? "";
-      return [{ ...match, emoji: entry.emoji, label }];
-    });
-  }
-  return insertCulture(results, matches, limit);
+  const withLabel = (match: CultureResult): CultureResult[] => {
+    if (!engine) return [match];
+    const entry = engine.get(match.id);
+    if (!entry) return [];
+    const label = entry.labels[locale ?? ""] ?? entry.labels.en ?? Object.values(entry.labels)[0] ?? "";
+    return [{ ...match, emoji: entry.emoji, label }];
+  };
+  const matches = matchCulture(culture, query, { ...options, limit: MAX_CULTURE_RESULTS }).flatMap(withLabel);
+  const lead = matchRegionalLead(culture, query, results[0]?.id, options);
+  return insertCulture(results, matches, limit, lead && withLabel(lead)[0]);
 }
 
 export interface RelevantEmoji {
@@ -303,7 +361,8 @@ export function relevantNow(
   const limit = options.limit ?? 8;
   const day = localDay(options.now);
   const entries = file.entries.filter(
-    (e) => e.featured === true && e.kind !== "lasting" && inScope(e, options.region, day),
+    (e) =>
+      e.featured === true && (e.kind === "seasonal" || e.kind === "event") && inScope(e, options.region, day),
   );
   const shelf: RelevantEmoji[] = [];
   const seen = new Set<string>();

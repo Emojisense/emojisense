@@ -1,0 +1,33 @@
+{
+  "id": "tudou-peanut",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In Taiwan, 土豆 means peanut",
+    "zh": "在台湾，土豆指的是花生"
+  },
+  "when": null,
+  "regions": [
+    "TW"
+  ],
+  "locales": [
+    "zh"
+  ],
+  "triggers": {
+    "zh": [
+      "土豆"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F95C",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F954"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

@@ -1,0 +1,49 @@
+{
+  "id": "hockey-field",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "Where field hockey is the main game, hockey means field hockey",
+    "es": "Donde el hockey sobre césped es el principal, hockey es ese deporte"
+  },
+  "when": null,
+  "regions": [
+    "IN",
+    "PK",
+    "BD",
+    "NL",
+    "BE",
+    "DE",
+    "AR",
+    "AU",
+    "NZ",
+    "GB",
+    "IE",
+    "ZA",
+    "MY"
+  ],
+  "locales": [
+    "en",
+    "es"
+  ],
+  "triggers": {
+    "en": [
+      "hockey"
+    ],
+    "es": [
+      "hockey"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3D1",
+      "weight": 0.9
+    }
+  ],
+  "outranks": [
+    "1F3D2"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

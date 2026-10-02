@@ -45,6 +45,11 @@ export const RETENTION_DELETE_BATCH = 1_000;
 export const RETENTION_MAX_BATCHES = 200;
 
 export const BROWSER_CACHE = "public, max-age=3600, s-maxage=86400";
+/**
+ * Answers with `culture=1`: no longer than the culture file itself (max-age=3600), so no shared
+ * cache keeps a seasonal emoji a day past its window.
+ */
+export const CULTURE_BROWSER_CACHE = "public, max-age=3600";
 export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;
 
 /** An app's custom emoji, as one isolate sees them for search, are at most this old. */

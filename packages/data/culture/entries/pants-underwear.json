@@ -1,0 +1,34 @@
+{
+  "id": "pants-underwear",
+  "status": "draft",
+  "kind": "regional",
+  "context": {
+    "en": "In British English, pants are underwear"
+  },
+  "when": null,
+  "regions": [
+    "GB",
+    "IE"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "pants"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1FA72",
+      "weight": 0.85
+    }
+  ],
+  "outranks": [
+    "1F456",
+    "1FA73"
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "createdAt": "2026-10-02"
+}

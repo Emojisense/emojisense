@@ -9,6 +9,7 @@ import {
 } from "emojisense";
 import { createApp } from "./app.ts";
 import { LOCALE_ENGINE_CACHE_SIZE } from "./config.ts";
+import { assetCultureReader, createCultureFiles } from "./culture.ts";
 import { createD1CustomEmojiReader } from "./custom-store.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
@@ -38,11 +39,15 @@ const localeEngines = createLocaleEngines({
   maxEngines: LOCALE_ENGINE_CACHE_SIZE,
 });
 
+// Culture files are static assets too, read on first use per locale and kept for the UTC day.
+const cultureFiles = createCultureFiles({ read: assetCultureReader(config.packVersion) });
+
 const catalog: Catalog = {
   config: config as GeneratedConfig,
   model: getModel(config.modelKey),
   engine: bundledEngine,
   aliasEngine: (locale, env) => localeEngines.get(locale, env),
+  culture: (locale, env) => cultureFiles.get(locale, env),
   index: () => {
     if (!index) {
       const decoded = decodeVectors(vectors);

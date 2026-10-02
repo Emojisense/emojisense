@@ -8,13 +8,14 @@ import {
   loadCulture,
   localDay,
   matchCulture,
+  matchRegionalLead,
   regionOf,
   relevantNow,
 } from "../src/culture.js";
 import { createEngine, type SearchResult } from "../src/engine.js";
 import type { Pack, PackRow } from "../src/pack.js";
 import { createSearchSession, type SessionState } from "../src/session.js";
-import { en } from "./fixture.js";
+import { en, row as fixtureRow } from "./fixture.js";
 
 const row = (emoji: string, hexcode: string, label: string, keyword = ""): PackRow => [
   emoji,
@@ -39,6 +40,7 @@ const pack: Pack = {
     row("🇵🇹", "1F1F5-1F1F9", "flag: Portugal"),
     row("👻", "1F47B", "ghost"),
     row("🙇", "1F647", "person bowing", "apology|bow"),
+    fixtureRow("🏈", "1F3C8", "american football", { shortcode: "football" }),
   ],
 };
 
@@ -219,6 +221,84 @@ describe("insertCulture", () => {
 
   it("cuts the merged list to the limit", () => {
     expect(insertCulture(canonical, matches, 3)).toHaveLength(3);
+  });
+});
+
+describe("regional senses", () => {
+  const footballSoccer = entry({
+    id: "football-soccer",
+    kind: "regional",
+    context: "Outside North America, football means soccer",
+    regions: ["*"],
+    exceptRegions: ["US", "CA"],
+    triggers: ["football"],
+    emoji: [["⚽", "26BD", 0.9]],
+    outranks: ["1F3C8"],
+  });
+  const pantsUk = entry({
+    id: "pants-underwear",
+    kind: "regional",
+    context: "In Britain, pants are underwear",
+    regions: ["GB"],
+    triggers: ["pants"],
+    emoji: [["👻", "1F47B", 0.8]],
+    outranks: ["1F410"],
+  });
+  const engine = createEngine(pack).withCulture(culture([footballSoccer, pantsUk, goat]));
+  const top2 = (query: string, region?: string) =>
+    ids(engine.search(query, { prefix: false, ...(region ? { region } : {}) }).results.slice(0, 2));
+
+  it("keeps the canonical answer first without a region", () => {
+    expect(ids(engine.search("football", { culture: false }).results.slice(0, 1))).toEqual(["🏈"]);
+    expect(top2("football")).toEqual(["🏈", "⚽"]);
+  });
+
+  it("leads with the regional sense in its regions, and keeps the canonical answer second", () => {
+    const results = engine.search("football", { region: "gb" }).results;
+    expect(ids(results.slice(0, 2))).toEqual(["⚽", "🏈"]);
+    expect(results[0]).toMatchObject({
+      source: "culture",
+      cultureId: "football-soccer",
+      context: "Outside North America, football means soccer",
+      label: "soccer ball",
+    });
+    expect(ids(results).filter((e) => e === "⚽")).toHaveLength(1);
+  });
+
+  it("changes nothing in the regions it excludes", () => {
+    expect(top2("football", "US")).toEqual(["🏈", "⚽"]);
+    expect(top2("football", "CA")[0]).toBe("🏈");
+  });
+
+  it("needs the whole trigger, not a prefix being typed", () => {
+    expect(engine.search("footba", { region: "GB" }).results[0]?.emoji).toBe("🏈");
+  });
+
+  it("leads only over the canonical answers it names", () => {
+    // pants-underwear names 🐐 as the reading it may move down; "pants" has no such answer here.
+    expect(matchRegionalLead(culture([pantsUk]), "pants", "1F456", { region: "GB" })).toBeUndefined();
+    expect(matchRegionalLead(culture([pantsUk]), "pants", "1F410", { region: "GB" })?.emoji).toBe("👻");
+    expect(matchRegionalLead(culture([pantsUk]), "pants", "1F410", { region: "IE" })).toBeUndefined();
+    expect(matchRegionalLead(culture([pantsUk]), "pants", "1F410")).toBeUndefined();
+  });
+
+  it("never leads for other kinds, even in their region", () => {
+    expect(matchRegionalLead(culture([bowJapan]), "thank you", "1F44D", { region: "JP" })).toBeUndefined();
+  });
+
+  it("is off with culture: false", () => {
+    expect(ids(engine.search("football", { region: "GB", culture: false }).results)[0]).toBe("🏈");
+  });
+
+  it("keeps the canonical answer within a short limit", () => {
+    expect(ids(engine.search("football", { region: "GB", limit: 2 }).results)).toEqual(["⚽", "🏈"]);
+  });
+
+  it("follows the session region", () => {
+    const states: SessionState[] = [];
+    const session = createSearchSession({ engine, region: "DE", onChange: (s) => states.push(s) });
+    session.update("football");
+    expect(ids(states[0]?.results ?? []).slice(0, 2)).toEqual(["⚽", "🏈"]);
   });
 });
 

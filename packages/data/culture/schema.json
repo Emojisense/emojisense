@@ -22,7 +22,10 @@
   "properties": {
     "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
     "status": { "enum": ["draft", "approved", "retired"] },
-    "kind": { "enum": ["lasting", "seasonal", "event"] },
+    "kind": {
+      "description": "regional: a word whose main sense differs by region; the only kind that may take rank 1 (see outranks).",
+      "enum": ["lasting", "seasonal", "event", "regional"]
+    },
     "context": {
       "description": "Neutral reason per locale. English is always present; every targeted locale too.",
       "type": "object",
@@ -31,7 +34,7 @@
       "additionalProperties": { "type": "string", "minLength": 3, "maxLength": 90 }
     },
     "when": {
-      "description": "lasting: null. seasonal: a yearly MM-DD window (may wrap the year end) or one dated window. event: one dated window, at most 60 days.",
+      "description": "lasting and regional: null. seasonal: a yearly MM-DD window (may wrap the year end) or one dated window. event: one dated window, at most 60 days.",
       "oneOf": [
         { "type": "null" },
         {
@@ -61,6 +64,13 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^(\\*|[A-Z]{2})$" }
+    },
+    "exceptRegions": {
+      "description": "With regions [\"*\"]: ISO 3166-1 alpha-2 codes where the entry does not apply when the app names one.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[A-Z]{2}$" }
     },
     "locales": {
       "description": "Pack locales whose culture file carries the entry, or [\"*\"].",
@@ -92,6 +102,14 @@
           "weight": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
         }
       }
+    },
+    "outranks": {
+      "description": "Regional entries only (required there): hexcodes of the canonical top answers the regional sense may move to second place.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[0-9A-F]{2,6}(-[0-9A-F]{2,6})*$" }
     },
     "featured": {
       "type": "boolean",
