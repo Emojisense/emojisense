@@ -1,5 +1,5 @@
-import { type FormEvent, useId, useState } from "react";
-import { ApiError, api, errorMessage, type Tenant } from "../api";
+import { type FormEvent, useEffect, useId, useState } from "react";
+import { ApiError, api, type CustomEmoji, errorMessage, type Tenant } from "../api";
 import { formatDate, formatNumber } from "../format";
 import { API_URL } from "../lib/config";
 import { useResource } from "../lib/useResource";
@@ -20,6 +20,7 @@ export function TenantsPage() {
   );
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Tenant | null>(null);
+  const previews = useTenantPreviews(app.id);
 
   const header = (
     <PageHeader
@@ -93,7 +94,16 @@ export function TenantsPage() {
                       <tr key={tenant.id}>
                         <th scope="row">{tenant.name ?? <span className="muted">Unnamed</span>}</th>
                         <td className="mono">{tenant.externalId}</td>
-                        <td className="col-num">{formatNumber(tenant.emojiCount)}</td>
+                        <td className="col-num">
+                          <span className="tenant-emoji">
+                            <span className="tenant-previews" aria-hidden="true">
+                              {previews.get(tenant.id)?.map((emoji) => (
+                                <img key={emoji.id} src={emoji.imageUrl} alt="" loading="lazy" />
+                              ))}
+                            </span>
+                            {formatNumber(tenant.emojiCount)}
+                          </span>
+                        </td>
                         <td className="cell-sub">{formatDate(tenant.createdAt)}</td>
                         <td className="col-actions">
                           {!readOnly && (
@@ -166,6 +176,31 @@ curl -X POST "${API_URL}/v1/tenants" \\
       />
     </>
   );
+}
+
+/** A few of each tenant's custom emoji, so the list shows whose set is whose. Best effort. */
+function useTenantPreviews(appId: string): Map<string, CustomEmoji[]> {
+  const [previews, setPreviews] = useState(() => new Map<string, CustomEmoji[]>());
+  useEffect(() => {
+    let live = true;
+    api.listEmoji(appId).then(
+      (list) => {
+        if (!live) return;
+        const byTenant = new Map<string, CustomEmoji[]>();
+        for (const emoji of list.emoji) {
+          if (!emoji.tenantId) continue;
+          const group = byTenant.get(emoji.tenantId) ?? [];
+          if (group.length < 4) byTenant.set(emoji.tenantId, [...group, emoji]);
+        }
+        setPreviews(byTenant);
+      },
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [appId]);
+  return previews;
 }
 
 function CreateTenantDialog({

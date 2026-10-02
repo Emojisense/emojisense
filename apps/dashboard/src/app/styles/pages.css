@@ -261,10 +261,17 @@
 
 .auth-single {
   grid-template-columns: 1fr;
+  background: var(--bg-soft);
 }
 
 .auth-single .auth-card {
   justify-items: start;
+  max-width: 27rem;
+  padding: 2rem;
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--bg);
+  box-shadow: var(--shadow);
 }
 
 @keyframes rise-in {
@@ -1256,6 +1263,32 @@ img.set-glyph {
   background: var(--bg);
   box-shadow: var(--shadow-lg);
   animation: rise-in 240ms var(--ease-out);
+}
+
+/* Tenants */
+.tenant-emoji {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tenant-previews {
+  display: inline-flex;
+}
+
+.tenant-previews img {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: -0.375rem;
+  padding: 0.125rem;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  box-shadow: 0 0 0 0.125rem var(--bg);
+  object-fit: contain;
+}
+
+.tenant-previews img:first-child {
+  margin-left: 0;
 }
 
 /* Webhooks */

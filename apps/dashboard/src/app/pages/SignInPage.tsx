@@ -17,8 +17,8 @@ const SIGN_IN_ERRORS: Record<string, string> = {
 const SHOWCASE: { query: string; emoji: string[]; note: string }[] = [
   { query: "ship it", emoji: ["🚢", "🚀", "🛳️", "📦", "⚓"], note: "slang" },
   { query: "facepalm", emoji: ["🤦", "🤦‍♂️", "🤦‍♀️", "🙈"], note: "feelings" },
-  { query: "feliz cumpleaños", emoji: ["🎂", "🎉", "🥳", "🎈", "🥂"], note: "11 languages" },
-  { query: "sleepy monday", emoji: ["😪", "💤", "🥱", "😴", "🛌"], note: "meaning" },
+  { query: "feliz cumpleaños", emoji: ["🎂", "🎉", "🥳", "🎈", "🥂"], note: "Spanish, by meaning" },
+  { query: "sleepy monday", emoji: ["😪", "💤", "🥱", "😴", "🛌"], note: "phrases" },
 ];
 
 function isLocalhost(hostname: string): boolean {
@@ -131,7 +131,7 @@ export function SignInPage({ invite = false }: { invite?: boolean }) {
             ))}
           </ul>
           <p className="auth-caption">
-            Slang, films, feelings, typos and 11 languages, answered on the device in under a millisecond.
+            Slang, feelings, phrases and 11 languages: on the device first, by meaning when it needs to.
           </p>
         </div>
       </aside>

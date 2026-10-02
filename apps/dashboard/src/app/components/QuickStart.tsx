@@ -20,16 +20,30 @@ function snippets(publishable: string, secret: string): Record<Tab, { code: stri
   return {
     browser: {
       lang: "js",
-      code: `import { createEngine, createLayeredSemantic, createSearchSession, loadPacks } from "emojisense";
+      code: `import {
+  createEngine,
+  createLayeredSemantic,
+  createSearchSession,
+  loadPacks,
+} from "emojisense";
 
-// On-device search: answers every keystroke in under a millisecond.
-const engine = createEngine(await loadPacks({ baseUrl: "${API_URL}/v1/pack/${PACK_VERSION}" }));
+// On the device: every keystroke, under a millisecond.
+const engine = createEngine(
+  await loadPacks({ baseUrl: "${API_URL}/v1/pack/${PACK_VERSION}" }),
+);
 
-// Meaning search through the API, counted for this app.
-const semantic = createLayeredSemantic({ endpoint: "${API_URL}", key: "${publishable}" });
+// By meaning, through the API, counted for this app.
+const semantic = createLayeredSemantic({
+  endpoint: "${API_URL}",
+  key: "${publishable}",
+});
 
-const session = createSearchSession({ engine, semantic, onChange: ({ results }) => render(results) });
-input.addEventListener("input", () => session.update(input.value));`,
+const session = createSearchSession({
+  engine,
+  semantic,
+  onChange: ({ results }) => render(results),
+});
+input.oninput = () => session.update(input.value);`,
     },
     react: {
       lang: "js",
@@ -44,7 +58,8 @@ const { results, status } = useEmojiSearch(query, sense);`,
     },
     http: {
       lang: "sh",
-      code: `# From your server. Publishable keys only work from their allowed origins.
+      code: `# From your server, with a secret key.
+# Publishable keys answer only their allowed origins.
 curl "${API_URL}/v1/search?q=ship+it&limit=8" \\
   -H "Authorization: Bearer ${secret}"`,
     },

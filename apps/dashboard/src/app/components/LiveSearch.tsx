@@ -1,8 +1,8 @@
-import type { SearchSession, SessionState } from "emojisense";
+import { type AliasEngine, createSearchSession, type SearchSession, type SessionState } from "emojisense";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { type App, api, type CustomEmoji } from "../api";
 import { API_URL } from "../lib/config";
-import { loadSearchKit, type SearchKit, semanticFor } from "../lib/engine";
+import { loadEngine, semanticFor } from "../lib/engine";
 import { planIncludes } from "../lib/plans";
 import { Link } from "../router";
 import { appHref } from "../routes";
@@ -48,7 +48,7 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
   const toast = useToast();
   const inputId = useId();
   const statusId = useId();
-  const [kit, setKit] = useState<SearchKit | null>(null);
+  const [engine, setEngine] = useState<AliasEngine | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [query, setQuery] = useState("");
@@ -62,8 +62,8 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
   useEffect(() => {
     let live = true;
     setFailed(false);
-    loadSearchKit().then(
-      (loaded) => live && setKit(loaded),
+    loadEngine().then(
+      (loaded) => live && setEngine(loaded),
       () => live && setFailed(true),
     );
     return () => {
@@ -72,10 +72,10 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
   }, [attempt]);
 
   useEffect(() => {
-    if (!kit) return;
-    const created = kit.sdk.createSearchSession({
-      engine: kit.engine,
-      semantic: semanticFor(kit.sdk, apiKey),
+    if (!engine) return;
+    const created = createSearchSession({
+      engine,
+      semantic: semanticFor(apiKey),
       limit: 24,
       onChange: setState,
     });
@@ -85,7 +85,7 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
       created.dispose();
       session.current = null;
     };
-  }, [kit, apiKey]);
+  }, [engine, apiKey]);
 
   const customAllowed = planIncludes(app.plan, "custom_emoji");
   useEffect(() => {
@@ -130,8 +130,8 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
           </h2>
           <p className="card-sub">The same search your users get: on the device first, then by meaning.</p>
         </div>
-        <span className="badge badge-dot" data-tone={kit ? "good" : failed ? "bad" : "idle"}>
-          {kit ? "Live" : failed ? "Offline" : "Loading"}
+        <span className="badge badge-dot" data-tone={engine ? "good" : failed ? "bad" : "idle"}>
+          {engine ? "Live" : failed ? "Offline" : "Loading"}
         </span>
       </div>
       <div className="card-body live-body">
@@ -144,11 +144,11 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
             id={inputId}
             className="live-input"
             type="search"
-            placeholder={kit ? "Type anything: slang, a feeling, a film…" : "Loading the emoji data…"}
+            placeholder={engine ? "Type anything: slang, a feeling, a film…" : "Loading the emoji data…"}
             autoComplete="off"
             spellCheck={false}
             value={query}
-            disabled={!kit}
+            disabled={!engine}
             aria-describedby={statusId}
             onChange={(event) => search(event.target.value)}
           />
@@ -171,7 +171,7 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
           </div>
         )}
 
-        {!hasQuery && kit && (
+        {!hasQuery && engine && (
           <div className="live-examples">
             <span className="hint">Try</span>
             {EXAMPLES.map((example) => (
@@ -197,7 +197,7 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
               </li>
             ))}
             {results.map((result) => {
-              const label = kit?.engine.get(result.id)?.labels.en ?? result.id;
+              const label = engine?.get(result.id)?.labels.en ?? result.id;
               return (
                 <li key={result.id}>
                   <button
