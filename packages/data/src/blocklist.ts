@@ -35,12 +35,40 @@ const DEMOTE: Record<string, Set<string>> = {
 };
 const NONE = new Set<string>();
 
+/**
+ * Phrases where a listed word has an ordinary meaning ("same sex parents" is about family, not
+ * sex). Their tokens are not checked; any other token in the alias still is.
+ */
+const ALLOW: Record<string, string[][]> = {
+  en: [
+    "same sex couple",
+    "same sex couples",
+    "same sex parents",
+    "same sex wedding",
+    "same sex weddings",
+    "same sex marriage",
+  ].map((p) => p.split(" ")),
+};
+
+/** Tokens outside every allowed phrase of the locale. */
+function unexempted(tokens: string[], locale: string): string[] {
+  const allowed = ALLOW[locale];
+  if (!allowed) return tokens;
+  const covered = new Array<boolean>(tokens.length).fill(false);
+  for (const phrase of allowed) {
+    for (let i = 0; i + phrase.length <= tokens.length; i++) {
+      if (phrase.every((word, j) => tokens[i + j] === word)) covered.fill(true, i, i + phrase.length);
+    }
+  }
+  return tokens.filter((_, i) => !covered[i]);
+}
+
 export type Moderation = "block" | "demote" | "ok";
 
 export function moderate(phrase: string, locale: string): Moderation {
   const block = BLOCK[locale] ?? DEFAULT_BLOCK;
   const demote = DEMOTE[locale] ?? NONE;
-  const tokens = phrase.split(" ");
+  const tokens = unexempted(phrase.split(" "), locale);
   if (tokens.some((t) => block.has(t))) return "block";
   if (tokens.some((t) => demote.has(t))) return "demote";
   return "ok";

@@ -852,5 +852,1195 @@
     "alias": "пока",
     "action": "low",
     "why": "👋 is the canonical 'bye' (пока) in Russian; the CLDR keyword ranked 🫂 first"
+  },
+  {
+    "hexcode": "1F349",
+    "locale": "en",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "en",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "en",
+    "alias": "pray for gaza",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "en",
+    "alias": "nakba day",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "en",
+    "alias": "solidarity with palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "en",
+    "alias": "stand with palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F531",
+    "locale": "en",
+    "alias": "glory to ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "glory to ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F531",
+    "locale": "en",
+    "alias": "slava ukraini",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "slava ukraini",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "heroyam slava",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "i stand with ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F33B",
+    "locale": "en",
+    "alias": "stand with ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "stand with ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "standwithukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "support ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "en",
+    "alias": "pray for ukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1E6-1F1EB",
+    "locale": "en",
+    "alias": "pray for afghanistan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1ED-1F1F9",
+    "locale": "en",
+    "alias": "pray for haiti",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F1-1F1E7",
+    "locale": "en",
+    "alias": "pray for lebanon",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E9",
+    "locale": "en",
+    "alias": "pray for sudan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1F8",
+    "locale": "en",
+    "alias": "pray for south sudan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "en",
+    "alias": "pray for syria",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FB-1F1EA",
+    "locale": "en",
+    "alias": "pray for venezuela",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FE-1F1EA",
+    "locale": "en",
+    "alias": "pray for yemen",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E9",
+    "locale": "en",
+    "alias": "support sudan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FE-1F1EA",
+    "locale": "en",
+    "alias": "support yemen",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1E8-1F1E9",
+    "locale": "en",
+    "alias": "free congo",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "es",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "es",
+    "alias": "palestina libre",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F349",
+    "locale": "es",
+    "alias": "solidaridad con palestina",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "es",
+    "alias": "solidaridad con palestina",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "es",
+    "alias": "apoyo a palestina",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "es",
+    "alias": "solidaridad con ucrania",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "es",
+    "alias": "apoyo a ucrania",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1EA-1F1ED",
+    "locale": "es",
+    "alias": "sahara libre",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1EA-1F1ED",
+    "locale": "es",
+    "alias": "apoyo al pueblo saharaui",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FB-1F1EA",
+    "locale": "es",
+    "alias": "venezuela libre",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "es",
+    "alias": "viva las malvinas",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "fr",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "fr",
+    "alias": "soutien a la palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "fr",
+    "alias": "slava ukraini",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "fr",
+    "alias": "solidarite avec lukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "fr",
+    "alias": "soutien a lukraine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1E6-1F1EB",
+    "locale": "fr",
+    "alias": "solidarite avec lafghanistan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "pt",
+    "alias": "palestina livre",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "pt",
+    "alias": "solidariedade ao povo palestino",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "pt",
+    "alias": "solidariedade a ucrania",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "pt",
+    "alias": "apoio a ucrania",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "2721",
+    "locale": "pt",
+    "alias": "am israel chai",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F349",
+    "locale": "id",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "id",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "id",
+    "alias": "palestina merdeka",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "id",
+    "alias": "solidaritas untuk palestina",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F349",
+    "locale": "id",
+    "alias": "solidaritas palestina",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "id",
+    "alias": "doa untuk palestina",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "id",
+    "alias": "slava ukraini",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E9",
+    "locale": "id",
+    "alias": "doa untuk sudan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E9",
+    "locale": "id",
+    "alias": "solidaritas untuk sudan",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F349",
+    "locale": "tr",
+    "alias": "ozgur filistin",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "tr",
+    "alias": "ozgur filistin",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "tr",
+    "alias": "filistine destek",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "tr",
+    "alias": "gazze icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "tr",
+    "alias": "slava ukraini",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "tr",
+    "alias": "ukrayna icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "tr",
+    "alias": "ukraynaya destek",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1E6-1F1EB",
+    "locale": "tr",
+    "alias": "afganistan icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E9",
+    "locale": "tr",
+    "alias": "sudan icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E9",
+    "locale": "tr",
+    "alias": "sudana destek",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "tr",
+    "alias": "suriye icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FB-1F1EA",
+    "locale": "tr",
+    "alias": "venezuela icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FE-1F1EA",
+    "locale": "tr",
+    "alias": "yemen icin dua",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "ru",
+    "alias": "слава украине",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "ru",
+    "alias": "поддерживаю украину",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "ru",
+    "alias": "поддержка палестины",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "zh",
+    "alias": "巴勒斯坦自由",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "zh",
+    "alias": "声援巴勒斯坦",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "zh",
+    "alias": "荣耀属于乌克兰",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "zh",
+    "alias": "声援乌克兰",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "zh",
+    "alias": "支持乌克兰",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "hi",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F2-1F1FB",
+    "locale": "hi",
+    "alias": "बॉयकॉट मालदीव",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F2-1F1FB",
+    "locale": "hi",
+    "alias": "boycott maldives",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "bn",
+    "alias": "free palestine",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "bn",
+    "alias": "ফিলিস্তিনের সঙ্গে সংহতি",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "bn",
+    "alias": "ফিলিস্তিনের জন্য দোয়া",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "bn",
+    "alias": "solidarity",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "bn",
+    "alias": "সংহতি",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "bn",
+    "alias": "solidarity",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "bn",
+    "alias": "সংহতি",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F8",
+    "locale": "ar",
+    "alias": "فلسطين حرة",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "1F349",
+    "locale": "ar",
+    "alias": "تضامن مع فلسطين",
+    "action": "remove",
+    "why": "safety review: campaign or protest slogan of a conflict or crisis (one rule for every conflict)"
+  },
+  {
+    "hexcode": "2622",
+    "locale": "en",
+    "alias": "fukushima",
+    "action": "remove",
+    "why": "safety review: names a nuclear disaster through a living region (tragedy reference)"
+  },
+  {
+    "hexcode": "2622",
+    "locale": "fr",
+    "alias": "fukushima",
+    "action": "remove",
+    "why": "safety review: names a nuclear disaster through a living region (tragedy reference)"
+  },
+  {
+    "hexcode": "2622",
+    "locale": "pt",
+    "alias": "hiroshima",
+    "action": "remove",
+    "why": "safety review: names the atomic bombing of a city (tragedy reference)"
+  },
+  {
+    "hexcode": "26D1",
+    "locale": "tr",
+    "alias": "6 subat",
+    "action": "remove",
+    "why": "safety review: date of the 2023 earthquake (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F2-1F1ED",
+    "locale": "en",
+    "alias": "nuclear testing",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "pt",
+    "alias": "regime fechado",
+    "action": "remove",
+    "why": "safety review: political label on a country flag"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "tr",
+    "alias": "savasa hayir",
+    "action": "remove",
+    "why": "safety review: war slogan on a country flag"
+  },
+  {
+    "hexcode": "1F1EA-1F1ED",
+    "locale": "es",
+    "alias": "campamentos de refugiados",
+    "action": "remove",
+    "why": "safety review: refugee crisis on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1EA",
+    "locale": "pt",
+    "alias": "refugiados venezuelanos",
+    "action": "remove",
+    "why": "safety review: refugee crisis on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "hi",
+    "alias": "सीरियाई शरणार्थी",
+    "action": "remove",
+    "why": "safety review: refugee crisis on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1E6-1F1EB",
+    "locale": "bn",
+    "alias": "আফগান শরণার্থী",
+    "action": "remove",
+    "why": "safety review: refugee crisis on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "bn",
+    "alias": "শরণার্থী",
+    "action": "remove",
+    "why": "safety review: refugee crisis on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "bn",
+    "alias": "শরণার্থী",
+    "action": "remove",
+    "why": "safety review: refugee crisis on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F3ED",
+    "locale": "bn",
+    "alias": "রানা প্লাজা স্মরণ",
+    "action": "remove",
+    "why": "safety review: names the Rana Plaza collapse (tragedy reference)"
+  },
+  {
+    "hexcode": "1F692",
+    "locale": "bn",
+    "alias": "নিমতলী",
+    "action": "remove",
+    "why": "safety review: names the Nimtoli fire (tragedy reference)"
+  },
+  {
+    "hexcode": "1F32A",
+    "locale": "bn",
+    "alias": "ঘূর্ণিঝড় সিডর",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "bn",
+    "alias": "ঘূর্ণিঝড় সিডর",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F32A",
+    "locale": "bn",
+    "alias": "ঘূর্ণিঝড় আমফান",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "bn",
+    "alias": "ঘূর্ণিঝড় আমফান",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "bn",
+    "alias": "ঘূর্ণিঝড় মোখা",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "bn",
+    "alias": "ঘূর্ণিঝড় রিমাল",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "ar",
+    "alias": "اعصار كاترينا",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "ar",
+    "alias": "اعصار شاهين",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "ar",
+    "alias": "اعصار جونو",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "ar",
+    "alias": "شاهين",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F300",
+    "locale": "ar",
+    "alias": "جونو",
+    "action": "remove",
+    "why": "safety review: named deadly cyclone (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1E8-1F1F3",
+    "locale": "hi",
+    "alias": "सस्ता चाइना माल",
+    "action": "remove",
+    "why": "safety review: ties a country to cheap goods (national stereotype)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F0",
+    "locale": "hi",
+    "alias": "विभाजन",
+    "action": "remove",
+    "why": "safety review: names the Partition of India on a flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F5-1F1F0",
+    "locale": "hi",
+    "alias": "बंटवारा",
+    "action": "remove",
+    "why": "safety review: names the Partition of India on a flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "hi",
+    "alias": "falklands war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "hi",
+    "alias": "फॉकलैंड युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1ED-1F1F9",
+    "locale": "hi",
+    "alias": "haiti earthquake",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1ED-1F1F9",
+    "locale": "hi",
+    "alias": "हैती भूकंप",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "hi",
+    "alias": "कोरियाई युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1FC",
+    "locale": "hi",
+    "alias": "खाड़ी युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F7-1F1FA",
+    "locale": "hi",
+    "alias": "रूस यूक्रेन युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E7",
+    "locale": "hi",
+    "alias": "द्वितीय विश्व युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "hi",
+    "alias": "syrian war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "hi",
+    "alias": "सीरिया युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "hi",
+    "alias": "chernobyl",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "hi",
+    "alias": "चेर्नोबिल",
+    "action": "remove",
+    "why": "safety review: names a disaster on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "hi",
+    "alias": "russia ukraine war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "hi",
+    "alias": "रूस यूक्रेन युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "hi",
+    "alias": "vietnam war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "hi",
+    "alias": "वियतनाम युद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FE-1F1EA",
+    "locale": "hi",
+    "alias": "गृहयुद्ध",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FF-1F1E6",
+    "locale": "hi",
+    "alias": "apartheid",
+    "action": "remove",
+    "why": "safety review: names a system of racial oppression on a country flag"
+  },
+  {
+    "hexcode": "1F1E7-1F1E6",
+    "locale": "bn",
+    "alias": "বসনিয়ার যুদ্ধ",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "bn",
+    "alias": "১৯৮২ সালের যুদ্ধ",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1E7",
+    "locale": "bn",
+    "alias": "দ্বিতীয় বিশ্বযুদ্ধের ইতিহাস",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F8-1F1FE",
+    "locale": "bn",
+    "alias": "গৃহযুদ্ধ",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "bn",
+    "alias": "war",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "bn",
+    "alias": "ইউক্রেন যুদ্ধ",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "bn",
+    "alias": "রুশ ইউক্রেন যুদ্ধ",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F42A",
+    "locale": "bn",
+    "alias": "আরব",
+    "action": "remove",
+    "why": "safety review: names an ethnic group on an animal (ethnic stereotype)"
+  },
+  {
+    "hexcode": "1F95C",
+    "locale": "ar",
+    "alias": "فستق عبيد",
+    "action": "remove",
+    "why": "safety review: the peanut name contains a racial slur"
+  },
+  {
+    "hexcode": "1F95C",
+    "locale": "ar",
+    "alias": "بدي فستق عبيد",
+    "action": "remove",
+    "why": "safety review: the peanut name contains a racial slur"
+  },
+  {
+    "hexcode": "1F1EB-1F1F0",
+    "locale": "ar",
+    "alias": "حرب فوكلاند",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FA-1F1E6",
+    "locale": "ar",
+    "alias": "حرب اوكرانيا",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FB-1F1F3",
+    "locale": "ar",
+    "alias": "حرب فيتنام",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1FE-1F1EA",
+    "locale": "ar",
+    "alias": "حرب اليمن",
+    "action": "remove",
+    "why": "safety review: names a war or battle on a country flag (tragedy reference)"
+  },
+  {
+    "hexcode": "1F1F0-1F1F5",
+    "locale": "ar",
+    "alias": "الصواريخ الكورية",
+    "action": "remove",
+    "why": "safety review: military label on a country flag"
+  },
+  {
+    "hexcode": "1F645-200D-2640-FE0F",
+    "locale": "ar",
+    "alias": "رافضة",
+    "action": "remove",
+    "why": "safety review: homograph of an anti-Shia slur"
+  },
+  {
+    "hexcode": "1F645-200D-2640-FE0F",
+    "locale": "ar",
+    "alias": "ست رافضة",
+    "action": "remove",
+    "why": "safety review: homograph of an anti-Shia slur"
+  },
+  {
+    "hexcode": "1F645-200D-2640-FE0F",
+    "locale": "ar",
+    "alias": "بنت رافضة",
+    "action": "remove",
+    "why": "safety review: homograph of an anti-Shia slur"
+  },
+  {
+    "hexcode": "1F645-200D-2640-FE0F",
+    "locale": "ar",
+    "alias": "هي رافضة",
+    "action": "remove",
+    "why": "safety review: homograph of an anti-Shia slur"
+  },
+  {
+    "hexcode": "1F914",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F928",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F635-200D-1F4AB",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F926",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F926-200D-2642-FE0F",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F926-200D-2640-FE0F",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "2753",
+    "locale": "zh",
+    "alias": "黑人问号",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F928",
+    "locale": "zh",
+    "alias": "黑人问号脸",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "2753",
+    "locale": "zh",
+    "alias": "黑人问号脸",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "26B0",
+    "locale": "zh",
+    "alias": "黑人抬棺",
+    "action": "remove",
+    "why": "safety review: meme name that singles out Black people"
+  },
+  {
+    "hexcode": "1F380",
+    "locale": "es",
+    "alias": "lolita",
+    "action": "remove",
+    "why": "safety review: can read as a sexualized minor"
+  },
+  {
+    "hexcode": "1F380",
+    "locale": "pt",
+    "alias": "lolita",
+    "action": "remove",
+    "why": "safety review: can read as a sexualized minor"
   }
 ]
