@@ -51,13 +51,17 @@ entry demotes a base alias. An unknown hexcode, or one listed twice, fails the b
 
 | `action` | Needs | Effect |
 | -------- | ----- | ------ |
-| `remove` | `alias` | Drops that alias of that emoji |
-| `low` | `alias` | Moves it to the `low` field (weight 0.55) |
+| `remove` | `alias` | Drops that alias or CLDR keyword of that emoji from the pack |
+| `low` | `alias` | Moves it to the `low` field (weight 0.55; a keyword goes to the ext part) |
 | `add` | `phrase`, optional `field` (`alias` by default, or `typo`) | Adds a phrase the batch missed |
 
-`locale` is a pack locale or `"*"` for every locale. `alias` is compared in its normalized form
-(docs/PACK_FORMAT.md §3). `why` is optional but expected: it is the review trail. A malformed entry
-fails the build with its index. Append new entries at the end of the file.
+`locale` is a pack locale or `"*"` for every locale. `alias` names an alias or a CLDR keyword
+(`tags`) and is compared in its normalized form (docs/PACK_FORMAT.md §3); the CLDR label is never
+curated. A keyword has weight 0.85, above every alias, so `low` is how another emoji becomes the
+answer for it. The build warns about a `remove` or `low` entry that matches nothing
+(`⚠ curation: …`). `why` is optional but expected: it is the review trail. A malformed entry fails
+the build with its index. Append new entries at the end of the file. More rules:
+`enrichment/STYLE.md`, "Curation".
 
 ## Culture layer (`culture/`)
 
