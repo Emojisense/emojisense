@@ -7,8 +7,19 @@
  * public/v1/pack/  static assets served at /v1/pack/<version>/… — generated, not committed
  * public/p/        layer 2 shards served at /p/<version>/…, if the data package built them
  *                  — generated, not committed
+ * public/v1/culture/  culture files served at /v1/culture/<version>/…, if `culture:build` ran
+ *                  — generated, not committed; cached for an hour, not immutable
  */
-import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { LOCALE_CODES } from "@emojisense/data/locales";
@@ -96,16 +107,30 @@ if (existsSync(join(shardSource, "index.json"))) {
   }
 }
 
+// Culture files (PACK_FORMAT §8). They are rebuilt daily under the same pack version, so they are
+// cached for an hour, never `immutable`. Files of another pack version are not copied.
+const cultureSource = join(DATA_ROOT, "dist", "culture", packVersion);
+const publicCulture = join(workerRoot, "public", "v1", "culture");
+rmSync(publicCulture, { recursive: true, force: true });
+let cultureNote = "no culture files";
+if (existsSync(join(cultureSource, "index.json"))) {
+  const cultureIndex = JSON.parse(readFileSync(join(cultureSource, "index.json"), "utf8"));
+  const files = readdirSync(cultureSource).filter((f) => /^culture\.[a-z]{2,3}\.json$|^index\.json$/.test(f));
+  mkdirSync(join(publicCulture, packVersion), { recursive: true });
+  for (const file of files) copyFileSync(join(cultureSource, file), join(publicCulture, packVersion, file));
+  cultureNote = `culture ${cultureIndex.from} → ${cultureIndex.until} → public/v1/culture/${packVersion}`;
+}
+
 // Static assets bypass the Worker, so their cache headers live here. `_headers` does not apply
-// to Worker responses (wrangler.jsonc keeps /v1/pack/* and /p/* out of run_worker_first).
-const immutable = [
-  "  Cache-Control: public, max-age=31536000, immutable",
-  "  Access-Control-Allow-Origin: *",
-];
+// to Worker responses (wrangler.jsonc keeps /v1/pack/*, /v1/culture/* and /p/* out of
+// run_worker_first).
+const cors = "  Access-Control-Allow-Origin: *";
+const immutable = ["  Cache-Control: public, max-age=31536000, immutable", cors];
+const hourly = ["  Cache-Control: public, max-age=3600", cors];
 writeFileSync(
   join(workerRoot, "public", "_headers"),
-  ["/v1/pack/*", ...immutable, "/p/*", ...immutable, ""].join("\n"),
+  ["/v1/pack/*", ...immutable, "/p/*", ...immutable, "/v1/culture/*", ...hourly, ""].join("\n"),
 );
 console.log(
-  `sync: pack ${packVersion} + ${model.id}@${dims} → src/generated, public/v1/pack/${packVersion}; ${shardNote}`,
+  `sync: pack ${packVersion} + ${model.id}@${dims} → src/generated, public/v1/pack/${packVersion}; ${shardNote}; ${cultureNote}`,
 );

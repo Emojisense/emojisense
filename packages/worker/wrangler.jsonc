@@ -13,9 +13,10 @@
     // src/locale-engines.ts reads pack.<locale>.json of locales outside the bundle through it.
     // `assets` is inherited by the offline env, binding included.
     "binding": "ASSETS",
-    // Packs (/v1/pack/*) and shards (/p/*) are static assets: free, immutable, and never run the
-    // Worker. Only the API routes run it first; the negative rule keeps packs on the asset path.
-    "run_worker_first": ["/v1/*", "!/v1/pack/*"]
+    // Packs (/v1/pack/*), culture files (/v1/culture/*) and shards (/p/*) are static assets: free,
+    // and they never run the Worker. Only the API routes run it first; the negative rules keep
+    // packs and culture files on the asset path. Cache headers: public/_headers (sync-pack.ts).
+    "run_worker_first": ["/v1/*", "!/v1/pack/*", "!/v1/culture/*"]
   },
   // Workers AI has no local emulator: even `wrangler dev` calls Cloudflare (needs `wrangler login`).
   // Without it the Worker degrades to alias-only results.
