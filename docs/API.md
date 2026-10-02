@@ -481,7 +481,7 @@ your own server, use the Search API and the tenants API.
 | `POST /api/apps/:id/webhooks` | `{ url, events? }` → `201 { webhook, secret }`. The `whsec_…` secret is shown only here. `events` defaults to all. At most 10 per app (`409 webhook_limit`). (Scale, developer+) |
 | `PATCH /api/webhooks/:id` | `{ url?, events?, enabled? }` → `{ webhook }` (Scale, developer+) |
 | `DELETE /api/webhooks/:id` | → `{ ok: true }`, with its deliveries (Scale, developer+) |
-| `POST /api/webhooks/:id/test` | Sends one `webhook.test` event now (no retries, also when disabled) → `{ delivery }` (Scale, developer+) |
+| `POST /api/webhooks/:id/test` | Sends one `webhook.test` event now (no retries, also when disabled) → `{ delivery }`. At most 5 a minute per webhook, then `429 rate_limited` (Scale, developer+) |
 | `GET /api/webhooks/:id/deliveries` | `{ deliveries: [{ id, event, status, ok, durationMs, createdAt }] }`, the last 50, newest first (Scale, viewer+) |
 | `GET /api/apps/:id/emoji[?tenantId=]` | Custom emoji → `{ emoji: CustomEmoji[], used, limit }` (viewer+), see below |
 | `POST /api/apps/:id/emoji` | Multipart upload: `file`, `shortcode`, `aliases`, `tenantId?` → `201 CustomEmoji` (Solo+, developer+) |

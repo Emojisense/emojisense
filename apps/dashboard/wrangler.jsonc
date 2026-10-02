@@ -29,8 +29,11 @@
   // Workers share it under --persist-to ../../.wrangler/state.
   "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
   // The waitlist is the only public write. Keyed by client IP, held in memory only.
+  // WEBHOOK_TEST_LIMITER: "Send test event" per webhook, so the dashboard cannot be used to flood
+  // a receiver's URL.
   "ratelimits": [
-    { "name": "WAITLIST_LIMITER", "namespace_id": "2001", "simple": { "limit": 5, "period": 60 } }
+    { "name": "WAITLIST_LIMITER", "namespace_id": "2001", "simple": { "limit": 5, "period": 60 } },
+    { "name": "WEBHOOK_TEST_LIMITER", "namespace_id": "2002", "simple": { "limit": 5, "period": 60 } }
   ],
   // Production values. `.dev.vars` overrides them locally (see .dev.vars.example).
   // Clerk sign-in needs CLERK_PUBLISHABLE_KEY and CLERK_JWT_KEY (both public) and, optionally,
@@ -59,7 +62,8 @@
       ],
       "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" }],
       "ratelimits": [
-        { "name": "WAITLIST_LIMITER", "namespace_id": "2101", "simple": { "limit": 5, "period": 60 } }
+        { "name": "WAITLIST_LIMITER", "namespace_id": "2101", "simple": { "limit": 5, "period": 60 } },
+        { "name": "WEBHOOK_TEST_LIMITER", "namespace_id": "2102", "simple": { "limit": 5, "period": 60 } }
       ],
       "vars": {
         "ENVIRONMENT": "staging",
@@ -87,7 +91,8 @@
       ],
       "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-prod" }],
       "ratelimits": [
-        { "name": "WAITLIST_LIMITER", "namespace_id": "2201", "simple": { "limit": 5, "period": 60 } }
+        { "name": "WAITLIST_LIMITER", "namespace_id": "2201", "simple": { "limit": 5, "period": 60 } },
+        { "name": "WEBHOOK_TEST_LIMITER", "namespace_id": "2202", "simple": { "limit": 5, "period": 60 } }
       ],
       "vars": {
         "ENVIRONMENT": "production",

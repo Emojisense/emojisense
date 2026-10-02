@@ -194,9 +194,20 @@ export async function deleteWebhook(ctx: AuthedContext): Promise<Response> {
   return json(body);
 }
 
-/** Sends one signed `webhook.test` event now, also to a disabled webhook, and reports the result. */
+/**
+ * Sends one signed `webhook.test` event now, also to a disabled webhook, and reports the result.
+ * At most 5 a minute per webhook (WEBHOOK_TEST_LIMITER), so the dashboard cannot flood a URL.
+ */
 export async function testWebhook(ctx: AuthedContext): Promise<Response> {
   const { webhook } = await requireWebhookAccess(ctx, "edit");
+  const limiter = ctx.env.WEBHOOK_TEST_LIMITER;
+  if (limiter && !(await limiter.limit({ key: webhook.id })).success) {
+    throw new HttpError(
+      429,
+      "rate_limited",
+      "At most 5 test events a minute per webhook. Try again in a minute.",
+    );
+  }
   const event = createWebhookEvent({
     type: WEBHOOK_TEST_EVENT,
     appId: webhook.app_id,

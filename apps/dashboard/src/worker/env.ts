@@ -26,6 +26,8 @@ export interface Env {
   /** Comma-separated website origins that may POST /api/waitlist from a browser. */
   WEBSITE_ORIGINS?: string;
   WAITLIST_LIMITER?: RateLimiter;
+  /** "Send test event", per webhook (5 a minute). */
+  WEBHOOK_TEST_LIMITER?: RateLimiter;
   /** R2 bucket `emojisense-emoji` (custom emoji images), shared with the API Worker. */
   EMOJI?: EmojiBucket;
   /** Base URL of the API Worker, which serves custom emoji images (e.g. https://api.emojisense.com). */
