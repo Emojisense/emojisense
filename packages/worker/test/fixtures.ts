@@ -45,17 +45,18 @@ export const ROW = { trex: 0, volcano: 1, rocket: 2, dog: 3 } as const;
 export const unit = (i: number) =>
   l2normalize(Float32Array.from({ length: DIMS }, (_, d) => (d === i ? 1 : 0.01)));
 
-export const EMBEDDING_MODEL = "@cf/google/embeddinggemma-300m";
+/** The production model (bge-m3 @1024); the fixture vectors use 8 dims. */
+export const EMBEDDING_MODEL = "@cf/baai/bge-m3";
 
 export const catalog: Catalog = {
   config: {
     packVersion: "test",
-    modelKey: "embeddinggemma",
+    modelKey: "bge-m3",
     modelId: EMBEDDING_MODEL,
     dims: DIMS,
-    queryTemplate: "task: search result | query: {q}",
+    queryTemplate: "{q}",
   },
-  model: getModel("embeddinggemma"),
+  model: getModel("bge-m3"),
   engine: () => createEngine(pack),
   index: () =>
     decodeVectors(
@@ -179,7 +180,13 @@ export interface Harness {
 }
 
 export function harness(
-  options: { store?: Store; env?: Partial<Env>; now?: () => number; embedTo?: number } = {},
+  options: {
+    store?: Store;
+    env?: Partial<Env>;
+    now?: () => number;
+    embedTo?: number;
+    catalog?: Catalog;
+  } = {},
 ): Harness {
   const ai = fakeAi(options.embedTo === undefined ? {} : { embedTo: options.embedTo });
   const events = vi.fn();
@@ -187,7 +194,7 @@ export function harness(
   const ctx = executionContext();
   const env: Env = { AI: { run: ai }, EVENTS: { writeDataPoint: events }, ...options.env };
   const app = createApp({
-    catalog,
+    catalog: options.catalog ?? catalog,
     cache: () => cache,
     store: () => options.store,
     ...(options.now ? { now: options.now } : {}),

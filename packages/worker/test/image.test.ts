@@ -28,7 +28,7 @@ describe("POST /v1/classify-image", () => {
       image_url: { url: `data:image/jpeg;base64,${toBase64(bytes)}` },
     });
     expect(h.ai).toHaveBeenCalledWith(EMBEDDING_MODEL, {
-      text: [`task: search result | query: ${DEFAULT_LABEL.caption}. ${DEFAULT_LABEL.reaction}`],
+      text: [`${DEFAULT_LABEL.caption}. ${DEFAULT_LABEL.reaction}`],
     });
   });
 

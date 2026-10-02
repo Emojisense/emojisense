@@ -3,8 +3,6 @@ import { truncateText } from "../src/reactions.ts";
 import type { SearchBody } from "../src/search.ts";
 import { API, EMBEDDING_MODEL, harness, reactions } from "./fixtures.ts";
 
-const TEMPLATE = "task: search result | query: ";
-
 describe("POST /v1/suggest-reactions", () => {
   it("ranks alias and semantic results for a whole message", async () => {
     const h = harness();
@@ -17,7 +15,7 @@ describe("POST /v1/suggest-reactions", () => {
     expect(body.results.some((r) => r.emoji === "🦖" && r.source === "alias")).toBe(true);
     expect(body.results.length).toBeLessThanOrEqual(8);
     expect(h.ai).toHaveBeenCalledWith(EMBEDDING_MODEL, {
-      text: [`${TEMPLATE}Jurassic Park vibes today!`],
+      text: ["Jurassic Park vibes today!"],
     });
   });
 
@@ -25,8 +23,7 @@ describe("POST /v1/suggest-reactions", () => {
     const h = harness();
     await h.call(reactions({ text: `${"🎉".repeat(300)} tail` }));
     const input = h.ai.mock.calls[0]?.[1] as { text: string[] } | undefined;
-    const sent = input?.text[0] ?? "";
-    const text = sent.slice(TEMPLATE.length);
+    const text = input?.text[0] ?? "";
     expect(Array.from(text)).toHaveLength(256);
     expect(text).not.toContain("tail");
     // Whole emoji only: a split surrogate pair would show up as a different element.

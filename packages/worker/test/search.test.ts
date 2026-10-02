@@ -1,9 +1,11 @@
+import { getModel } from "@emojisense/data/models";
 import { describe, expect, it, vi } from "vitest";
 import type { SearchBody } from "../src/search.ts";
-import { API, EMBEDDING_MODEL, harness, search } from "./fixtures.ts";
+import type { Catalog } from "../src/semantic.ts";
+import { API, catalog, EMBEDDING_MODEL, harness, search } from "./fixtures.ts";
 
 describe("GET /v1/search", () => {
-  it("fuses alias and semantic results and formats the query for the model", async () => {
+  it("fuses alias and semantic results and embeds the normalized query", async () => {
     const h = harness();
     const res = await h.call(search("Lava eruption!!"));
     const body = (await res.json()) as SearchBody;
@@ -11,10 +13,28 @@ describe("GET /v1/search", () => {
     expect(body).toMatchObject({ query: "lava eruption", cached: false, degraded: false, overLimit: false });
     expect(body.results[0]).toMatchObject({ emoji: "🌋", source: "semantic" });
     expect(h.ai).toHaveBeenCalledWith(EMBEDDING_MODEL, {
-      text: ["task: search result | query: lava eruption"],
+      text: ["lava eruption"],
     });
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
     expect(res.headers.get("server-timing")).toMatch(/^embed;dur=\d+, total;dur=\d+$/);
+  });
+
+  it("wraps the query in the model's template when it has one", async () => {
+    const gemma: Catalog = {
+      ...catalog,
+      config: {
+        ...catalog.config,
+        modelKey: "embeddinggemma",
+        modelId: "@cf/google/embeddinggemma-300m",
+        queryTemplate: "task: search result | query: {q}",
+      },
+      model: getModel("embeddinggemma"),
+    };
+    const h = harness({ catalog: gemma });
+    await h.call(search("Lava eruption"));
+    expect(h.ai).toHaveBeenCalledWith("@cf/google/embeddinggemma-300m", {
+      text: ["task: search result | query: lava eruption"],
+    });
   });
 
   it("keeps confident alias hits on top in hybrid mode", async () => {
@@ -77,7 +97,7 @@ describe("GET /v1/search", () => {
     expect(await res.json()).toEqual({
       ok: true,
       packVersion: "test",
-      model: "embeddinggemma@8",
+      model: "bge-m3@8",
       semantic: true,
     });
   });
@@ -96,7 +116,7 @@ describe("search analytics", () => {
       ["rocket", "en", "hybrid", "hit", "search"],
       ["lava eruption", "en", "semantic", "miss", "search"],
     ]);
-    expect(points[0].indexes).toEqual(["test:embeddinggemma@8"]);
+    expect(points[0].indexes).toEqual(["test:bge-m3@8"]);
     const logged = JSON.stringify(points);
     expect(logged).not.toContain("pk_test");
     expect(logged).not.toContain("203.0.113.9");
