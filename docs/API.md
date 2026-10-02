@@ -5,7 +5,7 @@ Two services, both Cloudflare Workers:
 | Service | Package | Hosted | Local (`wrangler dev`) | Purpose |
 | ------- | ------- | ------ | ---------------------- | ------- |
 | Search API | `packages/worker` | `https://api.emojisense.com` | `http://localhost:8788` | search, reactions, image → emoji, static packs and shards |
-| Dashboard | `apps/dashboard` | `https://app.emojisense.com` | `http://localhost:8790` | accounts, apps, keys, usage, waitlist (`/api/*`) |
+| Dashboard | `apps/dashboard` | `https://app.emojisense.com` | `http://localhost:8790` | accounts, apps, keys, usage, billing, waitlist (`/api/*`) |
 
 Shared contracts: `@emojisense/platform` (D1 schema, plans, key helpers) and
 [PACK_FORMAT.md](PACK_FORMAT.md) (packs, vectors, shards).
@@ -488,7 +488,7 @@ your own server, use the Search API and the tenants API.
 | ------------- | ------- |
 | `GET /api/auth/dev?login=<name>` | Local development only (`ENVIRONMENT=development` and localhost): sign in as `<name>@dev.localhost` with a cookie |
 | `POST /api/auth/logout` | Clears the dev sign-in cookie. Clerk sessions end in the browser. |
-| `GET /api/me` | Account, its own `plan`, `appCount`, `waitlistPlan`, `teams: [{ ownerId, ownerName, role }]` |
+| `GET /api/me` | Account, its own `plan`, `appCount`, `billingStatus`, `teams: [{ ownerId, ownerName, role }]` |
 | `DELETE /api/me` | `{ confirm }` → `{ ok: true, clerkUserDeleted }`. Deletes the account and everything it owns, see below (the account itself) |
 | `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`) / create an app in the own account (`name`, `environment`) |
 | `GET /api/apps/:id` | App + keys (viewer+) |
@@ -519,8 +519,9 @@ your own server, use the Search API and the tenants API.
 | `PATCH /api/team/members/:id` | `{ role }` (admin+). The owner cannot change. |
 | `DELETE /api/team/members/:id` | Remove a member (admin+), or leave the team (the member) |
 | `POST /api/invites/:token/accept` | Signed in: join the owner's team → `{ team: { ownerId, ownerName, role } }`. An invite with an email works only when the caller's verified email (the `email` claim with `email_verified: true`) is that email; otherwise `403 invite_email_mismatch`. |
-| `GET /api/billing` | `{ plan, period, usage, limits, appCount, provider: null, waitlistPlan }` (owner, admin) |
-| `POST /api/billing/upgrade` | `{ plan, email? }` → `{ status: "waitlist", plan }`. Never charges (owner only) |
+| `GET /api/billing` | `{ plan, period, usage, limits, appCount, provider: "whop" \| null, subscription: { status, interval, currentPeriodEnd, graceUntil, manageUrl }, purchasable }` (owner, admin; `manageUrl` only for the owner). See [Billing](#billing-whop). |
+| `POST /api/billing/checkout` | `{ plan: "solo" \| "pro" \| "scale", interval?: "month" \| "year" }` → `{ url }`: Whop's hosted checkout (owner only). Yearly is Solo only. |
+| `POST /api/whop/webhook` | Whop's signed billing events. No session; the Standard Webhooks signature is checked. |
 | `POST /api/waitlist` | Public: `{ email, plan }` (`plan` defaults to `pro`) as JSON, or the same fields as an HTML form (`application/x-www-form-urlencoded`). A form post without `Accept: application/json` gets `303` to `<website>/waitlist/?status=ok#waitlist-joined` or `?status=error#waitlist-failed` (the website is the posting `WEBSITE_ORIGINS` entry, or the first one when there is no `Origin`). Other origins get `403`; 5 posts per minute per IP. |
 
 ### Roles, plans and errors
@@ -540,7 +541,7 @@ your own server, use the Search API and the tenants API.
 | 403 | `forbidden_role` | The caller can see the app or team, but the role is too low |
 | 404 | `not_found` | No app, key, team or member, or no access to it (the same answer) |
 | 404 | `invite_not_found` | Unknown or withdrawn invite link |
-| 409 | `invite_own_team`, `already_member`, `owner_immutable`, `plan_not_higher` | Invite for the own team, a second membership, a change to the owner, an upgrade to the same or a lower plan |
+| 409 | `invite_own_team`, `already_member`, `owner_immutable`, `already_on_plan` | Invite for the own team, a second membership, a change to the owner, a checkout for the plan and interval the account already pays for |
 | 409 | `tenant_exists`, `webhook_limit` | A tenant with this `externalId` exists; the app has 10 webhooks |
 | 410 | `invite_used`, `invite_expired` | The invite was accepted already, or is older than 7 days |
 | 400 | `confirmation_required` | `DELETE /api/me` without the right `confirm` value |
@@ -548,6 +549,9 @@ your own server, use the Search API and the tenants API.
 | 403 | `email_required` | A new Clerk user whose session token has no verified email (or no custom claims) |
 | 503 | `storage_unavailable` | `DELETE /api/me` could not delete the custom emoji images. Nothing was deleted; try again. |
 | 503 | `clerk_unconfigured` | A bearer token reached a Worker without `CLERK_PUBLISHABLE_KEY` and `CLERK_JWT_KEY` |
+| 502 | `checkout_failed` | Whop did not create the checkout (error, timeout, or an answer without a whop.com URL) |
+| 503 | `billing_unavailable` | No `WHOP_API_KEY`, or no Whop variant for that plan and interval in `WHOP_PLAN_IDS` |
+| 401, 503 | `invalid_signature`, `billing_unconfigured` | `POST /api/whop/webhook`: a bad or old signature; no `WHOP_WEBHOOK_SECRET` or `WHOP_PLAN_IDS` (Whop retries) |
 
 ### `DELETE /api/me` (account deletion)
 
@@ -561,6 +565,8 @@ your own server, use the Search API and the tenants API.
   usage, search analytics (`query_daily`), tenants, custom emoji (rows and R2 images) and
   webhooks with their deliveries; its own team members and invites; its memberships in other
   teams; legacy session rows; and the waitlist entry of its email.
+- A Whop subscription that still renews is cancelled at the end of its paid period (best effort,
+  after the answer; a failure is logged).
 - The Clerk user goes too. With `CLERK_SECRET_KEY` the Worker deletes it (best effort, logged
   without ids) and answers `clerkUserDeleted: true`. Without the secret key it answers `false`,
   and the dashboard deletes the Clerk user with Clerk JS (`user.delete()`, which needs "allow users
@@ -842,6 +848,8 @@ What the hosted service collects, and for how long:
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
 | Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji, its tenant or the account is deleted (edge copies of the image until evicted) |
+| Paid plans: Whop membership id, plan, interval, subscription status, end of the paid period, grace end, manage link, time of the last Whop event applied. Card data stays at Whop. | D1 `accounts` | until the account is deleted |
+| Whop webhook ids already processed: id, event type, time (no personal data) | D1 `whop_events` | 30 days |
 | Waitlist: email, plan, date of the first sign-up | D1 `waitlist` | 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS`). The same daily cron deletes older rows. Also deleted with an account of the same email. |
 | Accounts (Clerk user id, name, verified email), apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Revoked keys stay, marked as revoked. Sign-in sessions live at Clerk; the dashboard stores none. |
 | Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
@@ -870,3 +878,38 @@ What the hosted service collects, and for how long:
   customer's own apps; anything across customers is such a k-anonymous aggregate.
 - `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
   Travel can still restore the database to a point in the last 30 days (Paid plan).
+
+## Billing (Whop)
+
+Paid plans are sold through Whop (DECISIONS.md, "Whop for payments"). The website's paid plan
+buttons open `https://app.<domain>/billing?plan=<id>&interval=month|year`; the dashboard keeps that
+choice through sign-in, and its Upgrade button calls `POST /api/billing/checkout`.
+
+- **Checkout.** The Worker calls Whop's `POST /checkout_configurations` with the variant id of
+  the plan and interval from `WHOP_PLAN_IDS`, `metadata: { accountId, plan, interval, env }` and
+  `redirect_url: <dashboard>/billing?checkout=success`, and answers Whop's `purchase_url` (only a
+  `https://*.whop.com` URL is passed on). The plan does not change here.
+- **Webhook.** `POST /api/whop/webhook` checks `webhook-signature` (`v1,<base64>`): HMAC-SHA256
+  over `{webhook-id}.{webhook-timestamp}.{raw body}`, keyed with the UTF-8 bytes of the whole
+  `ws_…` secret; timestamps more than 5 minutes off are refused. Each `webhook-id` is applied
+  once (`whop_events`, written in the same D1 batch as the change). The D1 change runs before the
+  answer (a failure is a `500`, and Whop retries); cancelling a replaced membership and cleanup
+  run in `waitUntil`.
+- **Events.** `payment.succeeded` and `membership.activated` set the plan: the plan always comes
+  from the Whop variant id through `WHOP_PLAN_IDS`. A membership the account already pays with
+  needs no metadata; a new one needs metadata that names an existing account, this Worker's
+  `env` (`ENVIRONMENT`) and the same plan and interval as the variant. `payment.failed` keeps
+  the plan for a 7-day grace (`past_due`). `membership.cancel_at_period_end_changed` marks the
+  plan as ending (`canceling`) or resumes it. `membership.deactivated` moves the account to
+  Free (except a deactivation while past due, which is the grace). An event older than the last
+  one applied to the account changes nothing. Everything else answers `200` and logs
+  `whop_event` with `result: "ignored"` and a reason, without changing anything.
+- **Plan changes.** A change between paid plans is a new checkout. When it is paid, the Worker
+  cancels the old membership at the end of its period (Whop does not prorate). Down to Free is a
+  cancel in Whop (Billing → Manage subscription).
+- **Lapses.** A grace or a cancelled period that ran out moves the account to Free on the next
+  Whop event, when the owner opens the dashboard, and in the optional daily cron of the
+  dashboard Worker.
+- **Delay.** The API Worker reads the plan from `accounts.plan` with each key lookup and caches
+  lookups for 60 s per isolate, so a plan change reaches every search within a minute. There is
+  no cross-isolate invalidation.
