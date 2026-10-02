@@ -67,10 +67,23 @@ async function clerkCaller(ctx: RequestContext, token: string): Promise<Caller |
   const { identity } = check;
   const db = ctx.env.DB;
   const existing = await findByClerkUser(db, identity.userId);
-  const account = existing
-    ? await syncProfile(db, existing, identity)
-    : await createClerkAccount(db, identity, ctx.deps.now());
-  return { account, verifiedEmail: identity.email };
+  if (existing) return { account: await syncProfile(db, existing, identity), verifiedEmail: identity.email };
+  if (await deletedAfterIssue(db, identity)) {
+    console.warn(
+      JSON.stringify({ level: "warn", event: "clerk_session_rejected", reason: "account_deleted" }),
+    );
+    return null;
+  }
+  return { account: await createClerkAccount(db, identity, ctx.deps.now()), verifiedEmail: identity.email };
+}
+
+/** The account of this Clerk user was deleted after the token was issued (src/worker/account-deletion.ts). */
+async function deletedAfterIssue(db: D1Database, identity: ClerkIdentity): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT deleted_at FROM deleted_clerk_users WHERE clerk_user_id = ?")
+    .bind(identity.userId)
+    .first<{ deleted_at: number }>();
+  return row !== null && identity.issuedAt <= row.deleted_at;
 }
 
 async function devCaller(ctx: RequestContext): Promise<Caller | null> {
@@ -110,23 +123,26 @@ function linkLegacyAccount(db: D1Database, identity: ClerkIdentity): Promise<Acc
 async function createClerkAccount(db: D1Database, identity: ClerkIdentity, now: number): Promise<AccountRow> {
   const linked = identity.email ? await linkLegacyAccount(db, identity) : null;
   if (linked) return linked;
-  const insert = (email: string | null) =>
-    db
+  const insert = async (email: string | null) => {
+    const result = await db
       .prepare(
         `INSERT INTO accounts (id, email, clerk_user_id, name, created_at) VALUES (?, ?, ?, ?, ?)
          ON CONFLICT DO NOTHING`,
       )
       .bind(randomId(), email, identity.userId, identity.name, now)
       .run();
-  await insert(identity.email);
+    return result.meta.changes > 0;
+  };
+  let created = await insert(identity.email);
   let account = await findByClerkUser(db, identity.userId);
   if (!account && identity.email) {
-    await insert(null);
+    created = await insert(null);
     account = await findByClerkUser(db, identity.userId);
   }
   if (!account) throw new Error("account insert returned no row");
   // A missing email usually means the session token lacks the custom claims (README).
-  console.log(JSON.stringify({ event: "account_created", verifiedEmail: account.email !== null }));
+  if (created)
+    console.log(JSON.stringify({ event: "account_created", verifiedEmail: account.email !== null }));
   return account;
 }
 

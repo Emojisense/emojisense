@@ -442,6 +442,9 @@ answer is `401 unauthorized`; a token while Clerk is not configured gets `503 cl
   without ids) and answers `clerkUserDeleted: true`. Without the secret key it answers `false`,
   and the dashboard deletes the Clerk user with Clerk JS (`user.delete()`, which needs "allow users
   to delete their accounts" in Clerk).
+- A session token is checked without a network call, so one issued before the deletion stays
+  valid for up to a minute. For 10 minutes the Worker keeps the Clerk user id in
+  `deleted_clerk_users`, and such a token gets `401` instead of a new, empty account.
 - The R2 images go first. When R2 fails, the answer is `503 storage_unavailable` and no row is
   deleted. Then one D1 batch (one transaction) deletes the rows.
 - The API Worker caches key lookups for 60 s per isolate, so a deleted key can work for up to a

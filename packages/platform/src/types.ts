@@ -33,6 +33,12 @@ export interface AccountRow {
   created_at: number;
 }
 
+/** A Clerk user whose account was deleted in the last 10 minutes (0003). */
+export interface DeletedClerkUserRow {
+  clerk_user_id: string;
+  deleted_at: number;
+}
+
 /**
  * The legacy `apps.plan` column of 0001 is left out on purpose: since 0002 the plan lives on
  * `accounts.plan`. Join the owning account to read it.

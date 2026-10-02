@@ -6,6 +6,8 @@
 import { type ClerkGateway, identityFromClaims, type SessionCheck } from "../../src/worker/clerk";
 
 export const FAKE_ISSUER = "https://clerk.emojisense.example";
+/** The harness clock (NOW in harness.ts): tokens are issued at that time unless `issuedAt` says otherwise. */
+const HARNESS_NOW = Date.UTC(2026, 9, 15, 12);
 
 export interface FakeSession {
   userId: string;
@@ -15,6 +17,8 @@ export interface FakeSession {
   name?: string;
   /** Defaults to the harness origin, http://localhost:8790. */
   azp?: string;
+  /** Epoch milliseconds for `iat`. Defaults to the harness clock's start. */
+  issuedAt?: number;
   /** Any other claims, e.g. `{ sts: "pending" }` or `{ iss: "https://other.example" }`. */
   claims?: Record<string, unknown>;
 }
@@ -43,6 +47,7 @@ export class FakeClerk implements ClerkGateway {
       iss: FAKE_ISSUER,
       sub: session.userId,
       sid: `sess_${session.userId}`,
+      iat: Math.floor((session.issuedAt ?? HARNESS_NOW) / 1000),
       azp: session.azp ?? "http://localhost:8790",
       ...(session.email === undefined ? {} : { email: session.email }),
       email_verified: session.emailVerified ?? true,

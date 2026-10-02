@@ -84,6 +84,12 @@ function seedAccount(h: Harness, login: string, bucket?: ReturnType<typeof memor
     ],
     // A legacy GitHub-era session row: sign-in no longer writes them, deletion still removes them.
     ["INSERT INTO sessions (id, account_id, expires_at) VALUES (?, ?, 0)", `${login}_session`, accountId],
+    // Not owned by the account: every deletion prunes rows older than 10 minutes. ada's is old.
+    [
+      "INSERT INTO deleted_clerk_users (clerk_user_id, deleted_at) VALUES (?, ?)",
+      `${login}_clerk_user`,
+      login === "ada" ? 0 : NOW,
+    ],
   ];
   for (const [statement, ...params] of sql) h.db.exec(statement, ...params);
   bucket?.objects.set(image, new Uint8Array([1, 2, 3, 4]));
@@ -322,6 +328,29 @@ describe("DELETE /api/me with a Clerk account", () => {
       JSON.stringify({ level: "error", event: "clerk_user_delete_failed", error: "Error", status: 502 }),
     );
     expect(JSON.stringify(error.mock.calls)).not.toContain("user_ada");
+  });
+
+  it("keeps a token from before the deletion from creating a new account", async () => {
+    const clerk = new FakeClerk();
+    const { h, remove } = await clerkSetup(clerk);
+    const before = clerk.token({ userId: "user_ada", email: "ada@example.com" });
+    h.clock.now = NOW + 5_000;
+    expect((await remove()).status).toBe(200);
+    expect(h.db.rows("SELECT * FROM deleted_clerk_users")).toEqual([
+      { clerk_user_id: "user_ada", deleted_at: NOW + 5_000 },
+    ]);
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect((await h.call("GET", "/api/me", { token: before })).status).toBe(401);
+    expect(h.db.rows("SELECT id FROM accounts")).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(
+      JSON.stringify({ level: "warn", event: "clerk_session_rejected", reason: "account_deleted" }),
+    );
+
+    // The Clerk user can still sign in again (when Clerk kept it): a new token makes a new account.
+    const after = clerk.token({ userId: "user_ada", email: "ada@example.com", issuedAt: NOW + 6_000 });
+    expect((await h.call("GET", "/api/me", { token: after })).status).toBe(200);
+    expect(h.db.rows("SELECT clerk_user_id FROM accounts")).toEqual([{ clerk_user_id: "user_ada" }]);
   });
 
   it("does not ask Clerk for a dev account", async () => {

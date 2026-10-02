@@ -77,7 +77,7 @@ export async function deleteMe(ctx: AuthedContext): Promise<Response> {
   const { request, url, env, account } = ctx;
   const body = await readJsonObject(request);
   assertConfirmed(account, body.confirm);
-  const deleted = await deleteAccount(env.DB, env.EMOJI, account);
+  const deleted = await deleteAccount(env.DB, env.EMOJI, account, ctx.deps.now());
   const clerkUserDeleted = await deleteClerkUser(ctx);
   // Counts only: no ids or emails in logs (docs/API.md, Privacy).
   console.log(JSON.stringify({ event: "account_deleted", ...deleted, clerkUserDeleted }));

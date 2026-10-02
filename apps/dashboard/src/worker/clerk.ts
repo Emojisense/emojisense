@@ -19,6 +19,8 @@ export interface ClerkIdentity {
   /** The primary email in lower case, only when the token says it is verified. */
   email: string | null;
   name: string | null;
+  /** When Clerk issued the token (`iat`), in epoch milliseconds; 0 when it has none. */
+  issuedAt: number;
 }
 
 export type SessionCheck = { ok: true; identity: ClerkIdentity } | { ok: false; reason: string };
@@ -61,7 +63,11 @@ export function identityFromClaims(claims: Record<string, unknown>, issuer: stri
     return { ok: false, reason: "not_a_session_token" };
   }
   if (claims.sts === "pending") return { ok: false, reason: "session_pending" };
-  return { ok: true, identity: { userId: claims.sub, email: claimEmail(claims), name: claimName(claims) } };
+  const issuedAt = typeof claims.iat === "number" ? claims.iat * 1000 : 0;
+  return {
+    ok: true,
+    identity: { userId: claims.sub, email: claimEmail(claims), name: claimName(claims), issuedAt },
+  };
 }
 
 function reasonOf(error: unknown): string {

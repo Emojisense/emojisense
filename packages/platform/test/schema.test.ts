@@ -8,6 +8,7 @@ import {
   CUSTOM_EMOJI_CONTENT_TYPES,
   CUSTOM_EMOJI_SOURCES,
   type CustomEmojiRow,
+  type DeletedClerkUserRow,
   EMOJI_SETS,
   type QueryDailyRow,
   TEAM_ROLES,
@@ -133,6 +134,14 @@ describe("migration 0003 (Clerk sign-in)", () => {
     expect(() =>
       db.exec(`INSERT INTO accounts (id, clerk_user_id, created_at) VALUES ('c', 'user_1', 0)`),
     ).toThrow(/UNIQUE/);
+  });
+
+  it("adds deleted_clerk_users with exactly the typed columns", () => {
+    const keys = Object.keys({ clerk_user_id: "", deleted_at: 0 } satisfies Record<
+      keyof DeletedClerkUserRow,
+      unknown
+    >);
+    expect(columns(migratedDb(), "deleted_clerk_users")).toEqual(keys.sort());
   });
 });
 

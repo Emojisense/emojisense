@@ -93,7 +93,8 @@ One request deletes, at once, from the live database: your account, your apps
 with their API keys, usage counts, search analytics, tenants, custom emoji (records and images)
 and webhooks with their deliveries, your team members and invites, your memberships in other
 teams, and the waitlist entry of your email address. Then the dashboard deletes your sign-in
-profile at Clerk. The API keeps a cache of key lookups for one minute, so a deleted key can work
+profile at Clerk. For 10 minutes we keep only your Clerk user id, so that a sign-in from before
+the deletion cannot create the account again. The API keeps a cache of key lookups for one minute, so a deleted key can work
 for up to one more minute.
 
 Not deleted, because they are not linked to your account: the search records in Analytics Engine

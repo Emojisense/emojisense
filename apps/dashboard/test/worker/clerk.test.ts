@@ -134,7 +134,12 @@ describe("createClerkGateway (networkless, public values only)", () => {
     const token = await sign(instance.privateKey, sessionClaims());
     expect(await gateway?.verifySession(token, ["https://app.emojisense.com"])).toEqual({
       ok: true,
-      identity: { userId: "user_ada", email: "ada@example.com", name: "Ada Lovelace" },
+      identity: {
+        userId: "user_ada",
+        email: "ada@example.com",
+        name: "Ada Lovelace",
+        issuedAt: Number(sessionClaims().iat) * 1000,
+      },
     });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
