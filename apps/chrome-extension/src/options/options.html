@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Emojisense settings</title>
+    <link rel="stylesheet" href="options.css" />
+    <script type="module" src="options.js"></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <span class="sticker" aria-hidden="true">🦖</span>
+        <div>
+          <h1>Emojisense</h1>
+          <p class="lede">Type what you mean, get the emoji. In any text field, offline.</p>
+        </div>
+      </header>
+
+      <section class="card" aria-labelledby="shortcut-title">
+        <h2 id="shortcut-title">Shortcut</h2>
+        <p>
+          Put the caret in a text field and press <kbd id="shortcut">…</kbd>. The toolbar button
+          opens the picker too.
+        </p>
+        <button type="button" class="keycap" id="change-shortcut">Change the shortcut</button>
+      </section>
+
+      <form class="card" id="settings" novalidate>
+        <h2>Picker</h2>
+        <div class="field">
+          <label for="locale">Language</label>
+          <select id="locale" name="locale">
+            <option value="auto">Same as Chrome</option>
+            <option value="en">English</option>
+            <option value="tr">Türkçe</option>
+          </select>
+          <p class="note">Search always understands English and Turkish. This sets the labels and the picker text.</p>
+        </div>
+
+        <fieldset class="field">
+          <legend>Skin tone</legend>
+          <div class="pills" id="skin-tones"></div>
+        </fieldset>
+
+        <h2>Search by meaning <span class="badge">optional</span></h2>
+        <p>
+          Off by default. When it is on, the text you type in the picker goes to the API below, so
+          that a description such as “we shipped it” can find 🚀. Nothing else leaves this device.
+        </p>
+        <label class="check">
+          <input type="checkbox" id="semantic-enabled" />
+          <span>Use the Emojisense API for search by meaning</span>
+        </label>
+        <div class="group" id="semantic-fields">
+          <div class="field">
+            <label for="endpoint">API address</label>
+            <input
+              id="endpoint"
+              type="url"
+              inputmode="url"
+              placeholder="https://api.example.com"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="endpoint-error"
+            />
+            <p class="error" id="endpoint-error" hidden></p>
+          </div>
+          <div class="field">
+            <label for="key">Publishable key</label>
+            <input
+              id="key"
+              type="text"
+              placeholder="pk_live_…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-describedby="key-error key-note"
+            />
+            <p class="error" id="key-error" hidden></p>
+            <p class="note" id="key-note">
+              Add <code id="origin">this extension</code> to the key’s allowed origins.
+            </p>
+          </div>
+          <div class="row">
+            <button type="button" class="keycap" id="test-connection">Test the connection</button>
+            <span class="pill" id="test-result" role="status" hidden></span>
+          </div>
+        </div>
+
+        <h2>Google Docs</h2>
+        <p>
+          Docs draws text on a canvas, so the picker copies the emoji and you paste it with
+          <kbd class="paste-key">⌘V</kbd>.
+        </p>
+        <label class="check">
+          <input type="checkbox" id="docs-direct" />
+          <span>Also try to insert directly (experimental)</span>
+        </label>
+
+        <p class="saved" id="saved" role="status"></p>
+      </form>
+
+      <footer class="footer">
+        Emoji data: Emojibase (MIT) and Unicode CLDR (Unicode License v3). The license texts are in
+        the extension’s <code>licenses</code> folder.
+      </footer>
+    </main>
+  </body>
+</html>
