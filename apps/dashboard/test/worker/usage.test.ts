@@ -57,9 +57,9 @@ describe("GET /api/apps/:id/usage", () => {
     });
   });
 
-  it("reads the requested period and the app's plan limits", async () => {
-    const { h, appId, insert, usage } = await setup();
-    h.db.exec("UPDATE apps SET plan = 'pro' WHERE id = ?", appId);
+  it("reads the requested period and the owning account's plan limits", async () => {
+    const { h, insert, usage } = await setup();
+    h.db.exec("UPDATE accounts SET plan = 'pro'");
     insert("2026-09", "semantic_calls", 300_000);
 
     const report = await body<UsageResponse>(await usage("?period=2026-09"));

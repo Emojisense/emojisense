@@ -1,6 +1,6 @@
 import type { KeyKind, Metric, PlanId } from "@emojisense/platform";
 
-/** An API key joined with its app's plan: everything a request needs to be authorized. */
+/** An API key joined with the plan of the account that owns its app: all a request needs. */
 export interface ApiKey {
   id: string;
   appId: string;
@@ -66,9 +66,12 @@ interface KeyJoinRow {
   plan: PlanId;
 }
 
+// The plan lives on the account (migration 0002); the legacy apps.plan column is not read.
 const FIND_KEY = `
-  SELECT k.id, k.app_id, k.kind, k.allowed_origins, k.revoked_at, a.plan
-  FROM api_keys k JOIN apps a ON a.id = k.app_id
+  SELECT k.id, k.app_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan
+  FROM api_keys k
+  JOIN apps a ON a.id = k.app_id
+  JOIN accounts acc ON acc.id = a.account_id
   WHERE k.hash = ?`;
 const READ_USAGE = "SELECT metric, count FROM usage_monthly WHERE app_id = ? AND period = ?";
 const ADD_USAGE = `

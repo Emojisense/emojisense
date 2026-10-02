@@ -76,6 +76,19 @@ export function getPlan(id: string): Plan {
   return PLANS[(PLAN_IDS as readonly string[]).includes(id) ? (id as PlanId) : "free"];
 }
 
+/**
+ * The cheapest plan that passes `test`, e.g. `lowestPlanWith((p) => p.teamMembers)` → "pro".
+ * Plan gates name it in their `402 plan_required` answer. `undefined` = no plan has it.
+ */
+export function lowestPlanWith(test: (plan: Plan) => boolean): PlanId | undefined {
+  return PLAN_IDS.find((id) => test(PLANS[id]));
+}
+
+/** True when `a` is a higher plan than `b` (plans are ordered by price in PLAN_IDS). */
+export function isHigherPlan(a: PlanId, b: PlanId): boolean {
+  return PLAN_IDS.indexOf(a) > PLAN_IDS.indexOf(b);
+}
+
 /** Monthly period key, UTC: "2026-10". */
 export function periodOf(time: number | Date = Date.now()): string {
   return new Date(time).toISOString().slice(0, 7);

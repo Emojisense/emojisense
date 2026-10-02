@@ -1,9 +1,10 @@
-import { getPlan, METRICS, type Metric, PLAN_IDS, PLANS, type Plan } from "@emojisense/platform";
+import { getPlan, lowestPlanWith, METRICS, type Metric, type Plan } from "@emojisense/platform";
 import type { MetricUsage, PlanSummary } from "../shared/contract";
 import type { D1Database } from "./d1";
+import { type HttpError, planRequired } from "./http";
 
 /** JSON cannot carry Infinity, so unlimited becomes `null`. */
-function finiteOrNull(value: number): number | null {
+export function finiteOrNull(value: number): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
@@ -17,32 +18,50 @@ export function toPlanSummary(plan: Plan): PlanSummary {
       number | null
     >,
     maxApps: finiteOrNull(plan.maxApps),
+    hostedEmojiSets: plan.hostedEmojiSets,
+    analyticsRetentionDays: plan.analyticsRetentionDays,
+    teamMembers: plan.teamMembers,
+    tenants: plan.tenants,
   };
 }
 
-/**
- * Migration 0001 stores the plan per app and has no account plan. Until billing adds one, the
- * account's plan is the best plan among its apps, and new apps inherit it.
- */
+/** The plan lives on the account (migration 0002); every app of the account gets it. */
 export async function loadAccountPlan(
   db: D1Database,
   accountId: string,
 ): Promise<{ plan: Plan; appCount: number }> {
-  const { results } = await db
-    .prepare("SELECT plan FROM apps WHERE account_id = ?")
+  const row = await db
+    .prepare(
+      "SELECT plan, (SELECT COUNT(*) FROM apps WHERE account_id = accounts.id) AS app_count FROM accounts WHERE id = ?",
+    )
     .bind(accountId)
-    .all<{ plan: string }>();
-  const rank = (id: string) => PLAN_IDS.indexOf(getPlan(id).id);
-  const best = results.reduce((top, row) => (rank(row.plan) > rank(top) ? row.plan : top), "free");
-  return { plan: getPlan(best), appCount: results.length };
+    .first<{ plan: string; app_count: number }>();
+  return { plan: getPlan(row?.plan ?? "free"), appCount: row?.app_count ?? 0 };
 }
 
-export function planLimitMessage(plan: Plan): string {
-  const apps = (n: number) => `${n} app${n === 1 ? "" : "s"}`;
-  const base = `Your ${plan.name} plan allows ${apps(plan.maxApps)}, and you have reached that limit.`;
-  return plan.maxApps < PLANS.pro.maxApps
-    ? `${base} Join the Pro waitlist for up to ${apps(PLANS.pro.maxApps)}.`
-    : base;
+/**
+ * Throws `planRequired` (402) unless `plan` (the app owner's) passes `test`. The answer names the
+ * cheapest plan that does, so the dashboard can offer it. `feature` completes "… needs the Pro plan".
+ */
+export function requirePlan(plan: Plan, test: (plan: Plan) => boolean, feature: string): void {
+  if (test(plan)) return;
+  const required = getPlan(lowestPlanWith(test) ?? "scale");
+  throw planRequired(
+    required.id,
+    `${feature} needs the ${required.name} plan or higher. The current plan is ${plan.name}.`,
+  );
+}
+
+const apps = (n: number) => (Number.isFinite(n) ? `${n} app${n === 1 ? "" : "s"}` : "unlimited apps");
+
+/** `402 plan_required` for app number `appCount + 1`, naming the cheapest plan that allows it. */
+export function appLimitError(plan: Plan, appCount: number): HttpError {
+  const required = getPlan(lowestPlanWith((p) => p.maxApps > appCount) ?? "scale");
+  return planRequired(
+    required.id,
+    `Your ${plan.name} plan allows ${apps(plan.maxApps)}, and you have reached that limit. ` +
+      `${required.name} allows ${apps(required.maxApps)}.`,
+  );
 }
 
 const NEAR_LIMIT_PERCENT = 80;

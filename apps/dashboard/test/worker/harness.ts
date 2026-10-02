@@ -1,3 +1,4 @@
+import type { PlanId } from "@emojisense/platform";
 import { type Mock, vi } from "vitest";
 import { handleRequest } from "../../src/worker/app";
 import type { Deps, Env } from "../../src/worker/env";
@@ -69,6 +70,48 @@ export function sessionCookieFrom(response: Response): string {
 
 export async function body<T = Record<string, unknown>>(response: Response): Promise<T> {
   return (await response.json()) as T;
+}
+
+/** Dev sign-in accounts have the email `<login>@dev.localhost`. */
+export function accountIdOf(harness: Harness, login: string): string {
+  const [row] = harness.db.rows<{ id: string }>(
+    "SELECT id FROM accounts WHERE email = ?",
+    `${login}@dev.localhost`,
+  );
+  if (!row) throw new Error(`no account for ${login}`);
+  return row.id;
+}
+
+export function setPlan(harness: Harness, login: string, plan: PlanId): void {
+  harness.db.exec("UPDATE accounts SET plan = ? WHERE email = ?", plan, `${login}@dev.localhost`);
+}
+
+/** Creates an invite through the API and returns the token from its link. */
+export async function createInvite(
+  harness: Harness,
+  cookie: string,
+  input: { role: string; email?: string; owner?: string },
+): Promise<string> {
+  const query = input.owner ? `?owner=${input.owner}` : "";
+  const response = await harness.call("POST", `/api/team/invites${query}`, {
+    cookie,
+    body: { role: input.role, ...(input.email ? { email: input.email } : {}) },
+  });
+  if (response.status !== 201) throw new Error(`invite failed: ${response.status} ${await response.text()}`);
+  const { url } = await body<{ url: string }>(response);
+  return url.slice(url.lastIndexOf("/") + 1);
+}
+
+/** The member joins the owner's team with `role` (invite + accept). The owner needs Pro or Scale. */
+export async function joinTeam(
+  harness: Harness,
+  ownerCookie: string,
+  memberCookie: string,
+  role: string,
+): Promise<void> {
+  const token = await createInvite(harness, ownerCookie, { role });
+  const response = await harness.call("POST", `/api/invites/${token}/accept`, { cookie: memberCookie });
+  if (response.status !== 200) throw new Error(`accept failed: ${response.status} ${await response.text()}`);
 }
 
 /** Creates an app through the API and returns its id. */

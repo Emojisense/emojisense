@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AppDetailResponse, AppsResponse, MeResponse } from "../../src/shared/contract";
-import { body, createAppFor, createHarness } from "./harness";
+import type { AppDetailResponse, AppResponse, AppsResponse, MeResponse } from "../../src/shared/contract";
+import { body, createAppFor, createHarness, setPlan } from "./harness";
 
 describe("apps", () => {
   it("creates an app on the account's plan and lists it", async () => {
@@ -12,10 +12,18 @@ describe("apps", () => {
     });
     expect(response.status).toBe(201);
     const { app } = await body<{ app: AppsResponse["apps"][number] }>(response);
-    expect(app).toMatchObject({ name: "Chat app", environment: "staging", plan: "free", activeKeyCount: 0 });
+    expect(app).toMatchObject({
+      name: "Chat app",
+      environment: "staging",
+      plan: "free",
+      emojiSet: "native",
+      activeKeyCount: 0,
+      role: "owner",
+      ownerName: "ada",
+    });
 
     const list = await body<AppsResponse>(await h.call("GET", "/api/apps", { cookie }));
-    expect(list.apps.map((a) => a.id)).toEqual([app.id]);
+    expect(list.apps).toEqual([app]);
   });
 
   it("defaults the environment to prod", async () => {
@@ -56,34 +64,48 @@ describe("apps", () => {
     expect(array.status).toBe(400);
   });
 
-  it("enforces maxApps of the free plan", async () => {
+  it("enforces maxApps of the free plan with 402 plan_required", async () => {
     const h = createHarness();
     const cookie = await h.signIn();
     await createAppFor(h, cookie);
     const response = await h.call("POST", "/api/apps", { cookie, body: { name: "Second" } });
-    expect(response.status).toBe(403);
-    expect(await body(response)).toMatchObject({
+    expect(response.status).toBe(402);
+    expect(await body(response)).toEqual({
       error: {
-        code: "plan_limit",
-        message:
-          "Your Free plan allows 1 app, and you have reached that limit. Join the Pro waitlist for up to 3 apps.",
+        code: "plan_required",
+        plan: "pro",
+        message: "Your Free plan allows 1 app, and you have reached that limit. Pro allows 3 apps.",
       },
     });
     expect((await body<MeResponse>(await h.call("GET", "/api/me", { cookie }))).appCount).toBe(1);
   });
 
-  it("uses the best plan among the account's apps", async () => {
+  it("uses the account's plan for maxApps and names Scale after Pro", async () => {
     const h = createHarness();
     const cookie = await h.signIn();
-    const first = await createAppFor(h, cookie);
-    h.db.exec("UPDATE apps SET plan = 'pro' WHERE id = ?", first);
+    await createAppFor(h, cookie);
+    h.db.exec("UPDATE accounts SET plan = 'pro'");
 
     await createAppFor(h, cookie, { name: "Two" });
     await createAppFor(h, cookie, { name: "Three" });
     const fourth = await h.call("POST", "/api/apps", { cookie, body: { name: "Four" } });
-    expect(fourth.status).toBe(403);
+    expect(fourth.status).toBe(402);
+    expect(await body(fourth)).toMatchObject({ error: { code: "plan_required", plan: "scale" } });
     const list = await body<AppsResponse>(await h.call("GET", "/api/apps", { cookie }));
     expect(list.apps.map((a) => a.plan)).toEqual(["pro", "pro", "pro"]);
+
+    h.db.exec("UPDATE accounts SET plan = 'scale'");
+    expect((await h.call("POST", "/api/apps", { cookie, body: { name: "Four" } })).status).toBe(201);
+  });
+
+  it("ignores the legacy apps.plan column", async () => {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const appId = await createAppFor(h, cookie);
+    h.db.exec("UPDATE apps SET plan = 'scale' WHERE id = ?", appId);
+    const list = await body<AppsResponse>(await h.call("GET", "/api/apps", { cookie }));
+    expect(list.apps[0]?.plan).toBe("free");
+    expect((await h.call("POST", "/api/apps", { cookie, body: { name: "Two" } })).status).toBe(402);
   });
 
   it("refuses writes from another origin but accepts clients without Origin", async () => {
@@ -98,6 +120,62 @@ describe("apps", () => {
     expect(await body(sibling)).toMatchObject({ error: { code: "forbidden_origin" } });
     const cli = await h.call("POST", "/api/apps", { cookie, origin: null, body: { name: "Bot" } });
     expect(cli.status).toBe(201);
+  });
+});
+
+describe("PATCH /api/apps/:id", () => {
+  async function setup() {
+    const h = createHarness();
+    const cookie = await h.signIn();
+    const appId = await createAppFor(h, cookie);
+    const patch = (input: unknown) => h.call("PATCH", `/api/apps/${appId}`, { cookie, body: input });
+    return { h, cookie, appId, patch };
+  }
+
+  it("renames the app and keeps the emoji set", async () => {
+    const { h, cookie, appId, patch } = await setup();
+    const response = await patch({ name: "  Support bot " });
+    expect(response.status).toBe(200);
+    expect((await body<AppResponse>(response)).app).toMatchObject({
+      id: appId,
+      name: "Support bot",
+      emojiSet: "native",
+    });
+    const detail = await body<AppDetailResponse>(await h.call("GET", `/api/apps/${appId}`, { cookie }));
+    expect(detail.app.name).toBe("Support bot");
+  });
+
+  it("needs a plan with hosted emoji sets for anything but native", async () => {
+    const { h, appId, patch } = await setup();
+    const free = await patch({ emojiSet: "twemoji" });
+    expect(free.status).toBe(402);
+    expect(await body(free)).toEqual({
+      error: {
+        code: "plan_required",
+        plan: "solo",
+        message: "A hosted emoji set needs the Solo plan or higher. The current plan is Free.",
+      },
+    });
+    expect((await patch({ emojiSet: "native" })).status).toBe(200);
+
+    setPlan(h, "ada", "solo");
+    const solo = await patch({ name: "Chat", emojiSet: "fluent" });
+    expect((await body<AppResponse>(solo)).app).toMatchObject({ name: "Chat", emojiSet: "fluent" });
+    expect(h.db.rows("SELECT emoji_set FROM apps WHERE id = ?", appId)).toEqual([{ emoji_set: "fluent" }]);
+  });
+
+  it.each([
+    [{}, undefined],
+    [{ name: "" }, "name"],
+    [{ emojiSet: "openmoji" }, "emojiSet"],
+    [{ emojiSet: null }, "emojiSet"],
+  ])("rejects %j", async (input, field) => {
+    const { patch } = await setup();
+    const response = await patch(input);
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({
+      error: { code: "invalid_request", ...(field ? { field } : {}) },
+    });
   });
 });
 

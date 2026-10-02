@@ -18,5 +18,36 @@ export {
   originAllowed,
   randomId,
 } from "./keys.js";
-export { getPlan, METRICS, type Metric, PLAN_IDS, PLANS, type Plan, type PlanId, periodOf } from "./plans.js";
-export type { AccountRow, ApiKeyRow, AppRow, QueryDailyRow, UsageRow } from "./types.js";
+export {
+  getPlan,
+  isHigherPlan,
+  lowestPlanWith,
+  METRICS,
+  type Metric,
+  PLAN_IDS,
+  PLANS,
+  type Plan,
+  type PlanId,
+  periodOf,
+} from "./plans.js";
+export {
+  type AccountRow,
+  type ApiKeyRow,
+  type AppRow,
+  CUSTOM_EMOJI_CONTENT_TYPES,
+  CUSTOM_EMOJI_SOURCES,
+  type CustomEmojiContentType,
+  type CustomEmojiRow,
+  type CustomEmojiSource,
+  EMOJI_SETS,
+  type EmojiSet,
+  type QueryDailyRow,
+  TEAM_ROLES,
+  type TeamInviteRow,
+  type TeamMemberRow,
+  type TeamRole,
+  type TenantRow,
+  type UsageRow,
+  type WebhookDeliveryRow,
+  type WebhookRow,
+} from "./types.js";

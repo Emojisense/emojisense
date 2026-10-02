@@ -1,15 +1,49 @@
-/**
- * Row → JSON mappers and the ownership lookups. Every app or key query filters by the signed-in
- * account, and a resource of another account answers 404, the same as one that does not exist.
- */
-import type { AccountRow, ApiKeyRow, AppRow } from "@emojisense/platform";
-import type { AccountSummary, AppSummary, KeySummary } from "../shared/contract";
-import type { D1Database } from "./d1";
-import { HttpError } from "./http";
-import { isValidId } from "./validate";
+/** Row → JSON mappers and the app query that access.ts and the app list share. */
+import { type AccountRow, type ApiKeyRow, type AppRow, getPlan } from "@emojisense/platform";
+import type { AccountSummary, AppSummary, KeySummary, Role } from "../shared/contract";
+import type { D1Database, D1PreparedStatement, D1Value } from "./d1";
 
-export type AppWithKeyCount = AppRow & { active_keys: number };
-export type KeyWithEnvironment = ApiKeyRow & { environment: AppRow["environment"] };
+/** An app joined with its owner and the caller's membership (queryApps). */
+export interface AppRecord extends AppRow {
+  owner_plan: string;
+  owner_name: string | null;
+  owner_email: string | null;
+  active_keys: number;
+  /** "owner" when the caller owns the app, the `team_members` role, or null for no membership. */
+  role: Role | null;
+}
+
+const APP_SELECT = `
+  SELECT a.id, a.account_id, a.name, a.environment, a.emoji_set, a.created_at,
+    o.plan AS owner_plan, o.name AS owner_name, o.email AS owner_email,
+    (SELECT COUNT(*) FROM api_keys k WHERE k.app_id = a.id AND k.revoked_at IS NULL) AS active_keys,
+    CASE WHEN a.account_id = ? THEN 'owner' ELSE tm.role END AS role
+  FROM apps a
+  JOIN accounts o ON o.id = a.account_id
+  LEFT JOIN team_members tm ON tm.owner_id = a.account_id AND tm.member_id = ?`;
+
+/**
+ * Apps with their owner and the caller's role (`role`). `tail` adds WHERE / ORDER BY with its
+ * own `?` parameters, bound from `params`.
+ */
+export function queryApps(
+  db: D1Database,
+  accountId: string,
+  tail: string,
+  ...params: D1Value[]
+): D1PreparedStatement {
+  return db.prepare(`${APP_SELECT} ${tail}`).bind(accountId, accountId, ...params);
+}
+
+/**
+ * The caller's role, or undefined without access. A membership counts only while the owner's
+ * plan includes team members; after a downgrade the rows stay and work again after an upgrade.
+ */
+export function effectiveRole(row: Pick<AppRecord, "role" | "owner_plan">): Role | undefined {
+  if (row.role === "owner") return "owner";
+  if (row.role === null) return undefined;
+  return getPlan(row.owner_plan).teamMembers ? row.role : undefined;
+}
 
 export function toAccountSummary(row: AccountRow): AccountSummary {
   return {
@@ -21,14 +55,23 @@ export function toAccountSummary(row: AccountRow): AccountSummary {
   };
 }
 
-export function toAppSummary(row: AppWithKeyCount): AppSummary {
+/** Shown where a person is named: the name, else the email. */
+export function displayName(row: { name: string | null; email: string | null }): string | null {
+  return row.name ?? row.email;
+}
+
+export function toAppSummary(row: AppRecord, role: Role): AppSummary {
   return {
     id: row.id,
     name: row.name,
     environment: row.environment,
-    plan: row.plan,
+    plan: getPlan(row.owner_plan).id,
+    emojiSet: row.emoji_set,
     createdAt: row.created_at,
     activeKeyCount: row.active_keys,
+    role,
+    ownerId: row.account_id,
+    ownerName: displayName({ name: row.owner_name, email: row.owner_email }),
   };
 }
 
@@ -51,41 +94,4 @@ export function toKeySummary(row: ApiKeyRow): KeySummary {
     createdAt: row.created_at,
     revokedAt: row.revoked_at,
   };
-}
-
-export const APP_COLUMNS = `a.id, a.account_id, a.name, a.environment, a.plan, a.created_at,
-  (SELECT COUNT(*) FROM api_keys k WHERE k.app_id = a.id AND k.revoked_at IS NULL) AS active_keys`;
-
-const appNotFound = () => new HttpError(404, "not_found", "No app with this id in your account.");
-const keyNotFound = () => new HttpError(404, "not_found", "No key with this id in your account.");
-
-export async function requireOwnedApp(
-  db: D1Database,
-  appId: string | undefined,
-  accountId: string,
-): Promise<AppWithKeyCount> {
-  if (!isValidId(appId)) throw appNotFound();
-  const app = await db
-    .prepare(`SELECT ${APP_COLUMNS} FROM apps a WHERE a.id = ? AND a.account_id = ?`)
-    .bind(appId, accountId)
-    .first<AppWithKeyCount>();
-  if (!app) throw appNotFound();
-  return app;
-}
-
-export async function requireOwnedKey(
-  db: D1Database,
-  keyId: string | undefined,
-  accountId: string,
-): Promise<KeyWithEnvironment> {
-  if (!isValidId(keyId)) throw keyNotFound();
-  const key = await db
-    .prepare(
-      `SELECT k.*, a.environment FROM api_keys k JOIN apps a ON a.id = k.app_id
-       WHERE k.id = ? AND a.account_id = ?`,
-    )
-    .bind(keyId, accountId)
-    .first<KeyWithEnvironment>();
-  if (!key) throw keyNotFound();
-  return key;
 }

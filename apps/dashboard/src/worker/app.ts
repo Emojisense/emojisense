@@ -2,10 +2,12 @@ import type { AuthedContext, Deps, Env, RequestContext } from "./env";
 import { assertSameOrigin, errorJson, HttpError, json } from "./http";
 import { createRouter, type Handler } from "./router";
 import { getAnalytics } from "./routes/analytics";
-import { createApp, getApp, listApps } from "./routes/apps";
+import { createApp, getApp, listApps, updateApp } from "./routes/apps";
 import { devSignIn, finishGitHubSignIn, logout, startGitHubSignIn } from "./routes/auth";
+import { getBilling, requestUpgrade } from "./routes/billing";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
 import { getMe } from "./routes/me";
+import { acceptInvite, createInvite, deleteInvite, getTeam, removeMember, updateMember } from "./routes/team";
 import { getUsage } from "./routes/usage";
 import { joinWaitlist, waitlistPreflight } from "./routes/waitlist";
 import { findSessionAccount } from "./session";
@@ -29,11 +31,20 @@ const route = createRouter([
   { method: "GET", path: "/api/apps", handler: authed(listApps) },
   { method: "POST", path: "/api/apps", handler: authed(createApp) },
   { method: "GET", path: "/api/apps/:id", handler: authed(getApp) },
+  { method: "PATCH", path: "/api/apps/:id", handler: authed(updateApp) },
   { method: "POST", path: "/api/apps/:id/keys", handler: authed(createKey) },
   { method: "GET", path: "/api/apps/:id/usage", handler: authed(getUsage) },
   { method: "GET", path: "/api/apps/:id/analytics", handler: authed(getAnalytics) },
   { method: "PATCH", path: "/api/keys/:id", handler: authed(updateKey) },
   { method: "DELETE", path: "/api/keys/:id", handler: authed(revokeKey) },
+  { method: "GET", path: "/api/team", handler: authed(getTeam) },
+  { method: "POST", path: "/api/team/invites", handler: authed(createInvite) },
+  { method: "DELETE", path: "/api/team/invites/:id", handler: authed(deleteInvite) },
+  { method: "PATCH", path: "/api/team/members/:id", handler: authed(updateMember) },
+  { method: "DELETE", path: "/api/team/members/:id", handler: authed(removeMember) },
+  { method: "POST", path: "/api/invites/:token/accept", handler: authed(acceptInvite) },
+  { method: "GET", path: "/api/billing", handler: authed(getBilling) },
+  { method: "POST", path: "/api/billing/upgrade", handler: authed(requestUpgrade) },
   { method: "POST", path: "/api/waitlist", handler: joinWaitlist },
   { method: "OPTIONS", path: "/api/waitlist", handler: waitlistPreflight },
 ]);

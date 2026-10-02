@@ -1,14 +1,15 @@
 import { displayPrefix, generateKey, hashKey, randomId } from "@emojisense/platform";
 import type { CreatedKeyResponse, KeyResponse } from "../../shared/contract";
+import { requireAppAccess, requireKeyAccess } from "../access";
 import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { assertOriginPolicy, parseAllowedOrigins } from "../origins";
-import { requireOwnedApp, requireOwnedKey, toKeySummary } from "../records";
+import { toKeySummary } from "../records";
 import { parseKeyKind } from "../validate";
 
 /** The response is the only place the full key ever appears. Only its hash is stored. */
 export async function createKey({ request, env, deps, account, params }: AuthedContext): Promise<Response> {
-  const app = await requireOwnedApp(env.DB, params.id, account.id);
+  const { app } = await requireAppAccess(env.DB, account.id, params.id, "edit");
   const body = await readJsonObject(request);
   const kind = parseKeyKind(body.kind);
   const allowedOrigins = parseAllowedOrigins(body.allowedOrigins);
@@ -38,7 +39,7 @@ export async function createKey({ request, env, deps, account, params }: AuthedC
 
 /** Only the allowed origins of an active publishable key can change. */
 export async function updateKey({ request, env, account, params }: AuthedContext): Promise<Response> {
-  const key = await requireOwnedKey(env.DB, params.id, account.id);
+  const { key, access } = await requireKeyAccess(env.DB, account.id, params.id, "edit");
   const body = await readJsonObject(request);
   if (!("allowedOrigins" in body)) {
     throw new HttpError(400, "invalid_request", "allowedOrigins is required.", "allowedOrigins");
@@ -49,7 +50,7 @@ export async function updateKey({ request, env, account, params }: AuthedContext
     throw new HttpError(400, "invalid_request", "Secret keys have no allowed origins.", "allowedOrigins");
   }
   const allowedOrigins = parseAllowedOrigins(body.allowedOrigins);
-  assertOriginPolicy(key.kind, key.environment, allowedOrigins);
+  assertOriginPolicy(key.kind, access.app.environment, allowedOrigins);
 
   const encoded = JSON.stringify(allowedOrigins);
   await env.DB.prepare("UPDATE api_keys SET allowed_origins = ? WHERE id = ?").bind(encoded, key.id).run();
@@ -59,7 +60,7 @@ export async function updateKey({ request, env, account, params }: AuthedContext
 
 /** Revoking twice is harmless and keeps the first revocation time. */
 export async function revokeKey({ env, deps, account, params }: AuthedContext): Promise<Response> {
-  const key = await requireOwnedKey(env.DB, params.id, account.id);
+  const { key } = await requireKeyAccess(env.DB, account.id, params.id, "edit");
   const revokedAt = key.revoked_at ?? deps.now();
   if (key.revoked_at === null) {
     await env.DB.prepare("UPDATE api_keys SET revoked_at = ? WHERE id = ? AND revoked_at IS NULL")

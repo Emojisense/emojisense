@@ -12,8 +12,8 @@ describe("D1 store on the platform schema", () => {
   beforeEach(async () => {
     db = migratedDatabase();
     db.exec(`
-      INSERT INTO accounts (id, email, created_at) VALUES ('acc', 'dev@example.com', 0);
-      INSERT INTO apps (id, account_id, name, plan, created_at) VALUES ('app_1', 'acc', 'Demo', 'pro', 0);`);
+      INSERT INTO accounts (id, email, plan, created_at) VALUES ('acc', 'dev@example.com', 'pro', 0);
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_1', 'acc', 'Demo', 0);`);
     db.prepare(
       `INSERT INTO api_keys (id, app_id, kind, prefix, hash, allowed_origins, created_at, revoked_at)
        VALUES (?, 'app_1', ?, ?, ?, ?, 0, ?)`,
@@ -21,7 +21,7 @@ describe("D1 store on the platform schema", () => {
     store = createD1Store(sqliteD1(db));
   });
 
-  it("finds a key by hash, with its app's plan and origins", async () => {
+  it("finds a key by hash, with its account's plan and origins", async () => {
     expect(await store.findKeyByHash(await hashKey(KEY))).toEqual({
       id: "key_1",
       appId: "app_1",
@@ -31,6 +31,11 @@ describe("D1 store on the platform schema", () => {
       revoked: false,
     });
     expect(await store.findKeyByHash(await hashKey("pk_live_other"))).toBeUndefined();
+  });
+
+  it("reads the plan from the owning account, not the legacy apps.plan column", async () => {
+    db.exec("UPDATE apps SET plan = 'free'; UPDATE accounts SET plan = 'scale';");
+    expect((await store.findKeyByHash(await hashKey(KEY)))?.plan).toBe("scale");
   });
 
   it("reports revoked keys and never opens a key with corrupt origins to every origin", async () => {

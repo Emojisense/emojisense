@@ -11,8 +11,12 @@ export const APP: AppSummary = {
   name: "Chat app",
   environment: "prod",
   plan: "free",
+  emojiSet: "native",
   createdAt: Date.UTC(2026, 7, 3),
   activeKeyCount: 0,
+  role: "owner",
+  ownerId: "acc_1",
+  ownerName: "Ada",
 };
 
 export const KEY: KeySummary = {
@@ -31,6 +35,7 @@ export function me(overrides: Partial<MeResponse> = {}): MeResponse {
     plan: toPlanSummary(PLANS.free),
     appCount: 1,
     waitlistPlan: null,
+    teams: [],
     ...overrides,
   };
 }
