@@ -1,5 +1,6 @@
 ---
 import { REPO_URL } from "../../config";
+import { i18nFor } from "../../i18n/page";
 import type { PricingFaq } from "./faq";
 
 interface Props {
@@ -7,14 +8,19 @@ interface Props {
 }
 
 const { faqs } = Astro.props;
+const { t, parts } = i18nFor(Astro);
 ---
 
 <section id="faq" class="section" aria-labelledby="faq-title">
   <div class="container faq-wrap">
     <div class="section-head faq-head">
-      <p class="kicker">FAQ</p>
-      <h2 id="faq-title">Pricing questions.</h2>
-      <p class="lead">Something missing? <a href={`${REPO_URL}/discussions`}>Ask on GitHub Discussions</a>.</p>
+      <p class="kicker">{t("pricing.faq.kicker")}</p>
+      <h2 id="faq-title">{t("pricing.faq.title")}</h2>
+      <p class="lead">
+        {parts("pricing.faq.lead").map((part) =>
+          part.tag === "link" ? <a href={`${REPO_URL}/discussions`}>{part.text}</a> : part.text,
+        )}
+      </p>
     </div>
     <div class="faq">
       {
@@ -25,7 +31,9 @@ const { faqs } = Astro.props;
               <p>{faq.a}</p>
               {faq.link && (
                 <p>
-                  <a href={faq.link.href}>{faq.link.label}</a>
+                  <a href={faq.link.href} hreflang={faq.link.hreflang}>
+                    {faq.link.label}
+                  </a>
                 </p>
               )}
             </div>

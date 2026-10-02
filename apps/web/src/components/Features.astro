@@ -1,7 +1,12 @@
 ---
+import { cultureLocaleFor } from "../i18n/culture";
+import { i18nFor } from "../i18n/page";
 import { cultureShowcase } from "../lib/culture";
 import { answersFor, languages } from "../lib/showcase";
 
+const { t, locale, tag } = i18nFor(Astro);
+/** The engine examples are English searches; a translated page marks them as such. */
+const exampleLang = locale === "en" ? undefined : "en";
 const meaning = answersFor(
   ["greatest of all time", "jurassic park", "i'm exhausted", "mind blown", "no cap", "break a leg"],
   "en",
@@ -10,37 +15,40 @@ const meaning = answersFor(
 const typos = answersFor(["hallowelen", "brocoli", "piza", "congradulations"], "en", 1);
 const [reaction] = answersFor(["so proud of you"], "en", 4);
 const envs = [
-  { name: "Development", key: "pk_dev_7Hq…" },
-  { name: "Staging", key: "pk_stg_2Lm…" },
-  { name: "Production", key: "pk_live_9Xa…" },
+  { name: t("features.teams.development"), key: "pk_dev_7Hq…" },
+  { name: t("features.teams.staging"), key: "pk_stg_2Lm…" },
+  { name: t("features.teams.production"), key: "pk_live_9Xa…" },
 ];
 const tenants = ["Acme Rockets", "Bloom Café", "Pixel Guild"];
-const { highlights: cultureShifts } = cultureShowcase();
+const { highlights: cultureShifts } = cultureShowcase(cultureLocaleFor(locale));
 const topSearches = [
   { q: "congrats", n: 92 },
   { q: "lfg", n: 71 },
   { q: "ship it", n: 58 },
   { q: "big mood", n: 41 },
 ];
+const languageCount = new Intl.NumberFormat(tag).format(languages.length);
 ---
 
 <section id="features" class="section" aria-labelledby="features-title">
   <div class="container">
     <div class="section-head">
-      <p class="kicker">Features</p>
-      <h2 id="features-title">Everything emoji, in one place.</h2>
-      <p class="lead">Search, reactions, photos, custom emoji, consistent emoji sets, analytics and tenants — one SDK, one API, one plan. For one app or a thousand customers.</p>
+      <p class="kicker">{t("features.kicker")}</p>
+      <h2 id="features-title">{t("features.title")}</h2>
+      <p class="lead">{t("features.lead")}</p>
     </div>
 
     <div class="bento">
       <article class="cell span-3 tall">
-        <h3>Understands what people mean</h3>
-        <p>Slang, films, idioms and plain feelings — not just official names.</p>
-        <ul class="pairs" aria-label="Examples from the real engine">
+        <h3>{t("features.meaning.title")}</h3>
+        <p>{t("features.meaning.body")}</p>
+        <ul class="pairs" aria-label={t("features.meaning.examples")}>
           {
             meaning.map((m) => (
               <li>
-                <span class="q">{m.query}</span>
+                <span class="q" lang={exampleLang}>
+                  {m.query}
+                </span>
                 <span class="arrow" aria-hidden="true" />
                 <span class="emoji big">{m.top[0]}</span>
               </li>
@@ -50,14 +58,14 @@ const topSearches = [
       </article>
 
       <article class="cell span-3">
-        <h3>Forgives typos</h3>
-        <p>People type fast. Search keeps up.</p>
+        <h3>{t("features.typos.title")}</h3>
+        <p>{t("features.typos.body")}</p>
         <ul class="typos">
           {
-            typos.map((t) => (
+            typos.map((typo) => (
               <li>
-                <s>{t.query}</s>
-                <span class="emoji">{t.top[0]}</span>
+                <s lang={exampleLang}>{typo.query}</s>
+                <span class="emoji">{typo.top[0]}</span>
               </li>
             ))
           }
@@ -65,8 +73,8 @@ const topSearches = [
       </article>
 
       <article class="cell span-3">
-        <h3>{languages.length} languages, typed the way people type</h3>
-        <p>Native scripts and Latin spellings: Hinglish, pinyin, Arabizi.</p>
+        <h3>{t("features.languages.title", { count: languageCount })}</h3>
+        <p>{t("features.languages.body")}</p>
         <ul class="langs">
           {
             languages.map((l) => (
@@ -81,19 +89,18 @@ const topSearches = [
 
       <article class="cell span-6 culture-cell">
         <div class="culture-copy">
-          <h3>Keeps up with culture <span class="tag">New</span></h3>
-          <p>
-            What an emoji means depends on where and when you are. Editors, helped by AI, add what fits right now —
-            next to the answer, never instead of it.
-          </p>
-          <a class="more" href="#culture">See how it works<span aria-hidden="true"> →</span></a>
+          <h3>{t("features.culture.title")} <span class="tag">{t("features.culture.tag")}</span></h3>
+          <p>{t("features.culture.body")}</p>
+          <a class="more" href="#culture">{t("features.culture.more")}<span class="flip-rtl" aria-hidden="true"> →</span></a>
         </div>
         {
           cultureShifts.length > 0 && (
-            <ul class="shifts" aria-label="Examples of cultural additions">
+            <ul class="shifts" aria-label={t("features.culture.examples")}>
               {cultureShifts.map((s) => (
                 <li>
-                  <span class="shift-q">{s.query}</span>
+                  <span class="shift-q" lang={exampleLang}>
+                    {s.query}
+                  </span>
                   <span class="shift-emoji">
                     <span class="emoji shift-top">{s.top}</span>
                     <span class="shift-plus" aria-hidden="true">
@@ -101,7 +108,7 @@ const topSearches = [
                     </span>
                     <span class="emoji shift-add">{s.added.join("")}</span>
                   </span>
-                  <small>{s.note}</small>
+                  <small lang={s.lang}>{s.note}</small>
                 </li>
               ))}
             </ul>
@@ -110,23 +117,23 @@ const topSearches = [
       </article>
 
       <article class="cell span-2">
-        <h3>Instant, even offline</h3>
-        <p>Most searches never leave the device.</p>
-        <p class="metric"><strong>0.4 ms</strong><span>p95 per keystroke, measured</span></p>
+        <h3>{t("features.instant.title")}</h3>
+        <p>{t("features.instant.body")}</p>
+        <p class="metric"><strong>{t("features.instant.metric")}</strong><span>{t("features.instant.metricLabel")}</span></p>
       </article>
 
       <article class="cell span-2">
-        <h3>Reaction suggestions</h3>
-        <p>Send a message, get the reactions people would use.</p>
+        <h3>{t("features.reactions.title")}</h3>
+        <p>{t("features.reactions.body")}</p>
         <div class="bubble">
-          <p>“{reaction?.query}”</p>
+          <p lang={exampleLang}>“{reaction?.query}”</p>
           <div class="chips">{reaction?.top.map((e) => <span class="emoji">{e}</span>)}</div>
         </div>
       </article>
 
       <article class="cell span-2">
-        <h3>Photo to emoji <span class="tag">Beta</span></h3>
-        <p>A puppy gets 🐶 and 🥹. Photos are never stored.</p>
+        <h3>{t("features.photo.title")} <span class="tag">{t("features.photo.tag")}</span></h3>
+        <p>{t("features.photo.body")}</p>
         <div class="photo" aria-hidden="true" data-play-in-view>
           <span class="frame"><span class="emoji">🐶</span></span>
           <span class="scan"></span>
@@ -135,41 +142,44 @@ const topSearches = [
       </article>
 
       <article class="cell span-3">
-        <h3>Your own custom emoji</h3>
-        <p>Upload a set or import it from Slack and Discord. It is searched next to the standard emoji, with your own aliases.</p>
-        <div class="custom">
+        <h3>{t("features.custom.title")}</h3>
+        <p>{t("features.custom.body")}</p>
+        <div class="custom" dir="ltr">
           <code>:shipit-rocket:</code><code>:lgtm:</code><code>:deploy-friday:</code><code>:latte-art:</code>
         </div>
       </article>
 
       <article class="cell span-3">
-        <h3>Hosted emoji sets</h3>
-        <p>Twemoji, Noto or Fluent, served from the edge — the same look on every device. Even flags on Windows.</p>
+        <h3>{t("features.sets.title")}</h3>
+        <p>{t("features.sets.body")}</p>
         <div class="sets">
-          <span class="win"><b>J</b><b>P</b><small>Windows today</small></span>
-          <span class="to" aria-hidden="true">→</span>
-          <span class="flag"><span class="emoji">🇯🇵</span><small>with a hosted set</small></span>
+          <span class="win"><b>J</b><b>P</b><small>{t("features.sets.windowsToday")}</small></span>
+          <span class="to flip-rtl" aria-hidden="true">→</span>
+          <span class="flag"><span class="emoji">🇯🇵</span><small>{t("features.sets.withSet")}</small></span>
         </div>
       </article>
 
       <article class="cell span-2">
-        <h3>Analytics</h3>
-        <p>See what people search for — and what they don't find.</p>
-        <ul class="bars" aria-label="Example dashboard">
+        <h3>{t("features.analytics.title")}</h3>
+        <p>{t("features.analytics.body")}</p>
+        <ul class="bars" aria-label={t("features.analytics.dashboard")}>
           {
             topSearches.map((s) => (
               <li style={`--w: ${s.n}%`}>
-                <span>{s.q}</span>
+                <span lang={exampleLang}>{s.q}</span>
               </li>
             ))
           }
         </ul>
-        <p class="miss">No match: <code>rizzler</code> <span>→ add a custom emoji</span></p>
+        <p class="miss">
+          {t("features.analytics.noMatch")} <code>rizzler</code>
+          <span><span class="flip-rtl" aria-hidden="true">→</span> {t("features.analytics.addCustom")}</span>
+        </p>
       </article>
 
       <article class="cell span-2">
-        <h3>Teams and environments</h3>
-        <p>Separate keys for dev, staging and production. Invite your team.</p>
+        <h3>{t("features.teams.title")}</h3>
+        <p>{t("features.teams.body")}</p>
         <ul class="envs">
           {
             envs.map((e) => (
@@ -183,28 +193,28 @@ const topSearches = [
       </article>
 
       <article class="cell span-2">
-        <h3>Tenants and webhooks</h3>
-        <p>Building a platform? Give each customer their own emoji set, managed through the API.</p>
+        <h3>{t("features.tenants.title")}</h3>
+        <p>{t("features.tenants.body")}</p>
         <ul class="tree">
-          <li class="root">Your platform</li>
-          {tenants.map((t) => <li>{t}</li>)}
+          <li class="root">{t("features.tenants.root")}</li>
+          {tenants.map((tenant) => <li>{tenant}</li>)}
         </ul>
       </article>
 
       <article class="cell span-3">
-        <h3>Private by design</h3>
+        <h3>{t("features.privacy.title")}</h3>
         <ul class="never">
-          <li>No user IDs or IP addresses</li>
-          <li>No message text, ever</li>
-          <li>Photos processed in memory, never stored</li>
-          <li>Only anonymous, aggregated search trends</li>
+          <li>{t("features.privacy.ids")}</li>
+          <li>{t("features.privacy.text")}</li>
+          <li>{t("features.privacy.photos")}</li>
+          <li>{t("features.privacy.trends")}</li>
         </ul>
       </article>
 
       <article class="cell span-3">
-        <h3>Open-source core</h3>
-        <p>The engine, SDKs, data pack and API server are MIT. Run it on your own Cloudflare account, or let us host it.</p>
-        <p class="mit"><code>MIT</code> engine · SDKs · data · API server</p>
+        <h3>{t("features.oss.title")}</h3>
+        <p>{t("features.oss.body")}</p>
+        <p class="mit"><code>MIT</code> {t("features.oss.parts")}</p>
       </article>
     </div>
   </div>

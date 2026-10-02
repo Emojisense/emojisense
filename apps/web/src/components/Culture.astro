@@ -1,26 +1,17 @@
 ---
+import { cultureLocaleFor } from "../i18n/culture";
+import { i18nFor } from "../i18n/page";
 import { CultureLens } from "../islands/CultureLens";
 import cultureLensCss from "../islands/culture-lens.css?url";
 import { cultureShowcase } from "../lib/culture";
 
-const { source, today, queries, calendar } = cultureShowcase();
+const { t, locale, tag, messages } = i18nFor(Astro);
+const { source, today, queries, calendar } = cultureShowcase(cultureLocaleFor(locale));
 
 const steps = [
-  {
-    emoji: "🤖",
-    title: "AI proposes",
-    body: "It drafts associations from holiday calendars, big events and new slang.",
-  },
-  {
-    emoji: "👀",
-    title: "An editor decides",
-    body: "A person reviews every one. Nothing goes live without that approval.",
-  },
-  {
-    emoji: "🔎",
-    title: "Search adds it",
-    body: "Approved emoji join the results after the top answer, and step aside when their moment ends.",
-  },
+  { emoji: "🤖", title: t("culture.steps.ai.title"), body: t("culture.steps.ai.body") },
+  { emoji: "👀", title: t("culture.steps.editor.title"), body: t("culture.steps.editor.body") },
+  { emoji: "🔎", title: t("culture.steps.search.title"), body: t("culture.steps.search.body") },
 ];
 ---
 
@@ -32,12 +23,9 @@ const steps = [
 >
   <div class="container">
     <div class="section-head">
-      <p class="kicker">Culture <span class="new">New</span></p>
-      <h2 id="culture-title">Emoji meaning is cultural. And culture moves.</h2>
-      <p class="lead">
-        Our editors, helped by AI, map what emoji mean across cultures and moments — and keep it current. It adds
-        to the answer; it never replaces it.
-      </p>
+      <p class="kicker">{t("culture.kicker")} <span class="new">{t("culture.tag")}</span></p>
+      <h2 id="culture-title">{t("culture.title")}</h2>
+      <p class="lead">{t("culture.lead")}</p>
     </div>
 
     {
@@ -48,7 +36,15 @@ const steps = [
           <noscript>
             <link rel="stylesheet" href={cultureLensCss} />
           </noscript>
-          <CultureLens client:visible queries={queries} calendar={calendar} today={today} />
+          <CultureLens
+            client:visible
+            queries={queries}
+            calendar={calendar}
+            today={today}
+            messages={messages.culture.lens}
+            lang={tag}
+            queryLang={locale === "en" ? undefined : "en"}
+          />
         </>
       )
     }

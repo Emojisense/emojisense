@@ -1,7 +1,9 @@
 ---
+import { i18nFor } from "../i18n/page";
 import { cityBubbles } from "../lib/showcase";
 import { CITIES, landDots, MAP, MAP_HEIGHT, project } from "../lib/world";
 
+const { t } = i18nFor(Astro);
 const dots = landDots();
 const cities = new Map(CITIES.map(([name, lon, lat]) => [name, project(lon, lat)]));
 const STILL = new Set(["Los Angeles", "São Paulo", "Istanbul", "Shanghai", "Sydney"]);
@@ -15,34 +17,31 @@ const bubbles = cityBubbles.flatMap((b, i) => {
 });
 
 const stats = [
-  { value: "300+", label: "cities on Cloudflare's network. 95% of internet users are within 50 ms of one." },
-  { value: "< 1 ms", label: "for answers on the device, at every keystroke. Measured p95: 0.4 ms." },
-  { value: "≈ 50 ms", label: "for an AI meaning search inside the edge. Measured p50: 52 ms." },
-  { value: "0", label: "servers, regions or GPUs for you to set up. It works the same everywhere." },
+  { value: "300+", label: t("edge.stats.cities") },
+  { value: "< 1 ms", label: t("edge.stats.device") },
+  { value: "≈ 50 ms", label: t("edge.stats.ai") },
+  { value: "0", label: t("edge.stats.zero") },
 ];
 ---
 
 <section id="edge" class="edge" aria-labelledby="edge-title">
   <div class="container">
     <div class="edge-head">
-      <p class="kicker">Global edge</p>
-      <h2 id="edge-title">Fast in Lagos, Lima and Lahore.</h2>
-      <p class="lead">
-        Emojisense runs on Cloudflare's network in 300+ cities. Every search is answered in the city closest to
-        your user — never in one faraway region.
-      </p>
+      <p class="kicker">{t("edge.kicker")}</p>
+      <h2 id="edge-title">{t("edge.title")}</h2>
+      <p class="lead">{t("edge.lead")}</p>
     </div>
 
     <figure class="map">
       {/* WCAG 2.2.2: the bubbles move on their own, so they get a pause. It works once the script runs. */}
-      <button type="button" class="map-pause" data-map-pause>
+      <button type="button" class="map-pause" data-map-pause data-label-pause={t("edge.pause")} data-label-play={t("edge.play")}>
         <svg class="map-pause-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
           <path class="map-pause-bars" d="M4.5 3h2.25v10H4.5zM9.25 3h2.25v10H9.25z"></path>
           <path class="map-pause-play" d="M5 2.75v10.5L13 8z"></path>
         </svg>
-        <span class="map-pause-label">Pause animation</span>
+        <span class="map-pause-label">{t("edge.pause")}</span>
       </button>
-      <div class="map-canvas" style={`--n: ${bubbles.length}; aspect-ratio: ${MAP.width} / ${MAP_HEIGHT}`}>
+      <div class="map-canvas" dir="ltr" style={`--n: ${bubbles.length}; aspect-ratio: ${MAP.width} / ${MAP_HEIGHT}`}>
         <svg viewBox={`0 0 ${MAP.width} ${MAP_HEIGHT}`} aria-hidden="true" focusable="false">
           <path class="land" d={dots}></path>
           {[...cities.values()].map((c) => <circle class="city" cx={c.x} cy={c.y} r="3.2"></circle>)}
@@ -63,10 +62,7 @@ const stats = [
           ))
         }
       </div>
-      <figcaption>
-        Real searches and the emoji our engine returns for them. The map is an illustration; dots show large
-        cities, not exact data centers.
-      </figcaption>
+      <figcaption>{t("edge.caption")}</figcaption>
     </figure>
 
     <ul class="edge-stats">
@@ -91,7 +87,7 @@ const stats = [
     map.setAttribute("data-ready", "");
     button.addEventListener("click", () => {
       const paused = map.toggleAttribute("data-paused");
-      label.textContent = paused ? "Play animation" : "Pause animation";
+      label.textContent = (paused ? button.dataset.labelPlay : button.dataset.labelPause) ?? "";
     });
   }
 </script>

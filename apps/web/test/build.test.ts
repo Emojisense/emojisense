@@ -128,7 +128,7 @@ describe.each(PAGES)("page %s", (path) => {
     const urls = [
       ...Array.from(doc.querySelectorAll("script[src]"), (el) => el.getAttribute("src") ?? ""),
       ...Array.from(
-        doc.querySelectorAll("link[href]:not([rel=canonical])"),
+        doc.querySelectorAll("link[href]:not([rel=canonical]):not([rel=alternate])"),
         (el) => el.getAttribute("href") ?? "",
       ),
     ];

@@ -3,21 +3,28 @@ import { PLANS, WAITLIST_STATUS_ANCHORS } from "@emojisense/platform";
 import PageHero from "../components/PageHero.astro";
 import { PLAN_COPY } from "../components/pricing/plan-copy";
 import { DASHBOARD_URL, WAITLIST_ENDPOINT } from "../config";
+import { formatUsdIn } from "../i18n/format";
+import { i18nFor } from "../i18n/page";
+import { pricingLocaleFor } from "../i18n/pricing";
 import { WaitlistForm } from "../islands/WaitlistForm";
 import Base from "../layouts/Base.astro";
-import { formatUsd } from "../lib/format";
 import { type PlanFeature, planViews } from "../lib/pricing";
-import { RETURN_MESSAGES, WAITLIST_PLANS, type WaitlistPlan } from "../lib/waitlist";
+import { WAITLIST_PLANS, type WaitlistPlan } from "../lib/waitlist";
+
+const { t, parts, href, locale, tag, messages } = i18nFor(Astro);
 
 const plans = Object.fromEntries(
   WAITLIST_PLANS.map((id) => [
     id,
-    { name: PLANS[id].name, price: `${formatUsd(PLANS[id].priceUsdMonthly)} a month` },
+    {
+      name: PLANS[id].name,
+      price: t("plans.priceAMonth", { price: formatUsdIn(tag, PLANS[id].priceUsdMonthly) }),
+    },
   ]),
 ) as Record<WaitlistPlan, { name: string; price: string }>;
 
 const HIGHLIGHTS_SHOWN = 3;
-const paid = planViews(DASHBOARD_URL).filter((view) =>
+const paid = planViews(DASHBOARD_URL, undefined, pricingLocaleFor(locale)).filter((view) =>
   (WAITLIST_PLANS as readonly string[]).includes(view.id),
 );
 
@@ -41,43 +48,49 @@ function describe(feature: PlanFeature): string {
 }
 ---
 
-<Base
-  title="Waitlist"
-  description="Paid Emojisense plans are open: choose Solo, Pro or Scale on the pricing page."
-  path="/waitlist/"
->
-  <PageHero eyebrow="Solo · Pro · Scale" emoji="🎟️" title="Paid plans are open.">
+<Base title={t("meta.waitlist.title")} description={t("meta.waitlist.description")} path="/waitlist/">
+  <PageHero eyebrow="Solo · Pro · Scale" emoji="🎟️" title={t("waitlist.hero.title")}>
     <p>
-      Choose Solo, Pro or Scale on the <a href="/pricing/">pricing page</a> and pay in the dashboard. This form
-      stays for older links: it only adds your email to our list.
+      {
+        parts("waitlist.hero.lead").map((part) =>
+          part.tag === "link" ? <a href={href("/pricing/")}>{part.text}</a> : part.text,
+        )
+      }
     </p>
   </PageHero>
 
   <div class="container wl-layout">
-    <section class="card wl-panel" aria-label="Waitlist form">
+    <section class="card wl-panel" aria-label={t("waitlist.formLabel")}>
       {/* Without JavaScript the dashboard redirects back to /waitlist/?status=…#<anchor>; the anchor
           makes the matching message the :target, so CSS alone shows it. */}
       <noscript>
         <div id={WAITLIST_STATUS_ANCHORS.ok} class="wl-result" role="status" tabindex="-1">
           <p class="wl-result-title">
             <span class="emoji" aria-hidden="true">🎟️</span>
-            {RETURN_MESSAGES.ok.title}
+            {t("waitlist.returned.okTitle")}
           </p>
-          <p>{RETURN_MESSAGES.ok.text}</p>
+          <p>{t("waitlist.returned.okText")}</p>
         </div>
         <div id={WAITLIST_STATUS_ANCHORS.error} class="wl-result wl-result-error" role="alert" tabindex="-1">
           <p class="wl-result-title">
             <span class="emoji" aria-hidden="true">😬</span>
-            {RETURN_MESSAGES.error.title}
+            {t("waitlist.returned.errorTitle")}
           </p>
-          <p>{RETURN_MESSAGES.error.text}</p>
+          <p>{t("waitlist.returned.errorText")}</p>
         </div>
       </noscript>
-      <WaitlistForm client:load endpoint={WAITLIST_ENDPOINT} plans={plans} initialPlan="pro" />
+      <WaitlistForm
+        client:load
+        endpoint={WAITLIST_ENDPOINT}
+        plans={plans}
+        initialPlan="pro"
+        messages={messages.waitlist}
+        lang={tag}
+      />
     </section>
 
     <aside class="wl-plans" aria-labelledby="wl-plans-title">
-      <h2 id="wl-plans-title" class="wl-plans-title">Paid plans at a glance</h2>
+      <h2 id="wl-plans-title" class="wl-plans-title">{t("waitlist.plansTitle")}</h2>
       <ul>
         {
           paid.map((view) => (
@@ -90,10 +103,12 @@ function describe(feature: PlanFeature): string {
                   <span class="wl-plan-name">{view.name}</span>
                   <span class="wl-plan-price">
                     {view.monthly}
-                    <span>/ month</span>
+                    <span>{t("plans.perMonth")}</span>
                   </span>
                 </p>
-                <p class="wl-plan-inherits">{view.inherits ? `Everything in ${view.inherits}, plus` : "Includes"}</p>
+                <p class="wl-plan-inherits">
+                  {view.inherits ? t("plans.everythingIn", { plan: view.inherits }) : t("plans.includes")}
+                </p>
                 <ul class="wl-plan-features">
                   {keyHighlights(view.highlights).map((feature) => (
                     <li>{describe(feature)}</li>
@@ -105,9 +120,9 @@ function describe(feature: PlanFeature): string {
         }
       </ul>
       <p class="wl-plans-foot">
-        <a href="/pricing/">Compare all plans</a>
+        <a href={href("/pricing/")}>{t("waitlist.compareAll")}</a>
         <span aria-hidden="true">·</span>
-        <a href={`${DASHBOARD_URL}/`}>Start free, no waitlist</a>
+        <a href={`${DASHBOARD_URL}/`}>{t("waitlist.startFree")}</a>
       </p>
     </aside>
   </div>
@@ -219,7 +234,7 @@ function describe(feature: PlanFeature): string {
   }
 
   .wl-plan-price span {
-    margin-left: 0.25rem;
+    margin-inline-start: 0.25rem;
     color: var(--ink-3);
     font: 400 0.8125rem / 1 var(--font-body);
     letter-spacing: 0;

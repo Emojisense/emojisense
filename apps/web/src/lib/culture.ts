@@ -115,8 +115,18 @@ export interface DateWindow {
 const MONTH_DAY = /^\d{2}-\d{2}$/;
 const dayFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" });
 
-function rangeLabel(from: string, to: string, withYear: boolean): string {
+function rangeLabel(from: string, to: string, withYear: boolean, locale = "en"): string {
   const [a, b] = [new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`)];
+  if (locale !== "en") {
+    // Other languages order day, month and year their own way; Intl knows how.
+    const format = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      ...(withYear ? { year: "numeric" } : {}),
+      timeZone: "UTC",
+    });
+    return from === to ? format.format(a) : format.formatRange(a, b);
+  }
   const sameMonth = a.getUTCMonth() === b.getUTCMonth() && a.getUTCFullYear() === b.getUTCFullYear();
   const end = sameMonth ? String(b.getUTCDate()) : dayFormat.format(b);
   const range = from === to ? dayFormat.format(a) : `${dayFormat.format(a)} – ${end}`;
@@ -125,20 +135,21 @@ function rangeLabel(from: string, to: string, withYear: boolean): string {
 
 /**
  * Concrete windows of a seasonal or event entry. Yearly windows are listed from the year before
- * `around` to two years after, so a page built today still knows next year's dates.
+ * `around` to two years after, so a page built today still knows next year's dates. Labels are
+ * in `locale` (an Intl tag).
  */
-export function windowsOf(entry: CultureEntry, around: string): DateWindow[] {
+export function windowsOf(entry: CultureEntry, around: string, locale = "en"): DateWindow[] {
   const when = entry.when;
   if (entry.kind === "lasting" || !when) return [];
   if (!MONTH_DAY.test(when.from)) {
     const otherYear = when.to.slice(0, 4) !== around.slice(0, 4);
-    return [{ from: when.from, to: when.to, label: rangeLabel(when.from, when.to, otherYear) }];
+    return [{ from: when.from, to: when.to, label: rangeLabel(when.from, when.to, otherYear, locale) }];
   }
   const year = Number(around.slice(0, 4));
   return [year - 1, year, year + 1, year + 2].map((y) => {
     const from = `${y}-${when.from}`;
     const to = `${when.to >= when.from ? y : y + 1}-${when.to}`;
-    return { from, to, label: rangeLabel(from, to, false) };
+    return { from, to, label: rangeLabel(from, to, false, locale) };
   });
 }
 
@@ -180,10 +191,45 @@ export function applyCulture(canonical: string[], entries: CultureEntry[], limit
 
 // --- Landing page model ----------------------------------------------------------------------
 
-const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+/** The words the model writes into the page, in the page's language (src/i18n, culture.model). */
+export interface CultureWords {
+  today: string;
+  everywhere: string;
+  everywhereLower: string;
+  /** "Lasting · {where}" */
+  lasting: string;
+  seasonal: string;
+  event: string;
+  fromCalendar: string;
+  proposedByAi: string;
+  addedByEditor: string;
+}
 
-export function regionName(code: string): string {
-  return code === "*" ? "Everywhere" : (regionNames.of(code) ?? code);
+export const ENGLISH_WORDS: CultureWords = {
+  today: "Today",
+  everywhere: "Everywhere",
+  everywhereLower: "everywhere",
+  lasting: "Lasting · {where}",
+  seasonal: "Seasonal",
+  event: "Event",
+  fromCalendar: "From the calendar, approved by an editor",
+  proposedByAi: "Proposed by AI, approved by an editor",
+  addedByEditor: "Added by an editor",
+};
+
+/** Which page the model is for: the site locale (for the entries' text) and its Intl tag. */
+export interface CultureLocale {
+  locale: string;
+  tag: string;
+  words: CultureWords;
+}
+
+const ENGLISH: CultureLocale = { locale: "en", tag: "en", words: ENGLISH_WORDS };
+
+export function regionName(code: string, page: CultureLocale = ENGLISH): string {
+  return code === "*"
+    ? page.words.everywhere
+    : (new Intl.DisplayNames([page.tag], { type: "region" }).of(code) ?? code);
 }
 
 export function flagOf(code: string): string {
@@ -191,10 +237,20 @@ export function flagOf(code: string): string {
   return String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 }
 
+/** An entry's text in the page's language, or English with `lang: "en"` when it has none. */
+function contextOf(entry: CultureEntry, page: CultureLocale): { text: string; lang?: string } {
+  const own = entry.context[page.locale];
+  if (own) return { text: own };
+  const english = entry.context.en ?? entry.id;
+  return page.locale === "en" ? { text: english } : { text: english, lang: "en" };
+}
+
 /** Why an entry's emoji are in the results, shown next to them. */
 export interface CultureNote {
   id: string;
   context: string;
+  /** "en" when the entry has no text in the page's language yet. */
+  lang?: string;
   emoji: string[];
   /** "Lasting · everywhere", "Seasonal · Oct 15 – 31". */
   scope: string;
@@ -210,6 +266,7 @@ export interface LensResult {
 export interface LensOption {
   id: string;
   label: string;
+  lang?: string;
   flag?: string;
   /** For "when" options: the windows in which this option is the real answer. */
   windows?: DateWindow[];
@@ -228,6 +285,7 @@ export interface LensQuery {
 export interface CalendarItem {
   id: string;
   context: string;
+  lang?: string;
   emoji: string[];
   where: string;
   windows: DateWindow[];
@@ -238,6 +296,7 @@ export interface CultureHighlight {
   top: string;
   added: string[];
   note: string;
+  lang?: string;
 }
 
 export interface CultureShowcase {
@@ -255,53 +314,80 @@ const MAX_QUERIES = 4;
 const MAX_REGIONS = 3;
 const MAX_CALENDAR = 5;
 
-function provenanceOf(entry: CultureEntry): string {
-  if (entry.source === "calendar") return "From the calendar, approved by an editor";
-  if (entry.createdBy?.includes("ai") || entry.source === "ai-proposed")
-    return "Proposed by AI, approved by an editor";
-  return "Added by an editor";
+function provenanceOf(entry: CultureEntry, words: CultureWords): string {
+  if (entry.source === "calendar") return words.fromCalendar;
+  if (entry.createdBy?.includes("ai") || entry.source === "ai-proposed") return words.proposedByAi;
+  return words.addedByEditor;
 }
 
-function scopeOf(entry: CultureEntry, day: string): string {
-  const where = entry.regions.includes("*") ? "everywhere" : entry.regions.map(regionName).join(", ");
-  if (entry.kind === "lasting") return `Lasting · ${where}`;
-  const next = windowsOf(entry, day).find((w) => w.to >= day);
-  const kind = entry.kind === "seasonal" ? "Seasonal" : "Event";
+function scopeOf(entry: CultureEntry, day: string, page: CultureLocale): string {
+  const where = entry.regions.includes("*")
+    ? page.words.everywhereLower
+    : entry.regions.map((region) => regionName(region, page)).join(", ");
+  if (entry.kind === "lasting") return page.words.lasting.replace("{where}", where);
+  const next = windowsOf(entry, day, page.tag).find((w) => w.to >= day);
+  const kind = entry.kind === "seasonal" ? page.words.seasonal : page.words.event;
   return `${kind}${next ? ` · ${next.label}` : ""}`;
 }
 
-function resultFor(canonical: string[], entries: CultureEntry[], day: string): LensResult {
+function resultFor(
+  canonical: string[],
+  entries: CultureEntry[],
+  day: string,
+  page: CultureLocale,
+): LensResult {
   const ranked = applyCulture(canonical, entries);
   const notes = entries.flatMap((entry): CultureNote[] => {
     const emoji = ranked.filter((r) => r.cultureId === entry.id).map((r) => r.emoji);
     if (emoji.length === 0) return [];
-    const context = entry.context.en ?? "";
-    return [{ id: entry.id, context, emoji, scope: scopeOf(entry, day), provenance: provenanceOf(entry) }];
+    const context = contextOf(entry, page);
+    return [
+      {
+        id: entry.id,
+        context: context.text,
+        ...(context.lang ? { lang: context.lang } : {}),
+        emoji,
+        scope: scopeOf(entry, day, page),
+        provenance: provenanceOf(entry, page.words),
+      },
+    ];
   });
   return { ranked, notes };
 }
 
-function lensFor(query: string, canonical: string[], entries: CultureEntry[], today: string): LensQuery {
+function lensFor(
+  query: string,
+  canonical: string[],
+  entries: CultureEntry[],
+  today: string,
+  page: CultureLocale,
+): LensQuery {
   const matching = entries.filter((e) => matchesQuery(e, query));
   const lasting = (region?: string) =>
     matching.filter((e) => e.kind === "lasting" && appliesInRegion(e, region));
   const timed = matching
     .filter((e) => e.kind !== "lasting" && appliesInRegion(e))
-    .map((entry) => ({ entry, next: windowsOf(entry, today).find((w) => w.to >= today) }))
+    .map((entry) => ({ entry, next: windowsOf(entry, today, page.tag).find((w) => w.to >= today) }))
     .filter((t): t is { entry: CultureEntry; next: DateWindow } => t.next !== undefined)
     .sort((a, b) => a.next.from.localeCompare(b.next.from));
 
   if (timed.length > 0) {
     const seasons = timed.map(({ entry, next }): LensOption => {
       const active = matching.filter((e) => appliesInRegion(e) && isActiveOn(e, next.from));
+      const context = contextOf(entry, page);
       return {
         id: `when:${entry.id}`,
-        label: entry.context.en ?? entry.id,
-        windows: windowsOf(entry, today).filter((w) => w.to >= today),
-        result: resultFor(canonical, active, today),
+        label: context.text,
+        ...(context.lang ? { lang: context.lang } : {}),
+        windows: windowsOf(entry, today, page.tag).filter((w) => w.to >= today),
+        result: resultFor(canonical, active, today, page),
       };
     });
-    const base: LensOption = { id: "today", label: "Today", result: resultFor(canonical, lasting(), today) };
+    const base: LensOption = {
+      id: "today",
+      label: page.words.today,
+      result: resultFor(canonical, lasting(), today, page),
+    };
     return { query, canonical, dimension: "when", options: [base, ...seasons] };
   }
 
@@ -311,16 +397,16 @@ function lensFor(query: string, canonical: string[], entries: CultureEntry[], to
   );
   const everywhere: LensOption = {
     id: "where:*",
-    label: "Everywhere",
-    result: resultFor(canonical, lasting(), today),
+    label: page.words.everywhere,
+    result: resultFor(canonical, lasting(), today, page),
   };
   if (regions.length === 0) return { query, canonical, dimension: null, options: [everywhere] };
   const local = regions.map(
     (region): LensOption => ({
       id: `where:${region}`,
-      label: regionName(region),
+      label: regionName(region, page),
       flag: flagOf(region),
-      result: resultFor(canonical, lasting(region), today),
+      result: resultFor(canonical, lasting(region), today, page),
     }),
   );
   return { query, canonical, dimension: "where", options: [everywhere, ...local] };
@@ -332,6 +418,7 @@ export function buildCultureShowcase(
   loaded: LoadedCulture,
   search: (query: string) => string[],
   today: string,
+  page: CultureLocale = ENGLISH,
 ): CultureShowcase {
   const { entries } = loaded;
   // Queries named in SHOWCASE_QUERIES first, then the first trigger of any other entry, so the
@@ -345,21 +432,25 @@ export function buildCultureShowcase(
     if (queries.length >= MAX_QUERIES) break;
     const canonical = search(query);
     if (canonical.length === 0) continue;
-    const lens = lensFor(query, canonical, entries, today);
+    const lens = lensFor(query, canonical, entries, today, page);
     if (lens.options.some(hasCulture)) queries.push(lens);
   }
 
   const calendar = entries
     .filter((e) => e.featured === true && e.kind !== "lasting")
-    .map(
-      (entry): CalendarItem => ({
+    .map((entry): CalendarItem => {
+      const context = contextOf(entry, page);
+      return {
         id: entry.id,
-        context: entry.context.en ?? entry.id,
+        context: context.text,
+        ...(context.lang ? { lang: context.lang } : {}),
         emoji: entry.emoji.slice(0, 2).map((e) => toGlyph(e.hexcode)),
-        where: entry.regions.includes("*") ? "" : entry.regions.map(regionName).join(", "),
-        windows: windowsOf(entry, today).filter((w) => w.to >= today),
-      }),
-    )
+        where: entry.regions.includes("*")
+          ? ""
+          : entry.regions.map((region) => regionName(region, page)).join(", "),
+        windows: windowsOf(entry, today, page.tag).filter((w) => w.to >= today),
+      };
+    })
     .filter((item) => item.windows.length > 0)
     .sort((a, b) => (a.windows[0]?.from ?? "").localeCompare(b.windows[0]?.from ?? ""))
     .slice(0, MAX_CALENDAR);
@@ -369,24 +460,38 @@ export function buildCultureShowcase(
     const top = option?.result.ranked[0]?.emoji;
     if (!option || top === undefined) return [];
     const added = option.result.ranked.filter((r) => r.source === "culture").map((r) => r.emoji);
-    const context = option.result.notes[0]?.context ?? "";
+    const note = option.result.notes[0];
+    const context = note?.context ?? "";
     const when = lens.dimension === "when" ? option.windows?.[0]?.label : undefined;
     return [
-      { query: lens.query, top, added: added.slice(0, 3), note: when ? `${context} · ${when}` : context },
+      {
+        query: lens.query,
+        top,
+        added: added.slice(0, 3),
+        note: when ? `${context} · ${when}` : context,
+        ...(note?.lang ? { lang: note.lang } : {}),
+      },
     ];
   });
 
   return { source: loaded.source, today, queries, calendar, highlights: highlights.slice(0, 3) };
 }
 
-let cached: CultureShowcase | undefined;
+const cached = new Map<string, CultureShowcase>();
+let loadedEntries: LoadedCulture | undefined;
 
-/** The landing page's culture section, computed once per build with the real engine. */
-export function cultureShowcase(): CultureShowcase {
-  cached ??= buildCultureShowcase(
-    loadCultureEntries(),
-    (query) => answersFor([query], "en", 8)[0]?.top ?? [],
-    new Date().toISOString().slice(0, 10),
-  );
-  return cached;
+/** The landing page's culture section, computed once per build and language with the real engine. */
+export function cultureShowcase(page: CultureLocale = ENGLISH): CultureShowcase {
+  let showcase = cached.get(page.locale);
+  if (!showcase) {
+    loadedEntries ??= loadCultureEntries();
+    showcase = buildCultureShowcase(
+      loadedEntries,
+      (query) => answersFor([query], "en", 8)[0]?.top ?? [],
+      new Date().toISOString().slice(0, 10),
+      page,
+    );
+    cached.set(page.locale, showcase);
+  }
+  return showcase;
 }

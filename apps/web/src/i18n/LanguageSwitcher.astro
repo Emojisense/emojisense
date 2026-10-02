@@ -1,0 +1,239 @@
+---
+/**
+ * Links to this page in every language, named in their own language (no flags: a flag is a
+ * country, not a language). "menu" is the nav's disclosure; "list" is the footer's plain list.
+ * From an English-only page (docs, playground …) the other languages lead to their home page.
+ */
+import { DEFAULT_LOCALE, isLocalizedPath, LOCALE_INFO, LOCALES, type Locale, localizePath } from "./locales";
+import { i18nFor } from "./page";
+
+interface Props {
+  /** English path of the current page. */
+  path: string;
+  variant: "menu" | "list";
+}
+
+const { path, variant } = Astro.props;
+const { t, locale, tag } = i18nFor(Astro);
+const inPageLanguage = new Intl.DisplayNames([tag], { type: "language" });
+
+/** Short names for the nav button; the full name is in the menu. */
+const SHORT: Partial<Record<Locale, string>> = { zh: "中文", id: "Indonesia" };
+
+const options = LOCALES.map((code) => {
+  const info = LOCALE_INFO[code];
+  const target = isLocalizedPath(path) || code === DEFAULT_LOCALE ? path : "/";
+  const translated = inPageLanguage.of(info.tag);
+  return {
+    code,
+    name: info.name,
+    tag: info.tag,
+    href: isLocalizedPath(target) ? localizePath(target, code) : target,
+    // "Spanish" next to "Español" on an English page; nothing when both say the same.
+    hint:
+      translated && translated.toLocaleLowerCase(tag) !== info.name.toLocaleLowerCase(info.tag)
+        ? translated
+        : undefined,
+    current: code === locale,
+  };
+});
+const current = LOCALE_INFO[locale];
+---
+
+{
+  variant === "menu" ? (
+    <details class="lang-menu" data-lang-menu>
+      <summary>
+        <svg class="lang-globe" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3c2.5 2.6 3.75 5.6 3.75 9S14.5 18.4 12 21M12 3C9.5 5.6 8.25 8.6 8.25 12S9.5 18.4 12 21" />
+        </svg>
+        <span class="lang-current">
+          <span class="visually-hidden">{t("language.label")}: </span>
+          <span lang={current.tag}>{SHORT[locale] ?? current.name}</span>
+        </span>
+        <svg class="lang-caret" viewBox="0 0 12 12" aria-hidden="true" focusable="false">
+          <path d="m3 4.5 3 3 3-3" />
+        </svg>
+      </summary>
+      <ul class="lang-panel">
+        {options.map((option) => (
+          <li>
+            <a
+              href={option.href}
+              hreflang={option.tag}
+              aria-current={option.current ? "true" : undefined}
+            >
+              <span lang={option.tag}>{option.name}</span>
+              {option.hint && <small>{option.hint}</small>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </details>
+  ) : (
+    <nav class="lang-list" aria-label={t("language.label")}>
+      <ul>
+        {options.map((option) => (
+          <li>
+            <a
+              href={option.href}
+              hreflang={option.tag}
+              lang={option.tag}
+              aria-current={option.current ? "true" : undefined}
+            >
+              {option.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<script>
+  // Close the language menu on Escape and on a click outside it.
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>("[data-lang-menu]")) {
+    menu.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && menu.open) {
+        menu.open = false;
+        menu.querySelector("summary")?.focus();
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (menu.open && !menu.contains(event.target as Node)) menu.open = false;
+    });
+  }
+</script>
+
+<style>
+  .lang-menu {
+    position: relative;
+  }
+
+  .lang-menu summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.625rem;
+    border-radius: var(--pill);
+    color: var(--ink-2);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .lang-menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .lang-menu summary:hover,
+  .lang-menu[open] summary {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+
+  .lang-globe {
+    width: 1.125rem;
+    height: 1.125rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+
+  .lang-caret {
+    width: 0.75rem;
+    height: 0.75rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .lang-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    inset-inline-end: 0;
+    z-index: 60;
+    display: grid;
+    min-width: 14rem;
+    max-height: min(70vh, 32rem);
+    margin: 0;
+    padding: 0.375rem;
+    overflow-y: auto;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    box-shadow: var(--shadow-lg);
+    list-style: none;
+  }
+
+  .lang-panel a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--ink-2);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .lang-panel a:hover,
+  .lang-panel a[aria-current] {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+
+  .lang-panel a[aria-current] span::after {
+    content: " ✓" / "";
+  }
+
+  .lang-panel small {
+    color: var(--ink-3);
+    font-size: 0.8125rem;
+  }
+
+  /* Narrow screens: the globe alone (the name stays for screen readers); the menu lists languages too. */
+  @media (max-width: 72rem) {
+    .lang-current {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  .lang-list ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .lang-list a {
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+
+  .lang-list a:hover {
+    color: var(--ink);
+  }
+
+  .lang-list a[aria-current] {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.25em;
+  }
+</style>

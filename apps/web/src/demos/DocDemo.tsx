@@ -1,6 +1,6 @@
 import type { AliasEngine } from "emojisense";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { englishEngine, fullEngine, sharedSemantic, useEngine } from "../lib/engine-client";
+import { firstEngine, fullEngine, sharedSemantic, useEngine } from "../lib/engine-client";
 import { useAutoplayControl } from "./autoplay-control";
 import { DEFAULT_ICON, documentHtml, PAGE_TITLE, TEAMMATE } from "./doc/content";
 import { IconPicker } from "./doc/IconPicker";
@@ -199,7 +199,7 @@ export default function DocDemo() {
       // The full engine knows "dumpster fire"; wait for it a little, then settle for English.
       const quiet = <T,>(promise: Promise<T>) => promise.catch(() => undefined);
       const full = await Promise.race([quiet(fullEngine()), quiet(sleep(6000, signal))]);
-      const best = full ?? (await quiet(englishEngine()));
+      const best = full ?? (await quiet(firstEngine()));
       if (!best) {
         takeOver();
         return;

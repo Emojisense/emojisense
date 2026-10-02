@@ -1,9 +1,12 @@
 ---
+import { i18nFor } from "../../i18n/page";
+
 interface Props {
   value: string | boolean;
 }
 
 const { value } = Astro.props;
+const { t } = i18nFor(Astro);
 ---
 
 {
@@ -12,12 +15,12 @@ const { value } = Astro.props;
       <svg class="cmp-check" viewBox="0 0 16 16" aria-hidden="true">
         <path d="m3.5 8.5 3 3 6-7" />
       </svg>
-      <span class="visually-hidden">Included</span>
+      <span class="visually-hidden">{t("pricing.compare.included")}</span>
     </>
   ) : value === false ? (
     <>
       <span class="cmp-dash" aria-hidden="true" />
-      <span class="visually-hidden">Not included</span>
+      <span class="visually-hidden">{t("pricing.compare.notIncluded")}</span>
     </>
   ) : (
     <span class="cmp-text">{value}</span>

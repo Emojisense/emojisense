@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { englishEngine } from "../lib/engine-client";
+import { firstEngine } from "../lib/engine-client";
 import { classifyPhoto, downscale, type PhotoReading, UNREADABLE } from "./photo/classify";
 import credits from "./photo/credits.json";
 import fixtures from "./photo/fixtures.json";
@@ -294,7 +294,7 @@ export default function PhotoDemo() {
     if (!text) return;
     const token = run.current;
     try {
-      const engine = await englishEngine();
+      const engine = await firstEngine();
       if (run.current !== token) return;
       const { results } = engine.search(text, { limit: SHOWN_REACTIONS, prefix: false });
       setReacted(new Set());

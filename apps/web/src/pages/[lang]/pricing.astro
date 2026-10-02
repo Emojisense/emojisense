@@ -1,0 +1,11 @@
+---
+/** The pricing page in every language but English. The page itself reads Astro.currentLocale. */
+import { PREFIXED_LOCALES } from "../../i18n/locales";
+import Pricing from "../pricing.astro";
+
+export function getStaticPaths() {
+  return PREFIXED_LOCALES.map((lang) => ({ params: { lang } }));
+}
+---
+
+<Pricing />

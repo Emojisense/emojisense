@@ -15,13 +15,33 @@ export function parsePlan(value: string | null | undefined): WaitlistPlan {
   return WAITLIST_PLANS.find((plan) => plan === value) ?? DEFAULT_WAITLIST_PLAN;
 }
 
+/**
+ * What the form says when something goes wrong. A translated page passes its own (the catalog's
+ * `waitlist.errors`); these English ones are the same words as the English catalog.
+ */
+export interface WaitlistErrors {
+  empty: string;
+  invalid: string;
+  rejected: string;
+  rateLimited: string;
+  server: string;
+  network: string;
+}
+
+export const ENGLISH_ERRORS: WaitlistErrors = {
+  empty: "Enter your email address.",
+  invalid: "Enter a valid email address, like name@example.com.",
+  rejected: "The waitlist did not accept this address. Check it, then try again.",
+  rateLimited: "Too many tries from this network. Wait a minute, then try again.",
+  server: "The waitlist is not available right now. Try again in a few minutes.",
+  network: "We could not reach the waitlist. Check your connection, then try again.",
+};
+
 /** Returns a message for the person, or `undefined` when the address looks usable. */
-export function validateEmail(email: string): string | undefined {
+export function validateEmail(email: string, errors: WaitlistErrors = ENGLISH_ERRORS): string | undefined {
   const value = email.trim();
-  if (value === "") return "Enter your email address.";
-  if (value.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(value)) {
-    return "Enter a valid email address, like name@example.com.";
-  }
+  if (value === "") return errors.empty;
+  if (value.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(value)) return errors.invalid;
   return undefined;
 }
 
@@ -36,13 +56,9 @@ export interface SubmitWaitlistOptions {
   endpoint: string;
   fetch?: typeof fetch;
   timeoutMs?: number;
+  /** The messages in the page's language. */
+  errors?: WaitlistErrors;
 }
-
-const MESSAGES: Record<Exclude<WaitlistFailure, "invalid">, string> = {
-  rate_limited: "Too many tries from this network. Wait a minute, then try again.",
-  server: "The waitlist is not available right now. Try again in a few minutes.",
-  network: "We could not reach the waitlist. Check your connection, then try again.",
-};
 
 /**
  * What the page says after a form post that the browser sent without JavaScript. The dashboard
@@ -65,7 +81,8 @@ export async function submitWaitlist(
   options: SubmitWaitlistOptions,
 ): Promise<WaitlistResult> {
   const email = input.email.trim();
-  const invalid = validateEmail(email);
+  const errors = options.errors ?? ENGLISH_ERRORS;
+  const invalid = validateEmail(email, errors);
   if (invalid) return { ok: false, reason: "invalid", message: invalid };
 
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
@@ -81,7 +98,7 @@ export async function submitWaitlist(
       signal: controller.signal,
     });
   } catch {
-    return { ok: false, reason: "network", message: MESSAGES.network };
+    return { ok: false, reason: "network", message: errors.network };
   } finally {
     clearTimeout(timer);
   }
@@ -93,9 +110,9 @@ export async function submitWaitlist(
     return {
       ok: false,
       reason: "invalid",
-      message: "The waitlist did not accept this address. Check it, then try again.",
+      message: errors.rejected,
     };
   }
-  if (response.status === 429) return { ok: false, reason: "rate_limited", message: MESSAGES.rate_limited };
-  return { ok: false, reason: "server", message: MESSAGES.server };
+  if (response.status === 429) return { ok: false, reason: "rate_limited", message: errors.rateLimited };
+  return { ok: false, reason: "server", message: errors.server };
 }

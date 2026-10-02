@@ -1,8 +1,9 @@
 import { parseWaitlistStatus } from "@emojisense/platform";
 import { type SubmitEvent, useEffect, useId, useRef, useState } from "react";
+import type { Messages } from "../i18n/catalogs";
+import { rich, useTranslator } from "../i18n/react";
 import {
   parsePlan,
-  RETURN_MESSAGES,
   submitWaitlist,
   validateEmail,
   WAITLIST_PLANS,
@@ -16,6 +17,10 @@ export interface WaitlistFormProps {
   /** Name and price per plan, from PLANS. */
   plans: Record<WaitlistPlan, { name: string; price: string }>;
   initialPlan?: WaitlistPlan;
+  /** The catalog's `waitlist` part, in the page's language. */
+  messages: Messages["waitlist"];
+  /** Intl tag of the page. */
+  lang: string;
   /** Injected in tests. */
   fetch?: typeof fetch;
 }
@@ -26,8 +31,13 @@ type Phase =
   /** `signup` is unknown after a form post that returned with `?status=ok`. */
   | { name: "joined"; signup?: { email: string; plan: WaitlistPlan }; alreadyJoined: boolean };
 
+/** Both pages are in English only. */
+const LINKS = { quickstart: "/docs/", privacy: "/legal/privacy/" };
+
 export function WaitlistForm(props: WaitlistFormProps) {
-  const { endpoint, plans, initialPlan = "pro" } = props;
+  const { endpoint, plans, initialPlan = "pro", messages, lang } = props;
+  const t = useTranslator(messages, lang);
+  const errors = messages.errors;
   const [email, setEmail] = useState("");
   const [plan, setPlan] = useState<WaitlistPlan>(initialPlan);
   const [phase, setPhase] = useState<Phase>({ name: "editing" });
@@ -35,6 +45,8 @@ export function WaitlistForm(props: WaitlistFormProps) {
   const emailRef = useRef<HTMLInputElement>(null);
   const doneRef = useRef<HTMLHeadingElement>(null);
   const id = useId();
+  // Links to English-only pages say so on a translated page.
+  const linkLang = lang === "en" ? undefined : "en";
 
   // The page is static, so the URL is read after hydration: ?plan= from the pricing page, and
   // ?status= when the form was posted before the script ran and the dashboard sent it back.
@@ -48,10 +60,13 @@ export function WaitlistForm(props: WaitlistFormProps) {
     if (status === "error") {
       setPhase({
         name: "editing",
-        formError: `${RETURN_MESSAGES.error.title}. ${RETURN_MESSAGES.error.text}`,
+        formError: t.t("form.errorJoined", {
+          title: t.t("returned.errorTitle"),
+          text: t.t("returned.errorText"),
+        }),
       });
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (phase.name === "joined") doneRef.current?.focus();
@@ -59,7 +74,7 @@ export function WaitlistForm(props: WaitlistFormProps) {
 
   const onSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const fieldError = validateEmail(email);
+    const fieldError = validateEmail(email, errors);
     if (fieldError) {
       setPhase({ name: "editing", fieldError });
       emailRef.current?.focus();
@@ -68,7 +83,7 @@ export function WaitlistForm(props: WaitlistFormProps) {
     setPhase({ name: "submitting" });
     const result: WaitlistResult = await submitWaitlist(
       { email, plan },
-      { endpoint, ...(props.fetch ? { fetch: props.fetch } : {}) },
+      { endpoint, errors, ...(props.fetch ? { fetch: props.fetch } : {}) },
     );
     if (result.ok) {
       setPhase({
@@ -91,19 +106,27 @@ export function WaitlistForm(props: WaitlistFormProps) {
           <span className="emoji">🎟️</span>
         </span>
         <h2 ref={doneRef} tabIndex={-1}>
-          {phase.alreadyJoined ? "You are already on the list" : RETURN_MESSAGES.ok.title}
+          {phase.alreadyJoined ? t.t("form.alreadyJoined") : t.t("returned.okTitle")}
         </h2>
         {phase.signup ? (
           <p>
-            We will email <strong>{phase.signup.email}</strong> once, when {plans[phase.signup.plan].name}{" "}
-            opens.
+            {rich(
+              t.raw("form.willEmail"),
+              { strong: (text) => <strong>{text}</strong> },
+              { email: phase.signup.email, plan: plans[phase.signup.plan].name },
+            )}
           </p>
         ) : (
-          <p>{RETURN_MESSAGES.ok.text}</p>
+          <p>{t.t("returned.okText")}</p>
         )}
         <p>
-          Until then, the free plan has everything you need to start. <a href="/docs/">Read the quickstart</a>
-          .
+          {rich(t.raw("form.untilThen"), {
+            link: (text) => (
+              <a href={LINKS.quickstart} hrefLang={linkLang}>
+                {text}
+              </a>
+            ),
+          })}
         </p>
       </div>
     );
@@ -125,15 +148,16 @@ export function WaitlistForm(props: WaitlistFormProps) {
       data-testid="waitlist-form"
     >
       <div className="wl-field">
-        <label htmlFor={`${id}-email`}>Email</label>
+        <label htmlFor={`${id}-email`}>{t.t("form.email")}</label>
         <input
           ref={emailRef}
           id={`${id}-email`}
           name="email"
           type="email"
+          dir="ltr"
           autoComplete="email"
           inputMode="email"
-          placeholder="you@company.com"
+          placeholder={t.t("form.emailPlaceholder")}
           required
           maxLength={254}
           value={email}
@@ -147,13 +171,13 @@ export function WaitlistForm(props: WaitlistFormProps) {
           </p>
         ) : (
           <p className="wl-hint" id={`${id}-email-hint`}>
-            We use it only to tell you when the plan opens.
+            {t.t("form.emailHint")}
           </p>
         )}
       </div>
 
       <div className="wl-field">
-        <label htmlFor={`${id}-plan`}>Plan</label>
+        <label htmlFor={`${id}-plan`}>{t.t("form.plan")}</label>
         <select
           className="wl-select"
           id={`${id}-plan`}
@@ -179,11 +203,17 @@ export function WaitlistForm(props: WaitlistFormProps) {
       )}
 
       <button className="btn btn-primary btn-lg wl-submit" type="submit" disabled={submitting}>
-        {submitting ? "Joining…" : "Join the waitlist"}
+        {submitting ? t.t("form.submitting") : t.t("form.submit")}
       </button>
 
       <p className="wl-fine">
-        One email when your plan opens. No newsletter. <a href="/legal/privacy/">Privacy policy</a>
+        {rich(t.raw("form.fine"), {
+          link: (text) => (
+            <a href={LINKS.privacy} hrefLang={linkLang}>
+              {text}
+            </a>
+          ),
+        })}
       </p>
     </form>
   );

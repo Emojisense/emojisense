@@ -1,5 +1,8 @@
 ---
 import { DASHBOARD_URL } from "../config";
+import { formatListIn } from "../i18n/format";
+import { i18nFor } from "../i18n/page";
+import { pricingLocaleFor } from "../i18n/pricing";
 import { planViews, yearlySavingsPercent } from "../lib/pricing";
 import { FEATURED_PLAN, PLAN_COPY } from "./pricing/plan-copy";
 
@@ -12,11 +15,13 @@ interface Props {
 
 const { billingToggle = true, headingLevel = 3 } = Astro.props;
 const PlanName = `h${headingLevel}` as const;
-const plans = planViews(DASHBOARD_URL);
+const { t, parts, href, locale, tag } = i18nFor(Astro);
+const plans = planViews(DASHBOARD_URL, undefined, pricingLocaleFor(locale));
 const yearlyNames = plans.filter((plan) => plan.yearly).map((plan) => plan.name);
 const savings = yearlySavingsPercent();
 const showToggle = billingToggle && yearlyNames.length > 0;
-const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yearlyNames);
+const yearlyList = formatListIn(tag, yearlyNames);
+const percent = new Intl.NumberFormat(tag).format(savings);
 ---
 
 <div class="pricing">
@@ -24,20 +29,18 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
     showToggle && (
       <div class="billing-wrap">
         <fieldset class="billing">
-          <legend class="visually-hidden">Billing period</legend>
+          <legend class="visually-hidden">{t("plans.billingPeriod")}</legend>
           <label>
             <input type="radio" name="billing" value="monthly" checked />
-            <span>Monthly</span>
+            <span>{t("plans.monthly")}</span>
           </label>
           <label>
             <input type="radio" name="billing" value="yearly" />
-            <span>Yearly</span>
-            {savings > 0 && <span class="save">−{savings}%</span>}
+            <span>{t("plans.yearly")}</span>
+            {savings > 0 && <span class="save">{t("plans.savePercent", { percent })}</span>}
           </label>
         </fieldset>
-        <p class="billing-note">
-          Yearly billing is available on {yearlyList}. Other plans bill monthly.
-        </p>
+        <p class="billing-note">{t("plans.yearlyNote", { plans: yearlyList })}</p>
       </div>
     )
   }
@@ -58,31 +61,31 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
               <span class="plan-emoji emoji" aria-hidden="true">
                 {copy.emoji}
               </span>
-              {copy.badge && <p class="badge">{copy.badge}</p>}
+              {featured && <p class="badge">{t("plans.recommended")}</p>}
             </div>
             <PlanName id={`plan-${plan.id}`} class="plan-name">
               {plan.name}
             </PlanName>
-            <p class="blurb">{copy.blurb}</p>
+            <p class="blurb">{t(`plans.blurbs.${plan.id}`)}</p>
             <p class="price">
               <span class:list={["amount", { "when-monthly": plan.yearly }]}>{plan.monthly}</span>
               {plan.yearly && <span class="amount amount-yearly when-yearly">{plan.yearlyPerMonth}</span>}
-              <span class="per">/ month</span>
+              <span class="per">{t("plans.perMonth")}</span>
             </p>
             <p class="price-alt" data-price-yearly={plan.yearly?.raw}>
               {plan.yearly ? (
                 <>
                   <span class="when-monthly">
-                    or {plan.yearly.price} a year, save {plan.yearly.savings}
+                    {t("plans.orYearly", { price: plan.yearly.price, savings: plan.yearly.savings })}
                   </span>
                   <span class="when-yearly">
-                    Billed {plan.yearly.price} a year, save {plan.yearly.savings}
+                    {t("plans.billedYearly", { price: plan.yearly.price, savings: plan.yearly.savings })}
                   </span>
                 </>
               ) : plan.monthlyUsd === 0 ? (
-                "No card needed"
+                t("plans.noCard")
               ) : (
-                "Billed monthly"
+                t("plans.billedMonthly")
               )}
             </p>
             <a
@@ -97,10 +100,10 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
                 href={plan.cta.yearlyHref}
               >
                 {plan.cta.label}
-                <span class="visually-hidden"> yearly</span>
+                <span class="visually-hidden"> {t("plans.yearlyHint")}</span>
               </a>
             )}
-            <p class="includes">{plan.inherits ? `Everything in ${plan.inherits}, plus` : "Includes"}</p>
+            <p class="includes">{plan.inherits ? t("plans.everythingIn", { plan: plan.inherits }) : t("plans.includes")}</p>
             <ul>
               {plan.highlights.map((feature) => (
                 <li data-feature={feature.key} data-raw={feature.raw}>
@@ -127,8 +130,17 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
 
   <p class="fine" id="limits">
     <span class="emoji" aria-hidden="true">🛟</span>
-    <strong>Search never breaks at a limit.</strong> Past your monthly AI calls, on-device, ready-made and cached
-    answers keep working until the next month. <a href="/pricing/#calls">What counts as a call?</a>
+    {
+      parts("plans.fine").map((part) =>
+        part.tag === "strong" ? (
+          <strong>{part.text}</strong>
+        ) : part.tag === "link" ? (
+          <a href={href("/pricing/#calls")}>{part.text}</a>
+        ) : (
+          part.text
+        ),
+      )
+    }
   </p>
 </div>
 
@@ -411,7 +423,7 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
   }
 
   .fine .emoji {
-    margin-right: 0.375rem;
+    margin-inline-end: 0.375rem;
   }
 
   .fine strong {

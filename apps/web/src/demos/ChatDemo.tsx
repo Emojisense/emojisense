@@ -1,6 +1,6 @@
 import type { AliasEngine } from "emojisense";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { englishEngine, fullEngine, useEngine } from "../lib/engine-client";
+import { firstEngine, fullEngine, useEngine } from "../lib/engine-client";
 import { useAutoplayControl } from "./autoplay-control";
 import { keystrokeDelay, type Run, wait, waitFor } from "./chat/autoplay";
 import { Composer } from "./chat/Composer";
@@ -26,7 +26,7 @@ const sameEmoji = (a: string, b: string) => a.replaceAll(VS16, "") === b.replace
  * so it waits a moment for the full engine, then settles for English core.
  */
 function reactionEngine(): Promise<AliasEngine | undefined> {
-  const english = englishEngine().catch(() => undefined);
+  const english = firstEngine().catch(() => undefined);
   return Promise.race([fullEngine(), wait(FULL_ENGINE_WAIT_MS).then(() => english)]).catch(() => english);
 }
 

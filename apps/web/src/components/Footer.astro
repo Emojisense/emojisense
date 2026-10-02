@@ -1,83 +1,113 @@
 ---
 import { DASHBOARD_URL, REPO_URL } from "../config";
 import { LEGAL_PAGES } from "../content/legal";
+import LanguageSwitcher from "../i18n/LanguageSwitcher.astro";
+import { DEFAULT_LOCALE, isLocalizedPath } from "../i18n/locales";
+import { i18nFor } from "../i18n/page";
 import { packFacts } from "../lib/pack-facts";
+
+interface Props {
+  /** English path of the current page. */
+  path: string;
+}
 
 interface FooterLink {
   href: string;
   label: string;
 }
 
+const { path } = Astro.props;
+const { t, parts, href, locale, tag } = i18nFor(Astro);
+
+const LEGAL_LABELS: Record<string, string> = {
+  "/legal/terms/": t("footer.links.terms"),
+  "/legal/privacy/": t("footer.links.privacy"),
+  "/legal/acceptable-use/": t("footer.links.acceptableUse"),
+  "/legal/subprocessors/": t("footer.links.subprocessors"),
+};
+
 const columns: { title: string; links: FooterLink[] }[] = [
   {
-    title: "Product",
+    title: t("footer.columns.product"),
     links: [
-      { href: "/#use-cases", label: "Use cases" },
-      { href: "/#features", label: "Features" },
-      { href: "/#integrations", label: "Integrations" },
-      { href: "/playground/", label: "Playground" },
-      { href: "/pricing/", label: "Pricing" },
+      { href: "/#use-cases", label: t("footer.links.useCases") },
+      { href: "/#features", label: t("footer.links.features") },
+      { href: "/#integrations", label: t("footer.links.integrations") },
+      { href: "/playground/", label: t("footer.links.playground") },
+      { href: "/pricing/", label: t("footer.links.pricing") },
     ],
   },
   {
-    title: "Developers",
+    title: t("footer.columns.developers"),
     links: [
-      { href: "/docs/", label: "Docs" },
-      { href: "/docs/quickstart/", label: "Quickstart" },
-      { href: "/docs/api/", label: "HTTP API" },
-      { href: "/docs/self-host/", label: "Self-host" },
-      { href: "/docs/privacy/", label: "How data flows" },
+      { href: "/docs/", label: t("footer.links.docs") },
+      { href: "/docs/quickstart/", label: t("footer.links.quickstart") },
+      { href: "/docs/api/", label: t("footer.links.httpApi") },
+      { href: "/docs/self-host/", label: t("footer.links.selfHost") },
+      { href: "/docs/privacy/", label: t("footer.links.dataFlows") },
       { href: REPO_URL, label: "GitHub" },
     ],
   },
   {
-    title: "Company",
+    title: t("footer.columns.company"),
     links: [
-      { href: "/about/", label: "About" },
-      { href: "/changelog/", label: "Changelog" },
-      { href: `${REPO_URL}/issues`, label: "Report an issue" },
-      { href: `${DASHBOARD_URL}/`, label: "Sign in" },
+      { href: "/about/", label: t("footer.links.about") },
+      { href: "/changelog/", label: t("footer.links.changelog") },
+      { href: `${REPO_URL}/issues`, label: t("footer.links.reportIssue") },
+      { href: `${DASHBOARD_URL}/`, label: t("footer.links.signIn") },
     ],
   },
   {
-    title: "Legal",
-    links: LEGAL_PAGES.map((page) => ({ href: page.href, label: page.label })),
+    title: t("footer.columns.legal"),
+    links: LEGAL_PAGES.map((page) => ({ href: page.href, label: LEGAL_LABELS[page.href] ?? page.label })),
   },
 ];
 
-const isExternal = (href: string) => /^https?:\/\//.test(href) && !href.startsWith(DASHBOARD_URL);
-const number = new Intl.NumberFormat("en");
+const isExternal = (url: string) => /^https?:\/\//.test(url) && !url.startsWith(DASHBOARD_URL);
+/** On a translated page, a site link to an English-only page says so. */
+const isEnglishOnly = (url: string) =>
+  locale !== DEFAULT_LOCALE && url.startsWith("/") && !isLocalizedPath(url);
+const number = new Intl.NumberFormat(tag);
 const year = new Date().getFullYear();
 ---
 
 <footer class="footer">
   <div class="container footer-top">
     <div class="footer-brand">
-      <a class="footer-logo" href="/" aria-label="Emojisense home">
+      <a class="footer-logo" href={href("/")} aria-label={t("nav.home")}>
         <span class="footer-logo-mark emoji" aria-hidden="true">🦖</span>
         <span class="footer-logo-word">emojisense</span>
       </a>
-      <p class="footer-tagline">The complete emoji platform for every app.</p>
+      <p class="footer-tagline">{t("footer.tagline")}</p>
 
       <a class="footer-oss" href={REPO_URL}>
         <span class="footer-oss-head">
           <span class="footer-oss-dot" aria-hidden="true"></span>
-          Open-source core
+          {t("footer.ossTitle")}
           <span class="footer-oss-license">MIT</span>
         </span>
-        <span class="footer-oss-body">The engine, data packs, SDKs and API server are open source. Self-host them, or use ours.</span>
+        <span class="footer-oss-body">{t("footer.ossBody")}</span>
         {
           packFacts && (
             <span class="footer-oss-meta">
-              pack {packFacts.packVersion} · Emoji {packFacts.emojiVersion} · {number.format(packFacts.emojiCount)} emoji ·{" "}
-              {packFacts.languages} languages
+              {t("footer.ossMeta", {
+                pack: packFacts.packVersion,
+                emojiVersion: packFacts.emojiVersion,
+                count: number.format(packFacts.emojiCount),
+                languages: number.format(packFacts.languages),
+              })}
             </span>
           )
         }
       </a>
+
+      <div class="footer-lang">
+        <LanguageSwitcher path={path} variant="list" />
+        {locale !== DEFAULT_LOCALE && <p class="footer-lang-note">{t("language.englishOnly")}</p>}
+      </div>
     </div>
 
-    <nav class="footer-columns" aria-label="Footer">
+    <nav class="footer-columns" aria-label={t("footer.label")}>
       {
         columns.map((column) => (
           <div class="footer-column">
@@ -85,8 +115,14 @@ const year = new Date().getFullYear();
             <ul>
               {column.links.map((link) => (
                 <li>
-                  <a href={link.href}>
+                  <a href={href(link.href)} hreflang={isEnglishOnly(link.href) ? "en" : undefined}>
                     {link.label}
+                    {isEnglishOnly(link.href) && (
+                      <span class="lang-hint">
+                        <span aria-hidden="true">EN</span>
+                        <span class="visually-hidden">{t("nav.inEnglish")}</span>
+                      </span>
+                    )}
                     {isExternal(link.href) && (
                       <svg class="footer-external" viewBox="0 0 12 12" aria-hidden="true">
                         <path d="M4 3h5v5M9 3 3.5 8.5" />
@@ -103,12 +139,22 @@ const year = new Date().getFullYear();
   </div>
 
   <div class="container footer-bottom">
-    <p>© {year} Emojisense</p>
+    <p>{t("footer.copyright", { year: String(year) })}</p>
     <p>
-      Emoji data from{" "}
-      <a href="https://emojibase.dev">Emojibase</a>{packFacts?.emojibaseVersion && ` ${packFacts.emojibaseVersion}`}{" "}
-      (MIT) and <a href="https://cldr.unicode.org">Unicode CLDR</a>{packFacts?.cldrVersion && ` ${packFacts.cldrVersion}`}{" "}
-      (Unicode License v3). Emoji render in your system font.
+      {
+        parts("footer.credits", {
+          emojibaseVersion: packFacts?.emojibaseVersion ? ` ${packFacts.emojibaseVersion}` : "",
+          cldrVersion: packFacts?.cldrVersion ? ` ${packFacts.cldrVersion}` : "",
+        }).map((part) =>
+          part.tag === "emojibase" ? (
+            <a href="https://emojibase.dev">{part.text}</a>
+          ) : part.tag === "cldr" ? (
+            <a href="https://cldr.unicode.org">{part.text}</a>
+          ) : (
+            part.text
+          ),
+        )
+      }
     </p>
   </div>
 </footer>
@@ -198,7 +244,7 @@ const year = new Date().getFullYear();
   }
 
   .footer-oss-license {
-    margin-left: auto;
+    margin-inline-start: auto;
     padding: 0.125rem 0.5rem;
     border: 0.0625rem solid var(--line);
     border-radius: var(--pill);
@@ -215,6 +261,18 @@ const year = new Date().getFullYear();
   .footer-oss-meta {
     color: var(--ink-3);
     font: 400 0.75rem / 1.5 var(--font-mono);
+  }
+
+  .footer-lang {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .footer-lang-note {
+    color: var(--ink-3);
+    font-size: 0.8125rem;
   }
 
   .footer-columns {

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import en from "../src/i18n/en.json";
 import { WaitlistForm } from "../src/islands/WaitlistForm";
 
 const PLANS = {
@@ -10,7 +11,15 @@ const PLANS = {
 };
 
 function setup(fetch: typeof globalThis.fetch) {
-  render(<WaitlistForm endpoint="https://dashboard.test/api/waitlist" plans={PLANS} fetch={fetch} />);
+  render(
+    <WaitlistForm
+      endpoint="https://dashboard.test/api/waitlist"
+      plans={PLANS}
+      messages={en.waitlist}
+      lang="en"
+      fetch={fetch}
+    />,
+  );
   return {
     email: screen.getByLabelText("Email") as HTMLInputElement,
     plan: screen.getByLabelText("Plan") as HTMLSelectElement,
@@ -63,7 +72,15 @@ describe("WaitlistForm", () => {
   it("shows the confirmation when a form post without JavaScript came back with status=ok", async () => {
     window.history.replaceState(null, "", "/waitlist/?status=ok#waitlist-joined");
     const fetch = vi.fn<typeof globalThis.fetch>();
-    render(<WaitlistForm endpoint="https://dashboard.test/api/waitlist" plans={PLANS} fetch={fetch} />);
+    render(
+      <WaitlistForm
+        endpoint="https://dashboard.test/api/waitlist"
+        plans={PLANS}
+        messages={en.waitlist}
+        lang="en"
+        fetch={fetch}
+      />,
+    );
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("You are on the list");
     expect(status.textContent).toContain("when your plan opens");
