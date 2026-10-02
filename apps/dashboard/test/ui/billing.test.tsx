@@ -168,8 +168,11 @@ describe("Billing page: back from Whop", () => {
     const { calls } = openBilling("/billing?checkout=success", {
       "GET /api/billing": { body: billing("pro") },
     });
-    expect(await screen.findByText(/You are on Pro now\./)).toBeTruthy();
-    await vi.waitFor(() => expect(calls.filter((call) => call.path === "/api/me")).toHaveLength(2));
+    // Generous waits: the confirmation takes a few renders, and CI machines can be busy.
+    expect(await screen.findByText(/You are on Pro now\./, {}, { timeout: 5000 })).toBeTruthy();
+    await vi.waitFor(() => expect(calls.filter((call) => call.path === "/api/me")).toHaveLength(2), {
+      timeout: 5000,
+    });
     expect(window.location.search).toBe("");
     expect(sessionStorage.getItem("emojisense:checkout-started")).toBeNull();
   });
