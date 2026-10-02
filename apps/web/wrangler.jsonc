@@ -15,6 +15,16 @@
       "routes": [{ "pattern": "emojisense.dev", "custom_domain": true }],
       "workers_dev": false,
       "preview_urls": false
+    },
+    // Production at emojisense.com. www serves the same files; every page's canonical link
+    // points at the apex.
+    "production": {
+      "routes": [
+        { "pattern": "emojisense.com", "custom_domain": true },
+        { "pattern": "www.emojisense.com", "custom_domain": true }
+      ],
+      "workers_dev": false,
+      "preview_urls": false
     }
   }
 }

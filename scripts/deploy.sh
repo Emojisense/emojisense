@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 # Deploys the API Worker, the dashboard and the website to one environment.
 #   pnpm deploy:dev          → emojisense.dev (internal, noindex)
-#   pnpm deploy:production   → emojisense.com (needs PUBLIC_PUBLISHABLE_KEY: the site's own key)
+#   pnpm deploy:production   → emojisense.com (needs the site key: scripts/create-site-key.mjs)
 # Each Worker reads its bindings from the matching `env.<name>` block of its wrangler.jsonc.
 set -euo pipefail
 
 ENVIRONMENT="${1:?usage: scripts/deploy.sh dev|production}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# Per-environment settings that are not in git (.deploy/<env>.env, see scripts/create-site-key.mjs).
+if [ -f "$ROOT/.deploy/$ENVIRONMENT.env" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$ROOT/.deploy/$ENVIRONMENT.env"
+  set +a
+fi
 case "$ENVIRONMENT" in
   dev)
     DOMAIN="emojisense.dev"
@@ -15,7 +23,7 @@ case "$ENVIRONMENT" in
   production)
     DOMAIN="emojisense.com"
     INDEXABLE="true"
-    PUBLISHABLE_KEY="${PUBLIC_PUBLISHABLE_KEY:?set PUBLIC_PUBLISHABLE_KEY to the website key (dashboard → website app)}"
+    PUBLISHABLE_KEY="${PUBLIC_PUBLISHABLE_KEY:?run node scripts/create-site-key.mjs production first}"
     ;;
   *)
     echo "Unknown environment \"$ENVIRONMENT\". Use dev or production." >&2
@@ -23,7 +31,6 @@ case "$ENVIRONMENT" in
     ;;
 esac
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SITE_URL="https://$DOMAIN"
 API_URL="https://api.$DOMAIN"
 DASHBOARD_URL="https://app.$DOMAIN"

@@ -20,3 +20,6 @@ packages/worker/public/v1/
 
 # Local preview pages used while building demos; never shipped.
 apps/web/src/pages/dev/
+
+# Per-environment deploy settings (scripts/deploy.sh)
+.deploy/

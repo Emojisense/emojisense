@@ -65,6 +65,30 @@
         "WEBSITE_ORIGINS": "https://emojisense.dev",
         "API_URL": "https://api.emojisense.dev"
       }
+    },
+    // Production at app.emojisense.com (`pnpm deploy:production`). Same D1 and R2 as the
+    // production API Worker.
+    "production": {
+      "routes": [{ "pattern": "app.emojisense.com", "custom_domain": true }],
+      "workers_dev": false,
+      "preview_urls": false,
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "emojisense-prod",
+          "database_id": "6bb3345c-a77d-449a-bec3-f81a59a81439",
+          "migrations_dir": "../../packages/platform/migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-prod" }],
+      "ratelimits": [
+        { "name": "WAITLIST_LIMITER", "namespace_id": "2201", "simple": { "limit": 5, "period": 60 } }
+      ],
+      "vars": {
+        "ENVIRONMENT": "production",
+        "WEBSITE_ORIGINS": "https://emojisense.com,https://www.emojisense.com",
+        "API_URL": "https://api.emojisense.com"
+      }
     }
   }
 }
