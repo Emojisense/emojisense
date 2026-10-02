@@ -1,4 +1,5 @@
-import type { HostedEmojiSet, Pack } from "emojisense";
+import { EMOJI_SETS as PLATFORM_EMOJI_SETS } from "@emojisense/platform";
+import { EMOJI_SETS, type HostedEmojiSet, type Pack } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app.ts";
 import type { Env } from "../src/env.ts";
@@ -221,6 +222,11 @@ describe("hosted set mapping", () => {
     const toned = rows.filter((row) => row[4] === 1).length;
     expect(sets.all).toHaveLength(rows.length + toned * 5);
     expect(sets.find("1f44d-1f3ff")?.hexcode).toBe("1F44D-1F3FF");
+  });
+
+  it("serves every set that the SDKs and the dashboard can choose", () => {
+    expect(PLATFORM_EMOJI_SETS).toEqual(EMOJI_SETS);
+    expect(Object.keys(UPSTREAMS)).toEqual(EMOJI_SETS.filter((set) => set !== "native"));
   });
 
   it("was generated for the pinned commits and accounts for every emoji", () => {
