@@ -158,12 +158,6 @@ importers:
       '@fontsource/dm-mono':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource/figtree':
-        specifier: 5.3.0
-        version: 5.3.0
-      '@fontsource/gabarito':
-        specifier: 5.3.0
-        version: 5.3.0
       '@tiptap/core':
         specifier: 3.31.3
         version: 3.31.3(@tiptap/pm@3.31.3)
@@ -1170,12 +1164,6 @@ packages:
 
   '@fontsource/dm-mono@5.3.0':
     resolution: {integrity: sha512-OINjI8C1S/wpchhQxl7njZdMn4+hnDCpQ4YtvvOpKNARo+0J8O1x1IcrChxNjHOhfVv1by8C/FQoy3hXK+C1Ug==}
-
-  '@fontsource/figtree@5.3.0':
-    resolution: {integrity: sha512-/iTcTXL1eRBGhvD7NN9dnKzXzWqDLVZVEUFI9xIxAC1G/hXU8tCyYeXCAuPOuvSYPInFUP7H6KLGgygmDfy1SA==}
-
-  '@fontsource/gabarito@5.3.0':
-    resolution: {integrity: sha512-hpFHOvTBQx8OjPWcGMsTUVMNGhXjATebG1QLIYxxawKDkeskXjgwPD4v3LRsGBU4/8Za+odJiX/FmjCJ3mymcA==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -4355,10 +4343,6 @@ snapshots:
   '@fontsource-variable/hanken-grotesk@5.3.0': {}
 
   '@fontsource/dm-mono@5.3.0': {}
-
-  '@fontsource/figtree@5.3.0': {}
-
-  '@fontsource/gabarito@5.3.0': {}
 
   '@img/colour@1.1.0': {}
 

@@ -51,8 +51,8 @@ Copy `.env.example` to `.env`. Every value is public and ends up in the built pa
 `docs/DESIGN.md` ("emoji keyboard + stickers"): an emoji-yellow hero band, keycap result tiles,
 reaction-pill chips and the top answer as a die-cut sticker in a chat-composer search box. One
 celebration: a burst of the answer's own emoji when it settles, never with reduced motion. Docs
-and pricing use the same tokens with calmer layouts. Fonts (DynaPuff, Figtree, DM Mono) are
-self-hosted through Fontsource, so the site makes no third-party requests.
+and pricing use the same tokens with calmer layouts. Fonts (Bricolage Grotesque, Hanken Grotesk,
+DM Mono) are self-hosted through Fontsource, so the site makes no third-party requests.
 
 ## Layout
 
