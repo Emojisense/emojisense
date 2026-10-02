@@ -28,6 +28,10 @@ export const WEBHOOK_EVENTS = [
   "membership.activated",
   "membership.deactivated",
   "membership.cancel_at_period_end_changed",
+  "refund.created",
+  "refund.updated",
+  "dispute.created",
+  "dispute.updated",
 ];
 
 const DOMAINS = { dev: "emojisense.dev", production: "emojisense.com" };
@@ -254,6 +258,11 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
   const webhook = webhooks.find((w) => w?.url === url);
   const updates = {};
   if (webhook) {
+    if (webhook.api_version !== undefined && webhook.api_version !== "v1") {
+      warnings.push(
+        `The webhook ${webhook.id} uses api_version ${webhook.api_version}, not v1: the dashboard cannot verify its signatures. Delete it in Whop and run this again.`,
+      );
+    }
     const missing = WEBHOOK_EVENTS.filter((event) => !(webhook.events ?? []).includes(event));
     if (missing.length > 0 || webhook.enabled === false) {
       if (!dryRun) {
@@ -276,12 +285,28 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
   } else if (dryRun) {
     report.push(`webhook → ${url}: ${created("it")}`);
   } else {
-    const made = await whop.request("POST", "/webhooks", {
+    const body = {
       url,
       events: WEBHOOK_EVENTS,
+      // v1 is the Standard Webhooks format the dashboard verifies (v2 and v5 are not signed so).
+      api_version: "v1",
       api_version_date: WEBHOOK_API_VERSION_DATE,
       resource_id: companyId,
-    });
+    };
+    let made;
+    try {
+      made = await whop.request("POST", "/webhooks", body);
+    } catch (error) {
+      // Whop's newer reference no longer takes api_version (new webhooks are v1): send it without.
+      if (error?.status !== 400) throw error;
+      const { api_version: _, ...withoutVersion } = body;
+      made = await whop.request("POST", "/webhooks", withoutVersion);
+    }
+    if (made?.api_version !== undefined && made.api_version !== "v1") {
+      warnings.push(
+        `The new webhook ${made.id} uses api_version ${made.api_version}, not v1: its deliveries are not Standard Webhooks signed. Change it to v1 in the Whop dashboard.`,
+      );
+    }
     if (typeof made?.webhook_secret !== "string" || !made.webhook_secret) {
       warnings.push(
         `Whop created the webhook ${made?.id} but sent no secret. Copy it from the Whop dashboard.`,

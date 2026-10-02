@@ -21,7 +21,7 @@ const KEY = "test_key_not_real";
 const SECRET = "ws_testsecret_not_real";
 
 /** Whop's products, variants and webhooks in memory, behind fetch. Hidden ones can be left out of lists. */
-function fakeWhop({ listHidden = true, variantsPath = "/variants" } = {}) {
+function fakeWhop({ listHidden = true, variantsPath = "/variants", rejectApiVersion = false } = {}) {
   const state = { products: [], variants: [], webhooks: [], calls: [] };
   let next = 1;
   const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
@@ -62,7 +62,10 @@ function fakeWhop({ listHidden = true, variantsPath = "/variants" } = {}) {
     }
     if (method === "GET" && path === "/webhooks") return page(state.webhooks);
     if (method === "POST" && path === "/webhooks") {
-      const webhook = { id: `hook_${next++}`, enabled: true, ...body };
+      if (rejectApiVersion && "api_version" in body) {
+        return json({ error: { message: "api_version is no longer an input" } }, 400);
+      }
+      const webhook = { id: `hook_${next++}`, enabled: true, api_version: "v1", ...body };
       state.webhooks.push(webhook);
       return json({ ...webhook, webhook_secret: SECRET });
     }
@@ -115,6 +118,8 @@ describe("whop-setup", () => {
     );
     const [webhook] = whop.state.webhooks;
     assert.equal(webhook.url, "https://app.emojisense.com/api/whop/webhook");
+    assert.equal(webhook.api_version, "v1");
+    assert.ok(webhook.events.includes("refund.created") && webhook.events.includes("dispute.created"));
     assert.deepEqual(webhook.events, WEBHOOK_EVENTS);
     assert.equal(webhook.resource_id, DEFAULT_COMPANY_ID);
 
@@ -216,6 +221,27 @@ describe("whop-setup", () => {
     assert.ok(older.state.calls.includes("POST /plans"));
     assert.equal(older.state.variants.length, 4);
     assert.ok(result.updates.WHOP_PLAN_IDS);
+  });
+
+  it("creates the webhook without api_version where Whop no longer takes it", async () => {
+    const whop = fakeWhop({ rejectApiVersion: true });
+    const result = await setup(whop, {});
+    assert.equal(whop.state.webhooks.length, 1);
+    assert.equal(whop.state.webhooks[0].api_version, "v1");
+    assert.deepEqual(result.warnings, []);
+  });
+
+  it("warns about an existing webhook that is not v1", async () => {
+    const whop = fakeWhop();
+    whop.state.webhooks.push({
+      id: "hook_v5",
+      url: "https://app.emojisense.com/api/whop/webhook",
+      events: WEBHOOK_EVENTS,
+      enabled: true,
+      api_version: "v5",
+    });
+    const result = await setup(whop, { WHOP_WEBHOOK_SECRET: SECRET });
+    assert.match(result.warnings.join("\n"), /hook_v5 uses api_version v5/);
   });
 
   it("needs the API key", async () => {
