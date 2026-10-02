@@ -1,0 +1,1171 @@
+{
+  "meta": {
+    "homeTitle": "Emojisense: her uygulama için emoji platformu",
+    "skipLink": "İçeriğe geç",
+    "shareAlt": {
+      "home": "Emojisense: her uygulama için emojiye dair her şey. “jurassic park” ve “feliz cumpleaños” gibi aramalar ve ilk sıradaki emoji sonuçları.",
+      "pricing": "Emojisense fiyatları: başlangıç ücretsiz, büyüdükçe adil. Free, Solo, Pro ve Scale planları ve aylık fiyatları."
+    },
+    "home": {
+      "description": "Her uygulama için emoji platformu: argoyu ve 11 dili anlayan arama, tepki önerileri, fotoğraftan emoji, özel emoji, barındırılan emoji setleri ve analizler. Free planı, açık kaynaklı çekirdek."
+    },
+    "pricing": {
+      "title": "Fiyatlar",
+      "description": "Emojisense fiyatları: başlangıcı ücretsiz, eksiksiz emoji platformu. Her planda arama ve tepki önerileri; kullanım miktarı, fotoğraflar, özel emoji ve ekipler için ödeme yapın."
+    },
+    "waitlist": {
+      "title": "Bekleme listesi",
+      "description": "Solo, Pro veya Scale için Emojisense bekleme listesine katılın. Planınız açıldığında size bir kez e-posta göndeririz."
+    },
+    "about": {
+      "title": "Hakkımızda",
+      "description": "Emojisense neden var, nasıl çalışıyor, nasıl gelir elde ediyor ve bugün ne durumda?"
+    }
+  },
+  "nav": {
+    "home": "Emojisense ana sayfa",
+    "main": "Ana",
+    "mainMobile": "Ana (mobil)",
+    "menu": "Menü",
+    "product": "Ürün",
+    "features": "Özellikler",
+    "integrations": "Entegrasyonlar",
+    "playground": "Deneme alanı",
+    "pricing": "Fiyatlar",
+    "docs": "Belgeler",
+    "signIn": "Giriş yapın",
+    "getKey": "API anahtarı al",
+    "inEnglish": "(İngilizce)"
+  },
+  "language": {
+    "label": "Dil",
+    "current": "Dil: {language}",
+    "englishOnly": "Belgeler, deneme alanı ve değişiklik günlüğü şimdilik İngilizce."
+  },
+  "footer": {
+    "label": "Alt bilgi",
+    "tagline": "Her uygulama için eksiksiz emoji platformu.",
+    "ossTitle": "Açık kaynaklı çekirdek",
+    "ossBody": "Motor, veri paketleri, SDKs ve API sunucusu açık kaynaklıdır. Kendiniz barındırın veya bizim hizmetimizi kullanın.",
+    "ossMeta": "paket {pack} · Emoji {emojiVersion} · {count} emoji · {languages} dil",
+    "columns": {
+      "product": "Ürün",
+      "developers": "Geliştiriciler",
+      "company": "Şirket",
+      "legal": "Yasal"
+    },
+    "links": {
+      "useCases": "Kullanım alanları",
+      "features": "Özellikler",
+      "integrations": "Entegrasyonlar",
+      "playground": "Deneme alanı",
+      "pricing": "Fiyatlar",
+      "waitlist": "Bekleme listesi",
+      "docs": "Belgeler",
+      "quickstart": "Hızlı başlangıç",
+      "httpApi": "HTTP API",
+      "selfHost": "Kendiniz barındırın",
+      "dataFlows": "Veri akışı",
+      "about": "Hakkımızda",
+      "changelog": "Değişiklik günlüğü",
+      "reportIssue": "Sorun bildirin",
+      "signIn": "Giriş yapın",
+      "terms": "Koşullar",
+      "privacy": "Gizlilik",
+      "acceptableUse": "Kabul edilebilir kullanım",
+      "subprocessors": "Alt işleyenler"
+    },
+    "copyright": "© {year} Emojisense",
+    "credits": "Emoji verileri <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) ve <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode Lisansı v3) kaynaklarından gelir. Emojiler sistem yazı tipinizle gösterilir."
+  },
+  "home": {
+    "hero": {
+      "kicker": "Canlı · tarayıcınızda çalışır",
+      "title": "Her uygulama için emojiye dair her şey.",
+      "lead": "Argoyu, filmleri, duyguları ve {languages} dili anlayan arama. Tepki önerileri, fotoğraftan emoji, özel emoji, her cihazda aynı görünüm ve analizler. Mevcut uygulamanıza bağlanan tek platform.",
+      "ctaKey": "Ücretsiz API anahtarı alın",
+      "ctaDocs": "Belgeleri okuyun",
+      "installNote": "Free planı · kart gerekmez · MIT lisanslı çekirdek"
+    },
+    "logos": {
+      "worksWith": "Uyumlu araçlar"
+    },
+    "useCases": {
+      "kicker": "Kullanım alanları",
+      "title": "İnsanların emoji kullandığı her yerde, tek platform.",
+      "lead": "Beş küçük uygulama, hepsi gerçek hizmetle çalışıyor. Denemek için tıklayın; hepsi canlı."
+    },
+    "compare": {
+      "kicker": "Neden önemli?",
+      "title": "Seçiciler adları arar. İnsanlar duygularını yazar.",
+      "lead": "Çoğu emoji seçici yalnızca “rocket” veya “goat” gibi resmî adları arar. İşte aynı emoji verilerinde iki farklı arama yöntemi.",
+      "colQuery": "Kullanıcı yazar",
+      "colPicker": "Tipik seçici",
+      "colUs": "Emojisense",
+      "noResults": "Sonuç yok",
+      "kinds": {
+        "intent": "Niyet",
+        "meaning": "Anlam",
+        "typo": "Yazım hatası",
+        "film": "Film",
+        "feeling": "Duygu",
+        "idiom": "Deyim"
+      }
+    },
+    "developers": {
+      "kicker": "Geliştiriciler için",
+      "title": "Sprintler değil, dakikalar içinde ekleyin.",
+      "lead": "Arama ve seçiciler için tek SDK, tepkiler, fotoğraflar ve özel emoji için tek API. Üstelik kullandığınız araçlarla entegrasyonlar.",
+      "checks": {
+        "picker": "Seçicinizi ve tasarımınızı korur",
+        "offline": "İlk tuştan itibaren çevrimdışı çalışır",
+        "mit": "Kendiniz barındırabileceğiniz MIT lisanslı çekirdek"
+      },
+      "cta": "Hızlı başlangıcı okuyun",
+      "anyFramework": "Her geliştirme çatısı"
+    },
+    "pricing": {
+      "kicker": "Fiyatlar",
+      "title": "Başlangıç ücretsiz. Büyüdükçe adil.",
+      "lead": "Arama ve tepki önerileri her planda var. Kullanım miktarı, fotoğraflar, özel emoji ve ekip özellikleri için ödeme yapın."
+    },
+    "faq": {
+      "kicker": "SSS",
+      "title": "Sorular ve yanıtlar.",
+      "items": {
+        "what": {
+          "q": "Emojisense nedir?",
+          "a": "Ürününüzde emojiye dair her şey için tek platform: insanları 11 dilde anlayan arama, tepki önerileri, fotoğraftan emoji, özel emoji, barındırılan emoji setleri, analizler ve platformlar için müşteriye özel emoji. Mevcut uygulamanıza ve seçicinize bağlanır."
+        },
+        "server": {
+          "q": "Sunucuya ihtiyacım var mı?",
+          "a": "Hayır. Motor ve sözlük tarayıcıda veya uygulamada çalışır. Barındırılan API, alışılmadık sorgular için anlama göre arama ekler. Kendi Cloudflare hesabınızda kendiniz de barındırabilirsiniz."
+        },
+        "pickers": {
+          "q": "Hangi seçiciler ve geliştirme çatılarıyla çalışır?",
+          "a": "Şu anda React ve Frimousse seçiciyle çalışır. Ayrıca Vue, Svelte, Angular ve düz HTML için web bileşeni, Tiptap ve Lexical için editör eklentileri, Swift SDK, Chrome eklentisi, Raycast ve yapay zekâ uygulamaları için MCP sunucusu vardır."
+        },
+        "limit": {
+          "q": "Plan limitime ulaşınca ne olur?",
+          "a": "Kullanıcılarınız için hiçbir şey bozulmaz. Popüler aramalar akıllı yanıtlar almaya devam eder. Cihazdaki sözlük, gelecek aya kadar diğer tüm aramaları karşılar."
+        },
+        "where": {
+          "q": "Nerede çalışır?",
+          "a": "Motor, kullanıcılarınızın cihazlarında çalışır. API, 300'den fazla şehirde Cloudflare ağında çalışır. Böylece her arama, yazan kişiye yakın bir yerde yanıtlanır. Uzakta kalabileceğiniz tek bir bölgeye bağlı değildir."
+        },
+        "privacy": {
+          "q": "Kullanıcılarım hakkında ne biliyorsunuz?",
+          "a": "Kişisel hiçbir şey. Kimin, hangi uygulamadan arama yaptığını veya bir mesaja ne yazdığını asla saklamayız. Kullanımınız ve analizleriniz hesabınızda kalır."
+        },
+        "openSource": {
+          "q": "Açık kaynaklı mı?",
+          "a": "Evet. Motor, SDKs, veri paketi ve API sunucusu MIT lisanslıdır. Barındırılan hizmet, günlük sözlük güncellemeleri, analizler ve özel emoji ekler."
+        }
+      }
+    },
+    "final": {
+      "title": "Emoji işi tamam. Her yerde.",
+      "text": "Kullanıcılarınıza her dilde, her cihazda sorunsuz çalışan emoji sunun. Başlangıç ücretsiz, dakikalar içinde hazır.",
+      "ctaKey": "Ücretsiz API anahtarı alın",
+      "ctaGithub": "GitHub'da yıldız verin"
+    }
+  },
+  "features": {
+    "kicker": "Özellikler",
+    "title": "Emojiye dair her şey, tek yerde.",
+    "lead": "Arama, tepkiler, fotoğraflar, özel emoji, tutarlı emoji setleri, analizler ve müşteri alanları. Tek SDK, tek API, tek plan. Bir uygulama veya bin müşteri için.",
+    "meaning": {
+      "title": "İnsanların ne demek istediğini anlar",
+      "body": "Yalnızca resmî adlar değil; argo, filmler, deyimler ve duygular da.",
+      "examples": "Gerçek motordan örnekler"
+    },
+    "typos": {
+      "title": "Yazım hatalarını tolere eder",
+      "body": "İnsanlar hızlı yazar. Arama onlara yetişir."
+    },
+    "languages": {
+      "title": "{count} dil, insanların yazdığı gibi",
+      "body": "Kendi alfabeleriyle ve Latin harfleriyle: Hinglish, pinyin, Arabizi."
+    },
+    "culture": {
+      "title": "Kültürü takip eder",
+      "tag": "Yeni",
+      "body": "Bir emojinin anlamı, nerede ve ne zaman olduğunuza bağlıdır. Editörler, yapay zekâ desteğiyle güncel anlamları yanıtın yanına ekler. Yanıtın yerine koymazlar.",
+      "more": "Nasıl çalıştığını görün",
+      "examples": "Kültürel ekleme örnekleri"
+    },
+    "instant": {
+      "title": "Çevrimdışıyken bile anında",
+      "body": "Çoğu arama cihazdan hiç çıkmaz.",
+      "metric": "0,4 ms",
+      "metricLabel": "Tuş başına ölçülen p95"
+    },
+    "reactions": {
+      "title": "Tepki önerileri",
+      "body": "Bir mesaj gönderin, insanların kullanacağı tepkileri alın."
+    },
+    "photo": {
+      "title": "Fotoğraftan emoji",
+      "tag": "Beta",
+      "body": "Bir yavru köpeğe 🐶 ve 🥹 gelir. Fotoğraflar asla saklanmaz."
+    },
+    "custom": {
+      "title": "Kendi özel emojileriniz",
+      "body": "Bir set yükleyin veya Slack ve Discord'dan içe aktarın. Kendi alternatif adlarınızla, standart emojilerin yanında aranır."
+    },
+    "sets": {
+      "title": "Barındırılan emoji setleri",
+      "body": "Uç ağdan sunulan Twemoji, Noto veya Fluent: her cihazda aynı görünüm. Windows'ta bayraklar bile.",
+      "windowsToday": "Bugün Windows'ta",
+      "withSet": "barındırılan setle"
+    },
+    "analytics": {
+      "title": "Analizler",
+      "body": "İnsanların ne aradığını ve ne bulamadığını görün.",
+      "dashboard": "Örnek kontrol paneli",
+      "noMatch": "Eşleşme yok:",
+      "addCustom": "özel emoji ekleyin"
+    },
+    "teams": {
+      "title": "Ekipler ve ortamlar",
+      "body": "Geliştirme, ön üretim ve üretim için ayrı anahtarlar. Ekibinizi davet edin.",
+      "development": "Geliştirme",
+      "staging": "Ön üretim",
+      "production": "Üretim"
+    },
+    "tenants": {
+      "title": "Müşteri alanları ve web kancaları",
+      "body": "Platform mu geliştiriyorsunuz? Her müşteriye API üzerinden yönetilen kendi emoji setini sunun.",
+      "root": "Platformunuz"
+    },
+    "privacy": {
+      "title": "Gizlilik odaklı tasarım",
+      "ids": "Kullanıcı kimlikleri veya IP adresleri yok",
+      "text": "Mesaj metinleri asla saklanmaz",
+      "photos": "Fotoğraflar bellekte işlenir, asla saklanmaz",
+      "trends": "Yalnızca anonim, toplu arama eğilimleri"
+    },
+    "oss": {
+      "title": "Açık kaynaklı çekirdek",
+      "body": "Motor, SDKs, veri paketi ve API sunucusu MIT lisanslıdır. Kendi Cloudflare hesabınızda çalıştırın veya biz barındıralım.",
+      "parts": "motor · SDKs · veri · API sunucusu"
+    }
+  },
+  "culture": {
+    "kicker": "Kültür",
+    "tag": "Yeni",
+    "title": "Emojilerin anlamı kültüre bağlı. Kültür de değişir.",
+    "lead": "Editörlerimiz, yapay zekâ desteğiyle emojilerin farklı kültürlerde ve dönemlerdeki anlamlarını belirler ve güncel tutar. Bu anlamlar yanıta eklenir; yanıtın yerine geçmez.",
+    "steps": {
+      "ai": {
+        "title": "Yapay zekâ önerir",
+        "body": "Tatil takvimleri, büyük etkinlikler ve yeni argo ifadelerden anlam ilişkileri taslağı çıkarır."
+      },
+      "editor": {
+        "title": "Editör karar verir",
+        "body": "Her birini bir insan inceler. Bu onay olmadan hiçbir şey yayına girmez."
+      },
+      "search": {
+        "title": "Arama ekler",
+        "body": "Onaylanan emojiler ilk yanıtın ardından sonuçlara katılır. İlgili dönem bitince sonuçlardan çıkar."
+      }
+    },
+    "model": {
+      "today": "Bugün",
+      "everywhere": "Her yerde",
+      "everywhereLower": "her yerde",
+      "lasting": "Kalıcı · {where}",
+      "seasonal": "Dönemsel",
+      "event": "Etkinlik",
+      "fromCalendar": "Takvimden alındı, editör onayladı",
+      "proposedByAi": "Yapay zekâ önerdi, editör onayladı",
+      "addedByEditor": "Editör ekledi"
+    },
+    "lens": {
+      "tabs": "Örnek aramalar",
+      "switch": "Kültür",
+      "topAnswer": "İlk yanıt",
+      "addedByCulture": "Kültürün ekledikleri:",
+      "resultsFor": "“{query}” için sonuçlar",
+      "off": "Kültür kapalı: motorun kendi sıralaması değişmeden kalır.",
+      "nothingSeasonal": "{day} tarihinde dönemsel bir ekleme yok. Bu nedenle “{query}” her zamanki yanıtını alır.",
+      "noAdditions": "Burada kültürel ekleme yok.",
+      "sameEverywhere": "Yıl boyunca, her yerde aynı yanıt.",
+      "where": "Nerede",
+      "when": "Ne zaman",
+      "whereLegend": "Aramanın yapıldığı yer",
+      "whenLegend": "Aramanın yapıldığı zaman",
+      "relevantNow": "Şu an ilgili",
+      "today": "Bugün · {day}",
+      "liveNow": "Şu an yayında",
+      "calendarEmpty": "Önümüzdeki birkaç ayda dönemsel bir ekleme yok.",
+      "calendarNote": "Dönemsel seçimler takvime göre etkinleşir. İlgili dönem bitince sonuçlardan çıkar."
+    }
+  },
+  "edge": {
+    "kicker": "Küresel uç ağ",
+    "title": "Lagos, Lima ve Lahor'da hızlı.",
+    "lead": "Emojisense, 300'den fazla şehirde Cloudflare ağında çalışır. Her arama uzak bir bölgede değil, kullanıcınıza en yakın şehirde yanıtlanır.",
+    "pause": "Animasyonu duraklat",
+    "play": "Animasyonu oynat",
+    "caption": "Gerçek aramalar ve motorumuzun döndürdüğü emojiler. Harita temsili olarak çizilmiştir. Noktalar, veri merkezlerinin tam konumlarını değil, büyük şehirleri gösterir.",
+    "stats": {
+      "cities": "şehir Cloudflare ağında. İnternet kullanıcılarının %95'i bunlardan birine 50 ms mesafede.",
+      "device": "her tuşa basıldığında cihazdaki yanıtlar için. Ölçülen p95: 0,4 ms.",
+      "ai": "uç ağda yapay zekâ ile anlama göre arama için. Ölçülen p50: 52 ms.",
+      "zero": "kurmanız gereken sunucu, bölge veya GPU. Her yerde aynı şekilde çalışır."
+    }
+  },
+  "network": {
+    "kicker": "Kullandıkça gelişir",
+    "title": "Arayan kişi arttıkça daha akıllı olur.",
+    "lead": "Yaygın aramalar anında yanıtlanır. Yeni argo ifadeler her gece öğrenilir. Plan limitiniz dolsa bile arama akıllı kalır.",
+    "ladderTitle": "Bir arama nasıl yanıtlanır?",
+    "limitSwitch": "Plan limitine ulaşıldı",
+    "nearestCity": "en yakın şehir",
+    "layers": {
+      "device": {
+        "title": "Cihazda",
+        "body": "Adlar, argo ve yazım hataları doğrudan yerleşik sözlükten yanıtlanır. İlk tuştan itibaren çevrimdışı çalışır."
+      },
+      "popular": {
+        "title": "Popüler aramalar, önceden hazır",
+        "body": "Her gece en çok kullanılan aramalar için akıllı yanıtlar önceden hazırlanır ve kullanıcılarınıza yakın bir yere yerleştirilir."
+      },
+      "recent": {
+        "title": "Son yanıtlar, yakında tutulur",
+        "body": "Yeni bir arama anlaşıldığında yanıtı en yakın şehirde kalır. Böylece bir sonraki aramada anında döner."
+      },
+      "ai": {
+        "title": "Yapay zekâ ile anlama göre arama",
+        "body": "Yepyeni ifadeler uç ağda, anlamlarına göre yaklaşık 50 ms içinde anlaşılır."
+      }
+    },
+    "answers": "✓ yanıtlar",
+    "stillAnswers": "✓ hâlâ yanıtlar",
+    "untilNextMonth": "⏸ gelecek aya kadar",
+    "note": "Plan limitiniz aşılsa da kullanıcılarınız cihazdan, popüler aramalardan ve son yanıtlardan sonuç almaya devam eder. Yalnızca yepyeni ifadeler gelecek ayı bekler. Bu sırada onları cihaz yanıtlar.",
+    "loop": {
+      "title": "Her gün daha iyi",
+      "search": "İnsanlar arar",
+      "learn": "Yeni argo ifadeler öğrenilir",
+      "ready": "Daha fazla hazır yanıt",
+      "faster": "Daha hızlı, daha akıllı sonuçlar",
+      "quote": "“congrats on the launch” gibi popüler aramalar dünyanın her yerinde anında yanıtlanır.",
+      "privacy": "Yalnızca arama metninden öğreniriz. Kimin aradığından veya hangi uygulamayı kullandığından asla öğrenmeyiz."
+    }
+  },
+  "integrations": {
+    "kicker": "Entegrasyonlar",
+    "title": "Nerede geliştirirseniz, emojiye dair her şey orada.",
+    "lead": "Arama, tepkiler, fotoğraflar, özel emoji ve barındırılan emoji setleri. Tüm platformu mevcut araçlarınıza ekleyin.",
+    "groups": {
+      "frameworks": "Geliştirme çatıları",
+      "editors": "Editörler ve seçiciler",
+      "native": "Yerel ve uygulamalar",
+      "servers": "Yapay zekâ ve sunucular"
+    },
+    "items": {
+      "react": {
+        "name": "React hook'ları ve seçici",
+        "blurb": "Frimousse tabanlı, doğrudan eklenebilen bir seçici veya kendi arayüzünüz için hook'lar."
+      },
+      "webComponent": {
+        "name": "Web bileşeni",
+        "blurb": "Tek etiketle eksiksiz seçici. Her geliştirme çatısıyla veya çatı olmadan çalışır."
+      },
+      "engine": {
+        "name": "JavaScript motoru",
+        "blurb": "Motor tek başına: tarayıcılar, Node, Deno, Bun ve Workers."
+      },
+      "tiptap": {
+        "name": "Tiptap eklentisi",
+        "blurb": "İki noktayla otomatik tamamlama. <code>:fire:</code> yazın, <emoji>🔥</emoji> alın."
+      },
+      "lexical": {
+        "name": "Lexical eklentisi",
+        "blurb": "React için yazarken öneri sunan eklentiyle iki noktayla otomatik tamamlama."
+      },
+      "emojiMart": {
+        "name": "emoji-mart adaptörü",
+        "blurb": "emoji-mart seçicinizi koruyun. İnsanları anlayan arama ekleyin."
+      },
+      "swift": {
+        "name": "Swift paketi",
+        "blurb": "Aynı motor, iOS 16+ ve macOS 13+ üzerinde yerel olarak çalışır."
+      },
+      "chrome": {
+        "name": "Chrome eklentisi",
+        "blurb": "Her metin alanı için emoji seçici, bir kısayol uzağınızda."
+      },
+      "raycast": {
+        "name": "Raycast eklentisi",
+        "blurb": "Başlatıcınızdan anlama göre emoji arayın. Çevrimdışı çalışır."
+      },
+      "mcp": {
+        "name": "MCP sunucusu",
+        "blurb": "Claude ve diğer yapay zekâ asistanları için emoji arama ve tepkiler."
+      },
+      "http": {
+        "name": "HTTP API",
+        "blurb": "Her programlama dilinden arama, tepkiler ve fotoğraftan emoji."
+      },
+      "selfHosted": {
+        "name": "Kendiniz barındırdığınız API",
+        "blurb": "Tüm API, kendi Cloudflare hesabınızda tek Worker olarak çalışır."
+      }
+    },
+    "fromSource": "kaynak koddan",
+    "docsSuffix": ": belgeler",
+    "foot": "Slack veya Discord'da özel emojileriniz mi var? Pro ile onları da getirin.",
+    "seePlans": "Planları görün",
+    "allDocs": "Tüm belgeler"
+  },
+  "plans": {
+    "blurbs": {
+      "free": "Yan projeler ve denemek için.",
+      "solo": "Gerçek kullanıcıları olan tek uygulama için.",
+      "pro": "Birden fazla uygulama yayınlayan ekipler için.",
+      "scale": "Çok müşterili platformlar için."
+    },
+    "recommended": "Önerilen",
+    "billingPeriod": "Ödeme dönemi",
+    "monthly": "Aylık",
+    "yearly": "Yıllık",
+    "savePercent": "−{percent}%",
+    "yearlyNote": "{plans} için yıllık ödeme yapılabilir. Diğer planlarda ödeme aylıktır.",
+    "perMonth": "/ ay",
+    "pricePerMonth": "{price} / ay",
+    "priceAMonth": "aylık {price}",
+    "orYearly": "veya yıllık {price}, {savings} tasarruf",
+    "billedYearly": "Yıllık {price} faturalandırılır, {savings} tasarruf",
+    "noCard": "Kart gerekmez",
+    "billedMonthly": "Aylık faturalandırılır",
+    "everythingIn": "{plan} içindeki her şey, ayrıca",
+    "includes": "Dahil olanlar",
+    "getFreeKey": "Ücretsiz anahtar alın",
+    "joinWaitlist": "{plan} bekleme listesine katılın",
+    "fine": "<strong>Limite ulaşınca arama durmaz.</strong> Aylık yapay zekâ çağrılarınız bitse de cihazdaki, hazır ve önbellekteki yanıtlar gelecek aya kadar çalışır. <link>Neler çağrı sayılır?</link>",
+    "unlimited": "Sınırsız",
+    "groups": {
+      "core": "Her planda",
+      "usage": "Kullanım",
+      "emoji": "Özel emoji ve setler",
+      "teams": "Analizler ve ekipler",
+      "platform": "Platformlar için",
+      "support": "Destek"
+    },
+    "features": {
+      "search": {
+        "label": "Anlama göre arama ve tepki önerileri",
+        "hint": "Desteklenen her dilde argo, filmler, duygular ve yazım hataları"
+      },
+      "sdks": {
+        "label": "Tüm SDKs ve entegrasyonlar",
+        "hint": "React, web bileşeni, editörler, Swift, MCP. Sağlayıcı adı taşıyan rozet yok"
+      },
+      "onDevice": {
+        "label": "Cihazdaki ve hazır yanıtlar",
+        "hint": "Asla çağrı sayılmaz",
+        "unit": "cihazdaki yanıt"
+      },
+      "semanticCalls": {
+        "label": "Aylık yapay zekâ çağrısı",
+        "hint": "Uç ağ API'sine ulaşan anlama göre aramalar ve tepki önerileri",
+        "unit": "yapay zekâ çağrısı / ay"
+      },
+      "photos": {
+        "label": "Aylık fotoğraftan emoji",
+        "hint": "Emojilere göre sınıflandırılan fotoğraflar",
+        "unit": "fotoğraftan emoji / ay"
+      },
+      "overLimit": {
+        "label": "Limit aşılsa da çalışır",
+        "hint": "Tamamen durmaz; gelecek aya kadar cihaz yanıtlar"
+      },
+      "customEmoji": {
+        "label": "Özel emoji",
+        "hint": "Standart emojilerin yanında aranan tek set",
+        "unit": "özel emoji"
+      },
+      "emojiImport": {
+        "label": "Slack ve Discord'dan içe aktarma",
+        "hint": "Mevcut özel setinizi getirin"
+      },
+      "hostedSets": {
+        "label": "Barındırılan emoji setleri",
+        "hint": "Twemoji, Noto ve Fluent, her cihazda aynı görünüm"
+      },
+      "analytics": {
+        "label": "Analiz geçmişi",
+        "hint": "İnsanların ne aradığı ve ne bulamadığı",
+        "unit": "analiz geçmişi"
+      },
+      "apps": {
+        "label": "Uygulamalar veya ortamlar",
+        "hint": "Geliştirme, ön üretim ve üretim için ayrı anahtarlar",
+        "unit": {
+          "one": "uygulama veya ortam",
+          "other": "uygulama veya ortam"
+        }
+      },
+      "team": {
+        "label": "Ekip üyeleri",
+        "hint": "Ekibinizi tek hesaba davet edin"
+      },
+      "tenants": {
+        "label": "Müşteri alanları",
+        "hint": "Her müşteri için API üzerinden yönetilen bir özel emoji seti"
+      },
+      "webhooks": {
+        "label": "Web kancaları",
+        "hint": "Müşteri alanı ve emoji değişikliklerinden haberdar olun"
+      },
+      "communitySupport": {
+        "label": "Topluluk desteği",
+        "hint": "GitHub Discussions ve belgeler"
+      },
+      "prioritySupport": {
+        "label": "Öncelikli destek"
+      }
+    }
+  },
+  "pricing": {
+    "hero": {
+      "kicker": "Fiyatlar",
+      "title": "Başlangıç ücretsiz. <line>Büyüdükçe adil.</line>",
+      "lead": "Her uygulama için eksiksiz emoji platformu. Arama ve tepki önerileri her planda var. Yalnızca kullanım miktarı, fotoğraflar, özel emoji ve ekip özellikleri için ödeme yapın.",
+      "assurances": {
+        "card": "Ücretsiz planda kart gerekmez",
+        "failure": "Limite ulaşınca tamamen durmaz",
+        "mit": "MIT lisanslı çekirdek"
+      }
+    },
+    "compare": {
+      "kicker": "Planları karşılaştırın",
+      "title": "Tüm özellikler, yan yana.",
+      "lead": "Her plan tüm emoji platformunu sunar. Üst planlar daha fazla kullanım, özel emoji, ekipler ve müşteri alanları ekler.",
+      "caption": "Her Emojisense planının özellikleri ve limitleri",
+      "included": "Dahil",
+      "notIncluded": "Dahil değil",
+      "join": "<hidden>{plan} </hidden>bekleme listesine katılın"
+    },
+    "calls": {
+      "kicker": "Kullanım nasıl hesaplanır?",
+      "title": "Neler çağrı sayılır?",
+      "lead": "Çoğu emoji araması sunucularımıza hiç ulaşmaz. Cihaz ve hazır yanıtlar bunları her planda ücretsiz ve sınırsız karşılar. Yalnızca uç ağdaki yapay zekâ çalıştığında çağrı sayılır.",
+      "flowLabel": "Bir arama nasıl yanıtlanır?",
+      "nearestCity": "en yakın şehir",
+      "layers": {
+        "device": {
+          "title": "Cihazda",
+          "body": "Uygulamanızdaki sözlük, adları, argoyu ve yazım hatalarını {languages} dilde yanıtlar. Çevrimdışı çalışır."
+        },
+        "ready": {
+          "title": "Hazır yanıtlar",
+          "body": "Popüler aramalar önceden yanıtlanır. Yanıtlar, kullanıcılarınıza yakın bir yerden basit dosyalar olarak sunulur."
+        },
+        "edge": {
+          "title": "Uç ağda yapay zekâ",
+          "body": "Yepyeni ifadeler ve tepki önerileri uç ağ API'sine gider. API bunları anlamlarına göre anlar."
+        }
+      },
+      "countedStatus": "Yapay zekâ çağrısı sayılır",
+      "freeStatus": "Ücretsiz · sınırsız",
+      "countedTitle": "Planınızda neler sayılır?",
+      "countedItem": "<strong>{title}.</strong> {body}",
+      "counted": {
+        "calls": {
+          "title": "Yapay zekâ çağrıları",
+          "body": "Uç ağ API'sine ulaşan bir anlama göre arama veya tepki önerisi. Bir istek, bir çağrı."
+        },
+        "photos": {
+          "title": "Fotoğraflar",
+          "body": "Emojiye dönüştürülen her fotoğraf. Fotoğraflar bellekte işlenir ve asla saklanmaz."
+        }
+      },
+      "neverCounted": "Asla sayılmaz",
+      "free": {
+        "device": "Cihazdaki yanıtlar",
+        "ready": "Popüler aramalar için hazır yanıtlar",
+        "downloads": "Sözlük ve paket indirmeleri",
+        "failed": "Bizim tarafımızda başarısız olan istekler"
+      },
+      "limitTitle": "Limite ulaştığınızda",
+      "scale": {
+        "start": "Ayın 1'i",
+        "limit": "limitiniz",
+        "next": "gelecek ay"
+      },
+      "atLimit": {
+        "device": "Cihazdaki yanıtlar",
+        "ready": "Hazır yanıtlar",
+        "cached": "Uç ağdaki önbellek yanıtları",
+        "new": "Yeni yapay zekâ çağrıları ve fotoğraflar",
+        "keepAnswering": "yanıtlamaya devam eder",
+        "notCounted": "sunulmaya devam eder, sayılmaz",
+        "resume": "ayın 1'inde devam eder"
+      },
+      "foot": "Hata yok, bozuk seçici yok. API, <code>overLimit: true</code> ile yanıt verir. SDK kendiliğinden cihaza geçer. Limitler aylık sıfırlanır (UTC). Günlük sınır yoktur."
+    },
+    "beyond": {
+      "title": "Kendiniz barındırma ve özel planlar",
+      "oss": {
+        "kicker": "Açık kaynak",
+        "title": "Kendiniz çalıştırmak mı istersiniz?",
+        "body": "Emojisense çekirdeği MIT lisanslıdır. Lisans ücreti olmadan kendi Cloudflare hesabınızda çalıştırın ve ödemeyi doğrudan Cloudflare'a yapın. Barındırılan planlar günlük sözlük güncellemeleri, analizler ve barındırılan emoji setleri sunar. İşletim işlerini biz yaparız.",
+        "partsLabel": "MIT lisanslı bileşenler",
+        "parts": {
+          "engine": "Motor",
+          "sdks": "SDKs",
+          "pack": "Veri paketi",
+          "api": "API sunucusu",
+          "dashboard": "Kontrol paneli"
+        },
+        "guide": "Kendiniz barındırma rehberi",
+        "github": "GitHub'da görün"
+      },
+      "custom": {
+        "kicker": "Özel",
+        "title": "{plan} size yetmiyor mu?",
+        "body": "Daha yüksek limitler, çok sayıda müşteri alanı veya planlara uymayan bir kurulum mu gerekiyor? Ne geliştirdiğinizi anlatın.",
+        "cta": "Bize yazın"
+      }
+    },
+    "faq": {
+      "kicker": "SSS",
+      "title": "Fiyatlarla ilgili sorular.",
+      "lead": "Eksik bir şey mi var? <link>GitHub Discussions üzerinden sorun</link>.",
+      "items": {
+        "free": {
+          "q": "Ücretsiz plan gerçekten ücretsiz mi?",
+          "a": "Evet, üstelik kart gerekmez. Ayda {calls} yapay zekâ çağrısı ve {photos} fotoğraf sınıflandırması dahildir. Tüm SDK ve entegrasyonları, cihazda sınırsız yanıtları da içerir. Hiçbir planda sağlayıcı adı taşıyan rozet yoktur."
+        },
+        "call": {
+          "q": "Neler çağrı sayılır?",
+          "a": "Uç ağ API'mize ulaşan bir anlama göre arama veya tepki önerisi. Cihazdaki yanıtlar ve popüler aramalar için hazır yanıtlar ücretsiz ve sınırsızdır. Fotoğraftan emoji için ayrı bir aylık limit vardır.",
+          "link": "Bir aramanın nasıl yanıtlandığını görün"
+        },
+        "limit": {
+          "q": "Limite ulaştığımda ne olur?",
+          "a": "Kullanıcılarınız için hiçbir şey bozulmaz. API, overLimit: true ile yanıtlamaya devam eder. SDK kendiliğinden cihazdaki sözlüğe ve hazır yanıtlara geçer. Önbellekteki yanıtlar sunulmaya devam eder. Yeni yapay zekâ çağrıları ve fotoğraflar gelecek ayın 1'inde devam eder."
+        },
+        "failed": {
+          "q": "Başarısız istekleri sayıyor musunuz?",
+          "a": "Hayır. Yapay zekâmız yanıt veremezse kullanıcılarınız yine sözlükten sonuç alır ve istek sayılmaz."
+        },
+        "reset": {
+          "q": "Limitler ne zaman sıfırlanır?",
+          "a": "Her ayın ilk günü, UTC saatine göre. Günlük sınır yoktur."
+        },
+        "yearly": {
+          "q": "Yıllık fiyat var mı?",
+          "none": "Henüz yok. Şimdilik tüm planlar aylık faturalandırılır.",
+          "item": "{plan} yıllık {monthly} yerine {yearly} tutarındadır",
+          "a": "{items}. Diğer planlar aylık faturalandırılır."
+        },
+        "pay": {
+          "q": "Bir plan için ne zaman ödeme yapabilirim?",
+          "a": "Ücretli planlar yakında açılacak. Bekleme listesine katılın; planınız açıldığında size bir kez e-posta göndeririz. Ücretsiz planı bugün kullanabilirsiniz.",
+          "link": "Bekleme listesine katılın"
+        },
+        "selfHost": {
+          "q": "Bunun yerine kendim barındırabilir miyim?",
+          "a": "Evet. Motor, SDKs, veri paketi, API sunucusu ve kontrol paneli MIT lisanslıdır. Kendi Cloudflare hesabınızda çalıştırın ve ödemeyi doğrudan Cloudflare'a yapın. Açık veri paketi üç ayda bir güncellenir. Barındırılan planlar günlük sözlük güncellemeleri alır.",
+          "link": "Kendiniz barındırma rehberini okuyun"
+        },
+        "store": {
+          "q": "Kullanıcılarım hakkında ne saklıyorsunuz?",
+          "a": "Kişisel hiçbir şey. Kimin aradığını, IP adreslerini, mesaj metinlerini veya görselleri asla saklamayız. Fotoğraflar bellekte işlenir.",
+          "link": "Gizlilik notlarını okuyun"
+        }
+      }
+    },
+    "final": {
+      "title": "Ücretsiz başlayın. Hazır olduğunuzda büyüyün.",
+      "text": "Bir dakikada anahtar alın. İhtiyacınızı karşıladığı sürece ücretsiz planda kalın.",
+      "ctaKey": "Ücretsiz API anahtarı alın",
+      "ctaDocs": "Belgeleri okuyun"
+    }
+  },
+  "waitlist": {
+    "hero": {
+      "title": "Ücretli planlar açıldığında ilk siz katılın.",
+      "lead": "Ücretli planlar henüz satışta değil. E-posta adresinizi bırakın; planınız açıldığında size bir kez yazalım. Ücretsiz planı bugün kullanabilirsiniz."
+    },
+    "formLabel": "Bekleme listesi formu",
+    "plansTitle": "Bir bakışta ücretli planlar",
+    "compareAll": "Tüm planları karşılaştırın",
+    "startFree": "Beklemeden ücretsiz başlayın",
+    "returned": {
+      "okTitle": "Listedesiniz",
+      "okText": "Planınız açıldığında size bir kez e-posta göndereceğiz.",
+      "errorTitle": "Sizi ekleyemedik",
+      "errorText": "E-posta adresinizi kontrol edin. Bir dakika bekleyin, ardından formu tekrar gönderin."
+    },
+    "form": {
+      "email": "E-posta",
+      "emailPlaceholder": "you@company.com",
+      "emailHint": "Yalnızca planın açıldığını bildirmek için kullanırız.",
+      "plan": "Plan",
+      "submit": "Bekleme listesine katılın",
+      "submitting": "Ekleniyor…",
+      "fine": "Planınız açıldığında tek e-posta. Bülten yok. <link>Gizlilik politikası</link>",
+      "alreadyJoined": "Zaten listedesiniz",
+      "willEmail": "{plan} açıldığında <strong>{email}</strong> adresine bir kez e-posta göndereceğiz.",
+      "untilThen": "O zamana kadar ücretsiz plan, başlamak için ihtiyacınız olan her şeyi sunar. <link>Hızlı başlangıcı okuyun</link>.",
+      "errorJoined": "{title}. {text}"
+    },
+    "errors": {
+      "empty": "E-posta adresinizi girin.",
+      "invalid": "name@example.com gibi geçerli bir e-posta adresi girin.",
+      "rejected": "Bekleme listesi bu adresi kabul etmedi. Kontrol edip tekrar deneyin.",
+      "rateLimited": "Bu ağdan çok fazla deneme yapıldı. Bir dakika bekleyip tekrar deneyin.",
+      "server": "Bekleme listesi şu anda kullanılamıyor. Birkaç dakika sonra tekrar deneyin.",
+      "network": "Bekleme listesine ulaşamadık. Bağlantınızı kontrol edip tekrar deneyin."
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "Hakkımızda",
+      "title": "Emoji, insanların kastettiği anlamıyla.",
+      "lead": "Emojisense, her uygulama için eksiksiz emoji platformudur. Her dilde arama, tepkiler, fotoğraftan emoji, özel emoji ve daha fazlası."
+    },
+    "why": {
+      "title": "Neden var?",
+      "body": "Çoğu emoji seçici, emojilerin resmî adlarını eşleştirir. İnsanlar ad yazmaz. Film, duygu, deyim veya yazım hatası yazarlar. Ad araması bunları bulamaz. Onları anlayan aramayı geliştirdik. Ardından bir ürünün emoji konusunda ihtiyaç duyduğu diğer her şeyi ekledik.",
+      "tableLabel": "Ad araması ile Emojisense karşılaştırması",
+      "colQuery": "İnsanlar yazar",
+      "colName": "Ad araması",
+      "colUs": "Emojisense",
+      "nothing": "hiçbir şey"
+    },
+    "how": {
+      "title": "Nasıl çalışır?",
+      "body": "Cihazda küçük bir sözlük çalışır. Çoğu aramayı bir milisaniyeden kısa sürede yanıtlar. Yaygın aramaların hazır yanıtları statik dosyalarda bulunur. Yalnızca alışılmadık aramalar Cloudflare ağındaki API'mize gider. API, anlama göre emoji bulur ve yazan kişiye yakın bir yerde yanıt verir."
+    },
+    "principles": {
+      "title": "İlkelerimiz",
+      "neverBreaks": {
+        "title": "Asla durmaz",
+        "text": "Plan limiti aşılsa da arama cihazda çalışmaya devam eder. Kullanıcılarınız fatura nedeniyle asla hata görmez."
+      },
+      "private": {
+        "title": "Gizlilik odaklı tasarım",
+        "text": "Çoğu arama cihazdan hiç çıkmaz. Kimin aradığını, mesaj metinlerini veya fotoğrafları asla saklamayız."
+      },
+      "open": {
+        "title": "Çekirdeği açık",
+        "text": "Motor, veri paketleri, SDKs ve API sunucusu MIT lisanslıdır. İsterseniz kendiniz çalıştırın."
+      },
+      "languages": {
+        "title": "Her dil",
+        "text": "İnsanlar kendi sözcükleriyle ve kendi dillerinde arar. Sözlük de buna uyum sağlar."
+      }
+    },
+    "money": {
+      "title": "Nasıl gelir elde ediyoruz?",
+      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, fotoğraftan emoji, özel emoji, analizler, ekipler ve müşteri alanları ekler. Reklam yok, veri satmıyoruz. Ücretli planlar henüz satışta değil. <waitlist>Bekleme listesine katılabilir</waitlist> veya bugün <free>ücretsiz başlayabilirsiniz</free>."
+    },
+    "now": {
+      "title": "Ne durumdayız?",
+      "body": "Henüz baştayız. Bugün motor, {pack}, API ve kontrol paneli çalışıyor. Sırada ödemeler var. <changelog>Değişiklik günlüğü</changelog> gelişmeleri kaydeder.",
+      "pack": "veri paketi ({count} emoji, Emoji {emojiVersion}, {languages} dil)",
+      "packs": "veri paketleri",
+      "independent": "Emojisense bağımsız bir projedir. Sorularınızı, fikirlerinizi ve hata bildirimlerinizi <issues>GitHub sorunları</issues> üzerinden paylaşabilirsiniz."
+    }
+  },
+  "hero": {
+    "searchLabel": "Emoji arayın",
+    "placeholder": "Konuşur gibi emoji arayın…",
+    "offline": "çevrimdışı",
+    "results": "Emoji sonuçları",
+    "empty": "Henüz eşleşme yok, yazmaya devam edin.",
+    "byMeaning": "anlama göre eşleşti",
+    "matched": "<q>{match}</q> ile eşleşti",
+    "bestMatch": "en iyi eşleşme",
+    "idle": "Bir film, bir duygu, bir yazım hatası, başka bir dil. İstediğinizi deneyin.",
+    "try": "Deneyin",
+    "play": "Demoyu oynatın",
+    "pause": "Demoyu duraklatın",
+    "edgeCache": "uç ağ önbelleği",
+    "edgeAi": "{ms} · uç ağda yapay zekâ",
+    "onDevice": "{ms} · cihazınızda",
+    "kinds": {
+      "film": "bir film",
+      "meaning": "bir anlam",
+      "typo": "bir yazım hatası",
+      "feeling": "bir duygu",
+      "intent": "bir niyet",
+      "idiom": "bir deyim",
+      "greeting": "bir selam",
+      "wish": "bir dilek",
+      "thanks": "teşekkür"
+    }
+  },
+  "codeTabs": {
+    "label": "Kurulum örnekleri",
+    "copy": "Kopyalayın",
+    "copied": "Kopyalandı ✓",
+    "copiedStatus": "Kopyalandı",
+    "example": "{label} örneği"
+  },
+  "copyCommand": {
+    "copy": "Komutu kopyalayın: {command}",
+    "copied": "Kopyalandı",
+    "selected": "Seçildi",
+    "selectedStatus": "Komut seçildi. Klavyenizle kopyalayın."
+  },
+  "demos": {
+    "useCases": {
+      "tabs": "Kullanım alanları",
+      "stop": "Demoyu durdurun",
+      "missing": "Bu demo henüz hazır değil.",
+      "loading": "{name} demosu yükleniyor…",
+      "cases": {
+        "chat": {
+          "label": "Sohbet",
+          "title": "İki nokta yazın, duyguyu bulun",
+          "body": "Argoyu ve anlamı kavrayan otomatik tamamlama, her mesaj için tepki önerileri."
+        },
+        "docs": {
+          "label": "Belgeler",
+          "title": "Yazarken satır içinde emoji",
+          "body": "Doğrudan eklenebilen Tiptap eklentisi. Aynı motor Lexical ve her editörde çalışır."
+        },
+        "workspaces": {
+          "label": "Çalışma alanları",
+          "title": "Her müşteriye kendi emojileri",
+          "body": "Özel emojiler standart setin yanında aranır. Her çalışma alanının kendi seti vardır."
+        },
+        "photos": {
+          "label": "Fotoğraflar",
+          "title": "Fotoğrafa tepkiler",
+          "body": "Bir fotoğraf gönderin, insanların tepki verirken kullanacağı emojileri alın. Fotoğraflar asla saklanmaz."
+        },
+        "assistant": {
+          "label": "Yapay zekâ asistanı",
+          "title": "Yapay zekânıza emoji seçmeyi öğretin",
+          "body": "MCP sunucusuyla her asistan 11 dilde anlama göre emoji arayabilir."
+        }
+      }
+    },
+    "chat": {
+      "window": "Demo: Emojisense emoji otomatik tamamlama ve tepki önerileri içeren ekip sohbeti",
+      "topic": "Yeni kullanıcı deneyimi v2, yayın günü",
+      "members": "Üyeler:",
+      "messagesIn": "#{channel} kanalındaki mesajlar",
+      "today": "Bugün",
+      "you": "Siz",
+      "seed": {
+        "rc": "RC `2.14.0-rc.3` ön üretim ortamında sorunsuz. 412 uçtan uca testin hepsi ilk çalıştırmada geçti.",
+        "email": "Karşılama e-postası tamam. “Başlayın” yerine artık “Çalışma alanınızı kurun” yazıyor. Metin testini açık ara kazandı.",
+        "rollout": "Yayın %100'e ulaştı. Bu sabah kayıtlar %18 arttı, herkesin eline sağlık 📈"
+      },
+      "autoplay": {
+        "shipped": "yeni kullanıcı deneyimini yayına aldık",
+        "thanks": "teşekkürler ekip"
+      },
+      "reactionsLabel": "Tepkiler",
+      "reactionCount": {
+        "one": "{name}: {count} tepki",
+        "other": "{name}: {count} tepki"
+      },
+      "popTitle": "<b>:{query}</b> ile eşleşen emojiler",
+      "onDevice": "Cihazda {ms} ms",
+      "meaning": "anlam {ms} ms",
+      "meaningPending": "anlam…",
+      "listLabel": "Emoji",
+      "byMeaning": "anlama göre",
+      "loadingEmoji": "Emojiler yükleniyor…",
+      "searchingMeaning": "Anlama göre aranıyor…",
+      "keyNavigate": "gezin",
+      "keySelect": "seçin",
+      "keyDismiss": "kapatın",
+      "messageLabel": "#{channel} kanalına mesaj",
+      "composeHint": "Emoji için <kbd>:</kbd> ve 2 harf yazın",
+      "send": "Mesaj gönderin",
+      "sidebar": {
+        "search": "Arayın",
+        "threads": "Mesaj dizileri",
+        "channels": "Kanallar",
+        "direct": "Doğrudan mesajlar"
+      },
+      "suggested": "Tepki önerileri",
+      "reactWith": "{name} ile tepki verin",
+      "viaDeviceTitle": "API yanıt vermediği için cihazdaki motor mesajı aradı",
+      "viaEdge": "uç ağ · {ms} ms",
+      "viaDevice": "cihazda"
+    },
+    "doc": {
+      "region": "Canlı demo: Emojisense emoji otomatik tamamlama içeren belge editörü",
+      "pageTitle": "3. çeyrek yayın değerlendirmesi",
+      "sidebar": {
+        "search": "Arayın",
+        "home": "Ana sayfa",
+        "inbox": "Gelen kutusu",
+        "product": "Ürün",
+        "private": "Özel",
+        "newPage": "Yeni sayfa",
+        "launchPlan": "Yayın planı",
+        "retros": "Değerlendirmeler",
+        "q2": "2. çeyrek büyüme değerlendirmesi",
+        "roadmap": "2027 yol haritası",
+        "experiments": "Deneyler",
+        "drafts": "Taslaklar",
+        "reading": "Okuma listesi"
+      },
+      "typing": "{name} yazıyor…",
+      "edited": "Az önce düzenlendi",
+      "share": "Paylaşın",
+      "owner": "Sorumlu",
+      "date": "Tarih",
+      "failed": "Editör yüklenemedi. Tekrar denemek için sayfayı yenileyin.",
+      "body": {
+        "callout": "Suçlama yok: kişileri değil, sistemleri ve kararları konuşuyoruz.",
+        "wentWell": "Neler iyi gitti?",
+        "well1": "Yeni kullanıcı deneyimi v2 iki hafta erken yayına alındı. İlk hafta özellik bayrağıyla açıldı",
+        "well2": "Yeni kontrol listesi yayına girince desteğe gelen kurulum soruları azaldı",
+        "change": "Neleri değiştirirdik?",
+        "changeBody": "Yayın haftasında iki dağıtım başarısız oldu. İkisinin de nedeni aynı kararsız veri taşıma testiydi. Geri alma işlemi de gerekenden uzun sürdü.",
+        "actions": "Yapılacaklar",
+        "action1": "Kararsız veri taşıma testini ayır (Jonas)",
+        "action2": "Yayın kontrol listesine dağıtımları durdurma adımı ekle (Priya)",
+        "action3": "Bu değerlendirmeyi #product kanalında paylaş (Maya)",
+        "summary": "Özet",
+        "win": "En büyük başarı: yeni kullanıcı deneyimiyle uçuşa geçtik",
+        "miss": "En büyük aksilik: yayın haftasındaki dağıtımlar ortalığı yaktı"
+      },
+      "placeholder": "Emoji için “:” ve bir sözcük yazın…",
+      "bodyLabel": "Belge içeriği",
+      "done": "Tamamlandı",
+      "notDone": "Tamamlanmadı",
+      "menu": {
+        "label": "Emoji önerileri",
+        "matching": "<code>:{query}</code> ile eşleşen emojiler",
+        "move": "gezin",
+        "insert": "ekleyin",
+        "close": "kapatın",
+        "similar": "benzer anlam",
+        "custom": "özel emoji"
+      },
+      "picker": {
+        "dialog": "Sayfa simgesi seçin",
+        "search": "Emoji arayın",
+        "placeholder": "Emoji arayın…",
+        "random": "Rastgele",
+        "randomEmoji": "Rastgele emoji",
+        "all": "Tüm emojiler",
+        "for": "{query} için emojiler",
+        "results": "Sonuçlar",
+        "empty": "“{query}” için henüz emoji yok.",
+        "hint": "“{first}”, “{second}” veya “{third}” deneyin",
+        "hintWords": {
+          "first": "lansman",
+          "second": "keçi",
+          "third": "yanıyor"
+        },
+        "pageIcon": "Sayfa simgesi. Simgeyi değiştirin",
+        "pageIconNamed": "Sayfa simgesi: {label}. Simgeyi değiştirin"
+      }
+    },
+    "workspaces": {
+      "tabs": "Çalışma alanları",
+      "tenantTitle": "Müşteri alanı kimliği",
+      "message": "Mesaj",
+      "addReaction": "Tepki ekleyin",
+      "picker": "Emoji seçici",
+      "searchIn": "{workspace} içinde emoji arayın",
+      "placeholder": "{workspace} emojilerini arayın",
+      "clear": "Aramayı temizleyin",
+      "try": "Deneyin",
+      "results": "Emoji sonuçları",
+      "custom": "Özel",
+      "customEmoji": "Özel emoji",
+      "noCustom": "Burada “{query}” için özel emoji yok. Standart set yine de yanıt verir.",
+      "standard": "Standart",
+      "standardFailed": "Standart set şu anda yüklenemiyor. Özel emoji araması çalışmaya devam ediyor.",
+      "noStandard": "Henüz standart eşleşme yok. Yazmaya devam edin.",
+      "kindCustom": "özel",
+      "kindStandard": "standart",
+      "customOption": "{code}, özel",
+      "matched": "<q>{match}</q> ile eşleşti",
+      "byMeaning": "anlama göre eşleşti",
+      "enterToReact": "Tepki vermek için Enter'a basın veya tıklayın",
+      "idle": "Bir sözcük yazın veya bir öneriyi deneyin.",
+      "resultCount": "{workspace}: {custom} özel ve {standard} standart sonuç.",
+      "timingMeaning": "anlam · {ms} ms",
+      "timingDevice": "cihazda · {ms} ms",
+      "aside": "{workspace} özel emojileri",
+      "importTitle": "Slack ve Discord'dan içe aktarma: Pro ve Scale planları",
+      "imported": "{source} üzerinden içe aktarıldı",
+      "addedByAdmins": "Çalışma alanı yöneticileri ekledi",
+      "set": "Özel set",
+      "reactWith": "{code} ile tepki verin",
+      "inspectIdle": "Bir emojiyi bulan sözcükleri görmek için üzerine gelin.",
+      "tenants": "Müşteri alanları",
+      "scalePlan": "Scale planı",
+      "tenantsNote": "Her müşterinin kendi özel seti olan bir müşteri alanı vardır. Sunucunuz bu seti gizli anahtarla kaydeder.",
+      "presets": {
+        "shipIt": "yayına al",
+        "celebrate": "kutla",
+        "coffee": "kahve",
+        "gg": "gg"
+      },
+      "kinds": {
+        "acme": "Mühendislik",
+        "bloom": "Kafeler",
+        "guild": "Oyun topluluğu"
+      },
+      "texts": {
+        "acme": "v4.2 kullanıcıların %100'üne açılıyor. Son incelemeye kalan herkese teşekkürler.",
+        "bloom": "Yulaf sütü geldi, bademli kruvasanlar da fırından çıktı.",
+        "guild": "Baskın 9'da başlıyor. İksirleri getirin, bu sefer ejderhayı alacağız."
+      }
+    },
+    "photo": {
+      "region": "Demo: fotoğraf için emoji tepkileri",
+      "status": {
+        "scanning": "Fotoğraf okunuyor…",
+        "failed": "API kullanılamıyor",
+        "live": "Canlı · {seconds} sn",
+        "device": "Cihazda",
+        "example": "Kayıtlı API çıktısı"
+      },
+      "posts": {
+        "puppy": {
+          "label": "Corgi",
+          "alt": "Arka ayakları üzerinde duran, dili dışarıda bir corgi yavrusu"
+        },
+        "cake": {
+          "label": "Doğum günü pastası",
+          "alt": "Renkli şekerlemeler, yıldızlar ve yanan 3 rakamlı mumla süslenmiş doğum günü pastası"
+        },
+        "sunset": {
+          "label": "Sahilde gün batımı",
+          "alt": "Gün batımında sığ sudaki insanlar, biri iki kolunu havaya kaldırmış"
+        },
+        "pizza": {
+          "label": "Pizza",
+          "alt": "Ahşap tahta üzerinde dilimlenmiş mantarlı pizza"
+        },
+        "cat": {
+          "label": "Klavyede kedi",
+          "alt": "Bilgisayar klavyesine uzanmış uyuyan tekir kedi"
+        },
+        "hike": {
+          "label": "Dağ yürüyüşü",
+          "alt": "Sisli dağ vadilerinin üzerindeki kayalık sırtta bir yürüyüşçü"
+        }
+      },
+      "teammate": "Ekip arkadaşı",
+      "yourPhoto": "Fotoğrafınız",
+      "you": "Siz",
+      "now": "şimdi",
+      "tagCaption": "Açıklama",
+      "keywords": "Anahtar sözcükler:",
+      "describing": "Fotoğraf açıklanıyor",
+      "fallback": "Birkaç sözcükle anlatın, cihazdaki motor emoji seçsin.",
+      "describeLabel": "Fotoğrafı anlatın",
+      "describePlaceholder": "sahilde bir köpek",
+      "find": "Emoji bulun",
+      "suggested": "Tepki önerileri",
+      "reactWith": "{emoji} ile tepki verin",
+      "suggestedReply": "Yanıt önerisi",
+      "composer": "#{channel} kanalına mesaj",
+      "pick": "Fotoğraf seçin",
+      "credit": "Fotoğraf: <link>{author}</link>, CC0",
+      "stays": "Fotoğrafınız bu sayfada kalır.",
+      "drop": "Okumak için bırakın",
+      "try": "Kendi fotoğrafınızı deneyin",
+      "dropHint": "Buraya bir görsel bırakın veya dosya seçin",
+      "privacy": "<strong>Fotoğraflar asla saklanmaz.</strong> Fotoğrafınız tarayıcınızda 384 px boyutuna küçültülür, bellekte açıklanır, ardından silinir.",
+      "how1": "Görseli anlayan bir model açıklama, anahtar sözcükler ve yanıt yazar.",
+      "how2": "Emojisense, modelin emojilerini kendi aramasıyla sıralar.",
+      "engineFailed": "Cihazdaki motor yüklenemedi. Lütfen daha sonra tekrar deneyin.",
+      "errors": {
+        "unreadable": "Bu dosya okuyabildiğimiz bir fotoğraf değil. JPEG, PNG veya WebP deneyin.",
+        "unavailable": "Fotoğraf tepkileri şu anda kullanılamıyor.",
+        "tooLarge": "Bu fotoğraf gönderilemeyecek kadar büyük.",
+        "tooMany": "Aynı anda çok fazla fotoğraf gönderildi. Birkaç saniye bekleyip tekrar deneyin.",
+        "budget": "Demo, bu ayki fotoğraf bütçesini kullandı."
+      }
+    },
+    "assistant": {
+      "chat": "Asistan sohbeti",
+      "name": "Asistan",
+      "newChat": "Yeni sohbet",
+      "connected": "MCP sunucusuna bağlandı",
+      "toolCount": "3 araç",
+      "emptyTitle": "Ne yazalım?",
+      "emptyBody": "Emojisense bağlı. Bu nedenle emojiler gerçek bir aramadan geliyor.",
+      "thinking": "Düşünüyor",
+      "failed": "Emoji aracı yanıt vermedi. Bu yüzden şu anda emoji seçemiyorum. Biraz sonra tekrar deneyin.",
+      "prompts": "Örnek istemler",
+      "placeholder": "Çalıştırmak için bir istem seçin",
+      "note": "Hazır konuşma · canlı araç sonuçları",
+      "config": {
+        "kicker": "MCP sunucusu · stdio",
+        "title": "Her MCP istemcisine ekleyin",
+        "lead": "İstemci ayarlarınıza tek bir kayıt ekleyin. Çevrimdışı çalışır. Anlama göre sonuçlar için API anahtarı ekleyin.",
+        "copy": "Kopyalayın",
+        "copied": "Kopyalandı",
+        "copyFailed": "⌘C / Ctrl+C tuşlarına basın",
+        "tools": "Araçlar",
+        "summaries": {
+          "search_emoji": "Anahtar sözcükler, argo, adlar, filmler",
+          "emoji_for_text": "Yazdığınız cümle için emoji",
+          "suggest_reactions": "Okuyucunun vereceği tepkiler"
+        }
+      },
+      "tool": {
+        "failed": "Başarısız",
+        "used": "Kullanıldı",
+        "calling": "Çağırıyor",
+        "results": {
+          "one": ", {count} sonuç: ",
+          "other": ", {count} sonuç: "
+        },
+        "measured": "Tarayıcınızda ölçüldü",
+        "error": "hata",
+        "running": "Çalışıyor",
+        "request": "İstek",
+        "response": "Yanıt",
+        "view": "Yanıt görünümü",
+        "emoji": "Emoji",
+        "loadFailed": "Emoji verileri yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.",
+        "none": "Eşleşen emoji yok.",
+        "generic": "Kısa bir listeyi tamamlayan genel tepki",
+        "matched": "“{reason}” ile eşleşti"
+      },
+      "scenarios": {
+        "tweet": {
+          "prompt": "Koyu modumuzun çıkışı için bir tweet yaz",
+          "intro": "Aramadan gelen emojilerle bir taslak:",
+          "quote": "Koyu mod geldi {lead}\nGün batımından sonra gözlerinizi daha az yorar, pilinizi korur ve sistem ayarınıza uyar. Güncelleyin, koyu moda geçin {close}",
+          "moodier": "Biraz daha karanlık olsun mu? {from} yerine {to} kullanın."
+        },
+        "birthday": {
+          "prompt": "Ana için İspanyolca doğum günü mesajı",
+          "intro": "Ana için bir mesaj:",
+          "labels": "İngilizce aradım ve İspanyolca etiketler istedim. Bu yüzden {emoji}, “{label}” olarak geldi."
+        },
+        "react": {
+          "prompt": "“10k users. We did it!” mesajına tepki ver",
+          "none": "Bu mesajda tepki verilecek belirgin bir şey yok.",
+          "safe": "{emoji} ile tepki verin. Burada güvenli bir seçim.",
+          "matched": "{emoji} ile tepki verin. “{why}” ile eşleşti. İnsanlar bu emojiyi gerçekten tepki vermek için kullanıyor.",
+          "alsoWork": "Mesaj dizisinde kutlama varsa {second} ve {third} de olur.",
+          "skip": "{emoji} kullanmayın: koşu yarışı anlamındaki “10k” ile eşleşti."
+        },
+        "status": {
+          "prompt": "Durumumu ayarla: cuma günü dağıtım yapıyorum",
+          "intro": "İşte durumunuz:",
+          "matched": "{emoji}, “{why}” ile eşleşti.",
+          "runnerUp": "İkinci seçenek: {emoji}.",
+          "sideways": "İkinci seçenek: {emoji}. İşler ters giderse {other} de hazır."
+        }
+      }
+    }
+  }
+}

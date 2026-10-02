@@ -1,0 +1,1168 @@
+{
+  "meta": {
+    "homeTitle": "Emojisense: platform emoji untuk setiap aplikasi",
+    "skipLink": "Langsung ke konten",
+    "shareAlt": {
+      "home": "Emojisense: semua kebutuhan emoji, untuk setiap aplikasi. Pencarian seperti “jurassic park” dan “feliz cumpleaños” beserta hasil emoji teratasnya.",
+      "pricing": "Harga Emojisense: gratis untuk memulai, terjangkau saat berkembang. Paket Free, Solo, Pro, dan Scale beserta harga bulanannya."
+    },
+    "home": {
+      "description": "Platform emoji untuk setiap aplikasi: pencarian yang memahami bahasa gaul dan 11 bahasa, saran reaksi, foto ke emoji, emoji khusus, set emoji yang dihosting, dan analitik. Paket Free, inti sumber terbuka."
+    },
+    "pricing": {
+      "title": "Harga",
+      "description": "Harga Emojisense: platform emoji lengkap, gratis untuk memulai. Pencarian dan saran reaksi tersedia di setiap paket; bayar untuk volume, foto, emoji khusus, dan tim."
+    },
+    "waitlist": {
+      "title": "Daftar tunggu",
+      "description": "Bergabunglah dalam daftar tunggu Emojisense untuk Solo, Pro, atau Scale. Kami mengirim satu email saat paket Anda tersedia."
+    },
+    "about": {
+      "title": "Tentang",
+      "description": "Alasan Emojisense dibuat, cara kerjanya, sumber pendapatannya, dan perkembangannya saat ini."
+    }
+  },
+  "nav": {
+    "home": "Beranda Emojisense",
+    "main": "Utama",
+    "mainMobile": "Utama (seluler)",
+    "menu": "Menu",
+    "product": "Produk",
+    "features": "Fitur",
+    "integrations": "Integrasi",
+    "playground": "Uji coba",
+    "pricing": "Harga",
+    "docs": "Panduan",
+    "signIn": "Masuk",
+    "getKey": "Ambil kunci API",
+    "inEnglish": "(bahasa Inggris)"
+  },
+  "language": {
+    "label": "Bahasa",
+    "current": "Bahasa: {language}",
+    "englishOnly": "Dokumentasi, halaman uji coba, dan catatan perubahan saat ini tersedia dalam bahasa Inggris."
+  },
+  "footer": {
+    "label": "Penutup",
+    "tagline": "Platform emoji lengkap untuk setiap aplikasi.",
+    "ossTitle": "Inti sumber terbuka",
+    "ossBody": "Mesin, paket data, SDKs, dan server API bersumber terbuka. Host sendiri atau gunakan layanan kami.",
+    "ossMeta": "paket data {pack} · Emoji {emojiVersion} · {count} emoji · {languages} bahasa",
+    "columns": {
+      "product": "Produk",
+      "developers": "Pengembang",
+      "company": "Perusahaan",
+      "legal": "Hukum"
+    },
+    "links": {
+      "useCases": "Penggunaan",
+      "features": "Fitur",
+      "integrations": "Integrasi",
+      "playground": "Uji coba",
+      "pricing": "Harga",
+      "waitlist": "Daftar tunggu",
+      "docs": "Panduan",
+      "quickstart": "Mulai cepat",
+      "httpApi": "HTTP API",
+      "selfHost": "Host sendiri",
+      "dataFlows": "Alur data",
+      "about": "Tentang",
+      "changelog": "Perubahan",
+      "reportIssue": "Laporkan masalah",
+      "signIn": "Masuk",
+      "terms": "Syarat",
+      "privacy": "Privasi",
+      "acceptableUse": "Penggunaan wajar",
+      "subprocessors": "Subprosesor"
+    },
+    "copyright": "© {year} Emojisense",
+    "credits": "Data emoji dari <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) dan <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode License v3). Emoji ditampilkan dengan font sistem Anda."
+  },
+  "home": {
+    "hero": {
+      "kicker": "Langsung · di browser Anda",
+      "title": "Semua kebutuhan emoji, untuk setiap aplikasi di dunia.",
+      "lead": "Pencarian yang memahami bahasa gaul, film, perasaan, dan {languages} bahasa. Saran reaksi, foto ke emoji, emoji khusus, tampilan seragam di setiap perangkat, dan analitik. Satu platform, terhubung ke aplikasi yang sudah Anda miliki.",
+      "ctaKey": "Dapatkan kunci API gratis",
+      "ctaDocs": "Baca dokumentasi",
+      "installNote": "Paket Free · tanpa kartu · inti MIT"
+    },
+    "logos": {
+      "worksWith": "Dapat digunakan dengan"
+    },
+    "useCases": {
+      "kicker": "Penggunaan",
+      "title": "Satu platform, di mana pun orang memakai emoji.",
+      "lead": "Lima aplikasi kecil, semuanya memakai layanan nyata. Klik dan jelajahi — semuanya aktif."
+    },
+    "compare": {
+      "kicker": "Mengapa ini penting",
+      "title": "Pemilih mencari nama. Orang mengetik perasaan.",
+      "lead": "Kebanyakan pemilih emoji hanya mencari nama resmi seperti “rocket” atau “goat”. Berikut data emoji yang sama, dicari dengan kedua cara.",
+      "colQuery": "Yang diketik",
+      "colPicker": "Pemilih biasa",
+      "colUs": "Emojisense",
+      "noResults": "Tidak ada hasil",
+      "kinds": {
+        "intent": "Maksud",
+        "meaning": "Makna",
+        "typo": "Salah ketik",
+        "film": "Film",
+        "feeling": "Perasaan",
+        "idiom": "Ungkapan"
+      }
+    },
+    "developers": {
+      "kicker": "Untuk pengembang",
+      "title": "Pasang dalam hitungan menit, bukan sprint.",
+      "lead": "Satu SDK untuk pencarian dan pemilih, satu API untuk reaksi, foto, dan emoji khusus. Integrasi tersedia untuk teknologi yang sudah Anda gunakan.",
+      "checks": {
+        "picker": "Tetap memakai pemilih dan desain Anda",
+        "offline": "Bekerja luring sejak ketukan pertama",
+        "mit": "Inti berlisensi MIT untuk Anda host sendiri"
+      },
+      "cta": "Baca panduan mulai cepat",
+      "anyFramework": "Semua framework"
+    },
+    "pricing": {
+      "kicker": "Harga",
+      "title": "Gratis untuk memulai. Terjangkau saat berkembang.",
+      "lead": "Pencarian dan saran reaksi tersedia di setiap paket. Bayar untuk volume, foto, emoji khusus, dan fitur tim."
+    },
+    "faq": {
+      "kicker": "FAQ",
+      "title": "Jawaban untuk pertanyaan Anda.",
+      "items": {
+        "what": {
+          "q": "Apa itu Emojisense?",
+          "a": "Satu platform untuk semua kebutuhan emoji produk Anda: pencarian yang memahami orang dalam 11 bahasa, saran reaksi, foto ke emoji, emoji khusus, set emoji yang dihosting, analitik, dan emoji per pelanggan untuk platform. Terhubung ke aplikasi dan pemilih yang sudah Anda miliki."
+        },
+        "server": {
+          "q": "Apakah saya perlu server?",
+          "a": "Tidak. Mesin dan kamus berjalan di browser atau aplikasi. API yang dihosting menambahkan pencarian makna untuk kueri yang tidak umum. Anda juga dapat host sendiri di akun Cloudflare Anda."
+        },
+        "pickers": {
+          "q": "Pemilih dan framework apa yang didukung?",
+          "a": "Saat ini React dan pemilih Frimousse, serta komponen web untuk Vue, Svelte, Angular, dan HTML biasa. Juga ekstensi editor untuk Tiptap dan Lexical, SDK Swift, ekstensi Chrome, Raycast, dan server MCP untuk aplikasi AI."
+        },
+        "limit": {
+          "q": "Apa yang terjadi saat batas paket tercapai?",
+          "a": "Pengguna Anda tetap dapat memakai layanan. Pencarian populer tetap mendapat jawaban cerdas. Kamus di perangkat menangani pencarian lainnya sampai bulan berikutnya."
+        },
+        "where": {
+          "q": "Di mana layanan ini berjalan?",
+          "a": "Mesin berjalan di perangkat pengguna Anda. API berjalan di jaringan Cloudflare di lebih dari 300 kota. Setiap pencarian dijawab di dekat orang yang mengetik. Tidak ada satu wilayah pusat yang jauh."
+        },
+        "privacy": {
+          "q": "Apa yang Anda ketahui tentang pengguna saya?",
+          "a": "Tidak ada informasi pribadi. Kami tidak pernah menyimpan siapa yang mencari, dari aplikasi mana, atau isi pesan mereka. Data penggunaan dan analitik Anda tetap di akun Anda."
+        },
+        "openSource": {
+          "q": "Apakah sumbernya terbuka?",
+          "a": "Ya. Mesin, SDKs, paket data, dan server API berlisensi MIT. Layanan yang dihosting menambahkan pembaruan kamus harian, analitik, dan emoji khusus."
+        }
+      }
+    },
+    "final": {
+      "title": "Emoji beres. Di mana saja.",
+      "text": "Berikan pengguna Anda emoji yang bekerja dengan baik — dalam setiap bahasa, di setiap perangkat. Gratis untuk memulai, siap dalam hitungan menit.",
+      "ctaKey": "Dapatkan kunci API gratis",
+      "ctaGithub": "Bintangi di GitHub"
+    }
+  },
+  "features": {
+    "kicker": "Fitur",
+    "title": "Semua kebutuhan emoji, di satu tempat.",
+    "lead": "Pencarian, reaksi, foto, emoji khusus, set emoji seragam, analitik, dan tenant — satu SDK, satu API, satu paket. Untuk satu aplikasi atau seribu pelanggan.",
+    "meaning": {
+      "title": "Memahami maksud orang",
+      "body": "Bahasa gaul, film, ungkapan, dan perasaan sehari-hari — bukan hanya nama resmi.",
+      "examples": "Contoh dari mesin nyata"
+    },
+    "typos": {
+      "title": "Memahami salah ketik",
+      "body": "Orang mengetik cepat. Pencarian mengikuti."
+    },
+    "languages": {
+      "title": "{count} bahasa, sesuai cara orang mengetik",
+      "body": "Aksara asli dan ejaan Latin: Hinglish, pinyin, Arabizi."
+    },
+    "culture": {
+      "title": "Mengikuti budaya",
+      "tag": "Baru",
+      "body": "Makna emoji bergantung pada tempat dan waktu. Dengan bantuan AI, editor menambahkan emoji yang sesuai saat ini — melengkapi jawaban, tanpa menggantikannya.",
+      "more": "Lihat cara kerjanya",
+      "examples": "Contoh tambahan budaya"
+    },
+    "instant": {
+      "title": "Instan, bahkan saat luring",
+      "body": "Sebagian besar pencarian tetap di perangkat.",
+      "metric": "0,4 ms",
+      "metricLabel": "p95 per ketukan, terukur"
+    },
+    "reactions": {
+      "title": "Saran reaksi",
+      "body": "Kirim pesan, dapatkan reaksi yang biasa orang gunakan."
+    },
+    "photo": {
+      "title": "Foto ke emoji",
+      "tag": "Beta",
+      "body": "Anak anjing mendapat 🐶 dan 🥹. Foto tidak pernah disimpan."
+    },
+    "custom": {
+      "title": "Emoji khusus milik Anda",
+      "body": "Unggah satu set atau impor dari Slack dan Discord. Emoji khusus dicari bersama emoji standar, dengan alias Anda sendiri."
+    },
+    "sets": {
+      "title": "Set emoji yang dihosting",
+      "body": "Twemoji, Noto, atau Fluent, disajikan dari edge — tampil seragam di setiap perangkat. Termasuk bendera di Windows.",
+      "windowsToday": "Windows saat ini",
+      "withSet": "dengan set yang dihosting"
+    },
+    "analytics": {
+      "title": "Analitik",
+      "body": "Lihat apa yang orang cari — dan apa yang tidak mereka temukan.",
+      "dashboard": "Contoh dasbor",
+      "noMatch": "Tidak cocok:",
+      "addCustom": "tambahkan emoji khusus"
+    },
+    "teams": {
+      "title": "Tim dan lingkungan",
+      "body": "Kunci terpisah untuk pengembangan, staging, dan produksi. Undang tim Anda.",
+      "development": "Pengembangan",
+      "staging": "Staging",
+      "production": "Produksi"
+    },
+    "tenants": {
+      "title": "Tenant dan webhook",
+      "body": "Membangun platform? Berikan setiap pelanggan set emoji sendiri, yang dikelola melalui API.",
+      "root": "Platform Anda"
+    },
+    "privacy": {
+      "title": "Privasi sejak awal",
+      "ids": "Tanpa ID pengguna atau alamat IP",
+      "text": "Tidak pernah menyimpan teks pesan",
+      "photos": "Foto diproses di memori, tidak pernah disimpan",
+      "trends": "Hanya tren pencarian anonim yang digabungkan"
+    },
+    "oss": {
+      "title": "Inti sumber terbuka",
+      "body": "Mesin, SDKs, paket data, dan server API berlisensi MIT. Jalankan di akun Cloudflare Anda sendiri, atau biarkan kami menghostingnya.",
+      "parts": "mesin · SDKs · data · server API"
+    }
+  },
+  "culture": {
+    "kicker": "Budaya",
+    "tag": "Baru",
+    "title": "Makna emoji mengikuti budaya. Budaya terus berubah.",
+    "lead": "Dengan bantuan AI, editor kami memetakan makna emoji lintas budaya dan waktu, lalu memperbaruinya. Hasilnya melengkapi jawaban, tanpa menggantikannya.",
+    "steps": {
+      "ai": {
+        "title": "AI mengusulkan",
+        "body": "AI membuat rancangan asosiasi dari kalender hari raya, acara besar, dan bahasa gaul baru."
+      },
+      "editor": {
+        "title": "Editor memutuskan",
+        "body": "Manusia meninjau setiap usulan. Semuanya perlu persetujuan sebelum ditampilkan."
+      },
+      "search": {
+        "title": "Pencarian menambahkan",
+        "body": "Emoji yang disetujui tampil setelah jawaban teratas, lalu berhenti tampil saat waktunya berakhir."
+      }
+    },
+    "model": {
+      "today": "Hari ini",
+      "everywhere": "Di mana saja",
+      "everywhereLower": "di mana saja",
+      "lasting": "Tetap · {where}",
+      "seasonal": "Musiman",
+      "event": "Acara",
+      "fromCalendar": "Dari kalender, disetujui editor",
+      "proposedByAi": "Diusulkan AI, disetujui editor",
+      "addedByEditor": "Ditambahkan editor"
+    },
+    "lens": {
+      "tabs": "Contoh pencarian",
+      "switch": "Budaya",
+      "topAnswer": "Jawaban teratas",
+      "addedByCulture": "Tambahan budaya:",
+      "resultsFor": "Hasil untuk “{query}”",
+      "off": "Budaya nonaktif: urutan asli dari mesin, tanpa perubahan.",
+      "nothingSeasonal": "Tidak ada tambahan musiman pada {day}, jadi “{query}” tetap mendapat jawaban biasa.",
+      "noAdditions": "Tidak ada tambahan budaya di sini.",
+      "sameEverywhere": "Jawaban sama di mana saja, sepanjang tahun.",
+      "where": "Tempat",
+      "when": "Waktu",
+      "whereLegend": "Tempat pencarian dilakukan",
+      "whenLegend": "Waktu pencarian dilakukan",
+      "relevantNow": "Relevan saat ini",
+      "today": "Hari ini · {day}",
+      "liveNow": "Aktif sekarang",
+      "calendarEmpty": "Tidak ada tambahan musiman dalam beberapa bulan mendatang.",
+      "calendarNote": "Pilihan musiman aktif sesuai kalender dan berhenti tampil saat waktunya berakhir."
+    }
+  },
+  "edge": {
+    "kicker": "Edge global",
+    "title": "Cepat di Lagos, Lima, dan Lahore.",
+    "lead": "Emojisense berjalan di jaringan Cloudflare di lebih dari 300 kota. Setiap pencarian dijawab di kota terdekat dari pengguna Anda, bukan di satu wilayah yang jauh.",
+    "pause": "Jeda animasi",
+    "play": "Putar animasi",
+    "caption": "Pencarian nyata dan emoji yang dihasilkan mesin kami. Peta ini adalah ilustrasi; titik menunjukkan kota besar, bukan lokasi pusat data yang tepat.",
+    "stats": {
+      "cities": "kota di jaringan Cloudflare. 95% pengguna internet berada dalam jarak akses 50 ms dari salah satunya.",
+      "device": "untuk jawaban di perangkat, pada setiap ketukan. p95 terukur: 0,4 ms.",
+      "ai": "untuk pencarian makna AI di edge. p50 terukur: 52 ms.",
+      "zero": "server, wilayah, atau GPU yang perlu Anda siapkan. Cara kerjanya sama di mana saja."
+    }
+  },
+  "network": {
+    "kicker": "Membaik saat digunakan",
+    "title": "Semakin banyak pencarian, semakin cerdas hasilnya.",
+    "lead": "Pencarian umum dijawab seketika, bahasa gaul baru dipelajari setiap malam, dan pencarian tetap cerdas saat batas paket tercapai.",
+    "ladderTitle": "Cara pencarian dijawab",
+    "limitSwitch": "Batas paket tercapai",
+    "nearestCity": "kota terdekat",
+    "layers": {
+      "device": {
+        "title": "Di perangkat",
+        "body": "Nama, bahasa gaul, dan salah ketik, langsung dari kamus bawaan. Bekerja luring sejak ketukan pertama."
+      },
+      "popular": {
+        "title": "Pencarian populer, disiapkan lebih awal",
+        "body": "Setiap malam, jawaban cerdas disiapkan untuk pencarian yang paling sering digunakan, lalu ditempatkan dekat pengguna Anda."
+      },
+      "recent": {
+        "title": "Jawaban terbaru, disimpan dekat Anda",
+        "body": "Setelah pencarian baru dipahami, jawabannya disimpan di kota terdekat agar langsung tersedia saat dicari lagi."
+      },
+      "ai": {
+        "title": "Pencarian makna AI",
+        "body": "Ungkapan baru dipahami berdasarkan makna, di edge, dalam sekitar 50 ms."
+      }
+    },
+    "answers": "✓ menjawab",
+    "stillAnswers": "✓ tetap menjawab",
+    "untilNextMonth": "⏸ sampai bulan depan",
+    "note": "Setelah batas paket tercapai, pengguna Anda tetap mendapat jawaban dari perangkat, pencarian populer, dan jawaban terbaru. Hanya ungkapan baru yang menunggu sampai bulan depan. Sementara itu, perangkat menjawabnya.",
+    "loop": {
+      "title": "Lebih baik setiap hari",
+      "search": "Orang mencari",
+      "learn": "Bahasa gaul baru dipelajari",
+      "ready": "Lebih banyak jawaban siap",
+      "faster": "Hasil lebih cepat dan cerdas",
+      "quote": "Pencarian populer seperti “congrats on the launch” dijawab seketika, di mana pun di dunia.",
+      "privacy": "Kami hanya belajar dari teks pencarian, bukan dari siapa yang mencari atau aplikasi yang mereka gunakan."
+    }
+  },
+  "integrations": {
+    "kicker": "Integrasi",
+    "title": "Semua kebutuhan emoji, di mana pun Anda membangun.",
+    "lead": "Pencarian, reaksi, foto, emoji khusus, dan set emoji yang dihosting. Gunakan seluruh platform dengan teknologi yang sudah Anda pakai.",
+    "groups": {
+      "frameworks": "Framework",
+      "editors": "Editor dan pemilih",
+      "native": "Native dan aplikasi",
+      "servers": "AI dan server"
+    },
+    "items": {
+      "react": {
+        "name": "Hook dan pemilih React",
+        "blurb": "Pemilih berbasis Frimousse yang siap dipasang, atau hook untuk antarmuka Anda sendiri."
+      },
+      "webComponent": {
+        "name": "Komponen web",
+        "blurb": "Pemilih lengkap dalam satu tag, untuk semua framework atau tanpa framework."
+      },
+      "engine": {
+        "name": "Mesin JavaScript",
+        "blurb": "Mesin mandiri: browser, Node, Deno, Bun, dan Workers."
+      },
+      "tiptap": {
+        "name": "Ekstensi Tiptap",
+        "blurb": "Pelengkapan otomatis dengan titik dua. Ketik <code>:fire:</code>, dapatkan <emoji>🔥</emoji>."
+      },
+      "lexical": {
+        "name": "Plugin Lexical",
+        "blurb": "Pelengkapan otomatis dengan titik dua sebagai plugin saran saat mengetik untuk React."
+      },
+      "emojiMart": {
+        "name": "Adaptor emoji-mart",
+        "blurb": "Tetap gunakan pemilih emoji-mart. Tambahkan pencarian yang memahami orang."
+      },
+      "swift": {
+        "name": "Paket Swift",
+        "blurb": "Mesin yang sama, berjalan secara native di iOS 16+ dan macOS 13+."
+      },
+      "chrome": {
+        "name": "Ekstensi Chrome",
+        "blurb": "Pemilih emoji untuk setiap kolom teks, cukup dengan satu pintasan."
+      },
+      "raycast": {
+        "name": "Ekstensi Raycast",
+        "blurb": "Cari emoji berdasarkan makna dari peluncur aplikasi Anda. Bekerja luring."
+      },
+      "mcp": {
+        "name": "Server MCP",
+        "blurb": "Pencarian emoji dan reaksi untuk Claude dan asisten AI lainnya."
+      },
+      "http": {
+        "name": "HTTP API",
+        "blurb": "Pencarian, reaksi, dan foto ke emoji, dari bahasa apa pun."
+      },
+      "selfHosted": {
+        "name": "API untuk host sendiri",
+        "blurb": "Seluruh API dalam satu Worker di akun Cloudflare Anda sendiri."
+      }
+    },
+    "fromSource": "dari kode sumber",
+    "docsSuffix": ": dokumentasi",
+    "foot": "Punya emoji khusus di Slack atau Discord? Bawa ke sini dengan Pro.",
+    "seePlans": "Lihat paket",
+    "allDocs": "Semua dokumentasi"
+  },
+  "plans": {
+    "blurbs": {
+      "free": "Untuk proyek sampingan dan mencoba layanan.",
+      "solo": "Untuk satu aplikasi dengan pengguna nyata.",
+      "pro": "Untuk tim yang merilis beberapa aplikasi.",
+      "scale": "Untuk platform dengan banyak pelanggan."
+    },
+    "recommended": "Disarankan",
+    "billingPeriod": "Periode tagihan",
+    "monthly": "Bulanan",
+    "yearly": "Tahunan",
+    "savePercent": "−{percent}%",
+    "yearlyNote": "Tagihan tahunan tersedia untuk {plans}. Paket lainnya ditagih bulanan.",
+    "perMonth": "/ bulan",
+    "pricePerMonth": "{price} / bulan",
+    "priceAMonth": "{price} per bulan",
+    "orYearly": "atau {price} per tahun, hemat {savings}",
+    "billedYearly": "Ditagih {price} per tahun, hemat {savings}",
+    "noCard": "Tanpa kartu",
+    "billedMonthly": "Ditagih bulanan",
+    "everythingIn": "Semua di {plan}, ditambah",
+    "includes": "Termasuk",
+    "getFreeKey": "Dapatkan kunci gratis",
+    "joinWaitlist": "Masuk daftar tunggu {plan}",
+    "fine": "<strong>Pencarian tetap bekerja saat batas tercapai.</strong> Setelah jatah panggilan AI bulanan habis, jawaban di perangkat, jawaban siap pakai, dan jawaban dalam cache tetap tersedia sampai bulan berikutnya. <link>Apa yang dihitung sebagai panggilan?</link>",
+    "unlimited": "Tanpa batas",
+    "groups": {
+      "core": "Di setiap paket",
+      "usage": "Penggunaan",
+      "emoji": "Emoji khusus dan set",
+      "teams": "Wawasan dan tim",
+      "platform": "Untuk platform",
+      "support": "Dukungan"
+    },
+    "features": {
+      "search": {
+        "label": "Pencarian makna dan saran reaksi",
+        "hint": "Bahasa gaul, film, perasaan, dan salah ketik, dalam setiap bahasa yang didukung"
+      },
+      "sdks": {
+        "label": "Semua SDKs dan integrasi",
+        "hint": "React, komponen web, editor, Swift, MCP. Tanpa lencana “didukung oleh”"
+      },
+      "onDevice": {
+        "label": "Jawaban di perangkat dan siap pakai",
+        "hint": "Tidak pernah dihitung sebagai panggilan",
+        "unit": "jawaban di perangkat"
+      },
+      "semanticCalls": {
+        "label": "Panggilan AI per bulan",
+        "hint": "Pencarian makna dan saran reaksi yang mencapai API edge",
+        "unit": "panggilan AI per bulan"
+      },
+      "photos": {
+        "label": "Foto ke emoji per bulan",
+        "hint": "Foto diklasifikasikan menjadi emoji",
+        "unit": "foto ke emoji per bulan"
+      },
+      "overLimit": {
+        "label": "Tetap bekerja setelah batas tercapai",
+        "hint": "Layanan tetap berjalan; perangkat menjawab sampai bulan berikutnya"
+      },
+      "customEmoji": {
+        "label": "Emoji khusus",
+        "hint": "Satu set, dicari bersama emoji standar",
+        "unit": "emoji khusus"
+      },
+      "emojiImport": {
+        "label": "Impor Slack dan Discord",
+        "hint": "Bawa set emoji khusus yang sudah Anda miliki"
+      },
+      "hostedSets": {
+        "label": "Set emoji yang dihosting",
+        "hint": "Twemoji, Noto, dan Fluent, tampilan seragam di setiap perangkat"
+      },
+      "analytics": {
+        "label": "Riwayat analitik",
+        "hint": "Apa yang orang cari, dan apa yang tidak mereka temukan",
+        "unit": "analitik"
+      },
+      "apps": {
+        "label": "Aplikasi atau lingkungan",
+        "hint": "Kunci terpisah untuk pengembangan, staging, dan produksi",
+        "unit": {
+          "other": "aplikasi atau lingkungan"
+        }
+      },
+      "team": {
+        "label": "Anggota tim",
+        "hint": "Undang tim Anda ke satu akun"
+      },
+      "tenants": {
+        "label": "Tenant",
+        "hint": "Satu set emoji khusus per pelanggan, dikelola melalui API"
+      },
+      "webhooks": {
+        "label": "Webhook",
+        "hint": "Dapatkan kabar perubahan tenant dan emoji"
+      },
+      "communitySupport": {
+        "label": "Dukungan komunitas",
+        "hint": "GitHub Discussions dan dokumentasi"
+      },
+      "prioritySupport": {
+        "label": "Dukungan prioritas"
+      }
+    }
+  },
+  "pricing": {
+    "hero": {
+      "kicker": "Harga",
+      "title": "Gratis untuk memulai. <line>Terjangkau saat berkembang.</line>",
+      "lead": "Platform emoji lengkap untuk setiap aplikasi. Pencarian dan saran reaksi tersedia di setiap paket — bayar hanya untuk volume, foto, emoji khusus, dan fitur tim.",
+      "assurances": {
+        "card": "Tanpa kartu untuk paket gratis",
+        "failure": "Layanan tetap berjalan saat batas tercapai",
+        "mit": "Inti berlisensi MIT"
+      }
+    },
+    "compare": {
+      "kicker": "Bandingkan paket",
+      "title": "Bandingkan setiap fitur.",
+      "lead": "Setiap paket mendapat seluruh platform emoji. Paket lebih tinggi menambahkan volume, emoji khusus, tim, dan tenant.",
+      "caption": "Fitur dan batas setiap paket Emojisense",
+      "included": "Termasuk",
+      "notIncluded": "Tidak termasuk",
+      "join": "Masuk daftar tunggu<hidden> {plan}</hidden>"
+    },
+    "calls": {
+      "kicker": "Cara hitung penggunaan",
+      "title": "Apa yang dihitung sebagai panggilan?",
+      "lead": "Sebagian besar pencarian emoji tidak pernah mencapai server kami. Perangkat dan jawaban siap pakai menanganinya, gratis dan tanpa batas di setiap paket. Panggilan hanya dihitung saat AI edge bekerja.",
+      "flowLabel": "Cara pencarian dijawab",
+      "nearestCity": "kota terdekat",
+      "layers": {
+        "device": {
+          "title": "Di perangkat",
+          "body": "Nama, bahasa gaul, salah ketik, dan {languages} bahasa, dari kamus di aplikasi Anda. Bekerja luring."
+        },
+        "ready": {
+          "title": "Jawaban siap pakai",
+          "body": "Pencarian populer dijawab lebih awal dan disajikan sebagai berkas biasa, dekat pengguna Anda."
+        },
+        "edge": {
+          "title": "AI edge",
+          "body": "Ungkapan baru dan saran reaksi dikirim ke API edge, yang memahaminya berdasarkan makna."
+        }
+      },
+      "countedStatus": "Dihitung sebagai panggilan AI",
+      "freeStatus": "Gratis · tanpa batas",
+      "countedTitle": "Yang dihitung dalam paket Anda",
+      "countedItem": "<strong>{title}.</strong> {body}",
+      "counted": {
+        "calls": {
+          "title": "Panggilan AI",
+          "body": "Pencarian makna atau saran reaksi yang mencapai API edge. Satu permintaan, satu panggilan."
+        },
+        "photos": {
+          "title": "Foto",
+          "body": "Setiap foto yang diubah menjadi emoji. Foto diproses di memori dan tidak pernah disimpan."
+        }
+      },
+      "neverCounted": "Tidak pernah dihitung",
+      "free": {
+        "device": "Jawaban di perangkat",
+        "ready": "Jawaban siap pakai untuk pencarian populer",
+        "downloads": "Unduhan kamus dan paket data",
+        "failed": "Permintaan yang gagal di pihak kami"
+      },
+      "limitTitle": "Saat batas tercapai",
+      "scale": {
+        "start": "tanggal 1",
+        "limit": "batas Anda",
+        "next": "bulan depan"
+      },
+      "atLimit": {
+        "device": "Jawaban di perangkat",
+        "ready": "Jawaban siap pakai",
+        "cached": "Jawaban dalam cache di edge",
+        "new": "Panggilan AI baru dan foto",
+        "keepAnswering": "tetap menjawab",
+        "notCounted": "tetap disajikan, tidak dihitung",
+        "resume": "aktif lagi tanggal 1"
+      },
+      "foot": "Tanpa galat dan pemilih tetap bekerja. API menjawab dengan <code>overLimit: true</code>, lalu SDK beralih ke perangkat secara otomatis. Batas direset setiap bulan (UTC), tanpa batas harian."
+    },
+    "beyond": {
+      "title": "Host sendiri dan paket khusus",
+      "oss": {
+        "kicker": "Sumber terbuka",
+        "title": "Ingin menjalankannya sendiri?",
+        "body": "Inti Emojisense berlisensi MIT. Jalankan di akun Cloudflare Anda sendiri tanpa biaya lisensi, lalu bayar Cloudflare langsung. Paket yang dihosting menambahkan pembaruan kamus harian, analitik, set emoji yang dihosting, dan bebas pengelolaan operasional.",
+        "partsLabel": "Komponen berlisensi MIT",
+        "parts": {
+          "engine": "Mesin",
+          "sdks": "SDKs",
+          "pack": "Paket data",
+          "api": "Server API",
+          "dashboard": "Dasbor"
+        },
+        "guide": "Panduan host sendiri",
+        "github": "Lihat di GitHub"
+      },
+      "custom": {
+        "kicker": "Khusus",
+        "title": "Perlu lebih dari {plan}?",
+        "body": "Perlu batas lebih tinggi, banyak tenant, atau pengaturan di luar paket? Ceritakan apa yang sedang Anda bangun.",
+        "cta": "Mulai percakapan"
+      }
+    },
+    "faq": {
+      "kicker": "FAQ",
+      "title": "Pertanyaan tentang harga.",
+      "lead": "Ada yang belum dijawab? <link>Tanyakan di GitHub Discussions</link>.",
+      "items": {
+        "free": {
+          "q": "Apakah paket gratis benar-benar gratis?",
+          "a": "Ya, dan Anda tidak perlu kartu. Termasuk {calls} panggilan AI dan {photos} klasifikasi foto per bulan, semua SDK dan integrasi, serta jawaban di perangkat tanpa batas. Semua paket tanpa lencana “didukung oleh”."
+        },
+        "call": {
+          "q": "Apa yang dihitung sebagai panggilan?",
+          "a": "Pencarian makna atau saran reaksi yang mencapai API edge kami. Jawaban dari perangkat dan jawaban siap pakai untuk pencarian populer gratis dan tanpa batas. Foto ke emoji memiliki hitungan bulanan tersendiri.",
+          "link": "Lihat cara pencarian dijawab"
+        },
+        "limit": {
+          "q": "Apa yang terjadi saat batas tercapai?",
+          "a": "Pengguna Anda tetap dapat memakai layanan. API terus menjawab dengan overLimit: true. SDK otomatis beralih ke kamus di perangkat dan jawaban siap pakai. Jawaban dalam cache tetap disajikan. Panggilan AI baru dan foto aktif lagi pada tanggal 1 bulan berikutnya."
+        },
+        "failed": {
+          "q": "Apakah permintaan yang gagal dihitung?",
+          "a": "Tidak. Jika AI kami tidak dapat menjawab, pengguna Anda tetap mendapat hasil dari kamus. Permintaan tersebut tidak dihitung."
+        },
+        "reset": {
+          "q": "Kapan batas direset?",
+          "a": "Pada hari pertama setiap bulan, UTC. Tidak ada batas harian."
+        },
+        "yearly": {
+          "q": "Apakah ada harga tahunan?",
+          "none": "Belum. Saat ini semua paket ditagih bulanan.",
+          "item": "{plan} seharga {yearly} per tahun, alih-alih {monthly}",
+          "a": "{items}. Paket lainnya ditagih bulanan."
+        },
+        "pay": {
+          "q": "Kapan saya dapat membayar paket?",
+          "a": "Paket berbayar segera tersedia. Masuk daftar tunggu dan kami mengirim satu email saat paket Anda tersedia. Paket gratis dapat digunakan sekarang.",
+          "link": "Masuk daftar tunggu"
+        },
+        "selfHost": {
+          "q": "Apakah saya dapat host sendiri?",
+          "a": "Ya. Mesin, SDKs, paket data, server API, dan dasbor berlisensi MIT. Jalankan di akun Cloudflare Anda sendiri dan bayar Cloudflare langsung. Paket data terbuka diperbarui setiap tiga bulan; paket yang dihosting mendapat pembaruan kamus harian.",
+          "link": "Baca panduan host sendiri"
+        },
+        "store": {
+          "q": "Data pengguna apa yang Anda simpan?",
+          "a": "Tidak ada informasi pribadi. Kami tidak pernah menyimpan siapa yang mencari, alamat IP, teks pesan, atau gambar. Foto diproses di memori.",
+          "link": "Baca catatan privasi"
+        }
+      }
+    },
+    "final": {
+      "title": "Mulai gratis. Berkembang saat Anda siap.",
+      "text": "Dapatkan kunci dalam satu menit dan gunakan paket gratis selama masih sesuai kebutuhan.",
+      "ctaKey": "Dapatkan kunci API gratis",
+      "ctaDocs": "Baca dokumentasi"
+    }
+  },
+  "waitlist": {
+    "hero": {
+      "title": "Jadi yang pertama saat paket berbayar tersedia.",
+      "lead": "Paket berbayar belum dijual. Tinggalkan email Anda dan kami mengirim satu email saat paket Anda tersedia. Paket gratis dapat digunakan sekarang."
+    },
+    "formLabel": "Formulir daftar tunggu",
+    "plansTitle": "Sekilas paket berbayar",
+    "compareAll": "Bandingkan semua paket",
+    "startFree": "Mulai gratis, tanpa daftar tunggu",
+    "returned": {
+      "okTitle": "Anda masuk daftar tunggu",
+      "okText": "Kami akan mengirim satu email saat paket Anda tersedia.",
+      "errorTitle": "Kami gagal menambahkan Anda",
+      "errorText": "Periksa alamat email Anda, tunggu satu menit, lalu kirim formulir lagi."
+    },
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "you@company.com",
+      "emailHint": "Kami hanya memakainya untuk memberi tahu saat paket tersedia.",
+      "plan": "Paket",
+      "submit": "Masuk daftar tunggu",
+      "submitting": "Mendaftar…",
+      "fine": "Satu email saat paket Anda tersedia. Tanpa buletin. <link>Kebijakan privasi</link>",
+      "alreadyJoined": "Anda sudah masuk daftar tunggu",
+      "willEmail": "Kami akan mengirim satu email ke <strong>{email}</strong> saat {plan} tersedia.",
+      "untilThen": "Sementara itu, paket gratis menyediakan semua yang Anda perlukan untuk memulai. <link>Baca panduan mulai cepat</link>.",
+      "errorJoined": "{title}. {text}"
+    },
+    "errors": {
+      "empty": "Masukkan alamat email Anda.",
+      "invalid": "Masukkan alamat email yang valid, seperti name@example.com.",
+      "rejected": "Daftar tunggu tidak menerima alamat ini. Periksa alamatnya, lalu coba lagi.",
+      "rateLimited": "Terlalu banyak percobaan dari jaringan ini. Tunggu satu menit, lalu coba lagi.",
+      "server": "Daftar tunggu tidak tersedia saat ini. Coba lagi dalam beberapa menit.",
+      "network": "Kami gagal mengakses daftar tunggu. Periksa koneksi Anda, lalu coba lagi."
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "Tentang",
+      "title": "Emoji, sesuai maksud orang.",
+      "lead": "Emojisense adalah platform emoji lengkap untuk setiap aplikasi: pencarian, reaksi, foto ke emoji, emoji khusus, dan lainnya, dalam setiap bahasa."
+    },
+    "why": {
+      "title": "Alasan kami membuatnya",
+      "body": "Kebanyakan pemilih emoji mencocokkan nama resmi emoji. Orang tidak mengetik nama. Mereka mengetik film, perasaan, ungkapan, atau salah ketik. Pencarian nama tidak menemukan hasil. Kami membuat pencarian yang memahaminya, lalu melengkapi semua kebutuhan emoji dalam sebuah produk.",
+      "tableLabel": "Perbandingan pencarian nama dengan Emojisense",
+      "colQuery": "Yang orang ketik",
+      "colName": "Pencarian nama",
+      "colUs": "Emojisense",
+      "nothing": "tidak ada"
+    },
+    "how": {
+      "title": "Cara kerjanya",
+      "body": "Kamus kecil berjalan di perangkat dan menjawab sebagian besar pencarian dalam waktu kurang dari satu milidetik. Pencarian umum memiliki jawaban siap pakai dalam berkas statis. Hanya pencarian yang tidak umum dikirim ke API kami di jaringan Cloudflare. API mencari emoji berdasarkan makna dan menjawab dekat orang yang mengetik."
+    },
+    "principles": {
+      "title": "Prinsip kami",
+      "neverBreaks": {
+        "title": "Tetap bekerja",
+        "text": "Setelah batas paket tercapai, pencarian tetap bekerja di perangkat. Pengguna Anda tidak pernah melihat galat akibat tagihan."
+      },
+      "private": {
+        "title": "Privasi sejak awal",
+        "text": "Sebagian besar pencarian tetap di perangkat. Kami tidak pernah menyimpan siapa yang mencari, teks pesan, atau foto."
+      },
+      "open": {
+        "title": "Inti yang terbuka",
+        "text": "Mesin, paket data, SDKs, dan server API berlisensi MIT. Jalankan sendiri jika Anda mau."
+      },
+      "languages": {
+        "title": "Setiap bahasa",
+        "text": "Orang mencari dengan kata dan bahasa mereka sendiri. Kamus kami mendukung cara itu."
+      }
+    },
+    "money": {
+      "title": "Sumber pendapatan kami",
+      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, foto ke emoji, emoji khusus, analitik, tim, dan tenant. Tanpa iklan, dan kami tidak menjual data. Paket berbayar belum dijual: Anda dapat <waitlist>masuk daftar tunggu</waitlist>, atau <free>mulai gratis</free> hari ini."
+    },
+    "now": {
+      "title": "Perkembangan saat ini",
+      "body": "Masih tahap awal. Mesin, {pack}, API, dan dasbor dapat digunakan sekarang. Pembayaran menyusul. Ikuti perkembangannya di <changelog>catatan perubahan</changelog>.",
+      "pack": "paket data ({count} emoji, Emoji {emojiVersion}, {languages} bahasa)",
+      "packs": "paket data",
+      "independent": "Emojisense adalah proyek independen. Sampaikan pertanyaan, ide, dan laporan bug melalui <issues>isu GitHub</issues>."
+    }
+  },
+  "hero": {
+    "searchLabel": "Cari emoji",
+    "placeholder": "Cari emoji dengan bahasa sehari-hari…",
+    "offline": "luring",
+    "results": "Hasil emoji",
+    "empty": "Belum ada yang cocok — terus ketik.",
+    "byMeaning": "cocok berdasarkan makna",
+    "matched": "cocok dengan <q>{match}</q>",
+    "bestMatch": "paling cocok",
+    "idle": "Film, perasaan, salah ketik, bahasa lain — coba apa saja.",
+    "try": "Coba",
+    "play": "Putar demo",
+    "pause": "Jeda demo",
+    "edgeCache": "cache edge",
+    "edgeAi": "{ms} · AI edge",
+    "onDevice": "{ms} · di perangkat Anda",
+    "kinds": {
+      "film": "film",
+      "meaning": "makna",
+      "typo": "salah ketik",
+      "feeling": "perasaan",
+      "intent": "maksud",
+      "idiom": "ungkapan",
+      "greeting": "sapaan",
+      "wish": "harapan",
+      "thanks": "terima kasih"
+    }
+  },
+  "codeTabs": {
+    "label": "Contoh pemasangan",
+    "copy": "Salin",
+    "copied": "Disalin ✓",
+    "copiedStatus": "Disalin",
+    "example": "Contoh {label}"
+  },
+  "copyCommand": {
+    "copy": "Salin perintah: {command}",
+    "copied": "Disalin",
+    "selected": "Dipilih",
+    "selectedStatus": "Perintah dipilih. Salin dengan keyboard Anda."
+  },
+  "demos": {
+    "useCases": {
+      "tabs": "Penggunaan",
+      "stop": "Hentikan demo",
+      "missing": "Demo ini belum dibuat.",
+      "loading": "Memuat demo {name}…",
+      "cases": {
+        "chat": {
+          "label": "Obrolan",
+          "title": "Ketik titik dua, temukan perasaan",
+          "body": "Pelengkapan otomatis yang memahami bahasa gaul dan makna, serta saran reaksi untuk setiap pesan."
+        },
+        "docs": {
+          "label": "Dokumen",
+          "title": "Sisipkan emoji sambil menulis",
+          "body": "Ekstensi Tiptap yang siap dipasang. Mesin yang sama bekerja di Lexical dan semua editor."
+        },
+        "workspaces": {
+          "label": "Ruang kerja",
+          "title": "Setiap pelanggan punya emoji sendiri",
+          "body": "Emoji khusus dicari bersama set standar, dengan satu set per ruang kerja."
+        },
+        "photos": {
+          "label": "Foto",
+          "title": "Reaksi untuk foto",
+          "body": "Kirim gambar, dapatkan emoji yang biasa orang gunakan untuk bereaksi. Foto tidak pernah disimpan."
+        },
+        "assistant": {
+          "label": "Asisten AI",
+          "title": "Bantu AI Anda memilih emoji yang pas",
+          "body": "Server MCP memungkinkan semua asisten mencari emoji berdasarkan makna, dalam 11 bahasa."
+        }
+      }
+    },
+    "chat": {
+      "window": "Demo: obrolan tim dengan pelengkapan emoji otomatis dan saran reaksi Emojisense",
+      "topic": "Peluncuran onboarding v2, hari rilis",
+      "members": "Anggota:",
+      "messagesIn": "Pesan di #{channel}",
+      "today": "Hari ini",
+      "you": "Anda",
+      "seed": {
+        "rc": "RC `2.14.0-rc.3` lolos di staging. Semua 412 pengujian end-to-end lolos pada percobaan pertama.",
+        "email": "Email sambutan sudah final. “Mulai” sekarang jadi “Siapkan ruang kerja Anda”, hasil uji teksnya menang jauh.",
+        "rollout": "Peluncuran sudah 100%. Pendaftaran naik 18% pagi ini, kerja bagus semuanya 📈"
+      },
+      "autoplay": {
+        "shipped": "onboarding baru sudah dirilis",
+        "thanks": "makasih tim"
+      },
+      "reactionsLabel": "Reaksi",
+      "reactionCount": {
+        "other": "{name}: {count} reaksi"
+      },
+      "popTitle": "Emoji yang cocok dengan <b>:{query}</b>",
+      "onDevice": "{ms} ms di perangkat",
+      "meaning": "makna {ms} ms",
+      "meaningPending": "makna…",
+      "listLabel": "Emoji",
+      "byMeaning": "berdasarkan makna",
+      "loadingEmoji": "Memuat emoji…",
+      "searchingMeaning": "Mencari berdasarkan makna…",
+      "keyNavigate": "navigasi",
+      "keySelect": "pilih",
+      "keyDismiss": "tutup",
+      "messageLabel": "Pesan #{channel}",
+      "composeHint": "Ketik <kbd>:</kbd> dan 2 huruf untuk emoji",
+      "send": "Kirim pesan",
+      "sidebar": {
+        "search": "Cari",
+        "threads": "Utas",
+        "channels": "Kanal",
+        "direct": "Pesan langsung"
+      },
+      "suggested": "Saran reaksi",
+      "reactWith": "Beri reaksi {name}",
+      "viaDeviceTitle": "API tidak menjawab, jadi mesin di perangkat menelusuri pesan",
+      "viaEdge": "edge · {ms} ms",
+      "viaDevice": "di perangkat"
+    },
+    "doc": {
+      "region": "Demo langsung: editor dokumen dengan pelengkapan emoji otomatis Emojisense",
+      "pageTitle": "Retro peluncuran Q3",
+      "sidebar": {
+        "search": "Cari",
+        "home": "Beranda",
+        "inbox": "Kotak masuk",
+        "product": "Produk",
+        "private": "Pribadi",
+        "newPage": "Halaman baru",
+        "launchPlan": "Rencana peluncuran",
+        "retros": "Retro",
+        "q2": "Retro pertumbuhan Q2",
+        "roadmap": "Peta jalan 2027",
+        "experiments": "Eksperimen",
+        "drafts": "Draf",
+        "reading": "Daftar bacaan"
+      },
+      "typing": "{name} sedang mengetik…",
+      "edited": "Baru saja diedit",
+      "share": "Bagikan",
+      "owner": "Pemilik",
+      "date": "Tanggal",
+      "failed": "Editor gagal dimuat. Muat ulang halaman untuk mencoba lagi.",
+      "body": {
+        "callout": "Tanpa menyalahkan: kita membahas sistem dan keputusan, bukan orang.",
+        "wentWell": "Yang berjalan baik",
+        "well1": "Onboarding v2 dirilis dua minggu lebih awal, di balik flag selama minggu pertama",
+        "well2": "Pertanyaan penyiapan ke tim dukungan berkurang setelah daftar periksa baru aktif",
+        "change": "Yang ingin kita ubah",
+        "changeBody": "Dua deploy gagal pada minggu peluncuran. Keduanya berasal dari pengujian migrasi yang sama dengan hasil tidak konsisten. Rollback juga terlalu lama.",
+        "actions": "Tindak lanjut",
+        "action1": "Karantina pengujian migrasi yang hasilnya tidak konsisten (Jonas)",
+        "action2": "Tambahkan pembekuan deploy ke daftar periksa peluncuran (Priya)",
+        "action3": "Bagikan retro ini di #product (Maya)",
+        "summary": "Ringkasan",
+        "win": "Keberhasilan terbesar: onboarding baru",
+        "miss": "Masalah terbesar: deploy minggu peluncuran berakhir dengan"
+      },
+      "placeholder": "Ketik “:” dan satu kata untuk emoji…",
+      "bodyLabel": "Isi dokumen",
+      "done": "Selesai",
+      "notDone": "Belum selesai",
+      "menu": {
+        "label": "Saran emoji",
+        "matching": "Emoji yang cocok dengan <code>:{query}</code>",
+        "move": "pindah",
+        "insert": "sisipkan",
+        "close": "tutup",
+        "similar": "makna serupa",
+        "custom": "emoji khusus"
+      },
+      "picker": {
+        "dialog": "Pilih ikon halaman",
+        "search": "Cari emoji",
+        "placeholder": "Cari emoji…",
+        "random": "Acak",
+        "randomEmoji": "Emoji acak",
+        "all": "Semua emoji",
+        "for": "Emoji untuk {query}",
+        "results": "Hasil",
+        "empty": "Belum ada emoji untuk “{query}”.",
+        "hint": "Coba “{first}”, “{second}”, atau “{third}”",
+        "hintWords": {
+          "first": "peluncuran",
+          "second": "kambing",
+          "third": "membara"
+        },
+        "pageIcon": "Ikon halaman. Ganti ikon",
+        "pageIconNamed": "Ikon halaman: {label}. Ganti ikon"
+      }
+    },
+    "workspaces": {
+      "tabs": "Ruang kerja",
+      "tenantTitle": "ID tenant",
+      "message": "Pesan",
+      "addReaction": "Tambah reaksi",
+      "picker": "Pemilih emoji",
+      "searchIn": "Cari emoji di {workspace}",
+      "placeholder": "Cari emoji {workspace}",
+      "clear": "Hapus pencarian",
+      "try": "Coba",
+      "results": "Hasil emoji",
+      "custom": "Khusus",
+      "customEmoji": "Emoji khusus",
+      "noCustom": "Tidak ada emoji khusus untuk “{query}” di sini. Set standar tetap menjawab.",
+      "standard": "Standar",
+      "standardFailed": "Set standar tidak dapat dimuat saat ini. Pencarian emoji khusus tetap bekerja.",
+      "noStandard": "Belum ada emoji standar yang cocok. Terus ketik.",
+      "kindCustom": "khusus",
+      "kindStandard": "standar",
+      "customOption": "{code}, khusus",
+      "matched": "cocok dengan <q>{match}</q>",
+      "byMeaning": "cocok berdasarkan makna",
+      "enterToReact": "Tekan Enter atau klik untuk bereaksi",
+      "idle": "Ketik kata, atau coba salah satu pilihan.",
+      "resultCount": "{workspace}: {custom} hasil khusus dan {standard} hasil standar.",
+      "timingMeaning": "makna · {ms} ms",
+      "timingDevice": "di perangkat · {ms} ms",
+      "aside": "Emoji khusus {workspace}",
+      "importTitle": "Impor Slack dan Discord: paket Pro dan Scale",
+      "imported": "Diimpor dari {source}",
+      "addedByAdmins": "Ditambahkan admin ruang kerja",
+      "set": "Set khusus",
+      "reactWith": "Beri reaksi {code}",
+      "inspectIdle": "Arahkan kursor ke emoji untuk melihat kata yang dapat menemukannya.",
+      "tenants": "Tenant",
+      "scalePlan": "Paket Scale",
+      "tenantsNote": "Setiap pelanggan adalah tenant dengan set emoji khusus sendiri. Server Anda menulisnya dengan kunci rahasia.",
+      "presets": {
+        "shipIt": "rilis",
+        "celebrate": "rayakan",
+        "coffee": "kopi",
+        "gg": "gg"
+      },
+      "kinds": {
+        "acme": "Teknik",
+        "bloom": "Kedai kopi",
+        "guild": "Komunitas gim"
+      },
+      "texts": {
+        "acme": "v4.2 sedang diluncurkan ke 100%. Terima kasih untuk semua yang ikut sampai peninjauan terakhir.",
+        "bloom": "Kiriman susu oat sudah sampai, dan kroisan almon baru keluar dari oven.",
+        "guild": "Raid mulai jam 9. Bawa potion, kali ini kita incar naganya."
+      }
+    },
+    "photo": {
+      "region": "Demo: reaksi emoji untuk foto",
+      "status": {
+        "scanning": "Membaca foto…",
+        "failed": "API tidak tersedia",
+        "live": "Langsung · {seconds} dtk",
+        "device": "Di perangkat",
+        "example": "Hasil API tersimpan"
+      },
+      "posts": {
+        "puppy": {
+          "label": "Corgi",
+          "alt": "Anak anjing corgi berdiri dengan kaki belakang dan menjulurkan lidah"
+        },
+        "cake": {
+          "label": "Kue ulang tahun",
+          "alt": "Kue ulang tahun dengan meses, bintang, dan lilin angka 3 yang menyala"
+        },
+        "sunset": {
+          "label": "Senja di pantai",
+          "alt": "Orang-orang di air dangkal saat matahari terbenam, satu orang mengangkat kedua lengan"
+        },
+        "pizza": {
+          "label": "Piza",
+          "alt": "Piza jamur yang sudah dipotong di atas papan kayu"
+        },
+        "cat": {
+          "label": "Kucing di keyboard",
+          "alt": "Kucing belang tidur di atas keyboard komputer"
+        },
+        "hike": {
+          "label": "Pendakian gunung",
+          "alt": "Pendaki di punggung bukit berbatu di atas lembah pegunungan berkabut"
+        }
+      },
+      "teammate": "Rekan tim",
+      "yourPhoto": "Foto Anda",
+      "you": "Anda",
+      "now": "sekarang",
+      "tagCaption": "Keterangan",
+      "keywords": "Kata kunci:",
+      "describing": "Mendeskripsikan foto",
+      "fallback": "Jelaskan dalam beberapa kata dan mesin di perangkat akan memilih emoji.",
+      "describeLabel": "Deskripsikan foto",
+      "describePlaceholder": "anjing di pantai",
+      "find": "Cari emoji",
+      "suggested": "Saran reaksi",
+      "reactWith": "Beri reaksi {emoji}",
+      "suggestedReply": "Saran balasan",
+      "composer": "Pesan #{channel}",
+      "pick": "Pilih foto",
+      "credit": "Foto: <link>{author}</link>, CC0",
+      "stays": "Foto Anda tetap di halaman ini.",
+      "drop": "Lepaskan untuk dibaca",
+      "try": "Coba foto Anda sendiri",
+      "dropHint": "Lepaskan gambar di sini atau pilih berkas",
+      "privacy": "<strong>Foto tidak pernah disimpan.</strong> Foto Anda diperkecil menjadi 384 px di browser, diberi keterangan di memori, lalu dihapus.",
+      "how1": "Model pengenal gambar menulis keterangan, kata kunci, dan balasan.",
+      "how2": "Emojisense mengurutkan emoji dari model dengan pencariannya sendiri.",
+      "engineFailed": "Mesin di perangkat gagal dimuat. Coba lagi nanti.",
+      "errors": {
+        "unreadable": "Berkas ini bukan foto yang dapat kami baca. Coba JPEG, PNG, atau WebP.",
+        "unavailable": "Reaksi foto tidak tersedia saat ini.",
+        "tooLarge": "Foto ini terlalu besar untuk dikirim.",
+        "tooMany": "Terlalu banyak foto sekaligus. Tunggu beberapa detik, lalu coba lagi.",
+        "budget": "Demo sudah memakai seluruh jatah foto bulan ini."
+      }
+    },
+    "assistant": {
+      "chat": "Obrolan asisten",
+      "name": "Asisten",
+      "newChat": "Obrolan baru",
+      "connected": "Server MCP terhubung",
+      "toolCount": "3 alat",
+      "emptyTitle": "Apa yang ingin kita tulis?",
+      "emptyBody": "Emojisense terhubung, jadi emoji berasal dari pencarian nyata.",
+      "thinking": "Berpikir",
+      "failed": "Alat emoji tidak menjawab, jadi saya belum dapat memilih emoji. Coba lagi sebentar.",
+      "prompts": "Contoh perintah",
+      "placeholder": "Pilih perintah untuk menjalankannya",
+      "note": "Percakapan terprogram · hasil alat langsung",
+      "config": {
+        "kicker": "Server MCP · stdio",
+        "title": "Tambahkan ke semua klien MCP",
+        "lead": "Satu entri di konfigurasi klien Anda. Bekerja luring; tambahkan kunci API untuk hasil berdasarkan makna.",
+        "copy": "Salin",
+        "copied": "Disalin",
+        "copyFailed": "Tekan ⌘C / Ctrl+C",
+        "tools": "Alat",
+        "summaries": {
+          "search_emoji": "Kata kunci, bahasa gaul, nama, film",
+          "emoji_for_text": "Emoji untuk kalimat yang Anda tulis",
+          "suggest_reactions": "Reaksi yang digunakan pembaca"
+        }
+      },
+      "tool": {
+        "failed": "Gagal",
+        "used": "Digunakan",
+        "calling": "Memanggil",
+        "results": {
+          "other": ", {count} hasil: "
+        },
+        "measured": "Diukur di browser Anda",
+        "error": "galat",
+        "running": "Berjalan",
+        "request": "Permintaan",
+        "response": "Respons",
+        "view": "Tampilan respons",
+        "emoji": "Emoji",
+        "loadFailed": "Data emoji gagal dimuat. Periksa koneksi dan coba lagi.",
+        "none": "Tidak ada emoji yang cocok.",
+        "generic": "Reaksi umum untuk melengkapi daftar yang pendek",
+        "matched": "Cocok dengan “{reason}”"
+      },
+      "scenarios": {
+        "tweet": {
+          "prompt": "Tulis twit peluncuran mode gelap kita",
+          "intro": "Ini drafnya, dengan emoji dari pencarian:",
+          "quote": "Mode gelap sudah hadir {lead}\nLebih nyaman di mata setelah matahari terbenam, lebih hemat baterai, dan mengikuti pengaturan sistem Anda. Perbarui dan beralih ke mode gelap {close}",
+          "moodier": "Ingin suasana lebih sendu? Ganti {from} dengan {to}."
+        },
+        "birthday": {
+          "prompt": "Ucapan ulang tahun untuk Ana, dalam bahasa Spanyol",
+          "intro": "Ini untuk Ana:",
+          "labels": "Saya mencari dalam bahasa Inggris dan meminta label bahasa Spanyol, jadi {emoji} muncul sebagai “{label}”."
+        },
+        "react": {
+          "prompt": "Beri reaksi pada “10k users. We did it!”",
+          "none": "Tidak ada bagian pesan yang menonjol untuk diberi reaksi.",
+          "safe": "Beri reaksi {emoji}. Ini pilihan standar yang aman di sini.",
+          "matched": "Beri reaksi {emoji}. Cocok dengan “{why}”, dan memang biasa digunakan orang untuk bereaksi.",
+          "alsoWork": "{second} dan {third} juga cocok jika utas ini sedang merayakan sesuatu.",
+          "skip": "Lewati {emoji}: cocok dengan “10k” dalam konteks lomba lari."
+        },
+        "status": {
+          "prompt": "Atur status saya: deploy hari Jumat",
+          "intro": "Ini status Anda:",
+          "matched": "{emoji} cocok dengan “{why}”.",
+          "runnerUp": "Pilihan kedua: {emoji}.",
+          "sideways": "Pilihan kedua: {emoji}. Jika ada masalah, {other} siap dipakai."
+        }
+      }
+    }
+  }
+}
