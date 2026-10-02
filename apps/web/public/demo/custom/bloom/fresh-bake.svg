@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:fresh-bake:</title>
+  <g fill="none" stroke="#c2c7d0" stroke-width="2.6" stroke-linecap="round">
+    <path d="M24 20c-3-3 1-5-1.5-9"/>
+    <path d="M32 18c-3-3.5 1.5-6-1.5-11"/>
+    <path d="M40 20c-3-3 1-5-1.5-9"/>
+  </g>
+  <ellipse cx="10.5" cy="46" rx="7.5" ry="5" transform="rotate(-38 10.5 46)" fill="#c97f2c"/>
+  <ellipse cx="53.5" cy="46" rx="7.5" ry="5" transform="rotate(38 53.5 46)" fill="#c97f2c"/>
+  <ellipse cx="20" cy="39" rx="8.5" ry="10" transform="rotate(-28 20 39)" fill="#e09a45"/>
+  <ellipse cx="44" cy="39" rx="8.5" ry="10" transform="rotate(28 44 39)" fill="#e09a45"/>
+  <ellipse cx="32" cy="37" rx="9.5" ry="12.5" fill="#f2b95c"/>
+  <path d="M26 31.5c4 1.6 8 1.6 12 0M25.5 38.5c4.3 1.8 8.7 1.8 13 0" fill="none" stroke="#d98f38" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17 34c2.5 1.4 4.6 3.4 6 6M47 34c-2.5 1.4-4.6 3.4-6 6" fill="none" stroke="#c97f2c" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="29" cy="29" rx="2.4" ry="3.6" fill="#fff" opacity=".45"/>
+</svg>

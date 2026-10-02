@@ -18,14 +18,14 @@ const stats = [
   { value: "300+", label: "cities on Cloudflare's network. 95% of internet users are within 50 ms of one." },
   { value: "< 1 ms", label: "for answers on the device, at every keystroke. Measured p95: 0.4 ms." },
   { value: "≈ 50 ms", label: "for an AI meaning search inside the edge. Measured p50: 52 ms." },
-  { value: "0", label: "servers, regions or GPUs for you to run, scale or pay for." },
+  { value: "0", label: "servers, regions or GPUs for you to set up. It works the same everywhere." },
 ];
 ---
 
 <section id="edge" class="edge" aria-labelledby="edge-title">
   <div class="container">
     <div class="edge-head">
-      <p class="eyebrow"><span class="emoji" aria-hidden="true">🌐</span> Global edge</p>
+      <p class="kicker">Global edge</p>
       <h2 id="edge-title">Fast in Lagos, Lima and Lahore.</h2>
       <p class="lead">
         Emojisense runs on Cloudflare's network in 300+ cities. Every search is answered in the city closest to
@@ -76,16 +76,16 @@ const stats = [
 
 <style>
   .edge {
-    --edge-bg: #15121f;
+    --edge-bg: #0d0d12;
     --edge-ink: #f4f2fa;
     --edge-ink-2: #c4bfd3;
     --edge-ink-3: #8d889c;
-    --edge-line: #2e2a3b;
+    --edge-line: #24242c;
     position: relative;
     overflow: hidden;
     padding-block: clamp(4rem, 9vw, 7rem);
     background:
-      radial-gradient(50rem 22rem at 50% 0%, rgb(255 210 63 / 0.1), transparent 70%),
+      radial-gradient(50rem 22rem at 50% 0%, rgb(255 255 255 / 0.06), transparent 70%),
       var(--edge-bg);
     color: var(--edge-ink);
     border-block: 0.0625rem solid var(--edge-line);
@@ -97,9 +97,8 @@ const stats = [
     text-align: center;
   }
 
-  .edge .eyebrow {
-    background: rgb(255 210 63 / 0.14);
-    color: var(--brand);
+  .edge .kicker {
+    color: var(--edge-ink-3);
   }
 
   .edge h2 {
@@ -126,14 +125,14 @@ const stats = [
 
   .land {
     fill: none;
-    stroke: #3a3549;
+    stroke: #2c2c36;
     stroke-width: 3.6;
     stroke-linecap: round;
   }
 
   .city {
-    fill: var(--brand);
-    opacity: 0.85;
+    fill: #f3f3f6;
+    opacity: 0.9;
   }
 
   .bubble {
@@ -152,7 +151,7 @@ const stats = [
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 50%;
-    border: 0.125rem solid var(--brand);
+    border: 0.125rem solid #f3f3f6;
     animation: ping 1.2s ease-out infinite;
   }
 
@@ -206,7 +205,7 @@ const stats = [
     width: 1.75em;
     height: 1.75em;
     border-radius: 50%;
-    background: var(--brand);
+    background: #f1eff7;
     font-size: 1.125em;
   }
 
@@ -239,8 +238,8 @@ const stats = [
   }
 
   .edge-stats strong {
-    color: var(--brand);
-    font: 800 clamp(2rem, 1.5rem + 1.6vw, 2.75rem) / 1 var(--font-display);
+    color: var(--edge-ink);
+    font: 700 clamp(2rem, 1.5rem + 1.6vw, 2.75rem) / 1 var(--font-display);
     letter-spacing: -0.03em;
   }
 

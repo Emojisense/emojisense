@@ -1,0 +1,391 @@
+{
+  "$comment": "Unedited responses of the real API. Made on 2026-10-02 by sending each photo in public/demo/photos, downscaled to 384 px JPEG with sips, to POST http://localhost:8788/v1/classify-image?key=pk_demo&limit=8&locale=en (local Worker, Workers AI vision + bge-m3). See README.md in this folder.",
+  "endpoint": "POST /v1/classify-image?limit=8&locale=en",
+  "madeOn": "2026-10-02",
+  "photos": [
+    {
+      "id": "puppy",
+      "src": "/demo/photos/puppy.jpg",
+      "width": 427,
+      "height": 640,
+      "serverTiming": "vision;dur=735, embed;dur=140, total;dur=883",
+      "response": {
+        "caption": "A happy corgi dog standing on its hind legs outdoors",
+        "reaction": "So cute! 🐶",
+        "results": [
+          {
+            "emoji": "🐕️",
+            "id": "1F415",
+            "score": 0.559,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🐶",
+            "id": "1F436",
+            "score": 0.559,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😸",
+            "id": "1F638",
+            "score": 0.554,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🐩",
+            "id": "1F429",
+            "score": 0.546,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🦔",
+            "id": "1F994",
+            "score": 0.539,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😺",
+            "id": "1F63A",
+            "score": 0.523,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🐾",
+            "id": "1F43E",
+            "score": 0.518,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😼",
+            "id": "1F63C",
+            "score": 0.51,
+            "source": "semantic"
+          }
+        ],
+        "cached": false,
+        "degraded": false,
+        "overLimit": false
+      }
+    },
+    {
+      "id": "cake",
+      "src": "/demo/photos/cake.jpg",
+      "width": 500,
+      "height": 333,
+      "serverTiming": "vision;dur=1164, embed;dur=136, total;dur=1305",
+      "response": {
+        "caption": "A birthday cake with a lit number three candle and star decorations",
+        "reaction": "Happy birthday! 🎂",
+        "results": [
+          {
+            "emoji": "🎂",
+            "id": "1F382",
+            "score": 0.364,
+            "source": "alias"
+          },
+          {
+            "emoji": "🎇",
+            "id": "1F387",
+            "score": 0.252,
+            "source": "alias"
+          },
+          {
+            "emoji": "🧁",
+            "id": "1F9C1",
+            "score": 0.616,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🎈",
+            "id": "1F388",
+            "score": 0.592,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🥳",
+            "id": "1F973",
+            "score": 0.589,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🎁",
+            "id": "1F381",
+            "score": 0.587,
+            "source": "semantic"
+          },
+          {
+            "emoji": "💝",
+            "id": "1F49D",
+            "score": 0.586,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🤶",
+            "id": "1F936",
+            "score": 0.577,
+            "source": "semantic"
+          }
+        ],
+        "cached": false,
+        "degraded": false,
+        "overLimit": false
+      }
+    },
+    {
+      "id": "sunset",
+      "src": "/demo/photos/sunset.jpg",
+      "width": 500,
+      "height": 500,
+      "serverTiming": "vision;dur=777, embed;dur=128, total;dur=915",
+      "response": {
+        "caption": "Silhouette of people celebrating on a beach during sunset",
+        "reaction": "So beautiful! 😍",
+        "results": [
+          {
+            "emoji": "🌅",
+            "id": "1F305",
+            "score": 0.633,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🏖️",
+            "id": "1F3D6",
+            "score": 0.565,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🌞",
+            "id": "1F31E",
+            "score": 0.561,
+            "source": "semantic"
+          },
+          {
+            "emoji": "☀️",
+            "id": "2600",
+            "score": 0.545,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🏄‍♀️",
+            "id": "1F3C4-200D-2640-FE0F",
+            "score": 0.539,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🇸🇨",
+            "id": "1F1F8-1F1E8",
+            "score": 0.532,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🥳",
+            "id": "1F973",
+            "score": 0.532,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🐚",
+            "id": "1F41A",
+            "score": 0.53,
+            "source": "semantic"
+          }
+        ],
+        "cached": false,
+        "degraded": false,
+        "overLimit": false
+      }
+    },
+    {
+      "id": "pizza",
+      "src": "/demo/photos/pizza.jpg",
+      "width": 426,
+      "height": 640,
+      "serverTiming": "vision;dur=1476, embed;dur=148, total;dur=1628",
+      "response": {
+        "caption": "Mushroom pizza sliced on a wooden cutting board with rosemary",
+        "reaction": "That looks delicious!",
+        "results": [
+          {
+            "emoji": "🍄‍🟫",
+            "id": "1F344-200D-1F7EB",
+            "score": 0.666,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🍕",
+            "id": "1F355",
+            "score": 0.571,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🥢",
+            "id": "1F962",
+            "score": 0.547,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🍄",
+            "id": "1F344",
+            "score": 0.543,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😋",
+            "id": "1F60B",
+            "score": 0.543,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🍽️",
+            "id": "1F37D",
+            "score": 0.535,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🍅",
+            "id": "1F345",
+            "score": 0.528,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🔪",
+            "id": "1F52A",
+            "score": 0.526,
+            "source": "semantic"
+          }
+        ],
+        "cached": false,
+        "degraded": false,
+        "overLimit": false
+      }
+    },
+    {
+      "id": "cat",
+      "src": "/demo/photos/cat.jpg",
+      "width": 500,
+      "height": 281,
+      "serverTiming": "vision;dur=921, embed;dur=126, total;dur=1051",
+      "response": {
+        "caption": "A tabby cat sleeping on a computer keyboard and desk",
+        "reaction": "So cute! I want to pet it.",
+        "results": [
+          {
+            "emoji": "🐈️",
+            "id": "1F408",
+            "score": 0.35,
+            "source": "alias"
+          },
+          {
+            "emoji": "🐱",
+            "id": "1F431",
+            "score": 0.56,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😽",
+            "id": "1F63D",
+            "score": 0.543,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🐼",
+            "id": "1F43C",
+            "score": 0.541,
+            "source": "semantic"
+          },
+          {
+            "emoji": "⌨️",
+            "id": "2328",
+            "score": 0.533,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😹",
+            "id": "1F639",
+            "score": 0.531,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🧸",
+            "id": "1F9F8",
+            "score": 0.526,
+            "source": "semantic"
+          },
+          {
+            "emoji": "😿",
+            "id": "1F63F",
+            "score": 0.52,
+            "source": "semantic"
+          }
+        ],
+        "cached": false,
+        "degraded": false,
+        "overLimit": false
+      }
+    },
+    {
+      "id": "hike",
+      "src": "/demo/photos/hike.jpg",
+      "width": 500,
+      "height": 334,
+      "serverTiming": "vision;dur=1341, embed;dur=140, total;dur=1488",
+      "response": {
+        "caption": "A hiker standing on a rocky mountain ridge overlooking misty valleys",
+        "reaction": "Wow, what a view!",
+        "results": [
+          {
+            "emoji": "⛰️",
+            "id": "26F0",
+            "score": 0.589,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🏞️",
+            "id": "1F3DE",
+            "score": 0.565,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🌄",
+            "id": "1F304",
+            "score": 0.558,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🚵‍♂️",
+            "id": "1F6B5-200D-2642-FE0F",
+            "score": 0.554,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🚵‍♀️",
+            "id": "1F6B5-200D-2640-FE0F",
+            "score": 0.554,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🚵",
+            "id": "1F6B5",
+            "score": 0.54,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🏔️",
+            "id": "1F3D4",
+            "score": 0.539,
+            "source": "semantic"
+          },
+          {
+            "emoji": "🇷🇼",
+            "id": "1F1F7-1F1FC",
+            "score": 0.508,
+            "source": "semantic"
+          }
+        ],
+        "cached": false,
+        "degraded": false,
+        "overLimit": false
+      }
+    }
+  ]
+}

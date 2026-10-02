@@ -1,17 +1,10 @@
 ---
-// Self-hosted (no third-party requests). Latin + Latin Extended covers English and Turkish.
+// Self-hosted (no third-party requests). Variable fonts cover every weight with one file each.
 import "@fontsource/dm-mono/latin-400.css";
+import "@fontsource/dm-mono/latin-500.css";
 import "@fontsource/dm-mono/latin-ext-400.css";
-import "@fontsource/gabarito/latin-700.css";
-import "@fontsource/gabarito/latin-800.css";
-import "@fontsource/gabarito/latin-ext-700.css";
-import "@fontsource/gabarito/latin-ext-800.css";
-import "@fontsource/figtree/latin-400.css";
-import "@fontsource/figtree/latin-600.css";
-import "@fontsource/figtree/latin-800.css";
-import "@fontsource/figtree/latin-ext-400.css";
-import "@fontsource/figtree/latin-ext-600.css";
-import "@fontsource/figtree/latin-ext-800.css";
+import "@fontsource-variable/bricolage-grotesque/opsz.css";
+import "@fontsource-variable/hanken-grotesk/index.css";
 import "../styles/global.css";
 import Footer from "../components/Footer.astro";
 import Nav from "../components/Nav.astro";
@@ -28,7 +21,7 @@ interface Props {
 }
 
 const { title, description, path, jsonLd } = Astro.props;
-const fullTitle = title ? `${title} · Emojisense` : "Emojisense: emoji search that gets what people mean";
+const fullTitle = title ? `${title} · Emojisense` : "Emojisense: the emoji platform for every app";
 const canonical = `${SITE_URL}${path}`;
 ---
 
@@ -42,7 +35,8 @@ const canonical = `${SITE_URL}${path}`;
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap.xml" />
-    <meta name="theme-color" content="#ffd23f" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Emojisense" />
     <meta property="og:title" content={fullTitle} />

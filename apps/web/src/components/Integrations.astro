@@ -1,0 +1,448 @@
+---
+import { REPO_URL } from "../config";
+import { CopyCommand } from "../islands/CopyCommand";
+import { LOGO_VIEWBOX, LOGOS, type LogoName } from "../lib/logos";
+
+interface Integration {
+  name: string;
+  logos: LogoName[];
+  /** A typographic mark for an integration without a brand, e.g. the HTTP API. */
+  mark?: string;
+  /** One line of trusted HTML (`<code>`, `.emoji`). Every example in it is checked against the engine. */
+  blurb: string;
+  command: string;
+  prompt?: string;
+  /** Shown when the command runs in a clone of the repository. */
+  fromSource?: boolean;
+  docs: string;
+}
+
+interface Group {
+  id: string;
+  title: string;
+  items: Integration[];
+}
+
+const readme = (path: string) => `${REPO_URL}/tree/main/${path}#readme`;
+
+const groups: Group[] = [
+  {
+    id: "frameworks",
+    title: "Frameworks",
+    items: [
+      {
+        name: "React hooks and picker",
+        logos: ["react", "frimousse"],
+        blurb: "A drop-in picker built on Frimousse, or hooks for your own UI.",
+        command: "npm i @emojisense/react frimousse",
+        docs: "/docs/#react-frimousse",
+      },
+      {
+        name: "Web component",
+        logos: ["vue", "svelte", "angular", "javascript"],
+        blurb: "A complete picker in one tag, for any framework or none.",
+        command: "npm i @emojisense/web-component",
+        docs: "/docs/#web-component",
+      },
+      {
+        name: "JavaScript engine",
+        logos: ["javascript", "typescript"],
+        blurb: "The engine on its own: browsers, Node, Deno, Bun and Workers.",
+        command: "npm i emojisense",
+        docs: "/docs/#vanilla",
+      },
+    ],
+  },
+  {
+    id: "editors",
+    title: "Editors and pickers",
+    items: [
+      {
+        name: "Tiptap extension",
+        logos: ["tiptap"],
+        // `:fire:` → 🔥 is asserted in packages/tiptap/test/extension.test.ts.
+        blurb: 'Colon autocomplete. Type <code>:fire:</code>, get <span class="emoji">🔥</span>.',
+        command: "npm i @emojisense/tiptap emojisense",
+        docs: readme("packages/tiptap"),
+      },
+      {
+        name: "Lexical plugin",
+        logos: ["lexical"],
+        blurb: "Colon autocomplete as a typeahead plugin for React.",
+        command: "npm i @emojisense/lexical emojisense",
+        docs: readme("packages/lexical"),
+      },
+      {
+        name: "emoji-mart adapter",
+        logos: ["emojiMart"],
+        blurb: "Keep the emoji-mart picker. Give it search that understands people.",
+        command: "npm i @emojisense/emoji-mart emojisense",
+        docs: readme("packages/emoji-mart"),
+      },
+    ],
+  },
+  {
+    id: "native",
+    title: "Native and apps",
+    items: [
+      {
+        name: "Swift package",
+        logos: ["swift", "apple"],
+        blurb: "The same engine, native on iOS 16+ and macOS 13+.",
+        command: "https://github.com/emojisense/emojisense-swift",
+        prompt: "",
+        docs: readme("sdks/swift"),
+      },
+      {
+        name: "Chrome extension",
+        logos: ["chrome"],
+        blurb: "An emoji picker for every text field, one shortcut away.",
+        command: "pnpm --filter @emojisense/chrome-extension build",
+        fromSource: true,
+        docs: readme("apps/chrome-extension"),
+      },
+      {
+        name: "Raycast extension",
+        logos: ["raycast"],
+        blurb: "Search emoji by meaning from your launcher. Works offline.",
+        command: "pnpm --filter emojisense-search dev",
+        fromSource: true,
+        docs: readme("apps/raycast"),
+      },
+    ],
+  },
+  {
+    id: "servers",
+    title: "AI and servers",
+    items: [
+      {
+        name: "MCP server",
+        logos: ["mcp"],
+        blurb: "Emoji search and reactions for Claude and other AI assistants.",
+        command: "npx -y @emojisense/mcp",
+        docs: readme("packages/mcp"),
+      },
+      {
+        name: "HTTP API",
+        logos: [],
+        mark: "GET /v1",
+        blurb: "Search, reactions and photo to emoji, from any language.",
+        command: 'curl "https://api.emojisense.com/v1/search?q=ship+it"',
+        docs: "/docs/api/",
+      },
+      {
+        name: "Self-hosted API",
+        logos: ["cloudflare"],
+        blurb: "The whole API as one Worker on your own Cloudflare account.",
+        command: "pnpm --filter @emojisense/worker deploy",
+        fromSource: true,
+        docs: "/docs/self-host/",
+      },
+    ],
+  },
+];
+
+const isExternal = (href: string) => /^https?:/.test(href);
+---
+
+<section id="integrations" class="section int" aria-labelledby="integrations-title">
+  <div class="container">
+    <div class="section-head">
+      <p class="kicker"><span class="emoji" aria-hidden="true">🔌</span> Integrations</p>
+      <h2 id="integrations-title">Everything emoji, wherever you build.</h2>
+      <p class="lead">
+        Search, reactions, photos, custom emoji and hosted sets. Bring the whole platform to the stack you already use.
+      </p>
+    </div>
+
+    <div class="int-groups">
+      {
+        groups.map((group) => (
+          <div class="int-group">
+            <h3 class="int-group-title" id={`int-${group.id}`}>
+              {group.title}
+            </h3>
+            <ul class="int-grid" aria-labelledby={`int-${group.id}`}>
+              {group.items.map((item) => (
+                <li class="int-card">
+                  <div class="int-top">
+                    <span class="int-logos" aria-hidden="true">
+                      {item.mark && <span class="int-mark">{item.mark}</span>}
+                      {item.logos.map((name) => {
+                        const logo = LOGOS[name];
+                        return logo.kind === "icon" ? (
+                          <svg class="int-icon" viewBox={LOGO_VIEWBOX} focusable="false">
+                            <path d={logo.path} />
+                          </svg>
+                        ) : (
+                          <span class="int-wordmark">{logo.label}</span>
+                        );
+                      })}
+                    </span>
+                    {item.fromSource && <span class="int-tag">from source</span>}
+                  </div>
+                  <h4 class="int-name">
+                    <a href={item.docs}>
+                      {item.name}
+                      <span class="visually-hidden">: docs</span>
+                      <svg
+                        class:list={["int-arrow", { external: isExternal(item.docs) }]}
+                        viewBox="0 0 16 16"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path d="M3.5 8h9M8.5 4l4 4-4 4" />
+                      </svg>
+                    </a>
+                  </h4>
+                  <p class="int-blurb" set:html={item.blurb} />
+                  <CopyCommand client:visible command={item.command} prompt={item.prompt} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+
+    <p class="int-foot">
+      Custom emoji in Slack or Discord? Bring them along on Pro.
+      <a href="/pricing/">See plans</a>
+      <span aria-hidden="true">·</span>
+      <a href="/docs/">All docs</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .int-groups {
+    display: grid;
+    gap: clamp(2rem, 4vw, 2.75rem);
+  }
+
+  .int-group-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0 0 1rem;
+    color: var(--ink-3);
+    font: 500 0.8125rem / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .int-group-title::after {
+    content: "";
+    flex: 1;
+    height: 0.0625rem;
+    background: var(--line);
+  }
+
+  .int-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Cards share row tracks, so names, lines and commands align across a row. */
+  .int-card {
+    position: relative;
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0;
+    align-content: start;
+    margin-bottom: 0.75rem;
+    padding: 1.25rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    color: var(--ink-2);
+    transition:
+      border-color 200ms,
+      box-shadow 240ms var(--ease-out),
+      translate 280ms var(--spring);
+  }
+
+  .int-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+    translate: 0 -0.125rem;
+  }
+
+  .int-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.5rem;
+    margin-bottom: 1.125rem;
+  }
+
+  .int-logos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    color: var(--ink-2);
+    transition: color 200ms;
+  }
+
+  .int-card:hover .int-logos {
+    color: var(--ink);
+  }
+
+  .int-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentColor;
+  }
+
+  /* Brands without an open-licensed mark: the name, set as a wordmark. */
+  .int-wordmark {
+    font: 750 1.125rem / 1 var(--font-body);
+    letter-spacing: -0.035em;
+  }
+
+  .int-mark {
+    padding: 0.25rem 0.4375rem;
+    border: 0.0625rem solid currentColor;
+    border-radius: 0.375rem;
+    font: 500 0.6875rem / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .int-tag {
+    padding: 0.25rem 0.5rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    color: var(--ink-3);
+    font: 500 0.6875rem / 1 var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .int-name {
+    margin: 0;
+    font: 650 1.1875rem / 1.2 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .int-name a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* The whole card opens the docs; the command chip sits above this layer. */
+  .int-name a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+
+  .int-name a:focus-visible {
+    outline: none;
+  }
+
+  .int-name a:focus-visible::after {
+    outline: 0.1875rem solid var(--focus);
+    outline-offset: 0.1875rem;
+    border-radius: var(--radius-lg);
+  }
+
+  .int-arrow {
+    width: 0.875rem;
+    height: 0.875rem;
+    fill: none;
+    stroke: var(--ink-3);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition:
+      translate 240ms var(--spring),
+      stroke 200ms;
+  }
+
+  .int-arrow.external {
+    rotate: -45deg;
+  }
+
+  .int-card:hover .int-arrow {
+    stroke: var(--ink);
+    translate: 0.1875rem 0;
+  }
+
+  .int-card:hover .int-arrow.external {
+    translate: 0.125rem -0.125rem;
+  }
+
+  .int-blurb {
+    margin: 0.375rem 0 1.125rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .int-blurb :global(code) {
+    color: var(--ink);
+    font-size: 0.875em;
+  }
+
+  .int-blurb :global(.emoji) {
+    font-size: 1.125em;
+    vertical-align: -0.0625em;
+  }
+
+  .int-foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 0.625rem;
+    margin-top: clamp(1.5rem, 3vw, 2.25rem);
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+    text-align: center;
+  }
+
+  .int-foot a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .int-foot a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  @media (min-width: 40rem) {
+    .int-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .int-card:last-child:nth-child(odd) {
+      grid-column: span 2;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .int-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .int-card:last-child:nth-child(odd) {
+      grid-column: auto;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .int-card:hover {
+      translate: none;
+    }
+  }
+</style>

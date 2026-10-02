@@ -156,3 +156,13 @@ export const cityBubbles: CityBubble[] = CITY_QUERIES.flatMap(({ city, locale, q
   }
   return [];
 });
+
+export interface QueryAnswer {
+  query: string;
+  top: string[];
+}
+
+/** The engine's real top results for a few queries, for small visuals on the page. */
+export function answersFor(queries: string[], locale = "en", limit = 3): QueryAnswer[] {
+  return queries.map((query) => ({ query, top: ours(query, locale, limit) })).filter((a) => a.top.length > 0);
+}

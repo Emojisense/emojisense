@@ -1,0 +1,634 @@
+---
+import { answersFor, languages } from "../lib/showcase";
+
+const meaning = answersFor(["greatest of all time", "jurassic park", "i'm exhausted", "mind blown", "no cap", "break a leg"], "en", 1);
+const typos = answersFor(["hallowelen", "brocoli", "piza", "congradulations"], "en", 1);
+const [reaction] = answersFor(["so proud of you"], "en", 4);
+const envs = [
+  { name: "Development", key: "pk_dev_7Hq…" },
+  { name: "Staging", key: "pk_stg_2Lm…" },
+  { name: "Production", key: "pk_live_9Xa…" },
+];
+const tenants = ["Acme Rockets", "Bloom Café", "Pixel Guild"];
+const topSearches = [
+  { q: "congrats", n: 92 },
+  { q: "lfg", n: 71 },
+  { q: "ship it", n: 58 },
+  { q: "big mood", n: 41 },
+];
+---
+
+<section id="features" class="section" aria-labelledby="features-title">
+  <div class="container">
+    <div class="section-head">
+      <p class="kicker">Features</p>
+      <h2 id="features-title">Everything emoji, in one place.</h2>
+      <p class="lead">Search, reactions, photos, custom emoji, consistent emoji sets, analytics and tenants — one SDK, one API, one plan. For one app or a thousand customers.</p>
+    </div>
+
+    <div class="bento">
+      <article class="cell span-3 tall">
+        <h3>Understands what people mean</h3>
+        <p>Slang, films, idioms and plain feelings — not just official names.</p>
+        <ul class="pairs" aria-label="Examples from the real engine">
+          {
+            meaning.map((m) => (
+              <li>
+                <span class="q">{m.query}</span>
+                <span class="arrow" aria-hidden="true" />
+                <span class="emoji big">{m.top[0]}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </article>
+
+      <article class="cell span-3">
+        <h3>Forgives typos</h3>
+        <p>People type fast. Search keeps up.</p>
+        <ul class="typos">
+          {
+            typos.map((t) => (
+              <li>
+                <s>{t.query}</s>
+                <span class="emoji">{t.top[0]}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </article>
+
+      <article class="cell span-3">
+        <h3>{languages.length} languages, typed the way people type</h3>
+        <p>Native scripts and Latin spellings: Hinglish, pinyin, Arabizi.</p>
+        <ul class="langs">
+          {
+            languages.map((l) => (
+              <li lang={l.locale}>
+                {l.query}
+                <span class="emoji">{l.top[0]}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </article>
+
+      <article class="cell span-2">
+        <h3>Instant, even offline</h3>
+        <p>Most searches never leave the device.</p>
+        <p class="metric"><strong>0.4 ms</strong><span>p95 per keystroke, measured</span></p>
+      </article>
+
+      <article class="cell span-2">
+        <h3>Reaction suggestions</h3>
+        <p>Send a message, get the reactions people would use.</p>
+        <div class="bubble">
+          <p>“{reaction?.query}”</p>
+          <div class="chips">{reaction?.top.map((e) => <span class="emoji">{e}</span>)}</div>
+        </div>
+      </article>
+
+      <article class="cell span-2">
+        <h3>Photo to emoji <span class="tag">Beta</span></h3>
+        <p>A puppy gets 🐶 and 🥹. Photos are never stored.</p>
+        <div class="photo" aria-hidden="true">
+          <span class="frame"><span class="emoji">🐶</span></span>
+          <span class="scan"></span>
+          <span class="out emoji">🐶 🥹 🐾</span>
+        </div>
+      </article>
+
+      <article class="cell span-3">
+        <h3>Your own custom emoji</h3>
+        <p>Upload a set or import it from Slack and Discord. It is searched next to the standard emoji, with your own aliases.</p>
+        <div class="custom">
+          <code>:shipit-rocket:</code><code>:lgtm:</code><code>:deploy-friday:</code><code>:latte-art:</code>
+        </div>
+      </article>
+
+      <article class="cell span-3">
+        <h3>Hosted emoji sets</h3>
+        <p>Twemoji, Noto or Fluent, served from the edge — the same look on every device. Even flags on Windows.</p>
+        <div class="sets">
+          <span class="win"><b>J</b><b>P</b><small>Windows today</small></span>
+          <span class="to" aria-hidden="true">→</span>
+          <span class="flag"><span class="emoji">🇯🇵</span><small>with a hosted set</small></span>
+        </div>
+      </article>
+
+      <article class="cell span-2">
+        <h3>Analytics</h3>
+        <p>See what people search for — and what they don't find.</p>
+        <ul class="bars" aria-label="Example dashboard">
+          {
+            topSearches.map((s) => (
+              <li style={`--w: ${s.n}%`}>
+                <span>{s.q}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="miss">No match: <code>rizzler</code> <span>→ add a custom emoji</span></p>
+      </article>
+
+      <article class="cell span-2">
+        <h3>Teams and environments</h3>
+        <p>Separate keys for dev, staging and production. Invite your team.</p>
+        <ul class="envs">
+          {
+            envs.map((e) => (
+              <li>
+                <span>{e.name}</span>
+                <code>{e.key}</code>
+              </li>
+            ))
+          }
+        </ul>
+      </article>
+
+      <article class="cell span-2">
+        <h3>Tenants and webhooks</h3>
+        <p>Building a platform? Give each customer their own emoji set, managed through the API.</p>
+        <ul class="tree">
+          <li class="root">Your platform</li>
+          {tenants.map((t) => <li>{t}</li>)}
+        </ul>
+      </article>
+
+      <article class="cell span-3">
+        <h3>Private by design</h3>
+        <ul class="never">
+          <li>No user IDs or IP addresses</li>
+          <li>No message text, ever</li>
+          <li>Photos processed in memory, never stored</li>
+          <li>Only anonymous, aggregated search trends</li>
+        </ul>
+      </article>
+
+      <article class="cell span-3">
+        <h3>Open-source core</h3>
+        <p>The engine, SDKs, data pack and API server are MIT. Run it on your own Cloudflare account, or let us host it.</p>
+        <p class="mit"><code>MIT</code> engine · SDKs · data · API server</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  .bento {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 1.5rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+  }
+
+  .span-2 {
+    grid-column: span 2;
+  }
+
+  .span-3 {
+    grid-column: span 3;
+  }
+
+  .tall {
+    grid-row: span 2;
+  }
+
+  @media (max-width: 60rem) {
+    .bento {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .span-2,
+    .span-3 {
+      grid-column: span 1;
+    }
+
+    .tall {
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .bento {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .cell h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1875rem;
+  }
+
+  .cell > p {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .tag {
+    padding: 0.1875rem 0.5rem;
+    border: 0.0625rem solid var(--line-strong);
+    border-radius: var(--pill);
+    color: var(--ink-3);
+    font: 400 0.6875rem / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Meaning */
+  .pairs {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+
+  .pairs li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.5rem 2.75rem;
+    align-items: center;
+    padding: 0.625rem 0;
+    border-top: 0.0625rem solid var(--line);
+  }
+
+  .pairs .q {
+    font: 500 1.0625rem / 1.2 var(--font-body);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pairs .q::before,
+  .pairs .q::after {
+    color: var(--ink-3);
+    content: "“";
+  }
+
+  .pairs .q::after {
+    content: "”";
+  }
+
+  .arrow {
+    height: 0.0625rem;
+    background: var(--line-strong);
+  }
+
+  .big {
+    justify-self: end;
+    font-size: 1.875rem;
+  }
+
+  /* Typos */
+  .typos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .typos li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+  }
+
+  .typos s {
+    color: var(--ink-2);
+    text-decoration-color: var(--bad);
+    text-decoration-style: wavy;
+    text-decoration-thickness: 0.0625rem;
+    text-underline-offset: 0.25rem;
+    text-decoration-line: underline;
+  }
+
+  .typos .emoji {
+    font-size: 1.375rem;
+  }
+
+  /* Languages */
+  .langs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .langs li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.3125rem 0.625rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    color: var(--ink-2);
+    font-size: 0.875rem;
+  }
+
+  /* Instant */
+  .metric {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: auto;
+    padding-top: 1rem;
+  }
+
+  .metric strong {
+    font: 700 clamp(2.5rem, 2rem + 1.5vw, 3.25rem) / 1 var(--font-display);
+    letter-spacing: -0.04em;
+  }
+
+  .metric span {
+    color: var(--ink-3);
+    font: 400 0.8125rem / 1.3 var(--font-mono);
+  }
+
+  /* Reactions */
+  .bubble {
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .bubble p {
+    width: fit-content;
+    padding: 0.625rem 0.875rem;
+    border-radius: 1rem 1rem 1rem 0.25rem;
+    background: var(--bg-sunk);
+    font-size: 0.9375rem;
+  }
+
+  .chips {
+    display: flex;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+  }
+
+  .chips span {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    font-size: 1.0625rem;
+  }
+
+  /* Photo */
+  .photo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .frame {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: var(--bg-sunk);
+    font-size: 1.75rem;
+  }
+
+  .scan {
+    position: absolute;
+    left: 0;
+    width: 3.5rem;
+    height: 0.125rem;
+    background: var(--ink);
+    opacity: 0.5;
+    animation: scan 2.4s var(--ease-out) infinite;
+  }
+
+  .out {
+    font-size: 1.5rem;
+    letter-spacing: 0.15em;
+  }
+
+  @keyframes scan {
+    0% {
+      transform: translateY(-1.5rem);
+      opacity: 0;
+    }
+    20%,
+    60% {
+      opacity: 0.5;
+    }
+    80%,
+    100% {
+      transform: translateY(1.5rem);
+      opacity: 0;
+    }
+  }
+
+  /* Custom */
+  .custom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  code {
+    font-size: 0.8125rem;
+  }
+
+  .custom code {
+    padding: 0.3125rem 0.625rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    color: var(--ink-2);
+  }
+
+  /* Sets */
+  .sets {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .sets small {
+    display: block;
+    margin-top: 0.375rem;
+    color: var(--ink-3);
+    font: 400 0.75rem / 1 var(--font-mono);
+  }
+
+  .win b {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.75rem;
+    margin-right: 0.125rem;
+    border: 0.0625rem dashed var(--line-strong);
+    border-radius: 0.25rem;
+    color: var(--ink-3);
+    font: 500 0.875rem / 1 var(--font-mono);
+  }
+
+  .to {
+    color: var(--ink-3);
+  }
+
+  .flag .emoji {
+    font-size: 1.75rem;
+  }
+
+  /* Analytics */
+  .bars {
+    display: grid;
+    gap: 0.375rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .bars li {
+    position: relative;
+    padding: 0.3125rem 0.5rem;
+    font: 400 0.8125rem / 1.2 var(--font-mono);
+  }
+
+  .bars li::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    width: var(--w);
+    border-radius: 0.375rem;
+    background: var(--bg-sunk);
+    content: "";
+  }
+
+  .bars span {
+    position: relative;
+  }
+
+  .miss {
+    margin-top: 0.5rem;
+    color: var(--ink-3);
+    font-size: 0.8125rem;
+  }
+
+  /* Envs */
+  .envs {
+    display: grid;
+    gap: 0.375rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+  }
+
+  .envs li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.625rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+  }
+
+  .envs code {
+    color: var(--ink-3);
+  }
+
+  /* Tenants */
+  .tree {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .tree li {
+    position: relative;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    color: var(--ink-2);
+  }
+
+  .tree li::before {
+    position: absolute;
+    left: 0.375rem;
+    top: 0;
+    bottom: 50%;
+    width: 0.625rem;
+    border-left: 0.0625rem solid var(--line-strong);
+    border-bottom: 0.0625rem solid var(--line-strong);
+    border-bottom-left-radius: 0.25rem;
+    content: "";
+  }
+
+  .tree .root {
+    padding-left: 0;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .tree .root::before {
+    display: none;
+  }
+
+  /* Privacy */
+  .never {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+  }
+
+  .never li {
+    padding-left: 1.25rem;
+    color: var(--ink-2);
+    background: no-repeat 0 0.45em / 0.625rem
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 5.5 4 8l5-6' fill='none' stroke='%230f9f74' stroke-width='1.6'/%3E%3C/svg%3E");
+  }
+
+  @media (max-width: 40rem) {
+    .never {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .mit {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    color: var(--ink-3);
+    font: 400 0.8125rem / 1.3 var(--font-mono);
+  }
+
+  .mit code {
+    margin-right: 0.375rem;
+    padding: 0.1875rem 0.4375rem;
+    border: 0.0625rem solid var(--line-strong);
+    border-radius: 0.375rem;
+    color: var(--ink);
+  }
+</style>

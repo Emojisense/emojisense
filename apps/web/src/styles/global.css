@@ -1,60 +1,71 @@
-/* Emojisense website. Clean SaaS structure, with the fun coming from emoji and motion. */
+/* Emojisense website. A calm, near-monochrome page: the emoji are the only strong color. */
 :root {
   --bg: #ffffff;
-  --bg-soft: #f6f6fb;
-  --ink: #15121f;
-  --ink-2: #4b4759;
-  --ink-3: #7a7688;
-  --line: #e7e5ef;
-  --brand: #ffd23f;
-  --brand-hover: #ffc61a;
-  --on-brand: #15121f;
-
-  --pink: #ffe3f1;
-  --mint: #ddf7ee;
-  --sky: #e1eaff;
-  --peach: #ffe8da;
-  --lilac: #eee6ff;
-  --lemon: #fff6cc;
+  --bg-soft: #f6f6f8;
+  --bg-sunk: #eeeef2;
+  --ink: #0d0d12;
+  --ink-2: #4b4b57;
+  --ink-3: #85858f;
+  --line: #e7e7ec;
+  --line-strong: #d3d3db;
+  --accent: #0d0d12;
+  --on-accent: #ffffff;
+  --live: #12b76a;
+  --focus: #3d7bff;
   --good: #0f9f74;
   --bad: #c2410c;
 
-  --radius: 1rem;
-  --radius-lg: 1.5rem;
-  --pill: 999px;
-  --shadow-sm: 0 0.0625rem 0.125rem rgb(21 18 31 / 0.06);
-  --shadow: 0 0.5rem 1.5rem rgb(21 18 31 / 0.08);
-  --shadow-lg: 0 1.5rem 3.5rem rgb(21 18 31 / 0.16);
-  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Older names, kept so docs and content pages keep working. */
+  --brand: var(--accent);
+  --brand-hover: #2a2a33;
+  --on-brand: var(--on-accent);
+  --pink: var(--bg-soft);
+  --mint: #e7f6ef;
+  --sky: var(--bg-soft);
+  --peach: #fbeee6;
+  --lilac: var(--bg-soft);
+  --lemon: var(--bg-soft);
 
-  --font-display: "Gabarito", system-ui, sans-serif;
-  --font-body: "Figtree", system-ui, sans-serif;
+  --radius-sm: 0.625rem;
+  --radius: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --pill: 999px;
+  --shadow-sm: 0 0.0625rem 0.125rem rgb(13 13 18 / 0.05);
+  --shadow: 0 0.0625rem 0.125rem rgb(13 13 18 / 0.04), 0 0.5rem 1.5rem rgb(13 13 18 / 0.06);
+  --shadow-lg: 0 0.125rem 0.25rem rgb(13 13 18 / 0.04), 0 1.5rem 4rem rgb(13 13 18 / 0.12);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk Variable", system-ui, sans-serif;
   --font-mono: "DM Mono", ui-monospace, monospace;
   --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
-  --container: 74rem;
+  --container: 72rem;
   --gutter: clamp(1rem, 4vw, 2rem);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f0d16;
-    --bg-soft: #17141f;
-    --ink: #f4f2fa;
-    --ink-2: #c4bfd3;
-    --ink-3: #8d889c;
-    --line: #2a2636;
-    --pink: #3a2232;
-    --mint: #17332b;
-    --sky: #1d2742;
-    --peach: #3a2a20;
-    --lilac: #2a2240;
-    --lemon: #353016;
+    --bg: #0b0b0f;
+    --bg-soft: #141419;
+    --bg-sunk: #1b1b22;
+    --ink: #f3f3f6;
+    --ink-2: #b4b4c0;
+    --ink-3: #7c7c88;
+    --line: #24242c;
+    --line-strong: #34343e;
+    --accent: #f3f3f6;
+    --on-accent: #0b0b0f;
+    --brand-hover: #d9d9e0;
+    --mint: #12261f;
+    --peach: #2a1d16;
     --good: #34d399;
     --bad: #fb923c;
-    --shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.4);
-    --shadow-lg: 0 1.5rem 3.5rem rgb(0 0 0 / 0.55);
+    --shadow: 0 0.0625rem 0.125rem rgb(0 0 0 / 0.3), 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+    --shadow-lg: 0 0.125rem 0.25rem rgb(0 0 0 / 0.3), 0 1.5rem 4rem rgb(0 0 0 / 0.5);
     color-scheme: dark;
   }
 }
@@ -83,10 +94,16 @@ h1,
 h2,
 h3 {
   font-family: var(--font-display);
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
   margin: 0;
   text-wrap: balance;
+}
+
+h3 {
+  font-weight: 650;
+  letter-spacing: -0.02em;
 }
 
 p {
@@ -105,7 +122,7 @@ svg {
 }
 
 :focus-visible {
-  outline: 0.1875rem solid #3d7bff;
+  outline: 0.1875rem solid var(--focus);
   outline-offset: 0.1875rem;
   border-radius: 0.375rem;
 }
@@ -136,43 +153,39 @@ svg {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  min-height: 2.875rem;
-  padding: 0.6875rem 1.25rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 1.125rem;
   border-radius: var(--pill);
   border: 0.0625rem solid transparent;
-  font: 700 1rem / 1 var(--font-body);
+  font: 600 0.9375rem / 1 var(--font-body);
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   transition:
-    transform 160ms var(--spring),
+    transform 160ms var(--ease-out),
     background 160ms,
+    border-color 160ms,
     box-shadow 160ms;
 }
 
 .btn:active {
-  transform: translateY(0.125rem);
+  transform: translateY(0.0625rem);
 }
 
 .btn-primary {
-  background: var(--brand);
-  color: var(--on-brand);
-  box-shadow: 0 0.1875rem 0 #15121f;
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover {
   background: var(--brand-hover);
-  transform: translateY(-0.0625rem);
-}
-
-.btn-primary:active {
-  box-shadow: 0 0.0625rem 0 #15121f;
 }
 
 .btn-secondary {
   background: var(--bg);
   color: var(--ink);
-  border-color: var(--line);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--line-strong);
 }
 
 .btn-secondary:hover {
@@ -180,14 +193,19 @@ svg {
 }
 
 .btn-lg {
-  min-height: 3.25rem;
+  min-height: 3.125rem;
   padding: 0.875rem 1.5rem;
-  font-size: 1.0625rem;
+  font-size: 1rem;
 }
 
 /* Section scaffolding */
 .section {
-  padding-block: clamp(4rem, 9vw, 7rem);
+  padding-block: clamp(4rem, 8vw, 6.5rem);
+}
+
+/* Two plain sections in a row get a hairline between them instead of a color change. */
+.section:not(.section-soft) + .section:not(.section-soft) {
+  border-top: 0.0625rem solid var(--line);
 }
 
 .section-soft {
@@ -196,31 +214,35 @@ svg {
 
 .section-head {
   max-width: 44rem;
-  margin: 0 auto clamp(2.5rem, 5vw, 3.5rem);
+  margin: 0 0 clamp(2.5rem, 5vw, 3.5rem);
+}
+
+.section-head.center {
+  margin-inline: auto;
   text-align: center;
 }
 
+/* A small mono label above a heading. */
+.kicker,
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
-  padding: 0.375rem 0.875rem;
-  border-radius: var(--pill);
-  background: var(--lemon);
-  color: var(--ink);
-  font: 700 0.8125rem / 1 var(--font-body);
-  letter-spacing: 0.01em;
+  color: var(--ink-3);
+  font: 500 0.8125rem / 1 var(--font-mono);
+  letter-spacing: 0.02em;
 }
 
 .section-head h2 {
-  font-size: clamp(2rem, 1.3rem + 2.6vw, 3.125rem);
+  font-size: clamp(2.125rem, 1.3rem + 2.8vw, 3.5rem);
 }
 
 .lead {
-  margin-top: 1rem;
+  margin-top: 1.125rem;
   color: var(--ink-2);
   font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.55;
 }
 
 .card {

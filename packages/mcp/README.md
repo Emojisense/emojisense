@@ -10,7 +10,7 @@ semantic results from the Emojisense API.
 | `emoji_for_text` | `text`, `locale?`, `limit?` (5) | Pick the emoji to add to a sentence the user writes. Also returns the text with the best emoji appended. |
 | `suggest_reactions` | `text`, `locale?`, `limit?` (6) | Pick the emoji a reader reacts with: "we launched!" → 🎉 |
 
-`locale` is `en` or `tr` (the bundled packs). Every tool returns a short text and the same data as
+`locale` is any bundled pack locale: `en`, `es`, `zh`, `hi`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. Every tool returns a short text and the same data as
 structured content (`outputSchema`):
 
 ```json

@@ -1,0 +1,59 @@
+{
+  "$comment": "Example photos for the photo demo. Each license was checked on its Wikimedia Commons file page on 2026-10-02. Files are the Commons 500 px thumbnails, resized to at most 640 px and re-encoded as JPEG with sips.",
+  "photos": [
+    {
+      "id": "puppy",
+      "file": "public/demo/photos/puppy.jpg",
+      "title": "Fawn and white Welsh Corgi puppy standing on rear legs and sticking out the tongue",
+      "source": "https://commons.wikimedia.org/wiki/File:Fawn_and_white_Welsh_Corgi_puppy_standing_on_rear_legs_and_sticking_out_the_tongue.jpg",
+      "author": "Huoadg5888 (via Pixabay)",
+      "license": "CC0 1.0 (Pixabay upload, license review confirmed on Commons)",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "cake",
+      "file": "public/demo/photos/cake.jpg",
+      "title": "3rd birthday cake (Unsplash 10b8Lvvc-4g)",
+      "source": "https://commons.wikimedia.org/wiki/File:3rd_birthday_cake_(Unsplash_10b8Lvvc-4g).jpg",
+      "author": "Annie Spratt",
+      "license": "CC0 1.0 (Unsplash, pre-2017)",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "sunset",
+      "file": "public/demo/photos/sunset.jpg",
+      "title": "Cable Beach Sunset by Kate Branch",
+      "source": "https://commons.wikimedia.org/wiki/File:Cable_Beach_Sunset_by_Kate_Branch.jpg",
+      "author": "Kate Branch Photography",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "pizza",
+      "file": "public/demo/photos/pizza.jpg",
+      "title": "Pizza with mushrooms and cheese",
+      "source": "https://commons.wikimedia.org/wiki/File:Pizza_with_mushrooms_and_cheese.jpg",
+      "author": "LEi - DESIGN (via Foodiesfeed)",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "cat",
+      "file": "public/demo/photos/cat.jpg",
+      "title": "Cat Sleeping on Keyboard",
+      "source": "https://commons.wikimedia.org/wiki/File:Cat_Sleeping_on_Keyboard.jpg",
+      "author": "Panini!",
+      "license": "CC0 1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "hike",
+      "file": "public/demo/photos/hike.jpg",
+      "title": "Adventurous Mountain Hikes (Unsplash)",
+      "source": "https://commons.wikimedia.org/wiki/File:Adventurous_Mountain_Hikes_(Unsplash).jpg",
+      "author": "Galen Crout",
+      "license": "CC0 1.0 (Unsplash, pre-2017)",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    }
+  ]
+}

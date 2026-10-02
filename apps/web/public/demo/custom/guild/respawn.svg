@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:respawn:</title>
+  <path d="M48.1 13.9A25 25 0 1 1 13.42 16.27" fill="none" stroke="#3cc48a" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M19.44 9.58 8.59 11.92 18.25 20.62z" fill="#3cc48a" stroke="#3cc48a" stroke-width="2" stroke-linejoin="round"/>
+  <path fill="#f25c54" d="M23.25 23h7v3.5h3.5V23h7v3.5h3.5v10.5h-3.5v3.5h-3.5v3.5h-3.5v3.5h-3.5v-3.5h-3.5v-3.5h-3.5v-3.5h-3.5V26.5h3.5z"/>
+  <path fill="#fff" d="M23.25 26.5h3.5v3.5h-3.5z" opacity=".8"/>
+</svg>

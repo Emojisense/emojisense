@@ -3,28 +3,28 @@ const layers = [
   {
     emoji: "📱",
     title: "On the device",
-    body: "Names, slang and typos from the built-in dictionary. “c”, “cong”, “congrats” never leave the phone.",
+    body: "Names, slang and typos, straight from the built-in dictionary. Works offline, from the first keystroke.",
     speed: "< 1 ms",
     limited: false,
   },
   {
     emoji: "🗂️",
-    title: "Popular answers, ready in advance",
-    body: "Every night, the searches people use most across all apps get AI answers ahead of time, as small files in every city.",
-    speed: "static file",
+    title: "Popular searches, ready in advance",
+    body: "Every night, the searches people use most get smart answers prepared ahead of time and placed close to your users.",
+    speed: "nearest city",
     limited: false,
   },
   {
     emoji: "⚡",
-    title: "Shared city cache",
-    body: "An AI answer stays in the city where it was asked for up to a week. The next app there gets it without a model call.",
-    speed: "no model call",
+    title: "Recent answers, kept nearby",
+    body: "Once a new search is understood, its answer stays in the nearest city, so it comes back instantly next time.",
+    speed: "nearest city",
     limited: false,
   },
   {
     emoji: "🧠",
     title: "AI meaning search",
-    body: "Brand-new phrasing, the first time anyone nearby asks. The answer then joins the shared cache.",
+    body: "Brand-new phrasing is understood by meaning, at the edge, in about 50 ms.",
     speed: "≈ 50 ms",
     limited: true,
   },
@@ -33,19 +33,19 @@ const layers = [
 
 <section id="network" class="section section-soft" aria-labelledby="network-title">
   <div class="container">
-    <div class="section-head">
-      <p class="eyebrow"><span class="emoji" aria-hidden="true">🔁</span> Network effect</p>
-      <h2 id="network-title">Every search makes it faster for everyone.</h2>
+    <div class="section-head center">
+      <p class="kicker">Gets better with use</p>
+      <h2 id="network-title">The more people search, the smarter it gets.</h2>
       <p class="lead">
-        Each search is answered by the first layer that knows it. The more apps use Emojisense, the more answers
-        are already waiting — and they keep coming when your plan runs out.
+        Common searches come back instantly, new slang is learned every night, and search stays smart even when
+        your plan runs out.
       </p>
     </div>
 
     <div class="net-grid">
       <div class="ladder card">
         <div class="ladder-top">
-          <p class="ladder-title">Who answers a search</p>
+          <p class="ladder-title">How a search gets answered</p>
           <label class="switch">
             <input type="checkbox" role="switch" />
             <span class="track" aria-hidden="true"><span class="thumb"></span></span>
@@ -73,23 +73,23 @@ const layers = [
           }
         </ol>
         <p class="ladder-note">
-          Over the limit, cached and ready-made answers are served and not counted. Only brand-new searches wait, and
-          the device answers those meanwhile.
+          Past your plan limit, your users still get answers from the device, from popular searches and from recent
+          answers. Only brand-new phrasing waits until next month, and the device answers it meanwhile.
         </p>
       </div>
 
       <aside class="loop card" aria-labelledby="loop-title">
-        <h3 id="loop-title">The loop</h3>
+        <h3 id="loop-title">Better every day</h3>
         <ol class="cycle">
-          <li><span class="emoji" aria-hidden="true">🧩</span> More apps</li>
-          <li><span class="emoji" aria-hidden="true">⌨️</span> More searches</li>
+          <li><span class="emoji" aria-hidden="true">⌨️</span> People search</li>
+          <li><span class="emoji" aria-hidden="true">🧠</span> New slang is learned</li>
           <li><span class="emoji" aria-hidden="true">🗂️</span> More answers ready</li>
-          <li><span class="emoji" aria-hidden="true">⚡</span> Faster and cheaper for all</li>
+          <li><span class="emoji" aria-hidden="true">🚀</span> Faster, smarter results</li>
         </ol>
-        <p class="quote">The thousandth “congrats on the launch” of the day costs nobody a model call.</p>
+        <p class="quote">Popular searches like “congrats on the launch” come back instantly, anywhere in the world.</p>
         <p class="privacy">
-          <span class="emoji" aria-hidden="true">🔒</span> Shared answers hold only the search text and its emoji. No user,
-          app or key is attached.
+          <span class="emoji" aria-hidden="true">🔒</span> We learn from search text only — never from who searched or
+          which app they used.
         </p>
       </aside>
     </div>
@@ -201,7 +201,7 @@ const layers = [
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 0.875rem;
-    background: var(--lemon);
+    background: var(--bg-soft);
     font-size: 1.375rem;
   }
 
@@ -355,8 +355,8 @@ const layers = [
 
   .cycle li:nth-child(4) {
     order: 3;
-    background: var(--brand);
-    color: var(--on-brand);
+    background: var(--ink);
+    color: var(--bg);
   }
 
   .cycle li:nth-child(4)::after {

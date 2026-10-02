@@ -1,79 +1,16 @@
 ---
 import EdgeNetwork from "../components/EdgeNetwork.astro";
+import Features from "../components/Features.astro";
+import Integrations from "../components/Integrations.astro";
+import LogoStrip from "../components/LogoStrip.astro";
 import NetworkEffect from "../components/NetworkEffect.astro";
 import Pricing from "../components/Pricing.astro";
-import { API_URL, DASHBOARD_URL, PACK_BASE_URL, PUBLISHABLE_KEY, REPO_URL } from "../config";
+import { DASHBOARD_URL, REPO_URL } from "../config";
 import { CodeTabs } from "../islands/CodeTabs";
-import { HeroDemo } from "../islands/HeroDemo";
+import { HeroSearch } from "../islands/HeroSearch";
+import { UseCases } from "../islands/UseCases";
 import Base from "../layouts/Base.astro";
-import { comparisons, languages, stats } from "../lib/showcase";
-
-const worksWith = [
-  "React",
-  "Vue",
-  "Svelte",
-  "Angular",
-  "Vanilla JS",
-  "Frimousse",
-  "Tiptap",
-  "Lexical",
-  "Swift",
-  "Chrome",
-  "Raycast",
-  "MCP",
-];
-
-const features = [
-  {
-    emoji: "🧠",
-    tint: "lilac",
-    title: "Understands meaning",
-    body: "Slang, memes, films, idioms and plain feelings. “greatest of all time” finds 🐐, “jurassic park” finds 🦖.",
-  },
-  {
-    emoji: "✏️",
-    tint: "peach",
-    title: "Forgives typos",
-    body: "“hallowelen”, “brocoli”, “thumbs upp”. People type fast; search should keep up.",
-  },
-  {
-    emoji: "🌍",
-    tint: "sky",
-    title: `${stats.languages} languages`,
-    body: "English, Spanish, Chinese, Hindi, Arabic, French, Bengali, Portuguese, Russian, Indonesian and Turkish — plus how people type them in Latin letters.",
-  },
-  {
-    emoji: "⚡",
-    tint: "lemon",
-    title: "Instant, even offline",
-    body: "Most searches are answered on the device in under a millisecond. No spinner, no network needed.",
-  },
-  {
-    emoji: "💬",
-    tint: "mint",
-    title: "Reaction suggestions",
-    body: "Send a message, get the reactions people would use. One API call.",
-  },
-  {
-    emoji: "📷",
-    tint: "pink",
-    title: "Photo to emoji",
-    body: "Suggest reactions for a photo: a puppy gets 🐶🥹. Images are never stored.",
-    beta: true,
-  },
-  {
-    emoji: "🔒",
-    tint: "sky",
-    title: "Private by design",
-    body: "No user IDs, no IP logs, no message text stored. Only anonymous, aggregated search trends.",
-  },
-  {
-    emoji: "🧩",
-    tint: "lilac",
-    title: "Fits your picker",
-    body: "Keep your emoji picker. Emojisense only does the ranking: React, web component, editors, native.",
-  },
-];
+import { comparisons, stats } from "../lib/showcase";
 
 const samples = [
   {
@@ -111,16 +48,16 @@ engine.search("ship it").results; // → 🚀 🚢 🛳️ …`,
   {
     id: "http",
     label: "HTTP API",
-    code: `curl "https://api.emojisense.com/v1/search?q=congrats+on+the+launch&key=pk_live_…"
+    code: `curl "https://api.emojisense.com/v1/search?q=greatest+of+all+time&key=pk_live_…"
 
-{ "results": [{ "emoji": "🚀", "id": "1F680", "score": 0.81, "source": "semantic" }, …] }`,
+{ "results": [{ "emoji": "🐐", "id": "1F410", "source": "alias", … }, …], "cached": true }`,
   },
 ];
 
 const faqs = [
   {
     q: "What is Emojisense?",
-    a: "A search engine for emoji pickers. It understands what people mean — slang, typos, films, feelings and 11 languages — and plugs into the picker you already have.",
+    a: "One platform for everything emoji in your product: search that understands people in 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets, analytics and per-customer emoji for platforms. It plugs into the app and the picker you already have.",
   },
   {
     q: "Do I need a server?",
@@ -132,69 +69,67 @@ const faqs = [
   },
   {
     q: "What happens when I reach my plan limit?",
-    a: "Nothing breaks. Answers that are already cached or prepared in advance keep coming and are not counted. Only brand-new searches wait for the next month, and the on-device dictionary answers those meanwhile.",
+    a: "Nothing breaks for your users. Popular searches still get smart answers, and the on-device dictionary covers everything else until the next month.",
   },
   {
     q: "Where does it run?",
     a: "The engine runs on your users' devices. The API runs on Cloudflare's network in 300+ cities, so every search is answered close to the person typing it. There is no single region to be far from.",
   },
   {
-    q: "Do other apps see my users' searches?",
-    a: "No. The shared cache keeps only a short search text and its emoji, with no user, app or key attached. Your usage and analytics stay in your account.",
+    q: "What do you know about my users?",
+    a: "Nothing personal. We never store who searched, from which app, or what they wrote in a message. Your usage and analytics stay in your account.",
   },
   {
     q: "Is it open source?",
     a: "Yes. The engine, SDKs, data pack and API server are MIT. The hosted service adds daily dictionary updates, analytics and custom emoji.",
   },
-  {
-    q: "What do you store?",
-    a: "Never user IDs, IP addresses, message text or images. Search queries that reach the API are counted anonymously so the dictionary can learn new slang.",
-  },
 ];
 ---
 
 <Base
-  description="Emoji search that understands slang, typos, films and 11 languages. Drop it into any emoji picker. Free tier, open-source core."
+  description="The emoji platform for every app: search that understands slang and 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets and analytics. Free plan, open-source core."
   path="/"
 >
   <section class="hero">
-    <div class="container hero-grid">
-      <div class="hero-copy">
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">✨</span> Open source · {stats.languages} languages · 300+ cities</p>
-        <h1>Emoji search that gets what people <span class="mark">mean</span>.</h1>
-        <p class="hero-lead">
-          Your users type “jurassic park”, “greatest of all time” or “hallowelen”. Emojisense finds 🦖, 🐐 and 🎃 —
-          instantly, in 11 languages, inside the emoji picker you already have.
-        </p>
-        <div class="hero-ctas">
-          <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
-          <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
-        </div>
-        <p class="install"><code>npm install emojisense</code><span>Free tier · no card needed</span></p>
+    <div class="container hero-inner">
+      <p class="kicker hero-kicker"><span class="live" aria-hidden="true"></span> Live · runs in your browser</p>
+      <h1>Everything emoji, for every app on&nbsp;earth.</h1>
+      <p class="hero-lead">
+        Search that understands slang, films, feelings and {stats.languages} languages. Reaction suggestions, photo
+        to emoji, custom emoji, one consistent look on every device, and analytics. One platform, plugged into the
+        app you already have.
+      </p>
+      <HeroSearch client:load />
+      <div class="hero-ctas">
+        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
+        <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
       </div>
-      <div class="hero-demo">
-        <HeroDemo client:load apiUrl={API_URL} packBaseUrl={PACK_BASE_URL} publishableKey={PUBLISHABLE_KEY} />
-        <span class="float f1 emoji" aria-hidden="true">🦖</span>
-        <span class="float f2 emoji" aria-hidden="true">🎉</span>
-        <span class="float f3 emoji" aria-hidden="true">🐐</span>
-      </div>
+      <p class="install"><code>npm install emojisense</code><span>Free plan · no card needed · MIT core</span></p>
     </div>
-    <div class="container works">
-      <p>Works with</p>
-      <ul>{worksWith.map((w) => <li>{w}</li>)}</ul>
+    <div class="container hero-logos"><LogoStrip /></div>
+  </section>
+
+  <section id="use-cases" class="section section-soft" aria-labelledby="uc-title">
+    <div class="container">
+      <div class="section-head center">
+        <p class="kicker">Use cases</p>
+        <h2 id="uc-title">One platform, everywhere people use emoji.</h2>
+        <p class="lead">Five small apps, all running the real thing. Click around — they are live.</p>
+      </div>
+      <UseCases client:visible />
     </div>
   </section>
 
-  <section class="section section-soft" aria-labelledby="compare-title">
+  <section class="section" aria-labelledby="compare-title">
     <div class="container">
       <div class="section-head">
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">🔍</span> The problem</p>
+        <p class="kicker">Why it matters</p>
         <h2 id="compare-title">Pickers match names. People type feelings.</h2>
         <p class="lead">Most emoji pickers only search official names like “rocket” or “goat”. Here is the same emoji data, searched both ways.</p>
       </div>
       <div class="compare">
         <div class="compare-head" aria-hidden="true">
-          <span>You type</span><span>Typical picker</span><span>Emojisense</span>
+          <span>Someone types</span><span>Typical picker</span><span>Emojisense</span>
         </div>
         {
           comparisons.map((c) => (
@@ -204,15 +139,11 @@ const faqs = [
                 <small>{c.kind}</small>
               </span>
               <span class="them">
-                {c.name.length > 0 ? (
-                  <span class="emoji dim">{c.name.join(" ")}</span>
-                ) : (
-                  <span class="none">No results</span>
-                )}
+                {c.name.length > 0 ? <span class="emoji dim">{c.name.join(" ")}</span> : <span class="none">No results</span>}
               </span>
-              <span class="us emoji">
+              <span class="us">
                 {c.emojisense.map((e, i) => (
-                  <span class:list={["hit", { first: i === 0 }]}>{e}</span>
+                  <span class:list={["emoji", "hit", { first: i === 0 }]}>{e}</span>
                 ))}
               </span>
             </div>
@@ -222,67 +153,26 @@ const faqs = [
     </div>
   </section>
 
+  <Features />
+
   <EdgeNetwork />
 
   <NetworkEffect />
 
-  <section id="features" class="section" aria-labelledby="features-title">
-    <div class="container">
-      <div class="section-head">
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">🎁</span> Features</p>
-        <h2 id="features-title">Everything your emoji search was missing</h2>
-      </div>
-      <div class="features">
-        {
-          features.map((f) => (
-            <article class="feature">
-              <span class:list={["feature-emoji emoji", `tint-${f.tint}`]} aria-hidden="true">
-                {f.emoji}
-              </span>
-              <h3>
-                {f.title} {f.beta && <span class="beta">Beta</span>}
-              </h3>
-              <p>{f.body}</p>
-            </article>
-          ))
-        }
-      </div>
-    </div>
-  </section>
-
-  <section id="languages" class="section section-soft" aria-labelledby="lang-title">
-    <div class="container">
-      <div class="section-head">
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">🌍</span> Languages</p>
-        <h2 id="lang-title">Speaks your users' language</h2>
-        <p class="lead">Every language gets its own slang, holidays and typing habits — including Hinglish, pinyin and Arabizi.</p>
-      </div>
-      <ul class="langs">
-        {
-          languages.map((l) => (
-            <li class="lang" lang={l.locale}>
-              <span class="lang-name">{l.language}</span>
-              <span class="lang-q">“{l.query}”</span>
-              <span class="lang-a emoji">{l.top.slice(0, 3).join(" ")}</span>
-            </li>
-          ))
-        }
-      </ul>
-    </div>
-  </section>
+  <Integrations />
 
   <section id="developers" class="section" aria-labelledby="code-title">
     <div class="container code-grid">
       <div>
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">🛠️</span> For developers</p>
-        <h2 id="code-title" class="h2">Add it in minutes, not sprints</h2>
-        <p class="lead">A 6 KB engine, a ready-made picker for React, a web component for everything else, and a plain HTTP API.</p>
+        <p class="kicker">For developers</p>
+        <h2 id="code-title" class="h2">Add it in minutes, not sprints.</h2>
+        <p class="lead">One SDK for search and pickers, one API for reactions, photos and custom emoji, and integrations for the stack you already use.</p>
         <ul class="checks">
-          <li><span class="emoji">✅</span> Keeps your picker and your design</li>
-          <li><span class="emoji">✅</span> Works offline from the first keystroke</li>
-          <li><span class="emoji">✅</span> MIT-licensed core you can self-host</li>
+          <li>Keeps your picker and your design</li>
+          <li>Works offline from the first keystroke</li>
+          <li>MIT-licensed core you can self-host</li>
         </ul>
-        <a class="btn btn-secondary" href="/docs/">Read the quickstart →</a>
+        <a class="btn btn-secondary" href="/docs/">Read the quickstart</a>
       </div>
       <CodeTabs client:visible samples={samples} />
     </div>
@@ -290,10 +180,10 @@ const faqs = [
 
   <section id="pricing" class="section section-soft" aria-labelledby="pricing-title">
     <div class="container">
-      <div class="section-head">
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">💸</span> Pricing</p>
+      <div class="section-head center">
+        <p class="kicker">Pricing</p>
         <h2 id="pricing-title">Free to start. Fair when you grow.</h2>
-        <p class="lead">Search and reaction suggestions are free on every plan. You pay for volume, photos and custom emoji.</p>
+        <p class="lead">Search and reaction suggestions are on every plan. Pay for volume, photos, custom emoji and team features.</p>
       </div>
       <Pricing />
     </div>
@@ -302,8 +192,8 @@ const faqs = [
   <section id="faq" class="section" aria-labelledby="faq-title">
     <div class="container faq-wrap">
       <div class="section-head">
-        <p class="eyebrow"><span class="emoji" aria-hidden="true">🙋</span> FAQ</p>
-        <h2 id="faq-title">Questions, answered</h2>
+        <p class="kicker">FAQ</p>
+        <h2 id="faq-title">Questions, answered.</h2>
       </div>
       <div class="faq">
         {
@@ -320,12 +210,12 @@ const faqs = [
 
   <section class="final" aria-labelledby="final-title">
     <div class="container final-inner">
-      <span class="final-sticker emoji" aria-hidden="true">🦖</span>
-      <h2 id="final-title">Type “jurassic park”. Get 🦖.</h2>
-      <p>Give your users the emoji search they keep expecting. Free to start, ready in minutes.</p>
+      <p class="final-emoji emoji" aria-hidden="true">🦖</p>
+      <h2 id="final-title">Emoji, solved. Everywhere.</h2>
+      <p>Give your users emoji that just work — in every language, on every device. Free to start, ready in minutes.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
-        <a class="btn btn-ghost btn-lg" href={REPO_URL}>Star on GitHub</a>
+        <a class="btn btn-secondary btn-lg" href={REPO_URL}>Star on GitHub</a>
       </div>
     </div>
   </section>
@@ -333,168 +223,102 @@ const faqs = [
 
 <style>
   .hero {
-    position: relative;
-    padding: clamp(3rem, 7vw, 5.5rem) 0 3rem;
-    background:
-      radial-gradient(60rem 30rem at 85% -10%, var(--lemon), transparent 60%),
-      radial-gradient(40rem 24rem at -10% 20%, var(--lilac), transparent 60%);
+    padding: clamp(4rem, 10vw, 7.5rem) 0 clamp(4rem, 8vw, 6rem);
+    background: radial-gradient(60rem 28rem at 50% -8rem, var(--bg-soft), transparent 70%);
   }
 
-  .hero-grid {
+  .hero-inner {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: clamp(2.5rem, 5vw, 4rem);
-    align-items: center;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .hero-kicker {
+    padding: 0.4375rem 0.75rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    background: var(--bg);
+  }
+
+  .live {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background: var(--live);
+    box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--live) 22%, transparent);
   }
 
   h1 {
-    font-size: clamp(2.75rem, 1.6rem + 4.6vw, 4.75rem);
-    font-weight: 800;
-    letter-spacing: -0.035em;
-  }
-
-  .mark {
-    position: relative;
-    white-space: nowrap;
-  }
-
-  .mark::after {
-    content: "";
-    position: absolute;
-    inset: auto -0.1em 0.06em;
-    z-index: -1;
-    height: 0.36em;
-    border-radius: 0.2em;
-    background: var(--brand);
-    transform: rotate(-1.5deg);
+    max-width: 15ch;
+    font-size: clamp(2.75rem, 1.4rem + 5.6vw, 5.5rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
   }
 
   .hero-lead {
-    max-width: 34rem;
-    margin-top: 1.25rem;
+    max-width: 38rem;
+    margin: 1.5rem 0 2.75rem;
     color: var(--ink-2);
-    font-size: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+    font-size: clamp(1.0625rem, 1rem + 0.45vw, 1.3125rem);
+    line-height: 1.55;
   }
 
   .hero-ctas {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.75rem;
-    margin-top: 2rem;
+    margin-top: 2.75rem;
+  }
+
+  .hero-logos {
+    margin-top: clamp(3.5rem, 7vw, 5rem);
+  }
+
+  .hero-logos :global(.strip) {
+    justify-content: center;
   }
 
   .install {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 0.5rem 1rem;
     margin-top: 1.25rem;
     color: var(--ink-3);
     font-size: 0.875rem;
   }
 
   .install code {
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.5rem;
-    background: var(--bg-soft);
+    padding: 0.3125rem 0.625rem;
     border: 0.0625rem solid var(--line);
-    color: var(--ink);
-    font-size: 0.875rem;
-  }
-
-  .hero-demo {
-    position: relative;
-  }
-
-  .float {
-    position: absolute;
-    z-index: 2;
-    font-size: 2.5rem;
-    filter: drop-shadow(0 0 0.125rem #fff) drop-shadow(0 0.375rem 0.5rem rgb(21 18 31 / 0.18));
-    animation: bob 5s ease-in-out infinite;
-    pointer-events: none;
-  }
-
-  .f1 {
-    top: -1.25rem;
-    right: 1.5rem;
-    transform: rotate(8deg);
-  }
-
-  .f2 {
-    bottom: 22%;
-    left: -1.5rem;
-    animation-delay: -1.5s;
-  }
-
-  .f3 {
-    bottom: -1rem;
-    right: 18%;
-    animation-delay: -3s;
-  }
-
-  @keyframes bob {
-    50% {
-      translate: 0 -0.5rem;
-      rotate: -6deg;
-    }
-  }
-
-  .works {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem 1.25rem;
-    margin-top: clamp(3rem, 6vw, 4.5rem);
-    color: var(--ink-3);
-    font-size: 0.875rem;
-    font-weight: 600;
-  }
-
-  .works ul {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .works li {
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--pill);
-    background: var(--bg);
-    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-sm);
     color: var(--ink-2);
+    font-size: 0.8125rem;
   }
 
   /* Comparison */
   .compare {
-    max-width: 52rem;
-    margin-inline: auto;
     overflow: hidden;
     border: 0.0625rem solid var(--line);
     border-radius: var(--radius-lg);
-    background: var(--bg);
-    box-shadow: var(--shadow);
   }
 
   .compare-head,
   .compare-row {
     display: grid;
-    grid-template-columns: 1.3fr 1fr 1fr;
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
+    gap: 1rem;
     padding: 1rem 1.5rem;
   }
 
   .compare-head {
     background: var(--bg-soft);
     color: var(--ink-3);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font: 400 0.8125rem / 1 var(--font-mono);
   }
 
   .compare-row + .compare-row {
@@ -503,18 +327,19 @@ const faqs = [
 
   .q {
     display: grid;
+    gap: 0.25rem;
+  }
+
+  .q strong {
+    font-weight: 600;
   }
 
   .q small {
     color: var(--ink-3);
-    font-size: 0.8125rem;
+    font: 400 0.75rem / 1 var(--font-mono);
   }
 
   .none {
-    display: inline-block;
-    padding: 0.25rem 0.625rem;
-    border-radius: var(--pill);
-    background: var(--bg-soft);
     color: var(--ink-3);
     font-size: 0.875rem;
   }
@@ -526,285 +351,18 @@ const faqs = [
 
   .us {
     display: flex;
-    gap: 0.375rem;
-    font-size: 1.75rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .hit {
+    font-size: 1.375rem;
+    opacity: 0.6;
   }
 
   .hit.first {
-    display: grid;
-    place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 0.75rem;
-    background: var(--brand);
-  }
-
-  /* Features */
-  .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15.5rem), 1fr));
-    gap: 1rem;
-  }
-
-  .feature {
-    padding: 1.5rem;
-    border: 0.0625rem solid var(--line);
-    border-radius: var(--radius-lg);
-    background: var(--bg);
-    transition: transform 200ms var(--spring), box-shadow 200ms;
-  }
-
-  .feature:hover {
-    transform: translateY(-0.25rem);
-    box-shadow: var(--shadow);
-  }
-
-  .feature:hover .feature-emoji {
-    transform: rotate(-8deg) scale(1.1);
-  }
-
-  .feature-emoji {
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
-    margin-bottom: 1rem;
-    border-radius: 0.875rem;
-    font-size: 1.5rem;
-    transition: transform 240ms var(--spring);
-  }
-
-  .tint-lilac { background: var(--lilac); }
-  .tint-peach { background: var(--peach); }
-  .tint-sky { background: var(--sky); }
-  .tint-lemon { background: var(--lemon); }
-  .tint-mint { background: var(--mint); }
-  .tint-pink { background: var(--pink); }
-
-  .feature h3 {
-    font-size: 1.1875rem;
-  }
-
-  .feature p {
-    margin-top: 0.5rem;
-    color: var(--ink-2);
-    font-size: 0.9375rem;
-  }
-
-  .beta {
-    margin-left: 0.25rem;
-    padding: 0.125rem 0.5rem;
-    border-radius: var(--pill);
-    background: var(--sky);
-    font: 700 0.6875rem / 1.4 var(--font-body);
-    vertical-align: middle;
-  }
-
-  /* Languages */
-  .langs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-    gap: 0.75rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .lang {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "name a" "q a";
-    align-items: center;
-    padding: 1rem 1.25rem;
-    border: 0.0625rem solid var(--line);
-    border-radius: var(--radius);
-    background: var(--bg);
-  }
-
-  .lang-name {
-    grid-area: name;
-    color: var(--ink-3);
-    font-size: 0.8125rem;
-    font-weight: 700;
-  }
-
-  .lang-q {
-    grid-area: q;
-    font-weight: 700;
-  }
-
-  .lang-a {
-    grid-area: a;
-    font-size: 1.5rem;
-  }
-
-  /* Code */
-  .code-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem;
-    align-items: center;
-  }
-
-  .h2 {
-    font-size: clamp(2rem, 1.3rem + 2.6vw, 3.125rem);
-  }
-
-  .checks {
-    display: grid;
-    gap: 0.5rem;
-    margin: 1.5rem 0;
-    padding: 0;
-    list-style: none;
-    font-weight: 600;
-  }
-
-  .checks .emoji {
-    margin-right: 0.375rem;
-  }
-
-  .code-grid :global(.code-tabs) {
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: #15121f;
-    box-shadow: var(--shadow-lg);
-  }
-
-  .code-grid :global(.code-tablist) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    padding: 0.625rem;
-    border-bottom: 0.0625rem solid #2a2636;
-  }
-
-  .code-grid :global(.code-tablist button) {
-    padding: 0.4375rem 0.875rem;
-    border: 0;
-    border-radius: var(--pill);
-    background: transparent;
-    color: #bdb8cc;
-    font: 600 0.875rem / 1 var(--font-body);
-    cursor: pointer;
-  }
-
-  .code-grid :global(.code-tablist button[aria-selected="true"]) {
-    background: var(--brand);
-    color: #15121f;
-  }
-
-  .code-grid :global(.code-copy) {
-    margin-left: auto;
-  }
-
-  .code-grid :global(pre) {
-    margin: 0;
-    padding: 1.25rem 1.5rem 1.5rem;
-    overflow-x: auto;
-    color: #f4f2fa;
-    font: 400 0.875rem / 1.7 var(--font-mono);
-  }
-
-  /* Steps */
-  .faq-wrap {
-    max-width: 50rem;
-  }
-
-  .faq {
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  details {
-    border: 0.0625rem solid var(--line);
-    border-radius: var(--radius);
-    background: var(--bg);
-  }
-
-  summary {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.125rem 1.25rem;
-    font-weight: 700;
-    cursor: pointer;
-    list-style: none;
-  }
-
-  summary::-webkit-details-marker {
-    display: none;
-  }
-
-  summary::after {
-    content: "+";
-    font-size: 1.25rem;
-    line-height: 1;
-    transition: transform 200ms var(--spring);
-  }
-
-  details[open] summary::after {
-    transform: rotate(45deg);
-  }
-
-  details p {
-    padding: 0 1.25rem 1.25rem;
-    color: var(--ink-2);
-  }
-
-  /* Final CTA */
-  .final {
-    padding: clamp(4rem, 9vw, 6.5rem) 0;
-    background: #15121f;
-    color: #f4f2fa;
-    text-align: center;
-  }
-
-  .final-inner {
-    display: grid;
-    justify-items: center;
-  }
-
-  .final-sticker {
-    font-size: 4.5rem;
-    filter: drop-shadow(0 0 0.1875rem #fff) drop-shadow(0 0.5rem 1rem rgb(0 0 0 / 0.4));
-    transform: rotate(-8deg);
-    animation: bob 4s ease-in-out infinite;
-  }
-
-  .final h2 {
-    margin-top: 1rem;
-    font-size: clamp(2.25rem, 1.4rem + 3vw, 3.5rem);
-  }
-
-  .final p {
-    max-width: 34rem;
-    margin-top: 1rem;
-    color: #c4bfd3;
-    font-size: 1.125rem;
-  }
-
-  .final .hero-ctas {
-    justify-content: center;
-  }
-
-  .btn-ghost {
-    border-color: #4b4759;
-    color: #f4f2fa;
-  }
-
-  .btn-ghost:hover {
-    border-color: #f4f2fa;
-  }
-
-  @media (min-width: 62rem) {
-    .hero-grid {
-      grid-template-columns: 1.05fr 1fr;
-    }
-
-    .code-grid {
-      grid-template-columns: 0.8fr 1.2fr;
-      gap: 4rem;
-    }
+    font-size: 2rem;
+    opacity: 1;
   }
 
   @media (max-width: 40rem) {
@@ -813,8 +371,9 @@ const faqs = [
     }
 
     .compare-row {
-      grid-template-columns: 1fr 1fr;
-      grid-template-areas: "q q" "them us";
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas: "q us" "them us";
+      padding: 1rem 1.125rem;
     }
 
     .q {
@@ -828,9 +387,167 @@ const faqs = [
     .us {
       grid-area: us;
     }
+  }
 
-    .f2 {
-      left: -0.5rem;
+  /* Developers */
+  .code-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  @media (min-width: 64rem) {
+    .code-grid {
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    }
+  }
+
+  .h2 {
+    font-size: clamp(2.125rem, 1.3rem + 2.8vw, 3.5rem);
+  }
+
+  .checks {
+    display: grid;
+    gap: 0.625rem;
+    margin: 1.75rem 0 2rem;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-2);
+  }
+
+  .checks li {
+    padding-left: 1.5rem;
+    background: no-repeat 0 0.45em / 0.75rem
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 5.5 4 8l5-6' fill='none' stroke='%230f9f74' stroke-width='1.6'/%3E%3C/svg%3E");
+  }
+
+  .code-grid :global(.code-tabs) {
+    overflow: hidden;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: #0d0d12;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .code-grid :global(.code-tablist) {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.625rem;
+    border-bottom: 0.0625rem solid #24242c;
+  }
+
+  .code-grid :global(.code-tablist button) {
+    padding: 0.4375rem 0.75rem;
+    border: 0;
+    border-radius: var(--pill);
+    background: transparent;
+    color: #9a9aa6;
+    font: 500 0.8125rem / 1 var(--font-body);
+    cursor: pointer;
+  }
+
+  .code-grid :global(.code-tablist button[aria-selected="true"]) {
+    background: #24242c;
+    color: #f3f3f6;
+  }
+
+  .code-grid :global(.code-copy) {
+    margin-left: auto;
+  }
+
+  .code-grid :global(pre) {
+    margin: 0;
+    padding: 1.25rem 1.5rem;
+    overflow-x: auto;
+    color: #e4e4ea;
+    font: 400 0.8125rem / 1.7 var(--font-mono);
+  }
+
+  /* FAQ */
+  .faq-wrap {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .faq-wrap {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+  }
+
+  .faq {
+    border-top: 0.0625rem solid var(--line);
+  }
+
+  .faq details {
+    border-bottom: 0.0625rem solid var(--line);
+  }
+
+  .faq summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .faq summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq summary::after {
+    color: var(--ink-3);
+    content: "+";
+    font: 400 1.25rem / 1 var(--font-mono);
+    transition: transform 200ms var(--ease-out);
+  }
+
+  .faq details[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  .faq details p {
+    padding: 0 2rem 1.25rem 0;
+    color: var(--ink-2);
+  }
+
+  /* Final */
+  .final {
+    padding: clamp(5rem, 11vw, 8.5rem) 0;
+    border-top: 0.0625rem solid var(--line);
+    text-align: center;
+  }
+
+  .final-inner {
+    display: grid;
+    justify-items: center;
+  }
+
+  .final-emoji {
+    font-size: 4.5rem;
+    animation: bob 5s ease-in-out infinite;
+  }
+
+  .final h2 {
+    margin-top: 1.25rem;
+    font-size: clamp(2.25rem, 1.3rem + 3.2vw, 3.75rem);
+  }
+
+  .final p:not(.final-emoji) {
+    max-width: 32rem;
+    margin-top: 1rem;
+    color: var(--ink-2);
+    font-size: 1.125rem;
+  }
+
+  @keyframes bob {
+    50% {
+      transform: translateY(-0.5rem) rotate(-4deg);
     }
   }
 </style>
