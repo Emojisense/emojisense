@@ -303,7 +303,8 @@ describe("EmojiAutocompletePlugin (Lexical)", () => {
 
   it("fuses semantic results into the menu later", async () => {
     const semantic = stubSemantic();
-    const { editor, root } = setup({ semantic, debounceMs: 5 });
+    // Long enough that typing through act() never outlasts it, so the first check sees no menu.
+    const { editor, root } = setup({ semantic, debounceMs: 100 });
     await type(editor, ":blastoff");
     expect(options()).toHaveLength(0);
     await waitFor(() => expect(shown()).toEqual(["🚀"]));
