@@ -70,12 +70,21 @@
   box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--live) 22%, transparent);
 }
 
+/* The empty message sits on top of the list, so the row keeps its height either way. */
 .hs-results {
+  display: grid;
+  margin-top: 1.25rem;
+}
+
+.hs-results > * {
+  grid-area: 1 / 1;
+}
+
+.hs-list {
   display: grid;
   grid-template-columns: repeat(9, minmax(0, 1fr));
   gap: 0.375rem;
   min-height: 4.75rem;
-  margin-top: 1.25rem;
 }
 
 .hs-tile {
@@ -88,10 +97,13 @@
   background: transparent;
   font-size: clamp(1.75rem, 1.2rem + 1.8vw, 2.5rem);
   cursor: pointer;
-  animation: hs-in 380ms var(--spring) both;
   transition:
     background 140ms,
     transform 200ms var(--spring);
+}
+
+.hs-tile .emoji {
+  animation: hs-in 380ms var(--spring) both;
 }
 
 .hs-tile:hover {
@@ -109,8 +121,7 @@
 }
 
 .hs-empty {
-  grid-column: 1 / -1;
-  align-self: center;
+  place-self: center;
   margin: 0;
   color: var(--ink-3);
   text-align: center;
@@ -121,11 +132,13 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: center;
+  align-content: start;
   gap: 0.25rem 0.5rem;
-  min-height: 1.5rem;
+  min-height: 1lh;
   margin-top: 0.875rem;
   color: var(--ink-3);
   font-size: 0.9375rem;
+  line-height: 1.5;
   text-align: center;
 }
 
@@ -181,6 +194,28 @@
   color: var(--ink);
 }
 
+.hs-pause {
+  padding: 0.4375rem 0.5rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: 400 0.8125rem / 1.2 var(--font-mono);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.hs-pause:hover {
+  color: var(--ink);
+}
+
+/* Under reduced motion the examples do not play, so there is nothing to pause. */
+@media (prefers-reduced-motion: reduce) {
+  .hs-pause {
+    display: none;
+  }
+}
+
 @keyframes hs-in {
   from {
     opacity: 0;
@@ -191,6 +226,13 @@
 @keyframes hs-pulse {
   to {
     opacity: 0.4;
+  }
+}
+
+/* Narrow screens wrap the line: keep room for two, so the chips never jump while examples play. */
+@media (max-width: 48rem) {
+  .hs-why {
+    min-height: calc(2lh + 0.25rem);
   }
 }
 
@@ -205,7 +247,7 @@
     display: none;
   }
 
-  .hs-results {
+  .hs-list {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 

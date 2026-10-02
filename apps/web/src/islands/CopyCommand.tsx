@@ -53,8 +53,7 @@ export function CopyCommand({ command, prompt = "$" }: CopyCommandProps) {
             {prompt}
           </span>
         )}
-        {/* tabIndex -1: the scroller must not become a second tab stop inside the button. */}
-        <code className="copycmd-text" ref={textRef} tabIndex={-1}>
+        <code className="copycmd-text" ref={textRef}>
           {command}
         </code>
         <svg className="copycmd-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">

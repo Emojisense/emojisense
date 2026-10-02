@@ -12,7 +12,7 @@ import { englishEngine } from "../lib/engine-client";
 import { classifyPhoto, downscale, type PhotoReading, UNREADABLE } from "./photo/classify";
 import credits from "./photo/credits.json";
 import fixtures from "./photo/fixtures.json";
-import "./photo.css";
+import photoCss from "./photo.css?url";
 
 /** How each example appears in the mock channel. Results come from fixtures.json (real API output). */
 const POSTS: Record<string, { label: string; alt: string; poster: string; initials: string; time: string }> =
@@ -324,6 +324,7 @@ export default function PhotoDemo() {
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+      <link rel="stylesheet" href={photoCss} precedence="demo" />
       <div className="photo-shell">
         <div className="photo-thread">
           <header className="photo-head">

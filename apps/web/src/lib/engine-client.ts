@@ -1,13 +1,15 @@
 /**
- * One engine for every live demo on a page. English loads first so the first keystroke is
- * answered at once; the other languages follow when the browser is idle. All islands share the
- * same promises, so the packs are fetched once.
+ * One engine for every live demo on a page. English core loads first so the first keystroke is
+ * answered at once. The other languages are heavy (all 22 packs are several MB, and indexing them
+ * is seconds of main-thread work on a phone), so they load only when something asks: a demo, a
+ * visitor who starts typing, or an idle page on a desktop with a fast connection. Every pack file
+ * is fetched once and the full engine is built once, shared by all islands.
  */
 import {
   type AliasEngine,
+  assertPack,
   createEngine,
   createLayeredSemantic,
-  loadPacks,
   type Pack,
   type SemanticProvider,
 } from "emojisense";
@@ -16,38 +18,129 @@ import { API_URL, PACK_BASE_URL, PUBLISHABLE_KEY } from "../config";
 
 export const DEMO_LOCALES = ["en", "es", "zh", "hi", "ar", "fr", "bn", "pt", "ru", "id", "tr"] as const;
 
+/** The full build is one long task, so it waits until the visitor pauses for this long. */
+const QUIET_MS = 800;
+const IDLE_TIMEOUT_MS = 5000;
+
+type Part = "core" | "ext";
+type FullEngineListener = (engine: Promise<AliasEngine>) => void;
+
+const files = new Map<string, Promise<Pack>>();
+const fullEngineListeners = new Set<FullEngineListener>();
 let english: Promise<AliasEngine> | undefined;
 let everything: Promise<AliasEngine> | undefined;
 let semantic: SemanticProvider | undefined;
+let idleUpgradeScheduled = false;
 
-const idle = () =>
+export function packUrl(locale: string, part: Part = "core"): string {
+  return `${PACK_BASE_URL}/pack.${locale}${part === "ext" ? ".ext" : ""}.json`;
+}
+
+/**
+ * One pack file, fetched and validated once per page. `loadPacks` always adds English, so calling
+ * it per locale would download English again for every other file.
+ */
+function loadPack(locale: string, part: Part): Promise<Pack> {
+  const url = packUrl(locale, part);
+  let request = files.get(url);
+  if (!request) {
+    request = fetch(url).then(async (response) => {
+      if (!response.ok) throw new Error(`emojisense: ${url} answered ${response.status}`);
+      const pack: unknown = await response.json();
+      assertPack(pack);
+      return pack;
+    });
+    files.set(url, request);
+  }
+  return request;
+}
+
+const idle = (timeout: number) =>
   new Promise<void>((resolve) =>
-    "requestIdleCallback" in globalThis ? requestIdleCallback(() => resolve(), { timeout: 2500 }) : setTimeout(resolve, 1200),
+    "requestIdleCallback" in globalThis
+      ? requestIdleCallback(() => resolve(), { timeout })
+      : setTimeout(resolve, 1200),
   );
+
+/** Resolves once nobody has typed, clicked or touched the page for `ms`. */
+function quietFor(ms: number): Promise<void> {
+  const events = ["keydown", "pointerdown", "input"] as const;
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const done = () => {
+      for (const type of events) removeEventListener(type, restart, true);
+      resolve();
+    };
+    const restart = () => {
+      clearTimeout(timer);
+      timer = setTimeout(done, ms);
+    };
+    for (const type of events) addEventListener(type, restart, { capture: true, passive: true });
+    restart();
+  });
+}
 
 /** English core pack only: small and fast. */
 export function englishEngine(): Promise<AliasEngine> {
-  english ??= loadPacks({ baseUrl: PACK_BASE_URL, locales: ["en"] }).then((packs) => createEngine(packs));
+  english ??= loadPack("en", "core").then((pack) => createEngine(pack));
   return english;
 }
 
 /** Every language, core and extension packs. A pack that fails to load is skipped. */
 export function fullEngine(): Promise<AliasEngine> {
-  everything ??= (async () => {
-    await englishEngine();
-    await idle();
-    const settled = await Promise.allSettled(
-      DEMO_LOCALES.flatMap((locale) =>
-        (["core", "ext"] as const).map((part) => loadPacks({ baseUrl: PACK_BASE_URL, locales: [locale], part })),
-      ),
-    );
-    const packs = settled.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
-    // loadPacks always adds English core; keep one copy of each file, core packs first.
-    const unique = new Map(packs.map((p) => [`${p.locale}:${p.part ?? "core"}`, p] as const));
-    const ordered = [...unique.values()].sort((a, b) => Number(a.part === "ext") - Number(b.part === "ext"));
-    return createEngine(ordered as Pack[]);
-  })();
+  if (!everything) {
+    everything = buildFullEngine();
+    for (const listener of fullEngineListeners) listener(everything);
+    fullEngineListeners.clear();
+  }
   return everything;
+}
+
+async function buildFullEngine(): Promise<AliasEngine> {
+  await englishEngine();
+  // Core packs first: the first pack is the primary one (English core, with shortcodes).
+  const wanted = (["core", "ext"] as const).flatMap((part) =>
+    DEMO_LOCALES.map((locale) => loadPack(locale, part)),
+  );
+  const settled = await Promise.allSettled(wanted);
+  const packs = settled.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+  await quietFor(QUIET_MS);
+  await idle(IDLE_TIMEOUT_MS);
+  return createEngine(packs);
+}
+
+/** Calls `listener` with the full engine's promise as soon as anything starts loading it. */
+function whenFullEngineStarts(listener: FullEngineListener): () => void {
+  if (everything) {
+    listener(everything);
+    return () => {};
+  }
+  fullEngineListeners.add(listener);
+  return () => fullEngineListeners.delete(listener);
+}
+
+interface NetworkInformation {
+  saveData?: boolean;
+  effectiveType?: string;
+}
+
+/**
+ * Starts the full engine after the page has loaded and gone idle, on desktop-class devices with a
+ * fast, unmetered network. Phones index the packs for seconds, so there they wait to be asked.
+ */
+function loadFullEngineWhenIdle(): void {
+  if (idleUpgradeScheduled) return;
+  idleUpgradeScheduled = true;
+  const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
+  if (connection?.saveData || /2g|3g/.test(connection?.effectiveType ?? "")) return;
+  if (!matchMedia("(pointer: fine)").matches) return;
+  const start = () => {
+    idle(IDLE_TIMEOUT_MS)
+      .then(() => fullEngine())
+      .catch(() => {});
+  };
+  if (document.readyState === "complete") start();
+  else addEventListener("load", start, { once: true });
 }
 
 /** The hosted meaning search (edge cache, then Workers AI), shared by all demos. */
@@ -58,20 +151,35 @@ export function sharedSemantic(): SemanticProvider | undefined {
 
 export type EngineState = { engine?: AliasEngine; ready: "loading" | "english" | "all" | "failed" };
 
+export interface UseEngineOptions {
+  /**
+   * When to load every language. "now" (default) starts at once. "idle" waits for a page that has
+   * loaded and gone idle, or for any other island (or `fullEngine()`) to ask for it first.
+   */
+  upgrade?: "now" | "idle";
+}
+
 /** English at once, then the full multilingual engine when it is ready. */
-export function useEngine(): EngineState {
+export function useEngine({ upgrade = "now" }: UseEngineOptions = {}): EngineState {
   const [state, setState] = useState<EngineState>({ ready: "loading" });
   useEffect(() => {
     let live = true;
     englishEngine()
       .then((engine) => live && setState((s) => (s.ready === "all" ? s : { engine, ready: "english" })))
-      .catch(() => live && setState({ ready: "failed" }));
-    fullEngine()
-      .then((engine) => live && setState({ engine, ready: "all" }))
-      .catch(() => {});
+      .catch(() => live && setState((s) => (s.ready === "all" ? s : { ready: "failed" })));
+    const onFullEngine: FullEngineListener = (full) => {
+      full.then((engine) => live && setState({ engine, ready: "all" })).catch(() => {});
+    };
+    let unsubscribe = () => {};
+    if (upgrade === "now") onFullEngine(fullEngine());
+    else {
+      unsubscribe = whenFullEngineStarts(onFullEngine);
+      loadFullEngineWhenIdle();
+    }
     return () => {
       live = false;
+      unsubscribe();
     };
-  }, []);
+  }, [upgrade]);
   return state;
 }

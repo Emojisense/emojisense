@@ -99,9 +99,32 @@
   }
 }
 
+/* On phones each demo takes its natural height. Reserve about that much per demo, so a demo that
+   loads after its tab opens does not push the rest of the page down. */
 @media (max-width: 40rem) {
   .uc-stage {
     height: auto;
     min-height: 34rem;
+  }
+
+  /* The chat grows with each message up to 40rem (then its log scrolls): give it that height now. */
+  [data-case="chat"] .uc-stage {
+    height: 40rem;
+  }
+
+  [data-case="docs"] .uc-stage {
+    min-height: 40rem;
+  }
+
+  [data-case="workspaces"] .uc-stage {
+    min-height: 60rem;
+  }
+
+  [data-case="photos"] .uc-stage {
+    min-height: 54rem;
+  }
+
+  [data-case="assistant"] .uc-stage {
+    min-height: 66rem;
   }
 }

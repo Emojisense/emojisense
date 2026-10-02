@@ -10,7 +10,7 @@ import {
   WORKSPACES,
   type Workspace,
 } from "./workspaces/data";
-import "./workspaces.css";
+import workspacesCss from "./workspaces.css?url";
 
 const CUSTOM_LIMIT = 6;
 const STANDARD_LIMIT = 16;
@@ -247,6 +247,7 @@ export default function WorkspacesDemo() {
 
   return (
     <div className="ws" data-dir={direction}>
+      <link rel="stylesheet" href={workspacesCss} precedence="demo" />
       <div className="ws-app">
         <div className="ws-rail">
           <div

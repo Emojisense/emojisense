@@ -29,50 +29,17 @@
 
 .copycmd-prompt {
   flex: none;
+  align-self: flex-start;
   color: var(--ink-3);
   user-select: none;
 }
 
-/* One line. A long command scrolls sideways and fades at the edge that has more to show. */
-@property --copycmd-fade {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 0rem;
-}
-
+/* A long command wraps instead of scrolling, so every character is visible without a scroller. */
 .copycmd-text {
-  --copycmd-fade: 1.25rem;
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
   font: inherit;
-  white-space: nowrap;
-  scrollbar-width: none;
-  mask-image: linear-gradient(to right, #000 calc(100% - var(--copycmd-fade)), transparent);
-}
-
-.copycmd-text::-webkit-scrollbar {
-  display: none;
-}
-
-/* With scroll timelines, the fade shows only when the command overflows and clears at the end. */
-@supports (animation-timeline: scroll()) {
-  .copycmd-text {
-    --copycmd-fade: 0rem;
-    animation: copycmd-fade linear both;
-    animation-timeline: scroll(self inline);
-  }
-}
-
-@keyframes copycmd-fade {
-  from,
-  90% {
-    --copycmd-fade: 1.25rem;
-  }
-
-  to {
-    --copycmd-fade: 0rem;
-  }
+  overflow-wrap: anywhere;
 }
 
 .copycmd-icon {

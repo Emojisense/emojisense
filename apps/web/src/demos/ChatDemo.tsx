@@ -10,6 +10,7 @@ import { type ReactionSuggestions, suggestReactions } from "./chat/reactions";
 import { Sidebar } from "./chat/Sidebar";
 import { SuggestedReactions } from "./chat/SuggestedReactions";
 import { type EmojiAutocomplete, useEmojiAutocomplete } from "./chat/useEmojiAutocomplete";
+// The first tab is rendered on the server, so its styles ship with the page (no shift on reveal).
 import "./chat.css";
 
 const CHANNEL = "launch";

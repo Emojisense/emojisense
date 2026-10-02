@@ -80,15 +80,21 @@ export function UseCases() {
     setOpened((s) => (s.has(next) ? s : new Set([...s, next])));
   };
 
+  // WAI-ARIA tabs: arrows move between tabs, Home and End jump to the first and last.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
-    if (!step) return;
-    event.preventDefault();
     const index = CASES.findIndex((c) => c.id === current);
-    const next = CASES[(index + step + CASES.length) % CASES.length];
-    if (!next) return;
+    const target: Record<string, number> = {
+      ArrowRight: (index + 1) % CASES.length,
+      ArrowLeft: (index - 1 + CASES.length) % CASES.length,
+      Home: 0,
+      End: CASES.length - 1,
+    };
+    const nextIndex = target[event.key];
+    const next = nextIndex === undefined ? undefined : CASES[nextIndex];
+    if (nextIndex === undefined || !next) return;
+    event.preventDefault();
     open(next.id);
-    tabs.current[CASES.indexOf(next)]?.focus();
+    tabs.current[nextIndex]?.focus();
   };
 
   return (
@@ -127,6 +133,7 @@ export function UseCases() {
             aria-labelledby={`${id}-tab-${c.id}`}
             hidden={c.id !== current}
             className="uc-panel"
+            data-case={c.id}
           >
             <header className="uc-head">
               <h3>{c.title}</h3>
@@ -136,7 +143,13 @@ export function UseCases() {
               {!Demo ? (
                 <p className="uc-missing">This demo is not built yet.</p>
               ) : opened.has(c.id) ? (
-                <Suspense fallback={<div className="uc-loading" aria-label="Loading demo" />}>
+                <Suspense
+                  fallback={
+                    <div className="uc-loading" role="status">
+                      <span className="visually-hidden">Loading the {c.label} demo…</span>
+                    </div>
+                  }
+                >
                   <Demo />
                 </Suspense>
               ) : null}

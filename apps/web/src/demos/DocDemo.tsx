@@ -4,7 +4,7 @@ import { englishEngine, fullEngine, sharedSemantic, useEngine } from "../lib/eng
 import { DEFAULT_ICON, documentHtml, PAGE_TITLE, TEAMMATE } from "./doc/content";
 import { IconPicker } from "./doc/IconPicker";
 import { sleep } from "./doc/sleep";
-import "./doc.css";
+import docCss from "./doc.css?url";
 
 type Runtime = typeof import("./doc/editor");
 type DocEditor = import("./doc/editor").DocEditor;
@@ -240,6 +240,7 @@ export default function DocDemo() {
       className="doc"
       aria-label="Live demo: a docs editor with Emojisense emoji autocomplete"
     >
+      <link rel="stylesheet" href={docCss} precedence="demo" />
       <Sidebar icon={icon} />
 
       <div className="doc-main">

@@ -5,14 +5,14 @@
   --bg-sunk: #eeeef2;
   --ink: #0d0d12;
   --ink-2: #4b4b57;
-  --ink-3: #85858f;
+  --ink-3: #6b6b75;
   --line: #e7e7ec;
   --line-strong: #d3d3db;
   --accent: #0d0d12;
   --on-accent: #ffffff;
   --live: #12b76a;
   --focus: #3d7bff;
-  --good: #0f9f74;
+  --good: #066e4e;
   --bad: #c2410c;
 
   /* Older names, kept so docs and content pages keep working. */
@@ -54,7 +54,7 @@
     --bg-sunk: #1b1b22;
     --ink: #f3f3f6;
     --ink-2: #b4b4c0;
-    --ink-3: #7c7c88;
+    --ink-3: #8a8a96;
     --line: #24242c;
     --line-strong: #34343e;
     --accent: #f3f3f6;

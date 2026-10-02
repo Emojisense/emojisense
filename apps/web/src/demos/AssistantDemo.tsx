@@ -7,7 +7,7 @@ import { Reply } from "./assistant/Reply";
 import { SCENARIOS, type Scenario } from "./assistant/scenarios";
 import { ToolCard } from "./assistant/ToolCard";
 import { pause, prefersReducedMotion, useConversation } from "./assistant/useConversation";
-import "./assistant.css";
+import assistantCss from "./assistant.css?url";
 
 const TYPE_MS = 24;
 const NO_RESULTS: readonly EmojiSuggestion[] = [];
@@ -108,6 +108,7 @@ export default function AssistantDemo() {
 
   return (
     <div className="assistant">
+      <link rel="stylesheet" href={assistantCss} precedence="demo" />
       <section className="assistant-chat" ref={chatRef} aria-label="Assistant chat">
         <header className="assistant-head">
           <span className="assistant-avatar">

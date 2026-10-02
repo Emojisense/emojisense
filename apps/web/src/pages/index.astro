@@ -1,15 +1,17 @@
 ---
+import Culture from "../components/Culture.astro";
 import EdgeNetwork from "../components/EdgeNetwork.astro";
 import Features from "../components/Features.astro";
 import Integrations from "../components/Integrations.astro";
 import LogoStrip from "../components/LogoStrip.astro";
 import NetworkEffect from "../components/NetworkEffect.astro";
 import Pricing from "../components/Pricing.astro";
-import { DASHBOARD_URL, REPO_URL } from "../config";
+import { API_URL, DASHBOARD_URL, REPO_URL } from "../config";
 import { CodeTabs } from "../islands/CodeTabs";
 import { HeroSearch } from "../islands/HeroSearch";
 import { UseCases } from "../islands/UseCases";
 import Base from "../layouts/Base.astro";
+import { packUrl } from "../lib/engine-client";
 import { comparisons, stats } from "../lib/showcase";
 
 const samples = [
@@ -91,6 +93,9 @@ const faqs = [
   path="/"
 >
   <section class="hero">
+    {/* The hero's first answers need the English pack: fetch it while the page's scripts load. */}
+    <link rel="preconnect" href={API_URL} crossorigin />
+    <link rel="preload" href={packUrl("en")} as="fetch" crossorigin fetchpriority="low" />
     <div class="container hero-inner">
       <p class="kicker hero-kicker"><span class="live" aria-hidden="true"></span> Live · runs in your browser</p>
       <h1>Everything emoji, for every app on&nbsp;earth.</h1>
@@ -127,21 +132,23 @@ const faqs = [
         <h2 id="compare-title">Pickers match names. People type feelings.</h2>
         <p class="lead">Most emoji pickers only search official names like “rocket” or “goat”. Here is the same emoji data, searched both ways.</p>
       </div>
-      <div class="compare">
-        <div class="compare-head" aria-hidden="true">
-          <span>Someone types</span><span>Typical picker</span><span>Emojisense</span>
+      <div class="compare" role="table" aria-labelledby="compare-title">
+        <div class="compare-head" role="row">
+          <span role="columnheader">Someone types</span>
+          <span role="columnheader">Typical picker</span>
+          <span role="columnheader">Emojisense</span>
         </div>
         {
           comparisons.map((c) => (
-            <div class="compare-row">
-              <span class="q">
+            <div class="compare-row" role="row">
+              <span class="q" role="rowheader">
                 <strong>“{c.query}”</strong>
                 <small>{c.kind}</small>
               </span>
-              <span class="them">
+              <span class="them" role="cell">
                 {c.name.length > 0 ? <span class="emoji dim">{c.name.join(" ")}</span> : <span class="none">No results</span>}
               </span>
-              <span class="us">
+              <span class="us" role="cell">
                 {c.emojisense.map((e, i) => (
                   <span class:list={["emoji", "hit", { first: i === 0 }]}>{e}</span>
                 ))}
@@ -154,6 +161,8 @@ const faqs = [
   </section>
 
   <Features />
+
+  <Culture />
 
   <EdgeNetwork />
 
@@ -366,8 +375,15 @@ const faqs = [
   }
 
   @media (max-width: 40rem) {
+    /* Hidden on screen, kept for screen readers as the table's column headers. */
     .compare-head {
-      display: none;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
     }
 
     .compare-row {
@@ -430,14 +446,21 @@ const faqs = [
     box-shadow: var(--shadow-lg);
   }
 
-  .code-grid :global(.code-tablist) {
+  .code-grid :global(.code-bar) {
     display: flex;
+    align-items: center;
     gap: 0.25rem;
     padding: 0.625rem;
     border-bottom: 0.0625rem solid #24242c;
   }
 
-  .code-grid :global(.code-tablist button) {
+  .code-grid :global(.code-tablist) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .code-grid :global(.code-bar button) {
     padding: 0.4375rem 0.75rem;
     border: 0;
     border-radius: var(--pill);
@@ -447,12 +470,14 @@ const faqs = [
     cursor: pointer;
   }
 
-  .code-grid :global(.code-tablist button[aria-selected="true"]) {
+  .code-grid :global(.code-bar button[aria-selected="true"]) {
     background: #24242c;
     color: #f3f3f6;
   }
 
   .code-grid :global(.code-copy) {
+    flex: none;
+    align-self: start;
     margin-left: auto;
   }
 
