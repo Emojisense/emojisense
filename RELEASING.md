@@ -54,17 +54,17 @@ export target outside the tarball, or version 0.0.0. Then `changeset publish` ru
 for each package that npm does not have yet, and creates the git tags. A local publish has no
 provenance statement; the next releases get one from CI.
 
-Tarballs at 0.1.0 (2026-10-02):
+Tarballs (2026-10-02, packed by `pnpm release:check`):
 
 | Package | Tarball | Unpacked | Files |
 | ------- | ------: | -------: | ----: |
-| `emojisense` | 36.8 KB | 111.2 KB | 41 |
-| `@emojisense/react` | 11.2 KB | 36.6 KB | 11 |
-| `@emojisense/web-component` | 29.3 KB | 92.7 KB | 12 |
-| `@emojisense/mcp` | 4,107 KB | 14,208 KB | 47 (the packs of 11 languages are 22 of them) |
+| `emojisense` | 37.4 KB | 113.1 KB | 41 |
+| `@emojisense/react` | 11.2 KB | 36.7 KB | 11 |
+| `@emojisense/web-component` | 29.5 KB | 93.3 KB | 12 |
+| `@emojisense/mcp` | 4,105 KB | 14,204 KB | 47 (the packs of 11 languages are 22 of them) |
 | `@emojisense/emoji-mart` | 7.7 KB | 24.1 KB | 11 |
-| `@emojisense/lexical` | 10.8 KB | 33.3 KB | 16 |
-| `@emojisense/tiptap` | 11.2 KB | 36.7 KB | 14 |
+| `@emojisense/lexical` | 10.8 KB | 33.4 KB | 16 |
+| `@emojisense/tiptap` | 11.2 KB | 36.8 KB | 14 |
 
 `pnpm release:check --files` lists every file.
 
