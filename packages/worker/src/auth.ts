@@ -1,6 +1,6 @@
 import { getPlan, hashKey, keyKind, originAllowed, type Plan } from "@emojisense/platform";
 import { KEY_CACHE_MAX_ENTRIES, KEY_CACHE_TTL_MS } from "./config.ts";
-import type { Env } from "./env.ts";
+import type { Env, RateLimiter } from "./env.ts";
 import { errorResponse } from "./http.ts";
 import type { ApiKey, Store } from "./store.ts";
 
@@ -186,15 +186,34 @@ export async function authenticate(
     }
   }
 
-  const [limiter, limitKey] =
-    principal.kind === "key"
-      ? [env.SEARCH_LIMITER, `${principal.key.id}:${ip}`]
-      : [env.ANON_LIMITER, `anon:${ip}`];
+  const [limiter, limitKey] = rateLimitFor(env, principal, origin, ip);
   if (limiter && !(await limiter.limit({ key: limitKey })).success) return rateLimited();
   return principal;
 }
 
 const rateLimited = () => errorResponse(429, "rate limited", { "Retry-After": "60" });
+
+function rateLimitFor(
+  env: Env,
+  principal: Principal,
+  origin: string | null,
+  ip: string,
+): [RateLimiter | undefined, string] {
+  if (principal.kind === "anonymous") return [env.ANON_LIMITER, `anon:${ip}`];
+  // The website ships its publishable key in its JavaScript, so anyone can send it with a forged
+  // Origin. Traffic from our own pages gets a per-IP budget of its own (SITE_LIMITER); the
+  // website account's plan caps the month.
+  if (env.SITE_LIMITER && principal.key.kind === "publishable" && isFirstPartyOrigin(env, origin)) {
+    return [env.SITE_LIMITER, `site:${ip}`];
+  }
+  return [env.SEARCH_LIMITER, `${principal.key.id}:${ip}`];
+}
+
+/** True for an origin listed in `FIRST_PARTY_ORIGINS`: the website and the dashboard. */
+export function isFirstPartyOrigin(env: Env, origin: string | null): boolean {
+  if (!origin || !env.FIRST_PARTY_ORIGINS) return false;
+  return env.FIRST_PARTY_ORIGINS.split(",").some((entry) => entry.trim() === origin);
+}
 
 /**
  * For routes that serve keyed callers only: 401 without a key, 503 when a key was sent but the

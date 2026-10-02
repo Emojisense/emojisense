@@ -114,6 +114,7 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Sets, custom images, health and static files are not limited per call. | `src/auth.ts`, `wrangler.jsonc` |
 | Key lookups are cached per isolate for 60 s (unknown keys too). A revocation takes ≤ 60 s. | `src/config.ts` |
 | Lookups that miss that cache (a D1 read each) are limited per IP (`KEY_MISS_LIMITER`, 60/min) → 429; a stale entry still serves | `src/auth.ts` |
+| Publishable-key calls whose `Origin` is in `FIRST_PARTY_ORIGINS` (the website's public key) use `SITE_LIMITER` per IP (60/min) instead of `SEARCH_LIMITER`. The website account is on Pro, whose limits cap its month (`scripts/set-site-plan.mjs`) | `src/auth.ts`, `scripts/site-account.mjs` |
 | D1 down: a cached key is still used; an uncached key is served as anonymous (classify-image and custom-pack → 503) | `src/auth.ts` |
 | Limits come from the account's plan (`accounts.plan`, `getPlan` in `@emojisense/platform`). Monthly, UTC. | `src/context.ts` |
 | Limits are per account: `overLimit` compares the account's total over all of its apps with the limit. `usage_monthly` rows stay per app. | `src/context.ts`, `src/meter.ts` |

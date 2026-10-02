@@ -43,11 +43,13 @@
     { "binding": "EMOJI", "bucket_name": "emojisense-emoji" },
     { "binding": "SHARDS", "bucket_name": "emojisense-shards" }
   ],
-  // Per minute. KEY_MISS_LIMITER counts, per IP, key lookups that miss the isolate's key cache
-  // (each one a D1 read), so a flood of random keys cannot reach D1 (src/auth.ts).
+  // Per minute (src/auth.ts). SITE_LIMITER is the per-IP budget of publishable-key calls from
+  // FIRST_PARTY_ORIGINS (the website's public key). KEY_MISS_LIMITER counts, per IP, key lookups
+  // that miss the isolate's key cache (each one a D1 read), so random keys cannot flood D1.
   "ratelimits": [
     { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
     { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+    { "name": "SITE_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
     { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
@@ -63,7 +65,9 @@
     // memory only. pk_demo is the demo app's key; remove it once the demo has a real key.
     "DEV_KEYS": "pk_demo",
     // "true" runs the nightly shard build; set it to "false" to stop it (the served build stays).
-    "SHARDS_CRON_ENABLED": "true"
+    "SHARDS_CRON_ENABLED": "true",
+    // Our own pages: the website (astro dev) and the dashboard (vite, wrangler dev).
+    "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790"
   },
   "env": {
     // `wrangler dev --env offline`: no Workers AI binding, so it runs with no Cloudflare login.
@@ -84,6 +88,7 @@
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+        { "name": "SITE_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
         { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
@@ -92,7 +97,8 @@
       "vars": {
         "DEV_KEYS": "pk_demo,sk_live_local:pro",
         "ENVIRONMENT": "development",
-        "SHARDS_CRON_ENABLED": "true"
+        "SHARDS_CRON_ENABLED": "true",
+        "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790"
       }
     },
     // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
@@ -117,10 +123,16 @@
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1101", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } },
+        { "name": "SITE_LIMITER", "namespace_id": "1103", "simple": { "limit": 60, "period": 60 } },
         { "name": "KEY_MISS_LIMITER", "namespace_id": "1104", "simple": { "limit": 60, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search_dev" }],
-      "vars": { "DEV_KEYS": "pk_demo", "ENVIRONMENT": "staging", "SHARDS_CRON_ENABLED": "true" }
+      "vars": {
+        "DEV_KEYS": "pk_demo",
+        "ENVIRONMENT": "staging",
+        "SHARDS_CRON_ENABLED": "true",
+        "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev"
+      }
     },
     // Production at api.emojisense.com (`pnpm deploy:production`). No dev keys: every key is a
     // database row with its own origins and plan.
@@ -144,10 +156,16 @@
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1201", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1202", "simple": { "limit": 30, "period": 60 } },
+        { "name": "SITE_LIMITER", "namespace_id": "1203", "simple": { "limit": 60, "period": 60 } },
         { "name": "KEY_MISS_LIMITER", "namespace_id": "1204", "simple": { "limit": 60, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
-      "vars": { "DEV_KEYS": "", "ENVIRONMENT": "production", "SHARDS_CRON_ENABLED": "true" }
+      "vars": {
+        "DEV_KEYS": "",
+        "ENVIRONMENT": "production",
+        "SHARDS_CRON_ENABLED": "true",
+        "FIRST_PARTY_ORIGINS": "https://emojisense.com,https://www.emojisense.com,https://app.emojisense.com"
+      }
     }
   }
 }

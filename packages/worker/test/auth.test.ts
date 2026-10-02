@@ -163,6 +163,45 @@ describe("rate limits", () => {
     expect(keyed).toHaveBeenCalledWith({ key: "key_any:198.51.100.7" });
     expect(anon).toHaveBeenCalledWith({ key: "anon:198.51.100.7" });
   });
+
+  it("give publishable-key calls from our own pages a per-IP budget of their own", async () => {
+    const site = vi.fn<RateLimiter["limit"]>(async () => ({ success: false }));
+    const keyed = vi.fn<RateLimiter["limit"]>(async () => ({ success: true }));
+    const h = harness({
+      store: await seededStore(),
+      env: {
+        SITE_LIMITER: { limit: site },
+        SEARCH_LIMITER: { limit: keyed },
+        FIRST_PARTY_ORIGINS: "https://emojisense.example, https://app.emojisense.example",
+      },
+    });
+    const from = (origin: string) => ({ headers: { Origin: origin, "cf-connecting-ip": "198.51.100.7" } });
+    const fromSite = await h.call(
+      search("rocket", `&key=${KEYS.wildcard}`, from("https://emojisense.example")),
+    );
+    expect(fromSite.status).toBe(429);
+    expect(site).toHaveBeenCalledWith({ key: "site:198.51.100.7" });
+    expect(keyed).not.toHaveBeenCalled();
+    await h.call(search("rocket", `&key=${KEYS.wildcard}`, from("https://app.emojisense.example")));
+    expect(site).toHaveBeenCalledTimes(2);
+
+    // A customer's page and a server's secret key keep the per-key limiter.
+    const customer = await h.call(search("rocket", `&key=${KEYS.wildcard}`, from("https://shop.example")));
+    expect(customer.status).toBe(200);
+    expect((await h.call(withBearer(KEYS.secret))).status).toBe(200);
+    expect(keyed.mock.calls.map(([call]) => call.key)).toEqual(["key_any:198.51.100.7", "key_sec:local"]);
+    expect(site).toHaveBeenCalledTimes(2);
+  });
+
+  it("keep the per-key limiter for our own pages when SITE_LIMITER is not bound", async () => {
+    const keyed = vi.fn<RateLimiter["limit"]>(async () => ({ success: true }));
+    const h = harness({
+      store: await seededStore(),
+      env: { SEARCH_LIMITER: { limit: keyed }, FIRST_PARTY_ORIGINS: "https://emojisense.example" },
+    });
+    await h.call(withKey(KEYS.wildcard, "https://emojisense.example"));
+    expect(keyed).toHaveBeenCalledWith({ key: "key_any:local" });
+  });
 });
 
 describe("dev keys", () => {

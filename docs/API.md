@@ -32,6 +32,7 @@ headers, so every caller is also rate limited:
 | Caller | Limit | Counted per |
 | ------ | ----- | ----------- |
 | A key | 120 requests a minute | key and IP address |
+| A publishable key from Emojisense's own pages (website, dashboard) | 60 requests a minute | IP address |
 | Anonymous | 30 requests a minute | IP address |
 | Key lookups that miss the per-isolate key cache (each one a database read, unknown keys included) | 60 a minute | IP address |
 
@@ -39,7 +40,9 @@ Over the limit the answer is `429` with `Retry-After: 60`. The IP address is onl
 limiter key; it is never logged or stored. Static files, `/v1/health` and the emoji image routes
 (`/v1/sets/…`, `/v1/custom/…`) are not limited per call. The key-lookup limit stops a flood of
 random keys before it reaches the database; a key the instance knew before keeps working while
-it holds.
+it holds. The website's own publishable key is public (it ships in the site's JavaScript), so its
+calls have their own per-IP limit, and the website account's plan (Pro) caps what the key can use
+in a month.
 
 **Anonymous calls never reach Workers AI.** Without a key, `/v1/search` answers from the shared
 cache when it can; on a miss it answers like an account over its limit: alias results in `hybrid`

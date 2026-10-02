@@ -18,6 +18,10 @@ export interface Env {
   ANON_LIMITER?: RateLimiter;
   /** Key lookups that miss the isolate's key cache (each one a D1 read), per IP. */
   KEY_MISS_LIMITER?: RateLimiter;
+  /** Publishable-key calls from FIRST_PARTY_ORIGINS (the website's public key), per IP. */
+  SITE_LIMITER?: RateLimiter;
+  /** Comma-separated origins of our own pages (website, dashboard). Their key calls use SITE_LIMITER. */
+  FIRST_PARTY_ORIGINS?: string;
   EVENTS?: AnalyticsDataset;
   /** Static assets (public/): the published packs, read for locales outside the bundle. */
   ASSETS?: { fetch(input: string): Promise<Response> };
