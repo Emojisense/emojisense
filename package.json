@@ -16,8 +16,11 @@
     "data:build": "pnpm --filter @emojisense/data run build",
     "eval": "pnpm --filter @emojisense/eval run eval",
     "eval:ci": "pnpm --filter @emojisense/eval run eval:ci",
+    "eval:inhouse": "pnpm --filter @emojisense/eval run eval:inhouse",
     "deploy:dev": "bash scripts/deploy.sh dev",
-    "deploy:production": "bash scripts/deploy.sh production"
+    "deploy:production": "bash scripts/deploy.sh production",
+    "smoke:dev": "node scripts/smoke.mjs dev",
+    "smoke:production": "node scripts/smoke.mjs production"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",

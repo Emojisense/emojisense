@@ -40,6 +40,23 @@ pnpm test && pnpm eval   # unit tests, then the search benchmark (packages/eval/
 | `pnpm --filter @emojisense/worker sync -- --model embeddinggemma --dims 256` | Copy the pack and production vectors into the Worker |
 | `pnpm --filter @emojisense/worker dev` | API on http://localhost:8787 (alias-only if Workers AI is unreachable) |
 | `pnpm --filter @emojisense/web dev` | Website, docs and playground on http://localhost:4321 (playground: `/playground/`) |
+| `pnpm eval:inhouse` | The CI eval gate: in-house suite, offline, no held-out run |
+
+## Deploy and CI
+
+| Command | What it does |
+| ------- | ------------ |
+| `pnpm deploy:dev` / `pnpm deploy:production` | Deploy the API Worker, dashboard and website (`scripts/deploy.sh`), then run the smoke test |
+| `pnpm smoke:dev` / `pnpm smoke:production` | Read-only checks of a deployed environment. Exit code 1 on a failed check |
+
+The smoke test (`scripts/smoke.mjs`) checks the site pages, robots and noindex rules, search
+answers with the site key (expected answers: `scripts/smoke.expected.json`), origin and key
+refusals, CORS, pack and culture files, and the dashboard. When Playwright can be required (it
+is not a dependency; `NODE_PATH` works), it also opens the landing page in headless Chromium.
+
+CI (`.github/workflows/ci.yml`) runs on pushes to `main` and on pull requests: `biome check .`,
+the build, `turbo run typecheck test`, the core size budget, `pnpm eval:inhouse` and the culture
+gate. CI has no secrets and never deploys.
 
 ## Layout
 

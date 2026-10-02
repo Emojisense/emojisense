@@ -1,0 +1,28 @@
+{
+  "$comment": "Answers scripts/smoke.mjs expects from a deployed environment. `top`: the first result must be one of these. `includes`: each must be somewhere in the results. Variation selectors (U+FE0F) are ignored.",
+  "search": [
+    { "params": { "q": "cold feet", "locale": "en" }, "top": ["😰"] },
+    { "params": { "q": "jurassic park", "locale": "en" }, "top": ["🦖"] },
+    { "params": { "q": "lgtm", "locale": "en" }, "top": ["✅"] },
+    { "params": { "q": "ship it", "locale": "en" }, "top": ["🚀"] },
+    { "params": { "q": "躺平", "locale": "zh" }, "top": ["🛌"] },
+    { "params": { "q": "666", "locale": "zh" }, "top": ["👍"] },
+    { "params": { "q": "生日快乐", "locale": "zh" }, "top": ["🎂", "🥳"] },
+    { "params": { "q": "futebol", "locale": "pt" }, "top": ["⚽"] },
+    { "params": { "q": "gracias", "locale": "es" }, "top": ["🙏"] },
+    { "params": { "q": "joyeux anniversaire", "locale": "fr" }, "top": ["🥳", "🎂"] },
+    { "params": { "q": "football", "locale": "fr" }, "top": ["⚽"] },
+    { "params": { "q": "kolay gelsin", "locale": "tr" }, "top": ["💪"] },
+    { "params": { "q": "спасибо", "locale": "ru" }, "top": ["🙏"] },
+    { "params": { "q": "धन्यवाद", "locale": "hi" }, "top": ["🙏"] },
+    { "params": { "q": "قطة", "locale": "ar" }, "top": ["🐈", "🐱"] },
+    { "params": { "q": "terima kasih", "locale": "id" }, "top": ["🙏"] },
+    { "params": { "q": "ধন্যবাদ", "locale": "bn" }, "top": ["🙏"] },
+    {
+      "params": { "q": "greatest of all time", "culture": "1", "region": "AR" },
+      "top": ["🐐"],
+      "includes": ["⚽"]
+    }
+  ],
+  "hero": { "q": "pizza", "top": ["🍕"] }
+}

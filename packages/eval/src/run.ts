@@ -5,6 +5,7 @@
  *   pnpm eval -- --offline          cached embeddings only; skips engines without them
  *   pnpm eval -- --ci               also fail when recall@5 drops > 2 points vs reports/baseline.json
  *   pnpm eval -- --write-baseline   store this run as the new baseline (both suites)
+ *   pnpm eval -- --no-heldout       in-house suite only (`pnpm eval:inhouse`, the CI gate)
  *
  * Two suites: the in-house set (queries/queries.jsonl → reports/latest.md, latest.json) and the
  * held-out set (queries/heldout.jsonl → reports/heldout.md, heldout.json; alias and fused with
@@ -13,7 +14,6 @@
  */
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseArgs } from "node:util";
 import { gzipSync } from "node:zlib";
 import { disposeEmbeddings, embedTexts, measureLatency } from "@emojisense/data/embeddings";
 import { formatQuery, getModel, MODELS } from "@emojisense/data/models";
@@ -46,22 +46,11 @@ import {
   summarize,
 } from "./metrics.ts";
 import { type EvalQuery, loadQueries } from "./queries.ts";
+import { parseRunArgs } from "./run-args.ts";
 import { loadVectorLayout, type VectorLayout } from "./vector-layout.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
-const { values: args } = parseArgs({
-  // pnpm forwards a literal "--"; drop it so flags after it still parse.
-  args: process.argv.slice(2).filter((a) => a !== "--"),
-  options: {
-    pack: { type: "string" },
-    offline: { type: "boolean", default: false },
-    ci: { type: "boolean", default: false },
-    "write-baseline": { type: "boolean", default: false },
-    models: { type: "string" },
-    "alias-caps": { type: "string", default: "8,16,24" },
-    "min-coverage": { type: "string", default: "0.5,0.6" },
-  },
-});
+const args = parseRunArgs(process.argv.slice(2));
 
 const packConfig: { packVersion: string; model: { key: string; dims: number } } = JSON.parse(
   readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8"),
@@ -308,18 +297,20 @@ try {
 
 // ── Held-out suite (labels by another model; the gate only warns) ─────────────────────────
 const production = packConfig.model;
-const heldout = await runAndReportHeldout({
-  packDir,
-  packVersion,
-  model: production,
-  offline: args.offline,
-  writeBaseline: args["write-baseline"],
-  inHouse: {
-    source: "this run",
-    alias: (results[0] as EngineResult).summary,
-    fused: results.find((r) => r.name === `fused ${production.key}@${production.dims}`)?.summary,
-  },
-});
+const heldout = args.heldout
+  ? await runAndReportHeldout({
+      packDir,
+      packVersion,
+      model: production,
+      offline: args.offline,
+      writeBaseline: args["write-baseline"],
+      inHouse: {
+        source: "this run",
+        alias: (results[0] as EngineResult).summary,
+        fused: results.find((r) => r.name === `fused ${production.key}@${production.dims}`)?.summary,
+      },
+    })
+  : undefined;
 
 // ── Report ────────────────────────────────────────────────────────────────────────────────
 const manifestPath = join(packDir, "manifest.json");
@@ -402,21 +393,23 @@ if (calibrations.length) {
   }
 }
 
-lines.push(
-  "",
-  "## Held-out suite",
-  "",
-  `${heldout.queries.length} queries in ${heldout.locales.length} locales, written and labelled by another ` +
-    "model (not the alias author). Per locale and worst misses: [heldout.md](heldout.md).",
-  "",
-);
-row(["Mode", "R@1", "R@5", "MRR", "Macro R@5"]);
-row(["---", "--:", "--:", "--:", "--:"]);
-for (const m of heldout.modes) {
-  const s = m.scores.overall;
-  row([m.name, s.r1, s.r5, s.mrr, m.scores.macro.r5]);
+lines.push("", "## Held-out suite", "");
+if (heldout) {
+  lines.push(
+    `${heldout.queries.length} queries in ${heldout.locales.length} locales, written and labelled by another ` +
+      "model (not the alias author). Per locale and worst misses: [heldout.md](heldout.md).",
+    "",
+  );
+  row(["Mode", "R@1", "R@5", "MRR", "Macro R@5"]);
+  row(["---", "--:", "--:", "--:", "--:"]);
+  for (const m of heldout.modes) {
+    const s = m.scores.overall;
+    row([m.name, s.r1, s.r5, s.mrr, m.scores.macro.r5]);
+  }
+  if (heldout.skipped.length) lines.push("", ...heldout.skipped.map((s) => `> Skipped ${s}`));
+} else {
+  lines.push("Not run (`--no-heldout`). `pnpm eval:heldout` runs it alone.");
 }
-if (heldout.skipped.length) lines.push("", ...heldout.skipped.map((s) => `> Skipped ${s}`));
 
 lines.push("", "## Recall@5 by category", "");
 const shown = results.filter((r) => r.kind !== "fused" && !r.name.includes("≤"));
@@ -532,11 +525,14 @@ const json = {
   sizes,
   skipped,
   calibrations,
-  heldout: {
-    queries: heldout.queries.length,
-    modes: heldout.modes.map((m) => ({ name: m.name, overall: m.scores.overall, macro: m.scores.macro })),
-    skipped: heldout.skipped,
-  },
+  // null: not run (--no-heldout).
+  heldout: heldout
+    ? {
+        queries: heldout.queries.length,
+        modes: heldout.modes.map((m) => ({ name: m.name, overall: m.scores.overall, macro: m.scores.macro })),
+        skipped: heldout.skipped,
+      }
+    : null,
 };
 writeFileSync(join(EVAL_ROOT, "reports", "latest.json"), `${JSON.stringify(json, null, 1)}\n`);
 console.log(report.split("## Recall@5")[0]);
