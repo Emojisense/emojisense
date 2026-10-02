@@ -7,8 +7,9 @@ import type { KeyKind, Metric, PlanId } from "@emojisense/platform";
 export type Environment = "dev" | "staging" | "prod";
 export const ENVIRONMENTS: readonly Environment[] = ["prod", "staging", "dev"];
 
+/** Every dashboard error. A 402 has code "plan_required" and names the lowest plan that has the feature. */
 export interface ApiErrorBody {
-  error: { code: string; message: string; field?: string };
+  error: { code: string; message: string; field?: string; plan?: PlanId };
 }
 
 export interface AccountSummary {
@@ -104,12 +105,6 @@ export interface WaitlistResponse {
 }
 
 /** `402` body of a feature the account's plan does not include (product contract). */
-export interface PlanRequiredBody {
-  error: "plan_required";
-  /** The lowest plan that has the feature. */
-  plan: PlanId;
-  message: string;
-}
 
 export interface AnalyticsDay {
   /** "YYYY-MM-DD", UTC. */

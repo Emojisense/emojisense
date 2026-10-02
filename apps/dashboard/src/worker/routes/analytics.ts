@@ -9,10 +9,10 @@ import {
   PLANS,
   type Plan,
 } from "@emojisense/platform";
-import type { AnalyticsDay, AnalyticsResponse, PlanRequiredBody } from "../../shared/contract";
+import type { AnalyticsDay, AnalyticsResponse } from "../../shared/contract";
 import type { D1Database } from "../d1";
 import type { AuthedContext } from "../env";
-import { HttpError, json } from "../http";
+import { errorJson, HttpError, json, planRequired as planRequiredError } from "../http";
 import { requireOwnedApp } from "../records";
 
 const DEFAULT_WINDOW: AnalyticsWindow = 30;
@@ -42,12 +42,9 @@ async function loadOwnerPlan(db: D1Database, ownerId: string): Promise<Plan> {
 
 function planRequired(): Response {
   const plan = lowestPlanWithAnalytics();
-  const body: PlanRequiredBody = {
-    error: "plan_required",
-    plan,
-    message: `Search analytics are part of the ${PLANS[plan].name} plan and above.`,
-  };
-  return json(body, 402);
+  return errorJson(
+    planRequiredError(plan, `Search analytics are part of the ${PLANS[plan].name} plan and above.`),
+  );
 }
 
 /**

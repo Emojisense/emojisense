@@ -114,9 +114,11 @@ describe("GET /api/apps/:id/analytics", () => {
     const response = await analytics("?days=7");
     expect(response.status).toBe(402);
     expect(await body(response)).toEqual({
-      error: "plan_required",
-      plan: "pro",
-      message: "Search analytics are part of the Pro plan and above.",
+      error: {
+        code: "plan_required",
+        plan: "pro",
+        message: "Search analytics are part of the Pro plan and above.",
+      },
     });
   });
 

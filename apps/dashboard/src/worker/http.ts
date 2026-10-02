@@ -1,3 +1,4 @@
+import type { PlanId } from "@emojisense/platform";
 import type { ApiErrorBody } from "../shared/contract";
 
 /** An error with a status, a stable code and a message that is safe to show to the user. */
@@ -7,9 +8,15 @@ export class HttpError extends Error {
     readonly code: string,
     message: string,
     readonly field?: string,
+    readonly plan?: PlanId,
   ) {
     super(message);
   }
+}
+
+/** 402: the feature needs a higher plan. `plan` is the lowest plan that has it. */
+export function planRequired(plan: PlanId, message: string): HttpError {
+  return new HttpError(402, "plan_required", message, undefined, plan);
 }
 
 const JSON_HEADERS = {
@@ -28,7 +35,12 @@ export function json(data: unknown, status = 200, headers: HeadersInit = {}): Re
 
 export function errorJson(error: HttpError, headers: HeadersInit = {}): Response {
   const body: ApiErrorBody = {
-    error: { code: error.code, message: error.message, ...(error.field ? { field: error.field } : {}) },
+    error: {
+      code: error.code,
+      message: error.message,
+      ...(error.field ? { field: error.field } : {}),
+      ...(error.plan ? { plan: error.plan } : {}),
+    },
   };
   const extra = new Headers(headers);
   if (error.status === 429) extra.set("retry-after", "60");
