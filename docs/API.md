@@ -316,7 +316,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `POST /api/invites/:token/accept` | Signed in: join the owner's team → `{ team: { ownerId, ownerName, role } }` |
 | `GET /api/billing` | `{ plan, period, usage, limits, appCount, provider: null, waitlistPlan }` (owner, admin) |
 | `POST /api/billing/upgrade` | `{ plan, email? }` → `{ status: "waitlist", plan }`. Never charges (owner only) |
-| `POST /api/waitlist` | Public: `{ email, plan }` for the Pro waitlist |
+| `POST /api/waitlist` | Public: `{ email, plan }` (`plan` defaults to `pro`) as JSON, or the same fields as an HTML form (`application/x-www-form-urlencoded`). A form post without `Accept: application/json` gets `303` to `<website>/waitlist/?status=ok#waitlist-joined` or `?status=error#waitlist-failed` (the website is the posting `WEBSITE_ORIGINS` entry, or the first one when there is no `Origin`). Other origins get `403`; 5 posts per minute per IP. |
 
 ### Roles, plans and errors
 

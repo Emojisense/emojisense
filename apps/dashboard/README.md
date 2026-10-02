@@ -83,7 +83,7 @@ email. It uses the access token once and never stores it.
 | `ASSETS` | assets binding | The built SPA in `dist/client` |
 | `WAITLIST_LIMITER` | rate limit | 5 waitlist posts per minute per IP (the IP is only the in-memory key) |
 | `ENVIRONMENT` | var | `development` enables dev sign-in on localhost. Default `production`. |
-| `WEBSITE_ORIGINS` | var | Comma-separated website origins that may POST `/api/waitlist` (CORS) |
+| `WEBSITE_ORIGINS` | var | Comma-separated website origins that may POST `/api/waitlist` (CORS). A form post without JavaScript is sent back to the posting origin (the first one when there is no `Origin`). |
 | `EMOJI` | R2 binding | Custom emoji images, bucket `emojisense-emoji`, shared with the API Worker |
 | `API_URL` | var | The API Worker's origin; custom emoji `imageUrl`s point at it. Locally `http://localhost:8788`. |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | secrets | GitHub OAuth app |
@@ -107,7 +107,8 @@ email. It uses the access token once and never stores it.
 | Usage | `GET /api/apps/:id/usage?period=YYYY-MM` (UTC, default current month, no future months). Limits are per account, so `used` is the account's total over all of its apps and `appUsed` is this app's part. `status` is `ok`, `near_limit` (≥ 80%), `over_limit` (used ≥ limit) or `not_included` (limit 0). `limit: null` means unlimited. `custom_emoji` is the rows stored now (a stock, not a monthly counter), in every period. |
 | Custom emoji | `src/worker/routes/emoji.ts` and `emoji-import.ts` on the shared platform storage (`custom-emoji*.ts`, `emoji-image.ts`), the same code as the tenants API. Images go to R2 `EMOJI`; `imageUrl` uses `API_URL`. The limit counts every emoji of the account. Uploads, imports and deletes emit `custom_emoji.*` webhooks. Slack and Discord tokens are used once and never stored or logged. |
 | Analytics | `GET /api/apps/:id/analytics?days=7\|30\|90` (default 30) from `query_daily`. The window is cut to the owner account's `analyticsRetentionDays` and zero-filled. Top lists: 20 entries, only queries searched ≥ 5 times in the window. Plans without analytics get `402 { "error": { "code": "plan_required", "plan": "pro", "message" } }`. Every team role may read them. |
-| Waitlist | Public and idempotent. New and known emails get the same answer. A repeat updates the plan and keeps the first date. |
+| Waitlist | Public and idempotent. New and known emails get the same answer. A repeat updates the plan and keeps the first date. JSON or an HTML form body; a form post without `Accept: application/json` gets `303` to `<website>/waitlist/?status=ok\|error` (`waitlistReturnUrl` in `@emojisense/platform`). The API Worker's daily cron deletes rows 12 months after the first date. |
+| Account deletion | `DELETE /api/me { confirm }` (`src/worker/account-deletion.ts`). `confirm` is the account email, or `delete my account` without one. R2 images first (503 and no change on failure), then one D1 batch for every owned row, the waitlist entry and the sessions. The SPA has no button yet. |
 
 ## Tests
 

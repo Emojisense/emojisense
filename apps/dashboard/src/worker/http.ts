@@ -53,22 +53,61 @@ export function redirect(location: string, cookies: string[] = []): Response {
   return new Response(null, { status: 302, headers });
 }
 
+/** 303: the browser follows with a GET, so a form post is not sent again on reload. */
+export function seeOther(location: string, headers: HeadersInit = {}): Response {
+  const merged = new Headers(headers);
+  merged.set("location", location);
+  merged.set("cache-control", "no-store");
+  return new Response(null, { status: 303, headers: merged });
+}
+
 const MAX_BODY_BYTES = 16 * 1024;
+const JSON_TYPE = /^application\/json\b/i;
+const FORM_TYPE = /^application\/x-www-form-urlencoded\b/i;
+
+export function isJsonBody(request: Request): boolean {
+  return JSON_TYPE.test(request.headers.get("content-type") ?? "");
+}
+
+/** An HTML form post. Browsers send it without a CORS preflight. */
+export function isFormBody(request: Request): boolean {
+  return FORM_TYPE.test(request.headers.get("content-type") ?? "");
+}
+
+async function readBodyText(request: Request): Promise<string> {
+  const tooLarge = new HttpError(413, "body_too_large", "The request body is larger than 16 KB.");
+  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) throw tooLarge;
+  const text = await request.text();
+  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) throw tooLarge;
+  return text;
+}
+
+/** Reads a form body (application/x-www-form-urlencoded). A repeated field keeps its last value. */
+export async function readFormObject(request: Request): Promise<Record<string, string>> {
+  if (!isFormBody(request)) {
+    throw new HttpError(
+      415,
+      "unsupported_media_type",
+      "Send a form body with Content-Type: application/x-www-form-urlencoded.",
+    );
+  }
+  const fields = new Map<string, string>();
+  new URLSearchParams(await readBodyText(request)).forEach((value, name) => {
+    fields.set(name, value);
+  });
+  return Object.fromEntries(fields);
+}
 
 /** Reads a JSON object body. Requiring the JSON content type also forces a CORS preflight. */
 export async function readJsonObject(request: Request): Promise<Record<string, unknown>> {
-  const type = request.headers.get("content-type") ?? "";
-  if (!/^application\/json\b/i.test(type)) {
+  if (!isJsonBody(request)) {
     throw new HttpError(
       415,
       "unsupported_media_type",
       "Send a JSON body with Content-Type: application/json.",
     );
   }
-  const tooLarge = new HttpError(413, "body_too_large", "The request body is larger than 16 KB.");
-  if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) throw tooLarge;
-  const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) throw tooLarge;
+  const text = await readBodyText(request);
 
   let body: unknown;
   try {
