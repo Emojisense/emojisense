@@ -390,6 +390,17 @@ function loadChromium() {
   return undefined;
 }
 
+/** Playwright's own Chromium; without that download, an installed Google Chrome. Always headless. */
+async function launchBrowser(chromium) {
+  try {
+    return await chromium.launch({ headless: true });
+  } catch (bundled) {
+    return chromium.launch({ headless: true, channel: "chrome" }).catch(() => {
+      throw bundled;
+    });
+  }
+}
+
 async function browserChecks() {
   section(`Browser (headless Chromium) ${SITE}/`);
   const chromium = loadChromium();
@@ -399,7 +410,7 @@ async function browserChecks() {
   }
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await launchBrowser(chromium);
   } catch (error) {
     report("skip", "landing page in a browser", `Chromium did not start: ${error.message.split("\n")[0]}`);
     return;
