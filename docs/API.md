@@ -607,13 +607,22 @@ What the hosted service collects, and for how long:
 | ---- | ----- | ---- |
 | Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
-| Monthly call counts per app and metric | D1 `usage_monthly` | while the app exists |
-| Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the app |
+| Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
+| Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
-| Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji is deleted (edge copies of the image until evicted) |
+| Custom emoji: shortcode, aliases, size, source, and the image | D1 `custom_emoji`, R2 `emojisense-emoji` | until the emoji, its tenant or the account is deleted (edge copies of the image until evicted) |
+| Waitlist: email, plan, date of the first sign-up | D1 `waitlist` | 12 months after the first sign-up (`WAITLIST_KEEP_MONTHS`). The same daily cron deletes older rows. Also deleted with an account of the same email. |
+| Accounts, sessions, apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Sessions expire after 30 days; expired rows go at the next sign-in. Revoked keys stay, marked as revoked. |
+| Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
 
-- Never logged or stored: IP addresses (only an in-memory rate-limit key), keys, user
-  identifiers, reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens.
+- Never logged or stored: IP addresses (only an in-memory rate-limit key), user identifiers,
+  reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens. Keys are stored
+  only as a hash and a 12-character prefix, never logged.
+- Logs never hold query or message text, keys, IP addresses or emails. Workers AI failures log
+  the error type only, because a message could quote the input.
 - Anonymous calls and development keys never reach `query_daily`.
 - The dashboard names a query only when the app saw it ≥ 5 times in the window. Emojisense's own
-  downstream jobs (shards, alias mining) use a query only when it was seen ≥ 5 times.
+  downstream jobs (shards, alias mining) read Analytics Engine, never `query_daily`, and use a
+  query only when it was seen ≥ 5 times.
+- `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
+  Travel can still restore the database to a point in the last 30 days (Paid plan).

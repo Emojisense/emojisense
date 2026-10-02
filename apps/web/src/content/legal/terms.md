@@ -41,9 +41,10 @@ Their licenses continue to apply to that material.
 
 ## Plans, limits and fair use
 
-- The Free plan costs nothing. The paid plans (Solo, Pro and Scale) are not on sale yet. Before
-  we charge you anything, we will publish the prices and the payment terms, and you must agree to
-  them.
+- The Free plan costs nothing. The paid plans (Solo, Pro and Scale) are not on sale yet, and we
+  have no payment provider. Asking for a paid plan in the dashboard only puts you on the waitlist.
+  Before we charge you anything, we will publish the prices and the payment terms, and you must
+  agree to them.
 - Each plan has monthly limits, counted per calendar month in UTC. The
   [pricing page](/pricing/) shows them. Searches that are answered on the device or from static
   files are not counted.
@@ -81,8 +82,9 @@ not for the artwork. These terms do not limit the rights that those licenses giv
 
 We use the normalized text of searches that reach our API to make search better for everyone,
 for example with new search phrases and precomputed results. We use a search text only after it
-has been searched at least 5 times. We never connect it to an IP address, a key, an app or a
-person. The [Privacy Policy](/legal/privacy/) gives the details.
+has been searched at least 5 times. The records that we use for this have no IP address, key, app
+or person in them. The per-app search counts that your dashboard shows are kept apart and are not
+used for this. The [Privacy Policy](/legal/privacy/) gives the details.
 
 ## Acceptable use
 
@@ -100,7 +102,9 @@ You must obey the [Acceptable Use Policy](/legal/acceptable-use/). It is part of
 
 ## Suspension and termination
 
-- You can stop using the Service at any time. To close your account, write to [Contact email].
+- You can stop using the Service at any time. To close your account, delete it with the dashboard
+  API (`DELETE /api/me`, see the [HTTP API](/docs/api/) reference), or write to [Contact email].
+  Deletion is permanent and removes your apps, keys and custom emoji too.
 - We can suspend or end your access when you break these terms, when your use puts the Service or
   other people at risk, or when the law requires it. When we can, we tell you first and give you
   time to correct the problem.

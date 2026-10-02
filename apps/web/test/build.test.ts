@@ -8,7 +8,14 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { METRICS, PLAN_IDS, PLANS, waitlistReturnUrl } from "@emojisense/platform";
+import {
+  analyticsKeepDays,
+  METRICS,
+  PLAN_IDS,
+  PLANS,
+  WAITLIST_KEEP_MONTHS,
+  waitlistReturnUrl,
+} from "@emojisense/platform";
 import * as core from "emojisense";
 import { Window } from "happy-dom";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -521,10 +528,25 @@ describe("legal pages", () => {
   });
 
   it("states the real facts: what is never stored, the subprocessors and the payment status", () => {
-    const privacy = page("/legal/privacy/").body.textContent ?? "";
+    const privacy = (page("/legal/privacy/").body.textContent ?? "").replace(/\s+/g, " ");
     expect(privacy).toContain("[Company legal name]");
     expect(privacy).toContain("never stored");
     expect(privacy).toContain("at least 5 times");
+    // Retention periods and routes that the code implements (WAITLIST_KEEP_MONTHS, the query_daily
+    // cron, DELETE /api/me, invocation_logs: false) and the Analytics Engine limit.
+    expect(privacy).toContain(`${WAITLIST_KEEP_MONTHS} months after your first sign-up`);
+    expect(privacy).toContain("keeps them for three months");
+    const keep = (id: (typeof PLAN_IDS)[number]) => formatDays(analyticsKeepDays(PLANS[id]));
+    expect(privacy).toContain(`${keep("pro")} on Pro, ${keep("scale")} on Scale`);
+    expect(keep("free")).toBe(keep("solo"));
+    expect(privacy).toContain(`On Free and Solo we keep them for ${keep("free")}`);
+    expect(privacy).toContain("DELETE /api/me");
+    expect(privacy).toContain("Workers invocation logs) are turned off");
+    expect(privacy).toContain("We have no payment provider yet");
+    expect(privacy).not.toContain("[Usage retention period]");
+    const terms = (page("/legal/terms/").body.textContent ?? "").replace(/\s+/g, " ");
+    expect(terms).toContain("DELETE /api/me");
+    expect(terms).toContain("we have no payment provider");
     const subprocessors = page("/legal/subprocessors/").body.textContent ?? "";
     for (const name of ["Cloudflare, Inc.", "GitHub, Inc.", "Payments"])
       expect(subprocessors).toContain(name);
