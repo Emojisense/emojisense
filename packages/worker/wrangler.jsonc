@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "emojisense-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-24",
+  "observability": { "enabled": true },
+  // Pack files (/v1/pack/<version>/…) are static assets: free, immutable, CDN-cached.
+  "assets": { "directory": "./public" },
+  // Workers AI has no local emulator: even `wrangler dev` calls Cloudflare (needs `wrangler login`).
+  // Without it the Worker degrades to alias-only results.
+  "ai": { "binding": "AI" },
+  "ratelimits": [
+    { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
+    { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+  ],
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
+  "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }],
+  "vars": {
+    // Comma-separated publishable keys. Phase 3 moves keys to a store with per-tenant limits.
+    "PUBLISHABLE_KEYS": "pk_demo"
+  }
+}
