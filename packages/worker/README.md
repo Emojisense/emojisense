@@ -21,6 +21,20 @@ the shared search cache (`src/custom.ts`).
 `classify-image` takes the image as the body (`image/jpeg` or `image/webp`, ≤ 256 KB) and
 `?locale=&limit=` in the URL. Answers that degrade (Workers AI unavailable) are not metered.
 
+## Locales
+
+| Rule | Where |
+| ---- | ----- |
+| `locale` accepts every locale of `@emojisense/data/locales`; BCP 47 tags map to their language (`pt-BR` → `pt`); others → 400 | `src/http.ts` |
+| Search and reactions rank with the locale's aliases. `en` and `tr` (core + ext) are bundled; other locales read `pack.<locale>.json` through the `ASSETS` binding on first use and build an en + locale engine (core packs only). Images rank English keywords with English aliases | `src/locale-engines.ts`, `src/index.ts` |
+| At most 2 such engines per isolate (LRU, `LOCALE_ENGINE_CACHE_SIZE`), ≈ 8–10 MB each | `src/config.ts` |
+| A pack that does not load: no alias evidence (search: semantic-only), `aliasLocale: null`, no-store, not in the shared cache; the next request retries | `src/semantic.ts`, `src/search.ts`, `src/reactions.ts` |
+| `sync` fails when a locale has no published core pack | `scripts/sync-pack.ts` |
+
+Locally the packs come from `public/v1/pack/` (written by `sync`). Without them, non-bundled
+locales answer semantic-only and log `locale_pack_unavailable`. Each cold load logs
+`locale_engine_loaded` with `readMs` and `buildMs`.
+
 The metering flush also sends `usage.threshold` webhooks (80% and 100% of an account's limit,
 src/usage-alerts.ts). Webhooks to `http://localhost` work only with `ENVIRONMENT=development`
 (set in the `offline` env).
@@ -133,6 +147,7 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 | `src/semantic.ts`, `src/vision.ts` | Workers AI calls (embedding, `@cf/google/gemma-4-26b-a4b-it` vision); the vision label parser |
 | `src/image-rank.ts`, `src/reaction-rank.ts`, `src/reaction-intents.ts` | Photo and reaction ranking; intent cues |
 | `src/fusion.ts`, `src/emoji-lookup.ts` | Weighted reciprocal rank fusion with a confidence floor; emoji text → catalog id |
+| `src/locale-engines.ts` | Alias engines of non-bundled locales: packs read through `ASSETS`, per-isolate LRU |
 | `src/store.ts` | `Store` interface; D1 and in-memory implementations |
 | `src/config.ts` | Tunables: models, size limits, cache and flush timings |
 | `src/sets/` | Hosted emoji sets: servable emoji, pinned upstreams and naming rules, the route |
@@ -143,3 +158,5 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 Tests (`pnpm --filter @emojisense/worker test`) use a fake Workers AI, a fake upstream for the
 emoji sets and the in-memory store.
 `test/d1-store.test.ts` runs the D1 SQL on the real migrations with `node:sqlite`.
+`test/locales.test.ts` ranks with rows copied from the real es, hi and ar core packs
+(`test/fixtures/locale-packs.json`).

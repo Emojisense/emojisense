@@ -48,7 +48,7 @@ headers. Every key also has per-second rate limits.
 | Param | Default | Notes |
 | ----- | ------- | ----- |
 | `q` | — | Required. Normalized server-side (PACK_FORMAT.md §3), max 64 characters. |
-| `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr` |
+| `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). |
 | `limit` | `24` | 1–50 |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
 | `pack` | — | Client pack version (informational) |
@@ -63,13 +63,17 @@ headers. Every key also has per-second rate limits.
   "model": "embeddinggemma@256",
   "cached": false,
   "degraded": false,
-  "overLimit": false
+  "overLimit": false,
+  "aliasLocale": "en"
 }
 ```
 
 `source`: `alias` | `semantic` | `custom`. `degraded: true` = Workers AI was unavailable, so the
 results are alias-only (and not cached). `overLimit: true` = the key's account has used its monthly
-`semantic_calls` limit (see "Metering and plan limits"). Header: `Server-Timing: embed;dur=…, total;dur=…`.
+`semantic_calls` limit (see "Metering and plan limits"). `aliasLocale`: the locale whose aliases
+were fused into the results; `null` in `semantic` mode, or when that locale's pack could not be
+loaded (the results are then semantic-only and not cached). Header:
+`Server-Timing: embed;dur=…, total;dur=…`.
 
 **Custom emoji.** With a key, the app's custom emoji (app-wide, plus the tenant's with `tenant=`)
 are matched against the query and put first, in both modes, within `limit`:
@@ -86,12 +90,25 @@ are matched against the query and put first, in both modes, within `limit`:
 - A tenant emoji replaces an app-wide emoji with the same shortcode. An unknown `tenant` searches
   the app-wide emoji only.
 
+### Locales
+
+- The API accepts every pack locale. A BCP 47 tag counts as its language, case-insensitive:
+  `en-US` → `en`, `pt-BR` → `pt`, `zh-Hans` and `zh-Hant` → `zh` (the pack is Simplified Chinese).
+  No `locale` (or an empty one) means `en`.
+- Any other language answers `400` with the supported list, e.g. `unknown locale "de": use one of
+  en, zh, hi, es, ar, fr, bn, pt, ru, id, tr (or a BCP 47 tag of one, e.g. pt-BR)`.
+- Search and reactions rank with the English pack plus the requested locale's pack, the same
+  data an SDK loads on the device. English matches still count, slightly below the locale's own.
+- `en` and `tr` are built into the Worker. The other locales load their core pack on the first
+  request in a Worker instance (≈ 0.1–0.25 s once), then answer as fast as `en`.
+
 ## `POST /v1/suggest-reactions`
 
 Request `{ "text": "we just shipped the new onboarding!", "locale": "en", "limit": 8 }`. The text
-is truncated to 256 characters (≈ 64 tokens). The response has the same shape as search, with the
-caller's custom emoji first (`tenant` in the body or the query). **The text is never logged or
-cached:** it is chat content.
+is truncated to 256 characters (≈ 64 tokens). `locale` follows the [search rules](#locales) and
+picks the alias pack. The response has the same shape as search, with the caller's custom emoji
+first (`tenant` in the body or the query). **The text is never logged or cached:** it is chat
+content.
 
 Results are reactions, not topics: "we just shipped the new onboarding!" gives 🎉 🙌 👏, not 📦.
 The ranking fuses the emoji in the text, intent cues (thanks, congratulations, condolences,
@@ -106,7 +123,8 @@ embedding call per request, no LLM. `source` is `semantic` for the embedding sig
 
 Request: `Content-Type: image/jpeg` or `image/webp`, max 256 KB. Clients downscale to ~384 px
 first. Optional header `X-Image-Hash: <16 hex>` (64-bit perceptual hash) enables the cache, so the
-same meme shared many times costs one call.
+same meme shared many times costs one call. Query: `?locale=&limit=` (`locale` is checked as in
+[search](#locales); the label is English, so the keywords are ranked with English aliases).
 
 ```json
 { "caption": "a puppy asleep on a sofa", "reaction": "aww, so cute", "keywords": ["puppy", "sofa", "sleeping"], "results": [{ "emoji": "🐶", "id": "1F436", "score": 0.92, "source": "semantic" }], "cached": false, "degraded": false, "overLimit": false }
@@ -270,7 +288,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 
 | Status | Meaning |
 | ------ | ------- |
-| 400 | Missing or empty `q` / `text`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
+| 400 | Missing or empty `q` / `text`, a `locale` without a pack, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
 | 401 | Unknown or revoked key, or no key for `/v1/custom-pack` |
 | 402 | The account's plan does not include the feature (tenants API) |
 | 403 | Origin not allowed for this publishable key, or a secret key sent from a browser |
