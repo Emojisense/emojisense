@@ -8,17 +8,18 @@
  * diagnosis may steer generic fixes, but no held-out query may reach aliases, curation, tests
  * or prompts (DECISIONS.md, 2026-10-02 quality diagnosis).
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import { type AliasSearchOutput, fuse, type SearchResult, shouldUseSemantic } from "emojisense";
+import { type AliasSearchOutput, fuse, ROW_INDEX, type SearchResult, shouldUseSemantic } from "emojisense";
 import {
   classifyMiss,
   countFailures,
   type DiagnosisMode,
   FAILURE_DESCRIPTIONS,
   FAILURE_TYPES,
+  parseCollisions,
   parseReviewIds,
   type QueryEvidence,
   rankOf,
@@ -27,6 +28,7 @@ import {
 } from "./diagnose.ts";
 import { loadHeldout } from "./heldout.ts";
 import { HELDOUT_PATH, runHeldoutSuite } from "./heldout-run.ts";
+import { stripVariation } from "./queries.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 const LIMIT = 10;
@@ -44,6 +46,23 @@ const run = await runHeldoutSuite({ packDir, queries, model: packConfig.model, o
 const disputed = parseReviewIds(readFileSync(join(EVAL_ROOT, "queries", "heldout-review.md"), "utf8"));
 const vocabularies = new Map(run.locales.map((l) => [l, vocabularyOf(run.packsFor(l))]));
 const top = (list: readonly SearchResult[]) => list.slice(0, LIMIT).map((r) => r.emoji);
+// The data build's review.csv names the aliases the collision cap took from each emoji.
+const reviewPath = join(DATA_ROOT, "build", "review.csv");
+const collisions = existsSync(reviewPath) ? parseCollisions(readFileSync(reviewPath, "utf8")) : undefined;
+const hexcodeOf = new Map(
+  (run.packsFor("en")[0]?.emoji ?? []).map((row) => [
+    stripVariation(row[ROW_INDEX.emoji]),
+    row[ROW_INDEX.hexcode],
+  ]),
+);
+/** Another emoji's name or keyword equals the query and ranks first; a label has it as an alias. */
+const keywordOverAlias = (alias: AliasSearchOutput, labels: Set<string | undefined>) => {
+  const first = alias.results[0];
+  if (!first || first.match !== alias.query || labels.has(first.id)) return false;
+  if (first.field !== "name" && first.field !== "keyword" && first.field !== "shortcode") return false;
+  return alias.results.some((r) => labels.has(r.id) && r.match === alias.query && r.field === "alias");
+};
+const outranked: QueryEvidence[] = [];
 
 const evidence: QueryEvidence[] = queries.map((q) => {
   const alias = run.details.alias.get(q.id) as AliasSearchOutput;
@@ -51,7 +70,13 @@ const evidence: QueryEvidence[] = queries.map((q) => {
   const vocabulary = vocabularies.get(q.locale) as Set<string>;
   const gateCalled = shouldUseSemantic(alias);
   const fused = semantic && top(fuse(alias, semantic, LIMIT));
-  return {
+  const labels = new Set(q.answers.map((a) => hexcodeOf.get(stripVariation(a))));
+  const cappedForLabel = [q.locale, "en"].some((locale) =>
+    [alias.query, ...alias.tokens].some((phrase) =>
+      [...(collisions?.get(`${locale}\t${phrase}`) ?? [])].some((hexcode) => labels.has(hexcode)),
+    ),
+  );
+  const e: QueryEvidence = {
     id: q.id,
     locale: q.locale,
     q: q.q,
@@ -68,7 +93,10 @@ const evidence: QueryEvidence[] = queries.map((q) => {
     },
     gateCalled,
     disputed: disputed.has(q.id),
+    cappedForLabel,
   };
+  if (keywordOverAlias(alias, labels)) outranked.push(e);
+  return e;
 });
 
 const modes: DiagnosisMode[] = run.details.semantic ? ["alias", "fused", "gated"] : ["alias"];
@@ -137,6 +165,17 @@ for (const mode of modes) {
   ).length;
   lines.push(`| ${mode} | ${near} | ${flags} |`);
 }
+const rankInAlias = (e: QueryEvidence) => rankOf(e.lists.alias, e.answers);
+lines.push(
+  "",
+  `Name or keyword over alias: for ${outranked.length} queries another emoji has the whole query as ` +
+    "its name or CLDR keyword (weight 1 or 0.85) and ranks first, while a label has it as an alias " +
+    `(0.8). Alias mode: ${outranked.filter((e) => rankInAlias(e) !== 1).length} lose recall@1, ` +
+    `${outranked.filter((e) => !hitAt5(rankInAlias(e))).length} lose recall@5.`,
+  ...(collisions
+    ? []
+    : ["", "`collision-capped` needs packages/data/build/review.csv (run the data build)."]),
+);
 
 lines.push("", "## Legend", "");
 for (const type of FAILURE_TYPES) lines.push(`- \`${type}\`: ${FAILURE_DESCRIPTIONS[type]}`);

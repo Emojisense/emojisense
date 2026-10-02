@@ -5,6 +5,7 @@ import {
   countFailures,
   foldGender,
   isRomanized,
+  parseCollisions,
   parseReviewIds,
   type QueryEvidence,
   rankOf,
@@ -26,6 +27,7 @@ const evidence = (fields: Partial<QueryEvidence> = {}): QueryEvidence => ({
   lists: { alias: ["📅"], semantic: ["☀️"], fused: ["📅"], gated: ["📅"] },
   gateCalled: true,
   disputed: false,
+  cappedForLabel: false,
   ...fields,
 });
 
@@ -120,6 +122,27 @@ describe("counts", () => {
     expect(table).toContain("| disputed-label | 1 | 0 | 1 |");
     expect(table).toContain("| **misses** | 2 | 1 | 3 |");
     expect(table).not.toContain("romanized");
+  });
+});
+
+describe("collision cap", () => {
+  it("names a miss whose phrase the cap took from a label, after the query form", () => {
+    expect(classifyMiss(evidence({ cappedForLabel: true }), "alias")).toBe("collision-capped");
+    expect(classifyMiss(evidence({ cappedForLabel: true, locale: "hi", q: "baarish hai" }), "alias")).toBe(
+      "romanized",
+    );
+  });
+
+  it("reads the owners that lost each collided alias from review.csv", () => {
+    const csv = [
+      "reason,locale,emoji,hexcode,alias,field,emoji_count",
+      "blocked,en,😎,1F60E,x,alias,1",
+      "collision_demoted,en,🌧🌦,1F327 1F326,rainy day,alias,9",
+      'collision_dropped,fr,🌧,1F327,"averse, drizzle",alias,21',
+    ].join("\n");
+    const capped = parseCollisions(csv);
+    expect([...capped.keys()]).toEqual(["en\trainy day", "fr\taverse, drizzle"]);
+    expect([...(capped.get("en\trainy day") ?? [])]).toEqual(["1F327", "1F326"]);
   });
 });
 

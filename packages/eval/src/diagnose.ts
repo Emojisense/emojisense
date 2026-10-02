@@ -19,6 +19,7 @@ export const FAILURE_TYPES = [
   "fusion-dropped-semantic",
   "romanized",
   "unsegmented-script",
+  "collision-capped",
   "no-match",
   "unknown-word",
   "exact-phrase-other-emoji",
@@ -36,6 +37,8 @@ export const FAILURE_DESCRIPTIONS: Record<FailureType, string> = {
   "fusion-dropped-semantic": "Semantic had a label in its top 5 (alias did not); fusion pushed it out.",
   romanized: "A non-Latin-script locale typed in Latin letters (Hinglish, Banglish, Arabizi, translit).",
   "unsegmented-script": "A script without spaces (Han, kana, Thai) whose run is not one indexed token.",
+  "collision-capped":
+    "The query or one of its words is an alias of a label that the build's collision cap demoted or dropped.",
   "no-match": "The alias engine returned nothing.",
   "unknown-word": "A query word is in no phrase of the loaded packs (slang, inflection, spelling).",
   "exact-phrase-other-emoji": "The query is an indexed phrase, but of other emoji than the labels.",
@@ -63,6 +66,8 @@ export interface QueryEvidence {
   gateCalled: boolean;
   /** Listed in queries/heldout-review.md. */
   disputed: boolean;
+  /** The query or a query word lost its alias weight on a label emoji to the collision cap. */
+  cappedForLabel: boolean;
 }
 
 /** 1-based rank of the first label in the list, 0 when none; `fold` maps both sides first. */
@@ -110,6 +115,7 @@ export function classifyMiss(e: QueryEvidence, mode: DiagnosisMode): FailureType
 
   if (isRomanized(e.locale, e.q)) return "romanized";
   if (e.unknownTokens.some((t) => UNSEGMENTED.test(t))) return "unsegmented-script";
+  if (e.cappedForLabel) return "collision-capped";
   if (e.aliasTopMatch === undefined) return "no-match";
   if (e.unknownTokens.length > 0) return "unknown-word";
   if (e.aliasTopMatch === e.normalized) return "exact-phrase-other-emoji";
@@ -141,6 +147,25 @@ export function parseReviewIds(markdown: string): Set<string> {
     }
   }
   return ids;
+}
+
+/**
+ * Collision-capped aliases from the data build's review.csv
+ * (`reason,locale,emoji,hexcode,alias,field,emoji_count`): "locale\talias" → the hexcodes that
+ * lost the alias (demoted to `low` or dropped).
+ */
+export function parseCollisions(csv: string): Map<string, Set<string>> {
+  const capped = new Map<string, Set<string>>();
+  for (const line of csv.split("\n").slice(1)) {
+    if (!line.startsWith("collision_")) continue;
+    const cells = [...line.matchAll(/("(?:[^"]|"")*"|[^,]*)(?:,|$)/g)].map((m) =>
+      (m[1] as string).replace(/^"|"$/g, "").replace(/""/g, '"'),
+    );
+    const [, locale, , hexcodes, alias] = cells;
+    if (!locale || !alias || !hexcodes) continue;
+    capped.set(`${locale}\t${alias}`, new Set(hexcodes.split(" ")));
+  }
+  return capped;
 }
 
 export type TypeCounts = Record<FailureType, Record<string, number>>;
