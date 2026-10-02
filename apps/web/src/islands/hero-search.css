@@ -115,6 +115,27 @@
   box-shadow: inset 0 0 0 0.0625rem var(--line-strong);
 }
 
+/* Unsure: the tiles are guesses. Dimmed, not hidden, and still choosable. */
+.hs-tile .emoji {
+  transition:
+    opacity 240ms var(--ease-out),
+    filter 240ms var(--ease-out);
+}
+
+.hs-list[data-guessing] .hs-tile .emoji {
+  opacity: 0.4;
+  filter: saturate(0.5);
+}
+
+.hs-list[data-guessing] .hs-tile[aria-selected="true"] .emoji,
+.hs-list[data-guessing] .hs-tile:hover .emoji {
+  opacity: 0.75;
+}
+
+.hs-unsure {
+  color: var(--ink-2);
+}
+
 .hs-skeleton {
   background: var(--bg-soft);
   animation: hs-pulse 1.1s ease-in-out 4 alternate;

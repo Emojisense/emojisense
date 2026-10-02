@@ -793,6 +793,8 @@
     "byMeaning": "cocok berdasarkan makna",
     "matched": "cocok dengan <q>{match}</q>",
     "bestMatch": "paling cocok",
+    "unsure": "Tidak ada kecocokan yang kuat — coba kata lain",
+    "understoodAs": "dipahami sebagai <q>{terms}</q>",
     "idle": "Film, perasaan, salah ketik, bahasa lain — coba apa saja.",
     "try": "Coba",
     "play": "Putar demo",

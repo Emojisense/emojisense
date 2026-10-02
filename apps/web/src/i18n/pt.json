@@ -795,6 +795,8 @@
     "byMeaning": "encontrado por significado",
     "matched": "encontrado por <q>{match}</q>",
     "bestMatch": "melhor resultado",
+    "unsure": "Nenhuma correspondência clara: tente outra palavra",
+    "understoodAs": "entendido como <q>{terms}</q>",
     "idle": "Um filme, um sentimento, um erro de digitação, outro idioma — experimente qualquer coisa.",
     "try": "Teste",
     "play": "Iniciar demo",

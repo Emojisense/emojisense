@@ -4,6 +4,7 @@ import type { Messages } from "../i18n/catalogs";
 import type { HeroExample } from "../i18n/examples";
 import { rich, useTranslator } from "../i18n/react";
 import { fullEngine, labelOf, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
+import { honestyOf } from "../lib/search-copy";
 import "./hero-search.css";
 
 const LIMIT = 9;
@@ -118,6 +119,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   };
 
   const results: SearchResult[] = query.trim() ? (state?.results ?? []) : [];
+  const { guessing, terms } = honestyOf(state, query);
   const current = results[active];
   const label = (r: SearchResult) => labelOf(engine, r.id, locale) ?? r.emoji;
   const matched = current && state?.alias.results.find((r) => r.id === current.id)?.match;
@@ -201,6 +203,8 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
           role="listbox"
           aria-label={t.t("results")}
           aria-busy={loading || undefined}
+          // No tier understood the query: the tiles are guesses, shown dimmed.
+          data-guessing={guessing || undefined}
         >
           {loading &&
             Array.from({ length: LIMIT }, (_, i) => (
@@ -237,18 +241,22 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
 
       {/* Announced only while the visitor drives: the autoplay would otherwise talk every second. */}
       <p className="hs-why" aria-live={auto ? "off" : "polite"}>
-        {current ? (
+        {guessing && !auto ? (
+          <span className="hs-unsure">{t.t("unsure")}</span>
+        ) : current ? (
           // A new key per answer replaces the line instead of moving its parts (no layout shift).
-          <Fragment key={`${current.id}|${current.source}|${matched}|${auto && example}`}>
+          <Fragment key={`${current.id}|${current.source}|${matched}|${terms.join()}|${auto && example}`}>
             <span className="hs-name">{label(current)}</span>
             <span className="hs-sep" aria-hidden="true">
               ·
             </span>
-            {current.source === "semantic"
-              ? t.t("byMeaning")
-              : matched
-                ? rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched })
-                : t.t("bestMatch")}
+            {current.source === "concept" && terms.length > 0
+              ? rich(t.raw("understoodAs"), { q: (text) => <q dir="auto">{text}</q> }, { terms: terms.join(", ") })
+              : current.source === "semantic" || current.source === "concept"
+                ? t.t("byMeaning")
+                : matched
+                  ? rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched })
+                  : t.t("bestMatch")}
             {auto && <span className="hs-kind">{kindOf(shown)}</span>}
           </Fragment>
         ) : (

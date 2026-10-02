@@ -6,6 +6,7 @@ export const SOURCE_NAMES: Record<SearchResult["source"], string> = {
   semantic: "Meaning",
   custom: "Custom",
   culture: "Culture",
+  concept: "Concept",
 };
 
 /** The pack field that held the matching phrase (PACK_FORMAT.md). */
