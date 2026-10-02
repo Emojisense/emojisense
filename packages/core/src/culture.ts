@@ -35,7 +35,7 @@ export interface CultureEntry {
   when: CultureWhen;
   /** ISO 3166-1 alpha-2 codes, or `["*"]` for every region. */
   regions: string[];
-  /** Normalized phrases (docs/PACK_FORMAT.md §3) in the file's locale and English. */
+  /** Normalized phrases (docs/PACK_FORMAT.md §3) that people of this locale type. */
   triggers: string[];
   emoji: CultureEmoji[];
   /** May appear on a "relevant now" shelf (seasonal and event entries only). */
