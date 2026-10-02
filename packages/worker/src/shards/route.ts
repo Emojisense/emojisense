@@ -1,3 +1,4 @@
+import { LOCALE_CODES } from "@emojisense/data/locales";
 import { SHARD_INDEX_FILE, shardFileName } from "@emojisense/data/shards";
 import {
   SHARD_EDGE_CACHE_SECONDS,
@@ -13,7 +14,9 @@ import type { WaitUntil } from "../meter.ts";
 import { readPointer, type ShardBucket, storePrefix } from "./storage.ts";
 
 export const SHARDS_PATH_PREFIX = "/p/";
-const SHARD_PATH = /^\/p\/([^/]+)\/([^/]+)$/;
+/** `/p/<packVersion>/<file>` (English) or `/p/<packVersion>/<locale>/<file>`. */
+const SHARD_PATH = /^\/p\/([^/]+)\/(?:([^/]+)\/)?([^/]+)$/;
+const PACK_LOCALES: ReadonlySet<string> = new Set(LOCALE_CODES);
 const JSON_TYPE = "application/json; charset=utf-8";
 
 /**
@@ -49,11 +52,13 @@ export interface ShardRouteOptions {
 }
 
 /**
- * GET /p/<packVersion>/<file>: layer-2 shards (PACK_FORMAT §6). The nightly build (job.ts) writes
- * them to R2; this serves the build that the store's pointer names, through the edge cache
- * (keyed by build id, whose files never change). Without a build for this deployment's pack
- * version and data (no bucket, first night after a deploy, another pack version), the static
- * shards in public/p are served, if the deploy shipped any. Free for callers: no key, not metered.
+ * GET /p/<packVersion>/<file> and /p/<packVersion>/<locale>/<file>: layer-2 shards (PACK_FORMAT
+ * §6), English at the first path (`en/` is the same files), every other pack locale in its own
+ * directory. The nightly build (job.ts) writes them to R2; this serves the build that the store's
+ * pointer names, through the edge cache (keyed by build id, whose files never change). Without a
+ * build for this deployment's pack version and data (no bucket, first night after a deploy,
+ * another pack version), the static shards in public/p are served, if the deploy shipped any.
+ * Free for callers: no key, not metered.
  */
 export function createShardRoute(options: ShardRouteOptions) {
   const { config } = options;
@@ -95,19 +100,23 @@ export function createShardRoute(options: ShardRouteOptions) {
       return errorResponse(405, "method not allowed", { Allow: "GET, HEAD, OPTIONS" });
     }
     const match = SHARD_PATH.exec(url.pathname);
-    const name = match && storedName(match[2] as string);
+    const name = match && storedName(match[3] as string);
     if (!match || !name) return missing();
+    const locale = match[2];
+    if (locale !== undefined && !PACK_LOCALES.has(locale)) return missing();
+    // English lives at the build root; another locale in its directory.
+    const dir = locale === undefined || locale === "en" ? "" : `${locale}/`;
 
     const bucket = env.SHARDS;
     const build = bucket && match[1] === config.packVersion ? await currentBuild(bucket) : undefined;
     if (!bucket || !build) return fromAssets(request, env);
 
     const browserCache = name === SHARD_INDEX_FILE ? SHARD_INDEX_BROWSER_CACHE : SHARD_FILE_BROWSER_CACHE;
-    const cacheKey = new Request(`${url.origin}/p/${config.packVersion}/${build}/${name}`);
+    const cacheKey = new Request(`${url.origin}/p/${config.packVersion}/${build}/${dir}${name}`);
     const hit = await cache.match(cacheKey);
     if (hit) return present(request, hit, browserCache);
 
-    const object = await bucket.get(`${prefix}${build}/${name}`);
+    const object = await bucket.get(`${prefix}${build}/${dir}${name}`);
     if (!object) return missing();
     const stored = new Response(await object.text(), {
       headers: {

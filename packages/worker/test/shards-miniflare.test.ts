@@ -6,6 +6,8 @@ import type { CacheLike } from "../src/context.ts";
 import type { AiBinding, Env } from "../src/env.ts";
 import { runShardBuild } from "../src/shards/job.ts";
 import { type ShardPointer, storePrefix } from "../src/shards/storage.ts";
+import { createD1Store, type D1Like } from "../src/store.ts";
+import { buildRegionalTrends, readRegionalTrends } from "../src/trends.ts";
 import { API, catalog, executionContext, ROW, unit } from "./fixtures.ts";
 
 /**
@@ -46,7 +48,7 @@ const ai = vi.fn<AiBinding["run"]>(async (_model, input) => ({
   ),
 }));
 
-describe("shards on Miniflare R2 and D1", () => {
+describe("shards and regional stats on Miniflare R2 and D1", () => {
   let proxy: { env: Env; caches: { default: CacheLike }; dispose(): Promise<void> };
   let env: Env;
 
@@ -121,5 +123,32 @@ describe("shards on Miniflare R2 and D1", () => {
     expect(hit?.layer).toBe("shard");
     expect(hit?.results[0]?.emoji).toBe("🌋");
     await ctx.settle();
+  }, 120_000);
+
+  it("counts searches per locale and country and writes regional trends on real D1", async () => {
+    const db = env.DB as unknown as D1Like;
+    const store = createD1Store(db);
+    const day = "2026-10-14";
+    // Two flushes of the same rows: the upsert adds to the row of each locale and country.
+    for (let i = 0; i < 2; i++) {
+      await store.addQueryCounts(
+        ["a", "b", "c"].map((id) => ({
+          appId: `app_${id}`,
+          day,
+          query: "copa do mundo",
+          locale: "pt",
+          country: "BR",
+          searches: 3,
+          misses: 0,
+        })),
+      );
+    }
+    const report = await buildRegionalTrends(db, NOW);
+    expect(report).toMatchObject({ rows: 2, regions: 2 });
+    const rows = await readRegionalTrends(db, { locale: "pt" });
+    expect(rows.map((r) => [r.country, r.query, r.searches, r.accounts])).toEqual([
+      ["*", "copa do mundo", 18, 3],
+      ["BR", "copa do mundo", 18, 3],
+    ]);
   }, 120_000);
 });
