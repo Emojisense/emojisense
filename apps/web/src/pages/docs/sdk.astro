@@ -226,5 +226,5 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
   <CodeBlock code={sets} lang="ts" />
 
   <h2 id="vectors">Vectors</h2>
-  <p>For on-device meaning search experiments and for building vector files: <code>decodeVectors(buffer)</code>, <code>encodeVectors(model, ids, rows)</code>, <code>l2normalize(vector)</code> and <code>searchVectors(index, query, k)</code>. The file format is in <a href="/docs/pack-format/#5-vectors-vectorsmodeldimsbin-esvec1">Pack format §5</a>.</p>
+  <p>For on-device meaning search experiments and for building vector files: <code>decodeVectors(buffer)</code>, <code>encodeVectors(model, ids, rows)</code>, <code>l2normalize(vector)</code> and <code>searchVectors(index, query, k)</code>. <code>searchVectorSets(indexes, query, k)</code> searches several vector files at once (for example the shared English file and one locale file) and keeps each emoji's best row. The file format is in <a href="/docs/pack-format/#5-vectors-vectorsmodeldimsbin-esvec1">Pack format §5</a>.</p>
 </DocsLayout>
