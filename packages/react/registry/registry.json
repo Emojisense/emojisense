@@ -1,0 +1,22 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "emojisense",
+  "homepage": "https://emojisense.com",
+  "items": [
+    {
+      "name": "emoji-picker",
+      "type": "registry:ui",
+      "title": "Emoji Picker",
+      "description": "A Frimousse emoji picker with Emojisense search: on-device alias ranking on every keystroke, then semantic results from precomputed shards or the API when the dictionary is unsure.",
+      "dependencies": ["@emojisense/react", "emojisense", "frimousse@^0.4.0"],
+      "files": [
+        {
+          "path": "emoji-picker.tsx",
+          "type": "registry:ui"
+        }
+      ],
+      "categories": ["emoji", "picker", "search"],
+      "docs": "Load the packs once with `useEmojisense({ packBaseUrl, shardsUrl, endpoint })` from `@emojisense/react`, then compose `<EmojiPicker emojisense={sense}>` with `<EmojiPickerSearch />`, `<EmojiPickerContent />` and `<EmojiPickerFooter />`. Omit `shardsUrl` and `endpoint` for fully offline search."
+    }
+  ]
+}

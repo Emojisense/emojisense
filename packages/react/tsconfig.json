@@ -1,5 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable"], "jsx": "react-jsx", "types": [] },
-  "include": ["src", "test"]
+  "include": ["src", "test"],
+  "exclude": ["test/registry.test.tsx", "test/registry-build.test.ts"]
 }
