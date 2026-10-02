@@ -133,7 +133,7 @@ describe("POST /v1/classify-image", () => {
     const offline = harness({ env: { DEV_KEYS: "pk_demo" } });
     offline.env.AI = { run: async () => Promise.reject(new Error("offline")) };
     expect(await (await offline.call(image(jpeg(), {}, "?key=pk_demo"))).json()).toEqual(expected);
-    expect(await offline.app.meter?.count("dev:0", "image_classifications")).toBe(0);
+    expect(await offline.app.meter?.accountCount("dev:0", "image_classifications")).toBe(0);
 
     const garbage = harness({ label: "I see a dog!" });
     expect(await (await garbage.call(image(jpeg()))).json()).toEqual(expected);

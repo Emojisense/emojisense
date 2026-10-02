@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import type { AppSummary, MetricUsage, UsageResponse } from "../../shared/contract";
+import type { AppMetricUsage, AppSummary, UsageResponse } from "../../shared/contract";
 import { api, errorMessage } from "../api";
 import { formatNumber, formatPeriod, METRIC_COPY, recentPeriods } from "../format";
 import { EmptyState } from "./EmptyState";
@@ -90,20 +90,21 @@ function UsageReport({ usage }: { usage: UsageResponse }) {
         ))}
       </div>
       <p className="hint">
-        Over a limit, the API answers with <code>overLimit: true</code> and search keeps working on the
-        device. Counters can lag a few minutes, because the API writes them in batches.
+        Plan limits count the calls of every app of the account. Over a limit, the API answers with{" "}
+        <code>overLimit: true</code> and search keeps working on the device. Counters can lag a few minutes,
+        because the API writes them in batches.
       </p>
     </>
   );
 }
 
-function meterNote(usage: MetricUsage, planName: string): string {
+function meterNote(usage: AppMetricUsage, planName: string): string {
   const { hint } = METRIC_COPY[usage.metric];
   switch (usage.status) {
     case "not_included":
       return `Not included in the ${planName} plan.`;
     case "over_limit":
-      return `Limit reached. The API answers with overLimit: true until next month. ${hint}`;
+      return `Limit reached. The API answers with overLimit: true for every app of the account until next month. ${hint}`;
     case "near_limit":
       return `${usage.percent}% used: close to the limit. ${hint}`;
     default:
@@ -111,11 +112,18 @@ function meterNote(usage: MetricUsage, planName: string): string {
   }
 }
 
-function UsageMeter({ usage, planName }: { usage: MetricUsage; planName: string }) {
+/** Only when other apps of the account used the metric too; otherwise the figure says it all. */
+function appShare(usage: AppMetricUsage): string | null {
+  if (usage.appUsed === usage.used) return null;
+  return `This app: ${formatNumber(usage.appUsed)} of ${formatNumber(usage.used)}.`;
+}
+
+function UsageMeter({ usage, planName }: { usage: AppMetricUsage; planName: string }) {
   const labelId = useId();
   const noteId = useId();
   const { label } = METRIC_COPY[usage.metric];
   const used = formatNumber(usage.used);
+  const note = [appShare(usage), meterNote(usage, planName)].filter(Boolean).join(" ");
   const figure = usage.limit === null ? `${used} used` : `${used} / ${formatNumber(usage.limit)}`;
   const showTrack = usage.limit !== null && usage.status !== "not_included";
 
@@ -148,7 +156,7 @@ function UsageMeter({ usage, planName }: { usage: MetricUsage; planName: string 
         </div>
       )}
       <p id={noteId} className="hint meter-note">
-        {meterNote(usage, planName)}
+        {note}
       </p>
     </div>
   );

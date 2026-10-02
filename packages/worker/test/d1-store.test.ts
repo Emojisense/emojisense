@@ -21,10 +21,11 @@ describe("D1 store on the platform schema", () => {
     store = createD1Store(sqliteD1(db));
   });
 
-  it("finds a key by hash, with its account's plan and origins", async () => {
+  it("finds a key by hash, with its owning account, the account's plan and origins", async () => {
     expect(await store.findKeyByHash(await hashKey(KEY))).toEqual({
       id: "key_1",
       appId: "app_1",
+      accountId: "acc",
       kind: "publishable",
       plan: "pro",
       allowedOrigins: ["https://app.example.com"],
@@ -52,11 +53,30 @@ describe("D1 store on the platform schema", () => {
     ]);
     await store.addUsage([{ appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 4 }]);
     await store.addUsage([]);
-    expect(await store.readUsage("app_1", "2026-10")).toEqual({
+    expect(db.prepare("SELECT metric, count FROM usage_monthly ORDER BY metric").all()).toEqual([
+      { metric: "image_classifications", count: 1 },
+      { metric: "semantic_calls", count: 7 },
+    ]);
+  });
+
+  it("reads an account's usage as the sum over its apps, without other accounts", async () => {
+    db.exec(`
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_2', 'acc', 'Second', 0);
+      INSERT INTO accounts (id, plan, created_at) VALUES ('acc_other', 'pro', 0);
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_other', 'acc_other', 'Other', 0);`);
+    await store.addUsage([
+      { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 3 },
+      { appId: "app_2", period: "2026-10", metric: "semantic_calls", count: 4 },
+      { appId: "app_2", period: "2026-10", metric: "image_classifications", count: 2 },
+      { appId: "app_other", period: "2026-10", metric: "semantic_calls", count: 50 },
+      { appId: "app_1", period: "2026-09", metric: "semantic_calls", count: 9 },
+    ]);
+    expect(await store.readAccountUsage("acc", "2026-10")).toEqual({
       semantic_calls: 7,
-      image_classifications: 1,
+      image_classifications: 2,
     });
-    expect(await store.readUsage("app_1", "2026-11")).toEqual({});
+    expect(await store.readAccountUsage("acc_other", "2026-10")).toEqual({ semantic_calls: 50 });
+    expect(await store.readAccountUsage("acc", "2026-11")).toEqual({});
   });
 
   it("returns the new app and account totals, read in the same batch as the upserts", async () => {
@@ -110,7 +130,7 @@ describe("D1 store on the platform schema", () => {
         { appId: "missing_app", period: "2026-10", metric: "semantic_calls", count: 1 },
       ]),
     ).rejects.toThrow();
-    expect(await store.readUsage("app_1", "2026-10")).toEqual({});
+    expect(await store.readAccountUsage("acc", "2026-10")).toEqual({});
   });
 
   it("upserts query counts per app, day and query", async () => {

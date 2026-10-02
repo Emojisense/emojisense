@@ -4,6 +4,8 @@ import type { KeyKind, Metric, PlanId } from "@emojisense/platform";
 export interface ApiKey {
   id: string;
   appId: string;
+  /** The account that owns the app. Its plan, and so its limits, cover every app it owns. */
+  accountId: string;
   kind: KeyKind;
   plan: PlanId;
   /** Publishable keys only. Empty = any origin (development keys). */
@@ -43,7 +45,8 @@ export interface QueryCount {
 /** The Worker's view of the hosted-service database (packages/platform/migrations). */
 export interface Store {
   findKeyByHash(hash: string): Promise<ApiKey | undefined>;
-  readUsage(appId: string, period: string): Promise<UsageCounts>;
+  /** The account's counts for the period: the sum of usage_monthly over all of its apps. */
+  readAccountUsage(accountId: string, period: string): Promise<UsageCounts>;
   /**
    * Adds the deltas to usage_monthly and reads the new app and account totals, all in one batch
    * (one transaction), so an account's total before this flush is its total minus this flush's
@@ -73,6 +76,7 @@ export interface D1Like {
 interface KeyJoinRow {
   id: string;
   app_id: string;
+  account_id: string;
   kind: KeyKind;
   allowed_origins: string;
   revoked_at: number | null;
@@ -81,12 +85,16 @@ interface KeyJoinRow {
 
 // The plan lives on the account (migration 0002); the legacy apps.plan column is not read.
 const FIND_KEY = `
-  SELECT k.id, k.app_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan
+  SELECT k.id, k.app_id, a.account_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan
   FROM api_keys k
   JOIN apps a ON a.id = k.app_id
   JOIN accounts acc ON acc.id = a.account_id
   WHERE k.hash = ?`;
-const READ_USAGE = "SELECT metric, count FROM usage_monthly WHERE app_id = ? AND period = ?";
+const READ_ACCOUNT_USAGE = `
+  SELECT u.metric, SUM(u.count) AS count
+  FROM usage_monthly u JOIN apps a ON a.id = u.app_id
+  WHERE a.account_id = ? AND u.period = ?
+  GROUP BY u.metric`;
 const ADD_USAGE = `
   INSERT INTO usage_monthly (app_id, period, metric, count) VALUES (?, ?, ?, ?)
   ON CONFLICT (app_id, period, metric) DO UPDATE SET count = count + excluded.count`;
@@ -156,16 +164,17 @@ export function createD1Store(db: D1Like): Store {
       return {
         id: row.id,
         appId: row.app_id,
+        accountId: row.account_id,
         kind: row.kind,
         plan: row.plan,
         allowedOrigins: parseOrigins(row.allowed_origins),
         revoked: row.revoked_at !== null,
       };
     },
-    async readUsage(appId, period) {
+    async readAccountUsage(accountId, period) {
       const { results } = await db
-        .prepare(READ_USAGE)
-        .bind(appId, period)
+        .prepare(READ_ACCOUNT_USAGE)
+        .bind(accountId, period)
         .all<{ metric: Metric; count: number }>();
       return Object.fromEntries(results.map((r) => [r.metric, r.count]));
     },
@@ -187,11 +196,26 @@ export function createD1Store(db: D1Like): Store {
   };
 }
 
-/** For tests and local runs without D1. Keys are registered by hash, like the real table. */
+/**
+ * For tests and local runs without D1. Keys are registered by hash, like the real table. An app
+ * belongs to the account of its keys; an app without a key is its own account.
+ */
 export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
   const keysByHash = new Map(Object.entries(keys));
   const usage = new Map<string, number>();
   const usageKey = (appId: string, period: string, metric: string) => `${appId}|${period}|${metric}`;
+  const accountOf = (appId: string) =>
+    [...keysByHash.values()].find((key) => key.appId === appId)?.accountId ?? appId;
+  const accountUsage = (accountId: string, period: string): UsageCounts => {
+    const counts: UsageCounts = {};
+    for (const [key, count] of usage) {
+      const [appId = "", rowPeriod, metric] = key.split("|") as [string, string, Metric];
+      if (rowPeriod === period && accountOf(appId) === accountId) {
+        counts[metric] = (counts[metric] ?? 0) + count;
+      }
+    }
+    return counts;
+  };
   const queries = new Map<string, QueryCount>();
   const queryKey = (appId: string, day: string, query: string) => `${appId}|${day}|${query}`;
   const store: Store & {
@@ -211,19 +235,23 @@ export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
       const key = keysByHash.get(hash);
       return key && { ...key, allowedOrigins: [...key.allowedOrigins] };
     },
-    async readUsage(appId, period) {
-      const prefix = `${appId}|${period}|`;
-      return Object.fromEntries(
-        [...usage].filter(([k]) => k.startsWith(prefix)).map(([k, v]) => [k.slice(prefix.length), v]),
-      );
+    async readAccountUsage(accountId, period) {
+      return accountUsage(accountId, period);
     },
-    // The memory store has no accounts: each app is its own account.
+    // All upserts first, then the totals, like the D1 batch.
     async addUsage(deltas) {
-      return deltas.map((d) => {
+      for (const d of deltas) {
         const key = usageKey(d.appId, d.period, d.metric);
-        const count = (usage.get(key) ?? 0) + d.count;
-        usage.set(key, count);
-        return { ...d, count, accountId: d.appId, accountCount: count };
+        usage.set(key, (usage.get(key) ?? 0) + d.count);
+      }
+      return deltas.map((d) => {
+        const accountId = accountOf(d.appId);
+        return {
+          ...d,
+          count: usage.get(usageKey(d.appId, d.period, d.metric)) ?? 0,
+          accountId,
+          accountCount: accountUsage(accountId, d.period)[d.metric] ?? 0,
+        };
       });
     },
     async addQueryCounts(counts) {

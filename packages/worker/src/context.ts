@@ -15,8 +15,12 @@ export interface CacheLike {
  * never limited or counted.
  */
 export interface Metering {
+  /**
+   * True when the key's account has used this month's plan limit for the metric. The limit
+   * belongs to the account, so the calls of all of its apps count.
+   */
   overLimit(metric: Metric): Promise<boolean>;
-  /** Count one billable call and start a batched flush when one is due. */
+  /** Count one billable call for the key's app and start a batched flush when one is due. */
   count(metric: Metric): void;
   /**
    * Add one search to the app's analytics (query_daily): the normalized query and how many
@@ -50,10 +54,10 @@ export function createMetering(
   const { key, plan, persistUsage } = principal;
   return {
     async overLimit(metric) {
-      return (await meter.count(key.appId, metric)) >= plan.limits[metric];
+      return (await meter.accountCount(key.accountId, metric)) >= plan.limits[metric];
     },
     count(metric) {
-      meter.add(key.appId, metric, persistUsage, plan.limits[metric]);
+      meter.add(key, metric, persistUsage, plan.limits[metric]);
       meter.flushIfDue(ctx);
     },
     recordSearch(query, resultCount) {

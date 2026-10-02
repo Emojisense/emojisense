@@ -53,6 +53,22 @@ describe("usage", () => {
     expect(calls.map((call) => call.path)).toContain("/api/apps/app_1/usage?period=2026-09");
   });
 
+  it("measures the account's total and names this app's part of it", async () => {
+    stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
+      "GET /api/apps/app_1/usage": {
+        body: usage("2026-10", { semantic_calls: 85_000 }, { semantic_calls: 12_000 }),
+      },
+    });
+    render(<App />);
+
+    const semantic = await screen.findByRole("meter", { name: "Semantic calls" });
+    expect(semantic.getAttribute("aria-valuetext")).toBe("85,000 of 100,000 (85%)");
+    expect(screen.getByText(/^This app: 12,000 of 85,000\. 85% used: close to the limit\./)).toBeTruthy();
+    expect(screen.getByText(/Plan limits count the calls of every app of the account\./)).toBeTruthy();
+  });
+
   it("tells the user what to do when nothing was counted yet", async () => {
     stubApi({
       "GET /api/me": { body: me() },

@@ -40,12 +40,20 @@ export function me(overrides: Partial<MeResponse> = {}): MeResponse {
   };
 }
 
-export function usage(period: string, counts: Partial<Record<Metric, number>> = {}): UsageResponse {
+/** `counts` are the account's; this app has all of them unless `appCounts` says otherwise. */
+export function usage(
+  period: string,
+  counts: Partial<Record<Metric, number>> = {},
+  appCounts: Partial<Record<Metric, number>> = counts,
+): UsageResponse {
   return {
     appId: APP.id,
     period,
     plan: { id: "free", name: "Free" },
-    metrics: METRICS.map((metric) => measureUsage(metric, counts[metric] ?? 0, PLANS.free.limits[metric])),
+    metrics: METRICS.map((metric) => ({
+      ...measureUsage(metric, counts[metric] ?? 0, PLANS.free.limits[metric]),
+      appUsed: appCounts[metric] ?? 0,
+    })),
   };
 }
 

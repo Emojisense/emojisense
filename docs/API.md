@@ -27,6 +27,13 @@ headers. Every key also has per-second rate limits.
   when the response comes from the Cache API) and each `/v1/classify-image` (`image_classifications`).
 - Not metered: static packs and shards, hosted emoji set images, on-device search.
 - Monthly UTC periods, no daily caps. Limits come from `PLANS` in `@emojisense/platform`.
+- **Limits are per account.** The plan belongs to the account (`accounts.plan`), so the calls of
+  all of its apps count against one limit per metric. When the account's total for the month
+  reaches the limit, every app of the account gets `"overLimit": true`. Usage is still stored per
+  app, so the dashboard shows each app's part.
+- Each API instance counts calls in memory. Its copy of the account's total is never older than
+  a minute, and each write of its counts (about every 10 s while busy) refreshes it. So calls on
+  other instances can take about a minute to count, and an account can go a little over its limit.
 - **One shared cache.** The cache key is the normalized query, locale, limit, mode and index
   version. It has no key, app or origin in it, so every app warms the same edge cache.
 - **Over the limit, the API never fails.** A query that is in the shared cache is still answered
@@ -59,7 +66,8 @@ headers. Every key also has per-second rate limits.
 ```
 
 `source`: `alias` | `semantic` | `custom`. `degraded: true` = Workers AI was unavailable, so the
-results are alias-only (and not cached). Header: `Server-Timing: embed;dur=…, total;dur=…`.
+results are alias-only (and not cached). `overLimit: true` = the key's account has used its monthly
+`semantic_calls` limit (see "Metering and plan limits"). Header: `Server-Timing: embed;dur=…, total;dur=…`.
 
 ## `POST /v1/suggest-reactions`
 
@@ -233,7 +241,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
 | `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. (developer+) |
 | `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke (developer+) |
-| `GET /api/apps/:id/usage?period=YYYY-MM` | Usage per metric vs the owner's plan limits (viewer+) |
+| `GET /api/apps/:id/usage?period=YYYY-MM` | Per metric: the account's total over all of its apps vs the owner's plan limit (`used`, `limit`, `percent`, `status`), and this app's part (`appUsed`) (viewer+) |
 | `GET /api/apps/:id/analytics?days=7\|30\|90` | Search analytics (Pro and Scale, viewer+), see below |
 | `GET /api/apps/:id/tenants?limit=&cursor=` | `{ tenants: [{ id, externalId, name, createdAt, emojiCount }], nextCursor }` (Scale, viewer+) |
 | `POST /api/apps/:id/tenants` | `{ externalId, name? }` → `201 { tenant }`; a taken `externalId` is `409 tenant_exists` (Scale, developer+) |
@@ -258,7 +266,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 ### Roles, plans and errors
 
 - **Plan.** It lives on the account (`accounts.plan`). Every app of the account gets it, and team
-  members see the owner's plan.
+  members see the owner's plan. Its monthly limits count the usage of all apps of the account.
 - **Roles.** owner > admin (everything except changing the plan) > developer (apps, keys, custom
   emoji, webhooks; no team management) > viewer (read only). A team membership counts only while
   the owner's plan includes team members (Pro, Scale).

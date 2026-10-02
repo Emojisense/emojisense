@@ -80,7 +80,9 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | Unknown or revoked key → 401. No key → anonymous, stricter rate limit per IP | `src/auth.ts` |
 | Key lookups are cached per isolate for 60 s (unknown keys too). A revocation takes ≤ 60 s. | `src/config.ts` |
 | D1 down: a cached key is still used; an uncached key is served as anonymous | `src/auth.ts` |
-| Limits come from `getPlan(app.plan)` in `@emojisense/platform`. Monthly, UTC. | `src/context.ts` |
+| Limits come from the account's plan (`accounts.plan`, `getPlan` in `@emojisense/platform`). Monthly, UTC. | `src/context.ts` |
+| Limits are per account: `overLimit` compares the account's total over all of its apps with the limit. `usage_monthly` rows stay per app. | `src/context.ts`, `src/meter.ts` |
+| The account total is cached per isolate: read at most once a minute, replaced by the totals each flush reads in its own batch. No limit check costs a D1 query of its own. | `src/meter.ts`, `src/store.ts` |
 | Over the limit: `200` with `overLimit: true`; semantic mode returns no results, hybrid returns alias results only | handlers |
 | Usage is counted in memory and flushed as one UPSERT batch into `usage_monthly` after 10 s or 100 calls | `src/meter.ts` |
 
