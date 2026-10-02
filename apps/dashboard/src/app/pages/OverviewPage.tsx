@@ -52,7 +52,7 @@ export function OverviewPage() {
       <div className="stack-lg">
         <UsagePanel app={app} />
         <div className="overview-grid">
-          <LiveSearch app={app} apiKey={fullKey} />
+          <LiveSearch key={app.id} app={app} createdKey={fullKey} />
           <QuickStart app={app} keys={keys} />
         </div>
       </div>

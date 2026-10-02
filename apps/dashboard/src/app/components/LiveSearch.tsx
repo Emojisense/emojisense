@@ -4,18 +4,20 @@ import { type App, api, type CustomEmoji } from "../api";
 import { API_URL } from "../lib/config";
 import { loadEngine, semanticFor } from "../lib/engine";
 import { planIncludes } from "../lib/plans";
+import { forgetTryKey, readTryKey, saveTryKey } from "../lib/tryKey";
 import { Link } from "../router";
 import { appHref } from "../routes";
 import { Icon } from "../ui/Icon";
 import { useToast } from "../ui/Toast";
+import { TryKeyField } from "./TryKeyField";
 
-/** Queries that show what the engine does beyond keywords. */
-const EXAMPLES = ["ship it", "facepalm", "feliz cumpleaños", "sleepy monday", "no cap"];
+/** Queries that the on-device dictionary answers without the API. */
+const EXAMPLES = ["ship it", "facepalm", "sleepy monday", "no cap", "party"];
 
 interface LiveSearchProps {
   app: App;
-  /** A full publishable key from this tab, so calls count against this app. */
-  apiKey?: string;
+  /** A publishable key created in this tab (memory only), so calls count for this app. */
+  createdKey?: string;
 }
 
 function normalize(text: string): string {
@@ -44,10 +46,17 @@ function formatMs(ms: number | undefined): string {
   return ms < 1 ? `${ms.toFixed(2)} ms` : `${Math.round(ms)} ms`;
 }
 
-export function LiveSearch({ app, apiKey }: LiveSearchProps) {
+export function LiveSearch({ app, createdKey }: LiveSearchProps) {
   const toast = useToast();
   const inputId = useId();
   const statusId = useId();
+  const [pastedKey, setPastedKey] = useState(() => readTryKey(app.id));
+  const keyInUse: { key: string; source: "pasted" | "created" } | null = pastedKey
+    ? { key: pastedKey, source: "pasted" }
+    : createdKey
+      ? { key: createdKey, source: "created" }
+      : null;
+  const apiKey = keyInUse?.key;
   const [engine, setEngine] = useState<AliasEngine | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -73,9 +82,10 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
 
   useEffect(() => {
     if (!engine) return;
+    // Without a key the search stays on the device; it never calls the API anonymously here.
     const created = createSearchSession({
       engine,
-      semantic: semanticFor(apiKey),
+      ...(apiKey ? { semantic: semanticFor(apiKey) } : {}),
       limit: 24,
       onChange: setState,
     });
@@ -229,6 +239,19 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
           </div>
         )}
 
+        {hasQuery && state?.status === "error" && (
+          <p className="notice">
+            <span className="emoji" aria-hidden="true">
+              🔑
+            </span>
+            <span>
+              The API did not take this key from this page, so these are on-device results. A publishable key
+              answers only its allowed origins: add{" "}
+              <code className="code-inline">{window.location.origin}</code> to try it here.
+            </span>
+          </p>
+        )}
+
         <p id={statusId} className="live-status hint" aria-live="polite">
           {state && hasQuery
             ? `${results.length + customMatches.length} results · ${
@@ -238,10 +261,20 @@ export function LiveSearch({ app, apiKey }: LiveSearchProps) {
                     ? "on device, asking for meaning…"
                     : "on device"
               }`
-            : apiKey
-              ? "Meaning search uses the key you created in this tab, so calls count for this app."
-              : "Meaning search runs without a key here. Create a publishable key to count calls for this app."}
+            : ""}
         </p>
+
+        <TryKeyField
+          current={keyInUse}
+          onUse={(key) => {
+            saveTryKey(app.id, key);
+            setPastedKey(key);
+          }}
+          onForget={() => {
+            forgetTryKey(app.id);
+            setPastedKey(null);
+          }}
+        />
       </div>
     </section>
   );

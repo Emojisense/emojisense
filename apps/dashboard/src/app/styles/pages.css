@@ -603,8 +603,31 @@
   font-size: 1.375rem;
 }
 
-.live-status {
-  min-height: 1.2em;
+.live-status:empty {
+  display: none;
+}
+
+.try-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.4375rem;
+  padding-top: 0.875rem;
+  border-top: 0.0625rem solid var(--line);
+  font-size: var(--text-sm);
+}
+
+.try-key-icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  color: var(--ink-3);
+}
+
+.try-key-form {
+  display: grid;
+  gap: 0.375rem;
+  padding-top: 0.875rem;
+  border-top: 0.0625rem solid var(--line);
 }
 
 .quickstart .card-body {
