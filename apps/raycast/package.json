@@ -87,6 +87,7 @@
   "scripts": {
     "build": "tsx scripts/bundle-packs.mts && ray build -e dist -o dist --non-interactive",
     "dev": "tsx scripts/bundle-packs.mts && ray develop",
+    "store-export": "tsx scripts/bundle-packs.mts && tsx scripts/store-export.mts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

@@ -44,17 +44,23 @@ in development mode and rebuilds on save.
 | `src/lib/format.ts` | Result → list row: label, "why it matched", match kind |
 | `src/lib/semantic.ts` | Optional API provider from the preferences: key handling, timeout |
 | `src/lib/packs.ts` | Loads `assets/packs/` and caches the engine |
-| `scripts/bundle-packs.mts` | Copies the current pack version from `packages/data/dist/packs/` |
+| `scripts/bundle-packs.mts` | Copies the English and Turkish packs of the current pack version from `packages/data/dist/packs/`, with the data license notices |
+| `scripts/store-export.mts` | Writes the standalone Store project to `release/raycast/emojisense/` |
 
 `assets/packs/` and `raycast-env.d.ts` are generated and not committed.
 
 ## Before a Store submission
 
-The Raycast Store builds each extension as a standalone npm project. Before a submission:
+The Raycast Store builds each extension as a standalone npm project. `pnpm package:raycast` (at the
+repository root) writes that project to `release/raycast/emojisense/`:
 
-1. Replace `"emojisense": "workspace:*"` with a published version and add a `package-lock.json`.
-2. Commit `assets/packs/` (the Store does not run `bundle-packs`).
-3. Set `author` to the owner's Raycast handle and pick the final `name` (`emojisense-search` here,
-   because the monorepo already has a package called `emojisense`).
-4. Add the Raycast ESLint config if the Store review requires `ray lint`. This repository lints with
-   Biome.
+- `name` is `emojisense` (here it is `emojisense-search`, because the monorepo already has a package
+  called `emojisense`). `author` comes from `RAYCAST_AUTHOR`.
+- `emojisense` comes from npm at the version of `packages/core`, so publish the npm packages first.
+- `assets/packs/` holds the English and Turkish packs and their license notices.
+- The Raycast ESLint config, a Prettier config, the standard scripts and `CHANGELOG.md` are added.
+  Tests and build scripts stay here.
+
+Checked on 2026-10-02 with the core as a local tarball: `npm install`, `npm run fix-lint` (Prettier
+lays out one union type differently from Biome), `ray lint` (only the placeholder `author` fails) and
+`ray build` pass. The steps for the owner are in [RELEASING.md](../../RELEASING.md).
