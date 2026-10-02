@@ -1,0 +1,104 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "emojisense-search",
+  "title": "Emojisense",
+  "description": "Search emoji by meaning, slang and intent: \"ship it\" → 🚀, \"lgtm\" → 👍. Works offline.",
+  "icon": "extension-icon.png",
+  "author": "emojisense",
+  "license": "MIT",
+  "private": true,
+  "platforms": [
+    "macOS",
+    "Windows"
+  ],
+  "categories": [
+    "Productivity",
+    "Communication"
+  ],
+  "commands": [
+    {
+      "name": "search-emoji",
+      "title": "Search Emoji",
+      "subtitle": "Emojisense",
+      "description": "Find emoji by meaning, slang or intent, then copy or paste them.",
+      "mode": "view",
+      "keywords": [
+        "emoji",
+        "emoticon",
+        "smiley",
+        "reaction"
+      ]
+    }
+  ],
+  "preferences": [
+    {
+      "name": "locale",
+      "type": "dropdown",
+      "required": false,
+      "title": "Language",
+      "description": "Language for labels and for ranking. Both languages are always searched.",
+      "default": "en",
+      "data": [
+        {
+          "title": "English",
+          "value": "en"
+        },
+        {
+          "title": "Türkçe",
+          "value": "tr"
+        }
+      ]
+    },
+    {
+      "name": "primaryAction",
+      "type": "dropdown",
+      "required": false,
+      "title": "Primary Action",
+      "description": "What Enter does with the selected emoji.",
+      "default": "paste",
+      "data": [
+        {
+          "title": "Paste to Active App",
+          "value": "paste"
+        },
+        {
+          "title": "Copy to Clipboard",
+          "value": "copy"
+        }
+      ]
+    },
+    {
+      "name": "apiUrl",
+      "type": "textfield",
+      "required": false,
+      "title": "API URL",
+      "description": "Optional. Adds semantic results from the Emojisense API for unsure queries.",
+      "placeholder": "https://api.emojisense.com"
+    },
+    {
+      "name": "apiKey",
+      "type": "password",
+      "required": false,
+      "title": "API Key",
+      "description": "Optional. Your secret key (sk_live_…) or publishable key (pk_live_…).",
+      "placeholder": "sk_live_…"
+    }
+  ],
+  "scripts": {
+    "build": "tsx scripts/bundle-packs.mts && ray build -e dist -o dist --non-interactive",
+    "dev": "tsx scripts/bundle-packs.mts && ray develop",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@raycast/api": "2.5.1",
+    "emojisense": "workspace:*"
+  },
+  "devDependencies": {
+    "@emojisense/data": "workspace:*",
+    "@types/node": "22.19.17",
+    "@types/react": "19.0.10",
+    "react": "19.0.0",
+    "typescript": "5.9.3"
+  }
+}
