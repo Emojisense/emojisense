@@ -2,7 +2,13 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { type Curation, curatedAdditions, curationAction, loadCurations } from "../src/curation.ts";
+import {
+  type Curation,
+  curatedAdditions,
+  curateKeywords,
+  curationAction,
+  loadCurations,
+} from "../src/curation.ts";
 
 const curations: Curation[] = [
   { hexcode: "1F9B5", locale: "*", alias: "break a leg", action: "remove" },
@@ -30,6 +36,17 @@ describe("curation", () => {
       { phrase: "kkkkk", field: "typo" },
     ]);
     expect(curatedAdditions(curations, "1F602", "es")).toEqual([]);
+  });
+
+  it("splits CLDR keywords into kept and demoted ones and leaves removed ones out", () => {
+    expect(curateKeywords(curations, "1F6A2", "en", ["boat", "SHIP IT", "ship"])).toEqual({
+      keyword: ["boat", "ship"],
+      low: ["SHIP IT"],
+    });
+    expect(curateKeywords(curations, "1F9B5", "es", ["pierna", "break a leg"])).toEqual({
+      keyword: ["pierna"],
+      low: [],
+    });
   });
 
   it("never treats an addition as a remove/low decision", () => {

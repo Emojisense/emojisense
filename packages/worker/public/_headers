@@ -1,6 +1,108 @@
 /v1/pack/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: no-store
   Access-Control-Allow-Origin: *
+/v1/pack/0.1.0/pack.ar.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.ar.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.bn.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.bn.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.en.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.en.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.es.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.es.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.fr.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.fr.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.hi.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.hi.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.id.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.id.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.pt.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.pt.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.ru.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.ru.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.tr.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.tr.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.zh.ext.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/pack.zh.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.zh.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.hi.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.es.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.ar.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.fr.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.bn.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.pt.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.ru.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.id.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/vectors.bge-m3.1024.tr.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/manifest.json
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
 /p/*
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *

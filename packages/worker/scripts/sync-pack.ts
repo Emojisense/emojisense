@@ -34,6 +34,7 @@ import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
 import { vectorFileName } from "@emojisense/data/vector-files";
 import { decodeVectors, encodeVectors } from "emojisense";
+import { assetHeaders } from "./asset-headers.ts";
 import { contentHash } from "./content-hash.ts";
 
 const { values: args } = parseArgs({
@@ -185,15 +186,11 @@ if (args.culture) {
   cultureNote = `culture ${build.from} → ${build.until} (${build.approved} approved, ${entries} locale entries) → public/v1/culture/${packVersion}`;
 }
 
-// Static assets bypass the Worker, so their cache headers live here. `_headers` does not apply
-// to Worker responses (wrangler.jsonc keeps /v1/pack/*, /v1/culture/* and /p/* out of
-// run_worker_first).
-const cors = "  Access-Control-Allow-Origin: *";
-const immutable = ["  Cache-Control: public, max-age=31536000, immutable", cors];
-const hourly = ["  Cache-Control: public, max-age=3600", cors];
+// Static assets bypass the Worker, so their cache headers live here: immutable for the files
+// published above, never for a missing one (asset-headers.ts).
 writeFileSync(
   join(workerRoot, "public", "_headers"),
-  ["/v1/pack/*", ...immutable, "/p/*", ...immutable, "/v1/culture/*", ...hourly, ""].join("\n"),
+  assetHeaders(packVersion, [...published, "manifest.json"]),
 );
 console.log(
   `sync: pack ${packVersion} + ${model.id}@${dims} (locale vectors: ${vectorLocales.join(", ") || "none"}; ` +
