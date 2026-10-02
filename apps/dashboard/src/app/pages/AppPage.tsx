@@ -80,52 +80,53 @@ function AppDetail({
   const { app, keys } = data;
   const headingRef = usePageHeading(app.name);
 
+  // The keys table gets the full width; usage sits next to the plan whose limits it measures.
   return (
-    <div className="layout">
-      <div className="layout-main">
-        <header>
-          <nav aria-label="Breadcrumb" className="breadcrumb">
-            <ol>
-              <li>
-                <Link to="/apps">Apps</Link>
-              </li>
-              <li aria-current="page">{app.name}</li>
-            </ol>
-          </nav>
-          <h1 ref={headingRef} className="page-title" tabIndex={-1}>
-            {app.name}
-          </h1>
-          <dl className="facts">
-            <div>
-              <dt>Environment</dt>
-              <dd>
-                <EnvironmentPill environment={app.environment} />
-              </dd>
-            </div>
-            <div>
-              <dt>Plan</dt>
-              <dd>
-                <PlanPill name={getPlan(app.plan).name} />
-              </dd>
-            </div>
-            <div>
-              <dt>Created</dt>
-              <dd>
-                <time dateTime={isoDate(app.createdAt)}>{formatDate(app.createdAt)}</time>
-              </dd>
-            </div>
-            <div>
-              <dt>Active keys</dt>
-              <dd>{app.activeKeyCount}</dd>
-            </div>
-          </dl>
-        </header>
-        <KeysPanel app={app} keys={keys} onKeysChange={onKeysChange} />
+    <div className="layout-main">
+      <header>
+        <nav aria-label="Breadcrumb" className="breadcrumb">
+          <ol>
+            <li>
+              <Link to="/apps">Apps</Link>
+            </li>
+            <li aria-current="page">{app.name}</li>
+          </ol>
+        </nav>
+        <h1 ref={headingRef} className="page-title" tabIndex={-1}>
+          {app.name}
+        </h1>
+        <dl className="facts">
+          <div>
+            <dt>Environment</dt>
+            <dd>
+              <EnvironmentPill environment={app.environment} />
+            </dd>
+          </div>
+          <div>
+            <dt>Plan</dt>
+            <dd>
+              <PlanPill name={getPlan(app.plan).name} />
+            </dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>
+              <time dateTime={isoDate(app.createdAt)}>{formatDate(app.createdAt)}</time>
+            </dd>
+          </div>
+          <div>
+            <dt>Active keys</dt>
+            <dd>{app.activeKeyCount}</dd>
+          </div>
+        </dl>
+      </header>
+      <KeysPanel app={app} keys={keys} onKeysChange={onKeysChange} />
+      <div className="layout">
         <UsagePanel app={app} />
+        <aside className="layout-aside" aria-label="Plan">
+          <PlanCard />
+        </aside>
       </div>
-      <aside className="layout-aside" aria-label="Plan">
-        <PlanCard />
-      </aside>
     </div>
   );
 }

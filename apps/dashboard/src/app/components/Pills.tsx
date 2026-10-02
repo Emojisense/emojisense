@@ -4,7 +4,7 @@ import type { Environment } from "../../shared/contract";
 export function PlanPill({ name }: { name: string }) {
   return (
     <span className="pill" data-tone="plan">
-      {name} plan
+      {name}
     </span>
   );
 }

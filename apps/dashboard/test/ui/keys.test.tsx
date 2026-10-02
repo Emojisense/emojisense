@@ -126,7 +126,7 @@ describe("keys", () => {
 
     await waitFor(() => expect(screen.queryByRole("button", { name: "Revoke pk_live_AbCd…" })).toBeNull());
     const row = screen.getByRole("row", { name: /pk_live_AbCd…/ });
-    expect(within(row).getByText(/Revoked/)).toBeTruthy();
+    expect(within(row).getByText("Revoked", { selector: ".pill" })).toBeTruthy();
     expect(calls.filter((call) => call.method === "DELETE")).toEqual([
       { method: "DELETE", path: "/api/keys/key_1" },
     ]);

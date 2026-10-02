@@ -101,8 +101,9 @@ function KeysTable({ appName, keys, onEdit, onRevoke }: KeysTableProps) {
           <tr>
             <th scope="col">Key</th>
             <th scope="col">Type</th>
-            <th scope="col">Allowed origins</th>
-            <th scope="col">Created</th>
+            <th scope="col" className="col-origins">
+              Allowed origins
+            </th>
             <th scope="col">Status</th>
             <th scope="col">
               <span className="visually-hidden">Actions</span>
@@ -154,18 +155,19 @@ function KeyRow({
         <OriginsCell apiKey={apiKey} />
       </td>
       <td>
-        <time dateTime={isoDate(apiKey.createdAt)}>{formatDate(apiKey.createdAt)}</time>
-      </td>
-      <td>
-        {apiKey.revokedAt === null ? (
-          <span className="pill" data-tone="active">
-            Active
+        <div className="cell-stack">
+          <span className="pill" data-tone={revoked ? "revoked" : "active"}>
+            {revoked ? "Revoked" : "Active"}
           </span>
-        ) : (
-          <span className="pill" data-tone="revoked">
-            Revoked <time dateTime={isoDate(apiKey.revokedAt)}>{formatDate(apiKey.revokedAt)}</time>
+          <span className="hint">
+            Created <time dateTime={isoDate(apiKey.createdAt)}>{formatDate(apiKey.createdAt)}</time>
           </span>
-        )}
+          {apiKey.revokedAt !== null && (
+            <span className="hint">
+              Revoked <time dateTime={isoDate(apiKey.revokedAt)}>{formatDate(apiKey.revokedAt)}</time>
+            </span>
+          )}
+        </div>
       </td>
       <td className="cell-actions">
         {!revoked && (

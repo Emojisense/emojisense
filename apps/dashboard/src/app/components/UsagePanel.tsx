@@ -125,7 +125,7 @@ function UsageMeter({ usage, planName }: { usage: MetricUsage; planName: string 
         <span id={labelId} className="meter-label">
           {label}
         </span>
-        <span className="meter-figure">{figure}</span>
+        {usage.status !== "not_included" && <span className="meter-figure">{figure}</span>}
       </div>
       {showTrack && (
         // A native <meter> cannot take this pill track the same way in every browser.

@@ -558,13 +558,16 @@ textarea.input {
 }
 
 .table-scroll {
+  /* Positioned, so visually hidden labels inside the table stay inside the scroll area
+     instead of widening the page. */
+  position: relative;
   overflow-x: auto;
   border-top: var(--outline);
 }
 
 .table {
   width: 100%;
-  min-width: 46rem;
+  min-width: 38rem;
   border-collapse: collapse;
   font-size: var(--step--1);
 }
@@ -595,6 +598,10 @@ textarea.input {
   white-space: nowrap;
 }
 
+.col-origins {
+  min-width: 13rem;
+}
+
 .origin-list {
   display: grid;
   gap: 0.125rem;
@@ -602,7 +609,14 @@ textarea.input {
   padding: 0;
   list-style: none;
   font-family: var(--font-mono);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.cell-stack {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .cell-actions {
