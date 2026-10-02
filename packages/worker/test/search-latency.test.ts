@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CustomEmojiReader } from "../src/custom-store.ts";
 import type { SearchBody } from "../src/search.ts";
 import type { Store } from "../src/store.ts";
-import { harness, KEYS, keyedSearch, search, seededStore } from "./fixtures.ts";
+import { catalog, harness, KEYS, keyedSearch, search, seededStore } from "./fixtures.ts";
 
 /** A promise to resolve from outside. */
 function gate<T = void>() {
@@ -96,6 +96,19 @@ describe("search latency: what a request waits for", () => {
     const body = (await within(pending).then((res) => res.json())) as SearchBody;
     expect(body).toMatchObject({ overLimit: false, degraded: false });
     expect(body.results[0]).toMatchObject({ emoji: "🌋" });
+  });
+
+  it("answers a cache hit in a new isolate without building an alias engine", async () => {
+    const warmer = harness();
+    await warm(warmer, "lava eruption");
+    const engine = vi.fn(catalog.engine);
+    const aliasEngine = vi.fn(catalog.aliasEngine);
+    const h = harness({ catalog: { ...catalog, engine, aliasEngine } });
+    for (const [url, response] of warmer.cache.store) h.cache.store.set(url, response);
+    const hit = (await (await h.call(keyedSearch("lava eruption"))).json()) as SearchBody;
+    expect(hit.cached).toBe(true);
+    expect(engine).not.toHaveBeenCalled();
+    expect(aliasEngine).not.toHaveBeenCalled();
   });
 
   it("reads custom emoji only for an app that has some", async () => {

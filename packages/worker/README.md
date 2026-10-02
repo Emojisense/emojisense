@@ -30,7 +30,7 @@ the shared search cache (`src/custom.ts`).
 | Rule | Where |
 | ---- | ----- |
 | `locale` accepts every locale of `@emojisense/data/locales`; BCP 47 tags map to their language (`pt-BR` → `pt`); others → 400 | `src/http.ts` |
-| Search and reactions rank with the locale's aliases. `en` and `tr` (core + ext) are bundled; other locales read `pack.<locale>.json` and `pack.<locale>.ext.json` through the `ASSETS` binding on first use and build an en core + locale core + ext engine. Images rank English keywords with English aliases | `src/locale-engines.ts`, `src/index.ts` |
+| Search and reactions rank with the locale's aliases. `en` (core + ext) is bundled; other locales, `tr` included, read `pack.<locale>.json` and `pack.<locale>.ext.json` through the `ASSETS` binding on first use and build an en core + locale core + ext engine. Images rank English keywords with English aliases | `src/locale-engines.ts`, `src/index.ts` |
 | At most 2 such engines per isolate (LRU, `LOCALE_ENGINE_CACHE_SIZE`), ≈ 13–18 MB each | `src/config.ts` |
 | A pack that does not load: no alias evidence (search: semantic-only), `aliasLocale: null`, no-store, not in the shared cache; the next request retries | `src/semantic.ts`, `src/search.ts`, `src/reactions.ts` |
 | `sync` fails when a locale has no published core pack | `scripts/sync-pack.ts` |

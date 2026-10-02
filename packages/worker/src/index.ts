@@ -22,8 +22,6 @@ import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
 import packEnExt from "./generated/pack.en.ext.json";
 import packEn from "./generated/pack.en.json";
-import packTrExt from "./generated/pack.tr.ext.json";
-import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
 import glyphVectors from "./generated/vectors.glyph.bin";
 import { assetPackReader, createLocaleEngines } from "./locale-engines.ts";
@@ -36,8 +34,11 @@ import { createD1Store } from "./store.ts";
 let engine: AliasEngine | undefined;
 let index: VectorIndex | undefined;
 
+// English only: every other locale, Turkish included, is read from the static assets on first use.
+// The first miss of an isolate builds this engine (CPU, Node on an M-series laptop: en + tr
+// ≈ 125 ms, en alone ≈ 70 ms; a tr query then builds its own engine, ≈ 80 ms).
 const bundledEngine = () => {
-  engine ??= createEngine([packEn, packTr, packEnExt, packTrExt] as unknown as Pack[]);
+  engine ??= createEngine([packEn, packEnExt] as unknown as Pack[]);
   return engine;
 };
 // The other pack locales are static assets; their engines are built on first use (core packs).

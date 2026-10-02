@@ -225,7 +225,7 @@ over the account's limit? ─▶ the shared cache may still answer; else alias-o
 Cache API (key: text, locale, limit, mode, index tag, content hash; no key/app/origin)
    │ miss
    ▼
-alias engine of the locale (en, tr bundled; others: core+ext packs via ASSETS, LRU 2)
+alias engine of the locale (en bundled; others, tr included: core+ext packs via ASSETS, LRU 2)
    + embed (Workers AI) ─▶ searchVectorSets(shared index, locale index via ASSETS, LRU 2)
    ▼ fuse ─▶ assessConfidence (confidence, unsure)
    ▼ store in the shared cache (only when nothing degraded or failed to load)

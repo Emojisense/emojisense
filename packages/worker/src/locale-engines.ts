@@ -5,7 +5,7 @@ import type { Env } from "./env.ts";
 export type PackReader = (file: string, env: Env) => Promise<Pack>;
 
 export interface LocaleEnginesOptions {
-  /** The bundled engine (en + tr, core + ext). It serves the locales it was built with. */
+  /** The bundled engine (en, core + ext). It serves the locales it was built with. */
   bundled: () => AliasEngine;
   /** Packs every other locale's engine starts with: the English core pack (shortcodes). */
   base: () => Pack[];

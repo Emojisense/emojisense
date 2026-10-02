@@ -109,8 +109,8 @@ const PACK_FILES = readdirSync(source).filter((f) => /^pack\.[a-z]{2}(\.ext)?\.j
 // bundle from these static assets (src/locale-engines.ts), so each one must be published.
 const unpublished = LOCALE_CODES.filter((code) => !PACK_FILES.includes(`pack.${code}.json`));
 if (unpublished.length > 0) throw new Error(`no core pack for ${unpublished.join(", ")} in ${source}`);
-// The Worker bundles English and Turkish for server-side hybrid search; all locales are static assets.
-const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
+// The Worker bundles English for server-side hybrid search; all locales are static assets.
+const BUNDLED = ["pack.en.json", "pack.en.ext.json"];
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
 writeFileSync(join(generated, "vectors.glyph.bin"), glyphBytes);
