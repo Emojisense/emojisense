@@ -121,15 +121,24 @@ Apply to every query, and to `label` to get the `name` field. In order:
    `Regional_Indicator`, and U+E0020–U+E007F, with a space.
 3. Remove U+200D, U+FE0E, U+FE0F and U+20E3.
 4. Lowercase (locale-independent Unicode default case mapping).
-5. Unicode NFD, then remove every code point of general category `M` (marks).
-6. Replace `ı` (U+0131) with `i`.
-7. Remove the apostrophes `'` `’` `` ` `` `´`.
-8. Replace each run of characters that are not a letter (`L`), a number (`N`) or `+` with one space.
-9. Replace each `+` that is not followed by a digit with a space.
-10. Collapse whitespace runs to one space and trim.
-11. Truncate to 64 UTF-16 code units, then trim the end.
+5. Unicode NFD, then remove only the **optional** marks: U+0300–U+036F (Latin, Greek and
+   Cyrillic diacritics), U+064B–U+065F and U+0670 (Arabic harakat), U+0640 (tatweel), and
+   U+0591–U+05C7 (Hebrew points). Keep all other marks: in Devanagari, Bengali, Thai or Japanese
+   they are part of the spelling.
+6. Replace `ı`→`i`, `đ`→`d`, `ł`→`l`, `ø`→`o`, `ß`→`ss`.
+7. Unicode NFC (recomposes Hangul and kana).
+8. Remove the apostrophes `'` `’` `` ` `` `´`.
+9. Replace each run of characters that are not a letter (`L`), a mark (`M`), a number (`N`) or
+   `+` with one space.
+10. Replace each `+` that is not followed by a digit with a space.
+11. Collapse whitespace runs to one space and trim.
+12. Truncate to 64 UTF-16 code units, then trim the end.
 
-Examples: `"İYİ Kİ DOĞDUN"` → `"iyi ki dogdun"`, `"i'm exhausted"` → `"im exhausted"`,
+Scripts without spaces between words (Chinese, Japanese, Thai) form one token per run. Prefix
+matching still completes them while the user types.
+
+Examples: `"İYİ Kİ DOĞDUN"` → `"iyi ki dogdun"`, `"¡Feliz cumpleaños!"` → `"feliz cumpleanos"`,
+`"Ёлка"` → `"елка"`, `"مَرْحَبًا"` → `"مرحبا"`, `"नमस्ते"` → `"नमस्ते"` (unchanged), `"i'm exhausted"` → `"im exhausted"`,
 `":rocket:"` → `"rocket"`, `"+1"` → `"+1"`, `"🚀 launch 👍🏽"` → `"launch"`.
 
 Tokens are the result split on single spaces.
