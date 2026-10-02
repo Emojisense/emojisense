@@ -30,8 +30,39 @@ describe("D1 store on the platform schema", () => {
       plan: "pro",
       allowedOrigins: ["https://app.example.com"],
       revoked: false,
+      hasCustomEmoji: false,
     });
     expect(await store.findKeyByHash(await hashKey("pk_live_other"))).toBeUndefined();
+  });
+
+  it("says whether the key's app has custom emoji, a tenant's included", async () => {
+    db.exec(`
+      INSERT INTO custom_emoji (id, app_id, tenant_id, shortcode, image_key, content_type, bytes, created_at)
+      VALUES ('e_1', 'app_1', 't_1', 'parrot', 'custom/app_1/t_1/e_1.png', 'image/png', 11, 1);`);
+    expect((await store.findKeyByHash(await hashKey(KEY)))?.hasCustomEmoji).toBe(true);
+  });
+
+  it("reads keys and usage through `reads` and writes through the database", async () => {
+    const prepared: string[] = [];
+    const d1 = sqliteD1(db);
+    const replica = {
+      prepare: (sql: string) => {
+        prepared.push(sql);
+        return d1.prepare(sql);
+      },
+    };
+    const split = createD1Store(d1, replica);
+    await split.findKeyByHash(await hashKey(KEY));
+    await split.readAccountUsage("acc", "2026-10");
+    await split.addUsage([{ appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 1 }]);
+    expect(prepared).toHaveLength(2);
+    expect(prepared.every((sql) => /^\s*SELECT/.test(sql))).toBe(true);
+  });
+
+  it("asks the primary before it calls a key unknown that a lagging replica does not have yet", async () => {
+    const lagging = createD1Store(sqliteD1(db), sqliteD1(migratedDatabase()));
+    expect((await lagging.findKeyByHash(await hashKey(KEY)))?.id).toBe("key_1");
+    expect(await lagging.findKeyByHash(await hashKey("pk_live_other"))).toBeUndefined();
   });
 
   it("reads the plan from the owning account, not the legacy apps.plan column", async () => {

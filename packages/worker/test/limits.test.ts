@@ -51,14 +51,30 @@ describe("metering", () => {
 });
 
 describe("over the plan limit", () => {
-  it("returns empty semantic results with overLimit, without calling Workers AI", async () => {
-    const { h } = await setup(FREE_LIMIT);
+  it("returns empty semantic results with overLimit, and no model call once the usage is known", async () => {
+    let now = NOW;
+    const store = await seededStore();
+    await store.addUsage([
+      { appId: "app_free", period: PERIOD, metric: "semantic_calls", count: FREE_LIMIT },
+    ]);
+    const h = harness({ store, now: () => now });
     const res = await h.call(keyed("lava eruption", "&mode=semantic"));
     const body = (await res.json()) as SearchBody;
     expect(res.status).toBe(200);
     expect(body).toMatchObject({ results: [], overLimit: true, cached: false, degraded: false });
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(h.ai).not.toHaveBeenCalled();
+    // The isolate's first search of the account embeds while its usage is read; the answer is
+    // dropped. Later searches know the account is over the limit, also after the usage expires.
+    expect(h.ai).toHaveBeenCalledTimes(1);
+    await h.call(keyed("rocket launch", "&mode=semantic"));
+    now += 10 * 60_000;
+    expect(await (await h.call(keyed("volcano", "&mode=semantic"))).json()).toMatchObject({
+      overLimit: true,
+    });
+    expect(h.ai).toHaveBeenCalledTimes(1);
+    await h.ctx.settle();
+    await h.app.meter?.flush();
+    expect(store.usageOf("app_free", PERIOD, "semantic_calls")).toBe(FREE_LIMIT);
   });
 
   it("keeps alias results in hybrid mode when nothing is cached", async () => {
@@ -67,7 +83,8 @@ describe("over the plan limit", () => {
     expect(body).toMatchObject({ overLimit: true, cached: false });
     expect(body.results[0]).toMatchObject({ emoji: "🚀", source: "alias" });
     expect(body.results.every((r) => r.source === "alias")).toBe(true);
-    expect(h.ai).not.toHaveBeenCalled();
+    await h.call(keyed("ship it now"));
+    expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
   it("still serves the shared cache, without counting it", async () => {

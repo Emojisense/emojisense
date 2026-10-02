@@ -17,7 +17,11 @@ describe("GET /v1/search", () => {
       text: ["lavá eruption!!"],
     });
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
-    expect(res.headers.get("server-timing")).toMatch(/^embed;dur=\d+, total;dur=\d+$/);
+    const stages = (res.headers.get("server-timing") ?? "").split(", ").map((s) => s.split(";")[0]);
+    expect(stages.sort()).toEqual(
+      ["auth", "cache", "custom", "usage", "rank", "embed", "vectors", "locale", "total"].sort(),
+    );
+    expect(res.headers.get("server-timing")).toMatch(/(^|, )embed;dur=\d+(, |$)/);
   });
 
   it("wraps the query in the model's template when it has one", async () => {

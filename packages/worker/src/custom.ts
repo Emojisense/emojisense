@@ -127,10 +127,17 @@ export class CustomEmojiIndex {
     return loading;
   }
 
-  /** The caller's custom emoji. Anonymous and development callers have none. */
+  /**
+   * The caller's custom emoji. Anonymous and development callers have none. An app that had none
+   * when its key was read (the key cache, as old as this cache) costs no read, unless a fresh
+   * read of its emoji is cached (`load` from the custom pack route).
+   */
   async forCaller(caller: Principal, tenant: string | undefined): Promise<CustomEmojiSet> {
     const appId = callerApp(caller);
-    return appId ? this.get(appId, tenant) : EMPTY;
+    if (!appId) return EMPTY;
+    const none = caller.kind === "key" && caller.key.hasCustomEmoji === false;
+    if (none && !this.#cache.has(cacheKey(appId, tenant))) return EMPTY;
+    return this.get(appId, tenant);
   }
 
   #remember(key: string, set: CustomEmojiSet) {

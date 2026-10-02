@@ -16,13 +16,14 @@ import { handleClassifyImage } from "./image.ts";
 import { Meter, type WaitUntil } from "./meter.ts";
 import { QueryStats } from "./query-stats.ts";
 import { handleReactions } from "./reactions.ts";
-import { handleSearch } from "./search.ts";
+import { handleSearch, searchCacheKey } from "./search.ts";
 import { type Catalog, modelTag } from "./semantic.ts";
 import { authorizeEmojiSets } from "./sets/access.ts";
 import { createEmojiSetsRoute, type EmojiSetsOptions, SETS_PATH_PREFIX } from "./sets/route.ts";
 import { createShardRoute, SHARDS_PATH_PREFIX } from "./shards/route.ts";
 import type { Store } from "./store.ts";
 import { handleTenants, isTenantsPath } from "./tenants.ts";
+import { ServerTiming } from "./timing.ts";
 import { alertUsageThresholds } from "./usage-alerts.ts";
 
 export interface AppOptions {
@@ -44,8 +45,15 @@ export interface AppOptions {
   cultureOverride?: CultureOverride;
 }
 
-const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
-  "/v1/search": { method: "GET", handle: handleSearch },
+interface Route {
+  method: "GET" | "POST";
+  handle: Handler;
+  /** The shared edge-cache entry of the request, when it has one (see `lookAhead`). */
+  cacheKey?: (url: URL, catalog: Catalog) => Request | undefined;
+}
+
+const ROUTES: Record<string, Route> = {
+  "/v1/search": { method: "GET", handle: handleSearch, cacheKey: searchCacheKey },
   "/v1/suggest-reactions": { method: "POST", handle: handleReactions },
   "/v1/classify-image": { method: "POST", handle: handleClassifyImage },
   "/v1/custom-pack": { method: "GET", handle: handleCustomPack },
@@ -165,17 +173,33 @@ export function createApp(options: AppOptions) {
       }
 
       const { resolver, meter, queryStats, custom } = servicesFor(env);
+      const timing = new ServerTiming();
+      // The edge-cache lookup needs no key: it runs while the key is checked, and a refused key
+      // never sees its answer.
+      const early = route.cacheKey?.(url, catalog);
+      const cache = early ? lookAhead(options.cache(), early, timing) : options.cache();
+      const authStarted = Date.now();
       const principal = await authenticate(request, url, env, resolver);
+      timing.add("auth", Date.now() - authStarted);
       if (principal instanceof Response) return principal;
       const metering = createMetering(principal, meter, queryStats, ctx);
-      return route.handle(
-        request,
-        env,
-        ctx,
-        { catalog, cache: options.cache(), custom },
-        metering,
-        principal,
-      );
+      return route.handle(request, env, ctx, { catalog, cache, custom, timing }, metering, principal);
     },
+  };
+}
+
+/**
+ * A cache whose lookup of `key` started now: `match(key)` later answers from that lookup, any
+ * other request is looked up as usual. The lookup's duration is the `cache` stage.
+ */
+function lookAhead(cache: CacheLike, key: Request, timing: ServerTiming): CacheLike {
+  const started = Date.now();
+  const pending = cache.match(key).finally(() => timing.add("cache", Date.now() - started));
+  // Unused when the key check refuses the request: its failure must not go unhandled.
+  pending.catch(() => {});
+  return {
+    match: (request) => (request.url === key.url ? pending : cache.match(request)),
+    put: (request, response) => cache.put(request, response),
+    delete: (url) => cache.delete(url),
   };
 }

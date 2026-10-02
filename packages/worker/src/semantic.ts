@@ -130,7 +130,12 @@ export interface Ranked {
   degraded: boolean;
   /** True when a semantic ranking was produced (the call is billable). */
   semantic: boolean;
+  /** The Workers AI call alone. */
   embedMs: number;
+  /** Waiting for the locale's vector file (0 once it is resident in the isolate). */
+  vectorsMs: number;
+  /** Waiting for the locale's alias engine (0 once it is resident in the isolate). */
+  localeMs: number;
   aliasConfidence?: number | undefined;
   semanticTop?: number | undefined;
   /** The locale whose aliases ranked the results; null when no alias search ran. */
@@ -153,20 +158,29 @@ export interface Ranked {
 export async function rank(env: Env, catalog: Catalog, options: RankOptions): Promise<Ranked> {
   const { aliasQuery, embedText, locale, limit } = options;
   const engine = catalog.engine();
+  const started = Date.now();
+  // How long a load kept this call waiting; its failure is handled where its value is used.
+  const elapsed = () => Date.now() - started;
+  const waited = (promise: Promise<unknown>) => promise.then(elapsed, elapsed);
   // A locale's alias engine is built (first use per isolate only) while the query is embedded.
   const aliasLoad = aliasQuery !== undefined ? catalog.aliasEngine(locale, env) : undefined;
+  const localeWait = aliasLoad ? waited(aliasLoad) : Promise.resolve(0);
 
   let semantic: SearchResult[] | undefined;
   let degraded = false;
   let embedMs = 0;
+  let vectorsMs = 0;
   let vectorsUnavailable = false;
   if (embedText !== undefined) {
     // A locale's vector file loads while the query is embedded (first use per isolate only).
-    const [embedded, vectors] = await Promise.all([
+    const vectorsLoad = catalog.vectors(locale, env);
+    const [embedded, vectors, vectorsWait] = await Promise.all([
       embedQuery(env, catalog, embedText),
-      catalog.vectors(locale, env),
+      vectorsLoad,
+      waited(vectorsLoad),
     ]);
     ({ degraded, ms: embedMs } = embedded);
+    vectorsMs = vectorsWait;
     if (embedded.vector) {
       vectorsUnavailable = !vectors.complete;
       semantic = semanticResults(engine, vectors.indexes, embedded.vector, limit, catalog.glyph?.());
@@ -186,6 +200,8 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     degraded,
     semantic: semantic !== undefined,
     embedMs,
+    vectorsMs,
+    localeMs: await localeWait,
     aliasConfidence: alias?.confidence,
     semanticTop: semantic?.[0]?.score,
     aliasLocale: alias ? locale : null,

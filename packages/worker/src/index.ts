@@ -114,13 +114,22 @@ const cultureRuntime = createCultureRuntime({
   engine: (locale, env) => localeEngines.get(locale, env),
 });
 
+/**
+ * The search path's lookups (keys, account usage, custom emoji) only read. With D1 read
+ * replication on, the nearest replica answers them; without it, the primary does. A new session
+ * per statement: none of these reads depends on a write of the same request.
+ */
+const replicaReads = (db: D1Database) => ({
+  prepare: (sql: string) => db.withSession("first-unconstrained").prepare(sql),
+});
+
 const app = createApp({
   catalog,
   cultureOverride,
   cache: () => caches.default,
-  store: (env) => (env.DB ? createD1Store(env.DB) : undefined),
+  store: (env) => (env.DB ? createD1Store(env.DB, replicaReads(env.DB)) : undefined),
   emojiSets: { rows: () => packEn.emoji as unknown as PackRow[] },
-  customEmoji: (env) => (env.DB ? createD1CustomEmojiReader(env.DB) : undefined),
+  customEmoji: (env) => (env.DB ? createD1CustomEmojiReader(replicaReads(env.DB)) : undefined),
 });
 
 export default {

@@ -86,6 +86,17 @@ export class Meter {
   }
 
   /**
+   * `accountCount` without a read: this isolate's count, and whether `accountCount` would answer
+   * it without reading the store first. Undefined when the account's usage was never read here.
+   */
+  knownAccountCount(accountId: string, metric: Metric): { count: number; fresh: boolean } | undefined {
+    const snapshot = this.#snapshots.get(`${accountId}|${periodOf(this.#now())}`);
+    if (!snapshot || snapshot.loadedAt === 0) return undefined;
+    const fresh = this.#now() - snapshot.loadedAt < this.#snapshotTtlMs;
+    return { count: snapshot.counts[metric] ?? 0, fresh };
+  }
+
+  /**
    * Count one call of `owner.appId`. `persist: false` keeps it in memory only, for development
    * keys that have no row in the apps table. `limit` is the account's plan limit for the metric.
    */

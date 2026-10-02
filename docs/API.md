@@ -124,8 +124,23 @@ use the website's own publishable key, so they are not anonymous.
 | `region` | Only when the request has `region`: the region used for regional entries, uppercase. With `region=auto`, the request's country, or `null` when it is unknown. Also with `culture=0`, so an SDK can apply regional entries on the device |
 | `confidence`, `unsure` | How well the query was understood: see [Unsure queries](#unsure-queries). Over the limit and for anonymous calls, `unsure` is the dictionary's verdict alone |
 
-Headers: `Server-Timing: embed;dur=…, total;dur=…` (only `total` on a cache hit or over the
-limit) and `Cache-Control`:
+Headers: `Server-Timing` and `Cache-Control`. `Server-Timing` lists the stages of the request,
+in ms, in the order they finished, then `total` (the time in the search handler, after the key
+check):
+
+| Stage | What it timed |
+| ----- | ------------- |
+| `auth` | The key check: an isolate-cached lookup, or a D1 read, plus the rate limiter |
+| `cache` | The shared edge-cache lookup. It starts before the key check and runs at the same time |
+| `custom` | The app's custom emoji (isolate-cached for 60 s; 0 for an app without custom emoji) |
+| `usage` | The account's usage for the plan limit, when this isolate must read it from D1 (a hit sends its answer first and counts after) |
+| `culture` | The culture file, with `culture=1` |
+| `rank` | The whole ranking of a miss: `embed`, `vectors` and `locale` at the same time, then fusion |
+| `embed` | The Workers AI embedding call alone |
+| `vectors`, `locale` | Waiting for the locale's vector file and alias engine (0 once they are resident in the isolate) |
+
+Stages that run at the same time can add up to more than `total`. Inside Workers the clock
+moves only on I/O, so pure computation reports 0.
 
 | Answer | `Cache-Control` |
 | ------ | --------------- |

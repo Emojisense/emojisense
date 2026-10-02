@@ -11,6 +11,11 @@ export interface ApiKey {
   /** Publishable keys only. Empty = any origin (development keys). */
   allowedOrigins: string[];
   revoked: boolean;
+  /**
+   * Whether the app had any custom emoji when the key was read. False lets a search skip the
+   * custom emoji read; undefined (development and memory keys) means "read them".
+   */
+  hasCustomEmoji?: boolean;
 }
 
 export interface UsageDelta {
@@ -85,11 +90,13 @@ interface KeyJoinRow {
   allowed_origins: string;
   revoked_at: number | null;
   plan: PlanId;
+  has_custom: number;
 }
 
 // The plan lives on the account (migration 0002); the legacy apps.plan column is not read.
 const FIND_KEY = `
-  SELECT k.id, k.app_id, a.account_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan
+  SELECT k.id, k.app_id, a.account_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan,
+    EXISTS (SELECT 1 FROM custom_emoji c WHERE c.app_id = k.app_id) AS has_custom
   FROM api_keys k
   JOIN apps a ON a.id = k.app_id
   JOIN accounts acc ON acc.id = a.account_id
@@ -165,10 +172,17 @@ function readTotals(results: unknown): UsageTotal[] {
   });
 }
 
-export function createD1Store(db: D1Like): Store {
+/**
+ * `reads` answers the read-only lookups (keys, account usage); it may be a D1 read replica
+ * (index.ts). Writes always go to `db`.
+ */
+export function createD1Store(db: D1Like, reads: Pick<D1Like, "prepare"> = db): Store {
   return {
     async findKeyByHash(hash) {
-      const row = await db.prepare(FIND_KEY).bind(hash).first<KeyJoinRow>();
+      let row = await reads.prepare(FIND_KEY).bind(hash).first<KeyJoinRow>();
+      // A replica can lag behind a key created a moment ago, and an unknown key is cached: the
+      // primary has the last word before a key is called unknown.
+      if (!row && reads !== db) row = await db.prepare(FIND_KEY).bind(hash).first<KeyJoinRow>();
       if (!row) return undefined;
       return {
         id: row.id,
@@ -178,10 +192,11 @@ export function createD1Store(db: D1Like): Store {
         plan: row.plan,
         allowedOrigins: parseOrigins(row.allowed_origins),
         revoked: row.revoked_at !== null,
+        hasCustomEmoji: row.has_custom === 1,
       };
     },
     async readAccountUsage(accountId, period) {
-      const { results } = await db
+      const { results } = await reads
         .prepare(READ_ACCOUNT_USAGE)
         .bind(accountId, period)
         .all<{ metric: Metric; count: number }>();
