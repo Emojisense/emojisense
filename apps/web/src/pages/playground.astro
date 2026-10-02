@@ -1,0 +1,115 @@
+---
+import { SITE_URL } from "../config";
+import Base from "../layouts/Base.astro";
+import Playground from "../playground/Playground";
+
+const description =
+  "Try every part of Emojisense live: on-device and edge search in 11 languages, reaction suggestions and photo to emoji, with timings and copy-ready code.";
+---
+
+<Base
+  title="Playground"
+  description={description}
+  path="/playground/"
+  jsonLd={{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Emojisense Playground",
+    url: `${SITE_URL}/playground/`,
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Any",
+    description,
+  }}
+>
+  <section class="pg-page container">
+    <header class="pg-intro">
+      <div>
+        <p class="eyebrow"><span class="emoji" aria-hidden="true">🧪</span> Playground</p>
+        <h1>Everything emoji, live.</h1>
+        <p class="pg-lede">
+          Search on your device and at the edge in 11 languages, suggest reactions for a message, and turn a photo
+          into emoji. Every result is real, with its timing and the code to ship it.
+        </p>
+      </div>
+      <ul class="pg-intro-keys" aria-label="Keyboard shortcuts">
+        <li><kbd>/</kbd> search</li>
+        <li><kbd>↑</kbd><kbd>↓</kbd> move</li>
+        <li><kbd>↵</kbd> copy</li>
+        <li><kbd>esc</kbd> clear</li>
+      </ul>
+    </header>
+    <Playground client:load />
+    <noscript>
+      <p class="pg-noscript">The playground runs the real engine in your browser, so it needs JavaScript.</p>
+    </noscript>
+  </section>
+</Base>
+
+<style>
+  .pg-page {
+    padding-block: clamp(2rem, 5vw, 3.5rem) clamp(3rem, 7vw, 5rem);
+  }
+
+  .pg-intro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+    margin-bottom: clamp(1.5rem, 3vw, 2rem);
+  }
+
+  .pg-intro h1 {
+    font-size: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+    font-weight: 800;
+  }
+
+  .pg-lede {
+    max-width: 40rem;
+    margin-top: 0.875rem;
+    color: var(--ink-2);
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  }
+
+  .pg-intro-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-3);
+    font: 400 0.8125rem / 1 var(--font-mono);
+  }
+
+  .pg-intro-keys li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .pg-intro-keys kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.375rem;
+    height: 1.375rem;
+    padding: 0 0.3125rem;
+    border: 0.0625rem solid var(--line-strong);
+    border-bottom-width: 0.125rem;
+    border-radius: 0.375rem;
+    background: var(--bg);
+    color: var(--ink-2);
+    font: 500 0.75rem / 1 var(--font-mono);
+  }
+
+  .pg-noscript {
+    margin-top: 1rem;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 40rem) {
+    .pg-intro-keys {
+      display: none;
+    }
+  }
+</style>
