@@ -50,6 +50,23 @@ export function summarize(outcomes: QueryOutcome[]): Summary {
   };
 }
 
+/** Unweighted mean of group summaries: a small group counts as much as a large one. */
+export function macroAverage(groups: readonly Summary[]): Summary {
+  const mean = (key: Exclude<keyof Summary, "n">, places: number) => {
+    if (groups.length === 0) return 0;
+    const value = groups.reduce((sum, s) => sum + s[key], 0) / groups.length;
+    return Math.round(value * 10 ** places) / 10 ** places;
+  };
+  return {
+    n: groups.reduce((sum, s) => sum + s.n, 0),
+    r1: mean("r1", 1),
+    r5: mean("r5", 1),
+    r10: mean("r10", 1),
+    mrr: mean("mrr", 3),
+    forbidRate: mean("forbidRate", 1),
+  };
+}
+
 export function percentile(values: number[], p: number): number {
   if (values.length === 0) return Number.NaN;
   const sorted = [...values].sort((a, b) => a - b);

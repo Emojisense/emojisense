@@ -24,6 +24,7 @@
   "exports": {
     "./config": "./src/config.ts",
     "./embeddings": "./src/embeddings.ts",
+    "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",
     "./paths": "./src/paths.ts"
   },

@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 export interface EvalQuery {
   id: string;
   q: string;
-  locale: "en" | "tr";
+  /** A pack locale (`LOCALE_CODES` in @emojisense/data). The in-house suite has only en and tr. */
+  locale: string;
   cat: string;
   /** Any of these in the top k counts as a hit. Empty for noise queries. */
   answers: string[];
