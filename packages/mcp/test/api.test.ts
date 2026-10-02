@@ -89,6 +89,13 @@ describe("createApiClient", () => {
     ]);
   });
 
+  it("keeps the culture source of a culture result", async () => {
+    const soccer = { emoji: "⚽", id: "26BD", score: 0.6, source: "culture", context: "c", cultureId: "x" };
+    const { fetch } = fakeFetch(ok({ results: [soccer] }));
+    const api = createApiClient({ baseUrl: "https://api.test", secretKey: KEY, fetch });
+    expect(await api.search("goat")).toEqual([{ emoji: "⚽", id: "26BD", score: 0.6, source: "culture" }]);
+  });
+
   it("does not call the API for an empty query", async () => {
     const { fetch, calls } = fakeFetch();
     const api = createApiClient({ baseUrl: "https://api.test", secretKey: KEY, fetch });

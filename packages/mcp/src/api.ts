@@ -2,7 +2,7 @@ import { normalize, type SearchResult } from "emojisense";
 
 /** The API truncates reaction text to 256 characters (docs/API.md); sending more is waste. */
 const MAX_REACTION_TEXT = 256;
-const SOURCES = new Set<SearchResult["source"]>(["alias", "semantic", "custom"]);
+const SOURCES = new Set<SearchResult["source"]>(["alias", "semantic", "custom", "culture"]);
 
 export interface ApiClientOptions {
   /** Base URL of the Emojisense API, e.g. "https://api.emojisense.com". */
