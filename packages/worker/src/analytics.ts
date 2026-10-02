@@ -1,6 +1,6 @@
 import type { Env } from "./env.ts";
 
-export type Outcome = "hit" | "miss" | "degraded" | "over_limit";
+export type Outcome = "hit" | "hit_over_limit" | "miss" | "degraded" | "over_limit";
 
 interface Common {
   locale: string;

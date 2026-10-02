@@ -2,8 +2,8 @@ import Foundation
 
 /// The HTTP API as a semantic provider (layer `api`): `GET /v1/search?mode=semantic`.
 ///
-/// Over its plan limit the API answers `overLimit: true`; the client then goes quiet for a while
-/// and search continues on the alias dictionary and shards. Never a hard failure.
+/// Over its plan limit the API still answers from its shared cache. For other queries it answers
+/// `overLimit: true`, and search continues on the alias dictionary and shards. Never a hard failure.
 public actor SemanticClient: SemanticProvider {
   public struct Configuration: Sendable {
     /// Base URL of the Emojisense API, e.g. `https://api.emojisense.com`.
@@ -14,12 +14,13 @@ public actor SemanticClient: SemanticProvider {
     public var packVersion: String?
     /// In-memory LRU of recent responses.
     public var cacheSize: Int
-    /// After an over-limit answer, skip the API for this long.
+    /// After an over-limit answer, skip the API for this long. Default 0: keep asking, because
+    /// the edge still answers queries that are in its shared cache. Over-limit misses are remembered.
     public var overLimitCooldown: TimeInterval
 
     public init(
       endpoint: URL, key: String? = nil, packVersion: String? = nil, cacheSize: Int = 200,
-      overLimitCooldown: TimeInterval = 3600
+      overLimitCooldown: TimeInterval = 0
     ) {
       self.endpoint = endpoint
       self.key = key
@@ -54,17 +55,17 @@ public actor SemanticClient: SemanticProvider {
     if normalized.isEmpty || now() < pausedUntil { return nil }
 
     let url = try requestURL(query: normalized, options: options)
-    if let hit = cache.value(forKey: url.absoluteString) { return hit }
+    if let hit = cache.value(forKey: url.absoluteString) { return hit.overLimit ? nil : hit }
 
     let response = try await transport.get(url)
     guard response.isSuccess else { throw EmojisenseError.httpStatus(response.status, url: url) }
     var body = try JSONDecoder().decode(SemanticResponse.self, from: response.body)
     body.layer = .api
+    cache.insert(body, forKey: url.absoluteString)
     if body.overLimit {
       pausedUntil = now().addingTimeInterval(configuration.overLimitCooldown)
       return nil
     }
-    cache.insert(body, forKey: url.absoluteString)
     return body
   }
 

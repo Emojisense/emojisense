@@ -11,7 +11,10 @@ export interface SemanticClientOptions {
   fetch?: typeof fetch;
   /** In-memory LRU of recent responses. Default 200 entries. */
   cacheSize?: number;
-  /** After an over-limit answer, skip the API for this long. Default 1 hour. */
+  /**
+   * After an over-limit answer, skip the API for this long. Default 0: keep asking, because the
+   * edge still answers queries that are in its shared cache. Over-limit misses are remembered.
+   */
   overLimitCooldownMs?: number;
   now?: () => number;
 }
@@ -20,11 +23,11 @@ export interface SemanticClientOptions {
 export type SemanticClient = SemanticProvider;
 
 /**
- * Over its plan limit the API answers `overLimit: true`; the client then goes quiet for a while
- * and search continues on the alias dictionary and shards. Never a hard failure.
+ * Over its plan limit the API still answers from its shared cache. For other queries it answers
+ * `overLimit: true`, and search continues on the alias dictionary and shards. Never a hard failure.
  */
 export function createSemanticClient(options: SemanticClientOptions): SemanticClient {
-  const { endpoint, key, packVersion, cacheSize = 200, overLimitCooldownMs = 3_600_000 } = options;
+  const { endpoint, key, packVersion, cacheSize = 200, overLimitCooldownMs = 0 } = options;
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const now = options.now ?? Date.now;
   const base = endpoint.replace(/\/+$/, "");
@@ -46,19 +49,19 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
       if (hit) {
         cache.delete(url);
         cache.set(url, hit);
-        return hit;
+        return hit.overLimit ? undefined : hit;
       }
       const response = await doFetch(url, { signal: signal ?? null });
       if (!response.ok) {
         throw new Error(`emojisense: semantic search failed with HTTP ${response.status}`);
       }
       const body = { ...((await response.json()) as SemanticResponse), layer: "api" as const };
+      cache.set(url, body);
+      if (cache.size > cacheSize) cache.delete(cache.keys().next().value as string);
       if (body.overLimit) {
         pausedUntil = now() + overLimitCooldownMs;
         return undefined;
       }
-      cache.set(url, body);
-      if (cache.size > cacheSize) cache.delete(cache.keys().next().value as string);
       return body;
     },
   };

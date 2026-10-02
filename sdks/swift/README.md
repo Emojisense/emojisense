@@ -9,7 +9,7 @@ same results as the TypeScript engine.
 | Normalization | `Normalizer` | PACK_FORMAT.md §3, for queries and labels. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes `pack.<locale>.json` and `pack.<locale>.ext.json`. Verifies `sha256`. |
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6). |
-| Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache and the `overLimit` cooldown. |
+| Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache. Over the limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Pinned reciprocal rank fusion, as in `core/src/fusion.ts`. |
 
 Requirements: iOS 16+ or macOS 13+, Swift 6. No third-party dependencies.

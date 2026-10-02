@@ -61,17 +61,27 @@ describe("over the plan limit", () => {
     expect(h.ai).not.toHaveBeenCalled();
   });
 
-  it("keeps alias results in hybrid mode and ignores cached semantic answers", async () => {
+  it("keeps alias results in hybrid mode when nothing is cached", async () => {
     const { h } = await setup(FREE_LIMIT);
-    // An anonymous caller puts a semantic answer for the same query in the cache first.
-    await h.call(search("ship it"));
-    await h.ctx.settle();
-    expect(h.cache.store.size).toBe(1);
     const body = (await (await h.call(keyed("ship it"))).json()) as SearchBody;
     expect(body).toMatchObject({ overLimit: true, cached: false });
     expect(body.results[0]).toMatchObject({ emoji: "🚀", source: "alias" });
     expect(body.results.every((r) => r.source === "alias")).toBe(true);
+    expect(h.ai).not.toHaveBeenCalled();
+  });
+
+  it("still serves the shared cache, without counting it", async () => {
+    const { store, h } = await setup(FREE_LIMIT);
+    // Another app (here an anonymous caller) puts the answer in the shared cache first.
+    await h.call(search("lava eruption"));
+    await h.ctx.settle();
+    const res = await h.call(keyed("lava eruption"));
+    const body = (await res.json()) as SearchBody;
+    expect(body).toMatchObject({ cached: true, overLimit: false, degraded: false });
+    expect(body.results.some((r) => r.source === "semantic")).toBe(true);
     expect(h.ai).toHaveBeenCalledTimes(1);
+    await h.app.meter?.flush();
+    expect(store.usageOf("app_free", PERIOD, "semantic_calls")).toBe(FREE_LIMIT);
   });
 
   it("applies the limit of the key's plan", async () => {

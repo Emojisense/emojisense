@@ -27,7 +27,21 @@ describe("semantic client", () => {
     expect(url.searchParams.get("key")).toBe("pk_1");
   });
 
-  it("goes quiet after an over-limit answer, then retries after the cooldown", async () => {
+  it("keeps asking over the limit, because the edge cache still answers, but not twice", async () => {
+    let overLimit = true;
+    const fetch = vi.fn(
+      async () => new Response(JSON.stringify(overLimit ? { ...semanticBody, results: [], overLimit } : semanticBody)),
+    );
+    const client = createSemanticClient({ endpoint: "https://api.test", fetch });
+    expect(await client.search("lava eruption")).toBeUndefined();
+    expect(await client.search("lava eruption")).toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    overLimit = false;
+    expect(await client.search("congrats")).toMatchObject({ layer: "api" });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("goes quiet after an over-limit answer when a cooldown is set", async () => {
     let now = 0;
     const fetch = vi.fn(
       async () => new Response(JSON.stringify({ ...semanticBody, results: [], overLimit: true })),

@@ -27,16 +27,20 @@ headers. Every key also has per-second rate limits.
   when the response comes from the Cache API) and each `/v1/classify-image` (`image_classifications`).
 - Not metered: static packs and shards, on-device search.
 - Monthly UTC periods, no daily caps. Limits come from `PLANS` in `@emojisense/platform`.
-- **Over the limit, the API never fails.** It returns `200` with `"overLimit": true` and empty
-  semantic results. The SDK then stays on the on-device dictionary and shards until the cooldown
-  ends.
+- **One shared cache.** The cache key is the normalized query, locale, limit, mode and index
+  version. It has no key, app or origin in it, so every app warms the same edge cache.
+- **Over the limit, the API never fails.** A query that is in the shared cache is still answered
+  (`"cached": true`, not metered). Other queries return `200` with `"overLimit": true` and
+  alias-only (hybrid) or empty (semantic) results. The SDK keeps asking (the edge cache may know
+  the next query), remembers each over-limit miss, and stays on the on-device dictionary and
+  shards for those.
 
 ## `GET /v1/search`
 
 | Param | Default | Notes |
 | ----- | ------- | ----- |
 | `q` | — | Required. Normalized server-side (PACK_FORMAT.md §3), max 64 characters. |
-| `locale` | `en` | `en` or `tr` |
+| `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr` |
 | `limit` | `24` | 1–50 |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
 | `pack` | — | Client pack version (informational) |

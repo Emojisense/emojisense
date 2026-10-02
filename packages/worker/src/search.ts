@@ -45,7 +45,31 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
       ...scores,
     });
 
-  if (await metering.overLimit("semantic_calls")) {
+  const cacheKey = new Request(
+    `${url.origin}/v1/search?${new URLSearchParams({
+      q: params.query,
+      locale: params.locale,
+      limit: String(params.limit),
+      mode: params.mode,
+      v: indexTag(catalog),
+    })}`,
+  );
+  // The cache key has no key, user or origin in it: every app's searches warm the same edge cache,
+  // so popular queries get faster and cheaper for everyone. Cached answers are served even over
+  // the plan limit (they cost no model call), and those are not counted.
+  const overLimit = await metering.overLimit("semantic_calls");
+  const hit = await cache.match(cacheKey);
+  if (hit) {
+    const cached = (await hit.json()) as SearchBody;
+    if (!overLimit) metering.count("semantic_calls");
+    log(overLimit ? "hit_over_limit" : "hit");
+    return json({ ...cached, cached: true, degraded: false, overLimit: false } satisfies SearchBody, 200, {
+      "Cache-Control": BROWSER_CACHE,
+      "Server-Timing": `total;dur=${Date.now() - started}`,
+    });
+  }
+
+  if (overLimit) {
     // Never a hard failure: hybrid callers still get the alias dictionary's answer.
     const ranked =
       params.mode === "hybrid"
@@ -61,26 +85,6 @@ export const handleSearch: Handler = async (request, env, ctx, { catalog, cache 
     };
     return json(body, 200, {
       "Cache-Control": "no-store",
-      "Server-Timing": `total;dur=${Date.now() - started}`,
-    });
-  }
-
-  const cacheKey = new Request(
-    `${url.origin}/v1/search?${new URLSearchParams({
-      q: params.query,
-      locale: params.locale,
-      limit: String(params.limit),
-      mode: params.mode,
-      v: indexTag(catalog),
-    })}`,
-  );
-  const hit = await cache.match(cacheKey);
-  if (hit) {
-    const cached = (await hit.json()) as SearchBody;
-    metering.count("semantic_calls");
-    log("hit");
-    return json({ ...cached, cached: true, degraded: false, overLimit: false } satisfies SearchBody, 200, {
-      "Cache-Control": BROWSER_CACHE,
       "Server-Timing": `total;dur=${Date.now() - started}`,
     });
   }

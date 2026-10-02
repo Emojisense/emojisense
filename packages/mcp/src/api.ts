@@ -12,7 +12,7 @@ export interface ApiClientOptions {
   fetch?: typeof fetch;
   /** Give up on a request after this long and use the offline results. Default 4 s. */
   timeoutMs?: number;
-  /** After an over-limit answer, skip the API for this long. Default 1 hour. */
+  /** After an over-limit answer, skip the API for this long. Default 0: the edge cache still answers. */
   overLimitCooldownMs?: number;
   now?: () => number;
   /** Called when a request fails. The tool result does not change: it uses offline results. */
@@ -37,7 +37,7 @@ export interface EmojisenseApi {
 }
 
 export function createApiClient(options: ApiClientOptions): EmojisenseApi {
-  const { secretKey, timeoutMs = 4000, overLimitCooldownMs = 3_600_000, onError } = options;
+  const { secretKey, timeoutMs = 4000, overLimitCooldownMs = 0, onError } = options;
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const now = options.now ?? Date.now;
   const base = options.baseUrl.replace(/\/+$/, "");
