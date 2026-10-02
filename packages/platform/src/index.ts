@@ -27,8 +27,10 @@ export {
   toCustomEmoji,
 } from "./custom-emoji.js";
 export {
+  type CachePurger,
   type CreateCustomEmojiResult,
   CUSTOM_EMOJI_CACHE_CONTROL,
+  CUSTOM_EMOJI_EDGE_CACHE_CONTROL,
   countAccountCustomEmoji,
   createCustomEmoji,
   deleteCustomEmoji,
@@ -39,6 +41,7 @@ export {
   listCustomEmoji,
   listUsableCustomEmoji,
   type NewCustomEmoji,
+  purgeCustomEmojiImages,
   removeImages,
   type SqlReader,
   type UpdateCustomEmojiResult,

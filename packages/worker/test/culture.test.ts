@@ -11,7 +11,7 @@ import {
 import type { Env } from "../src/env.ts";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
-import { catalog, harness, search } from "./fixtures.ts";
+import { catalog, harness, keyedSearch } from "./fixtures.ts";
 
 const entry = (overrides: Partial<CultureEntry> & Pick<CultureEntry, "id">): CultureEntry => ({
   kind: "lasting",
@@ -73,17 +73,19 @@ afterEach(() => vi.useRealTimers());
 describe("GET /v1/search with culture", () => {
   it("is off by default", async () => {
     const { h, read } = withCulture();
-    const res = await body(await h.call(search("ship it")));
+    const res = await body(await h.call(keyedSearch("ship it")));
     expect(res.culture).toBeNull();
     expect(res.results.every((r) => r.source !== "culture")).toBe(true);
     expect(read).not.toHaveBeenCalled();
-    const off = await body(await harness({ catalog: { ...catalog } }).call(search("ship it", "&culture=0")));
+    const off = await body(
+      await harness({ catalog: { ...catalog } }).call(keyedSearch("ship it", "&culture=0")),
+    );
     expect(glyphs(off)).toEqual(glyphs(res));
   });
 
   it("adds culture results after the canonical top result, with context and cultureId", async () => {
     const { h } = withCulture();
-    const res = await h.call(search("ship it", "&culture=1"));
+    const res = await h.call(keyedSearch("ship it", "&culture=1"));
     const b = await body(res);
     expect(b.results[0]).toMatchObject({ emoji: "🚀", source: "alias" });
     expect(b.results[1]).toEqual({
@@ -101,9 +103,9 @@ describe("GET /v1/search with culture", () => {
   it("never changes the canonical top answer without a regional sense in the caller's region", async () => {
     const { h } = withCulture();
     for (const q of ["ship it", "rocket", "lava eruption", "jurassic park", "puppy", "dog"]) {
-      const plain = await body(await h.call(search(q)));
+      const plain = await body(await h.call(keyedSearch(q)));
       for (const extra of ["&culture=1", "&culture=1&region=US", "&culture=1&region=FR"]) {
-        const cultured = await body(await h.call(search(q, extra)));
+        const cultured = await body(await h.call(keyedSearch(q, extra)));
         expect([q, extra, cultured.results[0]?.id]).toEqual([q, extra, plain.results[0]?.id]);
       }
     }
@@ -111,18 +113,18 @@ describe("GET /v1/search with culture", () => {
 
   it("lets a regional sense lead only for a region in its list, keeping the canonical answer second", async () => {
     const { h } = withCulture();
-    const gb = await body(await h.call(search("rocket", "&culture=1&region=gb")));
+    const gb = await body(await h.call(keyedSearch("rocket", "&culture=1&region=gb")));
     expect(glyphs(gb).slice(0, 2)).toEqual(["🦖", "🚀"]);
     expect(gb.results[0]).toMatchObject({ source: "culture", cultureId: "rocket-dino" });
     expect(gb.culture).toEqual({ from: "2026-10-02", day: utcDay(Date.now()), region: "GB" });
     for (const extra of ["&culture=1&region=US", "&culture=1", "&region=GB"]) {
-      expect((await body(await h.call(search("rocket", extra)))).results[0]?.emoji).toBe("🚀");
+      expect((await body(await h.call(keyedSearch("rocket", extra)))).results[0]?.emoji).toBe("🚀");
     }
   });
 
   it("applies culture after the shared cache: one cache entry for every culture and region", async () => {
     const { h } = withCulture();
-    const first = await body(await h.call(search("rocket", "&culture=1&region=GB")));
+    const first = await body(await h.call(keyedSearch("rocket", "&culture=1&region=GB")));
     expect(first.cached).toBe(false);
     await h.ctx.settle();
     expect(h.cache.puts).toHaveLength(1);
@@ -131,10 +133,10 @@ describe("GET /v1/search with culture", () => {
     expect(stored.results.every((r) => r.source !== "culture")).toBe(true);
     expect(stored).not.toHaveProperty("culture");
 
-    const plain = await body(await h.call(search("rocket")));
+    const plain = await body(await h.call(keyedSearch("rocket")));
     expect(plain).toMatchObject({ cached: true, culture: null });
     expect(plain.results[0]?.emoji).toBe("🚀");
-    const gb = await body(await h.call(search("rocket", "&culture=1&region=GB")));
+    const gb = await body(await h.call(keyedSearch("rocket", "&culture=1&region=GB")));
     expect(gb.cached).toBe(true);
     expect(glyphs(gb).slice(0, 2)).toEqual(["🦖", "🚀"]);
     expect(h.ai).toHaveBeenCalledTimes(1);
@@ -144,10 +146,10 @@ describe("GET /v1/search with culture", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     const { h } = withCulture();
     vi.setSystemTime(new Date("2026-10-05T12:00:00Z"));
-    const inside = await body(await h.call(search("puppy", "&culture=1")));
+    const inside = await body(await h.call(keyedSearch("puppy", "&culture=1")));
     expect(inside.results.find((r) => r.source === "culture")?.emoji).toBe("🌋");
     vi.setSystemTime(new Date("2026-10-12T12:00:00Z"));
-    const after = await body(await h.call(search("puppy", "&culture=1")));
+    const after = await body(await h.call(keyedSearch("puppy", "&culture=1")));
     expect(after.results.some((r) => r.source === "culture")).toBe(false);
     expect(after.results[0]?.emoji).toBe(inside.results[0]?.emoji);
   });
@@ -168,7 +170,7 @@ describe("GET /v1/search with culture", () => {
           "2026-10-08T00:30:00Z",
         ]) {
           vi.setSystemTime(new Date(moment));
-          const b = await body(await h.call(search("puppy", "&culture=1")));
+          const b = await body(await h.call(keyedSearch("puppy", "&culture=1")));
           seen.push([moment, b.culture?.day, b.results.some((r) => r.source === "culture")]);
         }
         expect([tz, seen]).toEqual([
@@ -189,7 +191,7 @@ describe("GET /v1/search with culture", () => {
 
   it("answers without culture when the locale has no culture file", async () => {
     const { h } = withCulture(null);
-    const res = await h.call(search("ship it", "&culture=1"));
+    const res = await h.call(keyedSearch("ship it", "&culture=1"));
     const b = await body(res);
     expect(res.status).toBe(200);
     expect(b.culture).toBeNull();
@@ -206,10 +208,10 @@ describe("GET /v1/search with culture", () => {
       "&region=QQ",
       "&region=1",
     ]) {
-      const res = await h.call(search("rocket", extra));
+      const res = await h.call(keyedSearch("rocket", extra));
       expect([extra, res.status]).toEqual([extra, 400]);
     }
-    expect((await h.call(search("rocket", "&culture=true&region= de "))).status).toBe(200);
+    expect((await h.call(keyedSearch("rocket", "&culture=true&region= de "))).status).toBe(200);
   });
 });
 

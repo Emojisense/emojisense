@@ -8,7 +8,7 @@ import type { SearchBody } from "../src/search.ts";
 // Rows of 17 emoji copied verbatim from the core packs of pack version 0.1.0 (`pnpm data:build`):
 // the answers below, the fixture vectors' emoji, and what English-only aliases rank first.
 import fixturePacks from "./fixtures/locale-packs.json";
-import { catalog, harness, image, jpeg, reactions, search } from "./fixtures.ts";
+import { catalog, harness, image, jpeg, KEYED, keyedSearch, reactions } from "./fixtures.ts";
 
 const packs = fixturePacks as unknown as Record<string, Pack>;
 
@@ -49,7 +49,7 @@ function localeHarness(options: { read?: PackReader; maxEngines?: number } = {})
     catalog: { ...catalog, engine: () => bundled, aliasEngine: (locale, env) => engines.get(locale, env) },
   });
   const searchBody = async (q: string, query = "") =>
-    (await (await h.call(search(q, query))).json()) as SearchBody;
+    (await (await h.call(keyedSearch(q, query))).json()) as SearchBody;
   return { ...h, read, engines, searchBody };
 }
 
@@ -83,40 +83,40 @@ describe("locale parameter on the API", () => {
   it("accepts every pack locale on all three endpoints", async () => {
     const h = harness();
     for (const locale of LOCALE_CODES) {
-      const found = await h.call(search("rocket", `&locale=${locale}`));
+      const found = await h.call(keyedSearch("rocket", `&locale=${locale}`));
       expect(found.status, locale).toBe(200);
-      const reacted = await h.call(reactions({ text: "ship it", locale }));
+      const reacted = await h.call(reactions({ text: "ship it", locale }, KEYED));
       expect(reacted.status, locale).toBe(200);
-      const classified = await h.call(image(jpeg(), {}, `?locale=${locale}`));
+      const classified = await h.call(image(jpeg(), {}, `${KEYED}&locale=${locale}`));
       expect(classified.status, locale).toBe(200);
     }
   });
 
   it("answers 400 with the supported list for an unknown locale, before any metering", async () => {
     const h = harness();
-    const res = await h.call(search("rocket", "&locale=de"));
+    const res = await h.call(keyedSearch("rocket", "&locale=de"));
     expect(res.status).toBe(400);
     expect(((await res.json()) as { error: string }).error).toBe(
       'unknown locale "de": use one of en, zh, hi, es, ar, fr, bn, pt, ru, id, tr (or a BCP 47 tag of one, e.g. pt-BR)',
     );
-    expect((await h.call(reactions({ text: "hi", locale: 7 }))).status).toBe(400);
-    expect((await h.call(image(jpeg(), {}, "?locale=xx"))).status).toBe(400);
+    expect((await h.call(reactions({ text: "hi", locale: 7 }, KEYED))).status).toBe(400);
+    expect((await h.call(image(jpeg(), {}, `${KEYED}&locale=xx`))).status).toBe(400);
     expect(h.ai).not.toHaveBeenCalled();
     expect(h.events).not.toHaveBeenCalled();
   });
 
   it("keys the shared cache and the analytics by the parsed locale", async () => {
     const h = harness();
-    await h.call(search("lava eruption", "&locale=es-MX&mode=semantic"));
+    await h.call(keyedSearch("lava eruption", "&locale=es-MX&mode=semantic"));
     await h.ctx.settle();
     expect(h.cache.puts).toHaveLength(1);
     expect(new URL(h.cache.puts[0] as string).searchParams.get("locale")).toBe("es");
     const spanish = (await (
-      await h.call(search("lava eruption", "&locale=es&mode=semantic"))
+      await h.call(keyedSearch("lava eruption", "&locale=es&mode=semantic"))
     ).json()) as SearchBody;
     expect(spanish.cached).toBe(true);
     const english = (await (
-      await h.call(search("lava eruption", "&locale=en&mode=semantic"))
+      await h.call(keyedSearch("lava eruption", "&locale=en&mode=semantic"))
     ).json()) as SearchBody;
     expect(english.cached).toBe(false);
     expect(h.events.mock.calls.map(([point]) => point.blobs[1])).toEqual(["es", "es", "en"]);
@@ -163,7 +163,7 @@ describe("aliases of every pack locale", () => {
 
   it("loads a pack once per isolate and shares the load between concurrent requests", async () => {
     const h = localeHarness();
-    await Promise.all([1, 2, 3].map((n) => h.call(search(`feliz cumpleaños ${n}`, "&locale=es"))));
+    await Promise.all([1, 2, 3].map((n) => h.call(keyedSearch(`feliz cumpleaños ${n}`, "&locale=es"))));
     await h.searchBody("feliz", "&locale=es");
     expect(h.read).toHaveBeenCalledTimes(2);
     expect(h.read).toHaveBeenCalledWith("pack.es.json", h.env);
@@ -203,7 +203,7 @@ describe("aliases of every pack locale", () => {
       },
     });
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const res = await h.call(search("feliz cumpleaños", "&locale=es"));
+    const res = await h.call(keyedSearch("feliz cumpleaños", "&locale=es"));
     await h.ctx.settle();
     const body = (await res.json()) as SearchBody;
     expect(body.aliasLocale).toBeNull();
@@ -219,7 +219,7 @@ describe("aliases of every pack locale", () => {
     warn.mockRestore();
 
     available = true;
-    const retried = await h.call(search("feliz cumpleaños", "&locale=es"));
+    const retried = await h.call(keyedSearch("feliz cumpleaños", "&locale=es"));
     await h.ctx.settle();
     expect(top((await retried.json()) as SearchBody)).toMatchObject({ emoji: "🎂", aliasLocale: "es" });
     expect(h.cache.puts).toHaveLength(1);
@@ -229,7 +229,7 @@ describe("aliases of every pack locale", () => {
   it("suggests reactions with the locale's aliases, and without aliases when its pack is missing", async () => {
     const message = { text: "बधाई हो", locale: "hi" };
     const h = localeHarness();
-    const reacted = (await (await h.call(reactions(message))).json()) as SearchBody;
+    const reacted = (await (await h.call(reactions(message, KEYED))).json()) as SearchBody;
     expect(reacted.aliasLocale).toBe("hi");
     // The fake embedding puts 🌋 and 🚀 first; the Hindi aliases add the congratulation emoji.
     const aliasHits = reacted.results.filter((r) => r.source === "alias").map((r) => r.emoji);
@@ -237,7 +237,7 @@ describe("aliases of every pack locale", () => {
 
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const missing = localeHarness({ read: async (file) => Promise.reject(new Error(`${file}: HTTP 404`)) });
-    const fallback = (await (await missing.call(reactions(message))).json()) as SearchBody;
+    const fallback = (await (await missing.call(reactions(message, KEYED))).json()) as SearchBody;
     warn.mockRestore();
     expect(fallback.aliasLocale).toBeNull();
     expect(fallback.results.filter((r) => r.source === "alias")).toEqual([]);

@@ -55,7 +55,8 @@ function parseParams(url: URL) {
  * GET /v1/search. Metered as semantic_calls, Cache API hits included. Every answered search of a
  * key, cached and over-limit ones included, also goes to the app's analytics (query_daily). The
  * caller's custom emoji (with `tenant=`, the tenant's too) are matched per request and merged
- * first; they never enter the shared cache.
+ * first; they never enter the shared cache. Anonymous callers never cause a model call: they get
+ * shared-cache hits, else the answer of an account over its limit.
  */
 export const handleSearch: Handler = async (
   request,
@@ -126,13 +127,14 @@ export const handleSearch: Handler = async (
   // so popular queries get faster and cheaper for everyone. `c` changes with the bundled data and
   // engine, so a hotfix under the same pack version is not answered from week-old entries.
   // Cached answers are served even over the plan limit (they cost no model call), and those are
-  // not counted.
-  const overLimit = await metering.overLimit("semantic_calls");
+  // not counted. An anonymous caller has no model budget at all: it is treated as over the limit.
+  const anonymous = caller.kind === "anonymous";
+  const overLimit = anonymous || (await metering.overLimit("semantic_calls"));
   const hit = await cache.match(cacheKey);
   if (hit) {
     const cached = (await hit.json()) as SearchBody;
     if (!overLimit) metering.count("semantic_calls");
-    log(overLimit ? "hit_over_limit" : "hit");
+    log(overLimit && !anonymous ? "hit_over_limit" : "hit");
     const body: SearchBody = {
       ...cached,
       results: present(cached.results),
@@ -154,7 +156,7 @@ export const handleSearch: Handler = async (
       params.mode === "hybrid"
         ? await rank(env, catalog, { aliasQuery: params.query, locale, limit: params.limit })
         : undefined;
-    log("over_limit", { aliasConfidence: ranked?.aliasConfidence });
+    log(anonymous ? "anonymous" : "over_limit", { aliasConfidence: ranked?.aliasConfidence });
     const body: SearchBody = {
       ...base,
       results: present(ranked?.results ?? []),

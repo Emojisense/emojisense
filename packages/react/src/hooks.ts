@@ -39,7 +39,8 @@ export interface EmojisenseOptions {
   extended?: boolean;
   /**
    * How pickers draw emoji. Default "native" (the system font). "twemoji", "noto" and "fluent"
-   * draw images hosted at `${endpoint}/v1/sets/<set>/<hexcode>.svg`, so they need `endpoint`.
+   * draw images hosted at `${endpoint}/v1/sets/<set>/<hexcode>.svg`, so they need `endpoint` and
+   * a `publishableKey` whose plan includes hosted sets.
    */
   emojiSet?: EmojiSet;
   /**
@@ -79,6 +80,8 @@ export interface Emojisense {
   emojiSet?: EmojiSet;
   /** The API base URL, for hosted emoji set images. */
   endpoint?: string;
+  /** The publishable key, which hosted emoji set images send. */
+  publishableKey?: string;
   /** The loaded culture file (also attached to `engine`), once `cultureUrl` answered. */
   culture?: Culture;
   /** The region for culture entries: the `region` option, else the browser's region. */
@@ -197,6 +200,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     extended: state.extended,
     emojiSet,
     ...(endpoint ? { endpoint } : {}),
+    ...(publishableKey ? { publishableKey } : {}),
     ...(culture ? { culture } : {}),
     ...(region ? { region } : {}),
     ...(state.error ? { error: state.error } : {}),

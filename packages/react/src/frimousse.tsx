@@ -123,6 +123,8 @@ export interface EmojisenseResultsProps
   /** Draw the emoji as images of a hosted set (needs `endpoint`). Default "native". */
   emojiSet?: EmojiSet | undefined;
   endpoint?: string | undefined;
+  /** Publishable key: hosted sets need one whose plan includes them. */
+  publishableKey?: string | undefined;
 }
 
 /** Ranked results as an ARIA listbox. Must be rendered inside `EmojiPicker.Root` (skin tone). */
@@ -138,6 +140,7 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
     empty = null,
     emojiSet,
     endpoint,
+    publishableKey,
     style,
     ...rest
   } = props;
@@ -176,6 +179,7 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
               imageUrl={selection.imageUrl}
               emojiSet={emojiSet}
               endpoint={endpoint}
+              publishableKey={publishableKey}
             />
           </button>
         );
@@ -184,7 +188,11 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
   );
 }
 
-const GlyphContext = createContext<{ emojiSet?: EmojiSet | undefined; endpoint?: string | undefined }>({});
+const GlyphContext = createContext<{
+  emojiSet?: EmojiSet | undefined;
+  endpoint?: string | undefined;
+  publishableKey?: string | undefined;
+}>({});
 
 /** Frimousse's default list button, drawing the emoji with the picker's emoji set. */
 function ListEmoji({ emoji, ...props }: EmojiPickerListEmojiProps) {
@@ -243,7 +251,12 @@ function RelevantNowShelf({ emojisense, label, limit, onSelect }: RelevantNowShe
             data-culture-id={item.cultureId}
             onClick={() => onSelect({ emoji, label: name })}
           >
-            <EmojiGlyph emoji={emoji} emojiSet={emojisense.emojiSet} endpoint={emojisense.endpoint} />
+            <EmojiGlyph
+              emoji={emoji}
+              emojiSet={emojisense.emojiSet}
+              endpoint={emojisense.endpoint}
+              publishableKey={emojisense.publishableKey}
+            />
           </button>
         );
       })}
@@ -273,8 +286,8 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const { results } = useEmojiSearch(query, emojisense, { limit });
   const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
   const searching = query.trim() !== "";
-  const { emojiSet, endpoint } = emojisense;
-  const glyph = useMemo(() => ({ emojiSet, endpoint }), [emojiSet, endpoint]);
+  const { emojiSet, endpoint, publishableKey } = emojisense;
+  const glyph = useMemo(() => ({ emojiSet, endpoint, publishableKey }), [emojiSet, endpoint, publishableKey]);
 
   const labelOf = useCallback(
     (r: SearchResult) => {
@@ -322,6 +335,7 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
             empty={empty}
             emojiSet={emojiSet}
             endpoint={endpoint}
+            publishableKey={publishableKey}
           />
         ) : (
           <GlyphContext.Provider value={glyph}>

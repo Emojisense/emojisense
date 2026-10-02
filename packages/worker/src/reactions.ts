@@ -19,7 +19,8 @@ export function truncateText(text: string, max: number): string {
  * fuses emoji in the text, intent cues, the reaction vocabulary ranked by the embedding, alias
  * hits per clause and the nearest emoji. The caller's custom emoji go first. The text is chat
  * content: it is never cached, logged, or sent anywhere but the embedding model. Metered as
- * semantic_calls.
+ * semantic_calls. Anonymous callers get no embedding: the alias answer of an account over its
+ * limit.
  */
 export const handleReactions: Handler = async (request, env, _ctx, { catalog, custom }, metering, caller) => {
   const started = Date.now();
@@ -41,7 +42,8 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
   const customSet = await custom.forCaller(caller, tenant);
 
-  const overLimit = await metering.overLimit("semantic_calls");
+  const anonymous = caller.kind === "anonymous";
+  const overLimit = anonymous || (await metering.overLimit("semantic_calls"));
   const embedded = overLimit ? { degraded: false, ms: 0 } : await embedQuery(env, catalog, text);
   const aliasEngine = await catalog.aliasEngine(locale, env);
   const ranked = rankReactions(aliasEngine ?? catalog.engine(), {
@@ -57,7 +59,7 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
     endpoint: "reactions",
     locale,
     mode: "hybrid",
-    outcome: overLimit ? "over_limit" : embedded.degraded ? "degraded" : "miss",
+    outcome: anonymous ? "anonymous" : overLimit ? "over_limit" : embedded.degraded ? "degraded" : "miss",
     ms: Date.now() - started,
     aliasConfidence: ranked.aliasConfidence,
     semanticTop: ranked.semanticTop,

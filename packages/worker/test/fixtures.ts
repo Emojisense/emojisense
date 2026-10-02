@@ -74,16 +74,26 @@ export const catalog: Catalog = {
   vectors: async () => ({ indexes: [sharedIndex], complete: true }),
 };
 
-export function memoryCache(): CacheLike & { store: Map<string, Response>; puts: string[] } {
+export function memoryCache(): CacheLike & {
+  store: Map<string, Response>;
+  puts: string[];
+  deletes: string[];
+} {
   const store = new Map<string, Response>();
   const puts: string[] = [];
+  const deletes: string[] = [];
   return {
     store,
     puts,
+    deletes,
     match: async (r) => store.get(r.url)?.clone(),
     put: async (r, res) => {
       puts.push(r.url);
       store.set(r.url, res.clone());
+    },
+    delete: async (url) => {
+      deletes.push(url);
+      return store.delete(url);
     },
   };
 }
@@ -234,7 +244,12 @@ export function harness(
   const events = vi.fn();
   const cache = memoryCache();
   const ctx = executionContext();
-  const env: Env = { AI: { run: ai }, EVENTS: { writeDataPoint: events }, ...options.env };
+  const env: Env = {
+    AI: { run: ai },
+    EVENTS: { writeDataPoint: events },
+    DEV_KEYS: TEST_KEY,
+    ...options.env,
+  };
   const app = createApp({
     catalog: options.catalog ?? catalog,
     cache: () => cache,
@@ -249,8 +264,20 @@ export function harness(
 
 export const API = "https://api.test";
 
+/**
+ * The harness's development key (`DEV_KEYS` unless a test sets its own): a caller with a model
+ * budget. Anonymous callers get cache hits and alias answers only.
+ */
+export const TEST_KEY = "pk_test";
+/** `?key=` for a request with the harness's development key. */
+export const KEYED = `?key=${TEST_KEY}`;
+
 export const search = (q: string, extra = "", init?: RequestInit) =>
   new Request(`${API}/v1/search?q=${encodeURIComponent(q)}${extra}`, init);
+
+/** A search with the harness's development key. */
+export const keyedSearch = (q: string, extra = "", init?: RequestInit) =>
+  search(q, `&key=${TEST_KEY}${extra}`, init);
 
 export const reactions = (body: unknown, query = "", init: RequestInit = {}) =>
   new Request(`${API}/v1/suggest-reactions${query}`, {

@@ -105,6 +105,50 @@ describe("key cache", () => {
   });
 });
 
+describe("key lookups that miss the cache", () => {
+  const limiterAllowing = (n: number) => {
+    let left = n;
+    return vi.fn<RateLimiter["limit"]>(async () => ({ success: left-- > 0 }));
+  };
+
+  it("are rate limited per IP before the D1 read, so random keys cannot flood it", async () => {
+    const store = await seededStore();
+    const lookup = vi.spyOn(store, "findKeyByHash");
+    const misses = limiterAllowing(2);
+    const h = harness({ store, env: { KEY_MISS_LIMITER: { limit: misses } } });
+    const ip = { headers: { "cf-connecting-ip": "203.0.113.9" } };
+    expect((await h.call(search("rocket", "&key=pk_live_random1", ip))).status).toBe(401);
+    expect((await h.call(search("rocket", "&key=pk_live_random2", ip))).status).toBe(401);
+    const limited = await h.call(search("rocket", "&key=pk_live_random3", ip));
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("retry-after")).toBe("60");
+    expect(lookup).toHaveBeenCalledTimes(2);
+    expect(misses).toHaveBeenCalledWith({ key: "keymiss:203.0.113.9" });
+    expect(JSON.stringify(misses.mock.calls)).not.toContain("pk_live");
+  });
+
+  it("are not counted for cached keys, and a stale entry still serves when limited", async () => {
+    let now = Date.UTC(2026, 9, 2);
+    const store = await seededStore();
+    const misses = limiterAllowing(1);
+    const h = harness({ store, now: () => now, env: { KEY_MISS_LIMITER: { limit: misses } } });
+    expect((await h.call(withKey(KEYS.wildcard))).status).toBe(200);
+    expect((await h.call(withKey(KEYS.wildcard))).status).toBe(200);
+    expect(misses).toHaveBeenCalledTimes(1);
+    now += 120_000;
+    // The entry expired and the limiter refuses a new read: the known key keeps working.
+    expect((await h.call(withKey(KEYS.wildcard))).status).toBe(200);
+    expect((await h.call(withKey(KEYS.pro))).status).toBe(429);
+  });
+
+  it("need no limiter for development keys", async () => {
+    const misses = limiterAllowing(0);
+    const h = harness({ env: { DEV_KEYS: "pk_demo", KEY_MISS_LIMITER: { limit: misses } } });
+    expect((await h.call(withKey("pk_demo"))).status).toBe(200);
+    expect(misses).not.toHaveBeenCalled();
+  });
+});
+
 describe("rate limits", () => {
   it("use the key id and IP for keys and the IP alone for anonymous callers, never the raw key", async () => {
     const anon = vi.fn<RateLimiter["limit"]>(async () => ({ success: true }));
@@ -118,6 +162,45 @@ describe("rate limits", () => {
     await h.call(search("rocket", "", { headers: ip }));
     expect(keyed).toHaveBeenCalledWith({ key: "key_any:198.51.100.7" });
     expect(anon).toHaveBeenCalledWith({ key: "anon:198.51.100.7" });
+  });
+
+  it("give publishable-key calls from our own pages a per-IP budget of their own", async () => {
+    const site = vi.fn<RateLimiter["limit"]>(async () => ({ success: false }));
+    const keyed = vi.fn<RateLimiter["limit"]>(async () => ({ success: true }));
+    const h = harness({
+      store: await seededStore(),
+      env: {
+        SITE_LIMITER: { limit: site },
+        SEARCH_LIMITER: { limit: keyed },
+        FIRST_PARTY_ORIGINS: "https://emojisense.example, https://app.emojisense.example",
+      },
+    });
+    const from = (origin: string) => ({ headers: { Origin: origin, "cf-connecting-ip": "198.51.100.7" } });
+    const fromSite = await h.call(
+      search("rocket", `&key=${KEYS.wildcard}`, from("https://emojisense.example")),
+    );
+    expect(fromSite.status).toBe(429);
+    expect(site).toHaveBeenCalledWith({ key: "site:198.51.100.7" });
+    expect(keyed).not.toHaveBeenCalled();
+    await h.call(search("rocket", `&key=${KEYS.wildcard}`, from("https://app.emojisense.example")));
+    expect(site).toHaveBeenCalledTimes(2);
+
+    // A customer's page and a server's secret key keep the per-key limiter.
+    const customer = await h.call(search("rocket", `&key=${KEYS.wildcard}`, from("https://shop.example")));
+    expect(customer.status).toBe(200);
+    expect((await h.call(withBearer(KEYS.secret))).status).toBe(200);
+    expect(keyed.mock.calls.map(([call]) => call.key)).toEqual(["key_any:198.51.100.7", "key_sec:local"]);
+    expect(site).toHaveBeenCalledTimes(2);
+  });
+
+  it("keep the per-key limiter for our own pages when SITE_LIMITER is not bound", async () => {
+    const keyed = vi.fn<RateLimiter["limit"]>(async () => ({ success: true }));
+    const h = harness({
+      store: await seededStore(),
+      env: { SEARCH_LIMITER: { limit: keyed }, FIRST_PARTY_ORIGINS: "https://emojisense.example" },
+    });
+    await h.call(withKey(KEYS.wildcard, "https://emojisense.example"));
+    expect(keyed).toHaveBeenCalledWith({ key: "key_any:local" });
   });
 });
 

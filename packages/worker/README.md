@@ -8,8 +8,8 @@ The Emojisense Search API: a Cloudflare Worker, deployed at `https://api.emojise
 | ----- | ---- | ---------- |
 | `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API; `culture=1` (+ `region`) applies the culture layer after the cache (`src/culture.ts`) | `semantic_calls` (cache hits too) |
 | `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), no cache | `semantic_calls` |
-| `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
-| `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API, no key | — |
+| `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached (with `X-Image-Hash`) by the SHA-256 of the bytes | `image_classifications` (cache hits too) |
+| `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API; a key on a plan with hosted sets (`src/sets/access.ts`), none for `FIRST_PARTY_ORIGINS` | — |
 | `/v1/tenants[/:externalId[/emoji[/:shortcode]]]` | tenants and their custom emoji (Scale, secret key); D1 + R2 `EMOJI`; sends webhooks | — |
 | `GET /v1/custom/:appId/:emojiId` | custom emoji image from R2 (`EMOJI`), immutable, Cache API, no key | — |
 | `GET /v1/custom-pack` | the key's custom emoji (+ `tenant=`) as a pack, edge-cached 60 s | — |
@@ -109,10 +109,13 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | Every JSON answer has `X-Content-Type-Options: nosniff` and CORS `*`; errors are `no-store` | `src/http.ts` |
 | `?key=pk_live_…` must match the key's allowed origins (empty list = any) → else 403 | `src/auth.ts` |
 | `Authorization: Bearer sk_live_…` only; with an `Origin` header or in the URL → 403 | `src/auth.ts` |
-| Unknown or revoked key → 401. No key → anonymous: not metered, never over a limit, no custom emoji or analytics | `src/auth.ts`, `src/context.ts` |
-| Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Sets, custom images, health and static files are not limited. | `src/auth.ts`, `wrangler.jsonc` |
+| Unknown or revoked key → 401. No key → anonymous: not metered, no custom emoji or analytics | `src/auth.ts`, `src/context.ts` |
+| Anonymous callers never call Workers AI: search gets cache hits, else the over-limit answer; reactions rank without the embedding; classify-image and custom-pack → 401 | handlers |
+| Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Sets, custom images, health and static files are not limited per call. | `src/auth.ts`, `wrangler.jsonc` |
 | Key lookups are cached per isolate for 60 s (unknown keys too). A revocation takes ≤ 60 s. | `src/config.ts` |
-| D1 down: a cached key is still used; an uncached key is served as anonymous | `src/auth.ts` |
+| Lookups that miss that cache (a D1 read each) are limited per IP (`KEY_MISS_LIMITER`, 60/min) → 429; a stale entry still serves | `src/auth.ts` |
+| Publishable-key calls whose `Origin` is in `FIRST_PARTY_ORIGINS` (the website's public key) use `SITE_LIMITER` per IP (60/min) instead of `SEARCH_LIMITER`. The website account is on Pro, whose limits cap its month (`scripts/set-site-plan.mjs`) | `src/auth.ts`, `scripts/site-account.mjs` |
+| D1 down: a cached key is still used; an uncached key is served as anonymous (classify-image and custom-pack → 503) | `src/auth.ts` |
 | Limits come from the account's plan (`accounts.plan`, `getPlan` in `@emojisense/platform`). Monthly, UTC. | `src/context.ts` |
 | Limits are per account: `overLimit` compares the account's total over all of its apps with the limit. `usage_monthly` rows stay per app. | `src/context.ts`, `src/meter.ts` |
 | The account total is cached per isolate: read at most once a minute, replaced by the totals each flush reads in its own batch. No limit check costs a D1 query of its own. | `src/meter.ts`, `src/store.ts` |
@@ -158,7 +161,7 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 | Field | Content |
 | ----- | ------- |
 | `blob1` | normalized query text (≤ 64 chars) for `/v1/search`; empty for reactions and images |
-| `blob2` … `blob5` | locale, mode, outcome (`hit` · `miss` · `degraded` · `over_limit`), endpoint (`search` · `reactions` · `image`) |
+| `blob2` … `blob5` | locale, mode, outcome (`hit` · `hit_over_limit` · `miss` · `degraded` · `over_limit` · `anonymous` = a miss without a key, no model call), endpoint (`search` · `reactions` · `image`) |
 | `double1` … `double3` | latency ms, alias confidence, top semantic score (−1 = not available) |
 | `index1` | `<packVersion>:<model>@<dims>` |
 
@@ -178,7 +181,7 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 | `src/locale-vectors.ts` | Emoji vectors of each locale's documents (PACK_FORMAT §5): read through `ASSETS`, per-isolate LRU |
 | `src/store.ts` | `Store` interface; D1 and in-memory implementations |
 | `src/config.ts` | Tunables: models, size limits, cache and flush timings |
-| `src/sets/` | Hosted emoji sets: servable emoji, pinned upstreams and naming rules, the route |
+| `src/sets/` | Hosted emoji sets: servable emoji, pinned upstreams and naming rules, the key check, the route |
 | `src/shards/` | Nightly shard build: selection, R2 store, `/p/*` route |
 | `src/sets/upstreams.json` | Generated by `pnpm sets`: overrides, missing emoji, the Fluent file table |
 | `scripts/sync-pack.ts` | Copy packs, vectors and shards from `packages/data` |

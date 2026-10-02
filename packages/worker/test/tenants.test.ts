@@ -15,7 +15,7 @@ const textBytes = (text: string) => new TextEncoder().encode(text);
 
 type TenantJson = { id: string; externalId: string; emojiCount: number };
 type PageJson = { tenants: TenantJson[]; nextCursor: string | null };
-type EmojiJson = { id: string; tenantId: string; shortcode: string };
+type EmojiJson = { id: string; tenantId: string; shortcode: string; imageUrl: string };
 const read = async <T>(response: Response) => (await response.json()) as T;
 
 interface Sent {
@@ -99,7 +99,7 @@ async function setup(options: { plan?: string; emoji?: boolean; fetchStatus?: nu
     return call("POST", `/v1/tenants/${encodeURIComponent(externalId)}/emoji`, { body: form });
   };
   const events = () => sent.map((s) => JSON.parse(s.body) as { type: string; data: Record<string, unknown> });
-  return { sqlite, bucket, sent, fetch, call, upload, events };
+  return { sqlite, bucket, sent, fetch, call, upload, events, cache: h.cache };
 }
 
 describe("tenants API: auth and plan gate", () => {
@@ -230,15 +230,19 @@ describe("tenants API: tenants", () => {
   });
 
   it("deletes a tenant with its emoji and images, and emits tenant.deleted", async () => {
-    const { call, upload, bucket, events, sqlite } = await setup();
+    const { call, upload, bucket, events, sqlite, cache } = await setup();
     await call("POST", "/v1/tenants", { json: { externalId: "acme" } });
-    await upload("acme", { file: PNG, shortcode: "one" });
-    await upload("acme", { file: PNG, shortcode: "two" });
+    const one = (await (await upload("acme", { file: PNG, shortcode: "one" })).json()) as EmojiJson;
+    const two = (await (await upload("acme", { file: PNG, shortcode: "two" })).json()) as EmojiJson;
     expect(bucket.objects.size).toBe(2);
 
     const response = await call("DELETE", "/v1/tenants/acme");
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject({ tenant: { externalId: "acme" }, emojiDeleted: 2 });
+    const deleted = await response.json();
+    expect(deleted).toMatchObject({ tenant: { externalId: "acme" }, emojiDeleted: 2 });
+    expect(deleted).not.toHaveProperty("emojiIds");
+    // The cached images of this data center are purged too.
+    expect([...cache.deletes].sort()).toEqual([one.imageUrl, two.imageUrl].sort());
     expect(bucket.objects.size).toBe(0);
     expect(sqlite.prepare("SELECT COUNT(*) AS n FROM custom_emoji").get()).toEqual({ n: 0 });
     expect(events().at(-1)).toMatchObject({
@@ -335,12 +339,13 @@ describe("tenants API: tenant emoji", () => {
   });
 
   it("deletes an emoji by shortcode and emits custom_emoji.deleted", async () => {
-    const { upload, call, bucket, events } = await withTenant();
+    const { upload, call, bucket, events, cache } = await withTenant();
     const emoji = await read<EmojiJson>(await upload("acme", { file: PNG, shortcode: "wave" }));
     const response = await call("DELETE", "/v1/tenants/acme/emoji/:wave:");
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(emoji);
     expect(bucket.objects.size).toBe(0);
+    expect(cache.deletes).toEqual([emoji.imageUrl]);
     expect(events().at(-1)).toEqual(expect.objectContaining({ type: "custom_emoji.deleted", data: emoji }));
     const again = await call("DELETE", "/v1/tenants/acme/emoji/wave");
     expect(again.status).toBe(404);

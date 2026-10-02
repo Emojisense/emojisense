@@ -2,7 +2,7 @@ import { PLANS, periodOf } from "@emojisense/platform";
 import { describe, expect, it, vi } from "vitest";
 import type { ClassifyImageBody } from "../src/image.ts";
 import type { SearchBody } from "../src/search.ts";
-import { harness, image, jpeg, KEYS, reactions, search, seededStore } from "./fixtures.ts";
+import { harness, image, jpeg, KEYS, keyedSearch, reactions, search, seededStore } from "./fixtures.ts";
 
 const NOW = Date.UTC(2026, 9, 2, 12);
 const PERIOD = periodOf(NOW);
@@ -72,8 +72,8 @@ describe("over the plan limit", () => {
 
   it("still serves the shared cache, without counting it", async () => {
     const { store, h } = await setup(FREE_LIMIT);
-    // Another app (here an anonymous caller) puts the answer in the shared cache first.
-    await h.call(search("lava eruption"));
+    // Another app (here a development key) puts the answer in the shared cache first.
+    await h.call(keyedSearch("lava eruption"));
     await h.ctx.settle();
     const res = await h.call(keyed("lava eruption"));
     const body = (await res.json()) as SearchBody;
@@ -196,7 +196,7 @@ describe("limits are per account", () => {
 
   it("still serves cached answers over the account limit, without counting them", async () => {
     const store = await account({ app_pro: PRO.semantic_calls });
-    await h.call(search("lava eruption"));
+    await h.call(keyedSearch("lava eruption"));
     await h.ctx.settle();
     const hit = await searchAs(KEYS.proSibling, "lava eruption");
     expect(hit).toMatchObject({ cached: true, overLimit: false, degraded: false });

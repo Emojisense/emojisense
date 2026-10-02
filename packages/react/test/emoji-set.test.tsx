@@ -30,6 +30,20 @@ describe("EmojiGlyph", () => {
     expect(container.innerHTML).toBe("🦖");
   });
 
+  it("sends the publishable key and the page's origin with a hosted set image", () => {
+    render(<EmojiGlyph emoji="👍" emojiSet="noto" endpoint={API} publishableKey="pk_live_abc" />);
+    const img = screen.getByRole("img");
+    expect(img.getAttribute("src")).toBe(`${API}/v1/sets/noto/1F44D.svg?key=pk_live_abc`);
+    expect(img.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
+  });
+
+  it("keeps the page's referrer policy for custom emoji images", () => {
+    render(<EmojiGlyph emoji=":parrot:" imageUrl={`${API}/v1/custom/app/p1`} publishableKey="pk_live_abc" />);
+    const img = screen.getByRole("img");
+    expect(img.getAttribute("src")).toBe(`${API}/v1/custom/app/p1`);
+    expect(img.hasAttribute("referrerpolicy")).toBe(false);
+  });
+
   it("falls back to the text when the image fails", () => {
     const { container } = render(<EmojiGlyph emoji="🇺🇸" emojiSet="fluent" endpoint={API} />);
     fireEvent.error(screen.getByRole("img"));
@@ -38,13 +52,19 @@ describe("EmojiGlyph", () => {
 });
 
 describe("useEmojisense emojiSet", () => {
-  it("passes the set and the endpoint to the pickers", async () => {
+  it("passes the set, the endpoint and the key to the pickers", async () => {
     vi.stubGlobal("fetch", packFetch());
     const { result } = renderHook(() =>
-      useEmojisense({ packBaseUrl: "https://x.test", endpoint: API, emojiSet: "noto", extended: false }),
+      useEmojisense({
+        packBaseUrl: "https://x.test",
+        endpoint: API,
+        publishableKey: "pk_live_abc",
+        emojiSet: "noto",
+        extended: false,
+      }),
     );
     await waitFor(() => expect(result.current.status).toBe("ready"));
-    expect(result.current).toMatchObject({ emojiSet: "noto", endpoint: API });
+    expect(result.current).toMatchObject({ emojiSet: "noto", endpoint: API, publishableKey: "pk_live_abc" });
   });
 
   it("defaults to native", () => {
@@ -75,6 +95,21 @@ describe("EmojisensePicker with a hosted set", () => {
     const [option] = await screen.findAllByRole("option");
     expect(option?.querySelector("img")?.getAttribute("src")).toBe(`${API}/v1/sets/fluent/1F996.svg`);
     expect(option?.getAttribute("aria-label")).toBe("T-Rex");
+  });
+
+  it("sends the publishable key with every set image", async () => {
+    const keyed = { ...sense("noto"), publishableKey: "pk_live_abc" };
+    render(<EmojisensePicker emojisense={keyed} onEmojiSelect={() => {}} />);
+    const cell = await screen.findByRole("gridcell", { name: "thumbs up" });
+    expect(cell.querySelector("img")?.getAttribute("src")).toBe(
+      `${API}/v1/sets/noto/1F44D.svg?key=pk_live_abc`,
+    );
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "jurassic" } });
+    const [option] = await screen.findAllByRole("option");
+    expect(option?.querySelector("img")?.getAttribute("src")).toBe(
+      `${API}/v1/sets/noto/1F996.svg?key=pk_live_abc`,
+    );
   });
 
   it("keeps text for the native set", async () => {

@@ -154,8 +154,8 @@ logged, cached or stored. We record only the outcome and the response time, with
 
 Your app sends a small, downscaled image. The image is processed in memory and dropped. It is
 never stored. When your app also sends a 64-bit perceptual hash of the image, the short
-description that the model writes is cached for up to 7 days, keyed by that hash, so that the
-same image shared many times is processed once.
+description that the model writes is cached for up to 7 days, keyed by a SHA-256 hash of the
+image bytes that our API computes, so that the same image file sent many times is processed once.
 
 ### Logs
 

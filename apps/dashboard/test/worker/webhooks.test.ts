@@ -141,6 +141,30 @@ describe("webhooks: update, delete, test, deliveries", () => {
     expect((await h.call("PATCH", path, { cookie, body: { enabled: "no" } })).status).toBe(400);
   });
 
+  it("sends at most 5 test events a minute per webhook", async () => {
+    const { h, cookie, created } = await setup();
+    const first = (await created()).webhook;
+    const second = (await created({ url: `${HOOK_URL}/other` })).webhook;
+    const used = new Map<string, number>();
+    const keys: string[] = [];
+    h.env.WEBHOOK_TEST_LIMITER = {
+      limit: async ({ key }) => {
+        keys.push(key);
+        used.set(key, (used.get(key) ?? 0) + 1);
+        return { success: (used.get(key) ?? 0) <= 5 };
+      },
+    };
+    h.fetchMock.mockImplementation(async () => new Response(null, { status: 204 }));
+    const test = (id: string) => h.call("POST", `/api/webhooks/${id}/test`, { cookie });
+    for (let i = 0; i < 5; i++) expect((await test(first.id)).status).toBe(200);
+    const limited = await test(first.id);
+    expect(limited.status).toBe(429);
+    expect(await body(limited)).toMatchObject({ error: { code: "rate_limited" } });
+    expect(h.fetchMock).toHaveBeenCalledTimes(5);
+    expect((await test(second.id)).status).toBe(200);
+    expect(new Set(keys)).toEqual(new Set([first.id, second.id]));
+  });
+
   it("sends a signed test event, records it and lists deliveries newest first", async () => {
     const { h, cookie, appId, created } = await setup();
     const { webhook, secret } = await created();

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   CUSTOM_EMOJI_CACHE_CONTROL,
+  CUSTOM_EMOJI_EDGE_CACHE_CONTROL,
   countAccountCustomEmoji,
   createCustomEmoji,
   deleteCustomEmoji,
@@ -8,6 +9,7 @@ import {
   listCustomEmoji,
   listUsableCustomEmoji,
   type NewCustomEmoji,
+  purgeCustomEmojiImages,
   removeImages,
   updateCustomEmoji,
 } from "../src/custom-emoji-store.js";
@@ -203,5 +205,33 @@ describe("custom emoji store", () => {
     }
     expect(JSON.stringify(warnings)).toContain("emoji_image_delete_failed");
     expect(JSON.stringify(warnings)).not.toContain("app1");
+  });
+
+  it("purges deleted images from the Cache API at their public URLs, best effort", async () => {
+    const deleted: string[] = [];
+    const cache = { delete: async (url: string) => deleted.push(url) > 0 };
+    await purgeCustomEmojiImages(cache, "https://api.test/", "app1", ["e1", "e2"]);
+    expect(deleted).toEqual(["https://api.test/v1/custom/app1/e1", "https://api.test/v1/custom/app1/e2"]);
+
+    const warn = console.warn;
+    const warnings: unknown[] = [];
+    console.warn = (...args: unknown[]) => void warnings.push(args);
+    try {
+      await purgeCustomEmojiImages(
+        { delete: () => Promise.reject(new Error("x")) },
+        "https://api.test",
+        "a",
+        ["e"],
+      );
+      await purgeCustomEmojiImages(undefined, "https://api.test", "a", ["e"]);
+    } finally {
+      console.warn = warn;
+    }
+    expect(JSON.stringify(warnings)).toContain("emoji_image_purge_failed");
+  });
+
+  it("gives the edge a one-day lifetime and browsers an immutable one", () => {
+    expect(CUSTOM_EMOJI_EDGE_CACHE_CONTROL).toBe("public, max-age=86400");
+    expect(CUSTOM_EMOJI_CACHE_CONTROL).toContain("immutable");
   });
 });

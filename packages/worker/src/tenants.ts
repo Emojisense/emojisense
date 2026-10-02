@@ -13,6 +13,7 @@
  */
 import {
   type AppOwner,
+  type CachePurger,
   CUSTOM_EMOJI_MAX_BYTES,
   countAccountCustomEmoji,
   countTenantEmoji,
@@ -35,6 +36,7 @@ import {
   parseTenantName,
   planAllows,
   planRequiredMessage,
+  purgeCustomEmojiImages,
   randomId,
   type TenantRow,
   toCustomEmoji,
@@ -61,6 +63,8 @@ export interface TenantsContext {
   /** Undefined without a database; events are then not sent. */
   webhooks: WebhookRuntime | undefined;
   now: () => number;
+  /** The Cache API, to purge the images of deleted emoji (this data center only). */
+  cache?: CachePurger | undefined;
 }
 
 /** Structured error: `{ error: "<code>", message, …extra }`. */
@@ -199,7 +203,8 @@ async function create(scoped: Scoped): Promise<Response> {
 }
 
 async function remove(scoped: Scoped, tenant: TenantRow): Promise<Response> {
-  const { emojiDeleted } = await deleteTenant(scoped.db, scoped.env.EMOJI, tenant);
+  const { emojiDeleted, emojiIds } = await deleteTenant(scoped.db, scoped.env.EMOJI, tenant);
+  await purgeCustomEmojiImages(scoped.cache, apiUrl(scoped), tenant.app_id, emojiIds);
   emitEvent(scoped, "tenant.deleted", { ...toTenant(tenant), emojiDeleted });
   return json({ tenant: toTenant(tenant), emojiDeleted }, 200, { "Cache-Control": "no-store" });
 }
@@ -289,6 +294,7 @@ async function deleteEmoji(scoped: Scoped, tenant: TenantRow, rawShortcode: stri
     : undefined;
   if (!deleted)
     return apiError(404, "emoji_not_found", "This tenant has no custom emoji with this shortcode.");
+  await purgeCustomEmojiImages(scoped.cache, apiUrl(scoped), tenant.app_id, [deleted.id]);
   const emoji = toCustomEmoji(deleted, apiUrl(scoped), tenant.external_id);
   emitEvent(scoped, "custom_emoji.deleted", emoji);
   return json(emoji, 200, { "Cache-Control": "no-store" });

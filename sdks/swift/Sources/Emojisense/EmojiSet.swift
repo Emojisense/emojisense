@@ -15,11 +15,14 @@ public enum EmojiSet: String, CaseIterable, Codable, Sendable {
   /// The image URL of an emoji, skin tone included, or `nil` for `.native` (draw the text).
   ///
   /// A set may not draw every emoji (Fluent has no country flags). The API answers 404 then,
-  /// and the picker should draw the text instead.
-  public func imageURL(for emoji: String, endpoint: URL) -> URL? {
+  /// and the picker should draw the text instead. Hosted sets need a publishable `key` whose
+  /// plan includes them (the API answers 401 or 402 otherwise), as `emojiImageUrl` in
+  /// `packages/core`.
+  public func imageURL(for emoji: String, endpoint: URL, key: String? = nil) -> URL? {
     guard isHosted else { return nil }
     let base = URLEncoding.trimmingTrailingSlashes(endpoint)
-    return URL(string: "\(base)/v1/sets/\(rawValue)/\(Hexcode.of(emoji)).svg")
+    let query = key.map { $0.isEmpty ? "" : "?key=\(URLEncoding.uriComponent($0))" } ?? ""
+    return URL(string: "\(base)/v1/sets/\(rawValue)/\(Hexcode.of(emoji)).svg\(query)")
   }
 }
 

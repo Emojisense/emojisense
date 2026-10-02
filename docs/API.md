@@ -24,7 +24,7 @@ Shared contracts: `@emojisense/platform` (D1 schema, plans, key helpers) and
 | --- | ----- | ------- | ------ |
 | Publishable `pk_live_…` | browsers, extensions | `?key=` query parameter (no CORS preflight) | `Origin` must match the key's allowed origins (an empty list allows any origin; only `dev` apps may have such keys) |
 | Secret `sk_live_…` | servers only (MCP, bots, tenant writes) | `Authorization: Bearer sk_live_…` | never accepted with an `Origin` header (blocks use from browsers) or in the URL |
-| none (anonymous) | demos, trials, local dev | — | stricter rate limit per IP |
+| none (anonymous) | quick tries, local dev | — | stricter rate limit per IP, and no model calls (below) |
 
 The `Origin` check stops misuse from other websites. It does not stop servers, which can forge
 headers, so every caller is also rate limited:
@@ -32,17 +32,27 @@ headers, so every caller is also rate limited:
 | Caller | Limit | Counted per |
 | ------ | ----- | ----------- |
 | A key | 120 requests a minute | key and IP address |
+| A publishable key from Emojisense's own pages (website, dashboard) | 60 requests a minute | IP address |
 | Anonymous | 30 requests a minute | IP address |
+| Key lookups that miss the per-isolate key cache (each one a database read, unknown keys included) | 60 a minute | IP address |
 
 Over the limit the answer is `429` with `Retry-After: 60`. The IP address is only an in-memory
 limiter key; it is never logged or stored. Static files, `/v1/health` and the emoji image routes
-(`/v1/sets/…`, `/v1/custom/…`) are not limited.
+(`/v1/sets/…`, `/v1/custom/…`) are not limited per call. The key-lookup limit stops a flood of
+random keys before it reaches the database; a key the instance knew before keeps working while
+it holds. The website's own publishable key is public (it ships in the site's JavaScript), so its
+calls have their own per-IP limit, and the website account's plan (Pro) caps what the key can use
+in a month.
 
-**Anonymous calls** (no key) work on `/v1/search`, `/v1/suggest-reactions` and
-`/v1/classify-image`. They are never metered and never over a plan limit, they get no custom
-emoji, and they are not in any app's analytics. `/v1/custom-pack` answers them with `401`, the
-tenants API with `401 unauthorized`. When the key store cannot be read and a key is not in the
-per-isolate cache, the call is served as anonymous rather than failed.
+**Anonymous calls never reach Workers AI.** Without a key, `/v1/search` answers from the shared
+cache when it can; on a miss it answers like an account over its limit: alias results in `hybrid`
+mode, none in `semantic` mode, `"overLimit": true`, not cached. `/v1/suggest-reactions` ranks
+without the embedding (alias results, `"overLimit": true`). `/v1/classify-image` and
+`/v1/custom-pack` answer `401`, the tenants API `401 unauthorized`. Anonymous calls are never
+metered, get no custom emoji, and are not in any app's analytics. When a key was sent but the key
+store cannot be read and the key is not cached, the call is served as anonymous, except that
+`/v1/classify-image` and `/v1/custom-pack` answer `503` (retry). The public demos on the website
+use the website's own publishable key, so they are not anonymous.
 
 ## Metering and plan limits
 
@@ -134,6 +144,12 @@ are matched against the query and put first, in both modes, within `limit`:
 - When the app has custom emoji, the answer has `Cache-Control: private, max-age=60`.
 - A tenant emoji replaces an app-wide emoji with the same shortcode. An unknown `tenant` searches
   the app-wide emoji only.
+- **Tenant emoji are not secret.** Anyone with the app's publishable key (it is in your page) and
+  a tenant's `externalId` can read that tenant's custom emoji (shortcodes, aliases, images) through
+  search, reactions and `/v1/custom-pack`, like the custom emoji of a chat workspace, which every
+  member sees. Image URLs need no key at all. So do not store private content in custom emoji,
+  and use ids that other tenants cannot guess (not sequential numbers or public names) if tenants
+  must not see each other's emoji. There is no signed tenant token yet.
 
 ### Locales
 
@@ -168,16 +184,19 @@ laughter, agreement… in en, tr, es, fr, de, pt, it), a reaction vocabulary ran
 embedding, alias hits per clause and the nearest emoji of the catalog. A topical emoji needs two
 signals, or a very close embedding match, so "smoke tests are failing" does not give 🚬. One
 embedding call per request, no LLM. `source` is `semantic` for the embedding signals and
-`alias` for the rest; over the limit, all results are `alias`. The list can be shorter than
-`limit` when the text gives little to go on.
+`alias` for the rest; over the limit and without a key, all results are `alias`. The list can be
+shorter than `limit` when the text gives little to go on.
 
 ## `POST /v1/classify-image`
 
-Request: `Content-Type: image/jpeg` or `image/webp`, max 256 KB. Clients downscale to ~384 px
-first. Optional header `X-Image-Hash: <16 hex>` (64-bit perceptual hash) enables the cache, so the
-same meme shared many times costs one call. Query: `?locale=&limit=` (`locale` is checked as in
-[search](#locales); the label is English, so the keywords are ranked with English aliases;
-`limit` 1–50, default 8). Answers are `Cache-Control: no-store`.
+Needs a key (anonymous calls get `401`). Request: `Content-Type: image/jpeg` or `image/webp`, max
+256 KB. Clients downscale to ~384 px
+first. Optional header `X-Image-Hash: <16 hex>` (for example a 64-bit perceptual hash) turns on
+the label cache, so the same image sent many times costs one vision call. The cache key is the
+SHA-256 of the bytes the API received, never the header, so only byte-identical images share a
+label. Query: `?locale=&limit=` (`locale` is checked as in [search](#locales); the label is
+English, so the keywords are ranked with English aliases; `limit` 1–50, default 8). Answers are
+`Cache-Control: no-store`.
 
 ```json
 { "caption": "a puppy asleep on a sofa", "reaction": "aww, so cute", "keywords": ["puppy", "sofa", "sleeping"], "results": [{ "emoji": "🐶", "id": "1F436", "score": 0.92, "source": "semantic" }], "cached": false, "degraded": false, "overLimit": false }
@@ -192,7 +211,8 @@ caption embedding (fewer results).
 
 The image is never stored or logged. It is processed in memory and dropped. Only the label
 (caption, reaction, keywords, proposed emoji) is cached, and only with `X-Image-Hash`, keyed by
-the perceptual hash, the vision model and the prompt version.
+the SHA-256 of the image bytes, the vision model and the prompt version. A wrong or reused
+`X-Image-Hash` can never read or replace the label of another image.
 
 ## Static files
 
@@ -262,12 +282,25 @@ the top canonical result, except a regional sense in the caller's region (below)
 ## `GET /v1/sets/:set/:hexcode.svg`
 
 One emoji image from a hosted set. Pickers use it when their `emojiSet` option is not `native`.
-No key, not metered, not rate limited.
+Hosted sets are a paid feature: the image needs a key whose account plan includes them (Solo and
+up). Not metered, not rate limited per image.
 
 | Part | Values |
 | ---- | ------ |
 | `set` | `twemoji`, `noto`, `fluent` |
 | `hexcode` | Emojibase hexcode of a pack emoji or of one of its single-tone variants, e.g. `1F44D`, `1F44D-1F3FD`, `2764-FE0F-200D-1F525`. Case and U+FE0F spelling do not matter. `hexcodeOf(emoji)` in `emojisense` makes it. |
+| `key` | Query parameter: a publishable key, e.g. `?key=pk_live_…` (`emojiImageUrl(emoji, { endpoint, emojiSet, key })` adds it; the pickers pass their `publishableKey`). A server can send a secret key as `Authorization: Bearer`. |
+
+- **Key checks.** An `<img>` request has no `Origin` header, so a publishable key is checked
+  against the origin of the `Referer` (or `Origin` when there is one). The SDK pickers set
+  `referrerpolicy="strict-origin-when-cross-origin"` on these images, so the page's origin (never
+  its path) is sent even under a stricter page policy. A request with neither header is refused
+  for a key bound to origins. Emojisense's own pages (website and dashboard) show set images
+  without a key.
+- Key errors: `401 key_required` (no key), `401` unknown or revoked key, `402 plan_required` with
+  `plan: "solo"` (the account's plan has no hosted sets), `403` origin not allowed, `429` too many
+  unknown keys from one IP, `503` when the key cannot be checked now. The image of an
+  allowed request stays in browser caches for a year, also after a downgrade.
 
 - `200`: `image/svg+xml` with `Cache-Control: public, max-age=31536000, immutable`, CORS `*`, a
   `Link: <license>; rel="license"` header and a CSP that blocks scripts when the file is opened
@@ -300,11 +333,14 @@ not metered, not rate limited.
   `Cache-Control: public, max-age=31536000, immutable`, an `ETag`, CORS `*`,
   `Cross-Origin-Resource-Policy: cross-origin`, `X-Content-Type-Options: nosniff` and a CSP that
   sandboxes the file and blocks scripts and requests when it is opened directly. An id always
-  points at the same image (a new image is a new emoji), so edges and browsers keep it.
+  points at the same image (a new image is a new emoji), so browsers keep it.
+- The edge (Cache API) keeps a copy for one day only (`public, max-age=86400` on the cached
+  entry), then reads D1 and R2 again.
 - `404` for an unknown emoji, an emoji of another app, or a missing object. `503` when the
   database cannot be read (not cached).
-- A deleted emoji is gone from D1 and R2 at once, but an edge location that cached the image can
-  still serve it until its cache entry is evicted.
+- **Deletes (takedowns).** A deleted emoji is gone from D1 and R2 at once. The delete (dashboard
+  or tenants API) also purges the cached image in the data center that handled it; other edge
+  locations stop serving it within a day. Browsers that already loaded the image can keep it.
 
 ## `GET /v1/custom-pack`
 
@@ -331,7 +367,9 @@ metered, not rate limited. `semantic: false` = the Worker has no Workers AI bind
 Tenants are your own customers. Each tenant has its own custom emoji, next to the app-wide ones.
 Call these routes from your server with a secret key: `Authorization: Bearer sk_live_…`.
 Browsers cannot call them (a request with an `Origin` header is refused, and CORS does not allow
-`Authorization`). The account that owns the app must be on Scale.
+`Authorization`). The account that owns the app must be on Scale. Writes need the secret key;
+reads of a tenant's emoji in search and custom packs need only the publishable key and the
+`externalId` (see "Tenant emoji are not secret" under [search](#get-v1search)).
 
 | Method + path | Body | Answer |
 | ------------- | ---- | ------ |
@@ -398,16 +436,16 @@ curl -X POST https://api.emojisense.com/v1/tenants/acme/emoji \
 
 | Status | Meaning |
 | ------ | ------- |
-| 200 | Also over a plan limit (`"overLimit": true`) and when Workers AI is down (`"degraded": true`): search never fails hard |
+| 200 | Also over a plan limit (`"overLimit": true`), without a key on search and reactions, and when Workers AI is down (`"degraded": true`): search never fails hard |
 | 400 | Missing or empty `q` / `text`, a body that is not JSON (reactions), a `locale` without a pack, a `culture` other than `0`/`1`/`true`/`false`, a `region` that is not an ISO 3166-1 alpha-2 region, a wrong image `Content-Type`, a bad `X-Image-Hash`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
-| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/custom-pack` and the tenants API |
-| 402 | The account's plan does not include the feature (tenants API) |
-| 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key, a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
+| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/classify-image`, `/v1/custom-pack`, a hosted set image (`key_required`) and the tenants API |
+| 402 | The account's plan does not include the feature (tenants API, hosted sets: `plan_required`) |
+| 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key (for set images: the `Referer`'s origin), a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
 | 404 | No such route, emoji set, emoji or custom emoji |
 | 405 | Wrong method; `Allow` names the right one |
 | 413 | Image larger than 256 KB, or a reaction body larger than 16 KB |
-| 429 | Rate limited (per minute, see [Authentication](#authentication)). Retry after the seconds in `Retry-After` (60). |
-| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read (`503`, with `Retry-After`) |
+| 429 | Rate limited (per minute, see [Authentication](#authentication)), also too many key lookups that miss the key cache from one IP. Retry after the seconds in `Retry-After` (60). |
+| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read, or a key cannot be checked now on `/v1/classify-image`, `/v1/custom-pack` and set images (`503`, with `Retry-After`) |
 
 ## Dashboard API (`apps/dashboard`, Clerk session)
 
@@ -443,7 +481,7 @@ your own server, use the Search API and the tenants API.
 | `POST /api/apps/:id/webhooks` | `{ url, events? }` → `201 { webhook, secret }`. The `whsec_…` secret is shown only here. `events` defaults to all. At most 10 per app (`409 webhook_limit`). (Scale, developer+) |
 | `PATCH /api/webhooks/:id` | `{ url?, events?, enabled? }` → `{ webhook }` (Scale, developer+) |
 | `DELETE /api/webhooks/:id` | → `{ ok: true }`, with its deliveries (Scale, developer+) |
-| `POST /api/webhooks/:id/test` | Sends one `webhook.test` event now (no retries, also when disabled) → `{ delivery }` (Scale, developer+) |
+| `POST /api/webhooks/:id/test` | Sends one `webhook.test` event now (no retries, also when disabled) → `{ delivery }`. At most 5 a minute per webhook, then `429 rate_limited` (Scale, developer+) |
 | `GET /api/webhooks/:id/deliveries` | `{ deliveries: [{ id, event, status, ok, durationMs, createdAt }] }`, the last 50, newest first (Scale, viewer+) |
 | `GET /api/apps/:id/emoji[?tenantId=]` | Custom emoji → `{ emoji: CustomEmoji[], used, limit }` (viewer+), see below |
 | `POST /api/apps/:id/emoji` | Multipart upload: `file`, `shortcode`, `aliases`, `tenantId?` → `201 CustomEmoji` (Solo+, developer+) |
@@ -579,6 +617,8 @@ type CustomEmoji = {
   (`*.slack-edge.com` over HTTPS only). `alias:` entries are not imported.
 - Discord: `{ botToken, guildId }`. The dashboard calls `GET /api/v10/guilds/:guildId/emojis` with
   `Authorization: Bot …` and downloads `https://cdn.discordapp.com/emojis/<id>.gif|png?size=128`.
+- Image downloads follow at most 2 redirects, each only to these CDN hosts; a redirect anywhere
+  else counts the emoji as `failed`.
 - Names become shortcodes by the rules above (Discord names are lowercased). Emoji whose
   shortcode exists already, whose image fails the upload checks, or that do not fit the plan
   limit are skipped.

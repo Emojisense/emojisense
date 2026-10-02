@@ -52,6 +52,18 @@ describe("GET /v1/custom/:appId/:emojiId", () => {
     expect(bucket.gets).toHaveLength(1);
   });
 
+  it("keeps the edge copy one day while browsers keep the image immutable", async () => {
+    const { h } = await setup();
+    await h.call(imageRequest(`/v1/custom/${APP}/e_parrot`));
+    await h.ctx.settle();
+    const url = `${API}/v1/custom/${APP}/e_parrot`;
+    expect(h.cache.puts).toEqual([url]);
+    expect(h.cache.store.get(url)?.headers.get("cache-control")).toBe("public, max-age=86400");
+    const again = await h.call(imageRequest(`/v1/custom/${APP}/e_parrot`));
+    expect(again.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(again.headers.get("content-security-policy")).toContain("sandbox");
+  });
+
   it("answers 404 for unknown emoji, another app's emoji and missing objects", async () => {
     const { h } = await setup();
     expect((await h.call(imageRequest(`/v1/custom/${APP}/nope`))).status).toBe(404);

@@ -42,15 +42,34 @@ export const IMPORT_BATCH = 50;
 /** Parallel image downloads per call. */
 const DOWNLOAD_CONCURRENCY = 6;
 const DOWNLOAD_TIMEOUT_MS = 10_000;
+/** Redirects followed per image, each to a provider CDN only. */
+const MAX_REDIRECTS = 2;
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
 type Outcome = "imported" | EmojiImportSkipReason;
 
+/**
+ * Downloads one image from a provider CDN. Redirects are followed by hand (`redirect: "manual"`)
+ * and only to provider CDN hosts again, so a listed URL can never lead the Worker to another
+ * host (a private address, an internal service).
+ */
 async function download(fetch: Deps["fetch"], url: string): Promise<Uint8Array | "failed" | "too_large"> {
-  if (!isProviderImageUrl(url)) return "failed";
+  const signal = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS);
+  let current = url;
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
-    if (!response.ok) return "failed";
-    return (await readCapped(response.body, CUSTOM_EMOJI_MAX_BYTES)) ?? "too_large";
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      if (!isProviderImageUrl(current)) return "failed";
+      const response = await fetch(current, { redirect: "manual", signal });
+      if (!REDIRECT_STATUSES.has(response.status)) {
+        if (!response.ok) return "failed";
+        return (await readCapped(response.body, CUSTOM_EMOJI_MAX_BYTES)) ?? "too_large";
+      }
+      await response.body?.cancel().catch(() => {});
+      const location = response.headers.get("location");
+      if (!location) return "failed";
+      current = new URL(location, current).href;
+    }
+    return "failed";
   } catch {
     return "failed";
   }

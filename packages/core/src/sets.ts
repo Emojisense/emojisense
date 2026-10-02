@@ -17,14 +17,26 @@ export interface EmojiImageOptions {
   endpoint?: string | undefined;
   /** Default "native". */
   emojiSet?: EmojiSet | undefined;
+  /**
+   * Publishable key (`pk_live_…`). Hosted sets need a key whose plan includes them; the API
+   * checks it against the page's origin (the `Referer` of the image request).
+   */
+  key?: string | undefined;
 }
+
+/**
+ * Referrer policy for hosted set images: sends the page's origin (never its path) even when the
+ * page's own policy is stricter, so the API can check the key's allowed origins.
+ */
+export const EMOJI_IMAGE_REFERRER_POLICY = "strict-origin-when-cross-origin";
 
 /**
  * The image URL of an emoji (skin tone included) in a hosted set. Returns undefined for the
  * "native" set or without an endpoint: draw the emoji as text then.
  */
 export function emojiImageUrl(emoji: string, options: EmojiImageOptions): string | undefined {
-  const { endpoint, emojiSet = "native" } = options;
+  const { endpoint, emojiSet = "native", key } = options;
   if (emojiSet === "native" || !endpoint) return undefined;
-  return `${endpoint.replace(/\/+$/, "")}/v1/sets/${emojiSet}/${hexcodeOf(emoji)}.svg`;
+  const query = key ? `?key=${encodeURIComponent(key)}` : "";
+  return `${endpoint.replace(/\/+$/, "")}/v1/sets/${emojiSet}/${hexcodeOf(emoji)}.svg${query}`;
 }

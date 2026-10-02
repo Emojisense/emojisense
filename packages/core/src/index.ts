@@ -83,6 +83,7 @@ export {
   type SessionStatus,
 } from "./session.js";
 export {
+  EMOJI_IMAGE_REFERRER_POLICY,
   EMOJI_SETS,
   type EmojiImageOptions,
   type EmojiSet,

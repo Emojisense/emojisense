@@ -47,6 +47,8 @@ export interface Harness {
   clerkSignIn(login?: string): Promise<string>;
   /** Awaits the work handed to `waitUntil` (webhook deliveries), including work it started. */
   settle(): Promise<void>;
+  /** URLs deleted from the fake Cache API (`deps.cache`). */
+  purged: string[];
 }
 
 interface HarnessOptions {
@@ -68,6 +70,7 @@ export function createHarness(overrides: Partial<Env> = {}, options: HarnessOpti
     throw new Error("unexpected network call");
   });
   const background: Promise<unknown>[] = [];
+  const purged: string[] = [];
   const deps: Deps = {
     fetch: fetchMock,
     now: () => clock.now,
@@ -75,6 +78,7 @@ export function createHarness(overrides: Partial<Env> = {}, options: HarnessOpti
     // Webhook retries run at once in tests.
     sleep: async () => {},
     clerk: clerkFactory,
+    cache: { delete: async (url) => purged.push(url) > 0 },
   };
   async function settle(): Promise<void> {
     while (background.length > 0) await Promise.all(background.splice(0));
@@ -111,7 +115,7 @@ export function createHarness(overrides: Partial<Env> = {}, options: HarnessOpti
     return `Bearer ${token}`;
   }
 
-  return { db, env, clerk, clock, fetchMock, call, signIn, clerkSignIn, settle };
+  return { db, env, clerk, clock, fetchMock, call, signIn, clerkSignIn, settle, purged };
 }
 
 export function setCookies(response: Response): string[] {

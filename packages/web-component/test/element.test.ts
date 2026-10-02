@@ -163,6 +163,17 @@ describe("<emojisense-picker>", () => {
     expect($$(picker, "img")).toEqual([]);
   });
 
+  it("sends the key and the page's origin with hosted set images", async () => {
+    const picker = await mount({ "emoji-set": "noto", endpoint: "https://api.test", key: "pk_live_abc" });
+    const image = $(picker, "#b0 img");
+    expect(image.getAttribute("src")).toBe("https://api.test/v1/sets/noto/1F600.svg?key=pk_live_abc");
+    expect(image.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
+    picker.setAttribute("publishable-key", "pk_live_new");
+    expect($(picker, "#b0 img").getAttribute("src")).toBe(
+      "https://api.test/v1/sets/noto/1F600.svg?key=pk_live_new",
+    );
+  });
+
   it("draws text for a hosted set without an endpoint", async () => {
     const picker = await mount({ "emoji-set": "twemoji" });
     expect($$(picker, "img")).toEqual([]);

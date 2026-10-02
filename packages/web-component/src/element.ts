@@ -7,6 +7,7 @@ import {
   createLayeredSemantic,
   createSearchSession,
   deviceRegion,
+  EMOJI_IMAGE_REFERRER_POLICY,
   type EmojiEntry,
   type EmojiSet,
   emojiImageUrl,
@@ -277,7 +278,8 @@ export class EmojisensePickerElement extends Base {
 
   /**
    * `native` (default) draws the system font. `twemoji`, `noto` and `fluent` draw images hosted
-   * at `{endpoint}/v1/sets/{set}/{hexcode}.svg`, so they need `endpoint`.
+   * at `{endpoint}/v1/sets/{set}/{hexcode}.svg`, so they need `endpoint` and a `key` whose plan
+   * includes hosted sets.
    */
   get emojiSet(): EmojiSet {
     const set = this.getAttribute("emoji-set");
@@ -410,7 +412,7 @@ export class EmojisensePickerElement extends Base {
     else if (name === "emoji-set") this.#redrawGlyphs(() => true);
     else if (name === "placeholder") this.#applyPlaceholder();
     else {
-      if (name === "endpoint") this.#redrawGlyphs(() => true);
+      if (name === "endpoint" || name === "key" || name === "publishable-key") this.#redrawGlyphs(() => true);
       this.#schedule();
     }
   }
@@ -762,13 +764,21 @@ export class EmojisensePickerElement extends Base {
    */
   #drawGlyph(option: HTMLElement, item: Item) {
     const emoji = this.#glyph(item);
-    const src = item.imageUrl ?? emojiImageUrl(emoji, { emojiSet: this.emojiSet, endpoint: this.endpoint });
+    const src =
+      item.imageUrl ??
+      emojiImageUrl(emoji, {
+        emojiSet: this.emojiSet,
+        endpoint: this.endpoint,
+        key: this.publishableKey || undefined,
+      });
     if (!src) {
       option.textContent = emoji;
       return;
     }
     const image = element("img", { src, alt: emoji, loading: "lazy", decoding: "async", part: "image" });
     image.setAttribute("draggable", "false");
+    // The API checks a set image's key against the page's origin, sent as the Referer.
+    if (!item.imageUrl) image.setAttribute("referrerpolicy", EMOJI_IMAGE_REFERRER_POLICY);
     image.addEventListener("error", () => image.replaceWith(emoji), { once: true });
     option.replaceChildren(image);
   }

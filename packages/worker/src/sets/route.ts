@@ -44,7 +44,7 @@ export type EmojiSetsRoute = (
  * GET /v1/sets/:set/:hexcode.svg. Only emoji of the pack (and their single-tone variants) map to
  * a file, and only to a file of the pinned upstream commit, so the route never fetches a URL a
  * caller chose. Each file is fetched once per edge location and kept in the Cache API.
- * Public: no key, not metered, not rate limited (a picker loads hundreds of images).
+ * The caller's key is checked before this route runs (access.ts); not metered, not rate limited.
  */
 export function createEmojiSetsRoute(options: EmojiSetsOptions): EmojiSetsRoute {
   const doFetch = options.fetch ?? ((input, init) => fetch(input, init));

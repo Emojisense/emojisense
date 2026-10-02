@@ -9,6 +9,8 @@ import type { Catalog } from "./semantic.ts";
 export interface CacheLike {
   match(request: Request): Promise<Response | undefined>;
   put(request: Request, response: Response): Promise<void>;
+  /** Purges custom emoji images when they are deleted (this data center only). */
+  delete(url: string): Promise<boolean>;
 }
 
 /**
