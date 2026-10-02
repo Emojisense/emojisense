@@ -39,3 +39,30 @@ jobs:
         run: pnpm eval:inhouse
       - name: Culture gate (no top-1 change with every approved entry active)
         run: pnpm --filter @emojisense/eval culture:gate
+
+  kotlin:
+    # The Kotlin SDK against the TypeScript engine of this commit. Node 24.5.0 is pinned: the golden
+    # file must come from the Unicode version of the SDK's tables (16.0).
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.5.0
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build the packs and the reference results (golden.json) of this commit
+        run: |
+          pnpm exec turbo run build --filter=@emojisense/data
+          pnpm exec tsx sdks/swift/scripts/make-golden.ts
+      - name: Test (unit tests and conformance with the TypeScript engine)
+        working-directory: sdks/kotlin
+        run: ./gradlew test --no-daemon
