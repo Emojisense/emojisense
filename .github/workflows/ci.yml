@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Core bundle size (≤ 15 KB gz)
+        run: pnpm --filter emojisense size
+      - name: Build data pack from committed enrichment
+        run: pnpm data:build
+      - name: Eval gate (recall@5 may not drop > 2 points)
+        run: pnpm eval:ci

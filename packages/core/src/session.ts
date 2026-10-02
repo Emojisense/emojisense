@@ -9,6 +9,8 @@ export interface SessionState {
   results: SearchResult[];
   alias: AliasSearchOutput;
   status: SessionStatus;
+  /** Time spent in the alias engine for this query, ms. */
+  aliasMs: number;
   /** Round-trip time of the last semantic request, when one finished. */
   semanticMs?: number;
   semanticCached?: boolean;
@@ -60,12 +62,15 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
   return {
     update(query) {
       cancel();
+      const aliasStarted = performance.now();
       const alias = engine.search(query, { limit, ...(locale ? { locale } : {}) });
+      const aliasMs = performance.now() - aliasStarted;
       const wantsSemantic = semantic !== undefined && shouldUseSemantic(alias);
       onChange({
         query,
         results: alias.results,
         alias,
+        aliasMs,
         status: alias.tokens.length === 0 ? "idle" : wantsSemantic ? "loading" : "alias",
       });
       if (!wantsSemantic) return;
@@ -85,13 +90,14 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
             query,
             results: fuse(alias, response.results, limit),
             alias,
+            aliasMs,
             status: "fused",
             semanticMs: performance.now() - started,
             semanticCached: response.cached,
           });
         } catch (error) {
           if (controller.signal.aborted) return;
-          onChange({ query, results: alias.results, alias, status: "error", error });
+          onChange({ query, results: alias.results, alias, aliasMs, status: "error", error });
         }
       }, debounceMs);
     },

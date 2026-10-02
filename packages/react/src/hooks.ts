@@ -79,6 +79,8 @@ export interface EmojiSearchState {
   results: SearchResult[];
   status: SessionStatus;
   alias: AliasSearchOutput | undefined;
+  /** Alias engine time for the current query, ms. */
+  aliasMs: number | undefined;
   /** Round trip of the last semantic request, ms. */
   semanticMs: number | undefined;
   semanticCached: boolean | undefined;
@@ -93,6 +95,7 @@ const IDLE: EmojiSearchState = {
   results: [],
   status: "idle",
   alias: undefined,
+  aliasMs: undefined,
   semanticMs: undefined,
   semanticCached: undefined,
 };
@@ -125,6 +128,7 @@ export function useEmojiSearch(
           results: s.results,
           status: s.status,
           alias: s.alias,
+          aliasMs: s.aliasMs,
           semanticMs: s.semanticMs,
           semanticCached: s.semanticCached,
         }),
