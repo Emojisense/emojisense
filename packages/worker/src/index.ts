@@ -1,5 +1,12 @@
 import { getModel } from "@emojisense/data/models";
-import { type AliasEngine, createEngine, decodeVectors, type Pack, type VectorIndex } from "emojisense";
+import {
+  type AliasEngine,
+  createEngine,
+  decodeVectors,
+  type Pack,
+  type PackRow,
+  type VectorIndex,
+} from "emojisense";
 import { createApp } from "./app.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
@@ -41,6 +48,7 @@ const app = createApp({
   catalog,
   cache: () => caches.default,
   store: (env) => (env.DB ? createD1Store(env.DB) : undefined),
+  emojiSets: { rows: () => packEn.emoji as unknown as PackRow[] },
 });
 
 export default {

@@ -8,6 +8,7 @@ import { QueryStats } from "./query-stats.ts";
 import { handleReactions } from "./reactions.ts";
 import { handleSearch } from "./search.ts";
 import { type Catalog, modelTag } from "./semantic.ts";
+import { createEmojiSetsRoute, type EmojiSetsOptions, SETS_PATH_PREFIX } from "./sets/route.ts";
 import type { Store } from "./store.ts";
 
 export interface AppOptions {
@@ -16,6 +17,8 @@ export interface AppOptions {
   cache: () => CacheLike;
   /** The usage and key store for this environment; undefined = dev keys only, memory metering. */
   store?: (env: Env) => Store | undefined;
+  /** Hosted emoji sets (`/v1/sets/*`); undefined answers 404. */
+  emojiSets?: EmojiSetsOptions;
   now?: () => number;
 }
 
@@ -31,6 +34,7 @@ const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
  */
 export function createApp(options: AppOptions) {
   const { catalog } = options;
+  const emojiSets = options.emojiSets ? createEmojiSetsRoute(options.emojiSets) : undefined;
   let services: { resolver: KeyResolver; meter: Meter; queryStats: QueryStats } | undefined;
   const servicesFor = (env: Env) => {
     if (!services) {
@@ -66,6 +70,10 @@ export function createApp(options: AppOptions) {
           model: modelTag(catalog),
           semantic: Boolean(env.AI),
         });
+      }
+      // Public images: no key, not metered, not rate limited (a picker loads hundreds of them).
+      if (url.pathname.startsWith(SETS_PATH_PREFIX)) {
+        return emojiSets ? emojiSets(request, url, ctx, options.cache()) : errorResponse(404, "not found");
       }
       const route = ROUTES[url.pathname];
       if (!route) return errorResponse(404, "not found");
