@@ -1,5 +1,6 @@
 import type { Metric } from "@emojisense/platform";
 import type { Principal } from "./auth.ts";
+import type { CustomEmojiIndex } from "./custom.ts";
 import type { Env } from "./env.ts";
 import type { Meter, WaitUntil } from "./meter.ts";
 import type { QueryStats } from "./query-stats.ts";
@@ -32,6 +33,8 @@ export interface Metering {
 export interface Deps {
   catalog: Catalog;
   cache: CacheLike;
+  /** Per-isolate custom emoji of the caller's app (search merge, custom pack). */
+  custom: CustomEmojiIndex;
 }
 
 export type Handler = (
@@ -40,6 +43,8 @@ export type Handler = (
   ctx: WaitUntil,
   deps: Deps,
   metering: Metering,
+  /** Who is calling: a key (and its app) or anonymous. */
+  caller: Principal,
 ) => Promise<Response>;
 
 export function createMetering(

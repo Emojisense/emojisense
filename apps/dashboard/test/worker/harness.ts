@@ -11,6 +11,8 @@ export const NOW = Date.UTC(2026, 9, 15, 12);
 
 interface CallOptions {
   body?: unknown;
+  /** A multipart body (custom emoji uploads) instead of JSON. */
+  form?: FormData;
   cookie?: string;
   /** Defaults to the dashboard origin on writes (as browsers send it) and to none on GET. */
   origin?: string | null;
@@ -55,7 +57,7 @@ export function createHarness(overrides: Partial<Env> = {}): Harness {
     if (options.cookie) headers.set("cookie", options.cookie);
     const origin = options.origin === undefined ? (method === "GET" ? null : base) : options.origin;
     if (origin) headers.set("origin", origin);
-    let body: string | undefined;
+    let body: string | FormData | undefined = options.form;
     if (options.body !== undefined) {
       headers.set("content-type", "application/json");
       body = JSON.stringify(options.body);

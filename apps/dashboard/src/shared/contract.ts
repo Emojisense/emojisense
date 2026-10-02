@@ -3,6 +3,7 @@
  * the SPA consumes them, so both import from here. Times are Unix epoch milliseconds.
  */
 import type {
+  CustomEmoji,
   EmojiSet,
   KeyKind,
   Metric,
@@ -309,4 +310,32 @@ export interface WebhookDeliveriesResponse {
 /** `POST /api/webhooks/:id/test`: one `webhook.test` event, sent at once, no retries. */
 export interface WebhookTestResponse {
   delivery: WebhookDeliverySummary;
+}
+
+/** `{ id, shortcode, aliases, imageUrl, tenantId, source, bytes, createdAt }` (product contract). */
+export type { CustomEmoji };
+
+/**
+ * `GET /api/apps/:id/emoji[?tenantId=]`, newest first. `used` counts every emoji of the app
+ * (tenants included) against the plan's `limit`; `null` = unlimited.
+ */
+export interface CustomEmojiListResponse {
+  emoji: CustomEmoji[];
+  used: number;
+  limit: number | null;
+}
+
+export type EmojiImportSkipReason = "alias" | "exists" | "invalid" | "limit" | "failed";
+
+/**
+ * `POST /api/apps/:id/emoji/import/slack|discord`. One call imports at most 50 new emoji; while
+ * `remaining > 0`, call again (already imported ones then count as `exists`).
+ */
+export interface EmojiImportResponse {
+  imported: number;
+  /** Sum of `skippedBy`. */
+  skipped: number;
+  /** New emoji that fit the plan but wait for the next call. */
+  remaining: number;
+  skippedBy: Record<EmojiImportSkipReason, number>;
 }

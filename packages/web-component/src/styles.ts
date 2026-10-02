@@ -162,6 +162,7 @@ export const styles: string = /* css */ `
   display: block;
   inline-size: 1em;
   block-size: 1em;
+  object-fit: contain;
   pointer-events: none;
 }
 

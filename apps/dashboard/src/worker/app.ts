@@ -5,6 +5,8 @@ import { getAnalytics } from "./routes/analytics";
 import { createApp, getApp, listApps, updateApp } from "./routes/apps";
 import { devSignIn, finishGitHubSignIn, logout, startGitHubSignIn } from "./routes/auth";
 import { getBilling, requestUpgrade } from "./routes/billing";
+import { deleteEmoji, listEmoji, updateEmoji, uploadEmoji } from "./routes/emoji";
+import { importDiscordEmoji, importSlackEmoji } from "./routes/emoji-import";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
 import { getMe } from "./routes/me";
 import { acceptInvite, createInvite, deleteInvite, getTeam, removeMember, updateMember } from "./routes/team";
@@ -44,6 +46,12 @@ const route = createRouter([
   { method: "POST", path: "/api/apps/:id/keys", handler: authed(createKey) },
   { method: "GET", path: "/api/apps/:id/usage", handler: authed(getUsage) },
   { method: "GET", path: "/api/apps/:id/analytics", handler: authed(getAnalytics) },
+  { method: "GET", path: "/api/apps/:id/emoji", handler: authed(listEmoji) },
+  { method: "POST", path: "/api/apps/:id/emoji", handler: authed(uploadEmoji) },
+  { method: "PATCH", path: "/api/apps/:id/emoji/:emojiId", handler: authed(updateEmoji) },
+  { method: "DELETE", path: "/api/apps/:id/emoji/:emojiId", handler: authed(deleteEmoji) },
+  { method: "POST", path: "/api/apps/:id/emoji/import/slack", handler: authed(importSlackEmoji) },
+  { method: "POST", path: "/api/apps/:id/emoji/import/discord", handler: authed(importDiscordEmoji) },
   { method: "GET", path: "/api/apps/:id/tenants", handler: authed(listAppTenants) },
   { method: "POST", path: "/api/apps/:id/tenants", handler: authed(createAppTenant) },
   { method: "GET", path: "/api/apps/:id/tenants/:tenantId", handler: authed(getAppTenant) },

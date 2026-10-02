@@ -44,6 +44,21 @@ export const enExt: Pack = {
   emoji: [["🚀", "1F680", 0, 1, 0, "", "", "", "to infinity and beyond", "", ""]],
 };
 
+export const PARROT_URL = "https://api.test/v1/custom/app1/e1";
+
+/** An app's custom emoji, as GET /v1/custom-pack serves them. */
+export const custom: Pack = {
+  format: "emojisense-pack",
+  formatVersion: 1,
+  packVersion: "custom-00000001",
+  locale: "und",
+  part: "custom",
+  emojiVersion: "",
+  groups: ["custom"],
+  emoji: [[":party_parrot:", "C-e1", 0, 0, 0, "party_parrot", "party parrot", "", "celebrate", "", ""]],
+  images: { "C-e1": PARROT_URL },
+};
+
 export function packFetchWithExt() {
   return async (url: string | URL | Request) => {
     const u = String(url);

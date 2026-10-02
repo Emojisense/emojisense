@@ -8,7 +8,7 @@ import {
   EmojiPickerFooter,
   EmojiPickerSearch,
 } from "../registry/emoji-picker.js";
-import { en, tr } from "./fixture.js";
+import { custom, en, PARROT_URL, tr } from "./fixture.js";
 
 describe("registry emoji-picker", () => {
   const ready = {
@@ -80,5 +80,25 @@ describe("registry emoji-picker", () => {
     expect(sources.filter((src) => src === `${API}/v1/sets/twemoji/1F996.svg`)).toHaveLength(2); // option, footer
     fireEvent.keyDown(input, { key: "Enter" });
     expect(onEmojiSelect).toHaveBeenCalledWith({ emoji: "🦖", label: "T-Rex" });
+  });
+
+  it("draws custom emoji results and the footer preview as images, and selects with imageUrl", async () => {
+    const onEmojiSelect = vi.fn();
+    const withCustom = { ...ready, engine: createEngine([en, tr, custom]), customPack: custom };
+    render(<Picker emojisense={withCustom} onEmojiSelect={onEmojiSelect} />);
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "celebrate" } });
+    await screen.findAllByRole("option");
+    const images = [...document.querySelectorAll("img")].filter(
+      (img) => img.getAttribute("src") === PARROT_URL,
+    );
+    expect(images.map((img) => img.getAttribute("alt"))).toEqual([":party_parrot:", ":party_parrot:"]);
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onEmojiSelect).toHaveBeenCalledWith({
+      emoji: ":party_parrot:",
+      label: ":party_parrot:",
+      imageUrl: PARROT_URL,
+      shortcode: "party_parrot",
+    });
   });
 });

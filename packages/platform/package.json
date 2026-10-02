@@ -14,5 +14,8 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
   }
 }

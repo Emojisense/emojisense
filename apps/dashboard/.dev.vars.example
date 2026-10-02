@@ -6,6 +6,9 @@ ENVIRONMENT=development
 # Website origins that may POST /api/waitlist (comma-separated).
 WEBSITE_ORIGINS=http://localhost:5173,http://localhost:4321
 
+# The local API Worker, which serves custom emoji images (pnpm --filter @emojisense/worker dev:offline).
+API_URL=http://localhost:8788
+
 # GitHub OAuth app for local sign-in. Callback URL: http://localhost:8790/api/auth/github/callback
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=

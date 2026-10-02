@@ -41,6 +41,26 @@ type EmojiData = Awaited<ReturnType<EmojiDataResolver>>;
 const TONES = SKIN_TONES.filter((t): t is Exclude<SkinTone, "none"> => t !== "none");
 
 /**
+ * What `onEmojiSelect` gets: Frimousse's `{ emoji, label }`. A custom emoji has `emoji`
+ * `:shortcode:` and adds `imageUrl` and `shortcode`.
+ */
+export interface EmojiSelection {
+  emoji: string;
+  label: string;
+  imageUrl?: string;
+  shortcode?: string;
+}
+
+function selectionOf(result: SearchResult, skinTone: SkinTone, label: string): EmojiSelection {
+  return {
+    emoji: applySkinTone(result.emoji, skinTone),
+    label,
+    ...(result.imageUrl ? { imageUrl: result.imageUrl } : {}),
+    ...(result.shortcode ? { shortcode: result.shortcode } : {}),
+  };
+}
+
+/**
  * A Frimousse `resolveEmojiData` built from Emojisense packs: localized labels (Turkish
  * included) and keywords for the browse view and Frimousse's own fallback filter.
  */
@@ -91,7 +111,7 @@ export function useEmojisenseResolver(packs: Pack[]): { key: string; resolveEmoj
 export interface EmojisenseResultsProps
   extends Omit<ComponentProps<"div">, "children" | "onSelect" | "results"> {
   results: SearchResult[];
-  onSelect: (emoji: { emoji: string; label: string }) => void;
+  onSelect: (emoji: EmojiSelection) => void;
   /** Label lookup for accessible names. */
   labelOf?: (result: SearchResult) => string;
   activeIndex: number;
@@ -132,8 +152,7 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
       {...rest}
     >
       {results.map((result, index) => {
-        const emoji = applySkinTone(result.emoji, skinTone);
-        const label = labelOf(result);
+        const selection = selectionOf(result, skinTone, labelOf(result));
         return (
           <button
             key={result.id}
@@ -141,14 +160,19 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
             role="option"
             id={`${listboxId}-${index}`}
             aria-selected={index === activeIndex}
-            aria-label={label}
+            aria-label={selection.label}
             tabIndex={-1}
             data-active={index === activeIndex ? "" : undefined}
             data-source={result.source}
             onMouseEnter={() => onActiveIndexChange(index)}
-            onClick={() => onSelect({ emoji, label })}
+            onClick={() => onSelect(selection)}
           >
-            <EmojiGlyph emoji={emoji} emojiSet={emojiSet} endpoint={endpoint} />
+            <EmojiGlyph
+              emoji={selection.emoji}
+              imageUrl={selection.imageUrl}
+              emojiSet={emojiSet}
+              endpoint={endpoint}
+            />
           </button>
         );
       })}
@@ -173,7 +197,7 @@ const LIST_COMPONENTS = { Emoji: ListEmoji };
 export interface EmojisensePickerProps
   extends Omit<EmojiPickerRootProps, "onEmojiSelect" | "resolveEmojiData" | "locale"> {
   emojisense: Emojisense;
-  onEmojiSelect: (emoji: { emoji: string; label: string }) => void;
+  onEmojiSelect: (emoji: EmojiSelection) => void;
   placeholder?: string;
   /** Rendered when a query has no results. */
   empty?: ReactNode;
@@ -271,7 +295,7 @@ interface SearchInputProps {
   setActiveIndex: (i: number) => void;
   columns: number;
   listboxId: string;
-  onSelect: (emoji: { emoji: string; label: string }) => void;
+  onSelect: (emoji: EmojiSelection) => void;
   labelOf: (r: SearchResult) => string;
 }
 
@@ -299,8 +323,7 @@ function SearchInput(props: SearchInputProps) {
       event.preventDefault();
       event.stopPropagation();
       const result = results[activeIndex];
-      if (result)
-        props.onSelect({ emoji: applySkinTone(result.emoji, skinTone), label: props.labelOf(result) });
+      if (result) props.onSelect(selectionOf(result, skinTone, props.labelOf(result)));
     }
   };
 

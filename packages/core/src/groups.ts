@@ -13,6 +13,7 @@ const GROUP_LABELS: Record<string, Record<string, string>> = {
     objects: "Objects",
     symbols: "Symbols",
     flags: "Flags",
+    custom: "Custom",
   },
   tr: {
     "smileys-emotion": "İfadeler ve duygular",
@@ -24,6 +25,7 @@ const GROUP_LABELS: Record<string, Record<string, string>> = {
     objects: "Nesneler",
     symbols: "Semboller",
     flags: "Bayraklar",
+    custom: "Özel",
   },
 };
 

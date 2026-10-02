@@ -1,6 +1,9 @@
 import type { WebhookRuntime } from "@emojisense/platform";
 import { authenticate, KeyResolver } from "./auth.ts";
 import { type CacheLike, createMetering, type Handler } from "./context.ts";
+import { CustomEmojiIndex } from "./custom.ts";
+import { CUSTOM_IMAGE_PATH, handleCustomImage, handleCustomPack } from "./custom-routes.ts";
+import type { CustomEmojiReader } from "./custom-store.ts";
 import type { Env } from "./env.ts";
 import { corsHeaders, errorResponse, json } from "./http.ts";
 import { handleClassifyImage } from "./image.ts";
@@ -22,6 +25,8 @@ export interface AppOptions {
   store?: (env: Env) => Store | undefined;
   /** Hosted emoji sets (`/v1/sets/*`); undefined answers 404. */
   emojiSets?: EmojiSetsOptions;
+  /** Custom emoji rows (images come from env.EMOJI); undefined = no custom emoji. */
+  customEmoji?: (env: Env) => CustomEmojiReader | undefined;
   now?: () => number;
   /** Outgoing webhook requests. Defaults to the global fetch; tests replace it. */
   fetch?: (url: string, init: RequestInit) => Promise<Response>;
@@ -33,6 +38,7 @@ const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
   "/v1/search": { method: "GET", handle: handleSearch },
   "/v1/suggest-reactions": { method: "POST", handle: handleReactions },
   "/v1/classify-image": { method: "POST", handle: handleClassifyImage },
+  "/v1/custom-pack": { method: "GET", handle: handleCustomPack },
 };
 
 /**
@@ -42,7 +48,9 @@ const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
 export function createApp(options: AppOptions) {
   const { catalog } = options;
   const emojiSets = options.emojiSets ? createEmojiSetsRoute(options.emojiSets) : undefined;
-  let services: { resolver: KeyResolver; meter: Meter; queryStats: QueryStats } | undefined;
+  let services:
+    | { resolver: KeyResolver; meter: Meter; queryStats: QueryStats; custom: CustomEmojiIndex }
+    | undefined;
   const servicesFor = (env: Env) => {
     if (!services) {
       const store = options.store?.(env);
@@ -55,6 +63,7 @@ export function createApp(options: AppOptions) {
           onFlushed: (flushed, ctx) => alertUsageThresholds(webhooksFor(env, ctx), flushed),
         }),
         queryStats: new QueryStats({ store, ...(now ? { now } : {}) }),
+        custom: new CustomEmojiIndex({ reader: options.customEmoji?.(env), ...(now ? { now } : {}) }),
       };
     }
     return services;
@@ -99,6 +108,14 @@ export function createApp(options: AppOptions) {
       if (url.pathname.startsWith(SETS_PATH_PREFIX)) {
         return emojiSets ? emojiSets(request, url, ctx, options.cache()) : errorResponse(404, "not found");
       }
+      // Custom emoji images are `<img src>` targets too, edge-cached.
+      const image = CUSTOM_IMAGE_PATH.exec(url.pathname);
+      if (image) {
+        if (request.method !== "GET") return errorResponse(405, "method not allowed", { Allow: "GET" });
+        const [, appId = "", emojiId = ""] = image;
+        const { custom } = servicesFor(env);
+        return handleCustomImage(request, env, ctx, { cache: options.cache(), custom }, { appId, emojiId });
+      }
       if (isTenantsPath(url.pathname)) {
         const principal = await authenticate(request, url, env, servicesFor(env).resolver);
         if (principal instanceof Response) return principal;
@@ -117,11 +134,18 @@ export function createApp(options: AppOptions) {
         return errorResponse(405, "method not allowed", { Allow: `${route.method}, OPTIONS` });
       }
 
-      const { resolver, meter, queryStats } = servicesFor(env);
+      const { resolver, meter, queryStats, custom } = servicesFor(env);
       const principal = await authenticate(request, url, env, resolver);
       if (principal instanceof Response) return principal;
       const metering = createMetering(principal, meter, queryStats, ctx);
-      return route.handle(request, env, ctx, { catalog, cache: options.cache() }, metering);
+      return route.handle(
+        request,
+        env,
+        ctx,
+        { catalog, cache: options.cache(), custom },
+        metering,
+        principal,
+      );
     },
   };
 }

@@ -9,6 +9,7 @@ import {
   emojiImageUrl,
   groupLabel,
   isEmojiSet,
+  loadCustomPack,
   loadPacks,
   type Pack,
   type SearchSession,
@@ -21,12 +22,16 @@ import { type GridLayout, isGridKey, layoutRows, moveActive } from "./grid.js";
 import { styles } from "./styles.js";
 
 export interface EmojiSelectDetail {
-  /** The emoji with the picker's skin tone applied. */
+  /** The emoji with the picker's skin tone applied; `:shortcode:` for a custom emoji. */
   emoji: string;
   /** Label in the picker's locale. */
   label: string;
-  /** Emojibase hexcode of the base emoji, stable across skin tones (e.g. "1F44D"). */
+  /** Emojibase hexcode of the base emoji, stable across skin tones (e.g. "1F44D"); `C-<id>` for custom. */
   id: string;
+  /** Custom emoji only: the image to insert or show. */
+  imageUrl?: string;
+  /** Custom emoji only: the shortcode without colons. */
+  shortcode?: string;
 }
 
 export type EmojiSelectEvent = CustomEvent<EmojiSelectDetail>;
@@ -46,6 +51,9 @@ interface Item {
   id: string;
   label: string;
   hasSkinTones: boolean;
+  /** Custom emoji: drawn from this image, whatever the emoji set. */
+  imageUrl?: string | undefined;
+  shortcode?: string | undefined;
 }
 
 interface View {
@@ -93,6 +101,8 @@ const UPGRADED_PROPERTIES = [
   "emojiSet",
   "placeholder",
   "packs",
+  "customEmoji",
+  "tenant",
 ] as const;
 
 // Importing this module during server rendering must not throw.
@@ -104,8 +114,9 @@ const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as ty
  * every keystroke, then shard or API results fused in when the dictionary is unsure.
  *
  * Attributes: `pack-url`, `shards-url`, `endpoint`, `key` (alias `publishable-key`), `locale`,
- * `columns`, `skin-tone`, `emoji-set`, `placeholder`. Event: `emoji-select` with
- * `{ emoji, label, id }`.
+ * `columns`, `skin-tone`, `emoji-set`, `placeholder`, `custom-emoji` (load the key's custom
+ * emoji from `endpoint`) and `tenant`. Custom emoji are drawn as images. Event: `emoji-select`
+ * with `{ emoji, label, id }`, plus `imageUrl` and `shortcode` for a custom emoji.
  */
 export class EmojisensePickerElement extends Base {
   static readonly observedAttributes = [
@@ -119,6 +130,8 @@ export class EmojisensePickerElement extends Base {
     "skin-tone",
     "emoji-set",
     "placeholder",
+    "custom-emoji",
+    "tenant",
   ];
 
   readonly #shadow: ShadowRoot;
@@ -135,6 +148,11 @@ export class EmojisensePickerElement extends Base {
   #sessionStatus: SessionStatus = "idle";
   #status: PickerStatus = "idle";
   #packs: Pack[] | undefined;
+  /** The locale packs in the engine; the custom pack is added on top. */
+  #basePacks: Pack[] | undefined;
+  #customPack: Pack | undefined;
+  #customKey: string | undefined;
+  #customLoading: AbortController | undefined;
   #engine: AliasEngine | undefined;
   #session: SearchSession | undefined;
   #packKey: unknown;
@@ -247,6 +265,22 @@ export class EmojisensePickerElement extends Base {
     this.setAttribute("placeholder", value);
   }
 
+  /** `custom-emoji`: load the custom emoji of `key` from `endpoint` (GET /v1/custom-pack). */
+  get customEmoji(): boolean {
+    return this.hasAttribute("custom-emoji");
+  }
+  set customEmoji(value: boolean) {
+    this.toggleAttribute("custom-emoji", Boolean(value));
+  }
+
+  /** The app owner's id for one of their customers: adds that tenant's custom emoji. */
+  get tenant(): string {
+    return this.getAttribute("tenant") ?? "";
+  }
+  set tenant(value: string) {
+    this.setAttribute("tenant", value);
+  }
+
   /** Packs to use instead of fetching `pack-url`, e.g. bundled with an offline app. */
   get packs(): Pack[] | undefined {
     return this.#packs;
@@ -286,6 +320,12 @@ export class EmojisensePickerElement extends Base {
     if (this.#status === "loading") this.#packKey = undefined;
     this.#loading?.abort();
     this.#cancelIdle?.();
+    if (this.#customLoading) {
+      // Reconnecting starts the custom pack request again.
+      this.#customLoading.abort();
+      this.#customLoading = undefined;
+      this.#customKey = undefined;
+    }
     this.#session?.dispose();
     this.#session = undefined;
   }
@@ -326,6 +366,7 @@ export class EmojisensePickerElement extends Base {
   }
 
   #configure() {
+    this.#configureCustomEmoji();
     const packKey = this.#packs ?? `${this.packUrl}\n${this.locale}`;
     if (packKey !== this.#packKey) {
       this.#packKey = packKey;
@@ -365,15 +406,56 @@ export class EmojisensePickerElement extends Base {
   }
 
   #usePacks(packs: Pack[], renderBrowse: boolean) {
-    this.#engine = createEngine(packs);
+    this.#basePacks = packs;
+    this.#engine = createEngine(this.#customPack ? [...packs, this.#customPack] : packs);
     this.#status = "ready";
     if (renderBrowse) this.#renderBrowse();
     this.#sessionKey = undefined;
     this.#connectSession();
   }
 
+  /**
+   * Loads the key's custom emoji when `custom-emoji`, `endpoint` and `key` are set, and adds
+   * them to the engine and the browse view when they arrive. They are optional: a failed
+   * request leaves the catalog as it is.
+   */
+  #configureCustomEmoji() {
+    const enabled = this.customEmoji && this.endpoint !== "" && this.publishableKey !== "";
+    const key = enabled ? [this.endpoint, this.publishableKey, this.tenant].join("\n") : "";
+    if (key === this.#customKey) return;
+    this.#customKey = key;
+    this.#customLoading?.abort();
+    this.#customLoading = undefined;
+    const use = (pack: Pack | undefined) => {
+      this.#customPack = pack;
+      if (this.#basePacks) this.#usePacks(this.#basePacks, true);
+    };
+    if (!enabled) {
+      if (this.#customPack) use(undefined);
+      return;
+    }
+    const controller = new AbortController();
+    this.#customLoading = controller;
+    loadCustomPack({
+      endpoint: this.endpoint,
+      key: this.publishableKey,
+      ...(this.tenant ? { tenant: this.tenant } : {}),
+      signal: controller.signal,
+    }).then(
+      (pack) => {
+        if (controller.signal.aborted) return;
+        this.#customLoading = undefined;
+        use(pack);
+      },
+      () => {
+        if (this.#customLoading === controller) this.#customLoading = undefined;
+      },
+    );
+  }
+
   #reset() {
     this.#loading?.abort();
+    this.#basePacks = undefined;
     this.#session?.dispose();
     this.#session = undefined;
     this.#engine = undefined;
@@ -489,6 +571,8 @@ export class EmojisensePickerElement extends Base {
       id: entry.id,
       label: entry.labels[this.locale] ?? entry.labels.en ?? entry.emoji,
       hasSkinTones: entry.hasSkinTones,
+      imageUrl: entry.imageUrl,
+      shortcode: entry.shortcode,
     };
   }
 
@@ -512,12 +596,13 @@ export class EmojisensePickerElement extends Base {
   }
 
   /**
-   * The emoji as text, or as `<img src alt loading="lazy">` of the hosted set. A set may not draw
-   * every emoji (Fluent has no country flags), so a failed image gives way to the text.
+   * The emoji as text, or as `<img src alt loading="lazy">`: a custom emoji's image (alt
+   * `:shortcode:`) or the hosted set's. A set may not draw every emoji (Fluent has no country
+   * flags), so a failed image gives way to the text.
    */
   #drawGlyph(option: HTMLElement, item: Item) {
     const emoji = this.#glyph(item);
-    const src = emojiImageUrl(emoji, { emojiSet: this.emojiSet, endpoint: this.endpoint });
+    const src = item.imageUrl ?? emojiImageUrl(emoji, { emojiSet: this.emojiSet, endpoint: this.endpoint });
     if (!src) {
       option.textContent = emoji;
       return;
@@ -604,7 +689,13 @@ export class EmojisensePickerElement extends Base {
   #select(view: View, index: number) {
     const item = view.items[index];
     if (!item) return;
-    const detail: EmojiSelectDetail = { emoji: this.#glyph(item), label: item.label, id: item.id };
+    const detail: EmojiSelectDetail = {
+      emoji: this.#glyph(item),
+      label: item.label,
+      id: item.id,
+      ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
+      ...(item.shortcode ? { shortcode: item.shortcode } : {}),
+    };
     this.dispatchEvent(new CustomEvent("emoji-select", { detail, bubbles: true, composed: true }));
   }
 

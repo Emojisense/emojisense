@@ -5,6 +5,7 @@ import { vi } from "vitest";
 import { createApp } from "../src/app.ts";
 import { VISION_MODEL } from "../src/config.ts";
 import type { CacheLike } from "../src/context.ts";
+import type { CustomEmojiReader } from "../src/custom-store.ts";
 import type { AiBinding, Env } from "../src/env.ts";
 import type { Catalog } from "../src/semantic.ts";
 import { type ApiKey, createMemoryStore, type Store } from "../src/store.ts";
@@ -209,6 +210,7 @@ export interface Harness {
 export function harness(
   options: {
     store?: Store;
+    customEmoji?: CustomEmojiReader;
     env?: Partial<Env>;
     now?: () => number;
     embedTo?: number;
@@ -232,6 +234,7 @@ export function harness(
     catalog: options.catalog ?? catalog,
     cache: () => cache,
     store: () => options.store,
+    customEmoji: () => options.customEmoji,
     ...(options.now ? { now: options.now } : {}),
     ...(options.fetch ? { fetch: options.fetch } : {}),
     ...(options.sleep ? { sleep: options.sleep } : {}),

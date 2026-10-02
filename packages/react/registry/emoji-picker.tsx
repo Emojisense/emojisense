@@ -2,7 +2,7 @@
 
 import { EmojiGlyph, type Emojisense, useEmojiSearch } from "@emojisense/react";
 import { useEmojisenseResolver } from "@emojisense/react/frimousse";
-import { applySkinTone, type EmojiSet, type SearchResult } from "emojisense";
+import { applySkinTone, type EmojiSet, type SearchResult, type SkinTone } from "emojisense";
 import {
   type EmojiPickerListCategoryHeaderProps,
   type EmojiPickerListEmojiProps,
@@ -14,7 +14,17 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-type SelectedEmoji = { emoji: string; label: string };
+// A custom emoji has emoji ":shortcode:" plus its image and shortcode.
+type SelectedEmoji = { emoji: string; label: string; imageUrl?: string; shortcode?: string };
+
+function selectionOf(result: SearchResult, skinTone: SkinTone, label: string): SelectedEmoji {
+  return {
+    emoji: applySkinTone(result.emoji, skinTone),
+    label,
+    ...(result.imageUrl ? { imageUrl: result.imageUrl } : {}),
+    ...(result.shortcode ? { shortcode: result.shortcode } : {}),
+  };
+}
 
 // Keycap-like tiles drawn only with the app's theme tokens: the active key gets an outline and
 // a hard bottom edge, and sinks a pixel when pressed.
@@ -154,7 +164,7 @@ function EmojiPickerSearch({
     } else if (event.key === "Enter") {
       event.preventDefault();
       const result = results[activeIndex];
-      if (result) onEmojiSelect({ emoji: applySkinTone(result.emoji, skinTone), label: labelOf(result) });
+      if (result) onEmojiSelect(selectionOf(result, skinTone, labelOf(result)));
     }
   };
 
@@ -254,8 +264,7 @@ function EmojiPickerResults({ empty }: { empty: React.ReactNode }) {
       style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
     >
       {results.map((result, index) => {
-        const emoji = applySkinTone(result.emoji, skinTone);
-        const label = labelOf(result);
+        const selection = selectionOf(result, skinTone, labelOf(result));
         const active = index === activeIndex;
         return (
           <button
@@ -264,15 +273,15 @@ function EmojiPickerResults({ empty }: { empty: React.ReactNode }) {
             role="option"
             id={`${listboxId}-${index}`}
             aria-selected={active}
-            aria-label={label}
+            aria-label={selection.label}
             tabIndex={-1}
             data-active={active ? "" : undefined}
             data-source={result.source}
             className={emojiTile}
             onPointerEnter={() => setActiveIndex(index)}
-            onClick={() => onEmojiSelect({ emoji, label })}
+            onClick={() => onEmojiSelect(selection)}
           >
-            <EmojiGlyph emoji={emoji} {...glyph} />
+            <EmojiGlyph emoji={selection.emoji} imageUrl={selection.imageUrl} {...glyph} />
           </button>
         );
       })}
@@ -342,7 +351,7 @@ function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">)
     emoji ? (
       <>
         <div className="flex size-7 flex-none items-center justify-center text-lg">
-          <EmojiGlyph emoji={emoji.emoji} {...glyph} />
+          <EmojiGlyph emoji={emoji.emoji} imageUrl={emoji.imageUrl} {...glyph} />
         </div>
         <span className="text-secondary-foreground truncate text-xs">{emoji.label}</span>
       </>
@@ -363,7 +372,7 @@ function EmojiPickerFooter({ className, ...props }: React.ComponentProps<"div">)
     >
       <div className="flex min-w-0 flex-1 items-center gap-1">
         {result ? (
-          preview({ emoji: applySkinTone(result.emoji, skinTone), label: labelOf(result) })
+          preview(selectionOf(result, skinTone, labelOf(result)))
         ) : (
           <EmojiPickerPrimitive.ActiveEmoji>{({ emoji }) => preview(emoji)}</EmojiPickerPrimitive.ActiveEmoji>
         )}

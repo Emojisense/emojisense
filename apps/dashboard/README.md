@@ -84,6 +84,8 @@ email. It uses the access token once and never stores it.
 | `WAITLIST_LIMITER` | rate limit | 5 waitlist posts per minute per IP (the IP is only the in-memory key) |
 | `ENVIRONMENT` | var | `development` enables dev sign-in on localhost. Default `production`. |
 | `WEBSITE_ORIGINS` | var | Comma-separated website origins that may POST `/api/waitlist` (CORS) |
+| `EMOJI` | R2 binding | Custom emoji images, bucket `emojisense-emoji`, shared with the API Worker |
+| `API_URL` | var | The API Worker's origin; custom emoji `imageUrl`s point at it. Locally `http://localhost:8788`. |
 | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | secrets | GitHub OAuth app |
 
 ## Behavior worth knowing
@@ -102,7 +104,8 @@ email. It uses the access token once and never stores it.
 | Billing | No provider yet. `GET /api/billing` sums this month's `usage_monthly` over the account's own apps (custom emoji = rows stored now). `POST /api/billing/upgrade` only records the waitlist; it never charges and never changes the plan. |
 | Keys | The create response is the only place the full key appears. D1 stores its SHA-256 and the first 12 characters. |
 | Allowed origins | `https://host[:port]` or `https://*.example.com`; `http://` only for localhost; at most 20. A publishable key with no origins (any origin) is allowed only in `dev` apps. Secret keys have none. |
-| Usage | `GET /api/apps/:id/usage?period=YYYY-MM` (UTC, default current month, no future months). Limits are per account, so `used` is the account's total over all of its apps and `appUsed` is this app's part. `status` is `ok`, `near_limit` (≥ 80%), `over_limit` (used ≥ limit) or `not_included` (limit 0). `limit: null` means unlimited. |
+| Usage | `GET /api/apps/:id/usage?period=YYYY-MM` (UTC, default current month, no future months). Limits are per account, so `used` is the account's total over all of its apps and `appUsed` is this app's part. `status` is `ok`, `near_limit` (≥ 80%), `over_limit` (used ≥ limit) or `not_included` (limit 0). `limit: null` means unlimited. `custom_emoji` is the rows stored now (a stock, not a monthly counter), in every period. |
+| Custom emoji | `src/worker/routes/emoji.ts` and `emoji-import.ts` on the shared platform storage (`custom-emoji*.ts`, `emoji-image.ts`), the same code as the tenants API. Images go to R2 `EMOJI`; `imageUrl` uses `API_URL`. The limit counts every emoji of the account. Uploads, imports and deletes emit `custom_emoji.*` webhooks. Slack and Discord tokens are used once and never stored or logged. |
 | Analytics | `GET /api/apps/:id/analytics?days=7\|30\|90` (default 30) from `query_daily`. The window is cut to the owner account's `analyticsRetentionDays` and zero-filled. Top lists: 20 entries, only queries searched ≥ 5 times in the window. Plans without analytics get `402 { "error": { "code": "plan_required", "plan": "pro", "message" } }`. Every team role may read them. |
 | Waitlist | Public and idempotent. New and known emails get the same answer. A repeat updates the plan and keeps the first date. |
 

@@ -6,18 +6,28 @@ public enum ResultSource: String, Codable, Sendable {
 
 /// One ranked emoji from any tier.
 public struct SearchResult: Hashable, Codable, Sendable {
+  /// The emoji character, or `:shortcode:` for a custom emoji.
   public var emoji: String
-  /// Emojibase hexcode of the base emoji, e.g. "1F44D".
+  /// Emojibase hexcode of the base emoji, e.g. "1F44D"; `C-<emojiId>` for a custom emoji.
   public var id: String
   /// 0–1. Comparable within one source only.
   public var score: Double
   public var source: ResultSource
+  /// Custom emoji only (`source == .custom`): the image to draw instead of a font glyph.
+  public var imageUrl: String?
+  /// Custom emoji only: the shortcode without colons, e.g. "party_parrot".
+  public var shortcode: String?
 
-  public init(emoji: String, id: String, score: Double, source: ResultSource) {
+  public init(
+    emoji: String, id: String, score: Double, source: ResultSource,
+    imageUrl: String? = nil, shortcode: String? = nil
+  ) {
     self.emoji = emoji
     self.id = id
     self.score = score
     self.source = source
+    self.imageUrl = imageUrl
+    self.shortcode = shortcode
   }
 }
 

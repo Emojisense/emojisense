@@ -9,8 +9,14 @@ The Emojisense Search API: a Cloudflare Worker. The HTTP contract is [docs/API.m
 | `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API, no key | — |
 | `/v1/tenants[/:externalId[/emoji[/:shortcode]]]` | tenants and their custom emoji (Scale, secret key); D1 + R2 `EMOJI`; sends webhooks | — |
+| `GET /v1/custom/:appId/:emojiId` | custom emoji image from R2 (`EMOJI`), immutable, Cache API, no key | — |
+| `GET /v1/custom-pack` | the key's custom emoji (+ `tenant=`) as a pack, edge-cached 60 s | — |
 | `GET /v1/health` | status | — |
 | `/v1/pack/<v>/…`, `/p/<v>/…` | static assets (packs, layer 2 shards); the Worker does not run | — |
+
+`/v1/search` and `/v1/suggest-reactions` put the caller's custom emoji first (`tenant=` adds a
+tenant's). They come from a per-isolate copy of the app's rows, at most 60 s old, and never enter
+the shared search cache (`src/custom.ts`).
 
 `classify-image` takes the image as the body (`image/jpeg` or `image/webp`, ≤ 256 KB) and
 `?locale=&limit=` in the URL. Answers that degrade (Workers AI unavailable) are not metered.
@@ -119,6 +125,7 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 | `src/app.ts` | Routing, CORS, per-isolate key cache, meter and search analytics |
 | `src/query-stats.ts`, `src/retention.ts` | Search analytics: batched `query_daily` writes, retention cron |
 | `src/search.ts`, `src/reactions.ts`, `src/image.ts` | Route handlers |
+| `src/custom.ts`, `src/custom-pack.ts`, `src/custom-routes.ts`, `src/custom-store.ts` | Custom emoji: per-isolate cache and search, pack builder, image and pack routes, D1 reader |
 | `src/semantic.ts`, `src/vision.ts` | Workers AI calls (embedding, `@cf/google/gemma-4-26b-a4b-it` vision); the vision label parser |
 | `src/image-rank.ts`, `src/reaction-rank.ts`, `src/reaction-intents.ts` | Photo and reaction ranking; intent cues |
 | `src/fusion.ts`, `src/emoji-lookup.ts` | Weighted reciprocal rank fusion with a confidence floor; emoji text → catalog id |

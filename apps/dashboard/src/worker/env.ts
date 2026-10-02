@@ -21,6 +21,8 @@ export interface Env {
   WAITLIST_LIMITER?: RateLimiter;
   /** R2 bucket `emojisense-emoji` (custom emoji images), shared with the API Worker. */
   EMOJI?: EmojiBucket;
+  /** Base URL of the API Worker, which serves custom emoji images (e.g. https://api.emojisense.com). */
+  API_URL?: string;
 }
 
 /** Side effects the handlers need. Tests replace them with fakes. */

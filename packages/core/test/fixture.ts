@@ -46,6 +46,25 @@ export const en: Pack = {
   ],
 };
 
+/** An app's custom emoji, as GET /v1/custom-pack serves them (PACK_FORMAT.md §8). */
+export const custom: Pack = {
+  format: "emojisense-pack",
+  formatVersion: 1,
+  packVersion: "custom-1a2b3c4d",
+  locale: "und",
+  part: "custom",
+  emojiVersion: "",
+  groups: ["custom"],
+  emoji: [
+    [":party_parrot:", "C-e1", 0, 0, 0, "party_parrot", "party parrot", "", "celebrate|dance", "", ""],
+    [":shipit:", "C-e2", 0, 0, 0, "shipit", "shipit", "", "ship it|squirrel", "", ""],
+  ],
+  images: {
+    "C-e1": "https://api.test/v1/custom/app1/e1",
+    "C-e2": "https://api.test/v1/custom/app1/e2",
+  },
+};
+
 export const tr: Pack = {
   ...en,
   locale: "tr",
