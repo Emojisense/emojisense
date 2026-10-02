@@ -54,10 +54,6 @@ export interface Env {
   API_URL?: string;
   /** "development" allows webhook deliveries to http://localhost. Any other value is production. */
   ENVIRONMENT?: string;
-  /** "false" turns the concept tier off (src/concepts/). Any other value, or none, keeps it on. */
-  CONCEPTS_ENABLED?: string;
-  /** Model calls of the concept tier per UTC day, all keys together. Default CONCEPT_DEFAULT_DAILY_CAP. */
-  CONCEPT_DAILY_CAP?: string;
 }
 
 export interface GeneratedConfig {

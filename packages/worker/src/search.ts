@@ -1,9 +1,14 @@
 import { UNKNOWN_COUNTRY } from "@emojisense/platform";
-import { assessConfidence, embeddingText, normalize, type SearchResult } from "emojisense";
+import {
+  assessConfidence,
+  embeddingText,
+  normalize,
+  type QueryConfidence,
+  SEMANTIC_SURE,
+  type SearchResult,
+  semanticStrength,
+} from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
-import { CONCEPT_METERED_CALLS } from "./concepts/config.ts";
-import { type ConceptFields, wantsConcepts, withConcepts } from "./concepts/search.ts";
-import { conceptCacheTag } from "./concepts/tier.ts";
 import {
   BROWSER_CACHE,
   CULTURE_BROWSER_CACHE,
@@ -15,9 +20,10 @@ import {
 import type { Handler } from "./context.ts";
 import { type ApiCultureResult, applyServerCulture, parseCultureParams, utcDay } from "./culture.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
+import type { Env } from "./env.ts";
 import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
 import { edgeCountry } from "./region.ts";
-import { indexTag, modelTag, rank } from "./semantic.ts";
+import { type Catalog, indexTag, modelTag, type Ranked, rank } from "./semantic.ts";
 
 /** Response of /v1/search and /v1/suggest-reactions (docs/API.md). */
 export interface SearchBody {
@@ -48,11 +54,10 @@ export interface SearchBody {
    * apply regional entries on the device.
    */
   region?: string | null;
-  /** Search only: how well the tiers understood the query (concepts/search.ts). */
-  confidence?: ConceptFields["confidence"];
-  unsure?: ConceptFields["unsure"];
-  /** Search only: the concept tier's answer for an unsure query, null when it was not asked. */
-  concept?: ConceptFields["concept"];
+  /** Search only: 0–1, how well the tiers understood the query (`assessConfidence`). */
+  confidence?: QueryConfidence["confidence"];
+  /** Search only: no tier understood the query; show the results as guesses. */
+  unsure?: QueryConfidence["unsure"];
 }
 
 function parseParams(url: URL) {
@@ -65,8 +70,28 @@ function parseParams(url: URL) {
     locale: parseLocale(url.searchParams.get("locale")),
     limit: parseLimit(url.searchParams.get("limit"), SEARCH_DEFAULT_LIMIT, MAX_LIMIT),
     mode: url.searchParams.get("mode") === "semantic" ? ("semantic" as const) : ("hybrid" as const),
-    concepts: wantsConcepts(url),
   };
+}
+
+/**
+ * How well the tiers understood the query. Semantic mode ran no alias search: the locale's
+ * aliases are searched only when the semantic list is weak (a strong list is never unsure), so
+ * most semantic calls load no locale pack.
+ */
+async function judgeQuery(
+  env: Env,
+  catalog: Catalog,
+  ranked: Ranked,
+  query: { text: string; locale: string; limit: number; mode: "hybrid" | "semantic" },
+): Promise<QueryConfidence> {
+  const semantic = ranked.semanticList;
+  let alias = ranked.alias;
+  const weak = semantic !== undefined && semanticStrength(semantic) < SEMANTIC_SURE;
+  if (!alias && weak && query.mode === "semantic") {
+    const engine = await catalog.aliasEngine(query.locale, env);
+    alias = engine?.search(query.text, { locale: query.locale, limit: query.limit });
+  }
+  return assessConfidence(alias, semantic);
 }
 
 /**
@@ -150,8 +175,6 @@ export const handleSearch: Handler = async (
       mode: params.mode,
       v: indexTag(catalog),
       c: catalog.config.contentHash,
-      // The concept tier's model and prompt version, or "off" (concepts/tier.ts).
-      k: params.concepts ? conceptCacheTag(env) : "off",
     })}`,
   );
   // The cache key has no key, user or origin in it: every app's searches warm the same edge cache,
@@ -189,7 +212,7 @@ export const handleSearch: Handler = async (
         ? await rank(env, catalog, { aliasQuery: params.query, locale, limit: params.limit })
         : undefined;
     log(anonymous ? "anonymous" : "over_limit", { aliasConfidence: ranked?.aliasConfidence });
-    // No model call: the dictionary's own verdict, and no concept tier.
+    // No model call: the dictionary's own verdict.
     const verdict = ranked?.alias ? assessConfidence(ranked.alias, undefined) : undefined;
     const body: SearchBody = {
       ...base,
@@ -200,7 +223,7 @@ export const handleSearch: Handler = async (
       aliasLocale: ranked?.aliasLocale ?? null,
       culture,
       ...regionEcho,
-      ...(verdict ? { ...verdict, concept: null } : {}),
+      ...verdict,
     };
     metering.recordSearch(params.query, body.results.length, searchRegion);
     return json(body, 200, {
@@ -215,46 +238,26 @@ export const handleSearch: Handler = async (
     locale,
     limit: params.limit,
   });
-  const concepts = await withConcepts(
-    {
-      env,
-      catalog,
-      cache,
-      waitUntil: (promise) => ctx.waitUntil(promise),
-      request,
-      caller,
-      now: started,
-      enabled: params.concepts,
-    },
-    ranked,
-    { text: params.query, locale, limit: params.limit, mode: params.mode },
-    // Semantic mode: the locale's aliases are searched only when the semantic list is weak.
-    // Hybrid mode searched them already (its pack can be missing): no second load.
-    async () =>
-      params.mode === "semantic"
-        ? (await catalog.aliasEngine(locale, env))?.search(params.query, { locale, limit: params.limit })
-        : undefined,
-  );
+  // Hybrid mode searched the aliases already (its pack can be missing): no second load.
+  const verdict = await judgeQuery(env, catalog, ranked, {
+    text: params.query,
+    locale,
+    limit: params.limit,
+    mode: params.mode,
+  });
   const body: SearchBody = {
     ...base,
-    results: concepts.results,
+    results: ranked.results,
     cached: false,
     degraded: ranked.degraded,
     overLimit: false,
     aliasLocale: ranked.aliasLocale,
-    confidence: concepts.confidence,
-    unsure: concepts.unsure,
-    concept: concepts.concept,
+    ...verdict,
   };
-  // Without the locale's aliases or vectors (a file did not load), or while the concept answer is
-  // not final, the answer must not stay cached a week.
-  const cacheable =
-    !ranked.degraded && !ranked.aliasUnavailable && !ranked.vectorsUnavailable && concepts.cacheable;
+  // Without the locale's aliases or vectors (a file did not load), the answer must not stay
+  // cached a week.
+  const cacheable = !ranked.degraded && !ranked.aliasUnavailable && !ranked.vectorsUnavailable;
   if (ranked.semantic) metering.count("semantic_calls");
-  // A model call of the concept tier is metered like a semantic call; cached answers are not.
-  if (concepts.modelCall) {
-    for (let i = 0; i < CONCEPT_METERED_CALLS; i++) metering.count("semantic_calls");
-  }
   if (ranked.semantic && cacheable) {
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
@@ -268,6 +271,6 @@ export const handleSearch: Handler = async (
   return json(answer, 200, {
     // Degraded answers are not cached, so the client gets the full answer once AI is back.
     "Cache-Control": cacheable ? browserCache : "no-store",
-    "Server-Timing": `embed;dur=${ranked.embedMs}, ${concepts.concept ? `concept;dur=${concepts.ms}, ` : ""}total;dur=${Date.now() - started}`,
+    "Server-Timing": `embed;dur=${ranked.embedMs}, total;dur=${Date.now() - started}`,
   });
 };

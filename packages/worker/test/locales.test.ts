@@ -208,8 +208,7 @@ describe("aliases of every pack locale", () => {
       },
     });
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    // No concept tier: the weak semantic list would cache a concept answer.
-    const res = await h.call(keyedSearch("feliz cumpleaños", "&locale=es&concept=0"));
+    const res = await h.call(keyedSearch("feliz cumpleaños", "&locale=es"));
     await h.ctx.settle();
     const body = (await res.json()) as SearchBody;
     expect(body.aliasLocale).toBeNull();
@@ -225,7 +224,7 @@ describe("aliases of every pack locale", () => {
     warn.mockRestore();
 
     available = true;
-    const retried = await h.call(keyedSearch("feliz cumpleaños", "&locale=es&concept=0"));
+    const retried = await h.call(keyedSearch("feliz cumpleaños", "&locale=es"));
     await h.ctx.settle();
     expect(top((await retried.json()) as SearchBody)).toMatchObject({ emoji: "🎂", aliasLocale: "es" });
     expect(h.cache.puts).toHaveLength(1);

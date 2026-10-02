@@ -1,6 +1,5 @@
 import { getModel } from "@emojisense/data/models";
 import { describe, expect, it, vi } from "vitest";
-import { CONCEPT_TAG } from "../src/concepts/config.ts";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
 import type { Store } from "../src/store.ts";
@@ -52,6 +51,21 @@ describe("GET /v1/search", () => {
     expect(body.results.every((r) => r.source === "semantic")).toBe(true);
   });
 
+  it("says how well the tiers understood the query, in both modes", async () => {
+    const body = async (res: Response) => (await res.json()) as SearchBody;
+    const understood = await body(await harness().call(keyedSearch("jurassic park")));
+    expect(understood).toMatchObject({ unsure: false });
+    expect(understood.confidence).toBeGreaterThan(0.6);
+    expect(understood).not.toHaveProperty("concept");
+    // The fake embedding lands on no fixture row: a flat, low semantic list.
+    for (const mode of ["", "&mode=semantic"]) {
+      const unsure = await body(await harness({ embedTo: 4 }).call(keyedSearch("kendrick lamar", mode)));
+      expect(unsure).toMatchObject({ unsure: true });
+      expect(unsure.confidence).toBeLessThan(0.6);
+      expect(unsure.results.every((r) => r.source === "semantic" || r.source === "alias")).toBe(true);
+    }
+  });
+
   it("serves the second identical query from cache, ignoring the key, case and spacing", async () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
     await h.call(search("Lava  eruption", "&key=pk_test"));
@@ -78,7 +92,6 @@ describe("GET /v1/search", () => {
       mode: "hybrid",
       v: "test:bge-m3@8",
       c: "c0ffee",
-      k: CONCEPT_TAG,
     });
 
     const hotfix = harness({ catalog: { ...catalog, config: { ...catalog.config, contentHash: "beef" } } });

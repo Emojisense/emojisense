@@ -475,59 +475,6 @@ describe("nightly shard build", () => {
     await runScheduled({ cron: "23 4 * * *", scheduledTime: NOW }, env(), catalog);
     expect(pointer().queries).toBe(1);
   });
-
-  describe("concepts of popular unsure queries", () => {
-    /** "kendrick lamar" embeds next to no fixture row (unsure); the model reads it as a person. */
-    const withConcepts = () =>
-      vi.fn<AiBinding["run"]>(async (_model, input) => {
-        if ("messages" in input) {
-          const content = JSON.stringify({ kind: "person", concepts: ["puppy"], emoji: ["🚀", "🐶"] });
-          return { choices: [{ message: { content } }] };
-        }
-        const texts = (input as { text: string[] }).text;
-        return { data: texts.map((t) => Array.from(unit(/kendrick/.test(t) ? 4 : ROW.volcano))) };
-      });
-    const conceptCalls = () => ai.mock.calls.filter(([, input]) => "messages" in input);
-    const rows = () => db.prepare("SELECT status FROM concept_cache").all() as { status: string }[];
-
-    it("stores their concept answer and leads their shard entry with it", async () => {
-      ai = withConcepts();
-      popular(db, "kendrick lamar");
-      popular(db, "lava eruption");
-      const report = await run();
-      expect(report.concepts).toMatchObject({ checked: 2, unsure: 1, asked: 1, merged: 1 });
-      expect(rows()).toEqual([{ status: "ok" }]);
-      const published = (await served()) as Record<string, [string, string, number][]>;
-      expect(published["kendrick lamar"]?.slice(0, 2).map(([emoji]) => emoji)).toEqual(["🐶", "🚀"]);
-      expect(published["lava eruption"]?.[0]?.[0]).toBe("🌋");
-    });
-
-    it("asks the model once: the next run reuses the entry and publishes the same build", async () => {
-      ai = withConcepts();
-      popular(db, "kendrick lamar");
-      const first = await run();
-      const again = await run();
-      expect(again).toMatchObject({ status: "unchanged", build: first.build });
-      expect(conceptCalls()).toHaveLength(1);
-    });
-
-    it("stops at its model-call budget and leaves the rest to the API", async () => {
-      ai = withConcepts();
-      popular(db, "kendrick lamar");
-      const report = await run({ maxConceptCalls: 0 });
-      expect(report.concepts).toMatchObject({ unsure: 1, asked: 0, skipped: 1, merged: 0 });
-      expect(conceptCalls()).toHaveLength(0);
-      expect(rows()).toEqual([]);
-    });
-
-    it("leaves the shards alone with the tier switched off", async () => {
-      ai = withConcepts();
-      popular(db, "kendrick lamar");
-      const report = await run({}, { CONCEPTS_ENABLED: "false" });
-      expect(report.concepts).toMatchObject({ checked: 0, merged: 0 });
-      expect(conceptCalls()).toHaveLength(0);
-    });
-  });
 });
 
 describe("GET /p/*", () => {
