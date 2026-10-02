@@ -1903,10 +1903,6 @@
   position: relative;
 }
 
-.culture-preview-table .glyphs {
-  flex-wrap: nowrap;
-}
-
 .culture-context {
   color: var(--ink-3);
   font-weight: 400;
@@ -1954,6 +1950,10 @@
 .glyph[data-culture] {
   box-shadow: inset 0 0 0 0.09375rem var(--ink);
   background: var(--bg-soft);
+}
+
+.culture-preview-table .glyphs {
+  flex-wrap: nowrap;
 }
 
 .culture-regions {
