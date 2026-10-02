@@ -4,6 +4,8 @@ export {
   type Emojisense,
   type EmojisenseOptions,
   type UseEmojiSearchOptions,
+  type UseRelevantNowOptions,
   useEmojiSearch,
   useEmojisense,
+  useRelevantNow,
 } from "./hooks.js";

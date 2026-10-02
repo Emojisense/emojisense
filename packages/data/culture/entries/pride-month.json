@@ -1,0 +1,70 @@
+{
+  "id": "pride-month",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Pride Month, celebrating LGBTQ+ communities",
+    "es": "Mes del Orgullo LGBTQ+",
+    "pt": "Mês do Orgulho LGBTQ+",
+    "fr": "Mois des fiertés LGBTQ+"
+  },
+  "when": {
+    "from": "06-01",
+    "to": "06-30",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "es",
+    "pt",
+    "fr"
+  ],
+  "triggers": {
+    "en": [
+      "pride",
+      "pride month",
+      "happy pride",
+      "lgbtq",
+      "pride parade"
+    ],
+    "es": [
+      "orgullo",
+      "mes del orgullo",
+      "orgullo lgbt",
+      "marcha del orgullo"
+    ],
+    "pt": [
+      "orgulho",
+      "mes do orgulho",
+      "parada lgbt",
+      "parada do orgulho"
+    ],
+    "fr": [
+      "fierte",
+      "mois des fiertes",
+      "marche des fiertes"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3F3-FE0F-200D-1F308",
+      "weight": 0.9
+    },
+    {
+      "hexcode": "1F308",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F3F3-FE0F-200D-26A7-FE0F",
+      "weight": 0.55
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

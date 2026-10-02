@@ -1,0 +1,79 @@
+{
+  "id": "asian-games-2026",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Asian Games 2026 in Aichi and Nagoya, Japan",
+    "zh": "2026年爱知·名古屋亚运会",
+    "hi": "एशियाई खेल 2026, आइची और नागोया, जापान",
+    "id": "Asian Games 2026 di Aichi dan Nagoya, Jepang",
+    "ar": "دورة الألعاب الآسيوية 2026 في آيتشي وناغويا، اليابان",
+    "bn": "এশিয়ান গেমস ২০২৬, আইচি ও নাগোয়া, জাপান"
+  },
+  "when": {
+    "from": "2026-09-19",
+    "to": "2026-10-04"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "zh",
+    "hi",
+    "id",
+    "ar",
+    "bn"
+  ],
+  "triggers": {
+    "en": [
+      "asian games",
+      "asiad"
+    ],
+    "zh": [
+      "亚运会",
+      "亚运",
+      "亚洲运动会"
+    ],
+    "hi": [
+      "एशियाई खेल",
+      "एशियन गेम्स",
+      "asian games"
+    ],
+    "id": [
+      "asian games",
+      "asiad"
+    ],
+    "ar": [
+      "الالعاب الاسيوية",
+      "دورة الالعاب الاسيوية"
+    ],
+    "bn": [
+      "এশিয়ান গেমস",
+      "asian games"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3C5",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F947",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F1EF-1F1F5",
+      "weight": 0.4
+    },
+    {
+      "hexcode": "1F3DF",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

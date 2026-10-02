@@ -1,0 +1,46 @@
+{
+  "id": "dia-de-los-inocentes",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Holy Innocents' Day pranks, 28 December",
+    "es": "Día de los Inocentes: bromas del 28 de diciembre"
+  },
+  "when": {
+    "from": "12-20",
+    "to": "12-28",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "es"
+  ],
+  "triggers": {
+    "es": [
+      "dia de los inocentes",
+      "inocentes",
+      "inocente palomita",
+      "santos inocentes"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F921",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F61C",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F0CF",
+      "weight": 0.45
+    }
+  ],
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

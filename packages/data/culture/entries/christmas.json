@@ -1,0 +1,71 @@
+{
+  "id": "christmas",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Christmas, 25 December",
+    "es": "Navidad, 25 de diciembre",
+    "pt": "Natal, 25 de dezembro",
+    "fr": "Noël, le 25 décembre"
+  },
+  "when": {
+    "from": "12-01",
+    "to": "12-26",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "es",
+    "pt",
+    "fr"
+  ],
+  "triggers": {
+    "en": [
+      "christmas",
+      "merry christmas",
+      "xmas",
+      "christmas eve"
+    ],
+    "es": [
+      "navidad",
+      "feliz navidad",
+      "nochebuena"
+    ],
+    "pt": [
+      "natal",
+      "feliz natal",
+      "vespera de natal"
+    ],
+    "fr": [
+      "noel",
+      "joyeux noel",
+      "reveillon de noel"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F384",
+      "weight": 0.9
+    },
+    {
+      "hexcode": "1F381",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F385",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "2B50",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

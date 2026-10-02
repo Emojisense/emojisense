@@ -12,6 +12,10 @@
     "build:shards": "tsx src/build-shards.ts",
     "build": "tsx src/ingest.ts && tsx src/validate.ts && tsx src/build-pack.ts",
     "check:enrichment": "tsx scripts/check-enrichment.ts",
+    "culture:check": "tsx src/culture/check.ts",
+    "culture:propose": "tsx src/culture/propose.ts",
+    "culture:review": "tsx src/culture/review.ts",
+    "culture:build": "tsx src/culture/build.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
@@ -23,6 +27,7 @@
   },
   "exports": {
     "./config": "./src/config.ts",
+    "./culture": "./src/culture/index.ts",
     "./embeddings": "./src/embeddings.ts",
     "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",

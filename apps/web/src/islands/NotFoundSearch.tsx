@@ -74,7 +74,7 @@ export function NotFoundSearch() {
   const search = useMemo(() => {
     if (!engine || !query.trim()) return { results: [] as AliasResult[], ms: undefined };
     const start = performance.now();
-    const { results } = engine.search(query, { limit: LIMIT });
+    const { results } = engine.search(query, { limit: LIMIT, culture: false });
     return { results, ms: performance.now() - start };
   }, [engine, query]);
 

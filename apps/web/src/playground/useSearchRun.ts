@@ -1,6 +1,7 @@
 import {
   type AliasEngine,
   type AliasSearchOutput,
+  type CanonicalSearchOutput,
   createSearchSession,
   type SearchResult,
   type SessionState,
@@ -29,7 +30,7 @@ export interface SearchRun {
   query: string;
   results: SearchResult[];
   /** The on-device dictionary's own answer (on-device and hybrid modes). */
-  alias?: AliasSearchOutput;
+  alias?: CanonicalSearchOutput;
   deviceMs?: number;
   edge: EdgeStatus;
 }
@@ -104,7 +105,7 @@ export function useSearchRun({ engine, online, traced, settings }: Inputs): Sear
   useEffect(() => {
     if (!engine || mode !== "alias") return;
     const started = performance.now();
-    const alias = engine.search(query, { limit, locale });
+    const alias = engine.search(query, { limit, locale, culture: false });
     const deviceMs = performance.now() - started;
     setRun({ query, results: alias.results, alias, deviceMs, edge: { kind: "off" } });
   }, [engine, mode, query, limit, locale]);

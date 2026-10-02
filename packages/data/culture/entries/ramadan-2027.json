@@ -1,0 +1,94 @@
+{
+  "id": "ramadan-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Ramadan, the month of fasting, about 8 February to 8 March 2027",
+    "ar": "شهر رمضان، شهر الصيام، من نحو 8 فبراير إلى 8 مارس 2027",
+    "id": "Ramadan, bulan puasa, sekitar 8 Februari sampai 8 Maret 2027",
+    "tr": "Ramazan, oruç ayı, yaklaşık 8 Şubat – 8 Mart 2027",
+    "bn": "রমজান, রোজার মাস, প্রায় ৮ ফেব্রুয়ারি থেকে ৮ মার্চ ২০২৭",
+    "hi": "रमज़ान, रोज़ों का महीना, लगभग 8 फ़रवरी से 8 मार्च 2027"
+  },
+  "when": {
+    "from": "2027-01-29",
+    "to": "2027-03-08"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "ar",
+    "id",
+    "tr",
+    "bn",
+    "hi"
+  ],
+  "triggers": {
+    "ar": [
+      "رمضان",
+      "رمضان كريم",
+      "رمضان مبارك",
+      "سحور",
+      "افطار"
+    ],
+    "id": [
+      "ramadan",
+      "ramadhan",
+      "puasa",
+      "sahur",
+      "buka puasa",
+      "ngabuburit",
+      "marhaban ya ramadhan"
+    ],
+    "tr": [
+      "ramazan",
+      "hayirli ramazanlar",
+      "oruc",
+      "iftar",
+      "sahur"
+    ],
+    "bn": [
+      "রমজান",
+      "রমজান মোবারক",
+      "রোজা",
+      "ইফতার",
+      "সেহরি"
+    ],
+    "hi": [
+      "रमज़ान",
+      "रमजान",
+      "रोज़ा",
+      "इफ्तार",
+      "ramzan",
+      "ramadan"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F319",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F54C",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F932",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F4FF",
+      "weight": 0.45
+    },
+    {
+      "hexcode": "1F37D",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

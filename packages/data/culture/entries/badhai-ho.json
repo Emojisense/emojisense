@@ -1,0 +1,55 @@
+{
+  "id": "badhai-ho",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Congratulations as people say it in Hindi and Bengali",
+    "hi": "बधाई: किसी की खुशी में शामिल होना",
+    "bn": "অভিনন্দন: কারও আনন্দে শামিল হওয়া"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "hi": [
+      "बधाई",
+      "बधाई हो",
+      "मुबारक",
+      "मुबारक हो",
+      "badhai ho",
+      "mubarak ho"
+    ],
+    "bn": [
+      "অভিনন্দন",
+      "শুভেচ্ছা",
+      "অনেক অভিনন্দন"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F389",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F973",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F38A",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F490",
+      "weight": 0.45
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "niu-666",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Chinese internet slang for 'awesome, skilful'",
+    "zh": "网络用语：厉害、很强"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "zh"
+  ],
+  "triggers": {
+    "zh": [
+      "666",
+      "6666",
+      "66666",
+      "太牛了",
+      "真牛",
+      "牛啊"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F44D",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F402",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F525",
+      "weight": 0.45
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -1,0 +1,66 @@
+{
+  "id": "carnival-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Carnival, 6 to 9 February 2027",
+    "pt": "Carnaval, 6 a 9 de fevereiro de 2027",
+    "es": "Carnaval, del 6 al 9 de febrero de 2027",
+    "fr": "Carnaval, du 6 au 9 février 2027"
+  },
+  "when": {
+    "from": "2027-01-27",
+    "to": "2027-02-10"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "pt",
+    "es",
+    "fr"
+  ],
+  "triggers": {
+    "pt": [
+      "carnaval",
+      "bloco",
+      "bloquinho",
+      "sambodromo",
+      "escola de samba",
+      "folia",
+      "abada"
+    ],
+    "es": [
+      "carnaval",
+      "comparsa",
+      "murga"
+    ],
+    "fr": [
+      "carnaval",
+      "mardi gras"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3AD",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1FA87",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F483",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F38A",
+      "weight": 0.5
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

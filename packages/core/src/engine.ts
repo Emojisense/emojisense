@@ -1,3 +1,4 @@
+import { applyCulture, type Culture, type CultureResult, type CultureScope } from "./culture.js";
 import { boundedEditDistance, maxEditsFor, plausibleTypo } from "./fuzzy.js";
 import { normalize, tokenize } from "./normalize.js";
 import {
@@ -11,7 +12,7 @@ import {
   ROW,
 } from "./pack.js";
 
-export type ResultSource = "alias" | "semantic" | "custom";
+export type ResultSource = "alias" | "semantic" | "custom" | "culture";
 
 export interface SearchResult {
   /** The emoji character, or `:shortcode:` for a custom emoji. */
@@ -36,22 +37,30 @@ export interface AliasResult extends SearchResult {
   field: Field;
 }
 
-export interface AliasSearchOptions {
+export interface AliasSearchOptions extends CultureScope {
   /** Default 24. */
   limit?: number;
   /** Preferred locale. Matches that exist only in other loaded packs get a small penalty. */
   locale?: string;
   /** Treat the last token as a prefix while the user is still typing. Default true. */
   prefix?: boolean;
+  /** `false` = canonical ranking only, even when the engine has a culture file (reproducible). */
+  culture?: boolean;
 }
 
 export interface AliasSearchOutput {
   /** The normalized query that was searched. */
   query: string;
   tokens: string[];
-  results: AliasResult[];
-  /** Score of the best result, 0 when there is none. */
+  /** The canonical ranking, plus culture results after its top result when the engine has a culture file. */
+  results: (AliasResult | CultureResult)[];
+  /** Score of the best canonical result, 0 when there is none. */
   confidence: number;
+}
+
+/** The canonical ranking only (`culture: false`). */
+export interface CanonicalSearchOutput extends AliasSearchOutput {
+  results: AliasResult[];
 }
 
 export interface EmojiEntry {
@@ -73,11 +82,18 @@ export interface EngineOptions {
    * matches on multi-word queries. Default 0.34.
    */
   minCoverage?: number;
+  /** A culture file (loadCulture) whose entries add results after the canonical top result. */
+  culture?: Culture;
 }
 
 export interface AliasEngine {
+  /** `culture: false` gives the canonical ranking, typed as alias results only. */
+  search(query: string, options: AliasSearchOptions & { culture: false }): CanonicalSearchOutput;
   search(query: string, options?: AliasSearchOptions): AliasSearchOutput;
   get(id: string): EmojiEntry | undefined;
+  /** The same index with another culture file (`undefined` = none). The index is shared, not rebuilt. */
+  withCulture(culture: Culture | undefined): AliasEngine;
+  readonly culture: Culture | undefined;
   readonly entries: readonly EmojiEntry[];
   readonly locales: readonly string[];
   readonly packVersion: string;
@@ -370,7 +386,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     return candidates;
   }
 
-  function search(query: string, options: AliasSearchOptions = {}): AliasSearchOutput {
+  function search(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
     const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
@@ -480,14 +496,34 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     return { query: normalized, tokens, results, confidence: results[0]?.score ?? 0 };
   }
 
-  return {
-    search,
-    get: (id) => {
-      const index = indexById.get(id);
-      return index === undefined ? undefined : entries[index];
-    },
-    entries,
-    locales,
-    packVersion: primary.packVersion,
+  const get = (id: string) => {
+    const index = indexById.get(id);
+    return index === undefined ? undefined : entries[index];
   };
+
+  function withCulture(culture: Culture | undefined): AliasEngine {
+    const searchWithCulture = (query: string, options: AliasSearchOptions = {}): AliasSearchOutput => {
+      const output = search(query, options);
+      if (!culture || options.culture === false) return output;
+      const results = applyCulture(output.results, culture, query, {
+        ...options,
+        engine,
+        limit: options.limit ?? 24,
+      });
+      return { ...output, results };
+    };
+    const engine: AliasEngine = {
+      // With `culture: false` the output is the canonical one, which the first overload promises.
+      search: searchWithCulture as AliasEngine["search"],
+      get,
+      withCulture,
+      culture,
+      entries,
+      locales,
+      packVersion: primary.packVersion,
+    };
+    return engine;
+  }
+
+  return withCulture(options.culture);
 }

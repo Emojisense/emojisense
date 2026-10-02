@@ -1,0 +1,107 @@
+{
+  "id": "new-year",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "New Year's Eve and New Year's Day",
+    "es": "Nochevieja y Año Nuevo",
+    "pt": "Réveillon e Ano-Novo",
+    "fr": "Réveillon et jour de l'An",
+    "ru": "Новый год",
+    "tr": "Yılbaşı gecesi ve yeni yıl",
+    "id": "Malam dan hari Tahun Baru",
+    "zh": "跨年夜与元旦",
+    "hi": "नए साल की पूर्व संध्या और नया साल",
+    "bn": "নতুন বছরের আগের রাত ও নববর্ষ",
+    "ar": "ليلة رأس السنة الميلادية"
+  },
+  "when": {
+    "from": "12-26",
+    "to": "01-02",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "*"
+  ],
+  "triggers": {
+    "en": [
+      "new year",
+      "happy new year",
+      "new years eve",
+      "nye"
+    ],
+    "es": [
+      "ano nuevo",
+      "feliz ano nuevo",
+      "feliz ano"
+    ],
+    "pt": [
+      "ano novo",
+      "feliz ano novo",
+      "reveillon"
+    ],
+    "fr": [
+      "nouvel an",
+      "bonne annee",
+      "reveillon"
+    ],
+    "ru": [
+      "новыи год",
+      "с новым годом"
+    ],
+    "tr": [
+      "yilbasi",
+      "mutlu yillar",
+      "yeni yil"
+    ],
+    "id": [
+      "tahun baru",
+      "selamat tahun baru"
+    ],
+    "zh": [
+      "新年快乐",
+      "元旦",
+      "跨年"
+    ],
+    "hi": [
+      "नया साल",
+      "नए साल की शुभकामनाएं",
+      "happy new year"
+    ],
+    "bn": [
+      "ইংরেজি নববর্ষ",
+      "হ্যাপি নিউ ইয়ার",
+      "happy new year"
+    ],
+    "ar": [
+      "راس السنة",
+      "سنة جديدة سعيدة"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F386",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F942",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F389",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F37E",
+      "weight": 0.5
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

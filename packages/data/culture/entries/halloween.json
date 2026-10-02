@@ -1,0 +1,94 @@
+{
+  "id": "halloween",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Halloween, 31 October",
+    "es": "Halloween, 31 de octubre",
+    "pt": "Halloween (Dia das Bruxas), 31 de outubro",
+    "fr": "Halloween, le 31 octobre",
+    "ru": "Хэллоуин, 31 октября",
+    "tr": "Cadılar Bayramı, 31 Ekim",
+    "id": "Halloween, 31 Oktober",
+    "zh": "万圣节，10月31日"
+  },
+  "when": {
+    "from": "10-15",
+    "to": "10-31",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "es",
+    "pt",
+    "fr",
+    "ru",
+    "tr",
+    "id",
+    "zh"
+  ],
+  "triggers": {
+    "en": [
+      "halloween",
+      "happy halloween",
+      "spooky season",
+      "trick or treat"
+    ],
+    "es": [
+      "halloween",
+      "noche de brujas"
+    ],
+    "pt": [
+      "halloween",
+      "dia das bruxas"
+    ],
+    "fr": [
+      "halloween"
+    ],
+    "ru": [
+      "хэллоуин",
+      "хеллоуин"
+    ],
+    "tr": [
+      "cadilar bayrami",
+      "halloween"
+    ],
+    "id": [
+      "halloween"
+    ],
+    "zh": [
+      "万圣节",
+      "万圣夜"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F383",
+      "weight": 0.9
+    },
+    {
+      "hexcode": "1F47B",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F987",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F577",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F36C",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

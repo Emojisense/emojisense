@@ -1,0 +1,87 @@
+{
+  "id": "valentines-day",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Valentine's Day, 14 February",
+    "es": "San Valentín, 14 de febrero",
+    "fr": "La Saint-Valentin, le 14 février",
+    "ru": "День святого Валентина, 14 февраля",
+    "tr": "Sevgililer Günü, 14 Şubat",
+    "id": "Hari Valentine, 14 Februari",
+    "zh": "情人节，2月14日"
+  },
+  "when": {
+    "from": "02-07",
+    "to": "02-14",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "es",
+    "fr",
+    "ru",
+    "tr",
+    "id",
+    "zh"
+  ],
+  "triggers": {
+    "en": [
+      "valentines day",
+      "valentines",
+      "valentine",
+      "be my valentine"
+    ],
+    "es": [
+      "san valentin",
+      "dia de san valentin",
+      "dia de los enamorados"
+    ],
+    "fr": [
+      "saint valentin",
+      "st valentin"
+    ],
+    "ru": [
+      "день святого валентина",
+      "валентинка",
+      "день влюбленных"
+    ],
+    "tr": [
+      "sevgililer gunu"
+    ],
+    "id": [
+      "hari valentine",
+      "valentine"
+    ],
+    "zh": [
+      "情人节",
+      "情人节快乐"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F498",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F339",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F48C",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F36B",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

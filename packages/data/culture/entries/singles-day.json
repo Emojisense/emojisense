@@ -1,0 +1,52 @@
+{
+  "id": "singles-day",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Singles' Day shopping festival, 11 November",
+    "zh": "双十一购物节，11月11日"
+  },
+  "when": {
+    "from": "11-01",
+    "to": "11-11",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "zh"
+  ],
+  "triggers": {
+    "zh": [
+      "双十一",
+      "双11",
+      "光棍节",
+      "剁手",
+      "购物节"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F6CD",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F6D2",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F4E6",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F4B8",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

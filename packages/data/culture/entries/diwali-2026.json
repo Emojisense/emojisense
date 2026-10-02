@@ -1,0 +1,62 @@
+{
+  "id": "diwali-2026",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Diwali, the festival of lights, 8 November 2026",
+    "hi": "दीवाली, रोशनी का त्योहार, 8 नवंबर 2026",
+    "bn": "দীপাবলি, আলোর উৎসব, ৮ নভেম্বর ২০২৬"
+  },
+  "when": {
+    "from": "2026-10-30",
+    "to": "2026-11-11"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "hi": [
+      "दीवाली",
+      "दिवाली",
+      "दीपावली",
+      "शुभ दीपावली",
+      "हैप्पी दिवाली",
+      "diwali",
+      "happy diwali",
+      "deepawali"
+    ],
+    "bn": [
+      "দীপাবলি",
+      "দিওয়ালি",
+      "শুভ দীপাবলি",
+      "diwali"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1FA94",
+      "weight": 0.9
+    },
+    {
+      "hexcode": "1F386",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1FAB7",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F387",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -59,6 +59,10 @@ the search engine):
 | `skin-tone` | `skinTone` | `none` | `none`, `light`, `medium-light`, `medium`, `medium-dark`, `dark` |
 | `emoji-set` | `emojiSet` | `native` | `native` draws the system font. `twemoji`, `noto` and `fluent` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. A set may not draw every emoji (Fluent has no country flags); then the native emoji takes its place. Credit the set in your app (see NOTICE). |
 | `placeholder` | `placeholder` | `Search emoji…` | Input placeholder and accessible name |
+| `culture-url` | `cultureUrl` | — | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the moment and culture join the results after the top result (never above it). Without it the ranking is the canonical one. |
+| `region` | `region` | — | ISO 3166-1 code such as `BR`. Regional culture entries apply only with a matching region. |
+| `show-relevant-now` | `showRelevantNow` | off | Boolean. Adds a "Relevant now" row (seasonal and event emoji) above the browse view. Needs `culture-url`. |
+| — | `culture` | — | A culture file to use instead of fetching `culture-url` |
 | — | `packs` | — | Pack objects to use instead of fetching `pack-url` (bundled or offline apps) |
 | — | `query` | `""` | Read or set the search text |
 | — | `status`, `engine` | — | `idle`, `loading`, `ready` or `error`; the alias engine once ready |
@@ -103,8 +107,10 @@ emojisense-picker::part(option) { border-color: transparent; box-shadow: none; }
 emojisense-picker::part(active) { background: #e8eefc; }
 ```
 
-Parts: `root`, `search`, `pill`, `viewport`, `listbox`, `group`, `group-label`, `option`,
-`image` (the emoji image of a hosted set), `active` (the active option), `message`, `sticker`.
+Parts: `root`, `search`, `pill`, `viewport`, `listbox`, `group`, `relevant-now` (the "Relevant
+now" group), `group-label`, `option`, `image` (the emoji image of a hosted set), `active` (the
+active option), `message`, `sticker`. A culture result or a "relevant now" emoji names its reason
+in `title` and `aria-description`.
 
 ## Frameworks
 

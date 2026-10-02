@@ -1,0 +1,91 @@
+{
+  "id": "olympic-games",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "The Olympic Games",
+    "es": "Los Juegos Olímpicos",
+    "pt": "Os Jogos Olímpicos",
+    "fr": "Les Jeux olympiques",
+    "ru": "Олимпийские игры",
+    "tr": "Olimpiyat Oyunları",
+    "zh": "奥林匹克运动会",
+    "hi": "ओलंपिक खेल",
+    "bn": "অলিম্পিক গেমস",
+    "ar": "الألعاب الأولمبية",
+    "id": "Olimpiade"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "*"
+  ],
+  "triggers": {
+    "en": [
+      "olympics",
+      "olympic games",
+      "olympic"
+    ],
+    "es": [
+      "juegos olimpicos",
+      "olimpiadas"
+    ],
+    "pt": [
+      "olimpiadas",
+      "jogos olimpicos"
+    ],
+    "fr": [
+      "jeux olympiques",
+      "olympiades"
+    ],
+    "ru": [
+      "олимпиада",
+      "олимпииские игры"
+    ],
+    "tr": [
+      "olimpiyat",
+      "olimpiyatlar",
+      "olimpiyat oyunlari"
+    ],
+    "zh": [
+      "奥运会",
+      "奥运",
+      "奥林匹克"
+    ],
+    "hi": [
+      "ओलंपिक",
+      "ओलंपिक खेल"
+    ],
+    "bn": [
+      "অলিম্পিক",
+      "অলিম্পিক গেমস"
+    ],
+    "ar": [
+      "الاولمبياد",
+      "الالعاب الاولمبية"
+    ],
+    "id": [
+      "olimpiade"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3C5",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F947",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F3DF",
+      "weight": 0.4
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

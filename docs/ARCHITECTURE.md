@@ -52,6 +52,40 @@ Worker query log (Analytics Engine: normalized text only, no IP/key/user)
               └─▶ weak ones → LLM proposes aliases → eval gate → new pack   [closed, hosted only]
 ```
 
+## Culture layer
+
+Emoji meaning depends on culture, region and moment: 💀 means "dying of laughter", "goat" comes
+with ⚽ 🇦🇷 🇵🇹 in football chat, 🪔 matters at Diwali. The culture layer maps these associations
+and adds them to search. Phase 1 is editorial: AI proposes, a person approves. It does not learn
+from search traffic.
+
+```
+culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + analytics misses (seen ≥ 5)
+   │
+   ▼ culture:propose ── Workers AI, prompt culture/prompts/propose.v<N>.md ──▶ entries/<id>.json  status "draft"
+   ▼ culture:review  ── preview per trigger: canonical vs with the entry ──▶ status "approved"  (git = audit trail)
+   ▼ culture:check   ── schema, catalog hexcodes, windows, neutral context, exclusions.txt
+   ▼ culture:build --date d ──▶ dist/culture/<packVersion>/culture.<locale>.json
+   │                             lasting entries + seasonal/event entries active in [d, d+14], exact windows
+   ▼ Worker sync ──▶ /v1/culture/<packVersion>/… static assets, max-age=3600 (rebuilt daily)
+   ▼ SDK: loadCulture → engine.withCulture(culture) → session applies it after fusion
+```
+
+| Rule | Where |
+| ---- | ----- |
+| **Add, never replace.** Culture emoji go right after the canonical top result. They are above it only when the canonical list is empty. | `insertCulture` in `packages/core/src/culture.ts` |
+| Applied last, after the semantic results are fused in, so a semantic answer cannot lift a culture emoji over the top result. | `packages/core/src/session.ts` |
+| Results carry `source: "culture"`, `context` (the reason, localized) and `cultureId`. At most 5 per query. | `matchCulture` |
+| A trigger matches the whole normalized query, or a prefix being typed (≥ 3 characters and ≥ half the trigger). | `matchCulture` |
+| Windows are local calendar days. Yearly windows may wrap the year end. Lunar-calendar festivals get one dated entry per year. | `isActiveOn` |
+| Without a region from the app, only entries for every region (`"*"`) apply. | `CultureScope.region` |
+| `culture: false` keeps the canonical ranking (tests, benchmarks). Without a culture file nothing changes. | engine, session, React, web component |
+| A "relevant now" shelf (featured seasonal and event emoji) is off by default. | `relevantNow`, `showRelevantNow` |
+| CI gate: with every approved entry active, no top-1 answer of the eval suites changes, and each trigger brings its entry's strongest emoji into the top 3. | `packages/eval/src/culture-gate.ts` |
+
+The culture file is optional and small (≤ 1.5 KB gz per locale today). A failed load leaves
+search unchanged, and the engine index is shared, not rebuilt, when the file arrives.
+
 ## Packages
 
 | Package | Role | License |

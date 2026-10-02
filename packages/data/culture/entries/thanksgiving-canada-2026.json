@@ -1,0 +1,54 @@
+{
+  "id": "thanksgiving-canada-2026",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Thanksgiving in Canada, 12 October 2026",
+    "fr": "L'Action de grâce au Canada, le 12 octobre 2026"
+  },
+  "when": {
+    "from": "2026-10-05",
+    "to": "2026-10-12"
+  },
+  "regions": [
+    "CA"
+  ],
+  "locales": [
+    "en",
+    "fr"
+  ],
+  "triggers": {
+    "en": [
+      "thanksgiving",
+      "happy thanksgiving",
+      "thanksgiving dinner"
+    ],
+    "fr": [
+      "action de grace",
+      "joyeuse action de grace"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F983",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F967",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F341",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F342",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

@@ -7,6 +7,7 @@
  */
 import {
   applySkinTone,
+  type CultureResult,
   type EmojiSet,
   groupLabel,
   type Pack,
@@ -33,7 +34,7 @@ import {
   useState,
 } from "react";
 import { EmojiGlyph } from "./glyph.js";
-import { type Emojisense, useEmojiSearch } from "./hooks.js";
+import { type Emojisense, useEmojiSearch, useRelevantNow } from "./hooks.js";
 
 type EmojiDataResolver = NonNullable<EmojiPickerRootProps["resolveEmojiData"]>;
 type EmojiData = Awaited<ReturnType<EmojiDataResolver>>;
@@ -153,6 +154,7 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
     >
       {results.map((result, index) => {
         const selection = selectionOf(result, skinTone, labelOf(result));
+        const context = result.source === "culture" ? (result as CultureResult).context : undefined;
         return (
           <button
             key={result.id}
@@ -161,6 +163,8 @@ export function EmojisenseResults(props: EmojisenseResultsProps) {
             id={`${listboxId}-${index}`}
             aria-selected={index === activeIndex}
             aria-label={selection.label}
+            aria-description={context}
+            title={context ? `${selection.label} · ${context}` : undefined}
             tabIndex={-1}
             data-active={index === activeIndex ? "" : undefined}
             data-source={result.source}
@@ -202,6 +206,49 @@ export interface EmojisensePickerProps
   /** Rendered when a query has no results. */
   empty?: ReactNode;
   limit?: number;
+  /**
+   * Show a "relevant now" row (seasonal and event emoji of the culture file) above the browse
+   * list. Needs `cultureUrl` in `useEmojisense`. Off by default.
+   */
+  showRelevantNow?: boolean;
+  /** Heading of that row. Default "Relevant now". */
+  relevantNowLabel?: string;
+}
+
+interface RelevantNowShelfProps {
+  emojisense: Emojisense;
+  label: string;
+  limit: number;
+  onSelect: (emoji: { emoji: string; label: string }) => void;
+}
+
+/** One row of featured emoji for this moment; each names its reason. */
+function RelevantNowShelf({ emojisense, label, limit, onSelect }: RelevantNowShelfProps) {
+  const shelf = useRelevantNow(emojisense, { limit });
+  const [skinTone] = useSkinTone();
+  if (shelf.length === 0) return null;
+  return (
+    <fieldset data-emojisense-relevant-now="" style={{ border: 0, margin: 0, padding: 0, minWidth: 0 }}>
+      <legend data-emojisense-relevant-now-label="">{label}</legend>
+      {shelf.map((item) => {
+        const emoji = applySkinTone(item.emoji, skinTone);
+        const name = emojisense.engine?.get(item.hexcode)?.labels[emojisense.locale] ?? emoji;
+        return (
+          <button
+            key={item.hexcode}
+            type="button"
+            aria-label={name}
+            aria-description={item.context}
+            title={`${name} · ${item.context}`}
+            data-culture-id={item.cultureId}
+            onClick={() => onSelect({ emoji, label: name })}
+          >
+            <EmojiGlyph emoji={emoji} emojiSet={emojisense.emojiSet} endpoint={emojisense.endpoint} />
+          </button>
+        );
+      })}
+    </fieldset>
+  );
 }
 
 /**
@@ -216,6 +263,8 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
     empty,
     limit = 24,
     columns = 9,
+    showRelevantNow = false,
+    relevantNowLabel = "Relevant now",
     ...rest
   } = props;
   const [query, setQuery] = useState("");
@@ -276,6 +325,14 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
           />
         ) : (
           <GlyphContext.Provider value={glyph}>
+            {showRelevantNow && (
+              <RelevantNowShelf
+                emojisense={emojisense}
+                label={relevantNowLabel}
+                limit={columns}
+                onSelect={onEmojiSelect}
+              />
+            )}
             <EmojiPicker.Loading>Loading…</EmojiPicker.Loading>
             <EmojiPicker.List components={LIST_COMPONENTS} />
           </GlyphContext.Provider>

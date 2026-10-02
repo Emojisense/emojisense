@@ -1,0 +1,53 @@
+{
+  "id": "nochevieja-uvas",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "New Year's Eve: twelve grapes at the twelve chimes",
+    "es": "Nochevieja: las doce uvas con las campanadas"
+  },
+  "when": {
+    "from": "12-26",
+    "to": "12-31",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "es"
+  ],
+  "triggers": {
+    "es": [
+      "nochevieja",
+      "las doce uvas",
+      "doce uvas",
+      "uvas de la suerte",
+      "campanadas",
+      "fin de ano"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F347",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F55B",
+      "weight": 0.7
+    },
+    {
+      "hexcode": "1F514",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F942",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

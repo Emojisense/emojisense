@@ -1,0 +1,50 @@
+{
+  "id": "american-football-final-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "American football's championship final, 14 February 2027"
+  },
+  "when": {
+    "from": "2027-02-07",
+    "to": "2027-02-14"
+  },
+  "regions": [
+    "US"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "super bowl",
+      "superbowl",
+      "super bowl sunday",
+      "halftime show",
+      "big game"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3C8",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F3DF",
+      "weight": 0.5
+    },
+    {
+      "hexcode": "1F4FA",
+      "weight": 0.45
+    },
+    {
+      "hexcode": "1F357",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

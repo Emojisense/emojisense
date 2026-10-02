@@ -1,0 +1,63 @@
+{
+  "id": "april-fools",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "April Fools' Day, 1 April",
+    "pt": "Dia da Mentira, 1 de abril",
+    "ru": "День смеха, 1 апреля",
+    "tr": "1 Nisan şakaları"
+  },
+  "when": {
+    "from": "03-25",
+    "to": "04-01",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "pt",
+    "ru",
+    "tr"
+  ],
+  "triggers": {
+    "en": [
+      "april fools",
+      "april fools day",
+      "april fool"
+    ],
+    "pt": [
+      "dia da mentira",
+      "primeiro de abril"
+    ],
+    "ru": [
+      "день дурака",
+      "первое апреля",
+      "день смеха"
+    ],
+    "tr": [
+      "1 nisan",
+      "1 nisan sakasi"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F921",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F61C",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F0CF",
+      "weight": 0.45
+    }
+  ],
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

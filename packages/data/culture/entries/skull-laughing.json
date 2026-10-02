@@ -1,0 +1,49 @@
+{
+  "id": "skull-laughing",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Slang for laughing so hard it is too much",
+    "fr": "Argot : mourir de rire"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "fr"
+  ],
+  "triggers": {
+    "en": [
+      "lmao",
+      "lmfao",
+      "im dead",
+      "im dying",
+      "dead",
+      "deceased",
+      "crying laughing",
+      "dying laughing"
+    ],
+    "fr": [
+      "mort de rire",
+      "ptdr",
+      "je suis mort",
+      "jsuis mort"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F480",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F62D",
+      "weight": 0.55
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

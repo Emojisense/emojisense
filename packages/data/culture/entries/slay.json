@@ -1,0 +1,44 @@
+{
+  "id": "slay",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "Slang: confident and flawless"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en"
+  ],
+  "triggers": {
+    "en": [
+      "slay",
+      "slayed",
+      "slaying",
+      "ate that",
+      "ate and left no crumbs",
+      "understood the assignment",
+      "serving"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F485",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F451",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "2728",
+      "weight": 0.5
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

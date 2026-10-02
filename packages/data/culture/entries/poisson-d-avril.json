@@ -1,0 +1,46 @@
+{
+  "id": "poisson-d-avril",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "April fish: April Fools' Day in France",
+    "fr": "Poisson d'avril : les farces du 1er avril"
+  },
+  "when": {
+    "from": "03-25",
+    "to": "04-01",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "fr"
+  ],
+  "triggers": {
+    "fr": [
+      "poisson davril",
+      "poisson d avril",
+      "1er avril",
+      "premier avril"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F41F",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F61C",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "1F921",
+      "weight": 0.45
+    }
+  ],
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

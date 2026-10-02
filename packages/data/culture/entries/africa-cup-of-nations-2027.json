@@ -1,0 +1,55 @@
+{
+  "id": "africa-cup-of-nations-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Africa Cup of Nations 2027 in Kenya, Tanzania and Uganda",
+    "fr": "Coupe d'Afrique des nations 2027 au Kenya, en Tanzanie et en Ouganda",
+    "ar": "كأس الأمم الأفريقية 2027 في كينيا وتنزانيا وأوغندا"
+  },
+  "when": {
+    "from": "2027-06-12",
+    "to": "2027-07-17"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "fr",
+    "ar"
+  ],
+  "triggers": {
+    "en": [
+      "afcon",
+      "africa cup of nations"
+    ],
+    "fr": [
+      "can 2027",
+      "coupe dafrique des nations",
+      "coupe dafrique"
+    ],
+    "ar": [
+      "كاس الامم الافريقية",
+      "كاس امم افريقيا"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "26BD",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F3C6",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F30D",
+      "weight": 0.45
+    }
+  ],
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

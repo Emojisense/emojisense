@@ -1,0 +1,48 @@
+{
+  "id": "rugby-world-cup-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Men's Rugby World Cup 2027 in Australia",
+    "fr": "Coupe du monde de rugby masculine 2027 en Australie"
+  },
+  "when": {
+    "from": "2027-09-24",
+    "to": "2027-11-13"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "en",
+    "fr"
+  ],
+  "triggers": {
+    "en": [
+      "rugby world cup",
+      "rwc"
+    ],
+    "fr": [
+      "coupe du monde de rugby",
+      "mondial de rugby"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3C9",
+      "weight": 0.85
+    },
+    {
+      "hexcode": "1F3C6",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F1E6-1F1FA",
+      "weight": 0.35
+    }
+  ],
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

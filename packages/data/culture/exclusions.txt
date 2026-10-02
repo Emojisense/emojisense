@@ -1,0 +1,198 @@
+# Culture layer exclusions. A trigger or context text that contains one of these phrases fails
+# validation (src/culture/validate.ts). Phrases are normalized like queries (docs/PACK_FORMAT.md §3)
+# and match whole words; phrases in scripts without spaces (Chinese) match as substrings.
+#
+# Rules (PULSE.md): no political candidates or parties, no tragedies, no hate or slurs, nothing
+# sexual involving minors. Slurs and sexual terms are also blocked through the alias moderation
+# list (src/blocklist.ts, BLOCK), so they are not repeated here.
+#
+# Add a phrase under the right [section]. A false positive is cheap: reword the entry.
+
+[political]
+election
+elections
+electoral
+vote for
+political party
+candidate
+candidates
+campaign rally
+eleccion
+elecciones
+eleicao
+eleicoes
+secim
+выборы
+选举
+चुनाव
+নির্বাচন
+انتخابات
+pemilu
+pilpres
+trump
+biden
+kamala harris
+jd vance
+obama
+desantis
+newsom
+putin
+navalny
+zelensky
+zelenskyy
+xi jinping
+习近平
+modi
+मोदी
+rahul gandhi
+kejriwal
+sheikh hasina
+khaleda zia
+tarique rahman
+muhammad yunus
+erdogan
+imamoglu
+kilicdaroglu
+ozgur ozel
+macron
+le pen
+bardella
+melenchon
+lula
+bolsonaro
+tarcisio
+sheinbaum
+lopez obrador
+amlo
+milei
+pedro sanchez
+feijoo
+abascal
+prabowo
+jokowi
+anies
+netanyahu
+khamenei
+starmer
+farage
+democrats
+republicans
+gop
+maga
+bjp
+awami league
+akp
+ak parti
+chp
+mhp
+united russia
+единая россия
+communist party
+rassemblement national
+france insoumise
+psoe
+vox
+morena party
+gerindra
+likud
+
+[tragedy]
+earthquake
+earthquakes
+deprem
+terremoto
+seisme
+землетрясение
+地震
+भूकंप
+ভূমিকম্প
+زلزال
+gempa
+tsunami
+hurricane
+typhoon
+cyclone
+wildfire
+floods
+flooding
+stampede
+famine
+pandemic
+covid
+covid 19
+coronavirus
+disaster
+catastrophe
+death toll
+victims
+massacre
+masacre
+masaker
+katliam
+резня
+大屠杀
+नरसंहार
+مجزرة
+genocide
+genocidio
+genosida
+soykirim
+геноцид
+种族灭绝
+গণহত্যা
+holocaust
+terrorist
+terrorism
+terror attack
+atentado
+attentat
+teror
+теракт
+恐怖袭击
+आतंकवादी
+সন্ত্রাসী
+إرهاب
+mass shooting
+school shooting
+bombing
+airstrike
+air strike
+missile strike
+plane crash
+hijacking
+9 11
+twin towers
+war
+world war
+civil war
+invasion
+guerra
+guerre
+война
+战争
+युद्ध
+যুদ্ধ
+حرب
+perang
+savas
+
+[hate]
+hitler
+heil
+white power
+1488
+ethnic cleansing
+supremacist
+
+[minors]
+child porn
+cp
+loli
+lolicon
+shota
+shotacon
+jailbait
+underage
+preteen
+pedo
+pedophile

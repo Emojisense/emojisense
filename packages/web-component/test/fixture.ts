@@ -81,12 +81,50 @@ export const custom: Pack = {
   images: { "C-e1": PARROT_URL },
 };
 
+/** A culture file: "goat" adds 🚀 after the top result; a featured season lists 😂 and 👋. */
+export const culture = {
+  format: "emojisense-culture",
+  formatVersion: 1,
+  packVersion: "test",
+  locale: "en",
+  from: "2026-01-01",
+  until: "2026-01-15",
+  entries: [
+    {
+      id: "season",
+      kind: "seasonal",
+      context: "A season",
+      when: { from: "01-01", to: "12-31", recurs: "yearly" },
+      regions: ["*"],
+      triggers: ["season"],
+      emoji: [
+        ["😂", "1F602", 0.9],
+        ["👋", "1F44B", 0.5],
+      ],
+      featured: true,
+    },
+    {
+      id: "goat-test",
+      kind: "lasting",
+      context: "A test association",
+      when: null,
+      regions: ["*"],
+      triggers: ["goat"],
+      emoji: [["🚀", "1F680", 0.8]],
+    },
+  ],
+  relevantNow: ["season"],
+};
+
+export const CULTURE_URL = "https://cdn.test/v1/culture/test";
+
 /**
- * A fake network: packs under /v1/pack/test/, shards under /p/test/, the API at /v1/search and
- * /v1/custom-pack.
+ * A fake network: packs under /v1/pack/test/, culture under /v1/culture/test/, shards under
+ * /p/test/, the API at /v1/search and /v1/custom-pack.
  */
 export function serve({ packs = true } = {}) {
   const files: Record<string, unknown> = {
+    "/v1/culture/test/culture.en.json": culture,
     "/v1/pack/test/pack.en.json": en,
     "/v1/pack/test/pack.tr.json": tr,
     "/v1/pack/test/pack.en.ext.json": enExt,

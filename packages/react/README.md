@@ -22,6 +22,12 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | `locale` | `"tr"` loads the Turkish pack next to English. |
 | `shardsUrl` | Precomputed results. Omit it when no shards are deployed. |
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
+| `cultureUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the culture and the moment join the results after the top result, never above it (`source: "culture"`, with `context` and `cultureId`). A failed load is ignored. |
+| `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. |
+
+`useEmojiSearch(query, sense, { culture: false })` keeps the canonical ranking (for tests and
+benchmarks). `useRelevantNow(sense, { limit })` returns `{ emoji, hexcode, context, cultureId }`
+for a "relevant now" shelf: featured seasonal and event emoji active today.
 | `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg" alt="{emoji}" loading="lazy">` and need `endpoint`. When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |
 
 For your own components, `<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />`
@@ -47,6 +53,10 @@ import { EmojisensePicker } from "@emojisense/react/frimousse";
 Frimousse keeps its browse view. Typed queries show the Emojisense ranking as an ARIA listbox
 with the same `onEmojiSelect` contract and skin tone. The picker can mount before the packs
 arrive. It shows Frimousse's loading state and remounts when they are ready.
+
+`showRelevantNow` (off by default) adds a "Relevant now" row above the browse list when
+`cultureUrl` is set (`relevantNowLabel` renames it; style it with `[data-emojisense-relevant-now]`).
+Culture results and shelf emoji name their reason in `title` and `aria-description`.
 
 ## shadcn/ui
 

@@ -1,0 +1,42 @@
+{
+  "id": "jiayou",
+  "status": "approved",
+  "kind": "lasting",
+  "context": {
+    "en": "'Add oil': Chinese for 'keep going, you can do it'",
+    "zh": "加油：鼓励对方坚持下去"
+  },
+  "when": null,
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "zh"
+  ],
+  "triggers": {
+    "zh": [
+      "加油",
+      "加油加油",
+      "加油啊",
+      "冲鸭"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F4AA",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F525",
+      "weight": 0.55
+    },
+    {
+      "hexcode": "270A",
+      "weight": 0.45
+    }
+  ],
+  "source": "editorial",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

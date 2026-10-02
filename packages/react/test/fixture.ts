@@ -1,4 +1,4 @@
-import type { Pack, PackRow } from "emojisense";
+import type { Culture, Pack, PackRow } from "emojisense";
 
 const row = (
   emoji: string,
@@ -71,4 +71,46 @@ export function packFetchWithExt() {
           : en;
     return new Response(JSON.stringify(body));
   };
+}
+
+/** Culture: "jurassic park" adds 🚀 after 🦖; a featured season always lists 👍 and 🚀. */
+export const culture: Culture = {
+  format: "emojisense-culture",
+  formatVersion: 1,
+  packVersion: "test",
+  locale: "en",
+  from: "2026-01-01",
+  until: "2026-01-15",
+  entries: [
+    {
+      id: "season",
+      kind: "seasonal",
+      context: "A season",
+      when: { from: "01-01", to: "12-31", recurs: "yearly" },
+      regions: ["*"],
+      triggers: [],
+      emoji: [
+        ["👍", "1F44D", 0.9],
+        ["🚀", "1F680", 0.5],
+      ],
+      featured: true,
+    },
+    {
+      id: "dino-film",
+      kind: "lasting",
+      context: "The dinosaur film series",
+      when: null,
+      regions: ["*"],
+      triggers: ["jurassic park"],
+      emoji: [["🚀", "1F680", 0.6]],
+    },
+  ],
+  relevantNow: ["season"],
+};
+
+/** Packs, plus the English culture file under /culture/. */
+export function packAndCultureFetch() {
+  const packs = packFetch();
+  return async (url: string | URL | Request) =>
+    String(url).endsWith("/culture/culture.en.json") ? new Response(JSON.stringify(culture)) : packs(url);
 }

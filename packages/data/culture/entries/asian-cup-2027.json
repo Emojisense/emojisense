@@ -1,0 +1,53 @@
+{
+  "id": "asian-cup-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Asian Cup (football) 2027 in Saudi Arabia",
+    "ar": "كأس آسيا لكرة القدم 2027 في السعودية",
+    "zh": "2027年亚洲杯足球赛，沙特阿拉伯",
+    "id": "Piala Asia 2027 di Arab Saudi"
+  },
+  "when": {
+    "from": "2027-01-07",
+    "to": "2027-02-05"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "ar",
+    "zh",
+    "id"
+  ],
+  "triggers": {
+    "ar": [
+      "كاس اسيا"
+    ],
+    "zh": [
+      "亚洲杯",
+      "亚洲杯足球赛"
+    ],
+    "id": [
+      "piala asia"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "26BD",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F3C6",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F1F8-1F1E6",
+      "weight": 0.4
+    }
+  ],
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

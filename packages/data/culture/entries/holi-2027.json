@@ -1,0 +1,62 @@
+{
+  "id": "holi-2027",
+  "status": "approved",
+  "kind": "event",
+  "context": {
+    "en": "Holi, the festival of colours, 22 and 23 March 2027",
+    "hi": "होली, रंगों का त्योहार, 22–23 मार्च 2027",
+    "bn": "দোলযাত্রা, রঙের উৎসব, ২২–২৩ মার্চ ২০২৭"
+  },
+  "when": {
+    "from": "2027-03-12",
+    "to": "2027-03-23"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "hi",
+    "bn"
+  ],
+  "triggers": {
+    "hi": [
+      "होली",
+      "होली है",
+      "हैप्पी होली",
+      "holi",
+      "happy holi",
+      "बुरा न मानो होली है",
+      "गुलाल"
+    ],
+    "bn": [
+      "দোল",
+      "দোলযাত্রা",
+      "হোলি",
+      "বসন্ত উৎসব",
+      "holi"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F3A8",
+      "weight": 0.8
+    },
+    {
+      "hexcode": "1F308",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1FADF",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F4A6",
+      "weight": 0.45
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}

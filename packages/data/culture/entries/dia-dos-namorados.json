@@ -1,0 +1,50 @@
+{
+  "id": "dia-dos-namorados",
+  "status": "approved",
+  "kind": "seasonal",
+  "context": {
+    "en": "Brazil's Valentine's Day, 12 June",
+    "pt": "Dia dos Namorados, 12 de junho"
+  },
+  "when": {
+    "from": "06-05",
+    "to": "06-12",
+    "recurs": "yearly"
+  },
+  "regions": [
+    "*"
+  ],
+  "locales": [
+    "pt"
+  ],
+  "triggers": {
+    "pt": [
+      "dia dos namorados",
+      "namorados",
+      "feliz dia dos namorados"
+    ]
+  },
+  "emoji": [
+    {
+      "hexcode": "1F491",
+      "weight": 0.75
+    },
+    {
+      "hexcode": "1F339",
+      "weight": 0.65
+    },
+    {
+      "hexcode": "1F498",
+      "weight": 0.6
+    },
+    {
+      "hexcode": "1F36B",
+      "weight": 0.4
+    }
+  ],
+  "featured": true,
+  "source": "calendar",
+  "createdBy": "ai:claude",
+  "reviewedBy": "ai:claude-self-check",
+  "createdAt": "2026-10-02"
+}
