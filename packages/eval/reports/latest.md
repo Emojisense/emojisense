@@ -7,64 +7,32 @@
 
 | Engine | R@1 | R@5 | R@10 | MRR | forbid@3 | Tier 1 calls | Note |
 | --- | --: | --: | --: | --: | --: | --: | --- |
-| alias (core + ext) | 81.8 | 99.1 | 99.1 | 0.888 | 1.4 | 0% |  |
-| alias (core only, first load) | 74.8 | 87.9 | 88.8 | 0.807 | 1.4 | 0% |  |
-| alias (core with ≤8 aliases) | 67.3 | 78.5 | 79.9 | 0.722 | 1.4 | 0% |  |
-| alias (core with ≤16 aliases) | 74.8 | 87.9 | 88.8 | 0.807 | 1.4 | 0% |  |
-| alias (core with ≤24 aliases) | 77.1 | 93 | 95.3 | 0.84 | 1.9 | 0% |  |
-| alias (min coverage 0.5) | 79.9 | 99.1 | 99.5 | 0.88 | 1.4 | 0% |  |
-| alias (min coverage 0.6) | 78 | 96.7 | 97.7 | 0.857 | 0.5 | 0% |  |
-| semantic bge-small@384 | 56.5 | 70.6 | 73.4 | 0.623 | 2.3 | 100% |  |
-| fused bge-small@384 | 84.1 | 98.6 | 99.5 | 0.904 | 1.9 | 100% |  |
-| fused-gated bge-small@384 | 83.2 | 99.1 | 99.1 | 0.897 | 1.4 | 9% |  |
-| semantic bge-small@256 | 53.7 | 69.2 | 73.8 | 0.606 | 2.3 | 100% | truncated, model not MRL-trained |
-| fused bge-small@256 | 83.6 | 98.6 | 99.5 | 0.9 | 1.9 | 100% | truncated, model not MRL-trained |
-| fused-gated bge-small@256 | 83.2 | 98.6 | 99.1 | 0.895 | 1.4 | 9% | truncated, model not MRL-trained |
-| semantic bge-small@128 | 47.7 | 60.7 | 65.9 | 0.533 | 1.4 | 100% | truncated, model not MRL-trained |
-| fused bge-small@128 | 82.2 | 99.5 | 99.5 | 0.894 | 1.9 | 100% | truncated, model not MRL-trained |
-| fused-gated bge-small@128 | 82.7 | 99.1 | 99.1 | 0.892 | 1.4 | 9% | truncated, model not MRL-trained |
-| semantic bge-m3@1024 | 68.2 | 86.4 | 90.2 | 0.759 | 2.3 | 100% |  |
-| fused bge-m3@1024 | 85.5 | 98.6 | 99.1 | 0.91 | 1.9 | 100% |  |
-| fused-gated bge-m3@1024 | 83.6 | 99.1 | 99.1 | 0.9 | 1.4 | 9% |  |
-| semantic bge-m3@768 | 65.4 | 85 | 88.3 | 0.738 | 2.3 | 100% | truncated, model not MRL-trained |
-| fused bge-m3@768 | 85.5 | 99.1 | 99.5 | 0.91 | 1.9 | 100% | truncated, model not MRL-trained |
-| fused-gated bge-m3@768 | 83.2 | 99.1 | 99.1 | 0.895 | 1.4 | 9% | truncated, model not MRL-trained |
-| semantic bge-m3@512 | 61.2 | 82.7 | 86.4 | 0.696 | 2.3 | 100% | truncated, model not MRL-trained |
-| fused bge-m3@512 | 84.6 | 99.1 | 99.5 | 0.907 | 1.9 | 100% | truncated, model not MRL-trained |
-| fused-gated bge-m3@512 | 82.2 | 99.1 | 99.1 | 0.891 | 1.4 | 9% | truncated, model not MRL-trained |
-| semantic bge-m3@256 | 52.8 | 72 | 77.1 | 0.607 | 1.4 | 100% | truncated, model not MRL-trained |
-| fused bge-m3@256 | 84.1 | 98.6 | 99.1 | 0.901 | 1.9 | 100% | truncated, model not MRL-trained |
-| fused-gated bge-m3@256 | 83.2 | 99.1 | 99.1 | 0.895 | 1.4 | 9% | truncated, model not MRL-trained |
-| semantic bge-m3@128 | 36 | 51.9 | 62.1 | 0.432 | 1.4 | 100% | truncated, model not MRL-trained |
-| fused bge-m3@128 | 81.8 | 98.1 | 98.6 | 0.886 | 1.9 | 100% | truncated, model not MRL-trained |
-| fused-gated bge-m3@128 | 81.3 | 98.6 | 98.6 | 0.881 | 1.4 | 9% | truncated, model not MRL-trained |
-| semantic embeddinggemma@768 | 75.7 | 88.3 | 93 | 0.815 | 1.4 | 100% |  |
-| fused embeddinggemma@768 | 84.6 | 99.1 | 99.5 | 0.908 | 1.9 | 100% |  |
-| fused-gated embeddinggemma@768 | 83.2 | 99.1 | 99.1 | 0.897 | 1.4 | 9% |  |
-| semantic embeddinggemma@512 | 72.9 | 90.2 | 92.5 | 0.797 | 1.4 | 100% |  |
-| fused embeddinggemma@512 | 85.5 | 99.1 | 99.5 | 0.913 | 1.9 | 100% |  |
-| fused-gated embeddinggemma@512 | 83.2 | 99.1 | 99.1 | 0.897 | 1.4 | 9% |  |
-| semantic embeddinggemma@256 | 73.8 | 86.9 | 90.2 | 0.795 | 1.4 | 100% |  |
-| fused embeddinggemma@256 | 86 | 99.1 | 99.5 | 0.915 | 1.9 | 100% |  |
-| fused-gated embeddinggemma@256 | 83.2 | 99.1 | 99.1 | 0.896 | 1.4 | 9% |  |
-| semantic embeddinggemma@128 | 68.2 | 82.2 | 88.8 | 0.747 | 1.4 | 100% |  |
-| fused embeddinggemma@128 | 86.4 | 98.6 | 99.1 | 0.916 | 1.4 | 100% |  |
-| fused-gated embeddinggemma@128 | 82.7 | 99.1 | 99.1 | 0.894 | 1.4 | 9% |  |
-| semantic qwen3@1024 | 61.2 | 80.8 | 85 | 0.698 | 2.8 | 100% |  |
-| fused qwen3@1024 | 84.1 | 99.1 | 99.5 | 0.902 | 1.9 | 100% |  |
-| fused-gated qwen3@1024 | 83.2 | 99.1 | 99.1 | 0.895 | 1.4 | 9% |  |
-| semantic qwen3@768 | 59.8 | 80.4 | 85 | 0.687 | 2.8 | 100% |  |
-| fused qwen3@768 | 84.1 | 99.1 | 99.5 | 0.903 | 1.9 | 100% |  |
-| fused-gated qwen3@768 | 83.2 | 99.1 | 99.1 | 0.895 | 1.4 | 9% |  |
-| semantic qwen3@512 | 58.9 | 77.6 | 83.2 | 0.665 | 2.3 | 100% |  |
-| **fused qwen3@512** | 82.7 | 99.5 | 99.5 | 0.897 | 1.9 | 100% |  |
-| fused-gated qwen3@512 | 82.7 | 99.1 | 99.1 | 0.893 | 1.4 | 9% |  |
-| semantic qwen3@256 | 54.2 | 74.8 | 79.4 | 0.626 | 1.9 | 100% |  |
-| fused qwen3@256 | 83.2 | 99.1 | 99.5 | 0.9 | 1.9 | 100% |  |
-| fused-gated qwen3@256 | 82.7 | 99.1 | 99.1 | 0.893 | 1.4 | 9% |  |
-| semantic qwen3@128 | 50.5 | 71 | 75.7 | 0.584 | 0.9 | 100% |  |
-| fused qwen3@128 | 84.1 | 99.1 | 99.5 | 0.905 | 1.9 | 100% |  |
-| fused-gated qwen3@128 | 82.7 | 99.1 | 99.1 | 0.893 | 1.4 | 9% |  |
+| alias (core + ext) | 85 | 98.6 | 99.1 | 0.908 | 1.4 | 0% |  |
+| alias (core only, first load) | 75.7 | 87.4 | 88.3 | 0.81 | 1.4 | 0% |  |
+| alias (core with ≤8 aliases) | 68.7 | 78.5 | 79.9 | 0.731 | 1.4 | 0% |  |
+| alias (core with ≤16 aliases) | 75.7 | 87.4 | 88.3 | 0.81 | 1.4 | 0% |  |
+| alias (core with ≤24 aliases) | 79 | 93 | 95.3 | 0.853 | 1.9 | 0% |  |
+| alias (min coverage 0.5) | 85.5 | 98.6 | 99.5 | 0.913 | 1.4 | 0% |  |
+| alias (min coverage 0.6) | 83.2 | 96.3 | 97.7 | 0.889 | 0.5 | 0% |  |
+| semantic bge-m3@1024 | 75.2 | 90.2 | 93 | 0.81 | 2.3 | 100% |  |
+| **fused bge-m3@1024** | 88.3 | 99.1 | 100 | 0.928 | 1.9 | 100% |  |
+| fused-gated bge-m3@1024 | 86.4 | 99.1 | 99.5 | 0.917 | 1.4 | 9% |  |
+| semantic bge-m3@768 | 68.7 | 85 | 90.7 | 0.761 | 2.3 | 100% | truncated, model not MRL-trained |
+| fused bge-m3@768 | 87.9 | 98.6 | 99.5 | 0.925 | 1.9 | 100% | truncated, model not MRL-trained |
+| fused-gated bge-m3@768 | 86 | 98.6 | 99.1 | 0.912 | 1.4 | 9% | truncated, model not MRL-trained |
+| semantic bge-m3@512 | 67.3 | 81.8 | 86.9 | 0.736 | 2.3 | 100% | truncated, model not MRL-trained |
+| fused bge-m3@512 | 87.4 | 98.6 | 99.5 | 0.923 | 1.9 | 100% | truncated, model not MRL-trained |
+| fused-gated bge-m3@512 | 86 | 98.6 | 99.1 | 0.912 | 1.4 | 9% | truncated, model not MRL-trained |
+| semantic bge-m3@256 | 56.1 | 75.7 | 81.8 | 0.64 | 1.4 | 100% | truncated, model not MRL-trained |
+| fused bge-m3@256 | 86.4 | 98.6 | 99.5 | 0.917 | 1.9 | 100% | truncated, model not MRL-trained |
+| fused-gated bge-m3@256 | 86 | 98.6 | 99.1 | 0.912 | 1.4 | 9% | truncated, model not MRL-trained |
+| semantic bge-m3@128 | 39.7 | 57.5 | 64.5 | 0.471 | 1.4 | 100% | truncated, model not MRL-trained |
+| fused bge-m3@128 | 86 | 98.1 | 98.6 | 0.911 | 1.9 | 100% | truncated, model not MRL-trained |
+| fused-gated bge-m3@128 | 85 | 98.1 | 98.6 | 0.905 | 1.4 | 9% | truncated, model not MRL-trained |
+
+> Skipped bge-small: bge-small: 214 query embeddings not cached and --offline is set
+> Skipped embeddinggemma: embeddinggemma: 214 query embeddings not cached and --offline is set
+> Skipped qwen3: qwen3: 214 query embeddings not cached and --offline is set
 
 ### Semantic calibration
 
@@ -72,82 +40,41 @@ Fusion weights the semantic list by its best cosine, from 0 at `floor` to 1 at `
 
 | Vectors | Measured floor–ceiling | Used |
 | --- | --: | --: |
-| bge-small@384 | 0.56–0.70 | 0.56–0.70 |
-| bge-small@256 | 0.59–0.72 | 0.59–0.72 |
-| bge-small@128 | 0.63–0.74 | 0.63–0.74 |
-| bge-m3@1024 | 0.45–0.58 | 0.44–0.58 (client default) |
-| bge-m3@768 | 0.47–0.59 | 0.47–0.59 |
-| bge-m3@512 | 0.51–0.61 | 0.51–0.61 |
-| bge-m3@256 | 0.44–0.54 | 0.44–0.54 |
-| bge-m3@128 | 0.50–0.58 | 0.50–0.58 |
-| embeddinggemma@768 | 0.31–0.45 | 0.31–0.45 |
-| embeddinggemma@512 | 0.34–0.44 | 0.34–0.44 |
-| embeddinggemma@256 | 0.39–0.50 | 0.39–0.50 |
-| embeddinggemma@128 | 0.46–0.53 | 0.46–0.53 |
-| qwen3@1024 | 0.50–0.60 | 0.50–0.60 |
-| qwen3@768 | 0.53–0.61 | 0.53–0.61 |
-| qwen3@512 | 0.55–0.63 | 0.55–0.63 |
-| qwen3@256 | 0.57–0.64 | 0.57–0.64 |
-| qwen3@128 | 0.61–0.67 | 0.61–0.67 |
+| bge-m3@1024 | 0.47–0.62 | 0.44–0.58 (client default) |
+| bge-m3@768 | 0.50–0.61 | 0.50–0.61 |
+| bge-m3@512 | 0.52–0.63 | 0.52–0.63 |
+| bge-m3@256 | 0.45–0.56 | 0.45–0.56 |
+| bge-m3@128 | 0.52–0.60 | 0.52–0.60 |
 
 ## Held-out suite
 
-734 queries in 11 locales, written and labelled by another model (not the alias author). Per locale and worst misses: [heldout.md](heldout.md).
-
-| Mode | R@1 | R@5 | MRR | Macro R@5 |
-| --- | --: | --: | --: | --: |
-| alias (core + ext) | 27.1 | 52.9 | 0.379 | 53.7 |
-| fused bge-m3@1024 | 31.1 | 58.2 | 0.428 | 58.9 |
+Not run (`--no-heldout`). `pnpm eval:heldout` runs it alone.
 
 ## Recall@5 by category
 
 | Engine | exact (26) | typo (24) | slang (33) | pop (35) | idiom (21) | intent (32) | tr (33) | negative (10) |
 | --- | --: | --: | --: | --: | --: | --: | --: | --: |
-| alias (core + ext) | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| alias (core only, first load) | 100 | 95.8 | 81.8 | 85.7 | 71.4 | 78.1 | 97 | 100 |
-| alias (min coverage 0.5) | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| alias (min coverage 0.6) | 100 | 95.8 | 93.9 | 100 | 95.2 | 93.8 | 100 | 90 |
-| semantic bge-small@384 | 84.6 | 54.2 | 75.8 | 88.6 | 76.2 | 90.6 | 15.2 | 100 |
-| fused-gated bge-small@384 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic bge-small@256 | 84.6 | 50 | 72.7 | 85.7 | 76.2 | 90.6 | 15.2 | 100 |
-| fused-gated bge-small@256 | 100 | 100 | 100 | 100 | 95.2 | 93.8 | 100 | 100 |
-| semantic bge-small@128 | 84.6 | 37.5 | 63.6 | 74.3 | 76.2 | 75 | 6.1 | 100 |
-| fused-gated bge-small@128 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic bge-m3@1024 | 92.3 | 95.8 | 81.8 | 80 | 76.2 | 87.5 | 87.9 | 100 |
-| fused-gated bge-m3@1024 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic bge-m3@768 | 92.3 | 95.8 | 72.7 | 85.7 | 76.2 | 93.8 | 75.8 | 100 |
-| fused-gated bge-m3@768 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic bge-m3@512 | 92.3 | 95.8 | 66.7 | 77.1 | 81 | 84.4 | 81.8 | 100 |
-| fused-gated bge-m3@512 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic bge-m3@256 | 84.6 | 83.3 | 54.5 | 71.4 | 66.7 | 78.1 | 60.6 | 100 |
-| fused-gated bge-m3@256 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic bge-m3@128 | 57.7 | 66.7 | 45.5 | 42.9 | 52.4 | 50 | 48.5 | 70 |
-| fused-gated bge-m3@128 | 100 | 95.8 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic embeddinggemma@768 | 88.5 | 91.7 | 84.8 | 94.3 | 81 | 93.8 | 78.8 | 100 |
-| fused-gated embeddinggemma@768 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic embeddinggemma@512 | 88.5 | 95.8 | 90.9 | 91.4 | 85.7 | 96.9 | 78.8 | 100 |
-| fused-gated embeddinggemma@512 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic embeddinggemma@256 | 92.3 | 91.7 | 72.7 | 91.4 | 81 | 96.9 | 78.8 | 100 |
-| fused-gated embeddinggemma@256 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic embeddinggemma@128 | 88.5 | 83.3 | 75.8 | 82.9 | 81 | 93.8 | 66.7 | 100 |
-| fused-gated embeddinggemma@128 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic qwen3@1024 | 92.3 | 91.7 | 75.8 | 82.9 | 71.4 | 90.6 | 57.6 | 100 |
-| fused-gated qwen3@1024 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic qwen3@768 | 92.3 | 87.5 | 75.8 | 82.9 | 71.4 | 93.8 | 54.5 | 100 |
-| fused-gated qwen3@768 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic qwen3@512 | 92.3 | 83.3 | 69.7 | 80 | 61.9 | 93.8 | 54.5 | 100 |
-| fused-gated qwen3@512 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic qwen3@256 | 96.2 | 79.2 | 69.7 | 71.4 | 52.4 | 90.6 | 54.5 | 100 |
-| fused-gated qwen3@256 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
-| semantic qwen3@128 | 84.6 | 70.8 | 60.6 | 71.4 | 57.1 | 87.5 | 57.6 | 90 |
-| fused-gated qwen3@128 | 100 | 100 | 100 | 100 | 95.2 | 96.9 | 100 | 100 |
+| alias (core + ext) | 100 | 100 | 100 | 97.1 | 95.2 | 96.9 | 100 | 100 |
+| alias (core only, first load) | 100 | 95.8 | 78.8 | 85.7 | 71.4 | 78.1 | 97 | 100 |
+| alias (min coverage 0.5) | 100 | 100 | 100 | 97.1 | 95.2 | 96.9 | 100 | 100 |
+| alias (min coverage 0.6) | 100 | 95.8 | 93.9 | 97.1 | 95.2 | 93.8 | 100 | 90 |
+| semantic bge-m3@1024 | 92.3 | 95.8 | 87.9 | 82.9 | 81 | 96.9 | 90.9 | 100 |
+| fused-gated bge-m3@1024 | 100 | 100 | 100 | 97.1 | 100 | 96.9 | 100 | 100 |
+| semantic bge-m3@768 | 92.3 | 95.8 | 69.7 | 80 | 76.2 | 96.9 | 81.8 | 100 |
+| fused-gated bge-m3@768 | 100 | 100 | 100 | 97.1 | 95.2 | 96.9 | 100 | 100 |
+| semantic bge-m3@512 | 96.2 | 87.5 | 63.6 | 77.1 | 81 | 84.4 | 81.8 | 100 |
+| fused-gated bge-m3@512 | 100 | 100 | 100 | 97.1 | 95.2 | 96.9 | 100 | 100 |
+| semantic bge-m3@256 | 84.6 | 87.5 | 54.5 | 77.1 | 71.4 | 84.4 | 66.7 | 100 |
+| fused-gated bge-m3@256 | 100 | 100 | 100 | 97.1 | 95.2 | 96.9 | 100 | 100 |
+| semantic bge-m3@128 | 69.2 | 66.7 | 48.5 | 51.4 | 52.4 | 62.5 | 51.5 | 70 |
+| fused-gated bge-m3@128 | 100 | 95.8 | 100 | 97.1 | 95.2 | 96.9 | 100 | 100 |
 
 ## Latency
 
 | Measure | p50 | p95 | max | n |
 | --- | --: | --: | --: | --: |
-| Tier 0 per keystroke (Node, this machine) | 0.13 ms | 1.86 ms | 69 ms | 6237 |
-| Tier 0 index build (en + tr) | 392 ms |  |  | 1 |
+| Tier 0 per keystroke (Node, this machine) | 0.06 ms | 0.43 ms | 9.71 ms | 6237 |
+| Tier 0 index build (en + tr) | 102 ms |  |  | 1 |
 
 Noise queries with a confident (≥ 0.6) alias result: 0/3.
 
@@ -155,11 +82,11 @@ Noise queries with a confident (≥ 0.6) alias result: 0/3.
 
 | Client pack | en gz | tr gz |
 | --- | --: | --: |
-| core (shipped) | 178.0 KB | 168.8 KB |
-| ext (loaded when idle) | 255.3 KB | 92.3 KB |
-| core with ≤8 aliases | 112.2 KB | 112.3 KB |
-| core with ≤16 aliases | 178.0 KB | 168.8 KB |
-| core with ≤24 aliases | 242.0 KB | 189.1 KB |
+| core (shipped) | 179.7 KB | 168.7 KB |
+| ext (loaded when idle) | 255.1 KB | 92.3 KB |
+| core with ≤8 aliases | 113.9 KB | 112.2 KB |
+| core with ≤16 aliases | 179.7 KB | 168.7 KB |
+| core with ≤24 aliases | 243.6 KB | 189.0 KB |
 
 | Server file | raw | gz |
 | --- | --: | --: |
@@ -251,30 +178,19 @@ Same layer assumptions; query tokens ≈ chars / 4 of the formatted query.
 
 | Engine | Tier 1 calls | $ / 1M tokens | Search $ / 1M searches | All layers $ / 1M searches |
 | --- | --: | --: | --: | --: |
-| fused-gated bge-small@384 | 9% | $0.0200 | $0.0426 | $0.776 |
-| fused-gated bge-small@256 | 9% | $0.0200 | $0.0426 | $0.776 |
-| fused-gated bge-small@128 | 9% | $0.0200 | $0.0426 | $0.776 |
 | fused-gated bge-m3@1024 | 9% | $0.0120 | $0.0244 | $0.747 |
 | fused-gated bge-m3@768 | 9% | $0.0120 | $0.0244 | $0.747 |
 | fused-gated bge-m3@512 | 9% | $0.0120 | $0.0244 | $0.747 |
 | fused-gated bge-m3@256 | 9% | $0.0120 | $0.0244 | $0.747 |
 | fused-gated bge-m3@128 | 9% | $0.0120 | $0.0244 | $0.747 |
-| fused-gated embeddinggemma@768 | 9% | $0.0200 ⚠ | $0.0342 | $0.767 |
-| fused-gated embeddinggemma@512 | 9% | $0.0200 ⚠ | $0.0342 | $0.767 |
-| fused-gated embeddinggemma@256 | 9% | $0.0200 ⚠ | $0.0342 | $0.767 |
-| fused-gated embeddinggemma@128 | 9% | $0.0200 ⚠ | $0.0342 | $0.767 |
-| fused-gated qwen3@1024 | 9% | $0.0120 | $0.0244 | $0.747 |
-| fused-gated qwen3@768 | 9% | $0.0120 | $0.0244 | $0.747 |
-| fused-gated qwen3@512 | 9% | $0.0120 | $0.0244 | $0.747 |
-| fused-gated qwen3@256 | 9% | $0.0120 | $0.0244 | $0.747 |
-| fused-gated qwen3@128 | 9% | $0.0120 | $0.0244 | $0.747 |
 
 ⚠ = model price is not published; `model.assumedPricePerMTokens` is used.
 
-## Misses of the best engine (fused qwen3@512)
+## Misses of the best engine (fused bge-m3@1024)
 
 | Query | Category | Expected | Got (top 5) |
 | --- | --- | --- | --- |
-| bite the bullet ⓡ | idiom | 😬💪😤 | ⚫️ 🪦 💀 ▪️ ◾️ |
+| shrek ⓡ | pop | 🧌👹🟢 | 💚 🧅 🫏 🥺 🤷‍♂️ |
+| among us ⓡ | pop | 📮🔪🚀🤨 | 🫘 👯‍♂️ 🎮️ 👯 ⏏️ |
 
 ⓡ = label marked for human review in queries.jsonl.
