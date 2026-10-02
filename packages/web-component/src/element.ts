@@ -15,6 +15,7 @@ import {
   loadCulture,
   loadCustomPack,
   loadPacks,
+  localDay,
   type Pack,
   relevantNow,
   type SearchSession,
@@ -203,6 +204,11 @@ export class EmojisensePickerElement extends Base {
 
     this.#input.addEventListener("input", () => this.#search(this.#input.value));
     this.#input.addEventListener("keydown", (event) => this.#onKeyDown(event));
+    // The "relevant now" row follows the device's day: a picker left open overnight draws the new
+    // day's row when it gets focus again.
+    this.#input.addEventListener("focus", () => {
+      if (this.#engine && this.#currentShelfKey() !== this.#shelfKey) this.#refreshBrowse();
+    });
     for (const view of [this.#browse, this.#results]) {
       view.listbox.addEventListener("pointerover", (event) => {
         const index = optionIndex(event);
@@ -484,7 +490,8 @@ export class EmojisensePickerElement extends Base {
 
   #currentShelfKey(): string {
     if (!this.showRelevantNow || !this.#culture) return "";
-    return [this.#culture.locale, this.#culture.from, this.#region(), this.columns].join("|");
+    const { locale, from } = this.#culture;
+    return [locale, from, localDay(), this.#region(), this.columns].join("|");
   }
 
   /** The `region` attribute, else the region of the browser's language. Never sent anywhere. */

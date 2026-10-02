@@ -173,6 +173,27 @@ describe("culture layer", () => {
       { emoji: "👍", hexcode: "1F44D", context: "A season", cultureId: "season" },
     ]);
   });
+
+  it("shows the new day's relevant-now emoji on a render after midnight", () => {
+    const [season] = culture.entries;
+    if (!season) throw new Error("fixture has no season");
+    const oneDay: Culture = {
+      ...culture,
+      entries: [{ ...season, when: { from: "10-31", to: "10-31", recurs: "yearly" } }],
+    };
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 9, 31, 23, 50));
+      const sense = { culture: oneDay, engine: undefined };
+      const { result, rerender } = renderHook(() => useRelevantNow(sense));
+      expect(result.current.map((r) => r.emoji)).toEqual(["👍", "🚀"]);
+      vi.setSystemTime(new Date(2026, 10, 1, 0, 10));
+      rerender();
+      expect(result.current).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("culture region", () => {
