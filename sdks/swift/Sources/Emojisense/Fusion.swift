@@ -6,16 +6,21 @@ public enum Fusion {
     public var limit: Int
     /// Alias results at or above this score keep their place on top, so results do not jump.
     public var pinScore: Double
+    /// Alias results at or above this score (below `pinScore`) come before every other result,
+    /// ordered among themselves by fused score: semantic evidence breaks their near-ties, but it
+    /// cannot lift a clearly weaker alias hit or a semantic-only hit above them. `nil` = off.
+    public var aliasFloor: Double?
     public var aliasWeight: Double
     public var semanticWeight: Double
 
     public init(
-      k: Double = 60, limit: Int = 24, pinScore: Double = 0.9, aliasWeight: Double = 1,
-      semanticWeight: Double = 1
+      k: Double = 60, limit: Int = 24, pinScore: Double = 0.9, aliasFloor: Double? = nil,
+      aliasWeight: Double = 1, semanticWeight: Double = 1
     ) {
       self.k = k
       self.limit = limit
       self.pinScore = pinScore
+      self.aliasFloor = aliasFloor
       self.aliasWeight = aliasWeight
       self.semanticWeight = semanticWeight
     }
@@ -50,7 +55,12 @@ public enum Fusion {
     let rest = fused.indices
       .sorted { fused[$0].score != fused[$1].score ? fused[$0].score > fused[$1].score : $0 < $1 }
       .map { fused[$0].result }
-    return Array((pinned + rest).prefix(max(0, options.limit)))
+    guard let aliasFloor = options.aliasFloor else {
+      return Array((pinned + rest).prefix(max(0, options.limit)))
+    }
+    let floored = Set(alias.filter { $0.score >= aliasFloor }.map(\.id))
+    let ordered = rest.filter { floored.contains($0.id) } + rest.filter { !floored.contains($0.id) }
+    return Array((pinned + ordered).prefix(max(0, options.limit)))
   }
 
   /// Cosine range of the semantic model over which its top match goes from "rarely right" to
@@ -78,18 +88,55 @@ public enum Fusion {
     return min(1, max(0, value))
   }
 
+  /// The semantic list with its unsupported country flags moved after its other results, like
+  /// `demoteUnsupportedFlags` in packages/core/src/fusion.ts. A flag is supported when the alias
+  /// results hold the same flag or its cosine reaches the calibration ceiling. Short Latin-script
+  /// queries the model does not know (romanized text, slang) land near the flag documents.
+  static func demoteUnsupportedFlags(
+    _ semantic: [SearchResult], alias: [SearchResult],
+    calibration: SemanticCalibration = .standard
+  ) -> [SearchResult] {
+    let aliasIds = Set(alias.map(\.id))
+    func supported(_ result: SearchResult) -> Bool {
+      !isCountryFlag(result.id) || aliasIds.contains(result.id)
+        || result.score >= calibration.ceiling
+    }
+    if semantic.allSatisfy(supported) { return semantic }
+    return semantic.filter(supported) + semantic.filter { !supported($0) }
+  }
+
+  /// A country (two regional indicators) or subdivision (black flag + tags) flag, by hexcode.
+  static func isCountryFlag(_ id: String) -> Bool {
+    let points = id.split(separator: "-").map { UInt32($0, radix: 16) ?? 0 }
+    let regionalIndicators: ClosedRange<UInt32> = 0x1F1E6...0x1F1FF
+    if points.count == 2 { return points.allSatisfy { regionalIndicators.contains($0) } }
+    return points.count > 2 && points[0] == 0x1F3F4 && (0xE0020...0xE007F).contains(points[1])
+  }
+
+  /// Alias results this close to a confident top score stay above the rest (`aliasFloor`).
+  static let aliasBand = 0.1
+  /// Below this alias confidence the alias tier is unsure (as in `shouldUseSemantic`): no floor.
+  static let aliasFloorMinConfidence = 0.6
+
   /// Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when
   /// its best match is strong, down to 0.4 when it is weak, so a weak semantic list no longer
-  /// outranks an alias hit.
+  /// outranks an alias hit. When the alias tier is sure (confidence ≥ 0.6), its results within
+  /// 0.1 of the top score stay first; the semantic tier reorders them but cannot push in a
+  /// clearly weaker one. Semantic country flags the alias tier does not support go last.
   public static func fuse(
     alias: AliasSearchOutput, semantic: [SearchResult], limit: Int = 24,
     calibration: SemanticCalibration = .standard
   ) -> [SearchResult] {
-    fuseResults(
-      alias: alias.results.map(\.searchResult), semantic: semantic,
+    let aliasResults = alias.results.map(\.searchResult)
+    let guarded = demoteUnsupportedFlags(semantic, alias: aliasResults, calibration: calibration)
+    return fuseResults(
+      alias: aliasResults, semantic: guarded,
       options: Options(
-        limit: limit, aliasWeight: 0.4 + alias.confidence,
-        semanticWeight: 0.4 + 0.6 * semanticConfidence(semantic, calibration: calibration)))
+        limit: limit,
+        aliasFloor: alias.confidence >= aliasFloorMinConfidence
+          ? alias.confidence - aliasBand : nil,
+        aliasWeight: 0.4 + alias.confidence,
+        semanticWeight: 0.4 + 0.6 * semanticConfidence(guarded, calibration: calibration)))
   }
 
   /// Should this query also go to the semantic tier? Yes when the alias engine is unsure, or when

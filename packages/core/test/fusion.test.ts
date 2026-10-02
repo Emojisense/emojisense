@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AliasSearchOutput, SearchResult } from "../src/engine.js";
-import { fuse, fuseResults, semanticConfidence } from "../src/fusion.js";
+import { demoteUnsupportedFlags, fuse, fuseResults, semanticConfidence } from "../src/fusion.js";
 
 const r = (emoji: string, score: number, source: SearchResult["source"]): SearchResult => ({
   emoji,
@@ -26,6 +26,52 @@ describe("fuseResults", () => {
   it("respects the limit", () => {
     const many = Array.from({ length: 50 }, (_, i) => r(String(i), 0.1, "semantic"));
     expect(fuseResults([], many, { limit: 10 })).toHaveLength(10);
+  });
+
+  it("keeps alias results above the floor ahead of the rest, ordered by fused score", () => {
+    const alias = [r("A", 0.8, "alias"), r("B", 0.78, "alias"), r("C", 0.6, "alias")];
+    const semantic = [r("C", 0.5, "semantic"), r("B", 0.49, "semantic"), r("S", 0.48, "semantic")];
+    expect(fuseResults(alias, semantic).map((x) => x.emoji)).toEqual(["C", "B", "A", "S"]);
+    expect(fuseResults(alias, semantic, { aliasFloor: 0.7 }).map((x) => x.emoji)).toEqual([
+      "B",
+      "A",
+      "C",
+      "S",
+    ]);
+  });
+});
+
+describe("demoteUnsupportedFlags", () => {
+  const flag = (hexcode: string, score: number, source: SearchResult["source"] = "semantic") => ({
+    emoji: hexcode,
+    id: hexcode,
+    score,
+    source,
+  });
+  const brazil = "1F1E7-1F1F7";
+  const bhutan = "1F1E7-1F1F9";
+  const scotland = "1F3F4-E0067-E0062-E0073-E0063-E0074-E007F";
+  const chequered = "1F3C1";
+
+  it("moves country and subdivision flags the alias tier does not hold after the other results", () => {
+    const semantic = [
+      flag(bhutan, 0.45),
+      r("🐰", 0.44, "semantic"),
+      flag(scotland, 0.43),
+      flag(chequered, 0.42),
+    ];
+    expect(demoteUnsupportedFlags(semantic, []).map((x) => x.id)).toEqual([
+      "🐰",
+      chequered,
+      bhutan,
+      scotland,
+    ]);
+  });
+
+  it("keeps a flag the alias results hold, or one with a cosine at the calibration ceiling", () => {
+    const semantic = [flag(brazil, 0.5), flag(bhutan, 0.58), r("💛", 0.4, "semantic")];
+    expect(demoteUnsupportedFlags(semantic, [flag(brazil, 0.86, "alias")])).toBe(semantic);
+    expect(demoteUnsupportedFlags(semantic, []).map((x) => x.id)).toEqual([bhutan, "💛", brazil]);
   });
 });
 
@@ -62,6 +108,48 @@ describe("fuse", () => {
       "S1",
       "S2",
     ]);
+  });
+
+  it("keeps a sure alias top above a weaker alias hit that the semantic list favours", () => {
+    // zh "666": 👍 0.82 and 🔥 0.80 by alias; the keycap 6 has a weak alias (0.66) and leads a
+    // weak semantic list. Without the floor it went first.
+    const out: AliasSearchOutput = {
+      ...alias(0.82, []),
+      results: (
+        [
+          ["👍", 0.82],
+          ["🔥", 0.8],
+          ["6️⃣", 0.66],
+        ] as const
+      ).map(([e, score]) => ({
+        ...r(e, score, "alias"),
+        source: "alias",
+        label: e,
+        match: "666",
+        field: "alias",
+      })),
+    };
+    const semantic = [r("6️⃣", 0.46, "semantic"), r("🕕", 0.45, "semantic"), r("7️⃣", 0.43, "semantic")];
+    expect(fuse(out, semantic, 4).map((x) => x.emoji)).toEqual(["👍", "🔥", "6️⃣", "🕕"]);
+  });
+
+  it("lets the semantic list break near-ties among the top alias results", () => {
+    const out = alias(0.78, ["🪨", "🚀"]);
+    expect(fuse(out, [r("🚀", 0.51, "semantic"), r("🦝", 0.5, "semantic")], 3).map((x) => x.emoji)).toEqual([
+      "🚀",
+      "🪨",
+      "🦝",
+    ]);
+  });
+
+  it("ranks semantic country flags the alias tier does not hold after the other results", () => {
+    const bhutan = { emoji: "🇧🇹", id: "1F1E7-1F1F9", score: 0.44, source: "semantic" as const };
+    const fused = fuse(
+      alias(0.26, ["😄"]),
+      [bhutan, r("🐰", 0.43, "semantic"), r("🐇", 0.42, "semantic")],
+      4,
+    );
+    expect(fused.map((x) => x.emoji)).toEqual(["😄", "🐰", "🐇", "🇧🇹"]);
   });
 
   it("still lets a sure semantic list lead an unsure alias list", () => {

@@ -14,6 +14,11 @@ struct SearchScratch {
   private(set) var emojiPhrase: [Int32]
   /// Matching phrases from preferred-locale packs, the best phrase included.
   private(set) var emojiPreferred: [Int32]
+  /// The emoji has an exact whole-query name, shortcode, keyword or alias match in a
+  /// preferred-locale pack.
+  private(set) var emojiExactPreferred: [Bool]
+  /// The emoji's best phrase is an exact whole-query match.
+  private(set) var emojiBestExact: [Bool]
   private(set) var touchedEmoji: [Int32] = []
 
   var editDistance = EditDistance()
@@ -26,6 +31,8 @@ struct SearchScratch {
     emojiScore = Array(repeating: 0, count: emojiCount)
     emojiPhrase = Array(repeating: 0, count: emojiCount)
     emojiPreferred = Array(repeating: 0, count: emojiCount)
+    emojiExactPreferred = Array(repeating: false, count: emojiCount)
+    emojiBestExact = Array(repeating: false, count: emojiCount)
   }
 
   mutating func startSearch() {
@@ -55,17 +62,27 @@ struct SearchScratch {
     return quality[base..<(base + tokenCount)]
   }
 
-  mutating func recordEmoji(_ emoji: Int, phrase: Int32, score: Double, preferred: Bool) {
+  /// `exact`: the phrase matches the whole query. `strong`: its field is name, shortcode,
+  /// keyword or alias.
+  mutating func recordEmoji(
+    _ emoji: Int, phrase: Int32, score: Double, preferred: Bool, exact: Bool, strong: Bool
+  ) {
     if emojiStamp[emoji] != generation {
       emojiStamp[emoji] = generation
       emojiScore[emoji] = score
       emojiPhrase[emoji] = phrase
       emojiPreferred[emoji] = 0
+      emojiExactPreferred[emoji] = false
+      emojiBestExact[emoji] = exact
       touchedEmoji.append(Int32(emoji))
     } else if score > emojiScore[emoji] {
       emojiScore[emoji] = score
       emojiPhrase[emoji] = phrase
+      emojiBestExact[emoji] = exact
     }
-    if preferred { emojiPreferred[emoji] += 1 }
+    if preferred {
+      emojiPreferred[emoji] += 1
+      if exact && strong { emojiExactPreferred[emoji] = true }
+    }
   }
 }

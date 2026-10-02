@@ -38,6 +38,45 @@ final class FusionTests: XCTestCase {
       Fusion.fuseResults(alias: [], semantic: many, options: Fusion.Options(limit: 10)).count, 10)
   }
 
+  func testKeepsAliasResultsAboveTheFloorAheadOrderedByFusedScore() {
+    let alias = [result("A", 0.8, .alias), result("B", 0.78, .alias), result("C", 0.6, .alias)]
+    let semantic = [
+      result("C", 0.5, .semantic), result("B", 0.49, .semantic), result("S", 0.48, .semantic),
+    ]
+    XCTAssertEqual(
+      Fusion.fuseResults(alias: alias, semantic: semantic).map(\.emoji), ["C", "B", "A", "S"])
+    XCTAssertEqual(
+      Fusion.fuseResults(alias: alias, semantic: semantic, options: Fusion.Options(aliasFloor: 0.7))
+        .map(\.emoji),
+      ["B", "A", "C", "S"])
+  }
+
+  private let brazil = "1F1E7-1F1F7"
+  private let bhutan = "1F1E7-1F1F9"
+  private let scotland = "1F3F4-E0067-E0062-E0073-E0063-E0074-E007F"
+  private let chequered = "1F3C1"
+
+  func testMovesFlagsTheAliasTierDoesNotHoldAfterTheOtherResults() {
+    let semantic = [
+      result(bhutan, 0.45, .semantic), result("🐰", 0.44, .semantic),
+      result(scotland, 0.43, .semantic), result(chequered, 0.42, .semantic),
+    ]
+    XCTAssertEqual(
+      Fusion.demoteUnsupportedFlags(semantic, alias: []).map(\.id),
+      ["🐰", chequered, bhutan, scotland])
+  }
+
+  func testKeepsAFlagTheAliasResultsHoldOrOneAtTheCalibrationCeiling() {
+    let semantic = [
+      result(brazil, 0.5, .semantic), result(bhutan, 0.58, .semantic), result("💛", 0.4, .semantic),
+    ]
+    XCTAssertEqual(
+      Fusion.demoteUnsupportedFlags(semantic, alias: [result(brazil, 0.86, .alias)]).map(\.id),
+      [brazil, bhutan, "💛"])
+    XCTAssertEqual(
+      Fusion.demoteUnsupportedFlags(semantic, alias: []).map(\.id), [bhutan, "💛", brazil])
+  }
+
   private func aliasOutput(_ confidence: Double, _ emoji: [String]) -> AliasSearchOutput {
     let results = emoji.enumerated().map { index, value in
       AliasResult(
@@ -65,6 +104,31 @@ final class FusionTests: XCTestCase {
   func testKeepsAnUnsureAliasHitAboveAWeakSemanticList() {
     let fused = Fusion.fuse(alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.42), limit: 4)
     XCTAssertEqual(fused.map(\.emoji), ["A1", "A2", "S1", "S2"])
+  }
+
+  func testKeepsASureAliasTopAboveAWeakerAliasHitTheSemanticListFavours() {
+    let results = [("👍", 0.82), ("🔥", 0.8), ("6️⃣", 0.66)].map { emoji, score in
+      AliasResult(emoji: emoji, id: emoji, score: score, label: emoji, match: "666", field: .alias)
+    }
+    let alias = AliasSearchOutput(query: "666", tokens: ["666"], results: results, confidence: 0.82)
+    let semantic = [
+      result("6️⃣", 0.46, .semantic), result("🕕", 0.45, .semantic), result("7️⃣", 0.43, .semantic),
+    ]
+    XCTAssertEqual(
+      Fusion.fuse(alias: alias, semantic: semantic, limit: 4).map(\.emoji), ["👍", "🔥", "6️⃣", "🕕"])
+  }
+
+  func testLetsTheSemanticListBreakNearTiesAmongTheTopAliasResults() {
+    let semantic = [result("🚀", 0.51, .semantic), result("🦝", 0.5, .semantic)]
+    let fused = Fusion.fuse(alias: aliasOutput(0.78, ["🪨", "🚀"]), semantic: semantic, limit: 3)
+    XCTAssertEqual(fused.map(\.emoji), ["🚀", "🪨", "🦝"])
+  }
+
+  func testRanksSemanticFlagsTheAliasTierDoesNotHoldAfterTheOtherResults() {
+    let flag = SearchResult(emoji: "🇧🇹", id: bhutan, score: 0.44, source: .semantic)
+    let semantic = [flag, result("🐰", 0.43, .semantic), result("🐇", 0.42, .semantic)]
+    let fused = Fusion.fuse(alias: aliasOutput(0.26, ["😄"]), semantic: semantic, limit: 4)
+    XCTAssertEqual(fused.map(\.emoji), ["😄", "🐰", "🐇", "🇧🇹"])
   }
 
   func testStillLetsASureSemanticListLeadAnUnsureAliasList() {

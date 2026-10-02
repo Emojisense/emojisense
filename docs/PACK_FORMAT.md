@@ -44,7 +44,8 @@ Files never change after publication. A change produces a new pack version. Serv
 - Clients SHOULD verify `sha256` (lowercase hex of the raw file bytes) before they cache a file.
 - `coreAliases` is informational: how many aliases per emoji each locale's core part keeps (§2).
 - `queryTemplate` is the exact string to embed for a query. `{q}` is replaced by the
-  normalized query (§3). Only needed by clients that embed queries themselves.
+  query's embedding text (§3, "Embedding text"). Only needed by clients that embed queries
+  themselves.
 - A vector file with a `locale` key holds that locale's document vectors (§5).
 
 ## 2. pack.<locale>.json
@@ -151,6 +152,13 @@ Examples: `"İYİ Kİ DOĞDUN"` → `"iyi ki dogdun"`, `"¡Feliz cumpleaños!"` 
 
 Tokens are the result split on single spaces.
 
+**Embedding text.** The semantic tier embeds a lighter form of the query, because the embedding
+model reads accents and punctuation (folding them cost about 3 points of semantic recall@5):
+Unicode NFKC, lowercase, NFKC again, each run of `\p{Cc}`, `\p{Z}` or U+FEFF to one space, trim,
+then truncate to 64 UTF-16 code units without splitting a surrogate pair. Accents, punctuation
+and emoji stay: `"  Doğum GÜNÜ!! "` → `"doğum günü!!"`. Its normalized form (steps 1–12) is the
+normalized query. Reference: `embeddingText` in `packages/core/src/normalize.ts`.
+
 ## 4. Tier 0 search (reference algorithm)
 
 The reference implementation is `packages/core/src/engine.ts`. A port SHOULD match it, so that
@@ -201,7 +209,23 @@ contains it for this emoji.
 **Emoji score.** The best phrase score, plus 0.02 for every other matching phrase that is in a
 preferred-locale pack (at most +0.06), capped at 1. Phrases of other locales never add this
 bonus, so many loaded languages that share a loanword ("halloween") cannot lift every emoji to
-the cap. Sort by score (descending), then by row order. `confidence` = the top score.
+the cap.
+
+**Whole query before a partial match.** The bonus breaks near-ties only. For each emoji whose
+best phrase is not an `exactPhrase` match, let `W` be the lowest emoji score among the emoji
+whose best phrase is an `exactPhrase` match in a preferred-locale pack and has a higher phrase
+score (before the bonus). When there is one, the emoji scores at most `W − 0.01`. Without this,
+en "ship it" gave 🚢 (name `ship`, the stopword uncovered, plus +0.06 from its other ship
+phrases) before 🚀 (alias `ship it`).
+
+**Preferred exact match first.** Let `P` be the highest emoji score among the emoji that have
+an `exactPhrase` match in the `name`, `shortcode`, `keyword` or `alias` field of a
+preferred-locale pack. When there is one, every emoji without such a match whose best phrase is
+an `exactPhrase` match in the `name` or `shortcode` field of another pack scores at most
+`P − 0.01`. These two fields outweigh a preferred keyword or alias even after the foreign
+factor, so without this fr "foot" gave 🦶 (English name `foot`) before ⚽ (French alias `foot`).
+
+Sort by score (descending), then by row order. `confidence` = the top score.
 
 ## 5. Vectors (`vectors.<model>.<dims>.bin`, "ESVEC1")
 

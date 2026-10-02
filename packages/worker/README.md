@@ -26,8 +26,8 @@ the shared search cache (`src/custom.ts`).
 | Rule | Where |
 | ---- | ----- |
 | `locale` accepts every locale of `@emojisense/data/locales`; BCP 47 tags map to their language (`pt-BR` → `pt`); others → 400 | `src/http.ts` |
-| Search and reactions rank with the locale's aliases. `en` and `tr` (core + ext) are bundled; other locales read `pack.<locale>.json` through the `ASSETS` binding on first use and build an en + locale engine (core packs only). Images rank English keywords with English aliases | `src/locale-engines.ts`, `src/index.ts` |
-| At most 2 such engines per isolate (LRU, `LOCALE_ENGINE_CACHE_SIZE`), ≈ 8–10 MB each | `src/config.ts` |
+| Search and reactions rank with the locale's aliases. `en` and `tr` (core + ext) are bundled; other locales read `pack.<locale>.json` and `pack.<locale>.ext.json` through the `ASSETS` binding on first use and build an en core + locale core + ext engine. Images rank English keywords with English aliases | `src/locale-engines.ts`, `src/index.ts` |
+| At most 2 such engines per isolate (LRU, `LOCALE_ENGINE_CACHE_SIZE`), ≈ 13–18 MB each | `src/config.ts` |
 | A pack that does not load: no alias evidence (search: semantic-only), `aliasLocale: null`, no-store, not in the shared cache; the next request retries | `src/semantic.ts`, `src/search.ts`, `src/reactions.ts` |
 | `sync` fails when a locale has no published core pack | `scripts/sync-pack.ts` |
 
@@ -57,6 +57,10 @@ pnpm --filter @emojisense/worker dev:offline            # http://localhost:8788,
   file and publishes the locale files (`vectors.bge-m3.1024.<locale>.bin`) as static assets; the
   Worker reads the query locale's file on first use. When
   `packages/data/dist/shards/<packVersion>/` exists for the same model, it is copied to `public/p/`.
+- `sync` also writes `contentHash` to `src/generated/config.json`: a hash of every locale pack,
+  the vector files' model, dims and emoji (not their bytes), the model and the built core engine. The search cache key holds it, so run `sync`
+  after a data or engine change, even under the same pack version (else the edge cache answers
+  with the old results for up to a week).
 - Local D1 state is in the repo-root `.wrangler/state` (`--persist-to`), so a local dashboard
   that uses the same directory and binding sees the same keys.
 

@@ -15,16 +15,23 @@ function fakeFetch() {
 }
 
 describe("semantic client", () => {
-  it("normalizes the query, sends the key as a parameter and caches", async () => {
+  it("sends the embedding text (accents kept), sends the key as a parameter and caches", async () => {
     const fetch = fakeFetch();
     const client = createSemanticClient({ endpoint: "https://api.test/", key: "pk_1", fetch });
-    await client.search("  Jurassic PARK!! ", { locale: "en", limit: 5 });
-    await client.search("jurassic park", { locale: "en", limit: 5 });
+    await client.search("  Doğum   GÜNÜ!! ", { locale: "tr", limit: 5 });
+    await client.search("doğum günü!!", { locale: "tr", limit: 5 });
     expect(fetch).toHaveBeenCalledTimes(1);
     const url = new URL(String(fetch.mock.calls[0]?.[0]));
     expect(url.pathname).toBe("/v1/search");
-    expect(url.searchParams.get("q")).toBe("jurassic park");
+    expect(url.searchParams.get("q")).toBe("doğum günü!!");
     expect(url.searchParams.get("key")).toBe("pk_1");
+  });
+
+  it("does not ask for a query without searchable text", async () => {
+    const fetch = fakeFetch();
+    const client = createSemanticClient({ endpoint: "https://api.test/", fetch });
+    expect(await client.search(" 🎉 !! ")).toBeUndefined();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("keeps asking over the limit, because the edge cache still answers, but not twice", async () => {

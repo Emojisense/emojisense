@@ -23,7 +23,7 @@ describe("createApiClient", () => {
 
     expect(await api.search("  Ship IT! ", { locale: "en", limit: 5 })).toEqual([rocket]);
     const [{ url, init }] = calls as [{ url: string; init: RequestInit }];
-    expect(url).toBe("https://api.test/v1/search?q=ship+it&locale=en&limit=5&mode=semantic");
+    expect(url).toBe("https://api.test/v1/search?q=ship+it%21&locale=en&limit=5&mode=semantic");
     expect(url).not.toContain(KEY);
     expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${KEY}`);
   });

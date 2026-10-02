@@ -20,6 +20,7 @@ import { DATA_ROOT } from "@emojisense/data/paths";
 import {
   type AliasEngine,
   createEngine,
+  embeddingText,
   fuse,
   l2normalize,
   type Pack,
@@ -68,7 +69,8 @@ let vectors: Float32Array[];
 try {
   ({ vectors } = await embedTexts(
     model,
-    queries.map((q) => formatQuery(model, q.q)),
+    // Exactly what the Worker embeds for this query (search.ts), not the raw text.
+    queries.map((q) => formatQuery(model, embeddingText(q.q))),
     "query",
     { offline: args.offline },
   ));

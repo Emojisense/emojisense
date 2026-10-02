@@ -1,4 +1,4 @@
-import { normalize } from "./normalize.js";
+import { embeddingText, normalize } from "./normalize.js";
 import type { SemanticProvider, SemanticResponse } from "./provider.js";
 
 export interface SemanticClientOptions {
@@ -36,8 +36,9 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
 
   return {
     async search(query, { locale = "en", limit = 24, signal } = {}) {
-      const q = normalize(query);
-      if (q === "" || now() < pausedUntil) return undefined;
+      if (normalize(query) === "" || now() < pausedUntil) return undefined;
+      // The text the Worker embeds, accents and punctuation kept (normalize() would fold them).
+      const q = embeddingText(query);
 
       // The client fuses with its own alias results, so it asks for semantic results only.
       const params = new URLSearchParams({ q, locale, limit: String(limit), mode: "semantic" });

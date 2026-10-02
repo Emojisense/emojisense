@@ -1,4 +1,4 @@
-import { normalize, type SearchResult } from "emojisense";
+import { embeddingText, normalize, type SearchResult } from "emojisense";
 
 /** The API truncates reaction text to 256 characters (docs/API.md); sending more is waste. */
 const MAX_REACTION_TEXT = 256;
@@ -72,9 +72,14 @@ export function createApiClient(options: ApiClientOptions): EmojisenseApi {
 
   return {
     search(query, { locale = "en", limit = 24 } = {}) {
-      const q = normalize(query);
-      if (q === "") return Promise.resolve(undefined);
-      const params = new URLSearchParams({ q, locale, limit: String(limit), mode: "semantic" });
+      if (normalize(query) === "") return Promise.resolve(undefined);
+      // The text the Worker embeds: accents and punctuation kept (DECISIONS.md).
+      const params = new URLSearchParams({
+        q: embeddingText(query),
+        locale,
+        limit: String(limit),
+        mode: "semantic",
+      });
       return request(`/v1/search?${params}`);
     },
     suggestReactions(text, { locale = "en", limit = 8 } = {}) {

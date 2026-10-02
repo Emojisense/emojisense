@@ -10,8 +10,8 @@ export const VISION_MODEL = "@cf/google/gemma-4-26b-a4b-it";
 export const VISION_PROMPT_VERSION = 2;
 
 /**
- * Alias engines of non-bundled locales (en core + the locale's core pack, 8–10 MB each) kept per
- * isolate. Two keep an isolate near 60 MB of its 128 MB (DECISIONS.md, 2026-10-02).
+ * Alias engines of non-bundled locales (en core + the locale's core and ext packs, 13–18 MB each)
+ * kept per isolate. Two keep an isolate near 64 MB of its 128 MB (DECISIONS.md, 2026-10-02).
  */
 export const LOCALE_ENGINE_CACHE_SIZE = 2;
 

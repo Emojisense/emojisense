@@ -1,4 +1,4 @@
-import { normalize, type SearchResult } from "emojisense";
+import { embeddingText, normalize, type SearchResult } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
 import {
   BROWSER_CACHE,
@@ -38,8 +38,12 @@ export interface SearchBody {
 }
 
 function parseParams(url: URL) {
+  // The semantic tier embeds the text with its accents and punctuation; aliases, custom emoji
+  // and analytics use its normalized form. Both come from one text, so it can key the cache.
+  const text = embeddingText(url.searchParams.get("q") ?? "");
   return {
-    query: normalize(url.searchParams.get("q") ?? ""),
+    query: normalize(text),
+    embedText: text,
     locale: parseLocale(url.searchParams.get("locale")),
     limit: parseLimit(url.searchParams.get("limit"), SEARCH_DEFAULT_LIMIT, MAX_LIMIT),
     mode: url.searchParams.get("mode") === "semantic" ? ("semantic" as const) : ("hybrid" as const),
@@ -107,16 +111,19 @@ export const handleSearch: Handler = async (
 
   const cacheKey = new Request(
     `${url.origin}/v1/search?${new URLSearchParams({
-      q: params.query,
+      q: params.embedText,
       locale,
       limit: String(params.limit),
       mode: params.mode,
       v: indexTag(catalog),
+      c: catalog.config.contentHash,
     })}`,
   );
   // The cache key has no key, user or origin in it: every app's searches warm the same edge cache,
-  // so popular queries get faster and cheaper for everyone. Cached answers are served even over
-  // the plan limit (they cost no model call), and those are not counted.
+  // so popular queries get faster and cheaper for everyone. `c` changes with the bundled data and
+  // engine, so a hotfix under the same pack version is not answered from week-old entries.
+  // Cached answers are served even over the plan limit (they cost no model call), and those are
+  // not counted.
   const overLimit = await metering.overLimit("semantic_calls");
   const hit = await cache.match(cacheKey);
   if (hit) {
@@ -163,7 +170,7 @@ export const handleSearch: Handler = async (
 
   const ranked = await rank(env, catalog, {
     aliasQuery: params.mode === "hybrid" ? params.query : undefined,
-    embedText: params.query,
+    embedText: params.embedText,
     locale,
     limit: params.limit,
   });

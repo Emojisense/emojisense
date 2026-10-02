@@ -13,6 +13,7 @@
     "heldout:generate": "tsx scripts/make-heldout.ts",
     "photos": "tsx src/photos.ts",
     "reactions": "tsx src/reactions.ts",
+    "romanized": "tsx src/romanized.ts",
     "cost": "tsx src/cost-cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",

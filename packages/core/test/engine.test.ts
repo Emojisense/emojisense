@@ -107,6 +107,56 @@ describe("alias engine", () => {
     expect(first("es")).toBe("🧛");
   });
 
+  it("ranks an exact match of the preferred locale above an exact match only another pack has", () => {
+    // The English name (1.0) and shortcode (0.95) outweigh a French alias (0.8) or keyword
+    // (0.85) even after the foreign factor (0.92).
+    const english = {
+      ...en,
+      emoji: [
+        row("🦶", "1F9B6", "foot", {}),
+        row("🏈", "1F3C8", "american football", { shortcode: "football" }),
+        row("⚽", "26BD", "soccer ball", { keyword: "soccer" }),
+      ],
+    };
+    const french = {
+      ...en,
+      locale: "fr",
+      emoji: [
+        row("🦶", "1F9B6", "pied", {}),
+        row("🏈", "1F3C8", "football américain", { keyword: "ballon ovale" }),
+        row("⚽", "26BD", "ballon de football", { keyword: "football", alias: "foot" }),
+      ],
+    };
+    const multi = createEngine([english, french]);
+    const top = (q: string, locale: string) =>
+      multi.search(q, { locale, prefix: false }).results.map((r) => `${r.emoji} ${r.score}`);
+    expect(top("foot", "fr").slice(0, 2)).toEqual(["⚽ 0.8", "🦶 0.79"]);
+    expect(top("football", "fr").slice(0, 2)).toEqual(["⚽ 0.87", "🏈 0.86"]);
+    // Without an exact French match, the English one keeps its score; English searches are unchanged.
+    expect(top("soccer", "fr")[0]).toBe("⚽ 0.782");
+    expect(top("foot", "en")[0]).toBe("🦶 1");
+  });
+
+  it("keeps the whole-query alias above a partial name match that the evidence bonus lifts", () => {
+    // en "ship it": 🚢's name "ship" covers all but the stopword (0.9 × 0.95 ≈ 0.86) and its other
+    // ship phrases add +0.06; 🚀's alias "ship it" is the whole query (0.8 × 1.1 = 0.88). A rare
+    // word needs a large catalog, as in the real packs: hence the filler rows.
+    const filler = Array.from({ length: 1000 }, (_, i) => row(`f${i}`, `F${i}`, `filler ${i}`, {}));
+    const english = {
+      ...en,
+      emoji: [
+        row("🚢", "1F6A2", "ship", { alias: "cargo ship|cruise ship|container ship|i ship it" }),
+        row("🚀", "1F680", "rocket", { alias: "ship it|rocket ship" }),
+        row("📦", "1F4E6", "package", { alias: "ship it" }),
+        ...filler,
+      ],
+    };
+    const ships = createEngine([english]);
+    const top = (q: string) => ships.search(q, { prefix: false }).results.map((r) => `${r.emoji} ${r.score}`);
+    expect(top("ship it").slice(0, 3)).toEqual(["🚀 0.9", "📦 0.88", "🚢 0.87"]);
+    expect(top("ship")[0]).toBe("🚢 1");
+  });
+
   it("looks up entries by id", () => {
     expect(engine.get("1F680")?.emoji).toBe("🚀");
     expect(engine.get("1F680")?.labels).toEqual({ en: "rocket" });

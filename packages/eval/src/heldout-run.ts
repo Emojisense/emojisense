@@ -12,6 +12,7 @@ import {
   type AliasEngine,
   type AliasSearchOutput,
   createEngine,
+  embeddingText,
   fuse,
   l2normalize,
   type Pack,
@@ -98,7 +99,8 @@ export async function runHeldoutSuite(options: {
   }
   let semantic: Map<string, SearchResult[]> | undefined;
   try {
-    const texts = queries.map((q) => formatQuery(model, q.q));
+    // Exactly what the Worker embeds for this query (search.ts), not the raw text.
+    const texts = queries.map((q) => formatQuery(model, embeddingText(q.q)));
     const { vectors } = await embedTexts(model, texts, "query", { offline });
     const ranked = new Map<string, SearchResult[]>(
       queries.map((q, i) => {

@@ -107,6 +107,12 @@ const NON_EXACT_FACTOR = 0.9;
 const EXACT_PHRASE_BONUS = 1.1;
 const FOREIGN_LOCALE_FACTOR = 0.92;
 const EVIDENCE_BONUS = 0.02;
+/** How far below the match it must not pass a capped emoji scores. */
+const CAP_MARGIN = 0.01;
+/** Fields (FIELDS order) whose exact preferred-locale match outranks a foreign name or shortcode. */
+const STRONG_FIELDS = 4; // name, shortcode, keyword, alias
+/** Fields whose weight beats a preferred alias even after the foreign factor: name, shortcode. */
+const DOMINANT_FIELDS = 2;
 const MAX_EVIDENCE_BONUS = 0.06;
 const STOPWORD_WEIGHT_CAP = 0.3;
 /** Longest piece (code points) tried when a run of an unspaced script is split. */
@@ -357,6 +363,10 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   const emojiPhrase = new Int32Array(entries.length);
   /** Matching phrases from preferred-locale packs, the best phrase included. */
   const emojiPreferred = new Int32Array(entries.length);
+  /** 1 = the emoji has an exact whole-query name, shortcode, keyword or alias match in a preferred-locale pack. */
+  const emojiExactPreferred = new Uint8Array(entries.length);
+  /** 1 = the emoji's best phrase is an exact whole-query match. */
+  const emojiBestExact = new Uint8Array(entries.length);
   const touchedEmoji = new Int32Array(entries.length);
   let generation = 0;
 
@@ -458,6 +468,38 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       .slice(0, MAX_QUERY_TOKENS);
   }
 
+  /**
+   * The evidence bonus breaks near-ties. It never lifts an emoji whose best phrase matches only
+   * part of the query above one whose best phrase is the whole query, in a preferred-locale pack,
+   * with a higher phrase score: en "ship it" is 🚀 (alias "ship it"), not 🚢 (name "ship", lifted
+   * by its other ship phrases). Such an emoji scores at most `CAP_MARGIN` below the lowest of
+   * those (PACK_FORMAT.md §4).
+   */
+  function capPartialBelowWhole(
+    scored: { emoji: number; phrase: number; score: number }[],
+    isPreferred: (phrase: number) => boolean,
+  ): void {
+    const whole = scored
+      .filter(({ emoji, phrase }) => emojiBestExact[emoji] === 1 && isPreferred(phrase))
+      .sort((a, b) => (emojiScore[b.emoji] as number) - (emojiScore[a.emoji] as number));
+    if (whole.length === 0) return;
+    // lowest[i] = the lowest score among the i + 1 whole-query matches with the highest phrase scores.
+    const lowest: number[] = [];
+    for (const { score } of whole) lowest.push(Math.min(score, lowest.at(-1) ?? score));
+    for (const candidate of scored) {
+      if (emojiBestExact[candidate.emoji] === 1) continue;
+      const phraseScore = emojiScore[candidate.emoji] as number;
+      let above = 0;
+      let end = whole.length;
+      while (above < end) {
+        const mid = (above + end) >>> 1;
+        if ((emojiScore[(whole[mid] as { emoji: number }).emoji] as number) > phraseScore) above = mid + 1;
+        else end = mid;
+      }
+      if (above > 0) candidate.score = Math.min(candidate.score, (lowest[above - 1] as number) - CAP_MARGIN);
+    }
+  }
+
   function search(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
@@ -514,11 +556,12 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
 
       const length = phraseLength[phrase] as number;
       const preferred = isPreferred(phrase);
+      const exact = allExact && length === n;
       const score =
         (phraseFieldWeight[phrase] as number) *
         coverage *
         (0.6 + 0.4 * Math.min(1, matched / length)) *
-        (allExact && length === n ? (n >= 2 ? EXACT_PHRASE_BONUS : 1) : NON_EXACT_FACTOR) *
+        (exact ? (n >= 2 ? EXACT_PHRASE_BONUS : 1) : NON_EXACT_FACTOR) *
         (preferred ? 1 : FOREIGN_LOCALE_FACTOR);
 
       const emoji = phraseEmoji[phrase] as number;
@@ -527,28 +570,55 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         emojiScore[emoji] = score;
         emojiPhrase[emoji] = phrase;
         emojiPreferred[emoji] = 0;
+        emojiExactPreferred[emoji] = 0;
+        emojiBestExact[emoji] = exact ? 1 : 0;
         touchedEmoji[touchedEmojiCount++] = emoji;
       } else if (score > (emojiScore[emoji] as number)) {
         emojiScore[emoji] = score;
         emojiPhrase[emoji] = phrase;
+        emojiBestExact[emoji] = exact ? 1 : 0;
       }
-      if (preferred) emojiPreferred[emoji] = (emojiPreferred[emoji] as number) + 1;
+      if (preferred) {
+        emojiPreferred[emoji] = (emojiPreferred[emoji] as number) + 1;
+        if (exact && (phraseField[phrase] as number) < STRONG_FIELDS) emojiExactPreferred[emoji] = 1;
+      }
     }
 
     // Only phrases of the preferred locale add evidence: with many locales loaded, other
     // languages would otherwise lift every emoji that shares a loanword to the bonus cap.
     const support = (emoji: number) =>
       (emojiPreferred[emoji] as number) - (isPreferred(emojiPhrase[emoji] as number) ? 1 : 0);
-    const ranked = Array.from(touchedEmoji.subarray(0, touchedEmojiCount), (emoji) => ({
+    const scored = Array.from(touchedEmoji.subarray(0, touchedEmojiCount), (emoji) => ({
       emoji,
       phrase: emojiPhrase[emoji] as number,
       score: Math.min(
         1,
         (emojiScore[emoji] as number) + Math.min(MAX_EVIDENCE_BONUS, support(emoji) * EVIDENCE_BONUS),
       ),
-    }))
-      .sort((a, b) => b.score - a.score || a.emoji - b.emoji)
-      .slice(0, limit);
+    }));
+    capPartialBelowWhole(scored, isPreferred);
+    // An exact name, shortcode, keyword or alias match in a preferred-locale pack beats an exact
+    // name or shortcode match that only another pack has: fr "foot" is ⚽ by its French alias,
+    // not 🦶 by its English name (field weights differ more than the foreign factor). Such a
+    // foreign-only match is capped just below the best preferred one (PACK_FORMAT.md §4).
+    let topExactPreferred = 0;
+    for (const { emoji, score } of scored) {
+      if (emojiExactPreferred[emoji] === 1 && score > topExactPreferred) topExactPreferred = score;
+    }
+    if (topExactPreferred > 0) {
+      for (const candidate of scored) {
+        const { emoji, phrase } = candidate;
+        if (
+          emojiExactPreferred[emoji] === 0 &&
+          emojiBestExact[emoji] === 1 &&
+          (phraseField[phrase] as number) < DOMINANT_FIELDS &&
+          !isPreferred(phrase)
+        ) {
+          candidate.score = Math.min(candidate.score, topExactPreferred - CAP_MARGIN);
+        }
+      }
+    }
+    const ranked = scored.sort((a, b) => b.score - a.score || a.emoji - b.emoji).slice(0, limit);
 
     const results: AliasResult[] = ranked.map(({ emoji, phrase, score }) => {
       const entry = entries[emoji] as EmojiEntry;

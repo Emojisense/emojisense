@@ -20,6 +20,16 @@ public enum Normalizer {
     return string(from: truncate(collapsed, maxUTF16Length: maxLength))
   }
 
+  /// The text the semantic tier embeds, like `embeddingText` in packages/core/src/normalize.ts:
+  /// NFKC, lowercase, every run of spacing characters (controls, separators, U+FEFF) to one
+  /// space, trimmed, at most `maxLength` UTF-16 units. Accents, punctuation and emoji stay,
+  /// because the embedding model reads them. ``SemanticClient`` sends it as `q`.
+  public static func embeddingText(_ input: String, maxLength: Int = maxQueryLength) -> String {
+    let lowercased = string(from: lowercase(Array(UnicodeForms.nfkc(input).unicodeScalars)))
+    let spaced = UnicodeForms.nfkc(lowercased).unicodeScalars.map { isSpacing($0) ? " " : $0 }
+    return string(from: truncate(collapseSpaces(spaced), maxUTF16Length: maxLength))
+  }
+
   /// Splits a normalized string into tokens (JavaScript `split(" ")` semantics).
   public static func tokenize(_ normalized: String) -> [String] {
     normalized.isEmpty ? [] : normalized.splitOnScalar(" ", omittingEmpty: false)
@@ -162,6 +172,15 @@ public enum Normalizer {
     switch scalar.value {
     case 0x0300...0x036F, 0x064B...0x065F, 0x0670, 0x0640, 0x0591...0x05C7: true
     default: false
+    }
+  }
+
+  /// `[\p{Cc}\p{Z}\uFEFF]`: what `embeddingText` turns into a space.
+  private static func isSpacing(_ scalar: Unicode.Scalar) -> Bool {
+    if scalar.value == 0xFEFF { return true }
+    switch scalar.properties.generalCategory {
+    case .control, .spaceSeparator, .lineSeparator, .paragraphSeparator: return true
+    default: return false
     }
   }
 

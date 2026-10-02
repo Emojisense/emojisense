@@ -51,10 +51,10 @@ public actor SemanticClient: SemanticProvider {
   public func search(_ query: String, options: SemanticSearchOptions) async throws
     -> SemanticResponse?
   {
-    let normalized = Normalizer.normalize(query)
-    if normalized.isEmpty || now() < pausedUntil { return nil }
+    if Normalizer.normalize(query).isEmpty || now() < pausedUntil { return nil }
 
-    let url = try requestURL(query: normalized, options: options)
+    // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
+    let url = try requestURL(query: Normalizer.embeddingText(query), options: options)
     if let hit = cache.value(forKey: url.absoluteString) { return hit.overLimit ? nil : hit }
 
     let response = try await transport.get(url)

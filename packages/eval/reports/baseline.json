@@ -1,234 +1,234 @@
 {
   "alias (core + ext)": {
-    "r5": 97.7,
-    "mrr": 0.872
+    "r5": 99.1,
+    "mrr": 0.888
   },
   "alias (core only, first load)": {
-    "r5": 86.9,
-    "mrr": 0.798
+    "r5": 87.9,
+    "mrr": 0.807
   },
   "alias (core with ≤8 aliases)": {
-    "r5": 77.6,
-    "mrr": 0.708
+    "r5": 78.5,
+    "mrr": 0.722
   },
   "alias (core with ≤16 aliases)": {
-    "r5": 86.9,
-    "mrr": 0.798
+    "r5": 87.9,
+    "mrr": 0.807
   },
   "alias (core with ≤24 aliases)": {
-    "r5": 92.5,
-    "mrr": 0.838
+    "r5": 93,
+    "mrr": 0.84
   },
   "alias (min coverage 0.5)": {
-    "r5": 97.7,
-    "mrr": 0.864
+    "r5": 99.1,
+    "mrr": 0.88
   },
   "alias (min coverage 0.6)": {
-    "r5": 95.3,
-    "mrr": 0.836
+    "r5": 96.7,
+    "mrr": 0.857
   },
   "semantic bge-small@384": {
     "r5": 70.6,
     "mrr": 0.623
   },
   "fused bge-small@384": {
-    "r5": 96.3,
-    "mrr": 0.879
+    "r5": 98.6,
+    "mrr": 0.904
   },
   "fused-gated bge-small@384": {
-    "r5": 97.2,
-    "mrr": 0.877
+    "r5": 99.1,
+    "mrr": 0.897
   },
   "semantic bge-small@256": {
     "r5": 69.2,
     "mrr": 0.606
   },
   "fused bge-small@256": {
-    "r5": 97.2,
-    "mrr": 0.884
+    "r5": 98.6,
+    "mrr": 0.9
   },
   "fused-gated bge-small@256": {
-    "r5": 97.7,
-    "mrr": 0.882
+    "r5": 98.6,
+    "mrr": 0.895
   },
   "semantic bge-small@128": {
     "r5": 60.7,
     "mrr": 0.533
   },
   "fused bge-small@128": {
-    "r5": 97.7,
-    "mrr": 0.866
+    "r5": 99.5,
+    "mrr": 0.894
   },
   "fused-gated bge-small@128": {
-    "r5": 97.2,
-    "mrr": 0.871
-  },
-  "semantic bge-m3@1024": {
-    "r5": 85.5,
-    "mrr": 0.756
-  },
-  "fused bge-m3@1024": {
-    "r5": 96.7,
+    "r5": 99.1,
     "mrr": 0.892
   },
+  "semantic bge-m3@1024": {
+    "r5": 86.4,
+    "mrr": 0.759
+  },
+  "fused bge-m3@1024": {
+    "r5": 98.6,
+    "mrr": 0.91
+  },
   "fused-gated bge-m3@1024": {
-    "r5": 97.2,
-    "mrr": 0.881
+    "r5": 99.1,
+    "mrr": 0.9
   },
   "semantic bge-m3@768": {
     "r5": 85,
     "mrr": 0.738
   },
   "fused bge-m3@768": {
-    "r5": 96.7,
-    "mrr": 0.891
+    "r5": 99.1,
+    "mrr": 0.91
   },
   "fused-gated bge-m3@768": {
-    "r5": 97.2,
-    "mrr": 0.878
+    "r5": 99.1,
+    "mrr": 0.895
   },
   "semantic bge-m3@512": {
     "r5": 82.7,
     "mrr": 0.696
   },
   "fused bge-m3@512": {
-    "r5": 96.7,
-    "mrr": 0.89
+    "r5": 99.1,
+    "mrr": 0.907
   },
   "fused-gated bge-m3@512": {
-    "r5": 97.2,
-    "mrr": 0.873
+    "r5": 99.1,
+    "mrr": 0.891
   },
   "semantic bge-m3@256": {
     "r5": 72,
     "mrr": 0.607
   },
   "fused bge-m3@256": {
-    "r5": 96.7,
-    "mrr": 0.878
+    "r5": 98.6,
+    "mrr": 0.901
   },
   "fused-gated bge-m3@256": {
-    "r5": 97.2,
-    "mrr": 0.878
+    "r5": 99.1,
+    "mrr": 0.895
   },
   "semantic bge-m3@128": {
     "r5": 51.9,
     "mrr": 0.432
   },
   "fused bge-m3@128": {
-    "r5": 95.8,
-    "mrr": 0.852
+    "r5": 98.1,
+    "mrr": 0.886
   },
   "fused-gated bge-m3@128": {
-    "r5": 97.2,
-    "mrr": 0.857
+    "r5": 98.6,
+    "mrr": 0.881
   },
   "semantic embeddinggemma@768": {
     "r5": 88.3,
     "mrr": 0.815
   },
   "fused embeddinggemma@768": {
-    "r5": 97.2,
-    "mrr": 0.893
+    "r5": 99.1,
+    "mrr": 0.908
   },
   "fused-gated embeddinggemma@768": {
-    "r5": 97.2,
-    "mrr": 0.879
+    "r5": 99.1,
+    "mrr": 0.897
   },
   "semantic embeddinggemma@512": {
     "r5": 90.2,
     "mrr": 0.797
   },
   "fused embeddinggemma@512": {
-    "r5": 97.2,
-    "mrr": 0.894
+    "r5": 99.1,
+    "mrr": 0.913
   },
   "fused-gated embeddinggemma@512": {
-    "r5": 97.2,
-    "mrr": 0.878
+    "r5": 99.1,
+    "mrr": 0.897
   },
   "semantic embeddinggemma@256": {
     "r5": 86.9,
     "mrr": 0.795
   },
   "fused embeddinggemma@256": {
-    "r5": 96.7,
-    "mrr": 0.898
+    "r5": 99.1,
+    "mrr": 0.915
   },
   "fused-gated embeddinggemma@256": {
-    "r5": 96.7,
-    "mrr": 0.881
+    "r5": 99.1,
+    "mrr": 0.896
   },
   "semantic embeddinggemma@128": {
     "r5": 82.2,
     "mrr": 0.747
   },
   "fused embeddinggemma@128": {
-    "r5": 97.2,
-    "mrr": 0.905
+    "r5": 98.6,
+    "mrr": 0.916
   },
   "fused-gated embeddinggemma@128": {
-    "r5": 97.7,
-    "mrr": 0.88
+    "r5": 99.1,
+    "mrr": 0.894
   },
   "semantic qwen3@1024": {
     "r5": 80.8,
     "mrr": 0.698
   },
   "fused qwen3@1024": {
-    "r5": 96.3,
-    "mrr": 0.875
+    "r5": 99.1,
+    "mrr": 0.902
   },
   "fused-gated qwen3@1024": {
-    "r5": 97.7,
-    "mrr": 0.881
+    "r5": 99.1,
+    "mrr": 0.895
   },
   "semantic qwen3@768": {
     "r5": 80.4,
     "mrr": 0.687
   },
   "fused qwen3@768": {
-    "r5": 96.3,
-    "mrr": 0.875
+    "r5": 99.1,
+    "mrr": 0.903
   },
   "fused-gated qwen3@768": {
-    "r5": 97.7,
-    "mrr": 0.881
+    "r5": 99.1,
+    "mrr": 0.895
   },
   "semantic qwen3@512": {
     "r5": 77.6,
     "mrr": 0.665
   },
   "fused qwen3@512": {
-    "r5": 96.7,
-    "mrr": 0.871
+    "r5": 99.5,
+    "mrr": 0.897
   },
   "fused-gated qwen3@512": {
-    "r5": 97.7,
-    "mrr": 0.878
+    "r5": 99.1,
+    "mrr": 0.893
   },
   "semantic qwen3@256": {
     "r5": 74.8,
     "mrr": 0.626
   },
   "fused qwen3@256": {
-    "r5": 96.3,
-    "mrr": 0.875
+    "r5": 99.1,
+    "mrr": 0.9
   },
   "fused-gated qwen3@256": {
-    "r5": 97.2,
-    "mrr": 0.878
+    "r5": 99.1,
+    "mrr": 0.893
   },
   "semantic qwen3@128": {
     "r5": 71,
     "mrr": 0.584
   },
   "fused qwen3@128": {
-    "r5": 97.2,
-    "mrr": 0.883
+    "r5": 99.1,
+    "mrr": 0.905
   },
   "fused-gated qwen3@128": {
-    "r5": 97.7,
-    "mrr": 0.881
+    "r5": 99.1,
+    "mrr": 0.893
   }
 }

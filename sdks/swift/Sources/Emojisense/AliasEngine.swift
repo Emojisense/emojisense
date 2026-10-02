@@ -77,7 +77,7 @@ public final class AliasEngine: @unchecked Sendable {
   private struct RankedEmoji {
     let emoji: Int32
     let phrase: Int32
-    let score: Double
+    var score: Double
   }
 
   /// Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds
@@ -129,16 +129,17 @@ public final class AliasEngine: @unchecked Sendable {
       if coverage < minCoverage { continue }
 
       let length = Int(index.phraseLength[Int(phrase)])
+      let exact = allExact && length == tokenCount
       let exactFactor =
-        allExact && length == tokenCount
-        ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
+        exact ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
       let preferred = isPreferred(phrase)
       let localeFactor = preferred ? 1 : Scoring.foreignLocaleFactor
       let score =
         index.phraseFieldWeight[Int(phrase)] * coverage
         * (0.6 + 0.4 * min(1, Double(matched) / Double(length))) * exactFactor * localeFactor
       scratch.recordEmoji(
-        Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score, preferred: preferred)
+        Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score, preferred: preferred,
+        exact: exact, strong: Scoring.strongFields.contains(index.phraseField[Int(phrase)]))
     }
 
     // Only phrases of the preferred locale add evidence (PACK_FORMAT.md §4).
@@ -149,8 +150,58 @@ public final class AliasEngine: @unchecked Sendable {
       return RankedEmoji(
         emoji: emoji, phrase: best, score: min(1, scratch.emojiScore[Int(emoji)] + bonus))
     }
+    capPartialBelowWhole(&ranked, isPreferred: isPreferred)
+    // An exact name, shortcode, keyword or alias match in a preferred-locale pack beats an exact
+    // name or shortcode match that only another pack has (PACK_FORMAT.md §4): such a
+    // foreign-only match is capped just below the best preferred one.
+    let topExactPreferred = ranked.reduce(0.0) { top, candidate in
+      scratch.emojiExactPreferred[Int(candidate.emoji)] ? max(top, candidate.score) : top
+    }
+    if topExactPreferred > 0 {
+      for position in ranked.indices {
+        let emoji = Int(ranked[position].emoji)
+        let phrase = ranked[position].phrase
+        if !scratch.emojiExactPreferred[emoji] && scratch.emojiBestExact[emoji]
+          && Scoring.dominantFields.contains(index.phraseField[Int(phrase)])
+          && !isPreferred(phrase)
+        {
+          ranked[position].score = min(
+            ranked[position].score, topExactPreferred - Scoring.capMargin)
+        }
+      }
+    }
     ranked.sort { $0.score != $1.score ? $0.score > $1.score : $0.emoji < $1.emoji }
     return ranked
+  }
+
+  /// The evidence bonus breaks near-ties. It never lifts an emoji whose best phrase matches only
+  /// part of the query above one whose best phrase is the whole query, in a preferred-locale
+  /// pack, with a higher phrase score (en "ship it": 🚀 by its alias, not 🚢 by its name "ship").
+  /// Such an emoji scores at most `capMargin` below the lowest of those (PACK_FORMAT.md §4).
+  private func capPartialBelowWhole(
+    _ ranked: inout [RankedEmoji], isPreferred: (Int32) -> Bool
+  ) {
+    let phraseScore = { (candidate: RankedEmoji) in self.scratch.emojiScore[Int(candidate.emoji)] }
+    let whole = ranked
+      .filter { scratch.emojiBestExact[Int($0.emoji)] && isPreferred($0.phrase) }
+      .sorted { phraseScore($0) > phraseScore($1) }
+    if whole.isEmpty { return }
+    // lowest[i] = the lowest score among the i + 1 whole-query matches with the highest phrase
+    // scores.
+    var lowest: [Double] = []
+    for candidate in whole { lowest.append(min(candidate.score, lowest.last ?? candidate.score)) }
+    for position in ranked.indices where !scratch.emojiBestExact[Int(ranked[position].emoji)] {
+      let score = phraseScore(ranked[position])
+      var above = 0
+      var end = whole.count
+      while above < end {
+        let middle = (above + end) / 2
+        if phraseScore(whole[middle]) > score { above = middle + 1 } else { end = middle }
+      }
+      if above > 0 {
+        ranked[position].score = min(ranked[position].score, lowest[above - 1] - Scoring.capMargin)
+      }
+    }
   }
 
   private func makeResult(_ candidate: RankedEmoji, locale: String?) -> AliasResult {
@@ -288,6 +339,12 @@ enum Scoring {
   /// A multi-word query that equals a whole phrase ("ship it") beats one-word name hits ("ship").
   static let exactPhraseBonus = 1.1
   static let foreignLocaleFactor = 0.92
+  /// How far below the match it must not pass a capped emoji scores.
+  static let capMargin = 0.01
+  /// Fields whose exact preferred-locale match outranks a foreign name or shortcode.
+  static let strongFields: Set<Field> = [.name, .shortcode, .keyword, .alias]
+  /// Fields whose weight beats a preferred alias even after the foreign factor.
+  static let dominantFields: Set<Field> = [.name, .shortcode]
   static let evidenceBonus = 0.02
   static let maxEvidenceBonus = 0.06
   static let stopwordWeightCap = 0.3

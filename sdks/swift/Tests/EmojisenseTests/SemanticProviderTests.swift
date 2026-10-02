@@ -20,12 +20,13 @@ final class SemanticClientTests: XCTestCase {
       transport: transport, now: now)
   }
 
-  func testNormalizesTheQuerySendsTheKeyAndCaches() async throws {
+  func testSendsTheEmbeddingTextSendsTheKeyAndCaches() async throws {
     let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8)) }
     let client = client(transport, key: "pk_1")
     let options = SemanticSearchOptions(locale: "en", limit: 5)
-    let first = try await client.search("  Jurassic PARK!! ", options: options)
-    _ = try await client.search("jurassic park", options: options)
+    let first = try await client.search("  Jurassic   PARK!! ", options: options)
+    _ = try await client.search("jurassic park!!", options: options)
+    _ = try await client.search(" 🎉 !! ", options: options)
 
     XCTAssertEqual(first?.layer, .api)
     XCTAssertEqual(first?.results.first?.emoji, "🌋")
@@ -33,7 +34,7 @@ final class SemanticClientTests: XCTestCase {
     XCTAssertEqual(requests.count, 1)
     XCTAssertEqual(
       requests.first?.absoluteString,
-      "https://api.test/v1/search?q=jurassic+park&locale=en&limit=5&mode=semantic&key=pk_1")
+      "https://api.test/v1/search?q=jurassic+park%21%21&locale=en&limit=5&mode=semantic&key=pk_1")
   }
 
   func testEncodesAPlusLikeURLSearchParams() async throws {

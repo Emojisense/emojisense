@@ -40,4 +40,10 @@ export interface GeneratedConfig {
   queryTemplate: string;
   /** Locales with their own vector file, read through ASSETS on first use (PACK_FORMAT §5). */
   vectorLocales: string[];
+  /**
+   * Hash of the packs, vector files, model and core engine this build serves, written by the sync
+   * step (scripts/content-hash.ts). Part of the search cache key, so new data or a new engine
+   * under the same pack version is never answered from an older cache entry.
+   */
+  contentHash: string;
 }

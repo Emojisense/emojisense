@@ -35,8 +35,10 @@ headers. Every key also has per-second rate limits.
 - Each API instance counts calls in memory. Its copy of the account's total is never older than
   a minute, and each write of its counts (about every 10 s while busy) refreshes it. So calls on
   other instances can take about a minute to count, and an account can go a little over its limit.
-- **One shared cache.** The cache key is the normalized query, locale, limit, mode and index
-  version. It has no key, app or origin in it, so every app warms the same edge cache.
+- **One shared cache.** The cache key is the embedded query text, locale, limit, mode, index
+  version and a hash of the served packs, vector files and engine (written by the Worker's
+  `sync` step), so a data fix under the same pack version is not answered from older entries. It has
+  no key, app or origin in it, so every app warms the same edge cache.
 - **Over the limit, the API never fails.** A query that is in the shared cache is still answered
   (`"cached": true`, not metered). Other queries return `200` with `"overLimit": true` and
   alias-only (hybrid) or empty (semantic) results. The SDK keeps asking (the edge cache may know
@@ -47,7 +49,7 @@ headers. Every key also has per-second rate limits.
 
 | Param | Default | Notes |
 | ----- | ------- | ----- |
-| `q` | — | Required. Normalized server-side (PACK_FORMAT.md §3), max 64 characters. |
+| `q` | — | Required, max 64 characters. The semantic tier embeds it with its accents and punctuation (PACK_FORMAT.md §3, "Embedding text"); aliases, custom emoji and analytics use its normalized form. |
 | `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). Semantic search covers the English and this locale's emoji vectors (PACK_FORMAT.md §5). |
 | `limit` | `24` | 1–50 |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
@@ -100,10 +102,11 @@ are matched against the query and put first, in both modes, within `limit`:
   No `locale` (or an empty one) means `en`.
 - Any other language answers `400` with the supported list, e.g. `unknown locale "de": use one of
   en, zh, hi, es, ar, fr, bn, pt, ru, id, tr (or a BCP 47 tag of one, e.g. pt-BR)`.
-- Search and reactions rank with the English pack plus the requested locale's pack, the same
-  data an SDK loads on the device. English matches still count, slightly below the locale's own.
-- `en` and `tr` are built into the Worker. The other locales load their core pack on the first
-  request in a Worker instance (≈ 0.1–0.3 s once), then answer as fast as `en`.
+- Search and reactions rank with the English core pack plus the requested locale's core and ext
+  packs, close to what an SDK has after its idle-time load (it also has the English ext pack).
+  English matches still count, slightly below the locale's own.
+- `en` and `tr` are built into the Worker. The other locales load their core and ext packs on
+  the first request in a Worker instance (≈ 0.2–0.4 s once), then answer as fast as `en`.
 
 ## `POST /v1/suggest-reactions`
 

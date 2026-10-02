@@ -24,6 +24,7 @@ import {
   type AliasSearchOutput,
   createEngine,
   DEFAULT_SEMANTIC_CALIBRATION,
+  embeddingText,
   fuse,
   l2normalize,
   type Pack,
@@ -211,13 +212,14 @@ const calibrations: {
 try {
   const queryVectors = new Map<string, Float32Array[]>();
   for (const model of [...new Set(vectorFiles.map((v) => v.model))]) {
-    const texts = scored.map((q) => formatQuery(model, q.q));
+    // Exactly what the Worker embeds for this query (search.ts), not the raw text.
+    const texts = scored.map((q) => formatQuery(model, embeddingText(q.q)));
     queryTokens[model.id] = texts.reduce((s, t) => s + t.length / 4, 0) / texts.length;
     try {
       const { vectors } = await embedTexts(model, texts, "query", { offline: args.offline });
       queryVectors.set(model.key, vectors);
       if (!args.offline) {
-        const sample = scored.slice(0, 15).map((q) => `${formatQuery(model, q.q)} `);
+        const sample = scored.slice(0, 15).map((q) => `${formatQuery(model, embeddingText(q.q))} `);
         const ms = await measureLatency(model, sample);
         latency.push({ model: model.key, p50: percentile(ms, 50), p95: percentile(ms, 95), n: ms.length });
       }

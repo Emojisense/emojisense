@@ -53,7 +53,7 @@ export { groupLabel } from "./groups.js";
 export { baseId, hexcodeOf } from "./ids.js";
 export { createLayeredSemantic, type LayeredSemanticOptions } from "./layered.js";
 export { type LoadCustomPackOptions, type LoadPacksOptions, loadCustomPack, loadPacks } from "./loader.js";
-export { MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
+export { embeddingText, MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
 export {
   assertPack,
   CUSTOM_ID_PREFIX,

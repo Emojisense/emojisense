@@ -25,7 +25,7 @@ const REPO_ROOT = args.root ? resolve(args.root) : THIS_REPO;
 const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
-const { createEngine, normalize } = core;
+const { createEngine, embeddingText, normalize } = core;
 const TOP = 10;
 const KEYSTROKE_TOP = 5;
 /** Every n-th query is also replayed keystroke by keystroke. */
@@ -241,6 +241,8 @@ const golden = {
     cases: NORMALIZATION_INPUTS.map((input) => [input, normalize(input)]),
     sweep: { blockSize: SWEEP_BLOCK, ranges: SWEEP_RANGES, hashes: sweepHashes() },
   },
+  /** The text the semantic client sends and the API embeds (accents and punctuation kept). */
+  embeddingText: { cases: NORMALIZATION_INPUTS.map((input) => [input, embeddingText(input)]) },
   search: [
     { name: "core+ext", packs: fullFiles, cases: searchCases(fullEngine) },
     { name: "core", packs: coreFiles, cases: searchCases(coreEngine) },
