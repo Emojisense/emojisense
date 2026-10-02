@@ -1,4 +1,5 @@
 import { applyCulture, type Culture, type CultureResult, type CultureScope } from "./culture.js";
+import { functionWordsFor } from "./function-words.js";
 import { boundedEditDistance, maxEditsFor, plausibleTypo } from "./fuzzy.js";
 import { normalize, tokenize } from "./normalize.js";
 import {
@@ -114,7 +115,8 @@ const STRONG_FIELDS = 4; // name, shortcode, keyword, alias
 /** Fields whose weight beats a preferred alias even after the foreign factor: name, shortcode. */
 const DOMINANT_FIELDS = 2;
 const MAX_EVIDENCE_BONUS = 0.06;
-const STOPWORD_WEIGHT_CAP = 0.3;
+/** The most a function word (function-words.ts) weighs, so it never blocks a match. */
+const FUNCTION_WORD_WEIGHT_CAP = 0.3;
 /** Longest piece (code points) tried when a run of an unspaced script is split. */
 const MAX_PIECE_LENGTH = 16;
 /**
@@ -122,15 +124,6 @@ const MAX_PIECE_LENGTH = 16;
  * them is one token after normalization, so a sentence only matches if it is a whole phrase.
  */
 const UNSPACED_SCRIPT = /[฀-໿က-႟ក-៿぀-ヿ㐀-䶿一-鿿豈-﫿\u{20000}-\u{3134F}]/u;
-
-/** Function words that carry little meaning in a query (en + folded tr). */
-const STOPWORDS = new Set(
-  (
-    "a an the of to in on at for from by is are am be im i me my you your u it its this that " +
-    "so and or with just very really too we our they them he she his her bir ve ile bu su cok " +
-    "da de mi ben sen o icin gibi"
-  ).split(" "),
-);
 
 function entryOf(pack: Pack, row: PackRow): EmojiEntry {
   const entry: EmojiEntry = {
@@ -428,17 +421,18 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   }
 
   /**
-   * Split a run of an unspaced script into vocabulary tokens, longest match first from the left.
-   * Characters where no vocabulary token starts stay together as one unknown piece.
+   * Split a run of an unspaced script into vocabulary tokens and function words, longest match
+   * first from the left. Characters where neither starts stay together as one unknown piece.
    */
-  function segment(run: string): string[] {
+  function segment(run: string, functionWords: ReadonlySet<string>): string[] {
     const chars = Array.from(run);
     const pieces: string[] = [];
     let unknown = "";
     let i = 0;
+    const isPiece = (piece: string) => tokenId.has(piece) || functionWords.has(piece);
     while (i < chars.length) {
       let length = Math.min(MAX_PIECE_LENGTH, chars.length - i);
-      while (length > 0 && !tokenId.has(chars.slice(i, i + length).join(""))) length--;
+      while (length > 0 && !isPiece(chars.slice(i, i + length).join(""))) length--;
       if (length === 0) {
         unknown += chars[i];
         i++;
@@ -455,17 +449,27 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
 
   /**
    * Query tokens. A token of an unspaced script that is not in the vocabulary (and, while typing,
-   * is not the start of one) is split into the vocabulary tokens it contains.
+   * is not the start of one) is split into the vocabulary tokens and function words it contains.
    */
-  function queryTokens(normalized: string, lastIsPrefix: boolean): string[] {
+  function queryTokens(
+    normalized: string,
+    lastIsPrefix: boolean,
+    functionWords: ReadonlySet<string>,
+  ): string[] {
     const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
     return tokens
       .flatMap((token, i) => {
         if (tokenId.has(token) || !UNSPACED_SCRIPT.test(token)) return [token];
         if (lastIsPrefix && i === tokens.length - 1 && completes(token)) return [token];
-        return segment(token);
+        return segment(token, functionWords);
       })
       .slice(0, MAX_QUERY_TOKENS);
+  }
+
+  /** The vocabulary token equal to `token`, if any: a function word next to content words matches only itself. */
+  function exactly(token: string): Map<number, number> {
+    const id = tokenId.get(token);
+    return new Map(id === undefined ? [] : [[id, 1]]);
   }
 
   /**
@@ -504,18 +508,24 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
     const lastIsPrefix = prefix && !/\s$/.test(query);
-    const tokens = queryTokens(normalized, lastIsPrefix);
+    const functionWords = functionWordsFor(locale ?? primary.locale);
+    const tokens = queryTokens(normalized, lastIsPrefix, functionWords);
     if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0 };
 
     const preferredMask = (preferredMasks.get(locale ?? primary.locale) ?? 1) | customMask;
     const isPreferred = (phrase: number) => ((phraseLocaleMask[phrase] as number) & preferredMask) !== 0;
     const n = tokens.length;
+    const isFunctionWord = tokens.map((token) => functionWords.has(token));
+    // Next to a content word, a function word neither completes as a prefix ("了" is not "了解")
+    // nor stands for a typo. A query of function words only ("я тоже") is searched as typed.
+    const hasContentWord = isFunctionWord.includes(false);
     const weights: number[] = [];
     generation++;
     let touchedPhraseCount = 0;
 
     tokens.forEach((token, i) => {
-      const candidates = expand(token, lastIsPrefix && i === n - 1);
+      const candidates =
+        hasContentWord && isFunctionWord[i] ? exactly(token) : expand(token, lastIsPrefix && i === n - 1);
       let bestQuality = 0;
       let weight = maxIdf;
       for (const [id, q] of candidates) {
@@ -534,7 +544,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
           if (q > (quality[base + i] as number)) quality[base + i] = q;
         }
       }
-      weights.push(STOPWORDS.has(token) ? Math.min(weight, STOPWORD_WEIGHT_CAP) : weight);
+      weights.push(isFunctionWord[i] ? Math.min(weight, FUNCTION_WORD_WEIGHT_CAP) : weight);
     });
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
