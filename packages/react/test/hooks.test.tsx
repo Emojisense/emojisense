@@ -220,14 +220,15 @@ describe("culture region", () => {
   };
 
   /** Packs, the regional culture file and the search API; returns every request URL. */
-  function serve() {
+  function serve(answerRegion?: string) {
     const packs = packFetch();
     const fetch = vi.fn(async (url: string | URL | Request) => {
       const u = String(url);
       if (u.endsWith("/culture/culture.en.json")) return new Response(JSON.stringify(regional));
       if (u.includes("/v1/search")) {
         const results = [{ emoji: "🚀", id: "1F680", score: 0.6, source: "semantic" }];
-        return new Response(JSON.stringify({ results, packVersion: "test", cached: false }));
+        const region = answerRegion ? { region: answerRegion } : {};
+        return new Response(JSON.stringify({ results, packVersion: "test", cached: false, ...region }));
       }
       return packs(url);
     });
@@ -269,6 +270,30 @@ describe("culture region", () => {
     const { result: none } = renderHook(() => useEmojisense({ ...options, region: "" }));
     expect(none.current.region).toBeUndefined();
     expect(await search(none)).toEqual(["🦖", "🚀"]);
+  });
+
+  it("with region auto, asks the API for the region and applies it to later searches", async () => {
+    const fetch = serve("BR");
+    speak("en-US");
+    const { result: sense } = renderHook(() =>
+      useEmojisense({ ...options, endpoint: "https://api.test", publishableKey: "pk_test", region: "auto" }),
+    );
+    await waitFor(() => expect(sense.current.engine?.culture).toBeDefined());
+    const { result, rerender } = renderHook(
+      ({ query }) => useEmojiSearch(query, sense.current, { debounceMs: 10 }),
+      { initialProps: { query: "jurassic park" } },
+    );
+    await waitFor(() => expect(result.current.results.length).toBeGreaterThan(0));
+    expect(result.current.results.map((r) => r.emoji)).not.toContain("👍");
+    rerender({ query: "to infinity and beyond" });
+    await waitFor(() => expect(result.current.status).toBe("fused"));
+    rerender({ query: "jurassic park" });
+    await waitFor(() => expect(result.current.results.map((r) => r.emoji)).toContain("👍"));
+    const searches = fetch.mock.calls.map(([url]) => String(url)).filter((url) => url.includes("/v1/search"));
+    expect(searches.every((url) => new URL(url).searchParams.get("region") === "auto")).toBe(true);
+    // The shelf has no search to learn from: entries for every region only.
+    const { result: shelf } = renderHook(() => useRelevantNow(sense.current));
+    expect(shelf.current.every((item) => item.cultureId !== "dino-br")).toBe(true);
   });
 
   it("never sends the region", async () => {

@@ -54,7 +54,10 @@ public class SemanticClient @JvmOverloads constructor(
 
     public suspend fun search(query: String): SemanticResponse? = search(query, SemanticSearchOptions())
 
-    /** The client fuses with its own alias results, so it asks for semantic results only. */
+    /**
+     * The client fuses with its own alias results, so it asks for semantic results only. It sends
+     * `region=auto` only for the value "auto": an explicit region code stays on the device.
+     */
     private fun requestUrl(query: String, options: SemanticSearchOptions): String {
         val parameters = mutableListOf(
             "q" to query,
@@ -62,6 +65,7 @@ public class SemanticClient @JvmOverloads constructor(
             "limit" to options.limit.toString(),
             "mode" to "semantic",
         )
+        if (options.region.equals(AUTO_REGION, ignoreCase = true)) parameters.add("region" to AUTO_REGION)
         configuration.packVersion?.let { parameters.add("pack" to it) }
         configuration.key?.let { parameters.add("key" to it) }
         return "${UrlEncoding.trimTrailingSlashes(configuration.endpoint)}/v1/search?${UrlEncoding.formEncoded(parameters)}"

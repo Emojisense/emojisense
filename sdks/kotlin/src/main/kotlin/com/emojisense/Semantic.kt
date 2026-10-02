@@ -27,6 +27,11 @@ public data class SemanticResponse(
     val overLimit: Boolean = false,
     /** Set by the provider that answered. */
     val layer: SemanticLayer? = null,
+    /**
+     * API, after a request with `region=auto`: the region that the API found for the request, e.g.
+     * "DE". Null when it found none, and always null from shards.
+     */
+    val region: String? = null,
 ) {
     public companion object {
         /** Decodes an API answer (`/v1/search`). Unknown keys are ignored. */
@@ -41,6 +46,7 @@ public data class SemanticResponse(
                 degraded = root.optionalBoolean("degraded") == true,
                 overLimit = root.optionalBoolean("overLimit") == true,
                 layer = SemanticLayer.entries.firstOrNull { it.key == root.optionalString("layer") },
+                region = root.optionalString("region"),
             )
         }
 
@@ -60,10 +66,18 @@ public data class SemanticResponse(
 
 /** Options of [SemanticProvider.search]. */
 public data class SemanticSearchOptions @JvmOverloads constructor(
-    /** Null: the provider's default ("en" for the API). */
+    /** Null: the provider's default ("en" for the API). [ShardProvider] reads the shards of this locale. */
     val locale: String? = null,
     val limit: Int = 24,
+    /**
+     * "auto": the API finds the region of the request and returns it in [SemanticResponse.region].
+     * Only the value "auto" is sent to the API. An explicit region code (e.g. "BR") stays on the device.
+     */
+    val region: String? = null,
 )
+
+/** The region value that asks the API to find the region of the request. */
+internal const val AUTO_REGION = "auto"
 
 /**
  * A source of semantic results: precomputed shards, the HTTP API, or (later) an on-device model.

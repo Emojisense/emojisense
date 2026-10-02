@@ -7,6 +7,7 @@ import {
   createSearchSession,
   deviceRegion,
   type EmojiSet,
+  isAutoRegion,
   loadCulture,
   loadCustomPack,
   loadPacks,
@@ -59,7 +60,9 @@ export interface EmojisenseOptions {
   /**
    * ISO 3166-1 alpha-2 region, e.g. "BR". Regional culture entries apply only with it. Default:
    * the region of the browser's language (`navigator.language` "pt-BR" → "BR"), read on the
-   * device and never sent. `""` = no region.
+   * device and never sent. `""` = no region. `"auto"`: the region the API reports for the
+   * request's country (`region=auto`, needs `endpoint`), learned from the first API answer of a
+   * search; the relevant-now shelf then shows entries for every region only.
    */
   region?: string;
 }
@@ -307,7 +310,9 @@ export function useRelevantNow(
   emojisense: Pick<Emojisense, "culture" | "region" | "engine">,
   options: UseRelevantNowOptions = {},
 ): RelevantEmoji[] {
-  const { culture, region, engine } = emojisense;
+  const { culture, engine } = emojisense;
+  // With "auto", only a search learns the region; the shelf shows entries for every region.
+  const region = isAutoRegion(emojisense.region) ? undefined : emojisense.region;
   const { limit = 8, now } = options;
   // The device's calendar day: a render after midnight shows the new day's shelf.
   const day = localDay(now);

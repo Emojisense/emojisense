@@ -1,7 +1,7 @@
 import { applyCulture, type Culture } from "./culture.js";
 import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
 import { shouldUseSemantic as defaultShouldUseSemantic, fuse } from "./fusion.js";
-import type { SemanticLayer, SemanticProvider } from "./provider.js";
+import { AUTO_REGION, isAutoRegion, type SemanticLayer, type SemanticProvider } from "./provider.js";
 
 export type SessionStatus = "idle" | "alias" | "loading" | "fused" | "error";
 
@@ -37,7 +37,11 @@ export interface SearchSessionOptions {
    * canonical ranking stays first.
    */
   culture?: Culture | false;
-  /** ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". */
+  /**
+   * ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". `"auto"`: the region the
+   * API reports for the caller's country (`region=auto`), learned from the first API answer
+   * that has one; until then only entries for every region apply.
+   */
   region?: string;
   onChange: (state: SessionState) => void;
 }
@@ -64,6 +68,9 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
     onChange,
   } = options;
   const culture = options.culture === false ? undefined : (options.culture ?? engine.culture);
+  const auto = isAutoRegion(region);
+  /** With `region: "auto"`, the region of the first API answer that reported one. */
+  let learnedRegion: string | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let inflight: AbortController | undefined;
 
@@ -81,7 +88,14 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
       const alias = engine.search(query, { limit, culture: false, ...(locale ? { locale } : {}) });
       const aliasMs = performance.now() - aliasStarted;
       const present = (results: SearchResult[]): SearchResult[] =>
-        culture ? applyCulture(results, culture, query, { engine, locale, region, limit }) : results;
+        culture
+          ? applyCulture(results, culture, query, {
+              engine,
+              locale,
+              region: auto ? learnedRegion : region,
+              limit,
+            })
+          : results;
       const wantsSemantic = semantic !== undefined && shouldUseSemantic(alias);
       onChange({
         query,
@@ -101,8 +115,10 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
             limit,
             signal: controller.signal,
             ...(locale ? { locale } : {}),
+            ...(auto ? { region: AUTO_REGION } : {}),
           });
           if (controller.signal.aborted) return;
+          if (auto && typeof response?.region === "string") learnedRegion ??= response.region;
           if (!response) {
             // No layer had an answer (or the key is over its limit): alias results stand.
             onChange({ query, results: present(alias.results), alias, aliasMs, status: "alias" });

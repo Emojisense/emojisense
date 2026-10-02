@@ -158,6 +158,92 @@ final class ShardProviderTests: XCTestCase {
     let response = try await provider.search("congrats")
     XCTAssertNil(response)
   }
+
+  // MARK: Shards per locale
+
+  private static let base = "https://x.test/p/1"
+  private static let localeFiles = [
+    "\(base)/index.json": files["index.json"]!,
+    "\(base)/co.json": files["co.json"]!,
+    "\(base)/tr/index.json": """
+    {"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256",
+     "keys":["co","dogum "]}
+    """,
+    "\(base)/tr/co.json": #"{"key":"co","entries":{"congrats on the launch":[["🎊","1F38A",0.9]]}}"#,
+    "\(base)/tr/dogum%20.json": #"{"key":"dogum ","entries":{"dogum gunu":[["🎂","1F382",0.9]]}}"#,
+  ]
+
+  private func requestedURLs(_ transport: StubTransport) async -> [String] {
+    await transport.requests.map(\.absoluteString)
+  }
+
+  func testUsesTheRootFilesForEnglishAndForNoLocale() async throws {
+    let transport = StubTransport(urls: Self.localeFiles)
+    let provider = ShardProvider(baseURL: URL(string: "\(Self.base)/")!, transport: transport)
+    for locale in [nil, "en", "EN", ""] {
+      let response = try await provider.search(
+        "congrats on the launch", options: SemanticSearchOptions(locale: locale))
+      XCTAssertEqual(response?.results.first?.emoji, "🚀", locale ?? "nil")
+    }
+    let requests = await requestedURLs(transport)
+    XCTAssertEqual(requests, ["\(Self.base)/index.json", "\(Self.base)/co.json"])
+  }
+
+  func testAsksTheFolderOfAnyOtherLocaleInLowercase() async throws {
+    let transport = StubTransport(urls: Self.localeFiles)
+    let provider = ShardProvider(baseURL: URL(string: Self.base)!, transport: transport)
+    let upper = try await provider.search("Dogum gunu", options: SemanticSearchOptions(locale: "TR"))
+    XCTAssertEqual(upper?.layer, .shard)
+    XCTAssertEqual(upper?.results.map(\.emoji), ["🎂"])
+    let lower = try await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr"))
+    XCTAssertEqual(lower?.results.map(\.emoji), ["🎂"])
+    let requests = await requestedURLs(transport)
+    XCTAssertEqual(requests, ["\(Self.base)/tr/index.json", "\(Self.base)/tr/dogum%20.json"])
+  }
+
+  func testKeepsTheIndexAndShardsOfEachLocaleApart() async throws {
+    let transport = StubTransport(urls: Self.localeFiles)
+    let provider = ShardProvider(baseURL: URL(string: Self.base)!, transport: transport)
+    for _ in 0..<2 {
+      let english = try await provider.search(
+        "congrats on the launch", options: SemanticSearchOptions(locale: "en"))
+      let turkish = try await provider.search(
+        "congrats on the launch", options: SemanticSearchOptions(locale: "tr"))
+      XCTAssertEqual(english?.results.first?.emoji, "🚀")
+      XCTAssertEqual(turkish?.results.first?.emoji, "🎊")
+    }
+    let requests = await requestedURLs(transport)
+    XCTAssertEqual(
+      requests,
+      [
+        "\(Self.base)/index.json", "\(Self.base)/co.json", "\(Self.base)/tr/index.json",
+        "\(Self.base)/tr/co.json",
+      ])
+  }
+
+  func testGivesNoAnswerForALocaleWithoutShardsAndDoesNotAskAgain() async throws {
+    let transport = StubTransport(urls: Self.localeFiles)
+    let shards = ShardProvider(baseURL: URL(string: Self.base)!, transport: transport)
+    let german = SemanticSearchOptions(locale: "de")
+    let first = try await shards.search("congrats on the launch", options: german)
+    let second = try await shards.search("congrats on the way", options: german)
+    XCTAssertNil(first)
+    XCTAssertNil(second)
+    var requests = await requestedURLs(transport)
+    XCTAssertEqual(requests, ["\(Self.base)/de/index.json"])
+
+    let apiTransport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8))
+    }
+    let api = SemanticClient(
+      configuration: .init(endpoint: URL(string: "https://api.test")!), transport: apiTransport)
+    let chained = try await ProviderChain([shards, api]).search(
+      "congrats on the launch", options: german)
+    XCTAssertEqual(chained?.layer, .api)
+    let english = try await shards.search("congrats on the launch")
+    XCTAssertEqual(english?.layer, .shard)
+    requests = await requestedURLs(transport)
+    XCTAssertEqual(requests.filter { $0.hasSuffix("/de/index.json") }.count, 1)
+  }
 }
 
 /// A clock the test moves by hand.

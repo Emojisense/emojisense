@@ -18,6 +18,11 @@ export interface SemanticResponse {
    * since 2026-10-02) and the region, or null when none was applied.
    */
   culture?: { from: string; day?: string; region: string | null } | null;
+  /**
+   * Server, when the request named a region: the region it used. With `region: "auto"` it is the
+   * caller's country as the API's edge saw it, or null when unknown.
+   */
+  region?: string | null;
   /** Set by the provider that answered. */
   layer?: SemanticLayer;
 }
@@ -26,7 +31,18 @@ export interface SemanticSearchOptions {
   locale?: string;
   limit?: number;
   signal?: AbortSignal;
+  /**
+   * `"auto"` asks the API to report the caller's region (`region=auto`, from the request's
+   * country). Only `"auto"` is ever sent: a region code stays on the device.
+   */
+  region?: string;
 }
+
+/** The region value that asks the API for the caller's region. */
+export const AUTO_REGION = "auto";
+
+/** True for `"auto"` in any case. */
+export const isAutoRegion = (region: string | undefined): boolean => region?.toLowerCase() === AUTO_REGION;
 
 /**
  * A source of semantic results: precomputed shards, the HTTP API, or (later) an on-device

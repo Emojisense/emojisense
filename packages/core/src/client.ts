@@ -1,5 +1,5 @@
 import { embeddingText, normalize } from "./normalize.js";
-import type { SemanticProvider, SemanticResponse } from "./provider.js";
+import { AUTO_REGION, isAutoRegion, type SemanticProvider, type SemanticResponse } from "./provider.js";
 
 export interface SemanticClientOptions {
   /** Base URL of the Emojisense API, e.g. "https://api.emojisense.com". */
@@ -35,13 +35,15 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
   let pausedUntil = 0;
 
   return {
-    async search(query, { locale = "en", limit = 24, signal } = {}) {
+    async search(query, { locale = "en", limit = 24, signal, region } = {}) {
       if (normalize(query) === "" || now() < pausedUntil) return undefined;
       // The text the Worker embeds, accents and punctuation kept (normalize() would fold them).
       const q = embeddingText(query);
 
       // The client fuses with its own alias results, so it asks for semantic results only.
       const params = new URLSearchParams({ q, locale, limit: String(limit), mode: "semantic" });
+      // The API answers with the caller's region. A region code is never sent.
+      if (isAutoRegion(region)) params.set("region", AUTO_REGION);
       if (packVersion) params.set("pack", packVersion);
       if (key) params.set("key", key);
       const url = `${base}/v1/search?${params}`;

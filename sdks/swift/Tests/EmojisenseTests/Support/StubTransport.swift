@@ -22,6 +22,16 @@ actor StubTransport: HTTPTransport {
     }
   }
 
+  /// Serves bodies by the full URL; anything else is a 404.
+  init(urls: [String: String]) {
+    self.init { url in
+      guard let body = urls[url.absoluteString] else {
+        return HTTPResponse(status: 404, body: Data())
+      }
+      return HTTPResponse(status: 200, body: Data(body.utf8))
+    }
+  }
+
   func get(_ url: URL) async throws -> HTTPResponse {
     requests.append(url)
     return respond(url)

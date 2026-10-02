@@ -78,6 +78,9 @@ Notes:
 - `SemanticClient` returns `nil` while it is paused after an `overLimit` answer. It throws
   `EmojisenseError.httpStatus` for HTTP errors. `ShardProvider` returns `nil` for network errors,
   so the next provider gets the query.
+- `ShardProvider` reads the shards of `SemanticSearchOptions.locale`. English (or no locale) uses
+  `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. If a
+  locale has no shards (404), the provider stops asking for that locale and the API answers.
 - Inject an `HTTPTransport` to add headers, logging or a stub for tests.
 
 ## Tests and conformance
