@@ -74,12 +74,47 @@ export function isFormBody(request: Request): boolean {
   return FORM_TYPE.test(request.headers.get("content-type") ?? "");
 }
 
+/**
+ * Reads at most `max` bytes of a body; undefined when it is larger. Stops at the limit, so an
+ * oversized upload or download costs no more memory than the limit.
+ */
+export async function readCapped(
+  body: ReadableStream<Uint8Array> | null,
+  max: number,
+): Promise<Uint8Array<ArrayBuffer> | undefined> {
+  if (!body) return new Uint8Array();
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      await reader.cancel();
+      return undefined;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
+
+/**
+ * The body as text, at most 16 KB. A chunked body has no Content-Length, so the stream is cut at
+ * the limit instead of buffered whole (the public waitlist would otherwise take any size).
+ */
 async function readBodyText(request: Request): Promise<string> {
   const tooLarge = new HttpError(413, "body_too_large", "The request body is larger than 16 KB.");
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES) throw tooLarge;
-  const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) throw tooLarge;
-  return text;
+  const bytes = await readCapped(request.body, MAX_BODY_BYTES);
+  if (!bytes) throw tooLarge;
+  return new TextDecoder().decode(bytes);
 }
 
 /** Reads a form body (application/x-www-form-urlencoded). A repeated field keeps its last value. */

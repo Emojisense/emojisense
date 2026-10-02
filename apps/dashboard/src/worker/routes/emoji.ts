@@ -28,14 +28,13 @@ import {
   emitEmojiEvent,
   limitOf,
   limitReached,
-  readCapped,
   requireBucket,
   shortcodeTaken,
   valid,
 } from "../custom-emoji";
 import type { D1Database } from "../d1";
 import type { AuthedContext } from "../env";
-import { HttpError, json, readJsonObject } from "../http";
+import { HttpError, json, readCapped, readJsonObject } from "../http";
 import { requirePlan } from "../plans";
 import { isValidId } from "../validate";
 

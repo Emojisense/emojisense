@@ -23,7 +23,7 @@ import {
 } from "@emojisense/platform";
 import type { EmojiImportResponse, EmojiImportSkipReason } from "../../shared/contract";
 import { requireAppAccess } from "../access";
-import { apiUrlOf, emitEmojiEvent, readCapped, requireBucket } from "../custom-emoji";
+import { apiUrlOf, emitEmojiEvent, requireBucket } from "../custom-emoji";
 import {
   type EmojiCandidate,
   type EmojiListing,
@@ -34,7 +34,7 @@ import {
   parseSlackToken,
 } from "../emoji-sources";
 import type { AuthedContext, Deps } from "../env";
-import { json, readJsonObject } from "../http";
+import { json, readCapped, readJsonObject } from "../http";
 import { requirePlan } from "../plans";
 
 /** New emoji stored per call. */

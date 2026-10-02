@@ -1,6 +1,7 @@
 import { waitlistReturnUrl } from "@emojisense/platform";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { MeResponse } from "../../src/shared/contract";
+import { handleRequest } from "../../src/worker/app";
 import { BASE, body, createHarness, NOW, WEBSITE } from "./harness";
 
 const join = (h: ReturnType<typeof createHarness>, payload: unknown, origin: string | null = WEBSITE) =>
@@ -78,6 +79,29 @@ describe("POST /api/waitlist", () => {
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("60");
     expect(h.db.rows("SELECT * FROM waitlist")).toHaveLength(0);
+  });
+
+  it("stops reading a chunked body at 16 KB instead of buffering all of it", async () => {
+    const h = createHarness();
+    let chunksRead = 0;
+    // 10 MB in 1 KB chunks, without a Content-Length (Transfer-Encoding: chunked).
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        chunksRead++;
+        if (chunksRead > 10_240) controller.close();
+        else controller.enqueue(new Uint8Array(1024).fill(0x20));
+      },
+    });
+    const request = new Request(`${BASE}/api/waitlist`, {
+      method: "POST",
+      headers: { "content-type": "application/json", origin: WEBSITE },
+      body: stream,
+      duplex: "half",
+    } as RequestInit);
+    const response = await handleRequest(request, h.env, { fetch: vi.fn(), now: () => NOW });
+    expect(response.status).toBe(413);
+    expect(await body(response)).toMatchObject({ error: { code: "body_too_large" } });
+    expect(chunksRead).toBeLessThan(40);
   });
 });
 
