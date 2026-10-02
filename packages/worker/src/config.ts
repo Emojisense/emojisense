@@ -9,6 +9,12 @@ export const VISION_MODEL = "@cf/google/gemma-4-26b-a4b-it";
 /** Bump when the vision prompt changes, so cached captions from the old prompt are not reused. */
 export const VISION_PROMPT_VERSION = 2;
 
+/**
+ * Alias engines of non-bundled locales (en core + the locale's core pack, 8–10 MB each) kept per
+ * isolate. Two keep an isolate near 60 MB of its 128 MB (DECISIONS.md, 2026-10-02).
+ */
+export const LOCALE_ENGINE_CACHE_SIZE = 2;
+
 export const SEARCH_DEFAULT_LIMIT = 24;
 export const REACTIONS_DEFAULT_LIMIT = 8;
 export const MAX_LIMIT = 50;

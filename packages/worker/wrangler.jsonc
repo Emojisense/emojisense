@@ -10,6 +10,9 @@
   "dev": { "port": 8788 },
   "assets": {
     "directory": "./public",
+    // src/locale-engines.ts reads pack.<locale>.json of locales outside the bundle through it.
+    // `assets` is inherited by the offline env, binding included.
+    "binding": "ASSETS",
     // Packs (/v1/pack/*) and shards (/p/*) are static assets: free, immutable, and never run the
     // Worker. Only the API routes run it first; the negative rule keeps packs on the asset path.
     "run_worker_first": ["/v1/*", "!/v1/pack/*"]

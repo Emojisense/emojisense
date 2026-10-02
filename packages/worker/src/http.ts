@@ -1,3 +1,5 @@
+import { LOCALE_CODES } from "@emojisense/data/locales";
+
 /**
  * CORS: any origin may call the API; publishable keys are bound to origins separately (auth.ts).
  * `Authorization` is deliberately not in Allow-Headers, so browsers cannot send secret keys
@@ -27,8 +29,27 @@ export function parseLimit(raw: unknown, fallback: number, max: number): number 
   return Number.isFinite(value) ? Math.min(max, Math.max(1, Math.floor(value))) : fallback;
 }
 
-export function parseLocale(raw: unknown): "en" | "tr" {
-  return raw === "tr" ? "tr" : "en";
+export const DEFAULT_LOCALE = "en";
+const PACK_LOCALES = new Set(LOCALE_CODES);
+
+/**
+ * The pack locale of a `locale` parameter. A BCP 47 tag maps to its language, case-insensitive
+ * ("pt-BR" → "pt", "zh-Hans" → "zh", "en_US" → "en"). Missing or empty → English. Undefined
+ * when the language has no pack: the caller answers {@link unknownLocale}.
+ */
+export function parseLocale(raw: unknown): string | undefined {
+  if (raw === undefined || raw === null || raw === "") return DEFAULT_LOCALE;
+  if (typeof raw !== "string") return undefined;
+  const language = raw.trim().toLowerCase().split(/[-_]/)[0] ?? "";
+  return PACK_LOCALES.has(language) ? language : undefined;
+}
+
+export function unknownLocale(raw: unknown): Response {
+  const shown = typeof raw === "string" ? `"${raw.slice(0, 35)}"` : typeof raw;
+  return errorResponse(
+    400,
+    `unknown locale ${shown}: use one of ${LOCALE_CODES.join(", ")} (or a BCP 47 tag of one, e.g. pt-BR)`,
+  );
 }
 
 /**

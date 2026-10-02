@@ -8,6 +8,7 @@ import {
   type VectorIndex,
 } from "emojisense";
 import { createApp } from "./app.ts";
+import { LOCALE_ENGINE_CACHE_SIZE } from "./config.ts";
 import { createD1CustomEmojiReader } from "./custom-store.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
 import config from "./generated/config.json";
@@ -16,6 +17,7 @@ import packEn from "./generated/pack.en.json";
 import packTrExt from "./generated/pack.tr.ext.json";
 import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
+import { assetPackReader, createLocaleEngines } from "./locale-engines.ts";
 import { handleScheduled } from "./retention.ts";
 import type { Catalog } from "./semantic.ts";
 import { createD1Store } from "./store.ts";
@@ -24,13 +26,23 @@ import { createD1Store } from "./store.ts";
 let engine: AliasEngine | undefined;
 let index: VectorIndex | undefined;
 
+const bundledEngine = () => {
+  engine ??= createEngine([packEn, packTr, packEnExt, packTrExt] as unknown as Pack[]);
+  return engine;
+};
+// The other pack locales are static assets; their engines are built on first use (core packs).
+const localeEngines = createLocaleEngines({
+  bundled: bundledEngine,
+  base: () => [packEn as unknown as Pack],
+  read: assetPackReader(config.packVersion),
+  maxEngines: LOCALE_ENGINE_CACHE_SIZE,
+});
+
 const catalog: Catalog = {
   config: config as GeneratedConfig,
   model: getModel(config.modelKey),
-  engine: () => {
-    engine ??= createEngine([packEn, packTr, packEnExt, packTrExt] as unknown as Pack[]);
-    return engine;
-  },
+  engine: bundledEngine,
+  aliasEngine: (locale, env) => localeEngines.get(locale, env),
   index: () => {
     if (!index) {
       const decoded = decodeVectors(vectors);

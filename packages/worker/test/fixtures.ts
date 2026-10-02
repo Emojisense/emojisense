@@ -59,6 +59,8 @@ export const catalog: Catalog = {
   },
   model: getModel("bge-m3"),
   engine: () => createEngine(pack),
+  // English only; test/locales.test.ts builds a catalog with real packs of other locales.
+  aliasEngine: async (locale) => (locale === "en" ? createEngine(pack) : undefined),
   index: () =>
     decodeVectors(
       encodeVectors(

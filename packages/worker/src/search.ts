@@ -3,7 +3,7 @@ import { type Outcome, record } from "./analytics.ts";
 import { BROWSER_CACHE, EDGE_CACHE_SECONDS, MAX_LIMIT, SEARCH_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
-import { errorResponse, json, parseLimit, parseLocale } from "./http.ts";
+import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
 
 /** Response of /v1/search and /v1/suggest-reactions (docs/API.md). */
@@ -17,6 +17,11 @@ export interface SearchBody {
   degraded: boolean;
   /** The key's account is over its monthly plan limit; no semantic results until the next period. */
   overLimit: boolean;
+  /**
+   * The locale whose aliases were fused into the results. null: no alias search ran (semantic
+   * mode), or the locale's pack could not be loaded and the results are semantic-only.
+   */
+  aliasLocale: string | null;
 }
 
 function parseParams(url: URL) {
@@ -46,6 +51,8 @@ export const handleSearch: Handler = async (
   const url = new URL(request.url);
   const params = parseParams(url);
   if (!params.query) return errorResponse(400, "missing or empty q");
+  const { locale } = params;
+  if (!locale) return unknownLocale(url.searchParams.get("locale"));
   const tenant = parseTenant(url.searchParams.get("tenant"));
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
@@ -60,7 +67,7 @@ export const handleSearch: Handler = async (
     record(env, indexTag(catalog), {
       endpoint: "search",
       query: params.query,
-      locale: params.locale,
+      locale,
       mode: params.mode,
       outcome,
       ms: Date.now() - started,
@@ -70,7 +77,7 @@ export const handleSearch: Handler = async (
   const cacheKey = new Request(
     `${url.origin}/v1/search?${new URLSearchParams({
       q: params.query,
-      locale: params.locale,
+      locale,
       limit: String(params.limit),
       mode: params.mode,
       v: indexTag(catalog),
@@ -103,7 +110,7 @@ export const handleSearch: Handler = async (
     // Never a hard failure: hybrid callers still get the alias dictionary's answer.
     const ranked =
       params.mode === "hybrid"
-        ? await rank(env, catalog, { aliasQuery: params.query, locale: params.locale, limit: params.limit })
+        ? await rank(env, catalog, { aliasQuery: params.query, locale, limit: params.limit })
         : undefined;
     log("over_limit", { aliasConfidence: ranked?.aliasConfidence });
     const body: SearchBody = {
@@ -112,6 +119,7 @@ export const handleSearch: Handler = async (
       cached: false,
       degraded: false,
       overLimit: true,
+      aliasLocale: ranked?.aliasLocale ?? null,
     };
     metering.recordSearch(params.query, body.results.length);
     return json(body, 200, {
@@ -123,7 +131,7 @@ export const handleSearch: Handler = async (
   const ranked = await rank(env, catalog, {
     aliasQuery: params.mode === "hybrid" ? params.query : undefined,
     embedText: params.query,
-    locale: params.locale,
+    locale,
     limit: params.limit,
   });
   const body: SearchBody = {
@@ -132,9 +140,12 @@ export const handleSearch: Handler = async (
     cached: false,
     degraded: ranked.degraded,
     overLimit: false,
+    aliasLocale: ranked.aliasLocale,
   };
-  if (ranked.semantic) {
-    metering.count("semantic_calls");
+  // Without the locale's aliases (its pack did not load) the answer must not stay cached a week.
+  const cacheable = !ranked.degraded && !ranked.aliasUnavailable;
+  if (ranked.semantic) metering.count("semantic_calls");
+  if (ranked.semantic && cacheable) {
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }
@@ -145,8 +156,8 @@ export const handleSearch: Handler = async (
     semanticTop: ranked.semanticTop,
   });
   return json(answer, 200, {
-    // Degraded answers are not cached, so the client gets semantic results once AI is back.
-    "Cache-Control": ranked.degraded ? "no-store" : browserCache,
+    // Degraded answers are not cached, so the client gets the full answer once AI is back.
+    "Cache-Control": cacheable ? browserCache : "no-store",
     "Server-Timing": `embed;dur=${ranked.embedMs}, total;dur=${Date.now() - started}`,
   });
 };

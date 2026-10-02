@@ -10,7 +10,7 @@ import {
 } from "./config.ts";
 import type { CacheLike, Handler } from "./context.ts";
 import { resolveEmoji } from "./emoji-lookup.ts";
-import { errorResponse, json, parseLimit, parseLocale, readBodyCapped } from "./http.ts";
+import { errorResponse, json, parseLimit, parseLocale, readBodyCapped, unknownLocale } from "./http.ts";
 import { rankImage } from "./image-rank.ts";
 import { indexTag, rank } from "./semantic.ts";
 import { describeImage, type ImageLabel, sniffImage } from "./vision.ts";
@@ -83,6 +83,8 @@ export const handleClassifyImage: Handler = async (request, env, ctx, { catalog,
   if (!ACCEPTED_TYPES.has(declaredType)) {
     return errorResponse(400, "Content-Type must be image/jpeg or image/webp");
   }
+  const locale = parseLocale(url.searchParams.get("locale"));
+  if (!locale) return unknownLocale(url.searchParams.get("locale"));
   const hash = request.headers.get("x-image-hash");
   if (hash !== null && !IMAGE_HASH.test(hash)) {
     return errorResponse(400, "X-Image-Hash must be 16 hex characters");
@@ -91,7 +93,6 @@ export const handleClassifyImage: Handler = async (request, env, ctx, { catalog,
   if (!bytes) return errorResponse(413, `image larger than ${MAX_IMAGE_BYTES / 1024} KB`);
   const type = sniffImage(bytes);
   if (!type) return errorResponse(400, "unreadable image: not a JPEG or WebP file");
-  const locale = parseLocale(url.searchParams.get("locale"));
   const limit = parseLimit(url.searchParams.get("limit"), REACTIONS_DEFAULT_LIMIT, MAX_LIMIT);
 
   const respond = (body: ClassifyImageBody, timing: string) => {

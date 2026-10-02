@@ -3,7 +3,7 @@ import { record } from "./analytics.ts";
 import { MAX_LIMIT, MAX_REACTION_BODY_BYTES, MAX_REACTION_CHARS, REACTIONS_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
-import { errorResponse, json, parseLimit, parseLocale, readBodyCapped } from "./http.ts";
+import { errorResponse, json, parseLimit, parseLocale, readBodyCapped, unknownLocale } from "./http.ts";
 import { rankReactions } from "./reaction-rank.ts";
 import type { SearchBody } from "./search.ts";
 import { embedQuery, indexTag, modelTag } from "./semantic.ts";
@@ -34,6 +34,7 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
   const text = typeof input.text === "string" ? truncateText(input.text, MAX_REACTION_CHARS) : "";
   if (!text) return errorResponse(400, "missing or empty text");
   const locale = parseLocale(input.locale);
+  if (!locale) return unknownLocale(input.locale);
   const limit = parseLimit(input.limit, REACTIONS_DEFAULT_LIMIT, MAX_LIMIT);
   const url = new URL(request.url);
   const tenant = parseTenant(input.tenant ?? url.searchParams.get("tenant"));
@@ -42,11 +43,14 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
 
   const overLimit = await metering.overLimit("semantic_calls");
   const embedded = overLimit ? { degraded: false, ms: 0 } : await embedQuery(env, catalog, text);
-  const ranked = rankReactions(catalog.engine(), {
+  const aliasEngine = await catalog.aliasEngine(locale, env);
+  const ranked = rankReactions(aliasEngine ?? catalog.engine(), {
     text,
     locale,
     limit,
     semantic: embedded.vector ? { index: catalog.index(), vector: embedded.vector } : undefined,
+    // The locale's pack did not load: English aliases would misread the message, so none count.
+    ...(aliasEngine ? {} : { weights: { alias: 0 } }),
   });
   if (embedded.vector) metering.count("semantic_calls");
   record(env, indexTag(catalog), {
@@ -70,6 +74,7 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
     cached: false,
     degraded: embedded.degraded,
     overLimit,
+    aliasLocale: aliasEngine ? locale : null,
   };
   return json(body, 200, {
     "Cache-Control": "no-store",
