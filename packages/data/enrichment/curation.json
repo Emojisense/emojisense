@@ -2042,5 +2042,26 @@
     "alias": "lolita",
     "action": "remove",
     "why": "safety review: can read as a sexualized minor"
+  },
+  {
+    "hexcode": "1F525",
+    "locale": "hi",
+    "phrase": "aag laga di",
+    "action": "add",
+    "why": "Hinglish 'set it on fire' (nailed it); 🔥 is full at 50 aliases, so the wave 3 lane could not add it"
+  },
+  {
+    "hexcode": "1F3CF",
+    "locale": "hi",
+    "phrase": "chauka",
+    "action": "add",
+    "why": "Hinglish for a cricket four; 🏏 is full at 50 aliases and only the keycap 4 had it"
+  },
+  {
+    "hexcode": "1F64F",
+    "locale": "hi",
+    "phrase": "shukriya",
+    "action": "add",
+    "why": "the common Hinglish/Urdu 'thank you'; 🙏 is full at 50 aliases and did not have it"
   }
 ]
