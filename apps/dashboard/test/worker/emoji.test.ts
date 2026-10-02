@@ -73,7 +73,7 @@ describe("POST /api/apps/:id/emoji", () => {
     expect(await body(response)).toMatchObject({ error: { code: "plan_limit" } });
   });
 
-  it.each([
+  it.each<[Record<string, string>, number, string, string]>([
     [{ shortcode: "ok" }, 400, "invalid_request", "file"],
     [{ file: "not a file", shortcode: "ok" }, 400, "invalid_request", "file"],
     [{ file: "png" }, 400, "invalid_request", "shortcode"],
@@ -88,10 +88,11 @@ describe("POST /api/apps/:id/emoji", () => {
     [{ file: "png", shortcode: "ok", tenantId: "nope" }, 400, "invalid_request", "tenantId"],
     [{ file: "text", shortcode: "ok" }, 415, "unsupported_image", "file"],
     [{ file: "unsafeSvg", shortcode: "ok" }, 400, "unsafe_svg", "file"],
-  ] as const)("rejects %j", async (fields, status, code, field) => {
+  ])("rejects %j", async (fields, status, code, field) => {
     const { upload, bucket } = await emojiHarness();
     const form: Record<string, string | Blob> = { ...fields };
-    if (fields.file && fields.file in IMAGES) form.file = file(IMAGES[fields.file as keyof typeof IMAGES]);
+    const image = IMAGES[fields.file as keyof typeof IMAGES] as Uint8Array | undefined;
+    if (image) form.file = file(image);
     const response = await upload(form);
     expect(response.status).toBe(status);
     expect(await body(response)).toMatchObject({ error: { code, field } });

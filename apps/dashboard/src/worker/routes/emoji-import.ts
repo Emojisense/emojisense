@@ -105,7 +105,8 @@ export async function runImport(job: ImportJob, listing: EmojiListing): Promise<
     (await listCustomEmoji(ctx.env.DB, appId, { tenantId: null })).map((row) => row.shortcode),
   );
   const queue: { shortcode: string; url: string }[] = [];
-  const byName = (a: EmojiCandidate, b: EmojiCandidate) => a.name.localeCompare(b.name);
+  // Code-unit order, not locale order: the same list imports the same way on every runtime.
+  const byName = (a: EmojiCandidate, b: EmojiCandidate) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
   for (const candidate of [...listing.candidates].sort(byName)) {
     let shortcode: string;
     try {
