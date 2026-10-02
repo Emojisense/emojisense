@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../src/env.ts";
 import { assetVectorReader, createLocaleVectors, type VectorReader } from "../src/locale-vectors.ts";
 import type { SearchBody } from "../src/search.ts";
-import { catalog, EMBEDDING_MODEL, fixtureVectors, harness, search, unit } from "./fixtures.ts";
+import { catalog, EMBEDDING_MODEL, fixtureVectors, harness, keyedSearch, unit } from "./fixtures.ts";
 
 const shared = catalog.index();
 /** Spanish vectors: the dog row sits where the fake embedding of `embedTo: 4` lands. */
@@ -80,17 +80,17 @@ describe("semantic search with locale vectors", () => {
 
   it("ranks with the shared vectors and the locale's own, best row per emoji", async () => {
     const h = localeHarness();
-    const es = (await (await h.call(search("perro", "&locale=es&mode=semantic"))).json()) as SearchBody;
+    const es = (await (await h.call(keyedSearch("perro", "&locale=es&mode=semantic"))).json()) as SearchBody;
     expect(es.results[0]).toMatchObject({ emoji: "🐶", source: "semantic" });
     expect(es.results.filter((r) => r.emoji === "🐶")).toHaveLength(1);
-    const en = (await (await h.call(search("perro", "&locale=en&mode=semantic"))).json()) as SearchBody;
+    const en = (await (await h.call(keyedSearch("perro", "&locale=en&mode=semantic"))).json()) as SearchBody;
     expect(en.results[0]?.emoji).not.toBe("🐶");
   });
 
   it("never caches an answer ranked without the locale's own vectors", async () => {
     const h = localeHarness(async (name) => Promise.reject(new Error(`${name}: HTTP 404`)));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const res = await h.call(search("perro", "&locale=es&mode=semantic"));
+    const res = await h.call(keyedSearch("perro", "&locale=es&mode=semantic"));
     await h.ctx.settle();
     warn.mockRestore();
     const body = (await res.json()) as SearchBody;

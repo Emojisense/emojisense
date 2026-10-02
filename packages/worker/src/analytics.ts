@@ -1,6 +1,7 @@
 import type { Env } from "./env.ts";
 
-export type Outcome = "hit" | "hit_over_limit" | "miss" | "degraded" | "over_limit";
+/** `anonymous`: a cache miss without a key, answered without a model call. */
+export type Outcome = "hit" | "hit_over_limit" | "miss" | "degraded" | "over_limit" | "anonymous";
 
 interface Common {
   locale: string;

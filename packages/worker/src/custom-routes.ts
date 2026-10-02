@@ -1,4 +1,5 @@
 import { CUSTOM_EMOJI_CACHE_CONTROL } from "@emojisense/platform";
+import { keyRequired } from "./auth.ts";
 import { CUSTOM_PACK_CACHE_SECONDS, CUSTOM_PACK_CACHE_VERSION } from "./config.ts";
 import type { CacheLike, Handler } from "./context.ts";
 import { type CustomEmojiIndex, callerApp, imageOrigin, parseTenant } from "./custom.ts";
@@ -71,7 +72,8 @@ export async function handleCustomImage(
  * per app, tenant and pack layout version, so edits show up within a minute.
  */
 export const handleCustomPack: Handler = async (request, env, ctx, { cache, custom }, _metering, caller) => {
-  if (caller.kind === "anonymous") return errorResponse(401, "a key is required for custom emoji");
+  const refused = keyRequired(caller, "custom emoji");
+  if (refused) return refused;
   const url = new URL(request.url);
   const tenant = parseTenant(url.searchParams.get("tenant"));
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");

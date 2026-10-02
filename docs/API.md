@@ -24,7 +24,7 @@ Shared contracts: `@emojisense/platform` (D1 schema, plans, key helpers) and
 | --- | ----- | ------- | ------ |
 | Publishable `pk_live_…` | browsers, extensions | `?key=` query parameter (no CORS preflight) | `Origin` must match the key's allowed origins (an empty list allows any origin; only `dev` apps may have such keys) |
 | Secret `sk_live_…` | servers only (MCP, bots, tenant writes) | `Authorization: Bearer sk_live_…` | never accepted with an `Origin` header (blocks use from browsers) or in the URL |
-| none (anonymous) | demos, trials, local dev | — | stricter rate limit per IP |
+| none (anonymous) | quick tries, local dev | — | stricter rate limit per IP, and no model calls (below) |
 
 The `Origin` check stops misuse from other websites. It does not stop servers, which can forge
 headers, so every caller is also rate limited:
@@ -41,11 +41,15 @@ limiter key; it is never logged or stored. Static files, `/v1/health` and the em
 random keys before it reaches the database; a key the instance knew before keeps working while
 it holds.
 
-**Anonymous calls** (no key) work on `/v1/search`, `/v1/suggest-reactions` and
-`/v1/classify-image`. They are never metered and never over a plan limit, they get no custom
-emoji, and they are not in any app's analytics. `/v1/custom-pack` answers them with `401`, the
-tenants API with `401 unauthorized`. When the key store cannot be read and a key is not in the
-per-isolate cache, the call is served as anonymous rather than failed.
+**Anonymous calls never reach Workers AI.** Without a key, `/v1/search` answers from the shared
+cache when it can; on a miss it answers like an account over its limit: alias results in `hybrid`
+mode, none in `semantic` mode, `"overLimit": true`, not cached. `/v1/suggest-reactions` ranks
+without the embedding (alias results, `"overLimit": true`). `/v1/classify-image` and
+`/v1/custom-pack` answer `401`, the tenants API `401 unauthorized`. Anonymous calls are never
+metered, get no custom emoji, and are not in any app's analytics. When a key was sent but the key
+store cannot be read and the key is not cached, the call is served as anonymous, except that
+`/v1/classify-image` and `/v1/custom-pack` answer `503` (retry). The public demos on the website
+use the website's own publishable key, so they are not anonymous.
 
 ## Metering and plan limits
 
@@ -171,12 +175,13 @@ laughter, agreement… in en, tr, es, fr, de, pt, it), a reaction vocabulary ran
 embedding, alias hits per clause and the nearest emoji of the catalog. A topical emoji needs two
 signals, or a very close embedding match, so "smoke tests are failing" does not give 🚬. One
 embedding call per request, no LLM. `source` is `semantic` for the embedding signals and
-`alias` for the rest; over the limit, all results are `alias`. The list can be shorter than
-`limit` when the text gives little to go on.
+`alias` for the rest; over the limit and without a key, all results are `alias`. The list can be
+shorter than `limit` when the text gives little to go on.
 
 ## `POST /v1/classify-image`
 
-Request: `Content-Type: image/jpeg` or `image/webp`, max 256 KB. Clients downscale to ~384 px
+Needs a key (anonymous calls get `401`). Request: `Content-Type: image/jpeg` or `image/webp`, max
+256 KB. Clients downscale to ~384 px
 first. Optional header `X-Image-Hash: <16 hex>` (for example a 64-bit perceptual hash) turns on
 the label cache, so the same image sent many times costs one vision call. The cache key is the
 SHA-256 of the bytes the API received, never the header, so only byte-identical images share a
@@ -404,16 +409,16 @@ curl -X POST https://api.emojisense.com/v1/tenants/acme/emoji \
 
 | Status | Meaning |
 | ------ | ------- |
-| 200 | Also over a plan limit (`"overLimit": true`) and when Workers AI is down (`"degraded": true`): search never fails hard |
+| 200 | Also over a plan limit (`"overLimit": true`), without a key on search and reactions, and when Workers AI is down (`"degraded": true`): search never fails hard |
 | 400 | Missing or empty `q` / `text`, a body that is not JSON (reactions), a `locale` without a pack, a `culture` other than `0`/`1`/`true`/`false`, a `region` that is not an ISO 3166-1 alpha-2 region, a wrong image `Content-Type`, a bad `X-Image-Hash`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
-| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/custom-pack` and the tenants API |
+| 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/classify-image`, `/v1/custom-pack` and the tenants API |
 | 402 | The account's plan does not include the feature (tenants API) |
 | 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key, a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
 | 404 | No such route, emoji set, emoji or custom emoji |
 | 405 | Wrong method; `Allow` names the right one |
 | 413 | Image larger than 256 KB, or a reaction body larger than 16 KB |
-| 429 | Rate limited (per minute, see [Authentication](#authentication)). Retry after the seconds in `Retry-After` (60). |
-| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read (`503`, with `Retry-After`) |
+| 429 | Rate limited (per minute, see [Authentication](#authentication)), also too many key lookups that miss the key cache from one IP. Retry after the seconds in `Retry-After` (60). |
+| 502, 503 | An emoji set upstream did not answer (`502`); the custom emoji store cannot be read, or a key cannot be checked now on `/v1/classify-image` and `/v1/custom-pack` (`503`, with `Retry-After`) |
 
 ## Dashboard API (`apps/dashboard`, Clerk session)
 

@@ -2,12 +2,13 @@ import { getModel } from "@emojisense/data/models";
 import { describe, expect, it, vi } from "vitest";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
-import { API, catalog, EMBEDDING_MODEL, harness, search } from "./fixtures.ts";
+import type { Store } from "../src/store.ts";
+import { API, catalog, EMBEDDING_MODEL, harness, keyedSearch, search } from "./fixtures.ts";
 
 describe("GET /v1/search", () => {
   it("fuses alias and semantic results and embeds the query with its accents and punctuation", async () => {
     const h = harness();
-    const res = await h.call(search("  Lavá   eruption!! "));
+    const res = await h.call(keyedSearch("  Lavá   eruption!! "));
     const body = (await res.json()) as SearchBody;
     expect(res.status).toBe(200);
     expect(body).toMatchObject({ query: "lava eruption", cached: false, degraded: false, overLimit: false });
@@ -31,7 +32,7 @@ describe("GET /v1/search", () => {
       model: getModel("embeddinggemma"),
     };
     const h = harness({ catalog: gemma });
-    await h.call(search("Lava eruption"));
+    await h.call(keyedSearch("Lava eruption"));
     expect(h.ai).toHaveBeenCalledWith("@cf/google/embeddinggemma-300m", {
       text: ["task: search result | query: lava eruption"],
     });
@@ -44,7 +45,7 @@ describe("GET /v1/search", () => {
 
   it("returns semantic results only in semantic mode", async () => {
     const body = (await (
-      await harness().call(search("jurassic park", "&mode=semantic"))
+      await harness().call(keyedSearch("jurassic park", "&mode=semantic"))
     ).json()) as SearchBody;
     expect(body.results.length).toBeGreaterThan(0);
     expect(body.results.every((r) => r.source === "semantic")).toBe(true);
@@ -86,9 +87,9 @@ describe("GET /v1/search", () => {
 
   it("keys the cache by the embedded text, so an accent is a different answer", async () => {
     const h = harness();
-    await h.call(search("lavá"));
+    await h.call(keyedSearch("lavá"));
     await h.ctx.settle();
-    const second = await h.call(search("lava"));
+    const second = await h.call(keyedSearch("lava"));
     expect(((await second.json()) as SearchBody).cached).toBe(false);
     expect(h.ai).toHaveBeenCalledTimes(2);
   });
@@ -97,7 +98,7 @@ describe("GET /v1/search", () => {
     const h = harness();
     h.env.AI = { run: async () => Promise.reject(new Error("not logged in")) };
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const res = await h.call(search("rocket"));
+    const res = await h.call(keyedSearch("rocket"));
     await h.ctx.settle();
     const body = (await res.json()) as SearchBody;
     expect(body.degraded).toBe(true);
@@ -111,7 +112,7 @@ describe("GET /v1/search", () => {
     const h = harness();
     h.env.AI = { run: async () => Promise.reject(new TypeError("model failed on: rocket launch")) };
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await h.call(search("rocket launch"));
+    await h.call(keyedSearch("rocket launch"));
     await h.ctx.settle();
     expect(warn).toHaveBeenCalledWith(JSON.stringify({ event: "semantic_unavailable", error: "TypeError" }));
     expect(JSON.stringify(warn.mock.calls)).not.toContain("rocket");
@@ -148,18 +149,64 @@ describe("GET /v1/search", () => {
   });
 });
 
+describe("anonymous search", () => {
+  it("answers a cache miss with aliases only, never calls Workers AI and never caches it", async () => {
+    const h = harness();
+    const res = await h.call(search("ship it"));
+    await h.ctx.settle();
+    const body = (await res.json()) as SearchBody;
+    expect(res.status).toBe(200);
+    expect(body).toMatchObject({ cached: false, degraded: false, overLimit: true, aliasLocale: "en" });
+    expect(body.results[0]).toMatchObject({ emoji: "🚀", source: "alias" });
+    expect(body.results.every((r) => r.source === "alias")).toBe(true);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(h.ai).not.toHaveBeenCalled();
+    expect(h.cache.puts).toEqual([]);
+  });
+
+  it("gets no results in semantic mode on a miss", async () => {
+    const h = harness();
+    const body = (await (await h.call(search("lava eruption", "&mode=semantic"))).json()) as SearchBody;
+    expect(body).toMatchObject({ results: [], overLimit: true, cached: false });
+    expect(h.ai).not.toHaveBeenCalled();
+  });
+
+  it("is still served from the shared cache that keyed callers fill", async () => {
+    const h = harness();
+    await h.call(keyedSearch("lava eruption"));
+    await h.ctx.settle();
+    const res = await h.call(search("lava eruption"));
+    const body = (await res.json()) as SearchBody;
+    expect(body).toMatchObject({ cached: true, overLimit: false, degraded: false });
+    expect(body.results.some((r) => r.source === "semantic")).toBe(true);
+    expect(h.ai).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies when the key store is down and the key is not cached", async () => {
+    const store = { findKeyByHash: vi.fn().mockRejectedValue(new Error("D1 unavailable")) };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const h = harness({ store: store as unknown as Store });
+    const body = (await (await h.call(search("ship it", "&key=pk_live_unchecked"))).json()) as SearchBody;
+    expect(body).toMatchObject({ overLimit: true });
+    expect(h.ai).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
 describe("search analytics", () => {
   it("logs the normalized text of every search that reaches the Worker, cache hits included", async () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
     await h.call(search(" Rocket ", "&key=pk_test", { headers: { "cf-connecting-ip": "203.0.113.9" } }));
     await h.ctx.settle();
     await h.call(search("rocket"));
-    await h.call(search("lava eruption", "&mode=semantic"));
+    await h.call(keyedSearch("lava eruption", "&mode=semantic"));
+    await h.call(search("volcano"));
     const points = h.events.mock.calls.map(([point]) => point);
     expect(points.map((p) => p.blobs)).toEqual([
       ["rocket", "en", "hybrid", "miss", "search"],
       ["rocket", "en", "hybrid", "hit", "search"],
       ["lava eruption", "en", "semantic", "miss", "search"],
+      ["volcano", "en", "hybrid", "anonymous", "search"],
     ]);
     expect(points[0].indexes).toEqual(["test:bge-m3@8"]);
     const logged = JSON.stringify(points);

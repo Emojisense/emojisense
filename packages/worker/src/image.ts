@@ -1,5 +1,6 @@
 import type { AliasEngine, SearchResult } from "emojisense";
 import { record } from "./analytics.ts";
+import { keyRequired } from "./auth.ts";
 import {
   EDGE_CACHE_SECONDS,
   MAX_IMAGE_BYTES,
@@ -83,10 +84,19 @@ const catalogEmoji = (engine: AliasEngine) => (text: string) =>
  * neighbours of the caption (image-rank.ts). With `X-Image-Hash`, only the label is cached, keyed
  * by the SHA-256 of the received bytes and the prompt version, never by the client's hash. The
  * image itself is never stored or logged.
- * Metered as image_classifications, cache hits included.
+ * Needs a key: every miss is a vision call. Metered as image_classifications, cache hits included.
  */
-export const handleClassifyImage: Handler = async (request, env, ctx, { catalog, cache }, metering) => {
+export const handleClassifyImage: Handler = async (
+  request,
+  env,
+  ctx,
+  { catalog, cache },
+  metering,
+  caller,
+) => {
   const started = Date.now();
+  const refused = keyRequired(caller, "image classification");
+  if (refused) return refused;
   const url = new URL(request.url);
   const declaredType = (request.headers.get("content-type") ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
   if (!ACCEPTED_TYPES.has(declaredType)) {

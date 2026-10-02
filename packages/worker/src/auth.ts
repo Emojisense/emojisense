@@ -5,7 +5,14 @@ import { errorResponse } from "./http.ts";
 import type { ApiKey, Store } from "./store.ts";
 
 export type Principal =
-  | { kind: "anonymous" }
+  | {
+      kind: "anonymous";
+      /**
+       * A key was sent, but the key store is down and the key is not cached: served as anonymous
+       * (search never fails hard), while routes that need a key answer 503 instead of 401.
+       */
+      keyUnavailable?: true;
+    }
   | {
       kind: "key";
       key: ApiKey;
@@ -122,7 +129,7 @@ const BEARER = /^Bearer\s+(\S+)$/i;
 /**
  * docs/API.md §Authentication. Publishable keys come as `?key=` and must match the key's allowed
  * origins. Secret keys come as `Authorization: Bearer` and never with an `Origin` header, which
- * only browsers send. No key = anonymous, with the stricter limiter.
+ * only browsers send. No key = anonymous, with the stricter limiter and no model calls.
  */
 export async function authenticate(
   request: Request,
@@ -157,7 +164,7 @@ export async function authenticate(
     if (resolved === "unavailable") {
       // The key store is down and this key is not cached. Serve as anonymous rather than fail
       // (search never fails hard); the anonymous limiter still applies.
-      principal = { kind: "anonymous" };
+      principal = { kind: "anonymous", keyUnavailable: true };
     } else if (!resolved || resolved.key.revoked) {
       return errorResponse(401, "unknown or revoked key");
     } else {
@@ -188,6 +195,18 @@ export async function authenticate(
 }
 
 const rateLimited = () => errorResponse(429, "rate limited", { "Retry-After": "60" });
+
+/**
+ * For routes that serve keyed callers only: 401 without a key, 503 when a key was sent but the
+ * key store cannot be read (the caller should retry, not change its key).
+ */
+export function keyRequired(caller: Principal, feature: string): Response | undefined {
+  if (caller.kind === "key") return undefined;
+  if (caller.keyUnavailable) {
+    return errorResponse(503, "key check temporarily unavailable", { "Retry-After": "5" });
+  }
+  return errorResponse(401, `a key is required for ${feature}`);
+}
 
 /** Key lookups that miss the isolate cache, per IP (KEY_MISS_LIMITER); none without the binding. */
 function keyLookupGate(env: Env, ip: string): (() => Promise<boolean>) | undefined {
