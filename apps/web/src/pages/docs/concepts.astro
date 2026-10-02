@@ -3,7 +3,7 @@ import { PLAN_IDS, PLANS } from "@emojisense/platform";
 import Callout from "../../components/docs/Callout.astro";
 import CodeBlock from "../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
-import { edgeDecision, PACK_FACTS, PACK_URL, resultLiteral } from "../../components/docs/facts";
+import { API_HOST, edgeDecision, PACK_FACTS, PACK_URL, resultLiteral } from "../../components/docs/facts";
 import LayerDiagram from "../../components/docs/LayerDiagram.astro";
 import { formatCount } from "../../lib/format";
 
@@ -73,19 +73,19 @@ const { results, confidence } = engine.search("jurassic park");
   <p>The table is computed when this page is built, with the English core pack. With the extension pack loaded, the engine knows more phrases and asks the edge less often.</p>
 
   <h2 id="edge-meaning-search">Edge meaning search</h2>
-  <p>The API is a Cloudflare Worker in more than 300 cities. For a meaning search it embeds the query with Workers AI (<code>bge-m3</code>, 1,024 dimensions) and compares it with the vectors of every emoji, which are bundled into the Worker. The comparison takes about a millisecond. The model call takes about 50 ms inside the Worker at the median.</p>
+  <p>The API is a Cloudflare Worker in more than 300 cities, at <code>{API_HOST}</code> (HTTPS only). For a meaning search it embeds the query with Workers AI (<code>bge-m3</code>, 1,024 dimensions) and compares it with the vectors of every emoji. Each emoji has a vector of its English description, bundled into the Worker, and one of its description in the query’s language, loaded on that language’s first query. The emoji’s best match counts. The comparison takes a few milliseconds. The model call takes about 50 ms inside the Worker at the median.</p>
   <p>The query and the emoji are always embedded by the same model at the same size. The pack manifest pins both, and the Worker refuses a mismatch.</p>
 
   <h2 id="fusion">How results merge</h2>
   <p>When meaning results arrive, the SDK merges them with the dictionary results by weighted reciprocal rank fusion. Dictionary results with a score of 0.9 or more stay pinned at the top in their order, so the list does not jump under the person’s cursor. The more confident the dictionary was, the more weight its results keep.</p>
-  <p>Each result has a <code>source</code>: <code>alias</code> for the dictionary, <code>semantic</code> for meaning search and <code>custom</code> for custom emoji.</p>
+  <p>Each result has a <code>source</code>: <code>alias</code> for the dictionary, <code>semantic</code> for meaning search, <code>custom</code> for custom emoji and <code>culture</code> for the optional culture layer, which adds emoji for the culture and the moment after the top result.</p>
 
   <h2 id="caching">Caching</h2>
   <ul>
     <li><strong>Packs and shards</strong> are static files. They are free, cached for a year and never metered.</li>
-    <li><strong>One shared edge cache.</strong> The Worker caches answers in each data center. The cache key is the normalized query, locale, limit, mode and index version. It holds no key, app or origin, so every app warms the same cache for everyone.</li>
+    <li><strong>One shared edge cache.</strong> The Worker caches answers in each data center for up to a week. The cache key is the query text, locale, limit, mode, index version and a hash of the served data, so a data fix is never answered from old entries. It holds no key, app or origin, so every app warms the same cache for everyone. Custom emoji and culture are added after the cache, per request.</li>
     <li><strong>In the client</strong>, the semantic client keeps the last 200 answers in memory.</li>
-    <li><strong>Reaction suggestions are never cached</strong>, because message text is private. For photos, only the caption is cached, keyed by a perceptual hash of the image.</li>
+    <li><strong>Reaction suggestions are never cached</strong>, because message text is private. For photos, only the model’s label (caption, reaction, keywords and proposed emoji) is cached, keyed by a perceptual hash of the image.</li>
   </ul>
 
   <h2 id="plan-limits">Plan limits never fail</h2>
@@ -126,7 +126,7 @@ const { results, confidence } = engine.search("jurassic park");
   <ul>
     <li>Most searches never leave the device.</li>
     <li>Emojisense never stores IP addresses, keys, user identifiers, message text or images.</li>
-    <li>Search query text that reaches the Worker is normalized and cut to 64 characters. Emojisense’s own jobs use a query only after it was seen at least 5 times.</li>
+    <li>Search query text that reaches the Worker is cut to 64 characters and stored only in its normalized form. Emojisense’s own jobs use a query only after it was seen at least 5 times.</li>
   </ul>
   <p>Read <a href="/docs/privacy/">Privacy</a> for exactly what is kept and for how long.</p>
 </DocsLayout>

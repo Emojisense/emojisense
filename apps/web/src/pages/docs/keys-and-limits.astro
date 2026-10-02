@@ -4,6 +4,7 @@ import Callout from "../../components/docs/Callout.astro";
 import CodeBlock from "../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
 import { API_HOST } from "../../components/docs/facts";
+import { DASHBOARD_URL } from "../../config";
 import { formatCount } from "../../lib/format";
 
 const overLimit = `{
@@ -34,7 +35,7 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
   </div>
   <CodeBlock code={publishable} lang="ts" title="Publishable key" />
   <CodeBlock code={secret} lang="bash" title="Secret key" />
-  <p>Create keys in the dashboard, per app. The full key is shown once. The dashboard stores only a hash of it.</p>
+  <p>Create keys in the <a href={`${DASHBOARD_URL}/`}>dashboard</a>, per app. The full key is shown once. The dashboard stores only a hash of it. Call the API at <code>{API_HOST}</code> over HTTPS: a plain <code>http://</code> request gets <code>403</code>, so a key never travels unencrypted.</p>
   <Callout type="warning" title="Origins are a browser control">
     <p>The <code>Origin</code> check stops other websites from using your publishable key. It cannot stop a server, which can send any header, so every key also has a rate limit. Never put a secret key in a browser, an app bundle or a repository.</p>
   </Callout>
@@ -50,7 +51,19 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
   <p>Revoke a key in the dashboard. The API caches key lookups for up to 60 seconds, so a revoked key stops working within a minute. An unknown or revoked key gets <code>401</code>.</p>
 
   <h2 id="rate-limits">Rate limits</h2>
-  <p>Every key has a rate limit over a short window, and calls without a key share a stricter limit per IP address. Over it, the API answers <code>429</code> with a <code>Retry-After</code> header. The IP address is only an in-memory key for the limiter. It is never logged or stored.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Caller</th><th scope="col">Limit</th></tr></thead>
+      <tbody>
+        <tr><td>A key</td><td>120 requests a minute, per key and IP address</td></tr>
+        <tr><td>No key</td><td>30 requests a minute, per IP address</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Over it, the API answers <code>429</code> with <code>Retry-After: 60</code>. The IP address is only an in-memory key for the limiter. It is never logged or stored. Static files and emoji images are not limited.</p>
+
+  <h2 id="without-a-key">Without a key</h2>
+  <p>Search, reaction suggestions and photo to emoji also work without a key, for demos and first tests. Such calls are never metered and never over a limit, but they get the stricter rate limit, no custom emoji and no analytics. Custom packs and the tenants API need a key.</p>
 
   <h2 id="plan-limits">Plan limits</h2>
   <p>Limits are monthly, in UTC, with no daily caps. Only Worker calls are metered: searches and reaction suggestions that reach the API, and photo classifications. On-device searches, packs and shards are free on every plan.</p>
@@ -82,7 +95,7 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
       </tbody>
     </table>
   </div>
-  <p>See <a href="/pricing/">Pricing</a> for every feature of each plan. The dashboard shows each app’s usage for the month.</p>
+  <p>See <a href="/pricing/">Pricing</a> for every feature of each plan. Paid plans are not on sale yet: the pricing page has a waitlist for each one. Limits belong to the account, so the calls of all its apps count together. The dashboard shows each app’s part of the month’s usage.</p>
 
   <h2 id="over-the-limit">Over the limit</h2>
   <p>The API never fails because of a plan limit. A query that is in the shared edge cache is still answered, and is not counted. Any other query returns <code>200</code> with <code>"overLimit": true</code>:</p>

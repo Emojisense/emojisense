@@ -19,7 +19,7 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
     <li>Most searches never leave the device.</li>
     <li>Emojisense never logs or stores IP addresses or the identifiers of your users. API keys are stored only as a SHA-256 hash and their first 12 characters, and never logged.</li>
     <li>Message text for reaction suggestions and images for photo to emoji are never stored.</li>
-    <li>Query text is normalized and cut to 64 characters. A query is named in analytics, or used by Emojisense’s own jobs, only after it was seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times.</li>
+    <li>Query text is cut to 64 characters and stored only in its normalized form. A query is named in analytics, or used by Emojisense’s own jobs, only after it was seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times.</li>
     <li>You can delete your dashboard account, and everything it owns, with one request.</li>
   </ul>
 
@@ -36,9 +36,9 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
       <tbody>
         <tr><td>On-device dictionary</td><td>Nothing</td><td>Nothing</td></tr>
         <tr><td>Precomputed results (shards)</td><td>A request for one static file, named by the first letters of the query</td><td>Nothing. Static files are not logged or metered.</td></tr>
-        <tr><td>Worker search</td><td>The query, normalized and cut to 64 characters</td><td>The normalized query with cache status, latency and scores, without app, key or IP. For keyed calls, also daily counts per app (see below).</td></tr>
-        <tr><td>Reaction suggestions</td><td>The message text, cut to 256 characters</td><td>Nothing. The text is never logged or cached.</td></tr>
-        <tr><td>Photo to emoji</td><td>A small, downscaled image</td><td>With an image hash, a short caption cached by that hash for up to 7 days. The image itself is dropped after use.</td></tr>
+        <tr><td>Worker search</td><td>The query, lowercased and cut to 64 characters. Accents and punctuation stay, because the meaning model reads them.</td><td>The normalized query with cache status, latency and scores, without app, key or IP. For keyed calls, also daily counts per app (see below).</td></tr>
+        <tr><td>Reaction suggestions</td><td>The message text. The API reads only its first 256 characters.</td><td>Nothing. The text is never logged or cached.</td></tr>
+        <tr><td>Photo to emoji</td><td>A small, downscaled image</td><td>With an image hash, the model’s label (caption, reaction, keywords and proposed emoji) cached by that hash for up to 7 days. The image itself is dropped after use.</td></tr>
       </tbody>
     </table>
   </div>
@@ -51,6 +51,10 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
         <tr><td>Per app, UTC day and normalized query: the number of searches and of misses. Keyed <code>/v1/search</code> calls only.</td><td>D1 <code>query_daily</code></td><td>By the plan of the account that owns the app: {keep}. A daily job deletes older rows.</td></tr>
         <tr><td>Normalized query text of every search that reached the Worker, with cache status, latency and scores. No app.</td><td>Cloudflare Analytics Engine</td><td>3 months (the Analytics Engine retention)</td></tr>
         <tr><td>Monthly call counts per app and metric</td><td>D1 <code>usage_monthly</code></td><td>Until the account is deleted</td></tr>
+        <tr><td>Custom emoji: shortcode, aliases, size, source and the image</td><td>D1 and R2</td><td>Until the emoji, its tenant or the account is deleted. Edge caches can hold a copy of the image until it is evicted.</td></tr>
+        <tr><td>Tenants: your external id and optional name for each of your customers</td><td>D1 <code>tenants</code></td><td>Until you delete the tenant or the account</td></tr>
+        <tr><td>Webhook deliveries: event type, HTTP status, duration and time. No body and no response.</td><td>D1 <code>webhook_deliveries</code></td><td>The last 50 per webhook</td></tr>
+        <tr><td>Accounts, sessions, apps, keys (a hash and the first 12 characters), team members and webhooks</td><td>D1</td><td>Until the account is deleted. Revoked keys stay, marked as revoked.</td></tr>
         <tr><td>Waitlist: email address, plan and the date of the first sign-up</td><td>D1 <code>waitlist</code></td><td>{WAITLIST_KEEP_MONTHS} months after the first sign-up. A daily job deletes older rows.</td></tr>
         <tr><td>Our own log records: event names, error types and counts. No query or message text, keys, IP addresses or emails.</td><td>Cloudflare Workers Logs</td><td>Up to 7 days. Invocation logs (full request URLs) are turned off.</td></tr>
       </tbody>
