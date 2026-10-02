@@ -1,4 +1,5 @@
 import type { AliasSearchOutput, SearchResult } from "./engine.js";
+import { rerank } from "./rerank.js";
 
 export interface FuseOptions {
   /** Reciprocal-rank-fusion constant. Default 60. */
@@ -117,8 +118,20 @@ const ALIAS_BAND = 0.1;
 /** Below this alias confidence the alias tier is unsure (as in `shouldUseSemantic`): no floor. */
 const ALIAS_FLOOR_MIN_CONFIDENCE = 0.6;
 
+/** How `fuse` orders the lists. Default: the learned reranker (rerank.ts) with no popularity. */
+export interface FuseRanking {
+  /** Emoji popularity 0–1, usually `engine.popularity` (AliasEngine). */
+  popularity?: ((id: string) => number) | undefined;
+  /** false = the confidence-weighted reciprocal rank fusion below (the ranking before the reranker). */
+  rerank?: boolean;
+}
+
 /**
- * Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when its
+ * The learned reranker (rerank.ts) by default: confident alias hits (≥ 0.9) stay on top in alias
+ * order, then every other candidate of both lists by a linear score over alias and semantic
+ * scores, ranks, match kind, popularity and country flags.
+ *
+ * With `rerank: false`, fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when its
  * best match is strong, down to 0.4 when it is weak (unknown slang, romanized text, a language
  * the model handles poorly), so a weak semantic list no longer outranks an alias hit. When the
  * alias tier is sure (confidence ≥ 0.6), its results within 0.1 of the top score stay first; the
@@ -130,8 +143,19 @@ export function fuse(
   semantic: readonly SearchResult[],
   limit = 24,
   calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
+  ranking: FuseRanking = {},
 ) {
   const guarded = demoteUnsupportedFlags(semantic, alias.results, calibration);
+  if (ranking.rerank !== false) {
+    const confidence = semanticConfidence(guarded, calibration);
+    const input = {
+      alias,
+      semantic: guarded,
+      semanticConfidence: confidence,
+      popularity: ranking.popularity,
+    };
+    return demoteUnsupportedFlags(rerank(input, Infinity), alias.results, calibration).slice(0, limit);
+  }
   return fuseResults(alias.results, guarded, {
     limit,
     aliasWeight: 0.4 + alias.confidence,

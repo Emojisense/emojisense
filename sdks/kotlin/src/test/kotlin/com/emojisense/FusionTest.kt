@@ -7,6 +7,9 @@ import kotlin.test.assertTrue
 
 /** Ports packages/core/test/fusion.test.ts (and the Swift FusionTests). */
 class FusionTest {
+    /** The fusion before the reranker (`rerank = false`), which these `fuse` tests describe. */
+    private val rrf = Fusion.Ranking(rerank = false)
+
     private fun result(emoji: String, score: Double, source: ResultSource) = EmojiResult(emoji, emoji, score, source)
 
     @Test
@@ -104,7 +107,7 @@ class FusionTest {
 
     @Test
     fun `keeps an unsure alias hit above a weak semantic list`() {
-        val fused = Fusion.fuse(aliasOutput(0.45, listOf("A1", "A2")), semanticList(0.42), limit = 4)
+        val fused = Fusion.fuse(aliasOutput(0.45, listOf("A1", "A2")), semanticList(0.42), limit = 4, ranking = rrf)
         assertEquals(listOf("A1", "A2", "S1", "S2"), fused.map { it.emoji })
     }
 
@@ -119,13 +122,13 @@ class FusionTest {
             result("🕕", 0.45, ResultSource.SEMANTIC),
             result("7️⃣", 0.43, ResultSource.SEMANTIC),
         )
-        assertEquals(listOf("👍", "🔥", "6️⃣", "🕕"), Fusion.fuse(alias, semantic, limit = 4).map { it.emoji })
+        assertEquals(listOf("👍", "🔥", "6️⃣", "🕕"), Fusion.fuse(alias, semantic, limit = 4, ranking = rrf).map { it.emoji })
     }
 
     @Test
     fun `lets the semantic list break near-ties among the top alias results`() {
         val semantic = listOf(result("🚀", 0.51, ResultSource.SEMANTIC), result("🦝", 0.5, ResultSource.SEMANTIC))
-        val fused = Fusion.fuse(aliasOutput(0.78, listOf("🪨", "🚀")), semantic, limit = 3)
+        val fused = Fusion.fuse(aliasOutput(0.78, listOf("🪨", "🚀")), semantic, limit = 3, ranking = rrf)
         assertEquals(listOf("🚀", "🪨", "🦝"), fused.map { it.emoji })
     }
 
@@ -133,13 +136,13 @@ class FusionTest {
     fun `ranks semantic flags the alias tier does not hold after the other results`() {
         val flag = EmojiResult("🇧🇹", bhutan, 0.44, ResultSource.SEMANTIC)
         val semantic = listOf(flag, result("🐰", 0.43, ResultSource.SEMANTIC), result("🐇", 0.42, ResultSource.SEMANTIC))
-        val fused = Fusion.fuse(aliasOutput(0.26, listOf("😄")), semantic, limit = 4)
+        val fused = Fusion.fuse(aliasOutput(0.26, listOf("😄")), semantic, limit = 4, ranking = rrf)
         assertEquals(listOf("😄", "🐰", "🐇", "🇧🇹"), fused.map { it.emoji })
     }
 
     @Test
     fun `still lets a sure semantic list lead an unsure alias list`() {
-        val fused = Fusion.fuse(aliasOutput(0.45, listOf("A1", "A2")), semanticList(0.7), limit = 4)
+        val fused = Fusion.fuse(aliasOutput(0.45, listOf("A1", "A2")), semanticList(0.7), limit = 4, ranking = rrf)
         assertEquals(listOf("S1", "S2", "S3", "S4"), fused.map { it.emoji })
     }
 

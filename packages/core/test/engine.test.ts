@@ -83,6 +83,29 @@ describe("alias engine", () => {
     expect(withExt.locales).toEqual(["en", "tr"]);
   });
 
+  it("breaks equal scores by the pack's popularity, then by row order", () => {
+    const pack = {
+      ...en,
+      emoji: [
+        row("🐈", "1F408", "cat", {}),
+        row("🐱", "1F431", "cat face", { alias: "cat" }),
+        row("😺", "1F63A", "grinning cat", { alias: "cat" }),
+      ],
+    };
+    const order = (engine: ReturnType<typeof createEngine>) =>
+      engine.search("cat").results.map((r) => r.emoji);
+    expect(order(createEngine(pack))).toEqual(["🐈", "🐱", "😺"]);
+    const popular = createEngine({ ...pack, popularity: [10, 40, 90] });
+    expect(order(popular)).toEqual(["🐈", "😺", "🐱"]);
+    expect(popular.popularity("1F63A")).toBe(0.9);
+    expect(popular.popularity("unknown")).toBe(0);
+    expect(order(createEngine({ ...pack, popularity: [10, 40, 90] }, { popularity: false }))).toEqual([
+      "🐈",
+      "🐱",
+      "😺",
+    ]);
+  });
+
   it("adds the evidence bonus only for phrases of the preferred locale", () => {
     // 🧛 comes first in row order, so a tie would rank it above 🎃.
     const english = {

@@ -112,7 +112,10 @@ public class SearchSession @JvmOverloads constructor(
             onChange(
                 SessionState(
                     query = query,
-                    results = present(query, Fusion.fuse(alias, response.results, limit)),
+                    results = present(
+                        query,
+                        Fusion.fuse(alias, response.results, limit, ranking = Fusion.Ranking(engine::popularity)),
+                    ),
                     alias = alias,
                     status = SessionStatus.FUSED,
                     aliasMillis = aliasMillis,

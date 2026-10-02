@@ -7,7 +7,7 @@ package com.emojisense
  * same vocabulary order (UTF-16 code units, as JavaScript sorts), the same postings and IDF.
  * Custom packs add their own rows; their phrases count for every locale (§8).
  */
-internal class AliasIndex(packs: List<Pack>) {
+internal class AliasIndex(packs: List<Pack>, usePopularity: Boolean = true) {
     val primary: Pack
     val locales: List<String>
 
@@ -18,6 +18,9 @@ internal class AliasIndex(packs: List<Pack>) {
     val customMask: Int
     val entries: List<EmojiEntry>
     val indexById: Map<String, Int>
+
+    /** Popularity percentile (0–100, 0 = unknown) per entry, from the packs' `popularity`. */
+    val entryPopularity: IntArray
 
     val phraseText: Array<String>
     val phraseEmoji: IntArray
@@ -65,6 +68,15 @@ internal class AliasIndex(packs: List<Pack>) {
             }
         }
         indexById = byId
+        entryPopularity = IntArray(sources.size)
+        if (usePopularity) {
+            for (pack in packs) {
+                pack.popularity?.forEachIndexed { row, value ->
+                    val index = pack.emoji.getOrNull(row)?.let { byId[it.hexcode] }
+                    if (index != null) entryPopularity[index] = value
+                }
+            }
+        }
 
         val labels = Array(sources.size) { LinkedHashMap<String, String>() }
         val phrases = PhraseCollector(sources.size)

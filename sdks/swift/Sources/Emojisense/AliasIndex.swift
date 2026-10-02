@@ -11,6 +11,8 @@ typealias UTF16Text = [UInt16]
 struct AliasIndex: Sendable {
   let entries: [EmojiEntry]
   let entryIndexById: [String: Int]
+  /// Popularity percentile (0–100, 0 = unknown) per entry, from the packs' `popularity`.
+  let entryPopularity: [UInt8]
   let locales: [String]
   let primaryLocale: String
   let packVersion: String
@@ -38,7 +40,7 @@ struct AliasIndex: Sendable {
 
   var phraseCount: Int { phraseText.count }
 
-  init(packs: [Pack]) throws {
+  init(packs: [Pack], popularity usePopularity: Bool = true) throws {
     guard let primary = packs.first else { throw EmojisenseError.noPacks }
     primaryLocale = primary.locale
     packVersion = primary.packVersion
@@ -79,6 +81,15 @@ struct AliasIndex: Sendable {
     }
     self.entries = entries
     self.entryIndexById = entryIndexById
+    var entryPopularity = [UInt8](repeating: 0, count: entries.count)
+    for pack in usePopularity ? packs : [] {
+      for (row, value) in (pack.popularity ?? []).enumerated() where row < pack.emoji.count {
+        if let index = entryIndexById[pack.emoji[row].hexcode] {
+          entryPopularity[index] = UInt8(clamping: value)
+        }
+      }
+    }
+    self.entryPopularity = entryPopularity
 
     let sorted = phrases.sortedVocabulary()
     vocabulary = sorted.vocabulary

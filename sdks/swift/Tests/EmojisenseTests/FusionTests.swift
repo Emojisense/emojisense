@@ -4,6 +4,9 @@ import XCTest
 
 /// Ports packages/core/test/fusion.test.ts.
 final class FusionTests: XCTestCase {
+  /// The fusion before the reranker (`rerank: false`), which these `fuse` tests describe.
+  private let rrf = Fusion.Ranking(rerank: false)
+
   private func result(_ emoji: String, _ score: Double, _ source: ResultSource) -> SearchResult {
     SearchResult(emoji: emoji, id: emoji, score: score, source: source)
   }
@@ -102,7 +105,8 @@ final class FusionTests: XCTestCase {
   }
 
   func testKeepsAnUnsureAliasHitAboveAWeakSemanticList() {
-    let fused = Fusion.fuse(alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.42), limit: 4)
+    let fused = Fusion.fuse(
+      alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.42), limit: 4, ranking: rrf)
     XCTAssertEqual(fused.map(\.emoji), ["A1", "A2", "S1", "S2"])
   }
 
@@ -115,24 +119,28 @@ final class FusionTests: XCTestCase {
       result("6️⃣", 0.46, .semantic), result("🕕", 0.45, .semantic), result("7️⃣", 0.43, .semantic),
     ]
     XCTAssertEqual(
-      Fusion.fuse(alias: alias, semantic: semantic, limit: 4).map(\.emoji), ["👍", "🔥", "6️⃣", "🕕"])
+      Fusion.fuse(alias: alias, semantic: semantic, limit: 4, ranking: rrf).map(\.emoji),
+      ["👍", "🔥", "6️⃣", "🕕"])
   }
 
   func testLetsTheSemanticListBreakNearTiesAmongTheTopAliasResults() {
     let semantic = [result("🚀", 0.51, .semantic), result("🦝", 0.5, .semantic)]
-    let fused = Fusion.fuse(alias: aliasOutput(0.78, ["🪨", "🚀"]), semantic: semantic, limit: 3)
+    let fused = Fusion.fuse(
+      alias: aliasOutput(0.78, ["🪨", "🚀"]), semantic: semantic, limit: 3, ranking: rrf)
     XCTAssertEqual(fused.map(\.emoji), ["🚀", "🪨", "🦝"])
   }
 
   func testRanksSemanticFlagsTheAliasTierDoesNotHoldAfterTheOtherResults() {
     let flag = SearchResult(emoji: "🇧🇹", id: bhutan, score: 0.44, source: .semantic)
     let semantic = [flag, result("🐰", 0.43, .semantic), result("🐇", 0.42, .semantic)]
-    let fused = Fusion.fuse(alias: aliasOutput(0.26, ["😄"]), semantic: semantic, limit: 4)
+    let fused = Fusion.fuse(
+      alias: aliasOutput(0.26, ["😄"]), semantic: semantic, limit: 4, ranking: rrf)
     XCTAssertEqual(fused.map(\.emoji), ["😄", "🐰", "🐇", "🇧🇹"])
   }
 
   func testStillLetsASureSemanticListLeadAnUnsureAliasList() {
-    let fused = Fusion.fuse(alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.7), limit: 4)
+    let fused = Fusion.fuse(
+      alias: aliasOutput(0.45, ["A1", "A2"]), semantic: semanticList(0.7), limit: 4, ranking: rrf)
     XCTAssertEqual(fused.map(\.emoji), ["S1", "S2", "S3", "S4"])
   }
 

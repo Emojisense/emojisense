@@ -116,6 +116,27 @@ class ConformanceTest {
         }
     }
 
+    /** [Fusion.fuse] on the reference's alias and semantic lists, with and without the reranker. */
+    @Test
+    fun `fusion matches the reference`() {
+        val differences = golden.fusion.flatMap { case ->
+            val alias = AliasSearchOutput<SearchResult>(
+                query = case.aliasQuery,
+                tokens = emptyList(),
+                results = case.alias.map { AliasResult(it.id, it.id, it.score, ResultSource.ALIAS, "", "", Field.ALIAS) },
+                confidence = case.aliasConfidence,
+            )
+            val semantic = case.semantic.map { (emoji, id, score) -> EmojiResult(emoji, id, score, ResultSource.SEMANTIC) }
+            listOf(true to case.reranked, false to case.reciprocal).mapNotNull { (rerank, expected) ->
+                val ranking = Fusion.Ranking({ id: String -> case.popularity[id] ?: 0.0 }, rerank)
+                val actual = Fusion.fuse(alias, semantic, 10, ranking = ranking).map { it.id }
+                if (actual == expected) null else "  ${debug(case.q)} rerank $rerank:\n    kotlin $actual\n    ts     $expected"
+            }
+        }
+        report("fusion, identical top-10 ids", golden.fusion.size * 2, differences)
+        assertEquals(emptyList(), differences)
+    }
+
     /** The Kotlin copy (FunctionWords.kt, generated) holds exactly the reference lists. */
     @Test
     fun `function words match the reference`() {

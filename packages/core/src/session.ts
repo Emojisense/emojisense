@@ -126,7 +126,9 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           }
           onChange({
             query,
-            results: present(fuse(alias, response.results, limit)),
+            results: present(
+              fuse(alias, response.results, limit, undefined, { popularity: engine.popularity }),
+            ),
             alias,
             aliasMs,
             status: "fused",

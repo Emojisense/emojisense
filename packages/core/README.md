@@ -139,11 +139,11 @@ createEngine([...packs, custom]).search("party parrot");
 | `createEngine`, `loadPacks`, `loadCustomPack`, `assertPack` | The on-device index and its data |
 | `createSearchSession` | Keystroke controller with debounce, fusion and stale-answer handling |
 | `createLayeredSemantic`, `createShardProvider`, `createSemanticClient`, `chainProviders` | Semantic layers |
-| `fuse`, `fuseResults`, `shouldUseSemantic`, `semanticConfidence` | Fusion of alias and semantic results |
+| `fuse`, `fuseResults`, `shouldUseSemantic`, `semanticConfidence`, `rerank`, `rerankFeatures`, `RERANK_WEIGHTS` | Fusion of alias and semantic results (the learned reranker by default) |
 | `loadCulture`, `applyCulture`, `matchCulture`, `relevantNow`, `regionOf`, `deviceRegion` | The culture layer |
 | `applySkinTone`, `SKIN_TONES`, `emojiImageUrl`, `EMOJI_SETS`, `groupLabel` | Rendering helpers |
 | `normalize`, `tokenize`, `baseId`, `hexcodeOf` | Text and id helpers |
-| `encodeVectors`, `decodeVectors`, `searchVectors` | The emoji vector file format, for semantic search without the API |
+| `encodeVectors`, `decodeVectors`, `searchVectors`, `searchVectorSets` from `emojisense/vectors` | The emoji vector file format, for semantic search without the API (a separate entry, not in the picker bundle) |
 
 The full reference is at [emojisense.com/docs/sdk](https://emojisense.com/docs/sdk/).
 
