@@ -113,6 +113,18 @@
   }
 }
 
+/* The workspaces demo stacks below 46rem of its own width too (workspaces.css): 46.125rem of stage
+   width, up to about 800 px of screen. Stacked, the stage height is a minimum and the demo stretches
+   to it (spare height goes to the picker). Above 640 px it is 57.5-60.6rem tall (measured);
+   phones get their own reservation below, which comes later and wins. */
+@container uc (width < 46.125rem) {
+  [data-case="workspaces"] .uc-stage {
+    display: grid;
+    height: auto;
+    min-height: 60.75rem;
+  }
+}
+
 /* On phones each demo takes its natural height. Reserve that height, so a demo that loads after its
    tab opens does not push the rest of the page down. The heights below were measured on the landing
    page in headless Chrome and include the 0.125rem stage border. */
