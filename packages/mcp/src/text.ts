@@ -109,6 +109,7 @@ export function matchText(engine: AliasEngine, text: string, options: TextMatchO
   for (const window of textWindows(tokens)) {
     const { results } = engine.search(window, {
       prefix: false,
+      culture: false,
       limit: PER_WINDOW,
       ...(locale ? { locale } : {}),
     });

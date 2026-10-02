@@ -1,4 +1,5 @@
-import type { AliasEngine, AliasSearchOutput, SearchResult } from "./engine.js";
+import { applyCulture, type Culture } from "./culture.js";
+import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
 import { shouldUseSemantic as defaultShouldUseSemantic, fuse } from "./fusion.js";
 import type { SemanticLayer, SemanticProvider } from "./provider.js";
 
@@ -6,8 +7,10 @@ export type SessionStatus = "idle" | "alias" | "loading" | "fused" | "error";
 
 export interface SessionState {
   query: string;
+  /** What to show: the ranking, plus culture results after its top result when a culture file is set. */
   results: SearchResult[];
-  alias: AliasSearchOutput;
+  /** The canonical alias output (no culture results). */
+  alias: CanonicalSearchOutput;
   status: SessionStatus;
   /** Time spent in the alias engine for this query, ms. */
   aliasMs: number;
@@ -28,6 +31,14 @@ export interface SearchSessionOptions {
   /** Delay before a semantic request, after the last keystroke. Default 200 ms. */
   debounceMs?: number;
   shouldUseSemantic?: (alias: AliasSearchOutput) => boolean;
+  /**
+   * Culture file for the culture layer. Default: the engine's (`engine.withCulture`). `false` turns
+   * it off for reproducible ranking. It is applied last, after fusion, so the top result of the
+   * canonical ranking stays first.
+   */
+  culture?: Culture | false;
+  /** ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". */
+  region?: string;
   onChange: (state: SessionState) => void;
 }
 
@@ -49,8 +60,10 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
     limit = 24,
     debounceMs = 200,
     shouldUseSemantic = defaultShouldUseSemantic,
+    region,
     onChange,
   } = options;
+  const culture = options.culture === false ? undefined : (options.culture ?? engine.culture);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let inflight: AbortController | undefined;
 
@@ -65,12 +78,14 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
     update(query) {
       cancel();
       const aliasStarted = performance.now();
-      const alias = engine.search(query, { limit, ...(locale ? { locale } : {}) });
+      const alias = engine.search(query, { limit, culture: false, ...(locale ? { locale } : {}) });
       const aliasMs = performance.now() - aliasStarted;
+      const present = (results: SearchResult[]): SearchResult[] =>
+        culture ? applyCulture(results, culture, query, { engine, locale, region, limit }) : results;
       const wantsSemantic = semantic !== undefined && shouldUseSemantic(alias);
       onChange({
         query,
-        results: alias.results,
+        results: present(alias.results),
         alias,
         aliasMs,
         status: alias.tokens.length === 0 ? "idle" : wantsSemantic ? "loading" : "alias",
@@ -90,12 +105,12 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           if (controller.signal.aborted) return;
           if (!response) {
             // No layer had an answer (or the key is over its limit): alias results stand.
-            onChange({ query, results: alias.results, alias, aliasMs, status: "alias" });
+            onChange({ query, results: present(alias.results), alias, aliasMs, status: "alias" });
             return;
           }
           onChange({
             query,
-            results: fuse(alias, response.results, limit),
+            results: present(fuse(alias, response.results, limit)),
             alias,
             aliasMs,
             status: "fused",
@@ -105,7 +120,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           });
         } catch (error) {
           if (controller.signal.aborted) return;
-          onChange({ query, results: alias.results, alias, aliasMs, status: "error", error });
+          onChange({ query, results: present(alias.results), alias, aliasMs, status: "error", error });
         }
       }, debounceMs);
     },

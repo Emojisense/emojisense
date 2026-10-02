@@ -31,6 +31,6 @@ export function describeEmoji(
 
 /** Alias matches for a query, by emoji id, to explain each row. */
 export function matchesFor(engine: AliasEngine, query: string): Map<string, AliasResult> {
-  const { results } = engine.search(query, { limit: 24, locale: "en" });
+  const { results } = engine.search(query, { limit: 24, locale: "en", culture: false });
   return new Map(results.map((result) => [result.id, result]));
 }

@@ -1,0 +1,388 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  type Culture,
+  type CultureEntry,
+  insertCulture,
+  isActiveOn,
+  loadCulture,
+  localDay,
+  matchCulture,
+  relevantNow,
+} from "../src/culture.js";
+import { createEngine, type SearchResult } from "../src/engine.js";
+import type { Pack, PackRow } from "../src/pack.js";
+import { createSearchSession, type SessionState } from "../src/session.js";
+import { en } from "./fixture.js";
+
+const row = (emoji: string, hexcode: string, label: string, keyword = ""): PackRow => [
+  emoji,
+  hexcode,
+  0,
+  1,
+  0,
+  label,
+  "",
+  keyword,
+  "",
+  "",
+  "",
+];
+
+const pack: Pack = {
+  ...en,
+  emoji: [
+    ...en.emoji,
+    row("⚽", "26BD", "soccer ball", "football"),
+    row("🇦🇷", "1F1E6-1F1F7", "flag: Argentina"),
+    row("🇵🇹", "1F1F5-1F1F9", "flag: Portugal"),
+    row("👻", "1F47B", "ghost"),
+    row("🙇", "1F647", "person bowing", "apology|bow"),
+  ],
+};
+
+const entry = (overrides: Partial<CultureEntry> & Pick<CultureEntry, "id">): CultureEntry => ({
+  kind: "lasting",
+  context: "Context",
+  when: null,
+  regions: ["*"],
+  triggers: [],
+  emoji: [],
+  ...overrides,
+});
+
+const goat = entry({
+  id: "goat-football",
+  context: "Football's greatest-of-all-time debate",
+  triggers: ["goat", "greatest of all time"],
+  emoji: [
+    ["🐐", "1F410", 0.7],
+    ["⚽", "26BD", 0.6],
+    ["🇦🇷", "1F1E6-1F1F7", 0.45],
+    ["🇵🇹", "1F1F5-1F1F9", 0.45],
+  ],
+});
+const halloween = entry({
+  id: "halloween",
+  kind: "seasonal",
+  context: "Halloween, 31 October",
+  when: { from: "10-15", to: "10-31", recurs: "yearly" },
+  triggers: ["halloween", "spooky season"],
+  emoji: [
+    ["🎃", "1F383", 0.9],
+    ["👻", "1F47B", 0.8],
+  ],
+  featured: true,
+});
+const bowJapan = entry({
+  id: "thanks-bow-jp",
+  context: "Thanks and apologies with a bow, as in Japan",
+  regions: ["JP"],
+  triggers: ["thank you"],
+  emoji: [["🙇", "1F647", 0.7]],
+});
+const newYear = entry({
+  id: "new-year",
+  kind: "seasonal",
+  context: "New Year",
+  when: { from: "12-26", to: "01-02", recurs: "yearly" },
+  triggers: ["new year"],
+  emoji: [
+    ["🎆", "1F386", 0.8],
+    ["🥂", "1F942", 0.7],
+  ],
+  featured: true,
+});
+
+const culture = (entries: CultureEntry[], locale = "en"): Culture => ({
+  format: "emojisense-culture",
+  formatVersion: 1,
+  packVersion: "test",
+  locale,
+  from: "2026-10-02",
+  until: "2026-10-16",
+  entries,
+  relevantNow: [],
+});
+
+const OCT_20 = new Date(2026, 9, 20, 12);
+const ids = (results: readonly SearchResult[]) => results.map((r) => r.emoji);
+
+describe("windows", () => {
+  it("treats lasting entries as always active", () => {
+    expect(isActiveOn(null, "2026-01-01")).toBe(true);
+  });
+
+  it("checks dated windows inclusively", () => {
+    const when = { from: "2027-01-07", to: "2027-02-05" };
+    expect(isActiveOn(when, "2027-01-06")).toBe(false);
+    expect(isActiveOn(when, "2027-01-07")).toBe(true);
+    expect(isActiveOn(when, "2027-02-05")).toBe(true);
+    expect(isActiveOn(when, "2027-02-06")).toBe(false);
+  });
+
+  it("repeats yearly windows every year", () => {
+    const when = { from: "10-15", to: "10-31", recurs: "yearly" as const };
+    expect(isActiveOn(when, "2026-10-31")).toBe(true);
+    expect(isActiveOn(when, "2031-10-15")).toBe(true);
+    expect(isActiveOn(when, "2026-11-01")).toBe(false);
+  });
+
+  it("wraps yearly windows across the year end", () => {
+    const when = { from: "12-26", to: "01-02", recurs: "yearly" as const };
+    expect(isActiveOn(when, "2026-12-25")).toBe(false);
+    expect(isActiveOn(when, "2026-12-26")).toBe(true);
+    expect(isActiveOn(when, "2026-12-31")).toBe(true);
+    expect(isActiveOn(when, "2027-01-01")).toBe(true);
+    expect(isActiveOn(when, "2027-01-02")).toBe(true);
+    expect(isActiveOn(when, "2027-01-03")).toBe(false);
+    expect(isActiveOn(when, "2027-06-15")).toBe(false);
+  });
+
+  it("accepts one window per year for lunar-calendar festivals", () => {
+    const when = [
+      { from: "2026-02-08", to: "2026-03-19" },
+      { from: "2027-01-29", to: "2027-03-08" },
+    ];
+    expect(isActiveOn(when, "2026-03-01")).toBe(true);
+    expect(isActiveOn(when, "2026-12-01")).toBe(false);
+    expect(isActiveOn(when, "2027-02-08")).toBe(true);
+  });
+
+  it("uses the local calendar day", () => {
+    expect(localDay(new Date(2026, 11, 31, 23, 59))).toBe("2026-12-31");
+    expect(localDay(new Date(2027, 0, 1, 0, 1))).toBe("2027-01-01");
+  });
+});
+
+describe("matchCulture", () => {
+  it("matches exact triggers on the normalized query", () => {
+    const results = matchCulture(culture([goat]), "  Greatest of ALL time! ");
+    expect(ids(results)).toEqual(["🐐", "⚽", "🇦🇷", "🇵🇹"]);
+    expect(results[0]).toMatchObject({
+      source: "culture",
+      cultureId: "goat-football",
+      context: "Football's greatest-of-all-time debate",
+      match: "greatest of all time",
+      score: 0.7,
+    });
+  });
+
+  it("completes a trigger while typing, but not from short or tiny prefixes", () => {
+    expect(ids(matchCulture(culture([halloween]), "hallo", { now: OCT_20 }))).toEqual(["🎃", "👻"]);
+    expect(matchCulture(culture([halloween]), "hallo", { now: OCT_20 })[0]?.score).toBeLessThan(0.9);
+    expect(matchCulture(culture([halloween]), "hal", { now: OCT_20 })).toEqual([]);
+    expect(matchCulture(culture([goat]), "go")).toEqual([]);
+    expect(matchCulture(culture([halloween]), "hallo ", { now: OCT_20 })).toEqual([]);
+    expect(matchCulture(culture([halloween]), "hallo", { now: OCT_20, prefix: false })).toEqual([]);
+  });
+
+  it("applies seasonal entries only inside their window", () => {
+    expect(matchCulture(culture([halloween]), "halloween", { now: new Date(2026, 9, 1) })).toEqual([]);
+    expect(matchCulture(culture([halloween]), "halloween", { now: OCT_20 })).toHaveLength(2);
+    expect(matchCulture(culture([newYear]), "new year", { now: new Date(2027, 0, 1, 10) })).toHaveLength(2);
+  });
+
+  it("applies regional entries only with a matching region", () => {
+    const file = culture([bowJapan]);
+    expect(matchCulture(file, "thank you")).toEqual([]);
+    expect(matchCulture(file, "thank you", { region: "US" })).toEqual([]);
+    expect(ids(matchCulture(file, "thank you", { region: "jp" }))).toEqual(["🙇"]);
+  });
+
+  it("keeps the strongest entry per emoji and caps the count", () => {
+    const lmao = entry({ id: "a", triggers: ["goat"], emoji: [["⚽", "26BD", 0.9]] });
+    const results = matchCulture(culture([goat, lmao]), "goat", { limit: 2 });
+    expect(results.map((r) => [r.emoji, r.cultureId])).toEqual([
+      ["⚽", "a"],
+      ["🐐", "goat-football"],
+    ]);
+  });
+});
+
+describe("insertCulture", () => {
+  const canonical: SearchResult[] = [
+    { emoji: "🐐", id: "1F410", score: 1, source: "alias" },
+    { emoji: "♑", id: "2651", score: 0.89, source: "alias" },
+    { emoji: "⚽", id: "26BD", score: 0.5, source: "alias" },
+  ];
+  const matches = matchCulture(culture([goat]), "goat");
+
+  it("adds culture results right after the canonical top result, never above it", () => {
+    const merged = insertCulture(canonical, matches);
+    expect(ids(merged)).toEqual(["🐐", "⚽", "🇦🇷", "🇵🇹", "♑"]);
+    expect(merged[0]?.source).toBe("alias");
+    expect(merged[1]).toMatchObject({ source: "culture", context: goat.context });
+  });
+
+  it("puts culture results first only when the canonical list is empty", () => {
+    expect(ids(insertCulture([], matches))).toEqual(["🐐", "⚽", "🇦🇷", "🇵🇹"]);
+  });
+
+  it("cuts the merged list to the limit", () => {
+    expect(insertCulture(canonical, matches, 3)).toHaveLength(3);
+  });
+});
+
+describe("engine with culture", () => {
+  const file = culture([
+    goat,
+    halloween,
+    entry({ id: "x", triggers: ["goat"], emoji: [["🦄", "1F984", 1]] }),
+  ]);
+  const engine = createEngine(pack, { culture: file });
+
+  it("adds context after the canonical top result", () => {
+    const { results, confidence } = engine.search("goat");
+    expect(ids(results)).toEqual(["🐐", "⚽", "🇦🇷", "🇵🇹"]);
+    expect(results[1]).toMatchObject({ source: "culture", label: "soccer ball", cultureId: "goat-football" });
+    expect(confidence).toBe(engine.search("goat", { culture: false }).confidence);
+  });
+
+  it("drops culture emoji the packs do not have", () => {
+    expect(ids(engine.search("goat").results)).not.toContain("🦄");
+  });
+
+  it("opts out with culture: false", () => {
+    expect(ids(engine.search("goat", { culture: false }).results)).toEqual(["🐐"]);
+  });
+
+  it("shares the index with withCulture", () => {
+    const plain = engine.withCulture(undefined);
+    expect(plain.culture).toBeUndefined();
+    expect(plain.entries).toBe(engine.entries);
+    expect(ids(plain.search("goat").results)).toEqual(["🐐"]);
+    expect(ids(plain.withCulture(file).search("goat").results)).toHaveLength(4);
+  });
+
+  it("respects the search limit", () => {
+    expect(engine.search("goat", { limit: 2 }).results).toHaveLength(2);
+  });
+
+  it("follows the window of seasonal entries", () => {
+    expect(ids(engine.search("halloween", { now: OCT_20 }).results)).toEqual(["🎃", "👻"]);
+    expect(engine.search("halloween", { now: new Date(2026, 5, 1) }).results[1]?.source).not.toBe("culture");
+  });
+});
+
+describe("session with culture", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const semanticFirst = {
+    search: async () => ({
+      results: [
+        { emoji: "🇵🇹", id: "1F1F5-1F1F9", score: 0.9, source: "semantic" as const },
+        { emoji: "🐐", id: "1F410", score: 0.8, source: "semantic" as const },
+      ],
+      packVersion: "test",
+      cached: false,
+    }),
+  };
+
+  it("applies culture after fusion, so the canonical top result stays first", async () => {
+    const states: SessionState[] = [];
+    const session = createSearchSession({
+      engine: createEngine(pack).withCulture(culture([goat])),
+      semantic: semanticFirst,
+      shouldUseSemantic: () => true,
+      debounceMs: 10,
+      onChange: (s) => states.push(s),
+    });
+    session.update("greatest of all time");
+    expect(ids(states[0]?.results ?? [])).toEqual(["🐐", "⚽", "🇦🇷", "🇵🇹"]);
+    expect(states[0]?.alias.results.every((r) => r.source === "alias")).toBe(true);
+    await vi.advanceTimersByTimeAsync(50);
+    const fused = states.at(-1);
+    expect(fused?.status).toBe("fused");
+    expect(fused?.results[0]?.emoji).toBe("🐐");
+    expect(fused?.results.slice(1, 4).map((r) => r.source)).toEqual(["culture", "culture", "culture"]);
+  });
+
+  it("turns culture off with culture: false", () => {
+    const states: SessionState[] = [];
+    const session = createSearchSession({
+      engine: createEngine(pack, { culture: culture([goat]) }),
+      culture: false,
+      onChange: (s) => states.push(s),
+    });
+    session.update("goat");
+    expect(ids(states[0]?.results ?? [])).toEqual(["🐐"]);
+  });
+
+  it("passes the region to regional entries", () => {
+    const states: SessionState[] = [];
+    const session = createSearchSession({
+      engine: createEngine(pack),
+      culture: culture([bowJapan]),
+      region: "JP",
+      onChange: (s) => states.push(s),
+    });
+    session.update("thank you");
+    expect(ids(states[0]?.results ?? [])).toEqual(["🙇"]);
+  });
+});
+
+describe("relevantNow", () => {
+  const files = [
+    culture([
+      goat,
+      halloween,
+      entry({
+        ...newYear,
+        id: "dia",
+        when: halloween.when,
+        emoji: [
+          ["🎃", "1F383", 1],
+          ["💀", "1F480", 0.9],
+        ],
+      }),
+    ]),
+    culture([halloween], "es"),
+  ];
+
+  it("lists featured seasonal entries active now, one emoji per entry in turn", () => {
+    expect(relevantNow(files, { now: OCT_20 }).map((r) => [r.emoji, r.cultureId])).toEqual([
+      ["🎃", "halloween"],
+      ["👻", "halloween"],
+      ["💀", "dia"],
+    ]);
+  });
+
+  it("is empty outside every window and never lists lasting entries", () => {
+    expect(relevantNow(files, { now: new Date(2026, 4, 1) })).toEqual([]);
+  });
+
+  it("picks the file of the locale and honours limit and region", () => {
+    expect(relevantNow(files, { locale: "es", now: OCT_20, limit: 1 })).toHaveLength(1);
+    expect(relevantNow(files, { locale: "fr", now: OCT_20 })).toEqual([]);
+    const regional = culture([{ ...halloween, regions: ["US"] }]);
+    expect(relevantNow(regional, { now: OCT_20 })).toEqual([]);
+    expect(relevantNow(regional, { now: OCT_20, region: "us" })).toHaveLength(2);
+  });
+});
+
+describe("loadCulture", () => {
+  it("fetches culture.<locale>.json from the base URL", async () => {
+    const fetch = vi.fn(async (_url: string | URL | Request) => new Response(JSON.stringify(culture([]))));
+    const loaded = await loadCulture({ baseUrl: "https://x.test/v1/culture/0.1.0/", locale: "es", fetch });
+    expect(String(fetch.mock.calls[0]?.[0])).toBe("https://x.test/v1/culture/0.1.0/culture.es.json");
+    expect(loaded.entries).toEqual([]);
+  });
+
+  it("rejects HTTP errors and other files", async () => {
+    await expect(
+      loadCulture({
+        baseUrl: "https://x.test",
+        locale: "en",
+        fetch: async () => new Response("", { status: 404 }),
+      }),
+    ).rejects.toThrow("HTTP 404");
+    await expect(
+      loadCulture({
+        baseUrl: "https://x.test",
+        locale: "en",
+        fetch: async () => new Response(JSON.stringify(en)),
+      }),
+    ).rejects.toThrow("not an emojisense culture file");
+  });
+});
