@@ -148,4 +148,6 @@ The API Worker builds the shards every night from `query_daily` with the same co
 (`@emojisense/data/shards`) and serves them from R2 (ARCHITECTURE.md, "Nightly shard build").
 It accepts a key file name encoded or not (`the%20.json`), and it never sends `immutable`: the
 files change under one pack version. This CLI stays for bootstrap shards, dry runs and exports
-(`--log`). Rows of a log go through the same privacy filter (`src/shards/privacy.ts`).
+(`--log`). Rows of a log go through the same privacy filter (`src/shards/privacy.ts`). The CLI
+writes the English (`locale=en`) shards only; the nightly build also writes one directory per
+other pack locale (`/p/<v>/<locale>/…`, PACK_FORMAT.md §6).

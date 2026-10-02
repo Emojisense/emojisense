@@ -53,8 +53,9 @@
     { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
-  // Daily, 03:17 UTC: delete query_daily rows past their plan's retention and waitlist rows
-  // older than 12 months (src/retention.ts). Daily, 04:23 UTC: build the layer-2 shards from
+  // Daily, 03:17 UTC: write the regional trends (src/trends.ts), then delete query_daily rows past
+  // their plan's retention, waitlist rows older than 12 months and trends older than 90 days
+  // (src/retention.ts). Daily, 04:23 UTC: build the layer-2 shards from
   // query_daily (src/shards/job.ts, SHARD_BUILD_CRON in src/config.ts; SHARDS_CRON_ENABLED).
   // Inherited by the offline env. Locally: `wrangler dev --test-scheduled`, then
   // curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*" (or cron=23+4+*+*+*).

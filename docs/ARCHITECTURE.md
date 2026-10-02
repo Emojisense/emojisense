@@ -52,9 +52,11 @@ emojibase (en) + CLDR (tr) ─▶ ingest ─▶ enrichment (aliases, description
         ─▶ packs: pack.<locale>.json (core ≤ 200 KB gz) + pack.<locale>.ext.json (idle-loaded)
         ─▶ embed (chosen model × dims) ─▶ vectors.<model>.<dims>[.<locale>].bin ─▶ manifest.json
 
-query_daily (keyed calls: per app, day, normalized text; no IP/key/user)
+query_daily (keyed calls: per app, day, normalized text, locale, country; no IP/key/user)
         ─▶ nightly in the API Worker: apps of ≥ 3 accounts, ≥ 10 searches in 6 days, no PII
-              └─▶ precompute results → prefix shards (L2)                    [built]
+              └─▶ precompute results per locale → prefix shards (L2)         [built]
+        ─▶ nightly: rising queries per locale and country (≥ 3 accounts, ≥ 10 searches)
+              └─▶ trends_daily → culture proposals                           [built, private]
 Worker query log (Analytics Engine: normalized text only, no IP/key/user/app)
         ─▶ queries seen ≥ 5 times
               └─▶ weak ones → LLM proposes aliases → eval gate → new pack   [closed, hosted only]
@@ -164,6 +166,7 @@ authenticate: key → app + plan, or anonymous ─▶ rate limit (120/min key+IP
    │                                            (auth.ts; D1 down + key not cached → anonymous)
    ▼
 parse q (embeddingText), locale (11 + BCP 47 → else 400), limit, mode, culture, region
+   (region=auto → request.cf.country; the country is never part of the cache key)
    ▼
 over the account's limit? ─▶ the shared cache may still answer; else alias-only, overLimit: true
    ▼
@@ -174,10 +177,49 @@ alias engine of the locale (en, tr bundled; others: core+ext packs via ASSETS, L
    + embed (Workers AI) ─▶ searchVectorSets(shared index, locale index via ASSETS, LRU 2)
    ▼ fuse ─▶ store in the shared cache (only when nothing degraded or failed to load)
    ▼
-per request, never cached: culture (culture=1, UTC day) ─▶ custom emoji first (key's app, tenant)
+per request, never cached: culture (culture=1, UTC day, region) ─▶ custom emoji first (key's app, tenant)
    ▼
-metering (semantic_calls, batched to D1) + query_daily (keyed calls) + Analytics Engine point
+metering (semantic_calls, batched to D1) + query_daily (keyed calls; + locale, country)
+   + Analytics Engine point
 ```
+
+### Regional data flow
+
+The country of a request is known only at the edge: Cloudflare sets `request.cf.country` (ISO
+3166-1 alpha-2, from the IP address). The Worker reads it once per search (`region.ts`), maps
+unknown values (`XX`, Tor `T1`, local runs) to `XX`, and uses it in two places only:
+
+```
+request.cf.country ──▶ region=auto: regional culture entries of this one answer (after the cache)
+                   └─▶ query_daily(app, day, query, locale, country): +1 search   (keyed calls only)
+                         ├─▶ dashboard: the app's own counts by country and language
+                         ├─▶ 04:23 shards: k-anonymous per locale ─▶ /p/<v>/[<locale>/]…   (public)
+                         └─▶ 03:17 trends: k-anonymous per locale and country ─▶ trends_daily (private)
+```
+
+The IP address, the key and the user are never stored with the country. The shared cache key has
+no country or region in it, so every country shares one cache entry per query. Cross-customer
+outputs (shards, trends) are aggregates over apps of ≥ 3 accounts with ≥ 10 searches, after the
+privacy filter.
+
+## Regional trends (culture proposals)
+
+The 03:17 cron runs `buildRegionalTrends` (`packages/worker/src/trends.ts`) before its prunes,
+so the 7th day of the plans that keep 7 days is still there:
+
+```
+D1 query_daily, last 7 complete UTC days, rows with a locale (not 'und')
+  ─▶ per (locale, country) and per (locale, '*'): apps of ≥ 3 accounts and ≥ 10 searches
+     (unknown countries count only in '*'); privacyReason; normalize(q) = q
+  ─▶ baseline = max(query_daily over the 28 days before, the rows of the runs 7/14/21/28 days ago)
+  ─▶ score = (searches per day + 1) / (baseline per day + 1)
+  ─▶ trends_daily(day, locale, country, query, score, searches, accounts): ≤ 500 per region,
+     ≤ 10,000 per night, kept 90 days
+readRegionalTrends ─▶ culture proposals (score ≥ 2 = rising)
+```
+
+Plans that keep 7 days of `query_daily` have no baseline there, so the earlier runs' rows (already
+k-anonymous) are the long memory. Both baselines are lower bounds; the larger one is used.
 
 ## Nightly shard build (L2)
 
@@ -186,14 +228,17 @@ so no job runner is needed. Code: `packages/worker/src/shards/`, shared build lo
 `@emojisense/data/shards`.
 
 ```
-D1 query_daily, last 6 complete UTC days (keyed calls only)
-  ─▶ apps of ≥ 3 accounts and ≥ 10 searches; privacyReason drops emails, URLs, numbers, ids
-  ─▶ drop what the device answers (bundled alias engine)
-  ─▶ reuse the served build's entries; embed new queries like GET /v1/search?mode=semantic&locale=en
-     (embeddingText, template, shared vectors), ≤ 100 per Workers AI call, ≤ 5,000 per night
-  ─▶ adaptive prefix split (≤ 96 KB raw ≈ 25 KB gzip)
-  ─▶ R2 SHARDS: shards/<packVersion>/<contentHash>/<build>/…, then current.json (the pointer)
-GET /p/<v>/<file> ─▶ Worker ─▶ pointer (per isolate, 5 min) ─▶ edge cache ─▶ R2   (no build: public/p)
+D1 query_daily, last 6 complete UTC days (keyed calls only), per locale ('und' rows count as en)
+  ─▶ apps of ≥ 3 accounts and ≥ 10 searches in that locale; privacyReason drops emails, URLs, ids
+  ─▶ drop what the locale's device answers (that locale's alias engine)
+  ─▶ reuse the served build's entries; embed new queries like GET /v1/search?mode=semantic&locale=<l>
+     (embeddingText, template, shared + locale vectors), ≤ 100 per Workers AI call,
+     ≤ 5,000 per night over every locale (most searched first), ≤ 20,000 queries per build
+  ─▶ adaptive prefix split per locale (≤ 96 KB raw ≈ 25 KB gzip)
+  ─▶ R2 SHARDS: shards/<packVersion>/<contentHash>/<build>/… (en) and …/<build>/<locale>/…,
+     then current.json (the pointer, with queries and shards per locale)
+GET /p/<v>/[<locale>/]<file> ─▶ Worker ─▶ pointer (per isolate, 5 min) ─▶ edge cache ─▶ R2
+                                                                      (no build: public/p)
 ```
 
 A build id is a hash of its content, so a re-run on the same day publishes nothing new. The

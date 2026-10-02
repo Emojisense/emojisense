@@ -297,9 +297,11 @@ Frequent queries that the on-device dictionary cannot answer get their semantic 
 precomputed nightly and published as static files:
 
 ```
-/p/<packVersion>/index.json      {"format":"emojisense-shards","formatVersion":1,"packVersion":"0.1.0",
-                                  "model":"bge-m3@1024","keys":["a","ab","b", … ,"th","the ", …]}
-/p/<packVersion>/<key>.json      {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
+/p/<packVersion>/index.json            {"format":"emojisense-shards","formatVersion":1,"packVersion":"0.1.0",
+                                        "model":"bge-m3@1024","keys":["a","ab","b", … ,"th","the ", …]}
+/p/<packVersion>/<key>.json            {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
+/p/<packVersion>/<locale>/index.json   the same files for another pack locale, e.g. /p/0.1.0/tr/index.json
+/p/<packVersion>/<locale>/<key>.json
 ```
 
 - `keys` are sorted. A query uses the **longest key that is a prefix of the normalized query**.
@@ -307,7 +309,18 @@ precomputed nightly and published as static files:
   are `encodeURIComponent(key)`.
 - `entries` maps a normalized query (§3) to semantic results `[emoji, hexcode, score]`, best
   first. These are the same results the API returns with `mode=semantic` for that model and
-  `locale=en`: shards are built from the shared vector file only (§5).
+  locale: the files at `/p/<packVersion>/` hold the `locale=en` answers (the shared vector file
+  only, §5), the files in `/p/<packVersion>/<locale>/` the answers of that locale (the shared
+  vector file and the locale's own).
+- **Locale shards.** A client reads the directory of its search locale: English (and no locale)
+  at `/p/<packVersion>/`, every other pack locale at `/p/<packVersion>/<locale>/`, where `<locale>`
+  is the language subtag in lowercase (`pt-BR` → `pt`), like the API's `locale`. `en/` is an alias
+  of the English files. A locale without shards answers `404` for its `index.json`, and the client
+  asks the API. Clients from before locale shards read the English files for every locale, as
+  before: they keep working, but their non-English queries go to the API.
+- A query is in a locale's files only when it was searched in that locale (the k-anonymity
+  thresholds hold per locale) and that locale's on-device dictionary does not answer it with
+  confidence.
 - A client downloads `index.json` once and each shard at most once per session, then answers
   locally. A query that is not in its shard goes to the API.
 - Shards are valid only for the `model` they name. A new model or pack version publishes a new
