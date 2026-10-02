@@ -834,9 +834,10 @@ What the hosted service collects, and for how long:
 
 | Data | Where | Kept |
 | ---- | ----- | ---- |
-| Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
+| Per app, UTC day, normalized search query (≤ 64 chars), locale and country: number of searches and of misses. The country is `request.cf.country` (ISO 3166-1 alpha-2, derived from the IP address at Cloudflare's edge; `XX` when unknown). Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
 | Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below). No app, account, day or count. | R2 `emojisense-shards`, edge cache | Rebuilt nightly. The previous build is deleted after one more night; browser and edge copies expire within 1 day. |
+| Regional trends: normalized query text, locale, country (or `*`), score, searches and accounts, for queries over the trend thresholds (below). No app, account or user. Not served by any route. | D1 `trends_daily` | 90 days (`TRENDS_KEEP_DAYS`). The daily cron deletes older rows. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
@@ -845,6 +846,9 @@ What the hosted service collects, and for how long:
 | Accounts (Clerk user id, name, verified email), apps, keys (SHA-256 + first 12 chars), team, webhooks | D1 | until `DELETE /api/me`. Revoked keys stay, marked as revoked. Sign-in sessions live at Clerk; the dashboard stores none. |
 | Our own `console` records: event names, error types, counts | Workers Logs | up to 7 days (Paid plan; 3 days on Free). `invocation_logs` is off in both `wrangler.jsonc` files, so request URLs are never logged. |
 
+- The country of a request is used only as a count dimension of `query_daily` and, with
+  `region=auto`, to select the regional culture entries of that one answer. It is never stored
+  with an IP address, a key or a user, and it is not part of the cache key.
 - Never logged or stored: IP addresses (only an in-memory rate-limit key), user identifiers,
   reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens. Keys are stored
   only as a hash and a 12-character prefix, never logged.
@@ -853,11 +857,16 @@ What the hosted service collects, and for how long:
 - Anonymous calls and development keys never reach `query_daily`.
 - The dashboard names a query only when the app saw it ≥ 5 times in the window.
 - The nightly shard job reads `query_daily` in aggregate. It publishes a query in the public
-  shard files (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10 times in total
-  over the last 6 complete UTC days, and only when it does not look like personal data (an email
+  shard files of a locale (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10
+  times in total in that locale over the last 6 complete UTC days, and only when it does not look like personal data (an email
   or web address, a phone, account or postal number, a user id, a long token, blocklisted words).
   The files hold the query text and its emoji results: no app, account, day or count. A query
   leaves them with the first nightly build after it no longer passes. Alias mining reads Analytics
   Engine and uses a query only when it was seen ≥ 5 times.
+- The daily trend job reads `query_daily` in aggregate too. It keeps a query for a locale and a
+  country only when apps of ≥ 3 different accounts searched it ≥ 10 times there over the last 7
+  complete UTC days, with the same personal-data filter. Its rows (`trends_daily`) feed the
+  culture proposals and are never public. Per-customer views (the dashboard) show only the
+  customer's own apps; anything across customers is such a k-anonymous aggregate.
 - `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
   Travel can still restore the database to a point in the last 30 days (Paid plan).
