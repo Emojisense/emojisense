@@ -9,6 +9,23 @@ describe("moderate", () => {
     expect(moderate("sextant", "en")).toBe("ok");
   });
 
+  it("keeps same-sex family phrases but still blocks sex elsewhere", () => {
+    for (const phrase of [
+      "same sex couple",
+      "same sex parents",
+      "same sex wedding",
+      "same sex marriage",
+      "happy same sex marriage day",
+    ]) {
+      expect(moderate(phrase, "en"), phrase).toBe("ok");
+    }
+    expect(moderate("sex", "en")).toBe("block");
+    expect(moderate("sex on the beach", "en")).toBe("block");
+    expect(moderate("same sex", "en")).toBe("block");
+    expect(moderate("same sex couple porn", "en")).toBe("block");
+    expect(moderate("same sex couple shit", "en")).toBe("demote");
+  });
+
   it("demotes mild profanity instead of dropping it", () => {
     expect(moderate("holy shit", "en")).toBe("demote");
   });
