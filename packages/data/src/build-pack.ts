@@ -1,6 +1,6 @@
 /**
  * Step 4: base + validated aliases → dist/packs/<packVersion>/ and build/documents.json
- * (the text each embedding model sees per emoji).
+ * (the text each embedding model sees per emoji and locale; documents.ts).
  *
  *   tsx src/build-pack.ts [--initial-aliases N] [--out DIR]
  *
@@ -15,6 +15,7 @@ import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "nod
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { normalize, PACK_FORMAT, PACK_FORMAT_VERSION, type Pack, type PackRow } from "emojisense";
+import { buildDocuments } from "./documents.ts";
 import { LOCALE_CODES } from "./locales.ts";
 import { gzipSize, writeManifest } from "./manifest.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
@@ -90,27 +91,6 @@ function buildPacks(locale: string, coreAliasCount: number): { core: Pack; ext: 
   return { core: pack("core", core), ext: pack("ext", ext) };
 }
 
-/** Aliases per document, so en + tr stay well under the 512-token limit of some models. */
-const DOC_ALIASES = { en: 40, tr: 20 };
-
-/** One document per emoji. Multilingual models also get the Turkish text. */
-function buildDocuments() {
-  return emoji.map((e) => {
-    const en = validated[e.hexcode]?.en;
-    const tr = validated[e.hexcode]?.tr;
-    const enTerms = [...e.tags, ...(en?.alias ?? []).slice(0, DOC_ALIASES.en)];
-    const trCldr = e.i18n.tr;
-    const trTerms = [
-      trCldr?.label ?? "",
-      ...(trCldr?.tags ?? []),
-      ...(tr?.alias ?? []).slice(0, DOC_ALIASES.tr),
-    ];
-    const enText = [en?.desc ?? "", enTerms.join(", ")].join(" ");
-    const trText = [tr?.desc ?? "", trTerms.join(", ")].join(" ");
-    return { hexcode: e.hexcode, title: e.label, en: enText.trim(), tr: trText.trim() };
-  });
-}
-
 const outDir = args.out ?? join(DATA_ROOT, "dist", "packs", config.packVersion);
 // Replace only the pack files: vector files in the same directory come from the (paid) embed step.
 mkdirSync(outDir, { recursive: true });
@@ -136,7 +116,10 @@ for (const locale of LOCALE_CODES) {
   writeFileSync(join(outDir, `pack.${locale}.json`), core);
   writeFileSync(join(outDir, `pack.${locale}.ext.json`), ext);
 }
-writeFileSync(join(BUILD_DIR, "documents.json"), `${JSON.stringify(buildDocuments(), null, 1)}\n`);
+writeFileSync(
+  join(BUILD_DIR, "documents.json"),
+  `${JSON.stringify(buildDocuments(emoji, validated, LOCALE_CODES), null, 1)}\n`,
+);
 
 const manifest = writeManifest(outDir, {
   packVersion: config.packVersion,
