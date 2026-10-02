@@ -232,7 +232,7 @@ describe("routing", () => {
   it("hides internal errors behind a generic message and logs no account data", async () => {
     const h = createHarness();
     const cookie = await h.signIn();
-    h.db.exec("DROP TABLE waitlist");
+    h.db.exec("DROP TABLE team_members");
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     const response = await h.call("GET", "/api/me", { cookie });
     expect(response.status).toBe(500);

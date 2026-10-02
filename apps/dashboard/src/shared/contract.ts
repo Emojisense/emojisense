@@ -3,10 +3,13 @@
  * the SPA consumes them, so both import from here. Times are Unix epoch milliseconds.
  */
 import type {
+  BillingInterval,
+  BillingStatus,
   CustomEmoji,
   EmojiSet,
   KeyKind,
   Metric,
+  PaidPlanId,
   PlanId,
   TeamRole,
   WebhookEnvelopeType,
@@ -64,8 +67,8 @@ export interface MeResponse {
   plan: PlanSummary;
   /** Apps the account owns; `plan.maxApps` limits this number. */
   appCount: number;
-  /** Plan the account's email is on the waitlist for, if any. */
-  waitlistPlan: string | null;
+  /** The account's own subscription state; `past_due` means a renewal failed. */
+  billingStatus: BillingStatus;
   /** Teams of other owners that this account is a member of. */
   teams: TeamSummary[];
 }
@@ -278,6 +281,21 @@ export interface AcceptInviteResponse {
   team: TeamSummary;
 }
 
+/** The account's Whop subscription, as the last Whop event left it. */
+export interface BillingSubscription {
+  /**
+   * none: never paid. active: renews at `currentPeriodEnd`. canceling: cancelled, the plan stays
+   * until `currentPeriodEnd`. past_due: a renewal failed, the plan stays until `graceUntil`.
+   * canceled: ended, the account is on Free.
+   */
+  status: BillingStatus;
+  interval: BillingInterval | null;
+  currentPeriodEnd: number | null;
+  graceUntil: number | null;
+  /** Whop's page to change the card or cancel. Only the owner gets it; null without a subscription. */
+  manageUrl: string | null;
+}
+
 export interface BillingResponse {
   plan: PlanSummary;
   /** "YYYY-MM" (UTC). */
@@ -286,14 +304,22 @@ export interface BillingResponse {
   usage: MetricUsage[];
   limits: Record<Metric, number | null> & { apps: number | null };
   appCount: number;
-  /** No billing provider is chosen yet. */
-  provider: null;
-  waitlistPlan: string | null;
+  /** "whop" when this server can sell plans; null when payments are not set up. */
+  provider: "whop" | null;
+  subscription: BillingSubscription;
+  /** The intervals of each paid plan that can be bought now (yearly: Solo only). */
+  purchasable: Record<PaidPlanId, BillingInterval[]>;
 }
 
-export interface UpgradeResponse {
-  status: "waitlist";
-  plan: PlanId;
+/** `POST /api/billing/checkout` (owner only). `interval` defaults to "month". */
+export interface CheckoutRequest {
+  plan: PaidPlanId;
+  interval?: BillingInterval;
+}
+
+/** Whop's hosted checkout. After paying, Whop sends the buyer to `/billing?checkout=success`. */
+export interface CheckoutResponse {
+  url: string;
 }
 
 export interface OkResponse {

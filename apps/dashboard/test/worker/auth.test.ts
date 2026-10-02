@@ -70,7 +70,7 @@ describe("dev sign-in", () => {
     expect(me.account).toMatchObject({ name: "ada", email: "ada@dev.localhost", signIn: "dev" });
     expect(me.plan).toMatchObject({ id: "free", maxApps: 1, limits: { semantic_calls: 100_000 } });
     expect(me.appCount).toBe(0);
-    expect(me.waitlistPlan).toBeNull();
+    expect(me.billingStatus).toBe("none");
   });
 
   it("signs out: clears the dev cookie", async () => {

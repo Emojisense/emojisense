@@ -1,7 +1,7 @@
 # Emojisense dashboard
 
 Developers sign in with Clerk (email or a social account), create apps, create and revoke API
-keys, and watch usage against their plan. One Cloudflare Worker serves the SPA as static assets
+keys, watch usage against their plan, and buy a paid plan through Whop. One Cloudflare Worker serves the SPA as static assets
 and runs only for `/api/*` (`run_worker_first`). It shares the D1 schema in
 `packages/platform/migrations` with the API Worker. The API contract is the "Dashboard API"
 section of [docs/API.md](../../docs/API.md).
@@ -134,6 +134,27 @@ API in `CLERK_PUBLISHABLE_KEY`; `exp`/`nbf`; the session is not `pending`. Cooki
 | `CLERK_AUTHORIZED_PARTIES` | var | Comma-separated origins whose tokens count (`azp`), e.g. `https://app.emojisense.com`. Default: the dashboard's own origin. |
 | `CLERK_SECRET_KEY` | secret, optional | Only lets `DELETE /api/me` delete the Clerk user on the server. Without it the SPA does that with Clerk JS. |
 | `VITE_CLERK_PUBLISHABLE_KEY` | build-time env | The same publishable key for the SPA. The `_headers` CSP allows exactly that instance's Frontend API. Without it the build offers only the localhost dev sign-in. |
+| `WHOP_API_BASE` | var | `https://api.whop.com/api/v1` (default) or the sandbox, `https://sandbox-api.whop.com/api/v1` |
+| `WHOP_COMPANY_ID` | var (public) | The Whop company that sells the plans, `biz_…` |
+| `WHOP_PLAN_IDS` | var (public) | JSON: our plan and interval → Whop variant, e.g. `{"solo":{"month":"plan_…","year":"plan_…"},"pro":{"month":"plan_…"},"scale":{"month":"plan_…"}}`. `scripts/whop-setup.mjs` writes it. A malformed value sells nothing. |
+| `WHOP_API_KEY` | secret | Creates checkouts and cancels a replaced membership. Whop permissions: checkout configurations (create), plans and products (read; create for the setup script), memberships (cancel), webhooks (manage, for the setup script), and receiving payment, membership, refund and dispute webhooks. |
+| `WHOP_WEBHOOK_SECRET` | secret | The webhook's `ws_…` signing secret, exactly as Whop shows it |
+
+### Payments (Whop)
+
+1. Put `WHOP_API_KEY` (and, for the sandbox, `WHOP_API_BASE` and `WHOP_COMPANY_ID`) in
+   `.deploy/<env>.env`. Without them the setup uses the live API and the Emojisense company.
+2. `pnpm exec turbo run build --filter=@emojisense/platform`, then
+   `node scripts/whop-setup.mjs <env>` (`--dry-run` only reads). It creates the hidden products and
+   variants at the `PLANS` prices and the webhook to `https://app.<domain>/api/whop/webhook`, and
+   writes `WHOP_PLAN_IDS`, `WHOP_COMPANY_ID`, `WHOP_API_BASE` and a new webhook's
+   `WHOP_WEBHOOK_SECRET` to the env file. Running it again changes nothing.
+3. Deploy with the two secrets and the three vars (scripts/deploy.sh). In Whop, turn on "access
+   while past due", so a failed renewal keeps the membership during the grace period.
+
+Locally, without Whop settings, Billing shows the plans and says that payments are not set up.
+Mock mode (`pnpm dev:mock`) simulates a checkout; `?mock-billing=past_due|canceling|canceled`
+shows the banners.
 
 ## Behavior worth knowing
 
@@ -146,11 +167,11 @@ API in `CLERK_PUBLISHABLE_KEY`; `exp`/`nbf`; the session is not `pending`. Cooki
 | CSP | `vite.config.ts` emits `_headers` from `static-headers.ts`. With a Clerk key it adds only Clerk's sources: the Frontend API (script, connect), `img.clerk.com`, Cloudflare Turnstile and `*.protect.clerk.com` (script, frame, connect), `worker-src 'self' blob:`, and `style-src 'unsafe-inline'` (Clerk's CSS-in-JS). |
 | API errors | `{ "error": { "code", "message", "field"?, "plan"? } }` with 400, 401, 402, 403, 404, 405, 409, 410, 413, 415, 429 or 500. Plan gates throw `planRequired(plan, message)` (`src/worker/http.ts`) or call `requirePlan` (`src/worker/plans.ts`). |
 | Access | `accessFor(db, accountId, appId)` in `src/worker/access.ts` is the single gate for app and key routes: `{ role, plan, app }` or `undefined`. `requireAppAccess(…, permission)` turns that into 404 (no access, same as missing) or 403 `forbidden_role`. Permissions: `view` (viewer), `edit` (developer), `manage_team` and `view_billing` (admin), `change_plan` (owner). |
-| Account plan | `accounts.plan` (migration 0002). Apps get the owner's plan; the legacy `apps.plan` column is ignored. Only billing will change it; nothing in the dashboard does yet. |
+| Account plan | `accounts.plan` (migration 0002). Apps get the owner's plan; the legacy `apps.plan` column is ignored. Only Whop's webhook changes it (and the sweep of lapsed subscriptions). The API Worker caches key lookups with the plan for 60 s per isolate, so a change reaches searches within a minute. |
 | Team | Pro and Scale. A membership works only while the owner's plan includes team members; after a downgrade the rows stay and work again after an upgrade. Team and billing routes take `?owner=<accountId>` (default: the caller). Members list the owner first. |
 | Invites | `/invite/<token>` links: 32 random bytes, D1 stores only the SHA-256, single use, 7 days. With an email, only a caller whose verified email (the claim) matches can accept (`403 invite_email_mismatch`); without one, anyone with the link. |
 | Apps | `environment` is `prod` (default), `staging` or `dev`. Apps are created in the caller's own account. `maxApps` is checked inside the INSERT, so parallel requests cannot exceed it; past it, `402 plan_required` names the next plan with room. `PATCH` sets `name` and `emojiSet` (`native`, or `twemoji`/`noto`/`fluent` on Solo+). |
-| Billing | No provider yet. `GET /api/billing` sums this month's `usage_monthly` over the account's own apps (custom emoji = rows stored now). `POST /api/billing/upgrade` only records the waitlist; it never charges and never changes the plan. |
+| Billing | Whop (docs/API.md, "Billing (Whop)"). `GET /api/billing` sums this month's `usage_monthly` over the account's own apps (custom emoji = rows stored now) and reports the subscription and what can be bought. `POST /api/billing/checkout` (owner only) answers Whop's checkout URL; the plan changes only in `POST /api/whop/webhook` (`src/worker/routes/whop.ts`, rules in `src/worker/whop/events.ts`): signature with the `ws_` secret's bytes, ±5 minutes, each `webhook-id` once (`whop_events`), the plan from the variant via `WHOP_PLAN_IDS`, metadata only to find a new membership's account, older events never overwrite newer ones, 7 days of grace after a failed renewal. `/billing?plan=&interval=` from the website survives sign-in (sessionStorage). Each Whop membership's newest state is kept in `whop_memberships` (`src/worker/whop/memberships.ts`), so out-of-order events count; a replaced membership, or the one of a deleted account, is retired and cancelled until Whop confirms. Full refunds of the current period and lost disputes end the plan; open disputes are the grace. The daily cron (`17 4 * * *`, `scheduled` in `src/worker/index.ts`) moves lapsed subscriptions to Free and retries Whop cancels. |
 | Keys | The create response is the only place the full key appears. D1 stores its SHA-256 and the first 12 characters. |
 | Allowed origins | `https://host[:port]` or `https://*.example.com`; `http://` only for localhost; at most 20. A publishable key with no origins (any origin) is allowed only in `dev` apps. Secret keys have none. |
 | Usage | `GET /api/apps/:id/usage?period=YYYY-MM` (UTC, default current month, no future months). Limits are per account, so `used` is the account's total over all of its apps and `appUsed` is this app's part. `status` is `ok`, `near_limit` (≥ 80%), `over_limit` (used ≥ limit) or `not_included` (limit 0). `limit: null` means unlimited. `custom_emoji` is the rows stored now (a stock, not a monthly counter), in every period. |
@@ -167,9 +188,13 @@ API in `CLERK_PUBLISHABLE_KEY`; `exp`/`nbf`; the session is not `pending`. Cooki
   accounts), the real verifier with a key pair made in the test (`clerk.test.ts`, no secret key,
   no network), dev sign-in, the CSP, ownership, the key lifecycle, origin rules, usage math, the
   waitlist, roles on every app and key route (`access.test.ts`), team invites by verified email
-  and members (`team.test.ts`), account deletion with and without the secret key, billing, and
+  and members (`team.test.ts`), account deletion with and without the secret key, billing and
+  checkout with Whop's API mocked (`billing.test.ts`), the Whop webhook (`whop-webhook.test.ts`:
+  signatures signed with node:crypto, replays, metadata checks, every event type, ordering), and
   plan gates.
 - `test/ui`: the SPA in happy-dom with a fake `fetch`, and `@clerk/react` mocked in
   `clerk.test.tsx` (Clerk's sign-in when signed out, the bearer token on every call, sign-out,
   account deletion through Clerk JS). Also covers the empty state and app creation, the plan
-  limit and waitlist, create/reveal/revoke/edit of keys, and usage meters.
+  limit, the Billing page (`billing.test.tsx`: checkout, yearly Solo, a plan picked before
+  sign-in, status banners, the return from Whop), create/reveal/revoke/edit of keys, and usage
+  meters.

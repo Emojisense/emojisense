@@ -15,7 +15,8 @@
 ## Who is responsible
 
 [Company legal name], [Registered address] ("we") is the controller for the personal data of
-website visitors, people on the waitlist and dashboard account holders.
+website visitors, people on the waitlist and dashboard account holders, including the billing data
+of paid plans.
 
 When an app sends data about its own users to our API (searches, message text, images, tenant
 data), the company that makes the app is the controller, and we process the data for it.
@@ -42,8 +43,8 @@ browser. The address is not sent to us.
 
 ### The waitlist
 
-You join the waitlist with the form on this website. Account holders also join it when they ask
-for a paid plan in the dashboard; then we use the email address of the account.
+You join the waitlist with the form on this website. Paid plans are on sale now, so the website no
+longer asks you to join it; the form stays for older links.
 
 | What | Why | How long |
 | --- | --- | --- |
@@ -95,7 +96,8 @@ and webhooks with their deliveries, your team members and invites, your membersh
 teams, and the waitlist entry of your email address. Then the dashboard deletes your sign-in
 profile at Clerk. For 10 minutes we keep only your Clerk user id, so that a sign-in from before
 the deletion cannot create the account again. The API keeps a cache of key lookups for one minute, so a deleted key can work
-for up to one more minute.
+for up to one more minute. A paid subscription stops renewing: we ask Whop to cancel it at the end
+of the period that you paid for. Whop keeps its own payment records (see "Payments" below).
 
 Not deleted, because they are not linked to your account: the search records in Analytics Engine
 (they have no app, key or account and expire after three months), and the invites that other
@@ -187,13 +189,26 @@ processes IP addresses to route traffic and to block attacks.
 
 ### Payments
 
-We have no payment provider yet. The paid plans are not on sale, and we process no payment data.
-Before a payment provider processes any data, we will add it to the
-[Subprocessors](/legal/subprocessors/) page and update this policy.
+Whop is our payment provider (see [Subprocessors](/legal/subprocessors/)). When you buy a plan,
+the dashboard sends you to Whop's checkout. Whop collects your name, email address, payment details
+and billing address, takes the payments, sends the receipts and lets you change the payment method
+or cancel. We never receive or store your card details. Whop's own privacy policy applies to the
+data that it collects. [Whop's legal entity and role (processor or independent controller): to be
+confirmed in legal review.]
+
+| What | Why | How long |
+| --- | --- | --- |
+| When a checkout starts: your account id, the plan and the billing interval, sent to Whop | To match the payment to your account | Whop keeps them with the payment |
+| From Whop: the membership id, the plan, the interval, the subscription status, the end of the paid period and the link to manage the subscription | To give your account the plan that you paid for, and to show it in the dashboard | Until you delete your account |
+| The id, type and arrival time of each Whop event that we processed (no personal data) | To process each event only once | 30 days |
+
+If a renewal payment fails, your plan stays for 7 days while Whop tries again; then the account
+moves to Free.
 
 ## Legal bases
 
-- **Contract:** your account, your apps and keys, and the hosted features.
+- **Contract:** your account, your apps and keys, the hosted features, and the payments for a paid
+  plan.
 - **Legitimate interests:** security and rate limits, anonymous search statistics to improve
   search, and messages about the Service.
 - **Consent:** the waitlist.
@@ -207,7 +222,8 @@ requires it.
 ## International transfers
 
 Cloudflare operates the Service on its global network, so data can be processed in any country
-where Cloudflare has servers. Clerk is in the United States. [Transfer safeguards, for example
+where Cloudflare has servers. Clerk is in the United States. Whop: [location and transfer
+safeguards to be confirmed in legal review]. [Transfer safeguards, for example
 EU Standard Contractual Clauses: to be confirmed in legal review.]
 
 ## Deletion and backups

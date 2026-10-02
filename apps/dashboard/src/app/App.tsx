@@ -9,6 +9,13 @@ import {
 } from "react";
 import { ApiError, api, errorMessage, type Me, UNAUTHORIZED_EVENT } from "./api";
 import { useAuthAdapter } from "./auth/context";
+import {
+  checkoutIntentQuery,
+  forgetCheckoutIntent,
+  parseCheckoutIntent,
+  pendingCheckoutIntent,
+  rememberCheckoutIntent,
+} from "./lib/checkoutIntent";
 import { forgetPendingInvite, pendingInvite, rememberPendingInvite } from "./lib/pendingInvite";
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AppsPage } from "./pages/AppsPage";
@@ -24,7 +31,7 @@ import { SessionRejectedPage, SignInPage } from "./pages/SignInPage";
 import { TeamPage } from "./pages/TeamPage";
 import { TenantsPage } from "./pages/TenantsPage";
 import { WebhooksPage } from "./pages/WebhooksPage";
-import { navigate, usePath } from "./router";
+import { navigate, usePath, useSearchParams } from "./router";
 import { type AppSection, parseRoute, type Route } from "./routes";
 import { type Session, SessionContext } from "./session";
 import { AppShell } from "./shell/AppShell";
@@ -87,7 +94,10 @@ function Page({ route }: { route: Route }) {
 
 export function App() {
   const path = usePath();
+  const search = useSearchParams();
   const route = parseRoute(path);
+  const onBilling = route.name === "billing";
+  const checkoutIntent = useMemo(() => (onBilling ? parseCheckoutIntent(search) : null), [onBilling, search]);
   const [auth, setAuth] = useState<AuthState>({ status: "loading" });
   const provider = useAuthAdapter();
   const providerUser = useRef(provider.userId);
@@ -137,21 +147,30 @@ export function App() {
       () => false,
     );
     forgetPendingInvite();
+    forgetCheckoutIntent();
     // If Clerk kept the session, the sign-in form would face a signed-in user: offer sign-out again.
     setAuth(ended ? { status: "signed-out" } : { status: "rejected" });
     navigate("/", { replace: true });
   }, [provider]);
 
-  // After sign-in, "/" goes to the apps, or back to an invite opened while signed out.
+  // After sign-in, "/" goes to the apps, or back to an invite or a plan picked while signed out.
   useEffect(() => {
     if (auth.status !== "signed-in" || path !== "/") return;
     const invite = pendingInvite();
-    navigate(invite ? `/invite/${encodeURIComponent(invite)}` : "/apps", { replace: true });
+    const intent = pendingCheckoutIntent();
+    const next = invite
+      ? `/invite/${encodeURIComponent(invite)}`
+      : intent
+        ? `/billing?${checkoutIntentQuery(intent)}`
+        : "/apps";
+    navigate(next, { replace: true });
   }, [auth.status, path]);
 
   useEffect(() => {
-    if (auth.status === "signed-out" && route.name === "invite") rememberPendingInvite(route.token);
-  }, [auth.status, route]);
+    if (auth.status !== "signed-out") return;
+    if (route.name === "invite") rememberPendingInvite(route.token);
+    if (checkoutIntent) rememberCheckoutIntent(checkoutIntent);
+  }, [auth.status, route, checkoutIntent]);
 
   const session = useMemo<Session | null>(() => {
     if (auth.status !== "signed-in") return null;
@@ -202,7 +221,7 @@ export function App() {
       </main>
     );
   }
-  if (!session) return <SignInPage invite={route.name === "invite"} />;
+  if (!session) return <SignInPage invite={route.name === "invite"} checkout={checkoutIntent} />;
 
   return (
     <SessionContext.Provider value={session}>

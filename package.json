@@ -21,6 +21,8 @@
     "deploy:production": "bash scripts/deploy.sh production",
     "smoke:dev": "node scripts/smoke.mjs dev",
     "smoke:production": "node scripts/smoke.mjs production",
+    "whop:setup": "node scripts/whop-setup.mjs",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "changeset": "changeset",
     "check:readmes": "node scripts/check-readmes.mjs",
     "release:check": "node scripts/release-check.mjs",

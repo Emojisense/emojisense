@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../../src/app/App";
-import { APP, me, stubApi } from "./fake-api";
+import { APP, billing, me, stubApi } from "./fake-api";
 
 const planRequired = (plan: string) => ({
   status: 402,
@@ -9,16 +9,14 @@ const planRequired = (plan: string) => ({
 });
 
 describe("plan gates", () => {
-  it("shows a calm upsell that names the plan from the 402, and Upgrade joins its waitlist", async () => {
+  it("shows a calm upsell that names the plan from the 402; Upgrade opens Billing with it", async () => {
     window.history.replaceState(null, "", "/apps/app_1/analytics");
-    const { calls } = stubApi({
+    stubApi({
       "GET /api/me": { body: me() },
       "GET /api/apps": { body: { apps: [APP] } },
       "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
       "GET /api/apps/app_1/analytics": planRequired("pro"),
-      "POST /api/billing/upgrade": ({ body }) => ({
-        body: { status: "waitlist", plan: (body as { plan: string }).plan },
-      }),
+      "GET /api/billing": { body: billing() },
     });
     render(<App />);
 
@@ -28,9 +26,10 @@ describe("plan gates", () => {
     // An invitation, never an error.
     expect(screen.queryByRole("alert")).toBeNull();
 
-    fireEvent.click(within(gate).getByRole("button", { name: "Upgrade to Pro" }));
-    expect(await within(gate).findByText(/You are on the Pro waitlist/)).toBeTruthy();
-    expect(calls).toContainEqual({ method: "POST", path: "/api/billing/upgrade", body: { plan: "pro" } });
+    fireEvent.click(within(gate).getByRole("link", { name: "Upgrade to Pro" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Billing" })).toBeTruthy();
+    expect(`${window.location.pathname}${window.location.search}`).toBe("/billing?plan=pro&interval=month");
+    expect(screen.getByText(/You picked/).textContent).toContain("Pro");
   });
 
   it("uses the plan the API names, even when the page expected another", async () => {
@@ -44,7 +43,7 @@ describe("plan gates", () => {
     render(<App />);
 
     const gate = await screen.findByRole("region", { name: "Get told when things change" });
-    expect(within(gate).getByRole("button", { name: "Upgrade to Scale" })).toBeTruthy();
+    expect(within(gate).getByRole("link", { name: "Upgrade to Scale" })).toBeTruthy();
   });
 
   it("asks a team member to talk to the owner instead of offering an upgrade", async () => {
@@ -60,7 +59,7 @@ describe("plan gates", () => {
 
     const gate = await screen.findByRole("region", { name: "See what people search for" });
     expect(gate.textContent).toContain("This app runs on Ada Park’s plan. Ask Ada Park to upgrade to Pro.");
-    expect(within(gate).queryByRole("button", { name: /Upgrade/ })).toBeNull();
+    expect(within(gate).queryByRole("link", { name: /Upgrade/ })).toBeNull();
   });
 
   it("marks plan features in the sidebar by the app's plan", async () => {

@@ -95,7 +95,7 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
       </tbody>
     </table>
   </div>
-  <p>See <a href="/pricing/">Pricing</a> for every feature of each plan. Paid plans are not on sale yet: the pricing page has a waitlist for each one. Limits belong to the account, so the calls of all its apps count together. The dashboard shows each app’s part of the month’s usage.</p>
+  <p>See <a href="/pricing/">Pricing</a> for every feature of each plan. Buy a paid plan on the dashboard's Billing page; the new limits apply to every app of the account within a minute. Limits belong to the account, so the calls of all its apps count together. The dashboard shows each app’s part of the month’s usage.</p>
 
   <h2 id="over-the-limit">Over the limit</h2>
   <p>The API never fails because of a plan limit. A query that is in the shared edge cache is still answered, and is not counted. Any other query returns <code>200</code> with <code>"overLimit": true</code>:</p>

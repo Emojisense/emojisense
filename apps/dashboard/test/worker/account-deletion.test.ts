@@ -88,6 +88,12 @@ function seedAccount(h: Harness, login: string, bucket?: ReturnType<typeof memor
       "INSERT INTO waitlist (email, plan, created_at) VALUES (?, 'pro', 0)",
       `${login}@dev.localhost`.toUpperCase(),
     ],
+    // An ended Whop membership of the account (no plan now, so nothing is left to cancel).
+    [
+      "INSERT INTO whop_memberships (id, account_id, state, event_at) VALUES (?, ?, 'ended', 0)",
+      `${login}_membership`,
+      accountId,
+    ],
     // A legacy GitHub-era session row: sign-in no longer writes them, deletion still removes them.
     ["INSERT INTO sessions (id, account_id, expires_at) VALUES (?, ?, 0)", `${login}_session`, accountId],
     // Not owned by the account: every deletion prunes rows older than 10 minutes. ada's is old.
@@ -102,12 +108,16 @@ function seedAccount(h: Harness, login: string, bucket?: ReturnType<typeof memor
   return accountId;
 }
 
+/** Tables with no account data: Whop webhook ids (id, event type, time) only. */
+const NO_ACCOUNT_DATA = new Set(["whop_events"]);
+
 function tables(h: Harness): string[] {
   return h.db
     .rows<{ name: string }>(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
     )
-    .map((row) => row.name);
+    .map((row) => row.name)
+    .filter((name) => !NO_ACCOUNT_DATA.has(name));
 }
 
 /** Every row of every table, as JSON text, so a test can look for any trace of an account. */

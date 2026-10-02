@@ -1,6 +1,8 @@
+import { PLANS } from "@emojisense/platform";
 import { type ReactNode, useEffect, useId } from "react";
 import { ClerkSignIn } from "../auth/ClerkAuth";
 import { useAuthAdapter } from "../auth/context";
+import type { CheckoutIntent } from "../lib/checkoutIntent";
 import { MOCK_MODE } from "../lib/config";
 
 /**
@@ -116,7 +118,14 @@ function localLede(showDevSignIn: boolean): string {
     : "Sign-in is not set up on this server yet. Try again later.";
 }
 
-export function SignInPage({ invite = false }: { invite?: boolean }) {
+export function SignInPage({
+  invite = false,
+  checkout = null,
+}: {
+  invite?: boolean;
+  /** A plan picked on the website: after sign-in, Billing opens with it. */
+  checkout?: CheckoutIntent | null;
+}) {
   const { provider } = useAuthAdapter();
   const showDevSignIn = isLocalhost(window.location.hostname);
 
@@ -132,6 +141,16 @@ export function SignInPage({ invite = false }: { invite?: boolean }) {
             💌
           </span>
           <span>Your invite is waiting. Sign in, and we will take you back to it.</span>
+        </p>
+      )}
+      {!invite && checkout && (
+        <p className="notice">
+          <span className="emoji" aria-hidden="true">
+            🛒
+          </span>
+          <span>
+            Sign in or create an account, and we will take you to checkout for {PLANS[checkout.plan].name}.
+          </span>
         </p>
       )}
       {provider === "clerk" ? (

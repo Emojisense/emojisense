@@ -2,12 +2,14 @@ import { SITE_URL } from "../config";
 import { LEGAL_PAGES } from "../content/legal";
 import { DOCS_PAGES } from "../lib/docs-nav";
 
-/** Every public page. The 404 page and the /dev/ previews are left out on purpose. */
+/**
+ * Every public page. Left out on purpose: the 404 page, the /dev/ previews, and /waitlist/, which
+ * stays only for older links and forms now that paid plans are on sale.
+ */
 const SITEMAP_PATHS = [
   "/",
   "/pricing/",
   "/playground/",
-  "/waitlist/",
   "/about/",
   "/changelog/",
   "/legal/",

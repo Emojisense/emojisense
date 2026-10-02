@@ -12,19 +12,19 @@ import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { loadAccountPlan, toPlanSummary } from "../plans";
 import { toAccountSummary } from "../records";
-import { readWaitlistPlan } from "./billing";
+import { cancelAfterAccountDeletion, currentBilling } from "./billing";
 
-export async function getMe({ env, account }: AuthedContext): Promise<Response> {
-  const [{ plan, appCount }, waitlistPlan, teams] = await Promise.all([
+export async function getMe({ env, account: signedIn, deps }: AuthedContext): Promise<Response> {
+  const account = await currentBilling(env.DB, signedIn, deps.now());
+  const [{ plan, appCount }, teams] = await Promise.all([
     loadAccountPlan(env.DB, account.id),
-    readWaitlistPlan(env.DB, account.email),
     listMemberships(env.DB, account.id),
   ]);
   const body: MeResponse = {
     account: toAccountSummary(account),
     plan: toPlanSummary(plan),
     appCount,
-    waitlistPlan,
+    billingStatus: account.billing_status,
     teams,
   };
   return json(body);
@@ -78,6 +78,8 @@ export async function deleteMe(ctx: AuthedContext): Promise<Response> {
   const body = await readJsonObject(request);
   assertConfirmed(account, body.confirm);
   const deleted = await deleteAccount(env.DB, env.EMOJI, account, ctx.deps.now());
+  // A deleted account must not keep paying: the subscription ends with its paid period.
+  await cancelAfterAccountDeletion(ctx);
   const clerkUserDeleted = await deleteClerkUser(ctx);
   // Counts only: no ids or emails in logs (docs/API.md, Privacy).
   console.log(JSON.stringify({ event: "account_deleted", ...deleted, clerkUserDeleted }));

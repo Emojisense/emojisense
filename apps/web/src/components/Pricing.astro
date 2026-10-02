@@ -85,9 +85,21 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
                 "Billed monthly"
               )}
             </p>
-            <a class:list={["btn", "plan-cta", featured ? "btn-primary" : "btn-secondary"]} href={plan.cta.href}>
+            <a
+              class:list={["btn", "plan-cta", featured ? "btn-primary" : "btn-secondary", { "cta-monthly": plan.cta.yearlyHref }]}
+              href={plan.cta.href}
+            >
               {plan.cta.label}
             </a>
+            {plan.cta.yearlyHref && (
+              <a
+                class:list={["btn", "plan-cta", "cta-yearly", featured ? "btn-primary" : "btn-secondary"]}
+                href={plan.cta.yearlyHref}
+              >
+                {plan.cta.label}
+                <span class="visually-hidden"> yearly</span>
+              </a>
+            )}
             <p class="includes">{plan.inherits ? `Everything in ${plan.inherits}, plus` : "Includes"}</p>
             <ul>
               {plan.highlights.map((feature) => (
@@ -214,6 +226,19 @@ const yearlyList = new Intl.ListFormat("en", { type: "conjunction" }).format(yea
 
   .pricing:has(input[value="yearly"]:checked) .billing-note {
     visibility: visible;
+  }
+
+  /* Plans billed yearly have a second link to the same checkout, billed yearly. */
+  .cta-yearly {
+    display: none;
+  }
+
+  .pricing:has(input[value="yearly"]:checked) .cta-yearly {
+    display: inline-flex;
+  }
+
+  .pricing:has(input[value="yearly"]:checked) .cta-monthly {
+    display: none;
   }
 
   /* Only animate a price that the visitor switched, not on page load. */

@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
+import { BILLING_INTERVALS, BILLING_STATUSES } from "../src/billing.js";
 import { isHigherPlan, lowestPlanWith, PLAN_IDS } from "../src/plans.js";
 import {
   type AccountRow,
@@ -18,6 +19,9 @@ import {
   type TrendsDailyRow,
   type WebhookDeliveryRow,
   type WebhookRow,
+  WHOP_MEMBERSHIP_STATES,
+  type WhopEventRow,
+  type WhopMembershipRow,
 } from "../src/types.js";
 
 const MIGRATIONS = new URL("../migrations/", import.meta.url);
@@ -120,7 +124,7 @@ describe("row types of migrations 0002 and 0004", () => {
 });
 
 describe("migration 0003 (Clerk sign-in)", () => {
-  it("gives accounts exactly the typed columns", () => {
+  it("gives accounts exactly the typed columns (with 0006)", () => {
     const keys = Object.keys({
       id: "",
       email: null,
@@ -129,6 +133,13 @@ describe("migration 0003 (Clerk sign-in)", () => {
       name: null,
       plan: "free",
       created_at: 0,
+      whop_membership_id: null,
+      billing_status: "none",
+      billing_interval: null,
+      current_period_end: null,
+      billing_grace_until: null,
+      whop_manage_url: null,
+      billing_event_at: null,
     } satisfies Record<keyof AccountRow, unknown>);
     expect(columns(migratedDb(), "accounts")).toEqual(keys.sort());
   });
@@ -157,6 +168,65 @@ describe("migration 0003 (Clerk sign-in)", () => {
       unknown
     >);
     expect(columns(migratedDb(), "deleted_clerk_users")).toEqual(keys.sort());
+  });
+});
+
+describe("migration 0006 (billing)", () => {
+  it("adds whop_events with exactly the typed columns", () => {
+    const keys = Object.keys({ id: "", type: "", received_at: 0 } satisfies Record<
+      keyof WhopEventRow,
+      unknown
+    >);
+    expect(columns(migratedDb(), "whop_events")).toEqual(keys.sort());
+  });
+
+  it("adds whop_memberships with exactly the typed columns and its states", () => {
+    const keys = Object.keys({
+      id: "",
+      account_id: null,
+      state: "active",
+      period_end: null,
+      event_at: 0,
+      retired_at: null,
+      cancel_confirmed_at: null,
+      cancel_attempts: 0,
+      cancel_retry_at: null,
+    } satisfies Record<keyof WhopMembershipRow, unknown>);
+    const db = migratedDb();
+    expect(columns(db, "whop_memberships")).toEqual(keys.sort());
+    const insert = db.prepare(
+      "INSERT OR REPLACE INTO whop_memberships (id, state, event_at) VALUES ('m', ?, 0)",
+    );
+    for (const state of WHOP_MEMBERSHIP_STATES) insert.run(state);
+    expect(() => insert.run("trialing")).toThrow(/CHECK/);
+  });
+
+  it("starts existing accounts without billing and allows one account per membership", () => {
+    const db = new DatabaseSync(":memory:");
+    for (const file of ["0001_init.sql", "0002_product.sql", "0003_clerk.sql"]) {
+      db.exec(readFileSync(new URL(file, MIGRATIONS), "utf8"));
+    }
+    db.exec("INSERT INTO accounts (id, plan, created_at) VALUES ('old', 'pro', 0)");
+    db.exec(readFileSync(new URL("0006_billing.sql", MIGRATIONS), "utf8"));
+    expect(db.prepare("SELECT plan, billing_status, whop_membership_id FROM accounts").all()).toEqual([
+      { plan: "pro", billing_status: "none", whop_membership_id: null },
+    ]);
+    db.exec(
+      `INSERT INTO accounts (id, whop_membership_id, created_at) VALUES ('a', 'mem_1', 0), ('b', NULL, 0)`,
+    );
+    expect(() =>
+      db.exec(`INSERT INTO accounts (id, whop_membership_id, created_at) VALUES ('c', 'mem_1', 0)`),
+    ).toThrow(/UNIQUE/);
+  });
+
+  it("accepts every billing status and interval and rejects others", () => {
+    const db = migratedDb();
+    db.exec("INSERT INTO accounts (id, created_at) VALUES ('a', 0)");
+    for (const status of BILLING_STATUSES) db.prepare("UPDATE accounts SET billing_status = ?").run(status);
+    for (const interval of BILLING_INTERVALS)
+      db.prepare("UPDATE accounts SET billing_interval = ?").run(interval);
+    expect(() => db.prepare("UPDATE accounts SET billing_status = ?").run("trialing")).toThrow(/CHECK/);
+    expect(() => db.prepare("UPDATE accounts SET billing_interval = ?").run("week")).toThrow(/CHECK/);
   });
 });
 

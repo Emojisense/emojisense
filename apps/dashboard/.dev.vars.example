@@ -19,3 +19,11 @@ CLERK_JWT_KEY=
 CLERK_AUTHORIZED_PARTIES=
 # Optional secret: only lets DELETE /api/me delete the Clerk user on the server.
 # CLERK_SECRET_KEY=
+
+# Whop payments (optional locally: without them Billing says payments are not set up).
+# Use the sandbox: https://sandbox.whop.com/dashboard/developer. See the README, "Payments (Whop)".
+# WHOP_API_BASE=https://sandbox-api.whop.com/api/v1
+# WHOP_COMPANY_ID=
+# WHOP_PLAN_IDS={"solo":{"month":"plan_…","year":"plan_…"},"pro":{"month":"plan_…"},"scale":{"month":"plan_…"}}
+# WHOP_API_KEY=
+# WHOP_WEBHOOK_SECRET=

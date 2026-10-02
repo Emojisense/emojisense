@@ -1,4 +1,4 @@
-import { PLAN_IDS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
+import { PAST_DUE_GRACE_DAYS, PLAN_IDS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
 import { formatCount, formatUsd } from "../../lib/format";
 
 export interface PricingFaq {
@@ -48,9 +48,20 @@ export function pricingFaqs(plans: Record<PlanId, Plan> = PLANS): PricingFaq[] {
       a: yearlyAnswer,
     },
     {
-      q: "When can I pay for a plan?",
-      a: "Paid plans open soon. Join the waitlist and we email you once, when your plan opens. The free plan works today.",
-      link: { href: "/waitlist/", label: "Join the waitlist" },
+      q: "How does billing work?",
+      a: "Choose a plan on this page, then sign in to the dashboard and pay on Whop's checkout. Whop is our payment provider: it takes the card or another local payment method and sends the receipts. The plan changes for all your apps as soon as the payment goes through.",
+    },
+    {
+      q: "Can I cancel or change my plan?",
+      a: "Yes, at any time. In the dashboard, Billing → Manage subscription opens Whop, where you cancel. You keep the plan until the end of the period you paid for; then the account moves to Free, and your apps keep working within the Free limits. To change plans, choose another one on the Billing page: the new plan starts when it is paid, and the old one stops renewing. Whop does not prorate.",
+    },
+    {
+      q: "What if a payment fails?",
+      a: `Whop tries the charge again and emails you. Your plan keeps working for ${PAST_DUE_GRACE_DAYS} days. Update the payment method in Billing → Manage subscription; if no payment goes through by then, the account moves to Free.`,
+    },
+    {
+      q: "Do you give refunds?",
+      a: "[Refund policy: to be decided before launch.] Until it is published, write to [support email] about any payment.",
     },
     {
       q: "Can I self-host instead?",
