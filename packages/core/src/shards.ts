@@ -31,12 +31,13 @@ export interface ShardProviderOptions {
 
 /**
  * The shard directory of a locale: the base URL for English (and no locale), as before locale
- * shards existed, else `<base>/<locale>`.
+ * shards existed, else `<base>/<language>`. Like the API's `locale`, only the language subtag
+ * counts ("pt-BR" → "pt").
  */
 export function shardBaseFor(baseUrl: string, locale: string | undefined): string {
   const base = baseUrl.replace(/\/+$/, "");
-  const code = (locale ?? "").toLowerCase();
-  return code === "" || code === "en" ? base : `${base}/${encodeURIComponent(code)}`;
+  const language = (locale ?? "").toLowerCase().split(/[-_]/)[0] ?? "";
+  return language === "" || language === "en" ? base : `${base}/${encodeURIComponent(language)}`;
 }
 
 /** Longest key that is a prefix of the query (keys are few; a linear scan is fine). */

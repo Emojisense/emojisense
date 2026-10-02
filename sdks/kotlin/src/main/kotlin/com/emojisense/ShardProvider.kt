@@ -107,8 +107,9 @@ public class ShardProvider @JvmOverloads constructor(
             return best
         }
 
-        /** The locale in lowercase. Null and "" give "en". */
-        internal fun shardLocale(locale: String?): String = locale?.lowercase()?.takeIf { it.isNotEmpty() } ?: "en"
+        /** The language subtag in lowercase, like the API's `locale` ("pt-BR" gives "pt"). Null and "" give "en". */
+        internal fun shardLocale(locale: String?): String =
+            locale?.lowercase()?.split('-', '_')?.first()?.takeIf { it.isNotEmpty() } ?: "en"
 
         /** English shards stay at the root, so old clients keep them. Other locales have a folder. */
         private fun folder(locale: String): String = if (locale == "en") "" else "${UrlEncoding.uriComponent(locale)}/"

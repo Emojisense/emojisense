@@ -86,10 +86,11 @@ public actor ShardProvider: SemanticProvider {
     return best
   }
 
-  /// The locale in lowercase. `nil` and "" give "en".
+  /// The language subtag in lowercase, like the API's `locale` ("pt-BR" gives "pt"). `nil` and
+  /// "" give "en".
   static func shardLocale(_ locale: String?) -> String {
-    let lowercased = locale?.lowercased() ?? ""
-    return lowercased.isEmpty ? "en" : lowercased
+    let language = (locale ?? "").lowercased().split(whereSeparator: { $0 == "-" || $0 == "_" }).first
+    return language.map(String.init) ?? "en"
   }
 
   /// English shards stay at the root, so old clients keep them. Other locales have a folder.

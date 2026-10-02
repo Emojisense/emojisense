@@ -180,7 +180,7 @@ final class ShardProviderTests: XCTestCase {
   func testUsesTheRootFilesForEnglishAndForNoLocale() async throws {
     let transport = StubTransport(urls: Self.localeFiles)
     let provider = ShardProvider(baseURL: URL(string: "\(Self.base)/")!, transport: transport)
-    for locale in [nil, "en", "EN", ""] {
+    for locale in [nil, "en", "EN", "", "en-GB"] {
       let response = try await provider.search(
         "congrats on the launch", options: SemanticSearchOptions(locale: locale))
       XCTAssertEqual(response?.results.first?.emoji, "🚀", locale ?? "nil")
@@ -197,6 +197,9 @@ final class ShardProviderTests: XCTestCase {
     XCTAssertEqual(upper?.results.map(\.emoji), ["🎂"])
     let lower = try await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr"))
     XCTAssertEqual(lower?.results.map(\.emoji), ["🎂"])
+    // Only the language subtag counts, like the API's locale.
+    let tagged = try await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr-TR"))
+    XCTAssertEqual(tagged?.results.map(\.emoji), ["🎂"])
     let requests = await requestedURLs(transport)
     XCTAssertEqual(requests, ["\(Self.base)/tr/index.json", "\(Self.base)/tr/dogum%20.json"])
   }

@@ -89,6 +89,8 @@ describe("shards per locale", () => {
     expect(shardBaseFor("https://x.test/p/1/", undefined)).toBe("https://x.test/p/1");
     expect(shardBaseFor("https://x.test/p/1", "EN")).toBe("https://x.test/p/1");
     expect(shardBaseFor("https://x.test/p/1", "TR")).toBe("https://x.test/p/1/tr");
+    expect(shardBaseFor("https://x.test/p/1", "pt-BR")).toBe("https://x.test/p/1/pt");
+    expect(shardBaseFor("https://x.test/p/1", "en_GB")).toBe("https://x.test/p/1");
   });
 
   it("reads the shards of the search's locale, each directory once", async () => {

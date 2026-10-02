@@ -196,7 +196,7 @@ class ShardProviderTest {
     fun `uses the root files for English and for no locale`() = runBlocking {
         val transport = StubTransport.urls(localeFiles)
         val provider = ShardProvider("$base/", transport)
-        for (locale in listOf(null, "en", "EN", "")) {
+        for (locale in listOf(null, "en", "EN", "", "en-GB")) {
             assertEquals("🚀", provider.search("congrats on the launch", SemanticSearchOptions(locale = locale))?.results?.first()?.emoji, "$locale")
         }
         assertEquals(listOf("$base/index.json", "$base/co.json"), transport.requests)
@@ -210,6 +210,8 @@ class ShardProviderTest {
         assertEquals(SemanticLayer.SHARD, upper?.layer)
         assertEquals(listOf("🎂"), upper?.results?.map { it.emoji })
         assertEquals(listOf("🎂"), provider.search("dogum gunu", SemanticSearchOptions(locale = "tr"))?.results?.map { it.emoji })
+        // Only the language subtag counts, like the API's locale.
+        assertEquals(listOf("🎂"), provider.search("dogum gunu", SemanticSearchOptions(locale = "tr_TR"))?.results?.map { it.emoji })
         assertEquals(listOf("$base/tr/index.json", "$base/tr/dogum%20.json"), transport.requests)
     }
 
