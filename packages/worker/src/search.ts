@@ -14,7 +14,7 @@ export interface SearchBody {
   cached: boolean;
   /** Workers AI was unavailable; results are alias-only. */
   degraded: boolean;
-  /** The key is over its monthly limit; no semantic results until the next period. */
+  /** The key's account is over its monthly plan limit; no semantic results until the next period. */
   overLimit: boolean;
 }
 

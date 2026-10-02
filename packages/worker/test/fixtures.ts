@@ -124,9 +124,24 @@ export const KEYS = {
   secret: "sk_live_secret000000000000000000000000",
   revoked: "pk_live_revoked0000000000000000000000",
   pro: "pk_live_pro00000000000000000000000000",
+  /** A second app of the Pro account: it shares the account's plan limits. */
+  proSibling: "pk_live_prosibling000000000000000000",
 };
 
 export const ALLOWED_ORIGIN = "https://app.example.com";
+
+/** A key row of `owner.appId`, an app of `owner.accountId`, for memory stores. */
+export function apiKey(owner: { appId: string; accountId: string }, overrides: Partial<ApiKey> = {}): ApiKey {
+  return {
+    id: `key_${owner.appId}`,
+    ...owner,
+    kind: "publishable",
+    plan: "free",
+    allowedOrigins: [],
+    revoked: false,
+    ...overrides,
+  };
+}
 
 /** A memory store with one key of each kind, registered by hash like the api_keys table. */
 export async function seededStore() {
@@ -176,6 +191,7 @@ export async function seededStore() {
       allowedOrigins: [],
       revoked: false,
     },
+    [await hashKey(KEYS.proSibling)]: apiKey({ appId: "app_pro_2", accountId: "acc_pro" }, { plan: "pro" }),
   };
   return createMemoryStore(keys);
 }

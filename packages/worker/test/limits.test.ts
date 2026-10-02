@@ -136,3 +136,73 @@ describe("over the plan limit", () => {
     expect(((await (await h.call(keyed("rocket"))).json()) as SearchBody).overLimit).toBe(false);
   });
 });
+
+describe("limits are per account", () => {
+  const PRO = PLANS.pro.limits;
+  let h: ReturnType<typeof harness>;
+  const searchAs = async (key: string, q: string) =>
+    (await (await h.call(search(q, `&key=${key}`))).json()) as SearchBody;
+
+  /** A fresh isolate with this month's usage of the Pro account's two apps. */
+  async function account(
+    usage: { app_pro?: number; app_pro_2?: number },
+    metric: "semantic_calls" | "image_classifications" = "semantic_calls",
+  ) {
+    const store = await seededStore();
+    await store.addUsage(
+      Object.entries(usage).map(([appId, count]) => ({ appId, period: PERIOD, metric, count })),
+    );
+    h = harness({ store, now: () => NOW });
+    return store;
+  }
+
+  it("lets two apps of one account reach the limit together", async () => {
+    const store = await account({ app_pro: PRO.semantic_calls / 2, app_pro_2: PRO.semantic_calls / 2 - 1 });
+    const read = vi.spyOn(store, "readAccountUsage");
+    // One call is left for the account, and the first app takes it.
+    expect((await searchAs(KEYS.pro, "rocket")).overLimit).toBe(false);
+    // Each app alone is far below the limit, but their account is at it.
+    expect((await searchAs(KEYS.proSibling, "volcano")).overLimit).toBe(true);
+    expect((await searchAs(KEYS.pro, "volcano")).overLimit).toBe(true);
+    // One read of the account total for all three checks.
+    expect(read).toHaveBeenCalledTimes(1);
+
+    await h.ctx.settle();
+    await h.app.meter?.flush();
+    // Rows stay per app.
+    expect(store.usageOf("app_pro", PERIOD, "semantic_calls")).toBe(PRO.semantic_calls / 2 + 1);
+    expect(store.usageOf("app_pro_2", PERIOD, "semantic_calls")).toBe(PRO.semantic_calls / 2 - 1);
+  });
+
+  it("applies to image classifications too", async () => {
+    await account({ app_pro: PRO.image_classifications - 1 }, "image_classifications");
+    const classify = async (key: string) =>
+      (await (await h.call(image(jpeg(), {}, `?key=${key}`))).json()) as ClassifyImageBody;
+    expect((await classify(KEYS.proSibling)).overLimit).toBe(false);
+    expect((await classify(KEYS.pro)).overLimit).toBe(true);
+    expect((await classify(KEYS.proSibling)).overLimit).toBe(true);
+  });
+
+  it("leaves other accounts alone", async () => {
+    const store = await account({ app_pro: PRO.semantic_calls });
+    expect((await searchAs(KEYS.proSibling, "rocket")).overLimit).toBe(true);
+    const free = await searchAs(KEYS.wildcard, "lava eruption");
+    expect(free.overLimit).toBe(false);
+    expect(free.results.some((r) => r.source === "semantic")).toBe(true);
+    await h.ctx.settle();
+    await h.app.meter?.flush();
+    expect(store.usageOf("app_free", PERIOD, "semantic_calls")).toBe(1);
+  });
+
+  it("still serves cached answers over the account limit, without counting them", async () => {
+    const store = await account({ app_pro: PRO.semantic_calls });
+    await h.call(search("lava eruption"));
+    await h.ctx.settle();
+    const hit = await searchAs(KEYS.proSibling, "lava eruption");
+    expect(hit).toMatchObject({ cached: true, overLimit: false, degraded: false });
+    expect(hit.results.some((r) => r.source === "semantic")).toBe(true);
+    await h.app.meter?.flush();
+    expect(store.usageOf("app_pro_2", PERIOD, "semantic_calls")).toBe(0);
+    expect(store.usageOf("app_pro", PERIOD, "semantic_calls")).toBe(PRO.semantic_calls);
+  });
+});

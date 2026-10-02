@@ -152,6 +152,6 @@ describe("dev keys", () => {
     await h.ctx.settle();
     await h.app.meter?.flush();
     expect(store.usage.size).toBe(0);
-    expect(await h.app.meter?.count("dev:0", "semantic_calls")).toBe(1);
+    expect(await h.app.meter?.accountCount("dev:0", "semantic_calls")).toBe(1);
   });
 });
