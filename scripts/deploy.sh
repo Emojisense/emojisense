@@ -18,11 +18,13 @@ case "$ENVIRONMENT" in
   dev)
     DOMAIN="emojisense.dev"
     INDEXABLE="false"
+    CLERK_PUBLISHABLE_KEY="pk_test_ZmVhc2libGUtYmxvd2Zpc2gtOTY4MC5jbGVyay5hY2NvdW50cy5kZXYk"
     PUBLISHABLE_KEY="${PUBLIC_PUBLISHABLE_KEY:-pk_demo}"
     ;;
   production)
     DOMAIN="emojisense.com"
     INDEXABLE="true"
+    CLERK_PUBLISHABLE_KEY="pk_live_Y2xlcmsuZW1vamlzZW5zZS5jb20k"
     PUBLISHABLE_KEY="${PUBLIC_PUBLISHABLE_KEY:?run node scripts/create-site-key.mjs production first}"
     ;;
   *)
@@ -59,7 +61,7 @@ pnpm exec wrangler deploy --env "$ENVIRONMENT"
 
 echo "→ Dashboard ($DASHBOARD_URL)"
 cd "$ROOT/apps/dashboard"
-VITE_API_URL="$API_URL" pnpm exec vite build
+VITE_API_URL="$API_URL" VITE_CLERK_PUBLISHABLE_KEY="$CLERK_PUBLISHABLE_KEY" pnpm exec vite build
 [ "$INDEXABLE" = "false" ] && no_index dist/client
 pnpm exec wrangler deploy --env "$ENVIRONMENT"
 

@@ -44,7 +44,7 @@
   },
   "env": {
     // Internal dev environment at app.emojisense.dev (`pnpm deploy:dev`). Same D1 and R2 as the
-    // dev API Worker. Secrets per env: `wrangler secret put GITHUB_CLIENT_SECRET --env dev`.
+    // dev API Worker. Clerk values are public (publishable key, JWT public key); no secret is needed.
     "dev": {
       "routes": [{ "pattern": "app.emojisense.dev", "custom_domain": true }],
       "workers_dev": false,
@@ -64,7 +64,11 @@
       "vars": {
         "ENVIRONMENT": "staging",
         "WEBSITE_ORIGINS": "https://emojisense.dev",
-        "API_URL": "https://api.emojisense.dev"
+        "API_URL": "https://api.emojisense.dev",
+        // Clerk development instance (public values).
+        "CLERK_PUBLISHABLE_KEY": "pk_test_ZmVhc2libGUtYmxvd2Zpc2gtOTY4MC5jbGVyay5hY2NvdW50cy5kZXYk",
+        "CLERK_JWT_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsupJQ5+kY53VsrOu2/E9\ndDlE7Gou5HS+BwHZfOlCSy0RG9WKMIH6+Ajs9Nz4ZRIwgj29gQLzC5KcroSkRE9X\n3c+Wo3doUeKC5W9XkOzAe5Wcl+QVLPxD8ZbUEw1RvOx0T/GUUfgPI6AhlwneWXZ6\n1sX/N1tcGLQEQQK62cbZ2qtN7Mc4YAqihZdPvYfz0tYuKFBtiDwXycRSEutK3X2v\nIx2l6Lo69QTKlQpCNAtqmn6xZQ18iBXifd33osYV6UBRz5d5Sk0EbPZUO5REKlYK\n7vG6eh/sS8j/gtU2Xxmf/uMxImX6seK5xFsWDTAWQ1nEOlsflP8eD6eWlxweC7PI\ngwIDAQAB\n-----END PUBLIC KEY-----",
+        "CLERK_AUTHORIZED_PARTIES": "https://app.emojisense.dev"
       }
     },
     // Production at app.emojisense.com (`pnpm deploy:production`). Same D1 and R2 as the
@@ -88,7 +92,11 @@
       "vars": {
         "ENVIRONMENT": "production",
         "WEBSITE_ORIGINS": "https://emojisense.com,https://www.emojisense.com",
-        "API_URL": "https://api.emojisense.com"
+        "API_URL": "https://api.emojisense.com",
+        // Clerk production instance (public values).
+        "CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuZW1vamlzZW5zZS5jb20k",
+        "CLERK_JWT_KEY": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnRUDxztDHPEnTJkqUJi+\nYDw9R2rBtq3q9LPDf9iP7G8YaM/YPWs26KVZR2gsqwXLTWnVzMnMU91oFguO+Q1J\na944T6T1Zs4U2W2HHTL3JYY1ytQISLIaltZhZSsAWp83bdqGn3XIGdg5pxXXc2sT\ngWIDyGtEjDDJG8CbFbLTlcQq7UfYhqYjw3pvldtDO8SObiL60sCfwIYKgXhTVdGT\nT2k6r/5Cdd8gl8afUw0uSM/UaR6h9mAAg8Jh5UisyLxA5WTFwB6TI0RzLyD8i4bh\n9MHHP+xB1xXlYE2sLrHxf5cT4avZTcUIHdTOLGNjWMOldTCSz03j8jtDbX2HMUZ5\niwIDAQAB\n-----END PUBLIC KEY-----",
+        "CLERK_AUTHORIZED_PARTIES": "https://app.emojisense.com"
       }
     }
   }
