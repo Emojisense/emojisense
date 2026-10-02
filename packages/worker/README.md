@@ -58,7 +58,7 @@ pnpm --filter @emojisense/worker dev:offline            # http://localhost:8788,
   Worker reads the query locale's file on first use. When
   `packages/data/dist/shards/<packVersion>/` exists for the same model, it is copied to `public/p/`.
 - `sync` also writes `contentHash` to `src/generated/config.json`: a hash of every locale pack,
-  the vectors, the model and the built core engine. The search cache key holds it, so run `sync`
+  the vector files' model, dims and emoji (not their bytes), the model and the built core engine. The search cache key holds it, so run `sync`
   after a data or engine change, even under the same pack version (else the edge cache answers
   with the old results for up to a week).
 - Local D1 state is in the repo-root `.wrangler/state` (`--persist-to`), so a local dashboard

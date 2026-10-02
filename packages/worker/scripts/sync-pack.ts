@@ -94,17 +94,23 @@ const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ex
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
 const queryTemplate = formatQuery(model, "{q}");
-// What a cached search answer depends on besides the request: every locale pack and locale vector
-// file the Worker can load, the shared vectors, the model and the built core engine
+// What a cached search answer depends on besides the request: every locale pack the Worker can
+// load, which vector files it has (model, dims, emoji), the model and the built core engine
 // (normalization, alias search, fusion). The search cache key holds it, so a data hotfix or a
 // ranking change under the same pack version is not answered from the edge cache for a week.
+// Vector bytes are left out: they follow the packs' documents, and a dist embedded from another
+// cache (or a stale one) would change the key, and empty the edge cache, on every deploy.
 const coreDist = dirname(fileURLToPath(import.meta.resolve("emojisense")));
+const vectorIdentity = (name: string, vectors: { model: string; dims: number; ids: string[] }) => ({
+  name,
+  bytes: new TextEncoder().encode(`${vectors.model}@${vectors.dims}\n${vectors.ids.join(" ")}`),
+});
 const hash = await contentHash([
   ...PACK_FILES.map((file) => ({ name: file, bytes: readFileSync(join(source, file)) })),
-  { name: "vectors.bin", bytes: vectorBytes },
+  vectorIdentity("vectors.bin", index),
   ...vectorLocales.map((code) => {
     const file = vectorFileName(model.key, dims, code);
-    return { name: file, bytes: readFileSync(join(source, file)) };
+    return vectorIdentity(file, decodeVectors(readFileSync(join(source, file))));
   }),
   { name: "model", bytes: new TextEncoder().encode(`${model.id}@${dims}\n${queryTemplate}`) },
   ...readdirSync(coreDist)

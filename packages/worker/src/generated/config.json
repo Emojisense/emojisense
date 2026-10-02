@@ -5,5 +5,5 @@
   "dims": 1024,
   "queryTemplate": "{q}",
   "vectorLocales": ["zh", "hi", "es", "ar", "fr", "bn", "pt", "ru", "id", "tr"],
-  "contentHash": "c6cab2caf2e06865"
+  "contentHash": "0c699da36eb22ce0"
 }
