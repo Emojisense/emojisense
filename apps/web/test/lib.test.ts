@@ -40,11 +40,16 @@ describe("planViews", () => {
     expect(views.find((v) => v.id === "solo")?.yearly).toEqual({ price: "$48", savings: "$12", raw: 48 });
   });
 
-  it("sends free to the dashboard and paid plans to the waitlist", () => {
+  it("sends free to the dashboard and paid plans to its Billing page with the plan picked", () => {
     expect(views[0]?.cta.href).toBe("https://dashboard.test/");
     expect(views.find((v) => v.id === "pro")?.cta).toEqual({
-      label: "Join the Pro waitlist",
-      href: "/waitlist/?plan=pro",
+      label: "Get Pro",
+      href: "https://dashboard.test/billing?plan=pro&interval=month",
+    });
+    expect(views.find((v) => v.id === "solo")?.cta).toEqual({
+      label: "Get Solo",
+      href: "https://dashboard.test/billing?plan=solo&interval=month",
+      yearlyHref: "https://dashboard.test/billing?plan=solo&interval=year",
     });
   });
 

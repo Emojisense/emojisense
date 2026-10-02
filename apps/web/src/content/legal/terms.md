@@ -42,10 +42,18 @@ Their licenses continue to apply to that material.
 
 ## Plans, limits and fair use
 
-- The Free plan costs nothing. The paid plans (Solo, Pro and Scale) are not on sale yet, and we
-  have no payment provider. Asking for a paid plan in the dashboard only puts you on the waitlist.
-  Before we charge you anything, we will publish the prices and the payment terms, and you must
-  agree to them.
+- The Free plan costs nothing. The paid plans (Solo, Pro and Scale) have the prices on the
+  [pricing page](/pricing/). Solo is also sold yearly; the other plans bill monthly.
+- **Payment.** Whop is our payment provider. You pay on Whop's checkout, and Whop's terms apply to
+  the payment. A subscription renews at the start of each period until you cancel it. Prices are
+  in US dollars; [taxes: to be confirmed in legal review].
+- **Cancellation.** Cancel at any time in the dashboard (Billing → Manage subscription, on Whop).
+  The plan stays until the end of the period that you paid for; then the account moves to Free.
+  A change to another paid plan starts a new subscription, and the old one stops renewing. We do
+  not prorate.
+- **Failed payments.** If a renewal payment fails, the plan stays for 7 days while Whop tries
+  again. If no payment goes through, the account moves to Free.
+- **Refunds.** [Refund policy: to be decided before launch.]
 - Each plan has monthly limits, counted per calendar month in UTC. The
   [pricing page](/pricing/) shows them. Searches that are answered on the device or from static
   files are not counted.

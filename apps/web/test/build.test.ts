@@ -101,9 +101,12 @@ describe("emitted files", () => {
     },
   );
 
-  it("lists every page in the sitemap", () => {
+  it("lists every page in the sitemap, except the old waitlist page", () => {
     const sitemap = readFileSync(file("/sitemap.xml"), "utf8");
-    for (const path of PAGES) expect(sitemap).toContain(`<loc>${SITE}${path}</loc>`);
+    for (const path of PAGES.filter((p) => p !== "/waitlist/")) {
+      expect(sitemap).toContain(`<loc>${SITE}${path}</loc>`);
+    }
+    expect(sitemap).not.toContain("/waitlist/");
     expect(readFileSync(file("/robots.txt"), "utf8")).toContain(`Sitemap: ${SITE}/sitemap.xml`);
   });
 });
@@ -258,14 +261,23 @@ describe("pricing page", () => {
     }
   });
 
-  it.each(PLAN_IDS)("sends the %s card to the dashboard or the waitlist", (id) => {
+  it.each(PLAN_IDS)("sends the %s card to the dashboard, a paid plan to its Billing page", (id) => {
     const href = doc().querySelector(`[data-plan="${id}"] a.btn`)?.getAttribute("href");
-    expect(href).toBe(PLANS[id].priceUsdMonthly === 0 ? `${DASHBOARD}/` : `/waitlist/?plan=${id}`);
+    expect(href).toBe(
+      PLANS[id].priceUsdMonthly === 0 ? `${DASHBOARD}/` : `${DASHBOARD}/billing?plan=${id}&interval=month`,
+    );
   });
 
-  it("sends Pro to the waitlist", () => {
-    const link = doc().querySelector('[data-plan="pro"] a.btn');
-    expect(link?.getAttribute("href")).toBe("/waitlist/?plan=pro");
+  it("has a yearly checkout link for Solo, shown by the yearly switch", () => {
+    const yearly = doc().querySelector('[data-plan="solo"] a.cta-yearly');
+    expect(yearly?.getAttribute("href")).toBe(`${DASHBOARD}/billing?plan=solo&interval=year`);
+    expect(doc().querySelector('[data-plan="pro"] a.cta-yearly')).toBeNull();
+  });
+
+  it("no longer links paid plans to the waitlist", () => {
+    const links = Array.from(doc().querySelectorAll("a"), (a) => a.getAttribute("href") ?? "");
+    expect(links.filter((href) => href.includes("waitlist"))).toEqual([]);
+    expect(doc().body.textContent).not.toMatch(/not on sale|join the waitlist/i);
   });
 
   it("explains the over-limit fallback", () => {
@@ -543,14 +555,16 @@ describe("legal pages", () => {
     expect(privacy).toContain(`On Free and Solo we keep them for ${keep("free")}`);
     expect(privacy).toContain("DELETE /api/me");
     expect(privacy).toContain("Workers invocation logs) are turned off");
-    expect(privacy).toContain("We have no payment provider yet");
+    expect(privacy).toContain("Whop is our payment provider");
+    expect(privacy).toContain("We never receive or store your card details");
     expect(privacy).not.toContain("[Usage retention period]");
     const terms = (page("/legal/terms/").body.textContent ?? "").replace(/\s+/g, " ");
     expect(terms).toContain("DELETE /api/me");
-    expect(terms).toContain("we have no payment provider");
+    expect(terms).toContain("Whop is our payment provider");
+    expect(terms).toContain("Refund policy");
     const subprocessors = page("/legal/subprocessors/").body.textContent ?? "";
-    for (const name of ["Cloudflare, Inc.", "Clerk, Inc.", "Payments"]) expect(subprocessors).toContain(name);
-    expect(subprocessors).toContain("not on sale");
+    for (const name of ["Cloudflare, Inc.", "Clerk, Inc.", "Whop"]) expect(subprocessors).toContain(name);
+    expect(subprocessors).not.toContain("not on sale");
   });
 
   it("lists every legal page in the sitemap and on the legal index", () => {

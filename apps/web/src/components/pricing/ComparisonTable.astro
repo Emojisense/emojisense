@@ -77,15 +77,7 @@ const plans = planViews(DASHBOARD_URL);
               return (
                 <td class:list={{ featured }}>
                   <a class:list={["btn", "cmp-cta", featured ? "btn-primary" : "btn-secondary"]} href={plan.cta.href}>
-                    {plan.monthlyUsd === 0 ? (
-                      plan.cta.label
-                    ) : (
-                      <>
-                        <span>
-                          Join<span class="visually-hidden"> the {plan.name}</span> waitlist
-                        </span>
-                      </>
-                    )}
+                    {plan.cta.label}
                   </a>
                 </td>
               );

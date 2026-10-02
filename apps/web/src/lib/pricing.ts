@@ -42,7 +42,8 @@ export interface PlanView {
   highlights: PlanFeature[];
   /** Name of the plan this one builds on ("Everything in Solo, plus"). */
   inherits?: string;
-  cta: { label: string; href: string };
+  /** `yearlyHref`: the same plan billed yearly, where the plan is sold that way. */
+  cta: { label: string; href: string; yearlyHref?: string };
 }
 
 export interface ComparisonCell {
@@ -301,10 +302,19 @@ export function comparisonOf(plans: Record<PlanId, Plan> = PLANS): ComparisonGro
   }));
 }
 
-/** Free uses the dashboard; paid plans are not on sale yet, so they lead to the waitlist. */
+/** The dashboard's Billing page with the plan picked: sign-in first, then Whop's checkout. */
+export function checkoutHref(dashboardUrl: string, plan: PlanId, interval: "month" | "year"): string {
+  return `${dashboardUrl}/billing?${new URLSearchParams({ plan, interval })}`;
+}
+
+/** Free starts in the dashboard; a paid plan opens Billing in the dashboard with that plan. */
 function ctaFor(plan: Plan, dashboardUrl: string): PlanView["cta"] {
   if (plan.priceUsdMonthly === 0) return { label: "Get a free key", href: `${dashboardUrl}/` };
-  return { label: `Join the ${plan.name} waitlist`, href: `/waitlist/?plan=${plan.id}` };
+  return {
+    label: `Get ${plan.name}`,
+    href: checkoutHref(dashboardUrl, plan.id, "month"),
+    ...(plan.priceUsdYearly === undefined ? {} : { yearlyHref: checkoutHref(dashboardUrl, plan.id, "year") }),
+  };
 }
 
 export function planViews(dashboardUrl: string, plans: Record<PlanId, Plan> = PLANS): PlanView[] {
