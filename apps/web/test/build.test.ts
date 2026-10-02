@@ -68,9 +68,32 @@ function file(path: string): string {
   return join(outDir, relative);
 }
 
-function page(path: string): Document {
+/** Only the document head (with the html element): light enough to parse for every language. */
+function head(path: string): Document {
+  const html = readFileSync(file(path), "utf8");
+  const end = html.indexOf("</head>") + "</head>".length;
   const parser = new window.DOMParser();
-  return parser.parseFromString(readFileSync(file(path), "utf8"), "text/html") as unknown as Document;
+  return parser.parseFromString(
+    `${html.slice(0, end)}<body></body></html>`,
+    "text/html",
+  ) as unknown as Document;
+}
+
+/**
+ * Each page is parsed once. The window keeps every document it parses (about 20 MB for a landing
+ * page), and the tests that walk every page in eleven languages would otherwise parse each one
+ * several times and run out of memory. The tests only read the documents.
+ */
+const parsedPages = new Map<string, Document>();
+
+function page(path: string): Document {
+  let doc = parsedPages.get(path);
+  if (!doc) {
+    const parser = new window.DOMParser();
+    doc = parser.parseFromString(readFileSync(file(path), "utf8"), "text/html") as unknown as Document;
+    parsedPages.set(path, doc);
+  }
+  return doc;
 }
 
 beforeAll(() => {
@@ -331,11 +354,11 @@ describe("languages", () => {
   it.each(everyVersion)("builds /%s%s with its own language, title and canonical URL", (locale, path) => {
     const url = localized(path, locale);
     expect(existsSync(file(url)), url).toBe(true);
-    const doc = page(url);
+    const doc = head(url);
     expect(doc.documentElement.getAttribute("lang")).toBe(LOCALE_INFO[locale].tag);
     expect(doc.documentElement.getAttribute("dir")).toBe(locale === "ar" ? "rtl" : "ltr");
-    expect(doc.querySelectorAll("h1")).toHaveLength(1);
-    expect(doc.title).not.toBe(page(path).title);
+    expect(readFileSync(file(url), "utf8").match(/<h1[\s>]/g)).toHaveLength(1);
+    expect(doc.title).not.toBe(head(path).title);
     expect(doc.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(`${SITE}${url}`);
     expect(doc.querySelector('meta[property="og:locale"]')?.getAttribute("content")).toBe(
       LOCALE_INFO[locale].og,
@@ -348,7 +371,7 @@ describe("languages", () => {
       ["x-default", `${SITE}${path}`],
     ].sort();
     for (const locale of LOCALES) {
-      const doc = page(localized(path, locale));
+      const doc = head(localized(path, locale));
       const alternates = Array.from(doc.querySelectorAll('link[rel="alternate"][hreflang]'), (link) => [
         link.getAttribute("hreflang"),
         link.getAttribute("href"),
@@ -359,13 +382,13 @@ describe("languages", () => {
 
   it("gives English-only pages no language alternates", () => {
     for (const path of ["/docs/", "/playground/", "/changelog/", "/legal/privacy/"]) {
-      expect(page(path).querySelectorAll('link[rel="alternate"][hreflang]'), path).toHaveLength(0);
+      expect(head(path).querySelectorAll('link[rel="alternate"][hreflang]'), path).toHaveLength(0);
     }
   });
 
   it("writes Arabic right to left", () => {
     for (const path of TRANSLATED) {
-      expect(page(localized(path, "ar")).documentElement.getAttribute("dir")).toBe("rtl");
+      expect(head(localized(path, "ar")).documentElement.getAttribute("dir")).toBe("rtl");
     }
   });
 
