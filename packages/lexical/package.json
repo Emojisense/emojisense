@@ -1,0 +1,45 @@
+{
+  "name": "@emojisense/lexical",
+  "version": "0.0.0",
+  "description": "Lexical React plugin: `:` emoji autocomplete ranked by Emojisense.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./styles.css"
+  },
+  "files": [
+    "dist",
+    "styles.css"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
+  },
+  "peerDependencies": {
+    "@lexical/react": ">=0.30.0",
+    "lexical": ">=0.30.0",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "devDependencies": {
+    "@lexical/react": "0.51.0",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "happy-dom": "20.14.5",
+    "lexical": "0.51.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}

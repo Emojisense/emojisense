@@ -1,0 +1,44 @@
+{
+  "name": "@emojisense/tiptap",
+  "version": "0.0.0",
+  "description": "Tiptap extension: `:` emoji autocomplete ranked by Emojisense.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./styles.css"
+  },
+  "files": [
+    "dist",
+    "styles.css"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
+  },
+  "peerDependencies": {
+    "@tiptap/core": "^3.28.0",
+    "@tiptap/pm": "^3.28.0",
+    "@tiptap/suggestion": "^3.28.0"
+  },
+  "devDependencies": {
+    "@floating-ui/dom": "1.8.0",
+    "@tiptap/core": "3.31.3",
+    "@tiptap/extension-document": "3.31.3",
+    "@tiptap/extension-paragraph": "3.31.3",
+    "@tiptap/extension-text": "3.31.3",
+    "@tiptap/pm": "3.31.3",
+    "@tiptap/suggestion": "3.31.3",
+    "happy-dom": "20.14.5"
+  }
+}
