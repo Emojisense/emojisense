@@ -208,17 +208,17 @@ function StatusLine(props: {
     : health.kind === "checking"
       ? { state: "wait", text: "Connecting to the edge…" }
       : health.kind === "down"
-        ? { state: "down", text: "Edge API unreachable · on device still works" }
+        ? { state: "down", text: "Edge unreachable · device still works" }
         : health.health.semantic
           ? { state: "up", text: `Edge online · ${health.health.model}` }
-          : { state: "warn", text: "Edge online · dictionary only, no Workers AI" };
+          : { state: "warn", text: "Edge online · dictionary only" };
   const device =
     ready === "failed"
       ? { state: "down", text: "Dictionary did not load" }
       : ready === "all"
         ? { state: "up", text: `${languages ?? 11} languages on device` }
         : ready === "english"
-          ? { state: "wait", text: "English ready · other languages load when needed" }
+          ? { state: "wait", text: "English ready · others load on use" }
           : { state: "wait", text: "Loading dictionary…" };
   return (
     <div className="pg-status" aria-live="polite">
