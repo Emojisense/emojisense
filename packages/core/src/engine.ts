@@ -93,7 +93,9 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   const locales = [...new Set(packs.map((p) => p.locale))];
   // Core and extension packs of one locale count as one locale for the preference factor.
   const preferredMasks = new Map<string, number>();
-  packs.forEach((p, i) => preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i)));
+  packs.forEach((p, i) => {
+    preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
+  });
 
   const entries: EmojiEntry[] = [];
   const indexById = new Map<string, number>();
