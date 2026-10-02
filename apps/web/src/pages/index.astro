@@ -219,7 +219,7 @@ const faqs = [
 
   <section class="final" aria-labelledby="final-title">
     <div class="container final-inner">
-      <p class="final-emoji emoji" aria-hidden="true">🦖</p>
+      <p class="final-emoji emoji" aria-hidden="true" data-play-in-view>🦖</p>
       <h2 id="final-title">Emoji, solved. Everywhere.</h2>
       <p>Give your users emoji that just work — in every language, on every device. Free to start, ready in minutes.</p>
       <div class="hero-ctas">
@@ -228,6 +228,21 @@ const faqs = [
       </div>
     </div>
   </section>
+
+  <script>
+    // WCAG 2.2.2: short decorative motion waits until it is on screen, so it can stop within five seconds.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.setAttribute("data-playing", "");
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.5 },
+    );
+    for (const element of document.querySelectorAll("[data-play-in-view]")) observer.observe(element);
+  </script>
 </Base>
 
 <style>
@@ -555,7 +570,11 @@ const faqs = [
 
   .final-emoji {
     font-size: 4.5rem;
-    animation: bob 5s ease-in-out infinite;
+  }
+
+  /* WCAG 2.2.2: one 5 s bob once the emoji is on screen, then it stands still. */
+  .final-emoji[data-playing] {
+    animation: bob 5s ease-in-out;
   }
 
   .final h2 {

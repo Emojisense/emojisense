@@ -127,7 +127,7 @@ const topSearches = [
       <article class="cell span-2">
         <h3>Photo to emoji <span class="tag">Beta</span></h3>
         <p>A puppy gets 🐶 and 🥹. Photos are never stored.</p>
-        <div class="photo" aria-hidden="true">
+        <div class="photo" aria-hidden="true" data-play-in-view>
           <span class="frame"><span class="emoji">🐶</span></span>
           <span class="scan"></span>
           <span class="out emoji">🐶 🥹 🐾</span>
@@ -576,8 +576,12 @@ const topSearches = [
     width: 3.5rem;
     height: 0.125rem;
     background: var(--ink);
-    opacity: 0.5;
-    animation: scan 2.4s var(--ease-out) infinite;
+    opacity: 0;
+  }
+
+  /* WCAG 2.2.2: two passes once the card is on screen (4.8 s), then the line rests out of sight. */
+  .photo[data-playing] .scan {
+    animation: scan 2.4s var(--ease-out) 2;
   }
 
   .out {
