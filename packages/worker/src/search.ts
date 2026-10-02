@@ -17,6 +17,11 @@ export interface SearchBody {
   degraded: boolean;
   /** The key's account is over its monthly plan limit; no semantic results until the next period. */
   overLimit: boolean;
+  /**
+   * The locale whose aliases were fused into the results. null: no alias search ran (semantic
+   * mode), or the locale's pack could not be loaded and the results are semantic-only.
+   */
+  aliasLocale: string | null;
 }
 
 function parseParams(url: URL) {
@@ -114,6 +119,7 @@ export const handleSearch: Handler = async (
       cached: false,
       degraded: false,
       overLimit: true,
+      aliasLocale: ranked?.aliasLocale ?? null,
     };
     metering.recordSearch(params.query, body.results.length);
     return json(body, 200, {
@@ -134,9 +140,12 @@ export const handleSearch: Handler = async (
     cached: false,
     degraded: ranked.degraded,
     overLimit: false,
+    aliasLocale: ranked.aliasLocale,
   };
-  if (ranked.semantic) {
-    metering.count("semantic_calls");
+  // Without the locale's aliases (its pack did not load) the answer must not stay cached a week.
+  const cacheable = !ranked.degraded && !ranked.aliasUnavailable;
+  if (ranked.semantic) metering.count("semantic_calls");
+  if (ranked.semantic && cacheable) {
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }
@@ -147,8 +156,8 @@ export const handleSearch: Handler = async (
     semanticTop: ranked.semanticTop,
   });
   return json(answer, 200, {
-    // Degraded answers are not cached, so the client gets semantic results once AI is back.
-    "Cache-Control": ranked.degraded ? "no-store" : browserCache,
+    // Degraded answers are not cached, so the client gets the full answer once AI is back.
+    "Cache-Control": cacheable ? browserCache : "no-store",
     "Server-Timing": `embed;dur=${ranked.embedMs}, total;dur=${Date.now() - started}`,
   });
 };

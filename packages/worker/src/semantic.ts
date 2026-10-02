@@ -10,11 +10,17 @@ import {
 } from "emojisense";
 import type { Env, GeneratedConfig } from "./env.ts";
 
-/** The data one Worker build serves: alias engine, emoji vectors and the model that made them. */
+/** The data one Worker build serves: alias engines, emoji vectors and the model that made them. */
 export interface Catalog {
   config: GeneratedConfig;
   model: EmbeddingModel;
+  /** The bundled alias engine (en + tr). It also turns semantic hits into emoji. */
   engine(): AliasEngine;
+  /**
+   * The alias engine for a pack locale: the bundled one, or one built from the locale's pack on
+   * first use (locale-engines.ts). Undefined when that pack cannot be loaded now.
+   */
+  aliasEngine(locale: string, env: Env): Promise<AliasEngine | undefined>;
   index(): VectorIndex;
 }
 
@@ -83,16 +89,24 @@ export interface Ranked {
   embedMs: number;
   aliasConfidence?: number | undefined;
   semanticTop?: number | undefined;
+  /** The locale whose aliases ranked the results; null when no alias search ran. */
+  aliasLocale: string | null;
+  /** Aliases were asked for, but the locale's pack could not be loaded: never cache the answer. */
+  aliasUnavailable: boolean;
 }
 
-/** Alias and/or semantic ranking, fused when both ran. Workers AI failures degrade, never throw. */
+/**
+ * Alias and/or semantic ranking, fused when both ran. Workers AI failures degrade, never throw.
+ * When the locale's pack cannot be loaded, ranking is semantic-only (bge-m3 is multilingual).
+ */
 export async function rank(env: Env, catalog: Catalog, options: RankOptions): Promise<Ranked> {
   const { aliasQuery, embedText, locale, limit } = options;
   const engine = catalog.engine();
-  const alias: AliasSearchOutput | undefined =
-    aliasQuery === undefined
-      ? undefined
-      : engine.search(aliasQuery, { locale, limit, prefix: options.prefix ?? true });
+  let alias: AliasSearchOutput | undefined;
+  if (aliasQuery !== undefined) {
+    const aliasEngine = await catalog.aliasEngine(locale, env);
+    alias = aliasEngine?.search(aliasQuery, { locale, limit, prefix: options.prefix ?? true });
+  }
 
   let semantic: SearchResult[] | undefined;
   let degraded = false;
@@ -120,5 +134,7 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     embedMs,
     aliasConfidence: alias?.confidence,
     semanticTop: semantic?.[0]?.score,
+    aliasLocale: alias ? locale : null,
+    aliasUnavailable: aliasQuery !== undefined && !alias,
   };
 }

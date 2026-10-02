@@ -43,11 +43,14 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
 
   const overLimit = await metering.overLimit("semantic_calls");
   const embedded = overLimit ? { degraded: false, ms: 0 } : await embedQuery(env, catalog, text);
-  const ranked = rankReactions(catalog.engine(), {
+  const aliasEngine = await catalog.aliasEngine(locale, env);
+  const ranked = rankReactions(aliasEngine ?? catalog.engine(), {
     text,
     locale,
     limit,
     semantic: embedded.vector ? { index: catalog.index(), vector: embedded.vector } : undefined,
+    // The locale's pack did not load: English aliases would misread the message, so none count.
+    ...(aliasEngine ? {} : { weights: { alias: 0 } }),
   });
   if (embedded.vector) metering.count("semantic_calls");
   record(env, indexTag(catalog), {
@@ -71,6 +74,7 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
     cached: false,
     degraded: embedded.degraded,
     overLimit,
+    aliasLocale: aliasEngine ? locale : null,
   };
   return json(body, 200, {
     "Cache-Control": "no-store",

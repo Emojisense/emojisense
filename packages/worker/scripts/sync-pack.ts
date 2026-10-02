@@ -11,6 +11,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
 import { decodeVectors, encodeVectors } from "emojisense";
@@ -50,6 +51,10 @@ const generated = join(workerRoot, "src", "generated");
 mkdirSync(generated, { recursive: true });
 // Every locale pack the data step produced (core + ext); the Worker bundles only BUNDLED_LOCALES.
 const PACK_FILES = readdirSync(source).filter((f) => /^pack\.[a-z]{2}(\.ext)?\.json$/.test(f));
+// The API accepts every locale of @emojisense/data/locales and reads the core packs it does not
+// bundle from these static assets (src/locale-engines.ts), so each one must be published.
+const unpublished = LOCALE_CODES.filter((code) => !PACK_FILES.includes(`pack.${code}.json`));
+if (unpublished.length > 0) throw new Error(`no core pack for ${unpublished.join(", ")} in ${source}`);
 // The Worker bundles English and Turkish for server-side hybrid search; all locales are static assets.
 const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));

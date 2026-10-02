@@ -1,8 +1,41 @@
 import { LOCALE_CODES } from "@emojisense/data/locales";
-import { describe, expect, it } from "vitest";
+import { createEngine, type Pack } from "emojisense";
+import { describe, expect, it, vi } from "vitest";
+import type { Env } from "../src/env.ts";
 import { parseLocale } from "../src/http.ts";
+import { assetPackReader, createLocaleEngines, type PackReader } from "../src/locale-engines.ts";
 import type { SearchBody } from "../src/search.ts";
-import { harness, image, jpeg, reactions, search } from "./fixtures.ts";
+// Rows of 17 emoji copied verbatim from the core packs of pack version 0.1.0 (`pnpm data:build`):
+// the answers below, the fixture vectors' emoji, and what English-only aliases rank first.
+import fixturePacks from "./fixtures/locale-packs.json";
+import { catalog, harness, image, jpeg, reactions, search } from "./fixtures.ts";
+
+const packs = fixturePacks as unknown as Record<string, Pack>;
+
+/** Reads fixture packs like the ASSETS binding reads published ones; 404 for other locales. */
+const readFixturePack: PackReader = async (file) => {
+  const pack = packs[/^pack\.(\w+)\.json$/.exec(file)?.[1] ?? ""];
+  if (!pack) throw new Error(`${file}: HTTP 404`);
+  return pack;
+};
+
+/** The fixture app with real alias data: English bundled, es/hi/ar loaded on first use. */
+function localeHarness(options: { read?: PackReader; maxEngines?: number } = {}) {
+  const read = vi.fn(options.read ?? readFixturePack);
+  const bundled = createEngine(packs.en as Pack);
+  const engines = createLocaleEngines({
+    bundled: () => bundled,
+    base: () => [packs.en as Pack],
+    read,
+    maxEngines: options.maxEngines ?? 2,
+  });
+  const h = harness({
+    catalog: { ...catalog, engine: () => bundled, aliasEngine: (locale, env) => engines.get(locale, env) },
+  });
+  const searchBody = async (q: string, query = "") =>
+    (await (await h.call(search(q, query))).json()) as SearchBody;
+  return { ...h, read, engines, searchBody };
+}
 
 describe("parseLocale", () => {
   it("accepts every pack locale", () => {
@@ -58,14 +91,159 @@ describe("locale parameter on the API", () => {
 
   it("keys the shared cache and the analytics by the parsed locale", async () => {
     const h = harness();
-    await h.call(search("lava eruption", "&locale=es-MX"));
+    await h.call(search("lava eruption", "&locale=es-MX&mode=semantic"));
     await h.ctx.settle();
     expect(h.cache.puts).toHaveLength(1);
     expect(new URL(h.cache.puts[0] as string).searchParams.get("locale")).toBe("es");
-    const spanish = (await (await h.call(search("lava eruption", "&locale=es"))).json()) as SearchBody;
+    const spanish = (await (
+      await h.call(search("lava eruption", "&locale=es&mode=semantic"))
+    ).json()) as SearchBody;
     expect(spanish.cached).toBe(true);
-    const english = (await (await h.call(search("lava eruption", "&locale=en"))).json()) as SearchBody;
+    const english = (await (
+      await h.call(search("lava eruption", "&locale=en&mode=semantic"))
+    ).json()) as SearchBody;
     expect(english.cached).toBe(false);
     expect(h.events.mock.calls.map(([point]) => point.blobs[1])).toEqual(["es", "es", "en"]);
+  });
+});
+
+describe("aliases of every pack locale", () => {
+  const top = (body: SearchBody) => ({
+    emoji: body.results[0]?.emoji,
+    source: body.results[0]?.source,
+    aliasLocale: body.aliasLocale,
+  });
+
+  it("ranks with the locale's own aliases", async () => {
+    const h = localeHarness();
+    expect(top(await h.searchBody("feliz cumpleaños", "&locale=es"))).toEqual({
+      emoji: "🎂",
+      source: "alias",
+      aliasLocale: "es",
+    });
+    expect(top(await h.searchBody("बधाई हो", "&locale=hi"))).toEqual({
+      emoji: "㊗️",
+      source: "alias",
+      aliasLocale: "hi",
+    });
+    expect(top(await h.searchBody("مبروك", "&locale=ar"))).toEqual({
+      emoji: "㊗️",
+      source: "alias",
+      aliasLocale: "ar",
+    });
+    const cake = (await h.searchBody("feliz cumpleaños", "&locale=es")).results.slice(0, 2);
+    expect(cake.map((r) => r.emoji)).toEqual(["🎂", "🥳"]);
+  });
+
+  it("gets the same queries wrong with English aliases alone (the old behaviour)", async () => {
+    const h = localeHarness();
+    const aliasHits = async (q: string) =>
+      (await h.searchBody(q, "&locale=en")).results.filter((r) => r.source === "alias").map((r) => r.emoji);
+    // "arabia felix" (Yemen) is the nearest English alias of "feliz".
+    expect(await aliasHits("feliz cumpleaños")).toEqual(["🇾🇪"]);
+    expect(await aliasHits("बधाई हो")).toEqual([]);
+    expect(await aliasHits("مبروك")).toEqual([]);
+  });
+
+  it("loads a pack once per isolate and shares the load between concurrent requests", async () => {
+    const h = localeHarness();
+    await Promise.all([1, 2, 3].map((n) => h.call(search(`feliz cumpleaños ${n}`, "&locale=es"))));
+    await h.searchBody("feliz", "&locale=es");
+    expect(h.read).toHaveBeenCalledTimes(1);
+    expect(h.read).toHaveBeenCalledWith("pack.es.json", h.env);
+    // Bundled locales and semantic-only searches never read a pack.
+    await h.searchBody("rocket", "&locale=en");
+    await h.searchBody("नमस्ते", "&locale=hi&mode=semantic");
+    expect(h.read).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps at most two locale engines per isolate, dropping the least recently used", async () => {
+    const h = localeHarness();
+    // A new query each time: a cache hit does not rank, so it does not touch the engines.
+    for (const [n, locale] of ["es", "hi", "es", "ar"].entries()) {
+      await h.searchBody(`mubarak ${n}`, `&locale=${locale}`);
+    }
+    expect(h.engines.resident).toEqual(["es", "ar"]);
+    expect(h.read).toHaveBeenCalledTimes(3);
+    await h.searchBody("बधाई हो", "&locale=hi");
+    expect(h.engines.resident).toEqual(["ar", "hi"]);
+    expect(h.read).toHaveBeenCalledTimes(4);
+  });
+
+  it("ranks semantic-only when the pack cannot be loaded, never caches that, and retries", async () => {
+    let available = false;
+    const h = localeHarness({
+      read: async (file, env) => {
+        if (!available) throw new Error(`${file}: HTTP 404`);
+        return readFixturePack(file, env);
+      },
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await h.call(search("feliz cumpleaños", "&locale=es"));
+    await h.ctx.settle();
+    const body = (await res.json()) as SearchBody;
+    expect(body.aliasLocale).toBeNull();
+    expect(body.degraded).toBe(false);
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results.every((r) => r.source === "semantic")).toBe(true);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(h.cache.puts).toHaveLength(0);
+    expect(JSON.parse(warn.mock.calls[0]?.[0] as string)).toMatchObject({
+      event: "locale_pack_unavailable",
+      locale: "es",
+    });
+    warn.mockRestore();
+
+    available = true;
+    const retried = await h.call(search("feliz cumpleaños", "&locale=es"));
+    await h.ctx.settle();
+    expect(top((await retried.json()) as SearchBody)).toMatchObject({ emoji: "🎂", aliasLocale: "es" });
+    expect(h.cache.puts).toHaveLength(1);
+    expect(h.read).toHaveBeenCalledTimes(2);
+  });
+
+  it("suggests reactions with the locale's aliases, and without aliases when its pack is missing", async () => {
+    const message = { text: "बधाई हो", locale: "hi" };
+    const h = localeHarness();
+    const reacted = (await (await h.call(reactions(message))).json()) as SearchBody;
+    expect(reacted.aliasLocale).toBe("hi");
+    // The fake embedding puts 🌋 and 🚀 first; the Hindi aliases add the congratulation emoji.
+    const aliasHits = reacted.results.filter((r) => r.source === "alias").map((r) => r.emoji);
+    expect(aliasHits).toEqual(["㊗️", "🎉", "👏"]);
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const missing = localeHarness({ read: async (file) => Promise.reject(new Error(`${file}: HTTP 404`)) });
+    const fallback = (await (await missing.call(reactions(message))).json()) as SearchBody;
+    warn.mockRestore();
+    expect(fallback.aliasLocale).toBeNull();
+    expect(fallback.results.filter((r) => r.source === "alias")).toEqual([]);
+  });
+});
+
+describe("assetPackReader", () => {
+  const assets = (respond: (url: string) => Response) => {
+    const fetch = vi.fn(async (url: string) => respond(url));
+    return { env: { ASSETS: { fetch } } satisfies Env, fetch };
+  };
+
+  it("reads the published pack of the Worker's pack version through the ASSETS binding", async () => {
+    const { env, fetch } = assets(() => Response.json(packs.es));
+    const pack = await assetPackReader("0.1.0")("pack.es.json", env);
+    expect(pack.locale).toBe("es");
+    expect(new URL(fetch.mock.calls[0]?.[0] as string).pathname).toBe("/v1/pack/0.1.0/pack.es.json");
+  });
+
+  it("refuses a missing file, another pack version, a non-pack and a missing binding", async () => {
+    const read = assetPackReader("0.1.0");
+    await expect(read("pack.es.json", assets(() => new Response("", { status: 404 })).env)).rejects.toThrow(
+      "HTTP 404",
+    );
+    await expect(
+      read("pack.es.json", assets(() => Response.json({ ...packs.es, packVersion: "0.0.9" })).env),
+    ).rejects.toThrow("is pack 0.0.9");
+    await expect(read("pack.es.json", assets(() => Response.json({ hello: 1 })).env)).rejects.toThrow(
+      "not an emojisense pack",
+    );
+    await expect(read("pack.es.json", {})).rejects.toThrow("ASSETS binding missing");
   });
 });
