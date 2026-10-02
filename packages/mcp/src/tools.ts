@@ -56,7 +56,8 @@ export async function searchEmoji(
   // Same rule as the client SDK: only unsure or conceptual queries reach the (metered) API.
   const semantic =
     api && shouldUseSemantic(alias) ? await api.search(input.query, { locale, limit }) : undefined;
-  const results = toSuggestions(engine, semantic ? fuse(alias, semantic, limit) : alias.results, locale);
+  const fused = semantic && fuse(alias, semantic, limit, undefined, { popularity: engine.popularity });
+  const results = toSuggestions(engine, fused || alias.results, locale);
   const text = results.length > 0 ? results.map(describe).join("\n") : `No emoji found for "${input.query}".`;
   return { text, structured: { query: alias.query, locale, semantic: Boolean(semantic), results } };
 }

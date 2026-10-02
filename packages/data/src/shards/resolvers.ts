@@ -1,4 +1,4 @@
-import { l2normalize, searchVectors, type VectorIndex } from "emojisense";
+import { l2normalize, searchVectors, type VectorIndex } from "emojisense/vectors";
 import type { ShardResolver, ShardResult } from "./types.ts";
 
 /** Returns query vectors in input order; `undefined` where none is available (offline cache miss). */
@@ -11,16 +11,18 @@ export interface VectorResolverOptions {
   tag: string;
   /** The emoji vector file of the same model and dims. */
   index: VectorIndex;
+  /** The score bonus of one query (`semanticBonus` in semantic-score.ts), as the Worker adds it. */
+  bonus?: (query: Float32Array) => (id: string) => number;
   emojiOf(hexcode: string): string | undefined;
   embedder: QueryEmbedder;
 }
 
 /**
  * The Worker's `mode=semantic` path, run in batch: embed, truncate to the index dims,
- * re-normalize, brute-force top-k, round scores to three decimals.
+ * re-normalize, brute-force top-k with the score bonus, round scores to three decimals.
  */
 export function createVectorResolver(options: VectorResolverOptions): ShardResolver {
-  const { index, embedder, emojiOf } = options;
+  const { index, embedder, emojiOf, bonus } = options;
   return {
     model: options.tag,
     async resolve(queries, limit) {
@@ -29,7 +31,8 @@ export function createVectorResolver(options: VectorResolverOptions): ShardResol
       queries.forEach((q, i) => {
         const vector = vectors[i];
         if (!vector || vector.length < index.dims) return;
-        const matches = searchVectors(index, l2normalize(vector.slice(0, index.dims)), limit);
+        const query = l2normalize(vector.slice(0, index.dims));
+        const matches = searchVectors(index, query, limit, bonus ? { bonus: bonus(query) } : {});
         out.set(
           q,
           matches.map((m): ShardResult => [emojiOf(m.id) ?? "", m.id, Math.round(m.score * 1000) / 1000]),

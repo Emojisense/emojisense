@@ -8,7 +8,8 @@ import {
   type ShardResult,
 } from "@emojisense/data/shards";
 import { dayOf, SHARD_MIN_ACCOUNTS, SHARD_MIN_SEARCHES, SHARD_WINDOW_DAYS } from "@emojisense/platform";
-import { embeddingText, type VectorIndex } from "emojisense";
+import { embeddingText } from "emojisense";
+import type { VectorIndex } from "emojisense/vectors";
 import {
   SEARCH_DEFAULT_LIMIT,
   SHARD_MAX_EMBEDDINGS,
@@ -135,7 +136,8 @@ function apiResolver(
         );
         const engine = catalog.engine();
         chosen.forEach((q, i) => {
-          const results = semanticResults(engine, indexes, vectors[i] as Float32Array, limit);
+          const vector = vectors[i] as Float32Array;
+          const results = semanticResults(engine, indexes, vector, limit, catalog.glyph?.());
           out.set(
             q,
             results.map((r): ShardResult => [r.emoji, r.id, r.score]),

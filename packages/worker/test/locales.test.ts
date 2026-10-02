@@ -8,7 +8,7 @@ import type { SearchBody } from "../src/search.ts";
 // Rows of 17 emoji copied verbatim from the core packs of pack version 0.1.0 (`pnpm data:build`):
 // the answers below, the fixture vectors' emoji, and what English-only aliases rank first.
 import fixturePacks from "./fixtures/locale-packs.json";
-import { catalog, harness, image, jpeg, KEYED, keyedSearch, reactions } from "./fixtures.ts";
+import { catalog, harness, image, jpeg, KEYED, keyedSearch, ROW, reactions } from "./fixtures.ts";
 
 const packs = fixturePacks as unknown as Record<string, Pack>;
 
@@ -47,6 +47,7 @@ function localeHarness(options: { read?: PackReader; maxEngines?: number } = {})
   });
   const h = harness({
     catalog: { ...catalog, engine: () => bundled, aliasEngine: (locale, env) => engines.get(locale, env) },
+    embedTo: ROW.neutral,
   });
   const searchBody = async (q: string, query = "") =>
     (await (await h.call(keyedSearch(q, query))).json()) as SearchBody;
