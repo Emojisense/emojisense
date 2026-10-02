@@ -6,6 +6,7 @@
   "scripts": {
     "eval": "tsx src/run.ts",
     "eval:ci": "tsx src/run.ts --offline --ci",
+    "cost": "tsx src/cost-cli.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "mine": "tsx src/mine.ts"
