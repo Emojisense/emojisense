@@ -7,6 +7,7 @@ import {
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { type AliasEngine, applySkinTone, type SemanticProvider, type SkinTone } from "emojisense";
 import {
+  $addUpdateTag,
   $getSelection,
   $isRangeSelection,
   COMMAND_PRIORITY_CRITICAL,
@@ -169,6 +170,9 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
 
   const onSelectOption = useCallback((option: EmojiOption, query: TextNode | null, closeMenu: () => void) => {
     // Runs inside the typeahead's editor.update(); `query` holds exactly ":query".
+    // The caret stays where the user typed, so the commit must not scroll the page to it.
+    // The literal tag, not SKIP_SCROLL_INTO_VIEW_TAG: older supported Lexical versions lack it.
+    $addUpdateTag("skip-scroll-into-view");
     const { emoji } = option.suggestion;
     if (query) {
       query.setTextContent(emoji);

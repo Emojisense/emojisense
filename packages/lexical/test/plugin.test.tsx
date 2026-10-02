@@ -20,9 +20,13 @@ import {
   type LexicalEditor,
 } from "lexical";
 import { createRef } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojiAutocompletePlugin, type EmojiAutocompletePluginProps } from "../src/index.js";
 import { engine, stubSemantic } from "./fixture.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 type EditorProps = Partial<EmojiAutocompletePluginProps> & {
   editorRef: React.RefObject<LexicalEditor | null>;
@@ -112,6 +116,38 @@ const tableCells = (editor: LexicalEditor) =>
     .read(() =>
       childTexts($getRoot().getFirstChildOrThrow<TableNode>().getFirstChildOrThrow<TableRowNode>()),
     );
+const ROW = 40;
+
+/**
+ * happy-dom has no layout. Give the menu's scrolling list room for `rows` options of 40 px,
+ * 100 px below the viewport top, drawn at `scale` (a CSS transform scales the rects only).
+ */
+function stubMenuLayout(rows: number, scale = 1) {
+  const isList = (element: Element) => element.classList.contains("emojisense-menu");
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return isList(this) ? rows * ROW : 0;
+  });
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return isList(this) ? rows * ROW : 0;
+  });
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    if (isList(this)) return new DOMRect(0, 100, 200, rows * ROW * scale);
+    const list = this.parentElement;
+    if (this.getAttribute("role") !== "option" || !list) return new DOMRect();
+    const top = [...list.children].indexOf(this) * ROW - list.scrollTop;
+    return new DOMRect(0, 100 + top * scale, 200, ROW * scale);
+  });
+}
+
+/** Everything that would move the page or the host's containers instead of the menu. */
+function spyOnPageScroll() {
+  return [
+    vi.spyOn(Element.prototype, "scrollIntoView"),
+    vi.spyOn(window, "scrollTo"),
+    vi.spyOn(window, "scrollBy"),
+  ];
+}
+
 const options = () => [...document.querySelectorAll<HTMLElement>("[role=option]")];
 const shown = () => options().map((option) => option.querySelector(".emojisense-menu__emoji")?.textContent);
 const selected = () => options().find((option) => option.getAttribute("aria-selected") === "true");
@@ -160,6 +196,37 @@ describe("EmojiAutocompletePlugin (Lexical)", () => {
     const second = shown()[1];
     expect(await press(root, "Tab")).toBe(true);
     expect(text(editor)).toBe(second);
+  });
+
+  it.each([1, 0.5])("scrolls only the menu to the active option (scale %s)", async (scale) => {
+    stubMenuLayout(1, scale);
+    const pageScroll = spyOnPageScroll();
+    const { editor, root } = setup();
+    await type(editor, ":jurassic");
+    const list = document.querySelector(".emojisense-menu") as HTMLElement;
+    const last = options().length - 1;
+    expect(last).toBeGreaterThan(0);
+    expect(list.scrollTop).toBe(0);
+
+    await press(root, "ArrowDown");
+    expect(list.scrollTop).toBe(ROW);
+    await press(root, "ArrowUp");
+    expect(list.scrollTop).toBe(0);
+    await press(root, "ArrowUp");
+    expect(list.scrollTop).toBe(last * ROW);
+    for (const spy of pageScroll) expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("inserts without asking Lexical to scroll the caret into view", async () => {
+    const { editor, root } = setup();
+    await type(editor, ":jurassic");
+    const updates: Set<string>[] = [];
+    editor.registerUpdateListener(({ tags }) => {
+      updates.push(tags);
+    });
+    await press(root, "Enter");
+    expect(text(editor)).toBe("🦖");
+    expect(updates[0]?.has("skip-scroll-into-view")).toBe(true);
   });
 
   it("Escape closes the menu, keeps the typed text and stays closed for that word", async () => {

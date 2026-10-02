@@ -73,6 +73,10 @@ Without React hooks for the data: `engine={createEngine(await loadPacks({ baseUr
 Semantic results (when `semantic` is set and the alias engine is unsure) arrive after
 `debounceMs` and are fused in. Confident alias hits keep their place, so the list does not jump.
 
+The menu never scrolls the page. The default menu scrolls only its own list to keep the active
+option visible. An insert does not scroll the caret into view (it is tagged
+`skip-scroll-into-view`).
+
 While the menu is open, it gets Enter, Tab, ↑ / ↓ and Escape first: its handlers use
 `COMMAND_PRIORITY_CRITICAL`. Lexical's typeahead default (`COMMAND_PRIORITY_LOW`) lets other
 plugins take these keys first, for example `TablePlugin` (Tab moves to the next cell) and code
@@ -100,6 +104,9 @@ focus from the editor.
 Each `EmojiOption` has `suggestion: { emoji, id, label, source }`, with the skin tone applied. Give
 option rows the ids `typeahead-item-<index>` so the editor's `aria-activedescendant` resolves.
 `EmojiMenu` (the default) is exported for reuse.
+
+If your rows set `ref={option.setRefElement}`, Lexical calls `scrollIntoView` on the active row,
+which can also scroll the page. The default menu does not set it and scrolls its own list.
 
 `registerShortcodeTransform(editor, resolve)` is exported too, for `:name:` completion without
 the menu.
