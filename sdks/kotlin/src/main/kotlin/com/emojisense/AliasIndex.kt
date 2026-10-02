@@ -93,18 +93,17 @@ internal class AliasIndex(packs: List<Pack>) {
         entries = sources.mapIndexed { index, (pack, row) -> entryOf(pack, row, labels[index]) }
 
         phraseText = phrases.text.toTypedArray()
-        phraseEmoji = phrases.emoji.toIntArray()
-        phraseField = ByteArray(phrases.field.size) { phrases.field[it].toByte() }
-        phraseLocaleMask = phrases.localeMask.toIntArray()
-        phraseFieldWeight = phrases.fieldWeight.toDoubleArray()
+        phraseEmoji = phrases.emoji.toArray()
+        phraseField = phrases.field.toArray().let { fields -> ByteArray(fields.size) { fields[it].toByte() } }
+        phraseLocaleMask = phrases.localeMask.toArray()
+        phraseFieldWeight = phrases.fieldWeight.copyOf(phraseText.size)
 
-        // Sorted vocabulary; token ids become positions in it.
+        // Sorted vocabulary (String order = UTF-16 code units, as JavaScript sorts); token ids
+        // become positions in it.
         val firstSeen = phrases.tokens
-        val order = firstSeen.indices.sortedWith { a, b -> firstSeen[a].compareTo(firstSeen[b]) }
-        vocabulary = Array(order.size) { firstSeen[order[it]] }
-        val sortedId = IntArray(order.size)
-        order.forEachIndexed { position, provisional -> sortedId[provisional] = position }
+        vocabulary = firstSeen.toTypedArray().also { it.sort() }
         tokenIds = HashMap<String, Int>(vocabulary.size * 2).also { map -> vocabulary.forEachIndexed { id, token -> map[token] = id } }
+        val sortedId = IntArray(firstSeen.size) { tokenIds.getValue(firstSeen[it]) }
 
         val start = IntArray(vocabulary.size + 1)
         for (k in 0 until phrases.tokenCount) start[sortedId[phrases.phraseTokenIds[k]] + 1]++
@@ -178,20 +177,19 @@ internal class AliasIndex(packs: List<Pack>) {
 /** Pass 1 of the index build: phrases deduplicated per emoji (the strongest field, the first pack wins). */
 private class PhraseCollector(emojiCount: Int) {
     val text = ArrayList<String>()
-    val emoji = ArrayList<Int>()
-    val field = ArrayList<Int>()
-    val localeMask = ArrayList<Int>()
-    val fieldWeight = ArrayList<Double>()
+    val emoji = IntList()
+    val field = IntList()
+    val localeMask = IntList()
+    var fieldWeight = DoubleArray(1024)
+        private set
 
     /** Tokens in first-seen order; a token's provisional id is its position. */
     val tokens = ArrayList<String>()
 
     /** Provisional token ids of phrase p: `phraseTokenIds[phraseTokenEnd[p - 1] until phraseTokenEnd[p]]`. */
-    var phraseTokenIds = IntArray(1024)
-        private set
-    val phraseTokenEnd = ArrayList<Int>()
-    var tokenCount = 0
-        private set
+    val phraseTokenIds = IntList()
+    val phraseTokenEnd = IntList()
+    val tokenCount: Int get() = phraseTokenIds.size
     private val tokenIds = HashMap<String, Int>()
     private val seenByEmoji = arrayOfNulls<HashMap<String, Int>>(emojiCount)
 
@@ -202,22 +200,44 @@ private class PhraseCollector(emojiCount: Int) {
             localeMask[existing] = localeMask[existing] or packBit
             return
         }
-        seen[phrase] = text.size
+        val phraseIndex = text.size
+        seen[phrase] = phraseIndex
         text.add(phrase)
         emoji.add(emojiIndex)
         this.field.add(field.ordinal)
         localeMask.add(packBit)
-        fieldWeight.add(weight)
+        if (phraseIndex == fieldWeight.size) fieldWeight = fieldWeight.copyOf(phraseIndex * 2)
+        fieldWeight[phraseIndex] = weight
         if (phrase.indexOf(' ') < 0) addToken(phrase) else Normalizer.tokenize(phrase).forEach(::addToken)
-        phraseTokenEnd.add(tokenCount)
+        phraseTokenEnd.add(phraseTokenIds.size)
     }
 
     private fun addToken(token: String) {
-        val id = tokenIds.getOrPut(token) {
-            tokens.add(token)
-            tokens.size - 1
-        }
-        if (tokenCount == phraseTokenIds.size) phraseTokenIds = phraseTokenIds.copyOf(tokenCount * 2)
-        phraseTokenIds[tokenCount++] = id
+        phraseTokenIds.add(
+            tokenIds.getOrPut(token) {
+                tokens.add(token)
+                tokens.size - 1
+            },
+        )
     }
+}
+
+/** A growable list of ints without boxing. */
+private class IntList {
+    private var values = IntArray(1024)
+    var size = 0
+        private set
+
+    operator fun get(index: Int): Int = values[index]
+
+    operator fun set(index: Int, value: Int) {
+        values[index] = value
+    }
+
+    fun add(value: Int) {
+        if (size == values.size) values = values.copyOf(size * 2)
+        values[size++] = value
+    }
+
+    fun toArray(): IntArray = values.copyOf(size)
 }
