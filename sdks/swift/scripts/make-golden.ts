@@ -25,7 +25,7 @@ const REPO_ROOT = args.root ? resolve(args.root) : THIS_REPO;
 const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
-const { createEngine, embeddingText, fuse, normalize } = core;
+const { assessConfidence, createEngine, embeddingText, fuse, mergeConcept, normalize, semanticStrength } = core;
 const { FUNCTION_WORDS }: typeof import("../../../packages/core/src/function-words.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/function-words.ts")).href
 );
@@ -52,15 +52,56 @@ const queries = readQueries("queries.jsonl");
 /** Sentences with function words in the other pack locales, searched with en + that locale. */
 const sentences = readQueries("sentences-dev.jsonl");
 const sentenceLocales = [...new Set(sentences.map((q) => q.locale))];
+/** Names, titles and brands in every pack locale: the partial-match rules of PACK_FORMAT.md §4. */
+const entities = readQueries("entities-dev.jsonl");
+const entityLocales = [...new Set(entities.map((q) => q.locale))];
+const ALL_LOCALES = ["en", "es", "zh", "hi", "ar", "fr", "bn", "pt", "ru", "id", "tr"];
 /** Index order of PACK_FORMAT.md §2: every core part first (English first), then the ext parts. */
-const filesFor = (locale: string) => [
-  "pack.en.json",
-  `pack.${locale}.json`,
-  "pack.en.ext.json",
-  `pack.${locale}.ext.json`,
+const filesFor = (locale: string) =>
+  locale === "en"
+    ? ["pack.en.json", "pack.en.ext.json"]
+    : ["pack.en.json", `pack.${locale}.json`, "pack.en.ext.json", `pack.${locale}.ext.json`];
+/** Every pack locale in one engine, as the website's demo loads them. */
+const allFiles = [
+  ...ALL_LOCALES.map((l) => `pack.${l}.json`),
+  ...ALL_LOCALES.map((l) => `pack.${l}.ext.json`),
 ];
+/**
+ * Queries for the engine with every locale: prefix completions into other locales' words, short
+ * typos and one-word matches of unknown names (PACK_FORMAT.md §4, "Partial matches").
+ */
+const GUARD_QUERIES: Query[] = [
+  ["kendrick lamar", "en"],
+  ["lamar", "en"],
+  ["lamar", "id"],
+  ["lamara", "en"],
+  ["lamara", "id"],
+  ["messi", "en"],
+  ["taylor swift", "en"],
+  ["elon musk", "en"],
+  ["feliz cumpl", "en"],
+  ["feliz cumpl", "es"],
+  ["feliz cumpleaños", "en"],
+  ["lam", "en"],
+  ["gat", "en"],
+  ["gat", "es"],
+  ["rockt", "en"],
+  ["cofee", "en"],
+  ["kedu", "tr"],
+  ["kedu", "en"],
+  ["naruto ra", "en"],
+  ["harry potter", "en"],
+  ["i'm exhausted", "en"],
+  ["kolay gelsin", "tr"],
+  ["生日快乐", "zh"],
+  ["joyeux anniv", "fr"],
+  ["selamat ulang", "id"],
+  ["с днем рожд", "ru"],
+  ["bad bunny", "en"],
+  ["drake", "en"],
+].map(([q, locale], i) => ({ id: `guard-${i + 1}`, q: q as string, locale: locale as string }));
 
-const packFiles = [...new Set(["tr", ...sentenceLocales].flatMap(filesFor))];
+const packFiles = [...new Set(["tr", ...sentenceLocales, ...entityLocales].flatMap(filesFor).concat(allFiles))];
 const packBytes = new Map(packFiles.map((file) => [file, readFileSync(join(packDir, file))]));
 const pack = (file: string): Pack => JSON.parse((packBytes.get(file) as Buffer).toString("utf8"));
 
@@ -213,6 +254,7 @@ function searchCases(engine: AliasEngine, list: Query[] = queries) {
       locale: q.locale,
       query: out.query,
       confidence: out.confidence,
+      coverage: out.coverage,
       top: out.results.map((r): Ranked => [r.id, r.score]),
       match: best?.match ?? null,
       field: best?.field ?? null,
@@ -306,6 +348,73 @@ const localeEngines = sentenceLocales.map((locale) => {
   };
 });
 
+const entityEngines = entityLocales.map((locale) => {
+  const files = filesFor(locale);
+  return { locale, files, engine: createEngine(files.map(pack)), list: entities.filter((q) => q.locale === locale) };
+});
+const allEngine = createEngine(allFiles.map(pack));
+
+// ── Confidence ────────────────────────────────────────────────────────────────────────────────
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * `assessConfidence`, `semanticStrength` and `mergeConcept` on generated inputs: an alias output
+ * (tokens, confidence, coverage, results) and a semantic list with concept results in it.
+ */
+function confidenceCases() {
+  const next = random(20261002);
+  const ids = ["1F600", "1F525", "1F680", "1F3A4", "1F3B5", "1F451", "1F98E", "2B50", "1F30B", "1F436"];
+  return Array.from({ length: 80 }, (_, n) => {
+    const tokens = n % 11 === 0 ? [] : n % 3 === 0 ? ["a", "b"] : ["a"];
+    const confidence = round3(next());
+    const coverage = n % 4 === 0 ? 1 : round3(next());
+    const aliasIds = ids.filter(() => next() < 0.3);
+    const alias = {
+      query: tokens.join(" "),
+      tokens,
+      confidence,
+      coverage,
+      results: aliasIds.map((id, i) => ({
+        emoji: id,
+        id,
+        score: round3(Math.max(0, confidence - i * 0.05)),
+        source: "alias" as const,
+        label: id,
+        match: "a",
+        field: "alias" as const,
+      })),
+    };
+    const top = round3(0.3 + next() * 0.4);
+    const semanticIds = ids.filter(() => next() < 0.6);
+    const semantic = [
+      ...(n % 5 === 0 ? [{ emoji: "1F3A4", id: "1F3A4", score: 0.9, source: "concept" as const }] : []),
+      ...semanticIds.map((id, i) => ({
+        emoji: id,
+        id,
+        score: round3(top - i * next() * 0.03),
+        source: "semantic" as const,
+      })),
+    ];
+    const concept = ids
+      .filter(() => next() < 0.25)
+      .map((id, i) => ({ emoji: id, id, score: round3(0.9 - i * 0.1), source: "concept" as const }));
+    const fused = [...alias.results, ...semantic.filter((r) => r.source === "semantic")];
+    const withAlias = n % 7 !== 0;
+    const verdict = assessConfidence(withAlias ? alias : undefined, n % 9 === 0 ? undefined : semantic);
+    return {
+      alias: withAlias ? { tokens, confidence, coverage, results: alias.results.map((r) => [r.id, r.score]) } : null,
+      semantic: n % 9 === 0 ? null : semantic.map((r) => [r.id, r.score, r.source]),
+      concept: concept.map((r) => [r.id, r.score]),
+      fused: fused.map((r) => [r.id, r.score, r.source]),
+      limit: 4 + (n % 5),
+      strength: semanticStrength(semantic),
+      confidence: verdict.confidence,
+      unsure: verdict.unsure,
+      merged: mergeConcept(fused, concept, withAlias ? alias : undefined, 4 + (n % 5)).map((r) => r.id),
+    };
+  });
+}
+
 const golden = {
   generatedBy: "sdks/swift/scripts/make-golden.ts",
   node: process.versions.node,
@@ -328,6 +437,12 @@ const golden = {
       packs: files,
       cases: searchCases(engine, list),
     })),
+    ...entityEngines.map(({ locale, files, engine, list }) => ({
+      name: `${locale} entities`,
+      packs: files,
+      cases: searchCases(engine, list),
+    })),
+    { name: "all locales", packs: allFiles, cases: searchCases(allEngine, GUARD_QUERIES) },
   ],
   keystrokes: { packs: fullFiles, cases: keystrokeCases(fullEngine) },
   /** `fuse` with (reranked) and without (reciprocal) the reranker; PACK_FORMAT.md §10. */
@@ -340,15 +455,29 @@ const golden = {
     packs: files,
     cases: keystrokeCases(engine, list),
   })),
+  /** Per entity locale, and the guard queries with every locale: keystroke by keystroke. */
+  entityKeystrokes: [
+    ...entityEngines.map(({ files, engine, list }) => ({ packs: files, cases: keystrokeCases(engine, list) })),
+    { packs: allFiles, cases: keystrokeCases(allEngine, GUARD_QUERIES.filter((_, i) => i % 2 === 0)) },
+  ],
+  /**
+   * The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
+   * `alias` / `semantic` null = not given. Results are `[id, score]` (alias, concept) or
+   * `[id, score, source]` (semantic list, fused list). `strength` is unrounded.
+   */
+  confidence: confidenceCases(),
 };
 const keystrokeCount =
-  golden.keystrokes.cases.length + golden.sentenceKeystrokes.reduce((sum, k) => sum + k.cases.length, 0);
+  golden.keystrokes.cases.length +
+  [...golden.sentenceKeystrokes, ...golden.entityKeystrokes].reduce((sum, k) => sum + k.cases.length, 0);
 
 writeFileSync(OUTPUT, `${JSON.stringify(golden)}\n`);
 // Keep the file in the repository's canonical format so `pnpm lint` stays green.
 execFileSync(join(THIS_REPO, "node_modules/.bin/biome"), ["format", "--write", OUTPUT], { stdio: "ignore" });
 console.log(
   `make-golden: ${queries.length} queries × 2 configs, ${sentences.length} sentences in ` +
-    `${sentenceLocales.length} locales, ${keystrokeCount} keystrokes, ` +
+    `${sentenceLocales.length} locales, ${entities.length} entities in ${entityLocales.length} locales, ` +
+    `${GUARD_QUERIES.length} guard queries with every locale, ${golden.confidence.length} confidence cases, ` +
+    `${keystrokeCount} keystrokes, ` +
     `${NORMALIZATION_INPUTS.length} normalization cases, ${golden.normalization.sweep.hashes.length} sweep blocks → ${OUTPUT}`,
 );
