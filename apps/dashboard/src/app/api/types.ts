@@ -22,7 +22,10 @@ export {
 } from "@emojisense/platform";
 export type {
   AcceptInviteResponse,
+  AnalyticsCountry,
   AnalyticsDay,
+  AnalyticsFilters,
+  AnalyticsLocale,
   AnalyticsResponse,
   BillingResponse,
   CreatedInviteResponse,

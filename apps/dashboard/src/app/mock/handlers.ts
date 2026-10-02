@@ -502,7 +502,13 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
       const blocked = gate(appPlan(db, params[0]), "analytics");
       if (blocked) return blocked;
       const days = Number(url.searchParams.get("days") ?? 30);
-      return ok(analyticsFor(params[0] ?? "", days, PLANS[appPlan(db, params[0])].analyticsRetentionDays));
+      const filters = {
+        country: url.searchParams.get("country")?.toUpperCase() || null,
+        locale: url.searchParams.get("locale")?.toLowerCase() || null,
+      };
+      return ok(
+        analyticsFor(params[0] ?? "", days, PLANS[appPlan(db, params[0])].analyticsRetentionDays, filters),
+      );
     },
   ],
 

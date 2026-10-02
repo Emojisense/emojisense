@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AnalyticsResponse } from "../../src/shared/contract";
-import { TOP_QUERIES } from "../../src/worker/routes/analytics";
+import { TOP_BREAKDOWN, TOP_QUERIES } from "../../src/worker/routes/analytics";
 import { body, createAppFor, createHarness, NOW } from "./harness";
 
 /** 2026-10-15, the harness clock's UTC day. */
@@ -22,9 +22,28 @@ async function setup(plan = "pro") {
       searches,
       misses,
     );
+  /** A row with a locale and a country, as the API Worker writes them since migration 0004. */
+  const insertFrom = (
+    where: { locale: string; country: string },
+    day: string,
+    query: string,
+    searches: number,
+    misses = 0,
+    app = appId,
+  ) =>
+    h.db.exec(
+      "INSERT INTO query_daily (app_id, day, query, locale, country, searches, misses) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      app,
+      day,
+      query,
+      where.locale,
+      where.country,
+      searches,
+      misses,
+    );
   const analytics = (query = "", as = cookie) =>
     h.call("GET", `/api/apps/${appId}/analytics${query}`, { cookie: as });
-  return { h, cookie, appId, insert, analytics };
+  return { h, cookie, appId, insert, insertFrom, analytics };
 }
 
 describe("GET /api/apps/:id/analytics", () => {
@@ -106,6 +125,85 @@ describe("GET /api/apps/:id/analytics", () => {
     const report = await body<AnalyticsResponse>(await analytics("?days=7"));
     expect(report.days.at(-1)).toEqual({ day: TODAY, searches: 0, misses: 0 });
     expect(report.topQueries).toEqual([]);
+  });
+
+  it("breaks searches down by country and language, unknown ones included", async () => {
+    const { insert, insertFrom, analytics } = await setup();
+    insertFrom({ locale: "pt", country: "BR" }, TODAY, "futebol", 6, 1);
+    insertFrom({ locale: "en", country: "BR" }, TODAY, "football", 2);
+    insertFrom({ locale: "en", country: "GB" }, daysAgo(1), "football", 5);
+    insertFrom({ locale: "en", country: "XX" }, daysAgo(1), "football", 1);
+    insert(daysAgo(2), "ship it", 3); // from before migration 0004
+
+    const report = await body<AnalyticsResponse>(await analytics("?days=7"));
+    expect(report.countries).toEqual([
+      { country: "BR", searches: 8, misses: 1 },
+      { country: "GB", searches: 5, misses: 0 },
+      { country: "XX", searches: 4, misses: 0 },
+    ]);
+    expect(report.locales).toEqual([
+      { locale: "en", searches: 8, misses: 0 },
+      { locale: "pt", searches: 6, misses: 1 },
+      { locale: "und", searches: 3, misses: 0 },
+    ]);
+    expect(report.filters).toEqual({ country: null, locale: null });
+  });
+
+  it("filters days, top lists and the other breakdown by country and language", async () => {
+    const { insertFrom, analytics } = await setup();
+    insertFrom({ locale: "pt", country: "BR" }, TODAY, "futebol", 6, 1);
+    insertFrom({ locale: "en", country: "BR" }, TODAY, "football", 5);
+    insertFrom({ locale: "en", country: "GB" }, TODAY, "football", 7, 2);
+
+    const brazil = await body<AnalyticsResponse>(await analytics("?days=7&country=br"));
+    expect(brazil.filters).toEqual({ country: "BR", locale: null });
+    expect(brazil.days.at(-1)).toEqual({ day: TODAY, searches: 11, misses: 1 });
+    expect(brazil.topQueries).toEqual([
+      { query: "futebol", searches: 6 },
+      { query: "football", searches: 5 },
+    ]);
+    expect(brazil.topMisses).toEqual([{ query: "futebol", misses: 1 }]);
+    // The country list ignores the country filter; the language list follows it.
+    expect(brazil.countries.map((row) => row.country)).toEqual(["BR", "GB"]);
+    expect(brazil.locales).toEqual([
+      { locale: "pt", searches: 6, misses: 1 },
+      { locale: "en", searches: 5, misses: 0 },
+    ]);
+
+    const english = await body<AnalyticsResponse>(await analytics("?days=7&locale=EN&country=GB"));
+    expect(english.filters).toEqual({ country: "GB", locale: "en" });
+    expect(english.days.at(-1)).toEqual({ day: TODAY, searches: 7, misses: 2 });
+    expect(english.countries).toEqual([
+      { country: "GB", searches: 7, misses: 2 },
+      { country: "BR", searches: 5, misses: 0 },
+    ]);
+    // A query must reach 5 searches within the filter to be named.
+    const rare = await body<AnalyticsResponse>(await analytics("?days=7&country=BR&locale=en"));
+    expect(rare.topQueries).toEqual([{ query: "football", searches: 5 }]);
+  });
+
+  it(`lists at most ${TOP_BREAKDOWN} countries, most searches first`, async () => {
+    const { insertFrom, analytics } = await setup();
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (let i = 0; i < TOP_BREAKDOWN + 3; i++) {
+      const country = `${letters[Math.floor(i / 26)]}${letters[i % 26]}`;
+      insertFrom({ locale: "en", country }, TODAY, "hello", i + 1);
+    }
+    const report = await body<AnalyticsResponse>(await analytics("?days=7"));
+    expect(report.countries).toHaveLength(TOP_BREAKDOWN);
+    expect(report.countries[0]?.searches).toBe(TOP_BREAKDOWN + 3);
+  });
+
+  it.each([
+    ["?country=BRA", "country"],
+    ["?country=1", "country"],
+    ["?locale=portuguese", "locale"],
+    ["?locale=p", "locale"],
+  ])("rejects %s", async (query, field) => {
+    const { analytics } = await setup();
+    const response = await analytics(query);
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { code: "invalid_request", field } });
   });
 
   it.each(["free", "solo"])("answers 402 plan_required with the lowest plan on %s", async (plan) => {
