@@ -17,6 +17,10 @@ struct Golden: Decodable, Sendable {
     let sweep: Sweep
   }
 
+  struct EmbeddingText: Decodable, Sendable {
+    let cases: [[String]]
+  }
+
   struct Ranked: Decodable, Equatable, Sendable, CustomStringConvertible {
     let id: String
     let score: Double
@@ -69,6 +73,7 @@ struct Golden: Decodable, Sendable {
   let packVersion: String
   let packSha256: [String: String]
   let normalization: Normalization
+  let embeddingText: EmbeddingText
   let search: [SearchConfig]
   let keystrokes: Keystrokes
 

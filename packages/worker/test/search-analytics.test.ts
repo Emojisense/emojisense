@@ -22,7 +22,7 @@ const keyed = (q: string, extra = "") => search(q, `&key=${KEYS.wildcard}${extra
 describe("search analytics", () => {
   it("counts each keyed search under its app, day and normalized query, cache hits included", async () => {
     const { store, h, flush } = await setup();
-    await h.call(keyed("Lava  eruption!"));
+    await h.call(keyed("Lava  ERUPTION"));
     await h.ctx.settle();
     const hit = (await (await h.call(keyed("lava eruption"))).json()) as SearchBody;
     expect(hit.cached).toBe(true);

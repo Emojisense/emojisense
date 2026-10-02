@@ -44,7 +44,8 @@ Files never change after publication. A change produces a new pack version. Serv
 - Clients SHOULD verify `sha256` (lowercase hex of the raw file bytes) before they cache a file.
 - `coreAliases` is informational: how many aliases per emoji each locale's core part keeps (§2).
 - `queryTemplate` is the exact string to embed for a query. `{q}` is replaced by the
-  normalized query (§3). Only needed by clients that embed queries themselves.
+  query's embedding text (§3, "Embedding text"). Only needed by clients that embed queries
+  themselves.
 - A vector file with a `locale` key holds that locale's document vectors (§5).
 
 ## 2. pack.<locale>.json
@@ -150,6 +151,13 @@ Examples: `"İYİ Kİ DOĞDUN"` → `"iyi ki dogdun"`, `"¡Feliz cumpleaños!"` 
 `":rocket:"` → `"rocket"`, `"+1"` → `"+1"`, `"🚀 launch 👍🏽"` → `"launch"`.
 
 Tokens are the result split on single spaces.
+
+**Embedding text.** The semantic tier embeds a lighter form of the query, because the embedding
+model reads accents and punctuation (folding them cost about 3 points of semantic recall@5):
+Unicode NFKC, lowercase, NFKC again, each run of `\p{Cc}`, `\p{Z}` or U+FEFF to one space, trim,
+then truncate to 64 UTF-16 code units without splitting a surrogate pair. Accents, punctuation
+and emoji stay: `"  Doğum GÜNÜ!! "` → `"doğum günü!!"`. Its normalized form (steps 1–12) is the
+normalized query. Reference: `embeddingText` in `packages/core/src/normalize.ts`.
 
 ## 4. Tier 0 search (reference algorithm)
 

@@ -39,6 +39,21 @@ final class ConformanceTests: XCTestCase {
     XCTAssertEqual(differences, [])
   }
 
+  func testEmbeddingTextMatchesTheReferenceCases() throws {
+    let cases = try Self.golden.get().embeddingText.cases
+    var differences: [String] = []
+    for pair in cases {
+      let (input, expected) = (pair[0], pair[1])
+      let actual = Normalizer.embeddingText(input)
+      if actual != expected {
+        differences.append("  \(debug(input)): swift \(debug(actual)), ts \(debug(expected))")
+      }
+    }
+    report(
+      "embedding text cases", agreed: cases.count - differences.count, of: cases.count, differences)
+    XCTAssertEqual(differences, [])
+  }
+
   /// Normalizes every code point of planes 0–3 and 14 on its own and compares a hash per block
   /// of 1,024 code points with the reference.
   func testNormalizationMatchesTheReferenceOnEveryCodePoint() throws {

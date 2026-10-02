@@ -50,6 +50,23 @@ export function normalize(input: string, maxLength = MAX_QUERY_LENGTH): string {
   return folded.length <= maxLength ? folded : folded.slice(0, maxLength).trimEnd();
 }
 
+/** Control characters, separators and the BOM: anything that only spaces words apart. */
+const SPACING = /[\p{Cc}\p{Z}\uFEFF]+/gu;
+
+/**
+ * The text the semantic tier embeds: the query as typed, NFKC, lowercase, every run of spacing
+ * characters to one space, trimmed, at most `maxLength` UTF-16 units (never half a surrogate
+ * pair). Unlike {@link normalize} it keeps accents, punctuation and emoji, because the embedding
+ * model reads them: folding accents cost about 3 points of semantic recall@5 (DECISIONS.md).
+ * Idempotent, so a client can send it and the Worker apply it again.
+ */
+export function embeddingText(input: string, maxLength = MAX_QUERY_LENGTH): string {
+  const text = input.normalize("NFKC").toLowerCase().normalize("NFKC").replace(SPACING, " ").trim();
+  if (text.length <= maxLength) return text;
+  const end = /[\uD800-\uDBFF]/.test(text.charAt(maxLength - 1)) ? maxLength - 1 : maxLength;
+  return text.slice(0, end).trimEnd();
+}
+
 export function tokenize(normalized: string): string[] {
   return normalized === "" ? [] : normalized.split(" ");
 }

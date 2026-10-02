@@ -5,15 +5,15 @@ import type { Catalog } from "../src/semantic.ts";
 import { API, catalog, EMBEDDING_MODEL, harness, search } from "./fixtures.ts";
 
 describe("GET /v1/search", () => {
-  it("fuses alias and semantic results and embeds the normalized query", async () => {
+  it("fuses alias and semantic results and embeds the query with its accents and punctuation", async () => {
     const h = harness();
-    const res = await h.call(search("Lava eruption!!"));
+    const res = await h.call(search("  Lavá   eruption!! "));
     const body = (await res.json()) as SearchBody;
     expect(res.status).toBe(200);
     expect(body).toMatchObject({ query: "lava eruption", cached: false, degraded: false, overLimit: false });
     expect(body.results[0]).toMatchObject({ emoji: "🌋", source: "semantic" });
     expect(h.ai).toHaveBeenCalledWith(EMBEDDING_MODEL, {
-      text: ["lava eruption"],
+      text: ["lavá eruption!!"],
     });
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
     expect(res.headers.get("server-timing")).toMatch(/^embed;dur=\d+, total;dur=\d+$/);
@@ -50,13 +50,22 @@ describe("GET /v1/search", () => {
     expect(body.results.every((r) => r.source === "semantic")).toBe(true);
   });
 
-  it("serves the second identical query from cache, ignoring the key and raw spelling", async () => {
+  it("serves the second identical query from cache, ignoring the key, case and spacing", async () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
     await h.call(search("Lava  eruption", "&key=pk_test"));
     await h.ctx.settle();
-    const second = await h.call(search("lava eruption"));
+    const second = await h.call(search("LAVA eruption"));
     expect(((await second.json()) as SearchBody).cached).toBe(true);
     expect(h.ai).toHaveBeenCalledTimes(1);
+  });
+
+  it("keys the cache by the embedded text, so an accent is a different answer", async () => {
+    const h = harness();
+    await h.call(search("lavá"));
+    await h.ctx.settle();
+    const second = await h.call(search("lava"));
+    expect(((await second.json()) as SearchBody).cached).toBe(false);
+    expect(h.ai).toHaveBeenCalledTimes(2);
   });
 
   it("degrades to alias-only results when Workers AI fails, and does not cache them", async () => {
@@ -117,7 +126,7 @@ describe("GET /v1/search", () => {
 describe("search analytics", () => {
   it("logs the normalized text of every search that reaches the Worker, cache hits included", async () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
-    await h.call(search("Rocket!", "&key=pk_test", { headers: { "cf-connecting-ip": "203.0.113.9" } }));
+    await h.call(search(" Rocket ", "&key=pk_test", { headers: { "cf-connecting-ip": "203.0.113.9" } }));
     await h.ctx.settle();
     await h.call(search("rocket"));
     await h.call(search("lava eruption", "&mode=semantic"));

@@ -47,7 +47,7 @@ headers. Every key also has per-second rate limits.
 
 | Param | Default | Notes |
 | ----- | ------- | ----- |
-| `q` | — | Required. Normalized server-side (PACK_FORMAT.md §3), max 64 characters. |
+| `q` | — | Required, max 64 characters. The semantic tier embeds it with its accents and punctuation (PACK_FORMAT.md §3, "Embedding text"); aliases, custom emoji and analytics use its normalized form. |
 | `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). Semantic search covers the English and this locale's emoji vectors (PACK_FORMAT.md §5). |
 | `limit` | `24` | 1–50 |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
