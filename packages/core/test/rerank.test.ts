@@ -109,3 +109,33 @@ describe("fuse (the reranker by default)", () => {
     );
   });
 });
+
+describe("number slang", () => {
+  // zh "666": 👍 by its curated alias "666"; the embedding model reads the digits (6️⃣ first).
+  const slang = (query: string, field: AliasResult["field"] = "alias"): RerankInput => ({
+    alias: {
+      query,
+      tokens: [query],
+      confidence: 0.82,
+      results: [
+        { ...aliasHit("👍", 0.82, query), field },
+        aliasHit("🔥", 0.8, query),
+        aliasHit("6️⃣", 0.661, `${query}6`),
+      ],
+    },
+    semantic: [semanticHit("6️⃣", 0.586), semanticHit("🕕", 0.466), semanticHit("🐍", 0.436)],
+    semanticConfidence: 1,
+  });
+
+  it("keeps the dictionary's whole-query answer first for a query of digits only", () => {
+    expect(ids(rerank(slang("666"), 3))[0]).toBe("👍");
+    expect(ids(rerank(slang("8 8"), 3))[0]).toBe("👍");
+  });
+
+  it("leaves other queries, weak fields and unsure dictionaries to the learned score", () => {
+    expect(ids(rerank(slang("sss"), 3))[0]).toBe("6️⃣");
+    expect(ids(rerank(slang("666", "low"), 3))[0]).toBe("6️⃣");
+    const unsure = slang("666");
+    expect(ids(rerank({ ...unsure, alias: { ...unsure.alias, confidence: 0.5 } }, 3))[0]).toBe("6️⃣");
+  });
+});

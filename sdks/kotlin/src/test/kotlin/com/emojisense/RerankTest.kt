@@ -66,4 +66,32 @@ class RerankTest {
         val out = Fusion.fuse(output(listOf(aliasHit("😄", 0.26))), listOf(flag, semanticHit("🐰", 0.43)), 4)
         assertEquals("1F1E7-1F1F9", out.last().id)
     }
+
+    /** zh "666": 👍 by its curated alias "666"; the embedding model reads the digits (6️⃣ first). */
+    private fun slang(query: String, field: Field = Field.ALIAS, confidence: Double = 0.82): Rerank.Input {
+        val alias = AliasSearchOutput<SearchResult>(
+            query,
+            listOf(query),
+            listOf(
+                AliasResult("👍", "👍", 0.82, ResultSource.ALIAS, "", query, field),
+                AliasResult("🔥", "🔥", 0.8, ResultSource.ALIAS, "", query, Field.ALIAS),
+                AliasResult("6️⃣", "6️⃣", 0.661, ResultSource.ALIAS, "", query + "6", Field.ALIAS),
+            ),
+            confidence,
+        )
+        return Rerank.Input(alias, listOf(semanticHit("6️⃣", 0.586), semanticHit("🕕", 0.466), semanticHit("🐍", 0.436)), 1.0, null)
+    }
+
+    @Test
+    fun `keeps the dictionary's answer first for number slang`() {
+        assertEquals("👍", Rerank.rerank(slang("666"), 3).first().id)
+        assertEquals("👍", Rerank.rerank(slang("8 8"), 3).first().id)
+    }
+
+    @Test
+    fun `leaves other queries, weak fields and unsure dictionaries to the learned score`() {
+        assertEquals("6️⃣", Rerank.rerank(slang("sss"), 3).first().id)
+        assertEquals("6️⃣", Rerank.rerank(slang("666", Field.LOW), 3).first().id)
+        assertEquals("6️⃣", Rerank.rerank(slang("666", confidence = 0.5), 3).first().id)
+    }
 }

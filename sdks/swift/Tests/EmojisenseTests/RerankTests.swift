@@ -71,4 +71,33 @@ final class RerankTests: XCTestCase {
       alias: output([aliasHit("😄", 0.26)]), semantic: [flag, semanticHit("🐰", 0.43)], limit: 4)
     XCTAssertEqual(out.last?.id, "1F1E7-1F1F9")
   }
+
+  /// zh "666": 👍 by its curated alias "666"; the embedding model reads the digits (6️⃣ first).
+  private func slang(_ query: String, field: Field = .alias, confidence: Double = 0.82)
+    -> Rerank.Input
+  {
+    let alias = AliasSearchOutput(
+      query: query, tokens: [query],
+      results: [
+        AliasResult(emoji: "👍", id: "👍", score: 0.82, label: "", match: query, field: field),
+        AliasResult(emoji: "🔥", id: "🔥", score: 0.8, label: "", match: query, field: .alias),
+        AliasResult(emoji: "6️⃣", id: "6️⃣", score: 0.661, label: "", match: query + "6", field: .alias),
+      ],
+      confidence: confidence)
+    return Rerank.Input(
+      alias: alias,
+      semantic: [semanticHit("6️⃣", 0.586), semanticHit("🕕", 0.466), semanticHit("🐍", 0.436)],
+      semanticConfidence: 1, popularity: nil)
+  }
+
+  func testKeepsTheDictionaryAnswerFirstForNumberSlang() {
+    XCTAssertEqual(Rerank.rerank(slang("666"), limit: 3).first?.id, "👍")
+    XCTAssertEqual(Rerank.rerank(slang("8 8"), limit: 3).first?.id, "👍")
+  }
+
+  func testLeavesOtherQueriesWeakFieldsAndUnsureDictionariesToTheLearnedScore() {
+    XCTAssertEqual(Rerank.rerank(slang("sss"), limit: 3).first?.id, "6️⃣")
+    XCTAssertEqual(Rerank.rerank(slang("666", field: .low), limit: 3).first?.id, "6️⃣")
+    XCTAssertEqual(Rerank.rerank(slang("666", confidence: 0.5), limit: 3).first?.id, "6️⃣")
+  }
 }

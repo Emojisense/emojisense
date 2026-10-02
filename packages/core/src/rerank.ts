@@ -48,12 +48,33 @@ export function rerankFeatures(input: RerankInput, id: string): number[] {
   ];
 }
 
+/** Fields whose match of the whole query is a curated answer: name, shortcode, keyword, alias. */
+const CURATED_FIELDS = new Set<string>(["name", "shortcode", "keyword", "alias"]);
+/** A normalized query of digits only: number slang such as zh 666, 88, 520. */
+const DIGITS_ONLY = /^[0-9]+( [0-9]+)*$/;
+
 /**
- * Alias results ≥ 0.9 stay on top in alias order (no flicker when semantic results arrive), then
- * every other candidate of both lists by its learned score; ties keep alias-then-semantic order.
+ * The dictionary's answer to number slang. The embedding model reads digits literally (zh "666" →
+ * 6️⃣, "88" → 8️⃣); only the dictionary knows that 666 means "awesome" (👍) and 88 "bye" (👋).
+ * For a query of digits only, a confident top result whose phrase is the whole query in a curated
+ * field stays first. Other queries are left to the reranker: on the dev sets, pinning such a top
+ * result for every query lost more first places than it won (DECISIONS.md).
+ */
+function numberSlangAnswer(alias: AliasSearchOutput): SearchResult | undefined {
+  if (!DIGITS_ONLY.test(alias.query) || alias.confidence < 0.6) return undefined;
+  const top = alias.results[0] as (SearchResult & { match?: string; field?: string }) | undefined;
+  return top?.match === alias.query && CURATED_FIELDS.has(top.field ?? "") ? top : undefined;
+}
+
+/**
+ * Alias results ≥ 0.9 stay on top in alias order (no flicker when semantic results arrive), and so
+ * does the dictionary's answer to number slang (`numberSlangAnswer`); then every other candidate
+ * of both lists by its learned score; ties keep alias-then-semantic order.
  */
 export function rerank(input: RerankInput, limit: number, weights: readonly number[] = RERANK_WEIGHTS) {
-  const pinned = input.alias.results.filter((r) => r.score >= 0.9);
+  const pinned: SearchResult[] = input.alias.results.filter((r) => r.score >= 0.9);
+  const slang = pinned.length === 0 ? numberSlangAnswer(input.alias) : undefined;
+  if (slang) pinned.push(slang);
   const seen = new Set(pinned.map((r) => r.id));
   const rest: { result: SearchResult; score: number }[] = [];
   for (const result of [...input.alias.results, ...input.semantic]) {

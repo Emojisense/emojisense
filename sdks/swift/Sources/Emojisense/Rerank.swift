@@ -55,12 +55,33 @@ public enum Rerank {
     ]
   }
 
-  /// Alias results ≥ 0.9 stay on top in alias order, then every other candidate of both lists by
-  /// its learned score; equal scores keep alias-then-semantic order.
+  /// Fields whose match of the whole query is a curated answer.
+  private static let curatedFields: Set<Field> = [.name, .shortcode, .keyword, .alias]
+
+  /// The dictionary's answer to number slang (a query of ASCII digits only, e.g. zh "666", "88"):
+  /// a confident top result whose phrase is the whole query in a curated field. The embedding
+  /// model reads digits literally (6️⃣, 8️⃣); the dictionary knows the slang (👍, 👋).
+  static func numberSlangAnswer(_ alias: AliasSearchOutput) -> AliasResult? {
+    let groups = alias.query.split(separator: " ", omittingEmptySubsequences: false)
+    let digitsOnly = groups.allSatisfy { group in
+      !group.isEmpty && group.unicodeScalars.allSatisfy { $0.value >= 0x30 && $0.value <= 0x39 }
+    }
+    guard !alias.query.isEmpty, digitsOnly, alias.confidence >= 0.6, let top = alias.results.first,
+      top.match == alias.query, curatedFields.contains(top.field)
+    else { return nil }
+    return top
+  }
+
+  /// Alias results ≥ 0.9 stay on top in alias order, and so does the dictionary's answer to
+  /// number slang (``numberSlangAnswer(_:)``); then every other candidate of both lists by its
+  /// learned score; equal scores keep alias-then-semantic order.
   public static func rerank(_ input: Input, limit: Int, weights: [Double] = weights)
     -> [SearchResult]
   {
-    let pinned = input.alias.results.filter { $0.score >= 0.9 }.map(\.searchResult)
+    var pinned = input.alias.results.filter { $0.score >= 0.9 }.map(\.searchResult)
+    if pinned.isEmpty, let slang = numberSlangAnswer(input.alias) {
+      pinned.append(slang.searchResult)
+    }
     var seen = Set(pinned.map(\.id))
     var rest: [(result: SearchResult, score: Double)] = []
     for result in input.alias.results.map(\.searchResult) + input.semantic
