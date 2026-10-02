@@ -131,27 +131,36 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
     fun search(query: String, options: AliasSearchOptions): AliasSearchOutput<AliasResult> {
         val normalized = Normalizer.normalize(query)
         val lastIsPrefix = options.prefix && !endsWithJavaScriptWhitespace(query)
-        val tokens = queryTokens(normalized, lastIsPrefix)
+        val functionWords = FunctionWords.active(options.locale ?: index.primary.locale)
+        val tokens = queryTokens(normalized, lastIsPrefix, functionWords)
         if (tokens.isEmpty()) return AliasSearchOutput(normalized, tokens, emptyList(), 0.0)
         val results = synchronized(this) {
-            rank(tokens, lastIsPrefix, options.locale).take(maxOf(0, options.limit)).map { result(it, options.locale) }
+            rank(tokens, lastIsPrefix, functionWords, options.locale)
+                .take(maxOf(0, options.limit))
+                .map { result(it, options.locale) }
         }
         return AliasSearchOutput(normalized, tokens, results, results.firstOrNull()?.score ?: 0.0)
     }
 
     /** Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds the lock. */
-    private fun rank(tokens: List<String>, lastIsPrefix: Boolean, locale: String?): List<Scored> {
+    private fun rank(tokens: List<String>, lastIsPrefix: Boolean, functionWords: Set<String>, locale: String?): List<Scored> {
         val count = tokens.size
         val preferredMask = (index.preferredMasks[locale ?: index.primary.locale] ?: 1) or index.customMask
         fun isPreferred(phrase: Int) = (index.phraseLocaleMask[phrase] and preferredMask) != 0
         startSearch()
 
+        val isFunctionWord = tokens.map { it in functionWords }
+        // Next to a content word, a function word neither completes as a prefix ("了" is not "了解")
+        // nor stands for a typo. A query of function words only ("я тоже") is searched as typed.
+        val hasContentWord = false in isFunctionWord
         var touchedPhraseCount = 0
         val weights = DoubleArray(count)
         tokens.forEachIndexed { position, token ->
             var bestQuality = 0.0
             var weight = index.maxIdf
-            for ((id, candidateQuality) in expand(token, lastIsPrefix && position == count - 1)) {
+            val candidates =
+                if (hasContentWord && isFunctionWord[position]) exactly(token) else expand(token, lastIsPrefix && position == count - 1)
+            for ((id, candidateQuality) in candidates) {
                 if (candidateQuality > bestQuality) {
                     bestQuality = candidateQuality
                     weight = index.idf[id]
@@ -167,7 +176,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                     if (candidateQuality > quality[base + position]) quality[base + position] = candidateQuality.toFloat()
                 }
             }
-            weights[position] = if (token in STOPWORDS) minOf(weight, STOPWORD_WEIGHT_CAP) else weight
+            weights[position] = if (isFunctionWord[position]) minOf(weight, FUNCTION_WORD_WEIGHT_CAP) else weight
         }
         var totalWeight = 0.0
         for (weight in weights) totalWeight += weight
@@ -303,27 +312,30 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
 
     /**
      * Query tokens. A token of an unspaced script that is not in the vocabulary (and, while
-     * typing, is not the start of one) is split into the vocabulary tokens it holds.
+     * typing, is not the start of one) is split into the vocabulary tokens and function words it holds.
      */
-    private fun queryTokens(normalized: String, lastIsPrefix: Boolean): List<String> {
+    private fun queryTokens(normalized: String, lastIsPrefix: Boolean, functionWords: Set<String>): List<String> {
         val tokens = Normalizer.tokenize(normalized).take(MAX_QUERY_TOKENS)
         return tokens.flatMapIndexed { position, token ->
             when {
                 index.tokenIds.containsKey(token) || !isUnspacedScript(token) -> listOf(token)
                 lastIsPrefix && position == tokens.size - 1 && completes(token) -> listOf(token)
-                else -> segment(token)
+                else -> segment(token, functionWords)
             }
         }.take(MAX_QUERY_TOKENS)
     }
+
+    /** The vocabulary token equal to [token], if any: a function word next to content words matches only itself. */
+    private fun exactly(token: String): Map<Int, Double> = index.tokenIds[token]?.let { mapOf(it to 1.0) } ?: emptyMap()
 
     /** Does a longer vocabulary token start with `prefix`? */
     private fun completes(prefix: String): Boolean = index.vocabulary.getOrNull(lowerBound(prefix))?.startsWith(prefix) ?: false
 
     /**
-     * Splits a run of an unspaced script into vocabulary tokens, longest match first from the
-     * left. Code points where no vocabulary token starts stay together as one unknown piece.
+     * Splits a run of an unspaced script into vocabulary tokens and function words, longest match
+     * first from the left. Code points where neither starts stay together as one unknown piece.
      */
-    private fun segment(run: String): List<String> {
+    private fun segment(run: String, functionWords: Set<String>): List<String> {
         val points = CodePoints.of(run)
         val offsets = IntArray(points.size + 1)
         for (i in 0 until points.size) offsets[i + 1] = offsets[i] + Character.charCount(points[i])
@@ -333,7 +345,9 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         var start = 0
         while (start < points.size) {
             var length = minOf(MAX_PIECE_LENGTH, points.size - start)
-            while (length > 0 && !index.tokenIds.containsKey(text(start, start + length))) length--
+            while (length > 0 && text(start, start + length).let { !index.tokenIds.containsKey(it) && it !in functionWords }) {
+                length--
+            }
             if (length == 0) {
                 if (unknownStart < 0) unknownStart = start
                 start++
@@ -425,17 +439,11 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
 
         /** Fields whose weight beats a preferred alias even after the foreign factor: name, shortcode. */
         const val DOMINANT_FIELDS = 2
-        const val STOPWORD_WEIGHT_CAP = 0.3
+        /** The most a function word ([FunctionWords]) weighs, so it never blocks a match. */
+        const val FUNCTION_WORD_WEIGHT_CAP = 0.3
 
         /** Longest piece (code points) tried when a run of an unspaced script is split. */
         const val MAX_PIECE_LENGTH = 16
-
-        /** Function words that carry little meaning in a query (en + folded tr). */
-        val STOPWORDS: Set<String> = (
-            "a an the of to in on at for from by is are am be im i me my you your u it its this that " +
-                "so and or with just very really too we our they them he she his her bir ve ile bu su cok " +
-                "da de mi ben sen o icin gibi"
-            ).split(' ').toHashSet()
 
         /**
          * Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han (the

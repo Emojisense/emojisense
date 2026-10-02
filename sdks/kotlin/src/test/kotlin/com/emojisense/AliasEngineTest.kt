@@ -207,10 +207,93 @@ class AliasEngineTest {
     fun `keeps unknown characters together as one token`() {
         val engine = chinese()
         val search = { query: String -> engine.search(query, AliasSearchOptions(locale = "zh")) }
-        assertEquals(listOf("今天的", "蛋糕"), search("今天的蛋糕").tokens)
-        assertEquals("🎂", search("今天的蛋糕").results.first().emoji)
-        assertEquals(listOf("今天的", "蛋糕", "呀"), search("今天的蛋糕呀").tokens)
-        assertEquals(emptyList(), search("今天的蛋糕呀").results)
+        assertEquals(listOf("今天", "蛋糕"), search("今天蛋糕").tokens)
+        assertEquals("🎂", search("今天蛋糕").results.first().emoji)
+        // Two unknown pieces outweigh one known piece: below the coverage threshold.
+        assertEquals(listOf("今天", "蛋糕", "明天"), search("今天蛋糕明天").tokens)
+        assertEquals(emptyList(), search("今天蛋糕明天").results)
+    }
+
+    @Test
+    fun `splits function words out of a run even when no phrase holds them`() {
+        val engine = chinese()
+        val search = { query: String -> engine.search(query, AliasSearchOptions(locale = "zh")) }
+        assertEquals(listOf("今天", "的", "蛋糕", "呀"), search("今天的蛋糕呀").tokens)
+        assertEquals("🎂", search("今天的蛋糕呀").results.first().emoji)
+    }
+
+    // ── Function words ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * The fixture's emoji stand in for the real ones: 🔥 = 🤔 (想 "think"), 🚀 = 🛌 (躺平),
+     * 🐐 = 🙋 (我也是 "me too"), 👍 = 👌 (了解 "understood"), 🎃 = 😩 (устал "tired"), 🦖 = 🗿.
+     */
+    private val chineseFunctionWords by lazy {
+        AliasEngine(
+            listOf(
+                Fixtures.english,
+                Fixtures.english.copy(
+                    locale = "zh",
+                    emoji = listOf(
+                        Fixtures.row("🔥", "1F525", "火", keyword = "想|思考"),
+                        Fixtures.row("🚀", "1F680", "火箭", alias = "躺平"),
+                        Fixtures.row("🐐", "1F410", "山羊", alias = "我也是|我"),
+                        Fixtures.row("👍", "1F44D", "竖起大拇指", alias = "了解|好的"),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    private val russianFunctionWords by lazy {
+        AliasEngine(
+            listOf(
+                Fixtures.english,
+                Fixtures.english.copy(
+                    locale = "ru",
+                    emoji = listOf(
+                        Fixtures.row("🎃", "1F383", "тыква", keyword = "устал", alias = "я так устал"),
+                        Fixtures.row("🐐", "1F410", "коза", alias = "я тоже|я"),
+                        Fixtures.row("🦖", "1F996", "тираннозавр", alias = "очень"),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    private fun zh(query: String) = chineseFunctionWords.search(query, AliasSearchOptions(locale = "zh"))
+
+    private fun ru(query: String) = russianFunctionWords.search(query, AliasSearchOptions(locale = "ru"))
+
+    @Test
+    fun `function words never block the content word of a sentence`() {
+        assertEquals(listOf("我", "想", "躺平"), zh("我想躺平").tokens)
+        assertEquals("🚀", zh("我想躺平").results.first().emoji)
+        assertEquals("🎃", ru("я очень устал").results.first().emoji)
+    }
+
+    @Test
+    fun `does not complete a function word next to a content word`() {
+        assertEquals(listOf("躺平", "了"), zh("躺平了").tokens)
+        assertEquals(listOf("🚀"), zh("躺平了").results.map { it.emoji })
+    }
+
+    @Test
+    fun `still matches a whole query of function words`() {
+        assertEquals("🐐", zh("我也是").results.first().emoji)
+        assertEquals("🐐", zh("我").results.first().emoji)
+        assertEquals("🐐", ru("я тоже").results.first().emoji)
+        assertEquals("🦖", ru("очень").results.first().emoji)
+    }
+
+    @Test
+    fun `applies the query locale's list plus the English and Turkish ones`() {
+        assertTrue("我" in FunctionWords.active("zh"))
+        assertTrue("the" in FunctionWords.active("zh"))
+        assertTrue("bir" in FunctionWords.active("zh"))
+        assertTrue("son" in FunctionWords.active("es"))
+        assertTrue("son" !in FunctionWords.active("en"))
+        assertEquals(FunctionWords.active("en"), FunctionWords.active("ja"))
     }
 
     @Test

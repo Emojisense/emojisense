@@ -68,9 +68,18 @@ class Golden private constructor(root: JsonObject) {
         )
     }
     val keystrokePacks: List<String> = root.getValue("keystrokes").jsonObject.getValue("packs").jsonArray.map { it.jsonPrimitive.content }
-    val keystrokes: List<KeystrokeCase> = root.getValue("keystrokes").jsonObject.getValue("cases").jsonArray.map { element ->
-        val case = element.jsonObject
-        KeystrokeCase(case.text("q"), case.text("locale"), ranked(case.getValue("top").jsonArray))
+    val keystrokes: List<KeystrokeCase> = keystrokeCases(root.getValue("keystrokes").jsonObject)
+
+    /** Sentences of the other pack locales, typed keystroke by keystroke: (packs, cases) per locale. */
+    val sentenceKeystrokes: List<Pair<List<String>, List<KeystrokeCase>>> =
+        root.getValue("sentenceKeystrokes").jsonArray.map { element ->
+            val value = element.jsonObject
+            value.getValue("packs").jsonArray.map { it.jsonPrimitive.content } to keystrokeCases(value)
+        }
+
+    /** The reference function-word lists per locale (PACK_FORMAT.md §4). */
+    val functionWords: Map<String, List<String>> = root.getValue("functionWords").jsonObject.mapValues { (_, words) ->
+        words.jsonArray.map { it.jsonPrimitive.content }
     }
 
     companion object {
@@ -92,6 +101,11 @@ class Golden private constructor(root: JsonObject) {
         private fun pairs(array: JsonArray) = array.map { it.jsonArray[0].jsonPrimitive.content to it.jsonArray[1].jsonPrimitive.content }
 
         private fun ranked(array: JsonArray) = array.map { Ranked(it.jsonArray[0].jsonPrimitive.content, it.jsonArray[1].jsonPrimitive.double) }
+
+        private fun keystrokeCases(keystrokes: JsonObject) = keystrokes.getValue("cases").jsonArray.map { element ->
+            val case = element.jsonObject
+            KeystrokeCase(case.text("q"), case.text("locale"), ranked(case.getValue("top").jsonArray))
+        }
     }
 }
 

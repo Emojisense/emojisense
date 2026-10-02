@@ -100,16 +100,29 @@ class ConformanceTest {
         }
     }
 
-    /** Every prefix of a sample of queries, as typed: exercises prefix completion. */
+    /** Every prefix of a sample of queries and sentences, as typed: exercises prefix completion. */
     @Test
     fun `keystrokes match the reference`() {
-        val engine = packs().engine(golden.keystrokePacks)
-        val differences = golden.keystrokes.mapNotNull { case ->
-            val actual = engine.canonicalSearch(case.q, AliasSearchOptions(limit = 5, locale = case.locale))
-                .results.map { Golden.Ranked(it.id, it.score) }
-            if (actual == case.top) null else "  ${debug(case.q)}:\n    kotlin $actual\n    ts     ${case.top}"
+        val packs = packs()
+        for ((files, cases) in listOf(golden.keystrokePacks to golden.keystrokes) + golden.sentenceKeystrokes) {
+            val engine = packs.engine(files)
+            val differences = cases.mapNotNull { case ->
+                val actual = engine.canonicalSearch(case.q, AliasSearchOptions(limit = 5, locale = case.locale))
+                    .results.map { Golden.Ranked(it.id, it.score) }
+                if (actual == case.top) null else "  ${debug(case.q)}:\n    kotlin $actual\n    ts     ${case.top}"
+            }
+            report("[keystrokes ${files.joinToString(" ")}] identical top-5 ids + scores", cases.size, differences)
+            assertEquals(emptyList(), differences)
         }
-        report("[keystrokes] identical top-5 ids + scores", golden.keystrokes.size, differences)
+    }
+
+    /** The Kotlin copy (FunctionWords.kt, generated) holds exactly the reference lists. */
+    @Test
+    fun `function words match the reference`() {
+        val locales = (golden.functionWords.keys + FunctionWords.lists.keys).sorted()
+        val differences = locales.filter { FunctionWords.lists[it] != golden.functionWords[it] }
+            .map { "  $it: regenerate with sdks/swift/scripts/make-function-words.ts" }
+        report("function-word lists", golden.functionWords.size, differences)
         assertEquals(emptyList(), differences)
     }
 

@@ -109,7 +109,7 @@ Measured on macOS 26 (arm64), Swift 6.4, Node 24.5.0, pack 0.1.0.
 Regenerate the reference data after a change to `packages/core`, the packs or the queries:
 
 ```sh
-pnpm exec tsx sdks/swift/scripts/make-function-words.ts    # after a function-word list changes
+pnpm exec tsx sdks/swift/scripts/make-function-words.ts    # after a list changes (Swift and Kotlin)
 pnpm exec tsx sdks/swift/scripts/make-golden.ts            # writes golden.json
 pnpm exec tsx sdks/swift/scripts/make-unicode-tables.ts    # after a Node (Unicode) upgrade
 ```
