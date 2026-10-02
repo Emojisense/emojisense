@@ -1,6 +1,8 @@
+import { parseWaitlistStatus } from "@emojisense/platform";
 import { type SubmitEvent, useEffect, useId, useRef, useState } from "react";
 import {
   parsePlan,
+  RETURN_MESSAGES,
   submitWaitlist,
   validateEmail,
   WAITLIST_PLANS,
@@ -21,7 +23,8 @@ export interface WaitlistFormProps {
 type Phase =
   | { name: "editing"; fieldError?: string; formError?: string }
   | { name: "submitting" }
-  | { name: "joined"; email: string; plan: WaitlistPlan; alreadyJoined: boolean };
+  /** `signup` is unknown after a form post that returned with `?status=ok`. */
+  | { name: "joined"; signup?: { email: string; plan: WaitlistPlan }; alreadyJoined: boolean };
 
 export function WaitlistForm(props: WaitlistFormProps) {
   const { endpoint, plans, initialPlan = "pro" } = props;
@@ -33,11 +36,21 @@ export function WaitlistForm(props: WaitlistFormProps) {
   const doneRef = useRef<HTMLHeadingElement>(null);
   const id = useId();
 
-  // The page is static, so the ?plan= link from the pricing page is read after hydration.
+  // The page is static, so the URL is read after hydration: ?plan= from the pricing page, and
+  // ?status= when the form was posted before the script ran and the dashboard sent it back.
   useEffect(() => {
     setEnhanced(true);
-    const fromUrl = new URLSearchParams(window.location.search).get("plan");
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = params.get("plan");
     if (fromUrl) setPlan(parsePlan(fromUrl));
+    const status = parseWaitlistStatus(params.get("status"));
+    if (status === "ok") setPhase({ name: "joined", alreadyJoined: false });
+    if (status === "error") {
+      setPhase({
+        name: "editing",
+        formError: `${RETURN_MESSAGES.error.title}. ${RETURN_MESSAGES.error.text}`,
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -58,7 +71,11 @@ export function WaitlistForm(props: WaitlistFormProps) {
       { endpoint, ...(props.fetch ? { fetch: props.fetch } : {}) },
     );
     if (result.ok) {
-      setPhase({ name: "joined", email: email.trim(), plan, alreadyJoined: result.alreadyJoined });
+      setPhase({
+        name: "joined",
+        signup: { email: email.trim(), plan },
+        alreadyJoined: result.alreadyJoined,
+      });
     } else if (result.reason === "invalid") {
       setPhase({ name: "editing", fieldError: result.message });
       emailRef.current?.focus();
@@ -74,11 +91,16 @@ export function WaitlistForm(props: WaitlistFormProps) {
           <span className="emoji">🎟️</span>
         </span>
         <h2 ref={doneRef} tabIndex={-1}>
-          {phase.alreadyJoined ? "You are already on the list" : "You are on the list"}
+          {phase.alreadyJoined ? "You are already on the list" : RETURN_MESSAGES.ok.title}
         </h2>
-        <p>
-          We will email <strong>{phase.email}</strong> once, when {plans[phase.plan].name} opens.
-        </p>
+        {phase.signup ? (
+          <p>
+            We will email <strong>{phase.signup.email}</strong> once, when {plans[phase.signup.plan].name}{" "}
+            opens.
+          </p>
+        ) : (
+          <p>{RETURN_MESSAGES.ok.text}</p>
+        )}
         <p>
           Until then, the free plan has everything you need to start. <a href="/docs/">Read the quickstart</a>
           .

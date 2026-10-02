@@ -8,7 +8,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { METRICS, PLAN_IDS, PLANS } from "@emojisense/platform";
+import { METRICS, PLAN_IDS, PLANS, waitlistReturnUrl } from "@emojisense/platform";
 import * as core from "emojisense";
 import { Window } from "happy-dom";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -281,6 +281,23 @@ describe("waitlist page", () => {
     );
     expect(plans).toEqual(["solo", "pro", "scale"]);
     expect(form?.querySelector('button[type="submit"]')).not.toBeNull();
+  });
+
+  // The dashboard answers a form post without JavaScript with a 303 to waitlistReturnUrl(); the
+  // fragment must name a message that CSS shows as the :target.
+  it.each([
+    ["ok", "You are on the list"],
+    ["error", "We could not add you"],
+  ] as const)("shows the %s result of a form post without JavaScript", (status, title) => {
+    const html = readFileSync(file("/waitlist/"), "utf8");
+    const noscript = /<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? "";
+    const anchor = new URL(waitlistReturnUrl(SITE, status)).hash.slice(1);
+    const message = new RegExp(`<div[^>]*id="${anchor}"[^>]*>([\\s\\S]*?)</div>`).exec(noscript);
+    expect(message?.[1]).toContain(title);
+    const css = Array.from(html.matchAll(/<link rel="stylesheet" href="([^"]+)"/g), ([, href]) =>
+      readFileSync(file(href ?? ""), "utf8"),
+    ).join("\n");
+    expect(css).toMatch(/\.wl-result(\[[^\]]+\])?:target(\[[^\]]+\])?\s*\{\s*display:\s*block/);
   });
 });
 

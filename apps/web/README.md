@@ -27,6 +27,12 @@ pnpm --filter @emojisense/web test       # unit tests + build smoke test
 The live search needs the API for its packs (`pnpm --filter @emojisense/worker dev:offline`). The
 waitlist form needs the dashboard. Without them, both pages still render and show an inline error.
 
+Without JavaScript, the waitlist form posts a normal HTML form to the dashboard. The dashboard
+answers with a redirect to `/waitlist/?status=ok#waitlist-joined` (or `status=error`). The page
+shows the matching `<noscript>` message through the CSS `:target` rule. When the script runs, the
+island reads `?status=` and shows the same result. The site origin must be in the dashboard's
+`WEBSITE_ORIGINS`.
+
 ## Configuration
 
 Copy `.env.example` to `.env`. Every value is public and ends up in the built pages.
