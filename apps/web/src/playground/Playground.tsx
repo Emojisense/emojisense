@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useEngine } from "../lib/engine-client";
+import { fullEngine, useEngine } from "../lib/engine-client";
 import { type HealthState, useHealth, useOnline } from "./hooks";
 import { createTracedSemantic } from "./lib/edge";
 import {
@@ -29,9 +29,15 @@ const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement &&
   (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
 
+const loadAllLanguages = () => {
+  fullEngine().catch(() => {});
+};
+
 /** The Emojisense playground: search, reactions and photo, live, with timings and code. */
 export default function Playground() {
-  const { engine, ready } = useEngine();
+  // English answers at once. Indexing every language is seconds of main-thread work on a phone,
+  // so it starts on an idle desktop, on the visitor's first touch, or for a non-English locale.
+  const { engine, ready } = useEngine({ upgrade: "idle" });
   const online = useOnline();
   const health = useHealth(online);
   const traced = useMemo(() => createTracedSemantic(), []);
@@ -61,6 +67,10 @@ export default function Playground() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, [open]);
+
+  useEffect(() => {
+    if (settings.locale !== "en") loadAllLanguages();
+  }, [settings.locale]);
 
   useEffect(() => {
     if (!urlRead) return;
@@ -106,7 +116,7 @@ export default function Playground() {
   };
 
   return (
-    <div className="pg">
+    <div className="pg" onPointerDownCapture={loadAllLanguages} onFocusCapture={loadAllLanguages}>
       <div className="pg-bar">
         <div className="pg-tabs" role="tablist" aria-label="Capabilities" onKeyDown={onTabKey}>
           {TABS.map((name, index) => (
@@ -208,7 +218,7 @@ function StatusLine(props: {
       : ready === "all"
         ? { state: "up", text: `${languages ?? 11} languages on device` }
         : ready === "english"
-          ? { state: "wait", text: "English ready · more languages loading" }
+          ? { state: "wait", text: "English ready · other languages load when needed" }
           : { state: "wait", text: "Loading dictionary…" };
   return (
     <div className="pg-status" aria-live="polite">

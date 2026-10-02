@@ -1,6 +1,6 @@
 import type { AliasResult } from "emojisense";
 import { useEffect, useId, useMemo, useState } from "react";
-import { useEngine } from "../lib/engine-client";
+import { fullEngine, useEngine } from "../lib/engine-client";
 import { FALLBACK_QUERY, MAX_QUERY_LENGTH, queryFromPath } from "../lib/not-found";
 import "./not-found.css";
 
@@ -31,7 +31,8 @@ function displayPath(pathname: string): string {
  * engine: the address can hold private data, so it never goes to the API.
  */
 export function NotFoundSearch() {
-  const { engine, ready } = useEngine();
+  // English answers at once; every language loads on an idle desktop or when the visitor types.
+  const { engine, ready } = useEngine({ upgrade: "idle" });
   const [path, setPath] = useState<string>();
   const [target, setTarget] = useState("");
   const [query, setQuery] = useState("");
@@ -148,7 +149,10 @@ export function NotFoundSearch() {
             autoComplete="off"
             spellCheck={false}
             aria-describedby={`${id}-status`}
-            onFocus={() => setTyping(false)}
+            onFocus={() => {
+              setTyping(false);
+              fullEngine().catch(() => {});
+            }}
             onChange={(event) => {
               setTyping(false);
               setQuery(event.target.value);
