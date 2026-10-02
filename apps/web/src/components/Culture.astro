@@ -44,7 +44,7 @@ const steps = [
       queries.length > 0 && (
         <>
           {/* Far below the fold: the lens styles load with it, without blocking the first paint. */}
-          <link rel="stylesheet" href={cultureLensCss} media="print" onload="this.media='all'" />
+          <link rel="stylesheet" href={cultureLensCss} media="print" data-deferred-style />
           <noscript>
             <link rel="stylesheet" href={cultureLensCss} />
           </noscript>
@@ -68,6 +68,18 @@ const steps = [
     </ol>
   </div>
 </section>
+
+<script>
+  // Turns the print-only lens styles on once loaded. A script, not onload="", because the
+  // Content-Security-Policy blocks inline event handlers.
+  for (const link of document.querySelectorAll<HTMLLinkElement>("link[data-deferred-style]")) {
+    const show = () => {
+      link.media = "all";
+    };
+    if (link.sheet) show();
+    else link.addEventListener("load", show, { once: true });
+  }
+</script>
 
 <style>
   .new {
