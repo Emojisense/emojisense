@@ -197,7 +197,28 @@ Little-endian. All offsets are in bytes from the file start.
   A vector file must never be compared with vectors from another model or with other dims.
 - Sign bits allow a cheap Hamming-distance shortlist on weak devices before an int8 rerank.
 
-## 6. Versioning
+## 6. Shards (layer 2: precomputed results)
+
+Frequent queries that the on-device dictionary cannot answer get their semantic results
+precomputed nightly and published as static files:
+
+```
+/p/<packVersion>/index.json      {"format":"emojisense-shards","formatVersion":1,"packVersion":"0.1.0",
+                                  "model":"embeddinggemma@256","keys":["a","ab","b", … ,"th","the ", …]}
+/p/<packVersion>/<key>.json      {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
+```
+
+- `keys` are sorted. A query uses the **longest key that is a prefix of the normalized query**.
+  Hot prefixes get longer keys (adaptive split), so each shard stays ≤ ~30 KB gz. File names
+  are `encodeURIComponent(key)`.
+- `entries` maps a normalized query (§3) to semantic results `[emoji, hexcode, score]`, best
+  first. These are the same results the API returns with `mode=semantic` for that model.
+- A client downloads `index.json` once and each shard at most once per session, then answers
+  locally. A query that is not in its shard goes to the API.
+- Shards are valid only for the `model` they name. A new model or pack version publishes a new
+  directory.
+
+## 7. Versioning
 
 - `formatVersion` changes only for breaking layout changes. Adding optional manifest keys or
   pack-level keys is not breaking. Adding a row position is breaking.
