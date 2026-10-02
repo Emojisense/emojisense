@@ -271,6 +271,11 @@
   font: 400 0.875em / 1 var(--font-mono);
 }
 
+/* The tag says more than the code point, and the label needs the room. */
+.preview-tag:not([hidden]) + .hex {
+  display: none;
+}
+
 .hint {
   flex: none;
   display: flex;
