@@ -19,7 +19,6 @@ import {
   type KeyboardEvent,
   type ReactNode,
   useCallback,
-  useEffect,
   useId,
   useMemo,
   useState,
@@ -186,8 +185,6 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const resolver = useMemo(() => createEmojisenseResolver(emojisense.packs), [emojisense.packs]);
   const searching = query.trim() !== "";
 
-  useEffect(() => setActiveIndex(0), [results]);
-
   const labelOf = useCallback(
     (r: SearchResult) => {
       const labels = emojisense.engine?.get(r.id)?.labels;
@@ -206,7 +203,10 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
     >
       <SearchInput
         query={query}
-        onQueryChange={setQuery}
+        onQueryChange={(next) => {
+          setQuery(next);
+          setActiveIndex(0);
+        }}
         placeholder={placeholder}
         searching={searching}
         results={results}
