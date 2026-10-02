@@ -9,7 +9,6 @@
  *
  *   pnpm --filter @emojisense/eval eval:models -- --variants bge-m3@1024,qwen3-task@512
  *       [--offline]          cached query vectors only
- *       [--concepts]         also the API's concept tier (LLM) on entities-dev and the examples
  *       [--latency 40]       time 40 single-query embedding calls per variant (Workers AI round trip)
  *       [--doc-tokens 200]   count the tokens of 200 documents per document model (one-time cost)
  *       [--heldout a,b]      held-out aggregates for these variants (never a query or a row)
@@ -34,7 +33,6 @@ import {
   DEFAULT_SEMANTIC_CALIBRATION,
   embeddingText,
   fuse,
-  mergeConcept,
   type Pack,
   RERANK_WEIGHTS,
   type RerankInput,
@@ -43,8 +41,6 @@ import {
   semanticConfidence,
 } from "emojisense";
 import { l2normalize, searchVectorSets, type VectorIndex } from "emojisense/vectors";
-import { CONCEPT_MODEL } from "../../worker/src/concepts/config.ts";
-import { type ConceptTierStats, runConceptTier, USD_PER_1K_NEURONS } from "./concept-tier.ts";
 import { EVAL_ROOT } from "./cost-inputs.ts";
 import { loadHeldout } from "./heldout.ts";
 import { HELDOUT_PATH } from "./heldout-run.ts";
@@ -72,7 +68,6 @@ const { values: args } = parseArgs({
     variants: { type: "string", default: DEFAULT_VARIANTS.join(",") },
     pack: { type: "string" },
     offline: { type: "boolean", default: false },
-    concepts: { type: "boolean", default: false },
     latency: { type: "string", default: "0" },
     "doc-tokens": { type: "string", default: "0" },
     heldout: { type: "string", default: "" },
@@ -167,7 +162,6 @@ interface Ranked {
   cos: SearchResult[];
   sem: SearchResult[];
   lists: Record<Mode, string[]>;
-  fusedResults: SearchResult[];
   unsure: boolean;
 }
 
@@ -195,8 +189,6 @@ interface VariantRun {
   calibration: SemanticCalibration;
   weights: number[];
   ranked: Map<Item, Ranked>;
-  /** Fused + the concept tier's results, for entities-dev and the examples (--concepts). */
-  concept?: Map<Item, { lists: string[]; status?: string }>;
   memory: { sharedMB: number; glyphMB: number; localeMB: number; bundleMB: number; localeFileMB: number };
 }
 
@@ -282,7 +274,6 @@ async function runVariant(variant: ModelVariant): Promise<VariantRun | string> {
     ranked.set(it, {
       cos,
       sem,
-      fusedResults,
       unsure: assessConfidence(it.alias, sem, calibration).unsure,
       lists: {
         cos: emojiOf(cos),
@@ -307,41 +298,7 @@ async function runVariant(variant: ModelVariant): Promise<VariantRun | string> {
     localeFileMB: mb(fileBytes(vectorFileName(variant.documents.key, variant.dims, "es"))),
   };
 
-  const run: VariantRun = { variant, layout, calibration, weights, ranked, memory };
-  if (args.concepts) {
-    const asked = [...items.filter((it) => it.set === "entities-dev"), ...examples];
-    const { verdicts, stats } = await runConceptTier(
-      asked.map((it) => ({
-        query: it.alias.query,
-        locale: it.q.locale,
-        alias: it.alias,
-        semantic: (ranked.get(it) as Ranked).sem,
-      })),
-      {
-        packDir,
-        model: { key: variant.documents.key, dims: variant.dims },
-        offline: args.offline,
-        calibration,
-      },
-    );
-    conceptStats = stats;
-    run.concept = new Map(
-      asked.map((it, i) => {
-        const verdict = verdicts[i];
-        const merged = mergeConcept(
-          (ranked.get(it) as Ranked).fusedResults,
-          verdict?.concept?.results ?? [],
-          it.alias,
-          LIMIT,
-        );
-        return [
-          it,
-          { lists: emojiOf(merged), ...(verdict?.concept ? { status: verdict.concept.status } : {}) },
-        ];
-      }),
-    );
-  }
-  return run;
+  return { variant, layout, calibration, weights, ranked, memory };
 }
 
 // ── Latency and tokens (Workers AI round trips from this machine) ───────────────────────────
@@ -398,8 +355,6 @@ async function measureDocuments(model: EmbeddingModel, count: number) {
 
 // ── Run ──────────────────────────────────────────────────────────────────────────────────────
 const runs: VariantRun[] = [];
-/** The concept tier's cached model calls (every call of this prompt version so far). */
-let conceptStats: ConceptTierStats | undefined;
 const skipped: string[] = [];
 const latency = new Map<string, Awaited<ReturnType<typeof measureQueries>>>();
 const docTokens = new Map<string, Awaited<ReturnType<typeof measureDocuments>>>();
@@ -461,8 +416,7 @@ lines.push(
     "weights for bge-m3@1024; for every other variant weights fitted to it on the training sets (in-house, " +
     "semantic-, sentences-, romanized-, ranking-dev), scored there by 5-fold cross-validation. entities-dev is " +
     "never trained on.",
-  "- **unsure**: share of queries `assessConfidence` calls unsure with the variant's calibration (the API's " +
-    "concept tier asks the LLM for these).",
+  "- **unsure**: share of queries `assessConfidence` calls unsure with the variant's calibration.",
   "",
   "## Recall by set",
   "",
@@ -526,58 +480,6 @@ for (const run of runs) {
       ),
     ),
   ]);
-}
-
-if (args.concepts) {
-  lines.push(
-    "",
-    `## With the LLM concept tier (\`${CONCEPT_MODEL}\`) on entities-dev`,
-    "",
-    "fused + concept = the concept results merged after confident alias hits for unsure queries (the API).",
-    "",
-  );
-  const calls = conceptStats?.calls ?? [];
-  const priced = calls.filter((c) => c.usage?.neurons !== undefined);
-  const neurons = priced.reduce((sum, c) => sum + (c.usage?.neurons ?? 0), 0) / Math.max(1, priced.length);
-  const ms = calls.map((c) => c.ms);
-  if (calls.length) {
-    lines.push(
-      `LLM call from this machine (n = ${calls.length}): p50 ${percentile(ms, 50).toFixed(0)} ms, p95 ` +
-        `${percentile(ms, 95).toFixed(0)} ms; ${neurons.toFixed(2)} neurons → $${(((neurons * USD_PER_1K_NEURONS) / 1000) * 1e6).toFixed(0)} ` +
-        "per 1M unsure queries that miss every cache, plus one bge-m3 embedding of the terms.",
-      "",
-    );
-  }
-  header(["Variant", "fused", "fused + concept", "LLM calls (unsure)"], ["---", "--:", "--:", "--:"]);
-  for (const run of runs) {
-    const subset = inSet("entities-dev");
-    const withConcept = summarize(subset.map((it) => judge(it.q, run.concept?.get(it)?.lists ?? [])));
-    row([
-      run.variant.name,
-      pair(scoreOf(run, subset, (r) => r.lists.fused)),
-      pair(withConcept),
-      pct(subset.filter((it) => run.ranked.get(it)?.unsure).length, subset.length),
-    ]);
-  }
-  lines.push("");
-  header(
-    ["entities-dev by locale, fused + concept", ...entityLocales],
-    ["---", ...entityLocales.map(() => "--:")],
-  );
-  for (const run of runs) {
-    row([
-      run.variant.name,
-      ...entityLocales.map((l) =>
-        pair(
-          summarize(
-            inSet("entities-dev")
-              .filter((it) => it.q.locale === l)
-              .map((it) => judge(it.q, run.concept?.get(it)?.lists ?? [])),
-          ),
-        ),
-      ),
-    ]);
-  }
 }
 
 if (heldoutVariants.size) {
@@ -652,17 +554,10 @@ for (const run of runs) {
 }
 
 lines.push("", "## Example entity queries (en, fused top 5)", "");
-const exampleColumns = [
-  ...runs.map((r) => r.variant.name),
-  ...(args.concepts && runs[0] ? [`${runs[0].variant.name} + concept`] : []),
-];
+const exampleColumns = runs.map((r) => r.variant.name);
 header(["Query", ...exampleColumns], ["---", ...exampleColumns.map(() => "---")]);
 for (const it of examples) {
-  row([
-    it.q.q,
-    ...runs.map((run) => (run.ranked.get(it)?.lists.fused ?? []).slice(0, 5).join(" ")),
-    ...(args.concepts && runs[0] ? [(runs[0].concept?.get(it)?.lists ?? []).slice(0, 5).join(" ")] : []),
-  ]);
+  row([it.q.q, ...runs.map((run) => (run.ranked.get(it)?.lists.fused ?? []).slice(0, 5).join(" "))]);
 }
 
 lines.push("", "## Calibration and fitted reranker weights", "");
@@ -700,8 +595,6 @@ for (const run of runs) {
     documents: docTokens.get(run.variant.documents.key),
   };
 }
-if (args.concepts) json.conceptModel = CONCEPT_MODEL;
-json.usdPer1kNeurons = USD_PER_1K_NEURONS;
 
 const report = lines.join("\n");
 writeFileSync(join(EVAL_ROOT, "reports", "models.md"), `${report}\n`);
