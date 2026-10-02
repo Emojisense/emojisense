@@ -7,14 +7,8 @@ import type { DatedSource, SlangSource, SourceFile } from "@emojisense/data/cult
 import { getModel } from "@emojisense/data/models";
 import { vectorFileName } from "@emojisense/data/vector-files";
 import type { CultureAdminRpc } from "@emojisense/platform";
-import {
-  type AliasEngine,
-  createEngine,
-  decodeVectors,
-  type Pack,
-  type PackRow,
-  type VectorIndex,
-} from "emojisense";
+import { type AliasEngine, createEngine, type Pack, type PackRow } from "emojisense";
+import { decodeVectors, type VectorIndex } from "emojisense/vectors";
 // The in-house eval suite (never the held-out one): the canonical answers the culture gate keeps.
 import gateQueriesText from "../../eval/queries/queries.jsonl";
 import { createApp } from "./app.ts";
@@ -31,6 +25,7 @@ import packEn from "./generated/pack.en.json";
 import packTrExt from "./generated/pack.tr.ext.json";
 import packTr from "./generated/pack.tr.json";
 import vectors from "./generated/vectors.bin";
+import glyphVectors from "./generated/vectors.glyph.bin";
 import { assetPackReader, createLocaleEngines } from "./locale-engines.ts";
 import { assetVectorReader, createLocaleVectors } from "./locale-vectors.ts";
 import { runScheduled } from "./scheduled.ts";
@@ -74,6 +69,20 @@ const sharedIndex = () => {
   }
   return index;
 };
+// The glyph vectors (PACK_FORMAT §5) are bundled too; an empty file means this build has none.
+let glyph: VectorIndex | null | undefined;
+const glyphIndex = () => {
+  if (glyph === undefined) {
+    const decoded = decodeVectors(glyphVectors);
+    if (decoded.ids.length > 0 && (decoded.model !== config.modelId || decoded.dims !== config.dims)) {
+      throw new Error(
+        `glyph vector file is ${decoded.model}@${decoded.dims}, config says ${config.modelId}@${config.dims}`,
+      );
+    }
+    glyph = decoded.ids.length > 0 ? decoded : null;
+  }
+  return glyph ?? undefined;
+};
 // The shared vectors are bundled; each locale's own vectors are static assets, read on first use.
 const localeVectors = createLocaleVectors({
   shared: sharedIndex,
@@ -90,6 +99,7 @@ const catalog: Catalog = {
   aliasEngine: (locale, env) => localeEngines.get(locale, env),
   culture: (locale, env) => cultureFiles.get(locale, env),
   index: sharedIndex,
+  glyph: glyphIndex,
   vectors: (locale, env) => localeVectors.get(locale, env),
 };
 

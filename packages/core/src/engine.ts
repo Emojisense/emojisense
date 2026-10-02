@@ -85,6 +85,11 @@ export interface EngineOptions {
   minCoverage?: number;
   /** A culture file (loadCulture) whose entries add results after the canonical top result. */
   culture?: Culture;
+  /**
+   * Break equal scores by the packs' `popularity` (more used first) before row order. Default
+   * true; packs without the key keep row order (PACK_FORMAT.md §4).
+   */
+  popularity?: boolean;
 }
 
 export interface AliasEngine {
@@ -92,6 +97,8 @@ export interface AliasEngine {
   search(query: string, options: AliasSearchOptions & { culture: false }): CanonicalSearchOutput;
   search(query: string, options?: AliasSearchOptions): AliasSearchOutput;
   get(id: string): EmojiEntry | undefined;
+  /** How often people use the emoji, 0–1, from the packs' `popularity` (0 = unknown). */
+  popularity(id: string): number;
   /** The same index with another culture file (`undefined` = none). The index is shared, not rebuilt. */
   withCulture(culture: Culture | undefined): AliasEngine;
   readonly culture: Culture | undefined;
@@ -327,6 +334,13 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       indexById.set(row[ROW.hexcode], entries.length);
       entries.push(entryOf(pack, row));
     }
+  }
+  const entryPopularity = new Uint8Array(entries.length);
+  for (const pack of options.popularity === false ? [] : packs) {
+    pack.popularity?.forEach((value, row) => {
+      const index = indexById.get(pack.emoji[row]?.[ROW.hexcode] ?? "");
+      if (index !== undefined) entryPopularity[index] = value;
+    });
   }
 
   const {
@@ -628,7 +642,14 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         }
       }
     }
-    const ranked = scored.sort((a, b) => b.score - a.score || a.emoji - b.emoji).slice(0, limit);
+    const ranked = scored
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          (entryPopularity[b.emoji] as number) - (entryPopularity[a.emoji] as number) ||
+          a.emoji - b.emoji,
+      )
+      .slice(0, limit);
 
     const results: AliasResult[] = ranked.map(({ emoji, phrase, score }) => {
       const entry = entries[emoji] as EmojiEntry;
@@ -652,6 +673,10 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const index = indexById.get(id);
     return index === undefined ? undefined : entries[index];
   };
+  const popularity = (id: string) => {
+    const index = indexById.get(id);
+    return index === undefined ? 0 : (entryPopularity[index] as number) / 100;
+  };
 
   function withCulture(culture: Culture | undefined): AliasEngine {
     const searchWithCulture = (query: string, options: AliasSearchOptions = {}): AliasSearchOutput => {
@@ -668,6 +693,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       // With `culture: false` the output is the canonical one, which the first overload promises.
       search: searchWithCulture as AliasEngine["search"],
       get,
+      popularity,
       withCulture,
       culture,
       entries,

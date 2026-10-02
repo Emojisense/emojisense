@@ -75,6 +75,11 @@ public data class Pack(
     /** Field weight overrides. Fields without an entry use [Field.defaultWeight]. */
     val weights: Map<Field, Double> = emptyMap(),
     val emoji: List<PackRow>,
+    /**
+     * How often people use each row's emoji, percentile 0–100 (0 = unknown), in row order. English
+     * core pack only; it breaks alias score ties and feeds fusion (PACK_FORMAT.md §2).
+     */
+    val popularity: List<Int>? = null,
     /** Custom packs only: image URL per hexcode (`C-<emojiId>`). */
     val images: Map<String, String> = emptyMap(),
 ) {
@@ -103,6 +108,7 @@ public data class Pack(
                 groups = root.optionalArray("groups")?.strings("groups") ?: emptyList(),
                 weights = root.optionalObject("weights")?.let(::decodeWeights) ?: emptyMap(),
                 emoji = rows.map(::decodeRow),
+                popularity = root.optionalArray("popularity")?.map { (it as? JsonPrimitive)?.intOrNull ?: 0 },
                 images = root.optionalObject("images")?.mapNotNull { (key, value) ->
                     value.stringOrNull()?.let { key to it }
                 }?.toMap() ?: emptyMap(),

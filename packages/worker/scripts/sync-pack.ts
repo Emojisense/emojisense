@@ -32,8 +32,8 @@ import { addDays, buildCultureFiles } from "@emojisense/data/culture";
 import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import { vectorFileName } from "@emojisense/data/vector-files";
-import { decodeVectors, encodeVectors } from "emojisense";
+import { glyphVectorFileName, vectorFileName } from "@emojisense/data/vector-files";
+import { decodeVectors, encodeVectors } from "emojisense/vectors";
 import { assetHeaders } from "./asset-headers.ts";
 import { contentHash } from "./content-hash.ts";
 
@@ -83,6 +83,19 @@ for (const code of vectorLocales) {
   }
 }
 
+// The glyph vectors (PACK_FORMAT §5): bundled, and published with the pack. Without the file (no
+// `embed:glyph` step) the Worker gets an empty one and ranks without the glyph term.
+const glyphFile = glyphVectorFileName(model.key, dims);
+const hasGlyph = index.ids.length > 0 && existsSync(join(source, glyphFile));
+const glyphBytes = hasGlyph ? readFileSync(join(source, glyphFile)) : encodeVectors(model.id, [], []);
+const glyph = decodeVectors(glyphBytes);
+if (
+  hasGlyph &&
+  (glyph.model !== model.id || glyph.dims !== dims || glyph.ids.some((id) => !index.ids.includes(id)))
+) {
+  throw new Error(`${glyphFile} does not match ${vectorFile} (model, dims or emoji); run embed:glyph again`);
+}
+
 const workerRoot = new URL("..", import.meta.url).pathname;
 const generated = join(workerRoot, "src", "generated");
 mkdirSync(generated, { recursive: true });
@@ -96,6 +109,7 @@ if (unpublished.length > 0) throw new Error(`no core pack for ${unpublished.join
 const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
+writeFileSync(join(generated, "vectors.glyph.bin"), glyphBytes);
 const queryTemplate = formatQuery(model, "{q}");
 // What a cached search answer depends on besides the request: every locale pack the Worker can
 // load, which vector files it has (model, dims, emoji), the model and the built core engine
@@ -111,6 +125,7 @@ const vectorIdentity = (name: string, vectors: { model: string; dims: number; id
 const hash = await contentHash([
   ...PACK_FILES.map((file) => ({ name: file, bytes: readFileSync(join(source, file)) })),
   vectorIdentity("vectors.bin", index),
+  vectorIdentity("vectors.glyph.bin", glyph),
   ...vectorLocales.map((code) => {
     const file = vectorFileName(model.key, dims, code);
     return vectorIdentity(file, decodeVectors(readFileSync(join(source, file))));
@@ -139,6 +154,7 @@ const manifest = JSON.parse(readFileSync(join(source, "manifest.json"), "utf8"))
 const published = [
   ...PACK_FILES,
   ...(index.ids.length > 0 ? [vectorFile] : []),
+  ...(hasGlyph ? [glyphFile] : []),
   ...vectorLocales.map((code) => vectorFileName(model.key, dims, code)),
 ];
 manifest.files = Object.fromEntries(published.map((f) => [f, manifest.files[f]]));

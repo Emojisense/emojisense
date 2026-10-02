@@ -16,11 +16,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { type AliasEngine, createEngine, decodeVectors, type Pack } from "emojisense";
+import { type AliasEngine, createEngine, type Pack } from "emojisense";
+import { decodeVectors } from "emojisense/vectors";
 import { readPackConfig } from "./config.ts";
 import { disposeEmbeddings } from "./embeddings.ts";
 import { getModel } from "./models.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
+import { semanticBonus } from "./semantic-score.ts";
 import { bootstrapQueries } from "./shards/bootstrap.ts";
 import { buildShards } from "./shards/build.ts";
 import { cachedEmbedder, workersAiEmbedder } from "./shards/embedders.ts";
@@ -29,6 +31,7 @@ import { aggregateQueries, createWorkerGate, parseQueryLog, type QueryLogRow } f
 import { createFakeResolver, createVectorResolver } from "./shards/resolvers.ts";
 import type { ShardResolver } from "./shards/types.ts";
 import type { BaseEmoji } from "./types.ts";
+import { glyphVectorFileName } from "./vector-files.ts";
 
 const { values: args } = parseArgs({
   // pnpm forwards a literal "--"; drop it so flags after it still parse.
@@ -91,9 +94,13 @@ function createResolver(kind: string): ShardResolver {
   if (index.model !== model.id || index.dims !== dims) {
     throw new Error(`${file} holds ${index.model}@${index.dims}, expected ${model.id}@${dims}`);
   }
+  const glyphFile = join(packDir, glyphVectorFileName(model.key, dims));
+  const glyph = existsSync(glyphFile) ? decodeVectors(readFileSync(glyphFile)) : undefined;
   return createVectorResolver({
     tag: `${model.key}@${dims}`,
     index,
+    // The API's semantic score: popularity prior and glyph term (semantic-score.ts).
+    bonus: (query) => semanticBonus(fullEngine.popularity, glyph, query),
     emojiOf: (id) => fullEngine.get(id)?.emoji,
     embedder: kind === "cached" ? cachedEmbedder(model) : workersAiEmbedder(model),
   });

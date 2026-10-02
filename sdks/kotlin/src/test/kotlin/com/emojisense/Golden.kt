@@ -82,6 +82,37 @@ class Golden private constructor(root: JsonObject) {
         words.jsonArray.map { it.jsonPrimitive.content }
     }
 
+    /** `fuse` on recorded lists, with (reranked) and without (reciprocal) the reranker (PACK_FORMAT.md §10). */
+    data class FusionCase(
+        val q: String,
+        val aliasQuery: String,
+        val aliasConfidence: Double,
+        val alias: List<Ranked>,
+        /** (emoji, id, score) */
+        val semantic: List<Triple<String, String, Double>>,
+        val popularity: Map<String, Double>,
+        val reranked: List<String>,
+        val reciprocal: List<String>,
+    )
+
+    val fusion: List<FusionCase> = root.getValue("fusion").jsonArray.map { element ->
+        val case = element.jsonObject
+        val alias = case.getValue("alias").jsonObject
+        FusionCase(
+            q = case.text("q"),
+            aliasQuery = alias.text("query"),
+            aliasConfidence = alias.getValue("confidence").jsonPrimitive.double,
+            alias = ranked(alias.getValue("results").jsonArray),
+            semantic = case.getValue("semantic").jsonArray.map {
+                val row = it.jsonArray
+                Triple(row[0].jsonPrimitive.content, row[1].jsonPrimitive.content, row[2].jsonPrimitive.double)
+            },
+            popularity = case.getValue("popularity").jsonObject.mapValues { it.value.jsonPrimitive.double },
+            reranked = case.getValue("reranked").jsonArray.map { it.jsonPrimitive.content },
+            reciprocal = case.getValue("reciprocal").jsonArray.map { it.jsonPrimitive.content },
+        )
+    }
+
     companion object {
         /** The repository root, passed by Gradle (build.gradle.kts), else found from the working directory. */
         val repositoryRoot: File by lazy {

@@ -118,17 +118,47 @@ public enum Fusion {
   /// Below this alias confidence the alias tier is unsure (as in `shouldUseSemantic`): no floor.
   static let aliasFloorMinConfidence = 0.6
 
-  /// Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when
-  /// its best match is strong, down to 0.4 when it is weak, so a weak semantic list no longer
-  /// outranks an alias hit. When the alias tier is sure (confidence ≥ 0.6), its results within
-  /// 0.1 of the top score stay first; the semantic tier reorders them but cannot push in a
-  /// clearly weaker one. Semantic country flags the alias tier does not support go last.
+  /// How ``fuse(alias:semantic:limit:calibration:ranking:)`` orders the lists, like `FuseRanking`
+  /// in packages/core/src/fusion.ts.
+  public struct Ranking: Sendable {
+    /// Emoji popularity 0–1, usually ``AliasEngine/popularity(_:)``.
+    public var popularity: (@Sendable (String) -> Double)?
+    /// false = the confidence-weighted reciprocal rank fusion (the ranking before the reranker).
+    public var rerank: Bool
+
+    public init(popularity: (@Sendable (String) -> Double)? = nil, rerank: Bool = true) {
+      self.popularity = popularity
+      self.rerank = rerank
+    }
+  }
+
+  /// The learned reranker (``Rerank``) by default: alias hits ≥ 0.9 stay on top in alias order,
+  /// then every other candidate of both lists by a linear score over alias and semantic scores,
+  /// ranks, popularity and confidences; semantic country flags the alias tier does not support go
+  /// last. Pass `Ranking(popularity: engine.popularity)`.
+  ///
+  /// With `rerank: false`, fusion with weights from how sure each tier is. Alias: 0.4 +
+  /// confidence. Semantic: 1 when its best match is strong, down to 0.4 when it is weak, so a weak
+  /// semantic list no longer outranks an alias hit. When the alias tier is sure (confidence ≥
+  /// 0.6), its results within 0.1 of the top score stay first; the semantic tier reorders them but
+  /// cannot push in a clearly weaker one. Semantic country flags the alias tier does not support go
+  /// last.
   public static func fuse(
     alias: AliasSearchOutput, semantic: [SearchResult], limit: Int = 24,
-    calibration: SemanticCalibration = .standard
+    calibration: SemanticCalibration = .standard, ranking: Ranking = Ranking()
   ) -> [SearchResult] {
     let aliasResults = alias.results.map(\.searchResult)
     let guarded = demoteUnsupportedFlags(semantic, alias: aliasResults, calibration: calibration)
+    if ranking.rerank {
+      let input = Rerank.Input(
+        alias: alias, semantic: guarded,
+        semanticConfidence: semanticConfidence(guarded, calibration: calibration),
+        popularity: ranking.popularity)
+      let ranked = Rerank.rerank(input, limit: Int.max)
+      return Array(
+        demoteUnsupportedFlags(ranked, alias: aliasResults, calibration: calibration)
+          .prefix(max(0, limit)))
+    }
     return fuseResults(
       alias: aliasResults, semantic: guarded,
       options: Options(

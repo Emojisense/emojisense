@@ -45,8 +45,13 @@ public class AliasEngine private constructor(
      * English first, then the extension parts, then custom packs.
      */
     @JvmOverloads
-    public constructor(packs: List<Pack>, minCoverage: Double = DEFAULT_MIN_COVERAGE, culture: Culture? = null) :
-        this(Searcher(AliasIndex(packs), minCoverage), culture)
+    public constructor(
+        packs: List<Pack>,
+        minCoverage: Double = DEFAULT_MIN_COVERAGE,
+        culture: Culture? = null,
+        /** false = ignore the packs' `popularity`: equal scores keep row order. */
+        popularity: Boolean = true,
+    ) : this(Searcher(AliasIndex(packs, popularity), minCoverage), culture)
 
     /** Builds the index from the core parts, then the extension parts. */
     @JvmOverloads
@@ -64,6 +69,10 @@ public class AliasEngine private constructor(
     public val packVersion: String get() = searcher.index.primary.packVersion
 
     public fun entry(id: String): EmojiEntry? = searcher.index.indexById[id]?.let { searcher.index.entries[it] }
+
+    /** How often people use the emoji, 0–1, from the packs' `popularity` (0 = unknown). */
+    public fun popularity(id: String): Double =
+        searcher.index.indexById[id]?.let { searcher.index.entryPopularity[it] / 100.0 } ?: 0.0
 
     /** The same index with another culture file (null = none). The index is shared, not rebuilt. */
     public fun withCulture(culture: Culture?): AliasEngine = AliasEngine(searcher, culture)
@@ -253,7 +262,13 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 }
             }
         }
-        scored.sortWith { a, b -> b.score.compareTo(a.score).takeIf { it != 0 } ?: a.emoji.compareTo(b.emoji) }
+        // Equal scores: the more used emoji first (pack `popularity`), then row order (PACK_FORMAT.md §4).
+        val popularity = index.entryPopularity
+        scored.sortWith { a, b ->
+            b.score.compareTo(a.score).takeIf { it != 0 }
+                ?: popularity[b.emoji].compareTo(popularity[a.emoji]).takeIf { it != 0 }
+                ?: a.emoji.compareTo(b.emoji)
+        }
         return scored
     }
 

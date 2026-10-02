@@ -25,7 +25,7 @@ const REPO_ROOT = args.root ? resolve(args.root) : THIS_REPO;
 const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
-const { createEngine, embeddingText, normalize } = core;
+const { createEngine, embeddingText, fuse, normalize } = core;
 const { FUNCTION_WORDS }: typeof import("../../../packages/core/src/function-words.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/function-words.ts")).href
 );
@@ -239,6 +239,58 @@ function keystrokeCases(engine: AliasEngine, list: Query[] = queries) {
     );
 }
 
+// ── Fusion ────────────────────────────────────────────────────────────────────────────────────
+/** mulberry32: a small deterministic PRNG. */
+function random(seed: number): () => number {
+  let state = seed;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * `fuse` with and without the reranker on each query's real alias output (limit 12) and a
+ * stand-in semantic list: some alias ids and random emoji (flags included), descending scores in
+ * the API's range, three decimals. Self-contained (lists and popularity values), so a port checks
+ * its fusion even where its alias output differs.
+ */
+function fusionCases(engine: AliasEngine, list: Query[]) {
+  return list.map((q) => {
+    const next = random(fnv1a(0x811c9dc5, q.q));
+    const alias = engine.search(q.q, { locale: q.locale, limit: 12, culture: false });
+    const pool = [...alias.results.slice(0, 8).map((r) => r.id)];
+    while (pool.length < 24) pool.push(engine.entries[Math.floor(next() * engine.entries.length)]?.id ?? "");
+    const ids = [...new Set(pool.filter(() => next() < 0.7))].slice(0, 12);
+    let score = 0.4 + 0.35 * next();
+    const semantic = ids.map((id) => {
+      const row = [engine.get(id)?.emoji ?? "", id, Math.round(score * 1000) / 1000] as const;
+      score -= 0.002 + 0.02 * next();
+      return row;
+    });
+    const results = semantic.map(([emoji, id, s]) => ({ emoji, id, score: s, source: "semantic" as const }));
+    const popularity = Object.fromEntries(
+      [...new Set([...alias.results.map((r) => r.id), ...ids])].map((id) => [id, engine.popularity(id)]),
+    );
+    const fused = (rerank: boolean) =>
+      fuse(alias, results, TOP, undefined, { popularity: engine.popularity, rerank }).map((r) => r.id);
+    return {
+      q: q.q,
+      alias: {
+        query: alias.query,
+        confidence: alias.confidence,
+        results: alias.results.map((r) => [r.id, r.score]),
+      },
+      semantic,
+      popularity,
+      reranked: fused(true),
+      reciprocal: fused(false),
+    };
+  });
+}
+
 const fullFiles = filesFor("tr");
 const coreFiles = ["pack.en.json", "pack.tr.json"];
 const fullEngine = createEngine(fullFiles.map(pack));
@@ -278,6 +330,11 @@ const golden = {
     })),
   ],
   keystrokes: { packs: fullFiles, cases: keystrokeCases(fullEngine) },
+  /** `fuse` with (reranked) and without (reciprocal) the reranker; PACK_FORMAT.md §10. */
+  fusion: fusionCases(
+    fullEngine,
+    queries.filter((_, i) => i % 2 === 0),
+  ),
   /** Per sentence locale: every n-th sentence, keystroke by keystroke. */
   sentenceKeystrokes: localeEngines.map(({ files, engine, list }) => ({
     packs: files,

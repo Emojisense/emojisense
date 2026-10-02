@@ -11,7 +11,7 @@ import {
 import type { Env } from "../src/env.ts";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
-import { catalog, fromCountry, harness, keyedSearch } from "./fixtures.ts";
+import { catalog, fromCountry, harness, keyedSearch, ROW } from "./fixtures.ts";
 
 const entry = (overrides: Partial<CultureEntry> & Pick<CultureEntry, "id">): CultureEntry => ({
   kind: "lasting",
@@ -62,7 +62,8 @@ const lavaWeek = entry({
 const withCulture = (file: Culture | null = cultureFile([shipParty, rocketDino, lavaWeek])) => {
   const read = vi.fn(async (locale: string) => (locale === "en" ? (file ?? undefined) : undefined));
   const cultured: Catalog = { ...catalog, culture: read };
-  return { h: harness({ catalog: cultured }), read };
+  // A semantic tier with no opinion: the canonical top is the alias answer the entries are about.
+  return { h: harness({ catalog: cultured, embedTo: ROW.neutral }), read };
 };
 
 const body = async (res: Response) => (await res.json()) as SearchBody;
@@ -78,7 +79,9 @@ describe("GET /v1/search with culture", () => {
     expect(res.results.every((r) => r.source !== "culture")).toBe(true);
     expect(read).not.toHaveBeenCalled();
     const off = await body(
-      await harness({ catalog: { ...catalog } }).call(keyedSearch("ship it", "&culture=0")),
+      await harness({ catalog: { ...catalog }, embedTo: ROW.neutral }).call(
+        keyedSearch("ship it", "&culture=0"),
+      ),
     );
     expect(glyphs(off)).toEqual(glyphs(res));
   });

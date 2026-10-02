@@ -1,13 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { Shard, ShardIndex } from "@emojisense/data/shards";
 import { addDays, dayOf } from "@emojisense/platform";
-import {
-  createLayeredSemantic,
-  createSemanticClient,
-  createShardProvider,
-  decodeVectors,
-  encodeVectors,
-} from "emojisense";
+import { createLayeredSemantic, createSemanticClient, createShardProvider } from "emojisense";
+import { decodeVectors, encodeVectors } from "emojisense/vectors";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AiBinding, Env } from "../src/env.ts";
 import { runScheduled } from "../src/scheduled.ts";

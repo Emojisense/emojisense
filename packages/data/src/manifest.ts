@@ -3,7 +3,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { formatQuery, getModel } from "./models.ts";
-import { parseVectorFileName } from "./vector-files.ts";
+import { parseGlyphVectorFileName, parseVectorFileName } from "./vector-files.ts";
 
 export interface ManifestFile {
   sha256: string;
@@ -13,6 +13,8 @@ export interface ManifestFile {
   model?: string;
   dims?: number;
   queryTemplate?: string;
+  /** A glyph vector file: several rows per emoji (PACK_FORMAT.md §5). */
+  glyph?: true;
 }
 
 /** Compressed size as the manifest reports it (and as the pack budget is measured). */
@@ -40,7 +42,9 @@ export function writeManifest(dir: string, meta: Record<string, unknown>): Manif
     };
     const pack = /^pack\.([\w-]+?)(?:\.ext)?\.json$/.exec(name);
     if (pack) entry.locale = pack[1] as string;
-    const vectors = parseVectorFileName(name);
+    const glyph = parseGlyphVectorFileName(name);
+    const vectors = parseVectorFileName(name) ?? glyph;
+    if (glyph) entry.glyph = true;
     if (vectors) {
       const model = getModel(vectors.modelKey);
       // A locale's vector file names its locale; the shared file has none (PACK_FORMAT.md §5).

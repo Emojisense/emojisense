@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { getModel } from "@emojisense/data/models";
-import { encodeVectors, l2normalize } from "emojisense";
+import { encodeVectors, l2normalize } from "emojisense/vectors";
 import { afterAll, describe, expect, it } from "vitest";
 import { loadVectorLayout } from "../src/vector-layout.ts";
 

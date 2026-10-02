@@ -23,6 +23,7 @@ import { LOCALE_CODES } from "./locales.ts";
 import { gzipSize, writeManifest } from "./manifest.ts";
 import { packFields } from "./pack-fields.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
+import { loadPopularity, POPULARITY_CREDIT, popularityOf } from "./popularity.ts";
 import type { BaseEmoji } from "./types.ts";
 import type { Validated } from "./validate.ts";
 
@@ -45,6 +46,11 @@ const validated: Validated = JSON.parse(readFileSync(join(BUILD_DIR, "validated.
 /** Aliases were curated in validate.ts; the CLDR keywords are curated here (pack-fields.ts). */
 const curations = loadCurations(join(ENRICHMENT_DIR, "curation.json"));
 const groups = [...new Set(emoji.map((e) => e.group))];
+/** The popularity prior (popularity.ts) rides in the English core pack, which every client loads. */
+const popularity = popularityOf(
+  emoji.map((e) => e.hexcode),
+  loadPopularity(),
+);
 
 function buildPacks(locale: string, coreAliasCount: number): { core: Pack; ext: Pack } {
   const core: PackRow[] = [];
@@ -75,6 +81,7 @@ function buildPacks(locale: string, coreAliasCount: number): { core: Pack; ext: 
     ...(part === "ext" ? { part } : {}),
     emojiVersion: config.emojiVersion,
     groups,
+    ...(part === "core" && locale === "en" ? { popularity } : {}),
     emoji: rows,
   });
   return { core: pack("core", core), ext: pack("ext", ext) };
@@ -113,7 +120,8 @@ writeFileSync(
 const manifest = writeManifest(outDir, {
   packVersion: config.packVersion,
   emojiVersion: config.emojiVersion,
-  source,
+  // CC BY 4.0 asks for the credit wherever the data goes: the published manifest carries it.
+  source: { ...source, popularity: POPULARITY_CREDIT },
   emojiCount: emoji.length,
   coreAliases,
 });

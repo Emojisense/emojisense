@@ -67,7 +67,9 @@ let semantic = ProviderChain([
 if Fusion.shouldUseSemantic(alias),
   let response = try await semantic.search("jurassic pa", options: .init(locale: "en"))
 {
-  results = Fusion.fuse(alias: alias, semantic: response.results)
+  results = Fusion.fuse(
+    alias: alias, semantic: response.results,
+    ranking: .init(popularity: { [engine] in engine.popularity($0) }))
 }
 ```
 

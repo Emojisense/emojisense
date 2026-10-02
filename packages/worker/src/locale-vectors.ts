@@ -1,4 +1,4 @@
-import { decodeVectors, type VectorIndex } from "emojisense";
+import { decodeVectors, type VectorIndex } from "emojisense/vectors";
 import type { Env } from "./env.ts";
 
 /** Reads one published vector file (e.g. `vectors.bge-m3.1024.es.bin`) of the Worker's pack version. */

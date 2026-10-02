@@ -1,4 +1,4 @@
-import { encodeVectors, type VectorIndex } from "emojisense";
+import { encodeVectors, type VectorIndex } from "emojisense/vectors";
 import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../src/env.ts";
 import { assetVectorReader, createLocaleVectors, type VectorReader } from "../src/locale-vectors.ts";

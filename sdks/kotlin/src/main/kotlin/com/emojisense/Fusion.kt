@@ -97,11 +97,26 @@ public object Fusion {
     }
 
     /**
-     * Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when its
-     * best match is strong, down to 0.4 when it is weak, so a weak semantic list no longer outranks
-     * an alias hit. When the alias tier is sure (confidence ≥ 0.6), its results within 0.1 of the
-     * top score stay first; the semantic tier reorders them but cannot push in a clearly weaker
-     * one. Semantic country flags the alias tier does not support go last.
+     * How [fuse] orders the lists, like `FuseRanking` in packages/core/src/fusion.ts.
+     * [popularity] is usually [AliasEngine.popularity]; `rerank = false` is the confidence-weighted
+     * reciprocal rank fusion (the ranking before the reranker).
+     */
+    public data class Ranking @JvmOverloads constructor(
+        val popularity: ((String) -> Double)? = null,
+        val rerank: Boolean = true,
+    )
+
+    /**
+     * The learned reranker ([Rerank]) by default: alias hits ≥ 0.9 stay on top in alias order, then
+     * every other candidate of both lists by a linear score over alias and semantic scores, ranks,
+     * popularity and confidences; semantic country flags the alias tier does not support go last.
+     * Pass `Ranking(engine::popularity)`.
+     *
+     * With `rerank = false`, fusion with weights from how sure each tier is. Alias: 0.4 +
+     * confidence. Semantic: 1 when its best match is strong, down to 0.4 when it is weak, so a weak
+     * semantic list no longer outranks an alias hit. When the alias tier is sure (confidence ≥ 0.6),
+     * its results within 0.1 of the top score stay first; the semantic tier reorders them but cannot
+     * push in a clearly weaker one. Semantic country flags the alias tier does not support go last.
      */
     @JvmStatic
     @JvmOverloads
@@ -110,8 +125,14 @@ public object Fusion {
         semantic: List<SearchResult>,
         limit: Int = 24,
         calibration: SemanticCalibration = SemanticCalibration.DEFAULT,
+        ranking: Ranking = Ranking(),
     ): List<SearchResult> {
         val guarded = demoteUnsupportedFlags(semantic, alias.results, calibration)
+        if (ranking.rerank) {
+            val input = Rerank.Input(alias, guarded, semanticConfidence(guarded, calibration), ranking.popularity)
+            val ranked = Rerank.rerank(input, Int.MAX_VALUE)
+            return demoteUnsupportedFlags(ranked, alias.results, calibration).take(maxOf(0, limit))
+        }
         return fuseResults(
             alias.results,
             guarded,

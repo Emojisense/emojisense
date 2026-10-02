@@ -34,8 +34,11 @@ public final class AliasEngine: @unchecked Sendable {
   private var scratch: SearchScratch
 
   /// Builds the index from packs in index order: the first pack is the primary one.
-  public init(packs: [Pack], minCoverage: Double = defaultMinCoverage) throws {
-    index = try AliasIndex(packs: packs)
+  /// `popularity: false` ignores the packs' `popularity` (equal scores keep row order).
+  public init(packs: [Pack], minCoverage: Double = defaultMinCoverage, popularity: Bool = true)
+    throws
+  {
+    index = try AliasIndex(packs: packs, popularity: popularity)
     self.minCoverage = minCoverage
     scratch = SearchScratch(phraseCount: index.phraseCount, emojiCount: index.entries.count)
   }
@@ -50,6 +53,11 @@ public final class AliasEngine: @unchecked Sendable {
 
   public func entry(id: String) -> EmojiEntry? {
     index.entryIndexById[id].map { index.entries[$0] }
+  }
+
+  /// How often people use the emoji, 0–1, from the packs' `popularity` (0 = unknown).
+  public func popularity(_ id: String) -> Double {
+    index.entryIndexById[id].map { Double(index.entryPopularity[$0]) / 100 } ?? 0
   }
 
   public func search(_ query: String, options: AliasSearchOptions = AliasSearchOptions())
@@ -179,7 +187,13 @@ public final class AliasEngine: @unchecked Sendable {
         }
       }
     }
-    ranked.sort { $0.score != $1.score ? $0.score > $1.score : $0.emoji < $1.emoji }
+    // Equal scores: the more used emoji first (pack `popularity`), then row order (PACK_FORMAT §4).
+    let popularity = index.entryPopularity
+    ranked.sort {
+      if $0.score != $1.score { return $0.score > $1.score }
+      let (left, right) = (popularity[Int($0.emoji)], popularity[Int($1.emoji)])
+      return left != right ? left > right : $0.emoji < $1.emoji
+    }
     return ranked
   }
 

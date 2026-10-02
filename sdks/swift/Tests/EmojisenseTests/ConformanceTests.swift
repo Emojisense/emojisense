@@ -152,6 +152,38 @@ final class ConformanceTests: XCTestCase {
     }
   }
 
+  // MARK: Fusion
+
+  /// `Fusion.fuse` on the reference's alias and semantic lists, with and without the reranker.
+  func testFusionMatchesTheReference() throws {
+    let cases = try Self.golden.get().fusion
+    var differences: [String] = []
+    for testCase in cases {
+      let alias = AliasSearchOutput(
+        query: testCase.alias.query, tokens: [],
+        results: testCase.alias.results.map {
+          AliasResult(emoji: $0.id, id: $0.id, score: $0.score, label: "", match: "", field: .alias)
+        },
+        confidence: testCase.alias.confidence)
+      let semantic = testCase.semantic.map {
+        SearchResult(emoji: $0.emoji, id: $0.id, score: $0.score, source: .semantic)
+      }
+      let popularity = testCase.popularity
+      for (rerank, expected) in [(true, testCase.reranked), (false, testCase.reciprocal)] {
+        let ranking = Fusion.Ranking(popularity: { popularity[$0] ?? 0 }, rerank: rerank)
+        let actual = Fusion.fuse(alias: alias, semantic: semantic, limit: 10, ranking: ranking)
+          .map(\.id)
+        if actual != expected {
+          differences.append(
+            "  \(debug(testCase.q)) rerank \(rerank):\n    swift \(actual)\n    ts    \(expected)")
+        }
+      }
+    }
+    let count = cases.count * 2
+    report("fusion, identical top-10 ids", agreed: count - differences.count, of: count, differences)
+    XCTAssertEqual(differences, [])
+  }
+
   // MARK: Function words
 
   /// The Swift copy (FunctionWords.swift, generated) holds exactly the reference lists.

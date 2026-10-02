@@ -15,6 +15,22 @@ export function vectorFileName(modelKey: string, dims: number, locale?: string):
   return `vectors.${modelKey}.${dims}${locale ? `.${locale}` : ""}.bin`;
 }
 
+/**
+ * The glyph file of a model × dims: several rows per emoji, embedded from texts that hold the
+ * emoji itself (glyph-documents.ts, PACK_FORMAT.md §5). `parseVectorFileName` does not match it,
+ * so readers that know only document files skip it.
+ */
+export function glyphVectorFileName(modelKey: string, dims: number): string {
+  return `vectors.${modelKey}.${dims}.glyph.bin`;
+}
+
+const GLYPH_PATTERN = /^vectors\.([\w-]+)\.(\d+)\.glyph\.bin$/;
+
+export function parseGlyphVectorFileName(name: string): VectorFile | undefined {
+  const match = GLYPH_PATTERN.exec(name);
+  return match ? { modelKey: match[1] as string, dims: Number(match[2]) } : undefined;
+}
+
 const PATTERN = /^vectors\.([\w-]+)\.(\d+)(?:\.([a-z]{2,3}))?\.bin$/;
 
 export function parseVectorFileName(name: string): VectorFile | undefined {

@@ -80,6 +80,37 @@ struct Golden: Decodable, Sendable {
   let keystrokes: Keystrokes
   /// Sentences of the other pack locales, typed keystroke by keystroke (en + that locale).
   let sentenceKeystrokes: [Keystrokes]
+  /// `fuse` on recorded lists, with and without the reranker (PACK_FORMAT.md §10).
+  let fusion: [FusionCase]
+
+  struct FusionCase: Decodable, Sendable {
+    struct Alias: Decodable, Sendable {
+      let query: String
+      let confidence: Double
+      let results: [Ranked]
+    }
+
+    /// Stored as `[emoji, id, score]`.
+    struct Semantic: Decodable, Sendable {
+      let emoji: String
+      let id: String
+      let score: Double
+
+      init(from decoder: any Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        emoji = try container.decode(String.self)
+        id = try container.decode(String.self)
+        score = try container.decode(Double.self)
+      }
+    }
+
+    let q: String
+    let alias: Alias
+    let semantic: [Semantic]
+    let popularity: [String: Double]
+    let reranked: [String]
+    let reciprocal: [String]
+  }
 
   static func load() throws -> Golden {
     guard let url = Bundle.module.url(forResource: "golden", withExtension: "json") else {

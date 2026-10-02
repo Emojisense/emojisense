@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { encodeVectors, l2normalize } from "emojisense";
+import { encodeVectors, l2normalize } from "emojisense/vectors";
 import type { EmojiDocuments } from "./documents.ts";
 import { disposeEmbeddings, embedTexts } from "./embeddings.ts";
 import { writeManifest } from "./manifest.ts";

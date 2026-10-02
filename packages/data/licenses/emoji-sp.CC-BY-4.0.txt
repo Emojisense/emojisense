@@ -1,0 +1,15 @@
+Popularity prior from Emoji-SP (Ferré et al. 2023), CC BY 4.0.
+
+Source:  Ferré, P., Haro, J., Pérez-Sánchez, M. Á., Moreno, I., Hinojosa, J. A. (2023).
+         Emoji-SP, the Spanish emoji database: Visual complexity, familiarity, frequency of use,
+         clarity, and emotional valence and arousal norms for 1031 emojis.
+         Behavior Research Methods 55, 1715–1733. doi:10.3758/s13428-022-01893-6
+Data:    https://osf.io/dtfjv/ (ferre_et_al_emojis_database.xlsx,
+         sha256 72e7c0060ad232962b8eec953e3a34d37d6ff7aef7146f148519fb08cf161d68)
+License: Creative Commons Attribution 4.0 International
+         https://creativecommons.org/licenses/by/4.0/legalcode (full text: NOTICE, section A)
+Changes: Only the mean rated frequency of use (column "freq", 1–7) is kept, keyed by code points
+         without U+FE0F (priors/popularity.json). The pack build turns each rating into a
+         percentile 0–100 per pack row (pack.en.json, key "popularity"); an emoji the source does
+         not rate gets its family's rating (gender and skin-tone variants) or 0.
+         No warranties are given.

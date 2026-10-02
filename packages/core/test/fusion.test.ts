@@ -75,7 +75,9 @@ describe("demoteUnsupportedFlags", () => {
   });
 });
 
-describe("fuse", () => {
+describe("fuse with rerank: false (confidence-weighted reciprocal rank fusion)", () => {
+  const rrf = (a: AliasSearchOutput, s: readonly SearchResult[], limit: number) =>
+    fuse(a, s, limit, undefined, { rerank: false });
   const alias = (confidence: number, emoji: string[]): AliasSearchOutput => ({
     query: "q",
     tokens: ["q"],
@@ -102,7 +104,7 @@ describe("fuse", () => {
 
   it("keeps an unsure alias hit above a weak semantic list", () => {
     // Alias 0.45 → weight 0.85; semantic best 0.42 → weight 0.4. A fixed semantic weight of 1 won.
-    expect(fuse(alias(0.45, ["A1", "A2"]), semantic(0.42), 4).map((x) => x.emoji)).toEqual([
+    expect(rrf(alias(0.45, ["A1", "A2"]), semantic(0.42), 4).map((x) => x.emoji)).toEqual([
       "A1",
       "A2",
       "S1",
@@ -130,12 +132,12 @@ describe("fuse", () => {
       })),
     };
     const semantic = [r("6️⃣", 0.46, "semantic"), r("🕕", 0.45, "semantic"), r("7️⃣", 0.43, "semantic")];
-    expect(fuse(out, semantic, 4).map((x) => x.emoji)).toEqual(["👍", "🔥", "6️⃣", "🕕"]);
+    expect(rrf(out, semantic, 4).map((x) => x.emoji)).toEqual(["👍", "🔥", "6️⃣", "🕕"]);
   });
 
   it("lets the semantic list break near-ties among the top alias results", () => {
     const out = alias(0.78, ["🪨", "🚀"]);
-    expect(fuse(out, [r("🚀", 0.51, "semantic"), r("🦝", 0.5, "semantic")], 3).map((x) => x.emoji)).toEqual([
+    expect(rrf(out, [r("🚀", 0.51, "semantic"), r("🦝", 0.5, "semantic")], 3).map((x) => x.emoji)).toEqual([
       "🚀",
       "🪨",
       "🦝",
@@ -144,16 +146,12 @@ describe("fuse", () => {
 
   it("ranks semantic country flags the alias tier does not hold after the other results", () => {
     const bhutan = { emoji: "🇧🇹", id: "1F1E7-1F1F9", score: 0.44, source: "semantic" as const };
-    const fused = fuse(
-      alias(0.26, ["😄"]),
-      [bhutan, r("🐰", 0.43, "semantic"), r("🐇", 0.42, "semantic")],
-      4,
-    );
+    const fused = rrf(alias(0.26, ["😄"]), [bhutan, r("🐰", 0.43, "semantic"), r("🐇", 0.42, "semantic")], 4);
     expect(fused.map((x) => x.emoji)).toEqual(["😄", "🐰", "🐇", "🇧🇹"]);
   });
 
   it("still lets a sure semantic list lead an unsure alias list", () => {
-    expect(fuse(alias(0.45, ["A1", "A2"]), semantic(0.7), 4).map((x) => x.emoji)).toEqual([
+    expect(rrf(alias(0.45, ["A1", "A2"]), semantic(0.7), 4).map((x) => x.emoji)).toEqual([
       "S1",
       "S2",
       "S3",

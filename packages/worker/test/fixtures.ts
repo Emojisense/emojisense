@@ -1,6 +1,7 @@
 import { getModel } from "@emojisense/data/models";
 import { hashKey } from "@emojisense/platform";
-import { createEngine, decodeVectors, encodeVectors, l2normalize, type Pack } from "emojisense";
+import { createEngine, type Pack } from "emojisense";
+import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { vi } from "vitest";
 import { createApp } from "../src/app.ts";
 import { VISION_MODEL } from "../src/config.ts";
@@ -41,8 +42,11 @@ const pack: Pack = {
 };
 
 const DIMS = 8;
-/** Vector row of each fixture emoji, for `fakeAi({ embedTo })`. */
-export const ROW = { trex: 0, volcano: 1, rocket: 2, dog: 3 } as const;
+/**
+ * Vector row of each fixture emoji, for `fakeAi({ embedTo })`. `neutral` embeds at the same
+ * distance from every row: a semantic tier with no opinion, so the alias tier decides the order.
+ */
+export const ROW = { trex: 0, volcano: 1, rocket: 2, dog: 3, neutral: -1 } as const;
 export const unit = (i: number) =>
   l2normalize(Float32Array.from({ length: DIMS }, (_, d) => (d === i ? 1 : 0.01)));
 
@@ -130,7 +134,9 @@ export function fakeAi(options: { embedTo?: number; label?: ImageLabel | string 
         choices: [{ message: { role: "assistant", content: visionContent(options.label) } }],
       };
     }
-    return { data: [Array.from(unit(options.embedTo ?? 1))] };
+    const row = options.embedTo ?? ROW.volcano;
+    const vector = row === ROW.neutral ? l2normalize(new Float32Array(DIMS).fill(1)) : unit(row);
+    return { data: [Array.from(vector)] };
   });
 }
 

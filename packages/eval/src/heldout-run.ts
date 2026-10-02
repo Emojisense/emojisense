@@ -11,13 +11,11 @@ import { vectorFileName } from "@emojisense/data/vector-files";
 import {
   type AliasEngine,
   type AliasSearchOutput,
-  createEngine,
   embeddingText,
-  fuse,
-  l2normalize,
   type Pack,
   type SearchResult,
 } from "emojisense";
+import { l2normalize } from "emojisense/vectors";
 import {
   type HeldoutBaseline,
   type HeldoutQuery,
@@ -30,6 +28,7 @@ import {
 } from "./heldout.ts";
 import { type InHouseScores, renderHeldoutReport } from "./heldout-report.ts";
 import { judge, type QueryOutcome } from "./metrics.ts";
+import { fuseRanked, rankingEngine, semanticSearch } from "./ranking.ts";
 import { loadVectorLayout } from "./vector-layout.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
@@ -55,6 +54,8 @@ export interface HeldoutRun {
   details: { alias: Map<string, AliasSearchOutput>; semantic?: Map<string, SearchResult[]> };
   /** The packs each locale's engine was built from. */
   packsFor(locale: string): Pack[];
+  /** The alias engine of a locale (the one its fused lists used). */
+  engineFor(locale: string): AliasEngine;
 }
 
 export async function runHeldoutSuite(options: {
@@ -72,8 +73,9 @@ export async function runHeldoutSuite(options: {
     locales.map((l) => [l, l === "en" ? en : [...en, readPack(l), readPack(`${l}.ext`)]]),
   );
   const packsFor = (locale: string) => packs.get(locale) ?? [];
-  const engines = new Map<string, AliasEngine>(locales.map((l) => [l, createEngine(packsFor(l))]));
-  const engineFor = (q: HeldoutQuery) => engines.get(q.locale) as AliasEngine;
+  const engines = new Map<string, AliasEngine>(locales.map((l) => [l, rankingEngine(packsFor(l))]));
+  const engineOf = (locale: string) => engines.get(locale) as AliasEngine;
+  const engineFor = (q: HeldoutQuery) => engineOf(q.locale);
   const alias = new Map<string, AliasSearchOutput>(
     queries.map((q) => [q.id, engineFor(q).search(q.q, { locale: q.locale, limit: 24 })]),
   );
@@ -95,7 +97,7 @@ export async function runHeldoutSuite(options: {
   if (!layout) {
     const file = vectorFileName(model.key, options.model.dims);
     skipped.push(`fused ${tag}: no ${file} (nor a locale vector file) in the pack directory`);
-    return { queries, locales, modes, skipped, details: { alias }, packsFor };
+    return { queries, locales, modes, skipped, details: { alias }, packsFor, engineFor: engineOf };
   }
   let semantic: Map<string, SearchResult[]> | undefined;
   try {
@@ -105,20 +107,17 @@ export async function runHeldoutSuite(options: {
     const ranked = new Map<string, SearchResult[]>(
       queries.map((q, i) => {
         const query = l2normalize((vectors[i] as Float32Array).slice(0, options.model.dims));
-        const results = layout.search(q.locale, query, 24).map((m) => ({
-          emoji: engineFor(q).get(m.id)?.emoji ?? "",
-          id: m.id,
-          score: m.score,
-          source: "semantic" as const,
-        }));
-        return [q.id, results];
+        return [q.id, semanticSearch(engineFor(q), layout, q.locale, query, 24)];
       }),
     );
     modes.push(
       evaluate(`fused ${tag}`, "fused", (q) =>
-        fuse(alias.get(q.id) as AliasSearchOutput, ranked.get(q.id) as SearchResult[], LIMIT).map(
-          (r) => r.emoji,
-        ),
+        fuseRanked(
+          engineFor(q),
+          alias.get(q.id) as AliasSearchOutput,
+          ranked.get(q.id) as SearchResult[],
+          LIMIT,
+        ).map((r) => r.emoji),
       ),
     );
     semantic = ranked;
@@ -134,6 +133,7 @@ export async function runHeldoutSuite(options: {
     skipped,
     details: { alias, ...(semantic ? { semantic } : {}) },
     packsFor,
+    engineFor: engineOf,
   };
 }
 

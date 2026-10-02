@@ -117,11 +117,14 @@ public struct Pack: Sendable {
   public var groups: [String]
   /// Field weight overrides. Fields without an entry use ``Field/defaultWeight``.
   public var weights: [Field: Double]
+  /// How often people use each row's emoji, percentile 0–100 (0 = unknown), in row order. English
+  /// core pack only; it breaks alias score ties and feeds fusion (PACK_FORMAT.md §2).
+  public var popularity: [Int]?
   public var emoji: [PackRow]
 
   public init(
     packVersion: String, locale: String, part: Part = .core, emojiVersion: String,
-    groups: [String], weights: [Field: Double] = [:], emoji: [PackRow]
+    groups: [String], weights: [Field: Double] = [:], popularity: [Int]? = nil, emoji: [PackRow]
   ) {
     self.packVersion = packVersion
     self.locale = locale
@@ -129,6 +132,7 @@ public struct Pack: Sendable {
     self.emojiVersion = emojiVersion
     self.groups = groups
     self.weights = weights
+    self.popularity = popularity
     self.emoji = emoji
   }
 
@@ -144,7 +148,8 @@ public struct Pack: Sendable {
 
 extension Pack: Decodable {
   private enum CodingKeys: String, CodingKey {
-    case format, formatVersion, packVersion, locale, part, emojiVersion, groups, weights, emoji
+    case format, formatVersion, packVersion, locale, part, emojiVersion, groups, weights,
+      popularity, emoji
   }
 
   public init(from decoder: any Decoder) throws {
@@ -167,6 +172,7 @@ extension Pack: Decodable {
       uniqueKeysWithValues: rawWeights.compactMap { key, value in
         Field(rawValue: key).map { ($0, value) }
       })
+    popularity = try container.decodeIfPresent([Int].self, forKey: .popularity)
     emoji = try container.decode([PackRow].self, forKey: .emoji)
   }
 }

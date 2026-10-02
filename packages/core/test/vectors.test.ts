@@ -82,4 +82,13 @@ describe("searchVectorSets", () => {
     expect(searchVectorSets([shared, locale], query, 1)).toHaveLength(1);
     expect(searchVectorSets([], query)).toEqual([]);
   });
+
+  it("adds the bonus to an emoji's best row before ranking", () => {
+    const plain = searchVectorSets([shared, locale], query, 3);
+    const bonus = (id: string) => (id === "1F680" ? 2 : 0);
+    const boosted = searchVectorSets([shared, locale], query, 3, { bonus });
+    expect(boosted[0]?.id).toBe("1F680");
+    expect(boosted[0]?.score).toBeCloseTo((plain.find((m) => m.id === "1F680")?.score as number) + 2);
+    expect(searchVectors(shared, query, 1, { bonus })[0]?.id).toBe("1F680");
+  });
 });

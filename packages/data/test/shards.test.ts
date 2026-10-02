@@ -2,16 +2,8 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
-import {
-  createEngine,
-  createShardProvider,
-  decodeVectors,
-  encodeVectors,
-  l2normalize,
-  type Shard,
-  type ShardIndex,
-  shardKeyFor,
-} from "emojisense";
+import { createEngine, createShardProvider, type Shard, type ShardIndex, shardKeyFor } from "emojisense";
+import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildShards } from "../src/shards/build.ts";
 import { gzipBytes, loadShardEntries, readShardIndex, writeShardDir } from "../src/shards/files.ts";

@@ -22,17 +22,15 @@ import { parseVectorFileName, vectorFileName } from "@emojisense/data/vector-fil
 import {
   type AliasEngine,
   type AliasSearchOutput,
-  createEngine,
   DEFAULT_SEMANTIC_CALIBRATION,
   embeddingText,
-  fuse,
-  l2normalize,
   type Pack,
   ROW_INDEX,
   type SearchResult,
   type SemanticCalibration,
   shouldUseSemantic,
 } from "emojisense";
+import { l2normalize } from "emojisense/vectors";
 import { computeLayeredCost, type MeasuredRate, withValue } from "./cost.ts";
 import { ASSUMPTIONS_PATH, loadCostInputs } from "./cost-inputs.ts";
 import { renderCostReport, usd } from "./cost-report.ts";
@@ -46,6 +44,7 @@ import {
   summarize,
 } from "./metrics.ts";
 import { type EvalQuery, loadQueries } from "./queries.ts";
+import { fuseRanked, rankingEngine, semanticSearch } from "./ranking.ts";
 import { parseRunArgs } from "./run-args.ts";
 import { loadVectorLayout, type VectorLayout } from "./vector-layout.ts";
 
@@ -114,9 +113,9 @@ function simulateCore(core: Pack, ext: Pack, maxAliases: number): Pack {
 
 const gz = (value: unknown) => gzipSync(JSON.stringify(value), { level: 9 }).length;
 const buildStarted = performance.now();
-const engine = createEngine(packs);
+const engine = rankingEngine(packs);
 const buildMs = performance.now() - buildStarted;
-const coreEngine = createEngine(corePacks);
+const coreEngine = rankingEngine(corePacks);
 
 const aliasOutputs = new Map<string, AliasSearchOutput>();
 const aliasSearch = (e: AliasEngine, q: EvalQuery) => e.search(q.q, { locale: q.locale, limit: 24 });
@@ -141,7 +140,7 @@ for (const cap of (args["alias-caps"] ?? "").split(",").filter(Boolean).map(Numb
   const simulated = [0, 1].map((i) => simulateCore(corePacks[i] as Pack, extPacks[i] as Pack, cap));
   const variant = `core with ≤${cap} aliases`;
   sizes.push({ variant, enGz: gz(simulated[0]), trGz: gz(simulated[1]) });
-  const simulatedEngine = createEngine(simulated);
+  const simulatedEngine = rankingEngine(simulated);
   results.push(
     evaluate(`alias (${variant})`, "alias", (q) =>
       aliasSearch(simulatedEngine, q)
@@ -152,7 +151,7 @@ for (const cap of (args["alias-caps"] ?? "").split(",").filter(Boolean).map(Numb
 }
 
 for (const minCoverage of (args["min-coverage"] ?? "").split(",").filter(Boolean).map(Number)) {
-  const tuned = createEngine(packs, { minCoverage });
+  const tuned = rankingEngine(packs, { minCoverage });
   results.push(
     evaluate(`alias (min coverage ${minCoverage})`, "alias", (q) =>
       aliasSearch(tuned, q)
@@ -225,15 +224,7 @@ try {
     const semantic = new Map<string, SearchResult[]>();
     scored.forEach((q, i) => {
       const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
-      semantic.set(
-        q.id,
-        layout.search(q.locale, query, 24).map((m) => ({
-          emoji: engine.get(m.id)?.emoji ?? "",
-          id: m.id,
-          score: m.score,
-          source: "semantic" as const,
-        })),
-      );
+      semantic.set(q.id, semanticSearch(engine, layout, q.locale, query, 24));
     });
     const tag = `${model.key}@${dims}`;
     const note = !model.mrl && dims < model.nativeDims ? "truncated, model not MRL-trained" : undefined;
@@ -266,11 +257,13 @@ try {
         `fused ${tag}`,
         "fused",
         (q) =>
-          fuse(
+          fuseRanked(
+            engine,
             aliasOutputs.get(q.id) as AliasSearchOutput,
             semantic.get(q.id) as SearchResult[],
             LIMIT,
             calibration,
+            shipped,
           ).map((r) => r.emoji),
         base,
       ),
@@ -284,7 +277,8 @@ try {
           const alias = aliasOutputs.get(q.id) as AliasSearchOutput;
           if (!shouldUseSemantic(alias)) return alias.results.slice(0, LIMIT).map((r) => r.emoji);
           gated++;
-          return fuse(alias, semantic.get(q.id) as SearchResult[], LIMIT, calibration).map((r) => r.emoji);
+          const list = semantic.get(q.id) as SearchResult[];
+          return fuseRanked(engine, alias, list, LIMIT, calibration, shipped).map((r) => r.emoji);
         },
         base,
       ),

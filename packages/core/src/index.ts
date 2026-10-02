@@ -42,6 +42,7 @@ export {
 export {
   DEFAULT_SEMANTIC_CALIBRATION,
   type FuseOptions,
+  type FuseRanking,
   fuse,
   fuseResults,
   type SemanticCalibration,
@@ -78,6 +79,12 @@ export {
 } from "./provider.js";
 export { COMMON_REACTIONS } from "./reactions.js";
 export {
+  RERANK_WEIGHTS,
+  type RerankInput,
+  rerank,
+  rerankFeatures,
+} from "./rerank.js";
+export {
   createSearchSession,
   type SearchSession,
   type SearchSessionOptions,
@@ -102,12 +109,4 @@ export {
   shardKeyFor,
 } from "./shards.js";
 export { applySkinTone, SKIN_TONES, type SkinTone } from "./skin.js";
-export {
-  decodeVectors,
-  encodeVectors,
-  l2normalize,
-  searchVectorSets,
-  searchVectors,
-  type VectorIndex,
-  type VectorMatch,
-} from "./vectors.js";
+// The vector file format and search (vectors.ts) are a server-side subpath: `emojisense/vectors`.
