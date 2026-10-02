@@ -9,7 +9,7 @@ import type { Catalog } from "../src/semantic.ts";
 import { runShardBuild, type ShardLimits } from "../src/shards/job.ts";
 import { selectCandidates, selectionWindow } from "../src/shards/select.ts";
 import { type ShardPointer, storePrefix } from "../src/shards/storage.ts";
-import { API, catalog, harness, ROW, unit } from "./fixtures.ts";
+import { API, catalog, harness, ROW, TEST_KEY, unit } from "./fixtures.ts";
 import { memoryR2 } from "./memory-r2.ts";
 import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
 
@@ -497,11 +497,16 @@ describe("GET /p/*", () => {
       return h.call(new Request(String(input)));
     }) as typeof globalThis.fetch;
 
-    const layered = createLayeredSemantic({ shardsUrl: `${API}/p/test`, endpoint: API, fetch });
+    const layered = createLayeredSemantic({
+      shardsUrl: `${API}/p/test`,
+      endpoint: API,
+      key: TEST_KEY,
+      fetch,
+    });
     const fromShard = await layered?.search("Lava eruption", { limit: 4 });
     expect(fromShard?.layer).toBe("shard");
 
-    const api = createSemanticClient({ endpoint: API, fetch });
+    const api = createSemanticClient({ endpoint: API, key: TEST_KEY, fetch });
     const fromApi = await api.search("lava eruption", { limit: 4 });
     expect(fromApi?.layer).toBe("api");
     expect(fromShard?.results).toEqual(fromApi?.results);
