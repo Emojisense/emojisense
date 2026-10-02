@@ -15,7 +15,7 @@
     },
     "waitlist": {
       "title": "Lista de espera",
-      "description": "Entre na lista de espera do Emojisense para Solo, Pro ou Scale. Enviamos um único e-mail quando seu plano estiver disponível."
+      "description": "Os planos pagos do Emojisense já estão disponíveis. Escolha Solo, Pro ou Scale na página de preços."
     },
     "about": {
       "title": "Sobre",
@@ -60,7 +60,6 @@
       "integrations": "Integrações",
       "playground": "Laboratório",
       "pricing": "Preços",
-      "waitlist": "Lista de espera",
       "docs": "Docs",
       "quickstart": "Guia rápido",
       "httpApi": "HTTP API",
@@ -444,7 +443,8 @@
     "everythingIn": "Tudo do {plan}, mais",
     "includes": "Inclui",
     "getFreeKey": "Obter chave grátis",
-    "joinWaitlist": "Lista de espera do {plan}",
+    "getPlan": "Obter {plan}",
+    "yearlyHint": "anual",
     "fine": "<strong>A busca continua funcionando ao atingir o limite.</strong> Após usar suas chamadas de IA do mês, as respostas no dispositivo, prontas e em cache continuam funcionando até o próximo mês. <link>O que conta como uma chamada?</link>",
     "unlimited": "Ilimitado",
     "groups": {
@@ -548,8 +548,7 @@
       "lead": "Todos os planos incluem a plataforma inteira de emoji. Planos maiores acrescentam volume, emoji personalizados, equipes e tenants.",
       "caption": "Recursos e limites de cada plano do Emojisense",
       "included": "Incluído",
-      "notIncluded": "Não incluído",
-      "join": "Lista de espera<hidden> do {plan}</hidden>"
+      "notIncluded": "Não incluído"
     },
     "calls": {
       "kicker": "Como o uso funciona",
@@ -665,10 +664,21 @@
           "item": "O {plan} custa {yearly} por ano em vez de {monthly}",
           "a": "{items}. Os outros planos têm cobrança mensal."
         },
-        "pay": {
-          "q": "Quando posso pagar por um plano?",
-          "a": "Os planos pagos estarão disponíveis em breve. Entre na lista de espera e enviaremos um único e-mail quando seu plano estiver disponível. O plano gratuito já funciona.",
-          "link": "Entrar na lista de espera"
+        "billing": {
+          "q": "Como funciona a cobrança?",
+          "a": "Escolha um plano nesta página. Depois, entre no painel e pague na página de pagamento do Whop. O Whop é nosso provedor de pagamentos. Ele aceita cartão ou outro meio de pagamento local e envia os recibos. O plano muda para todos os seus aplicativos assim que o pagamento é aprovado."
+        },
+        "cancel": {
+          "q": "Posso cancelar ou mudar meu plano?",
+          "a": "Sim, a qualquer momento. No painel, Cobrança → Gerenciar assinatura abre o Whop, onde você pode cancelar. Você mantém o plano até o fim do período pago. Depois, a conta passa para o Free, e seus aplicativos continuam funcionando dentro dos limites do Free. Para mudar de plano, escolha outro na página Cobrança. O novo plano começa quando o pagamento é aprovado, e o anterior deixa de ser renovado. O Whop não calcula a cobrança proporcional ao tempo de uso."
+        },
+        "paymentFailed": {
+          "q": "O que acontece se um pagamento falhar?",
+          "a": "O Whop tenta cobrar novamente e envia um e-mail para você. Seu plano continua funcionando por {days} dias. Atualize o meio de pagamento em Cobrança → Gerenciar assinatura. Se nenhum pagamento for aprovado nesse prazo, a conta passa para o Free."
+        },
+        "refunds": {
+          "q": "Vocês oferecem reembolsos?",
+          "a": "[Política de reembolso: a definir antes do lançamento.] Até a publicação, escreva para [e-mail de suporte] sobre qualquer pagamento."
         },
         "selfHost": {
           "q": "Posso auto-hospedar?",
@@ -691,8 +701,8 @@
   },
   "waitlist": {
     "hero": {
-      "title": "Seja um dos primeiros a usar os planos pagos.",
-      "lead": "Os planos pagos ainda não estão à venda. Deixe seu e-mail e enviaremos uma única mensagem quando seu plano estiver disponível. O plano gratuito já funciona."
+      "title": "Os planos pagos já estão disponíveis.",
+      "lead": "Escolha Solo, Pro ou Scale na <link>página de preços</link> e pague no painel. Este formulário continua disponível para links antigos. Ele apenas adiciona seu e-mail à nossa lista."
     },
     "formLabel": "Formulário da lista de espera",
     "plansTitle": "Resumo dos planos pagos",
@@ -766,11 +776,11 @@
     },
     "money": {
       "title": "Como ganhamos dinheiro",
-      "body": "Busca e sugestões de reações são grátis em todos os planos. Planos pagos acrescentam volume, foto em emoji, emoji personalizados, análise de uso, equipes e tenants. Sem anúncios, e não vendemos dados. Os planos pagos ainda não estão à venda: você pode <waitlist>entrar na lista de espera</waitlist> ou <free>começar grátis</free> hoje."
+      "body": "Busca e sugestões de reações são grátis em todos os planos. Planos pagos acrescentam volume, foto em emoji, emoji personalizados, análise de uso, equipes e tenants. Sem anúncios, e não vendemos dados. <pricing>Escolha um plano</pricing> ou <free>comece grátis</free> hoje."
     },
     "now": {
       "title": "Em que fase estamos",
-      "body": "No começo. O motor, {pack}, a API e o painel já funcionam. Os pagamentos vêm a seguir. O <changelog>histórico de alterações</changelog> registra o progresso.",
+      "body": "No começo. O motor, {pack}, a API, o painel e os planos pagos já funcionam. O <changelog>histórico de alterações</changelog> registra o progresso.",
       "pack": "o pacote de dados ({count} emoji, Emoji {emojiVersion}, {languages} idiomas)",
       "packs": "os pacotes de dados",
       "independent": "O Emojisense é um projeto independente. Perguntas, ideias e relatos de bugs são bem-vindos nas <issues>issues do GitHub</issues>."

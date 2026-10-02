@@ -15,7 +15,7 @@
     },
     "waitlist": {
       "title": "Bekleme listesi",
-      "description": "Solo, Pro veya Scale için Emojisense bekleme listesine katılın. Planınız açıldığında size bir kez e-posta göndeririz."
+      "description": "Emojisense ücretli planları artık satışta. Fiyatlar sayfasından Solo, Pro veya Scale seçin."
     },
     "about": {
       "title": "Hakkımızda",
@@ -60,7 +60,6 @@
       "integrations": "Entegrasyonlar",
       "playground": "Deneme alanı",
       "pricing": "Fiyatlar",
-      "waitlist": "Bekleme listesi",
       "docs": "Belgeler",
       "quickstart": "Hızlı başlangıç",
       "httpApi": "HTTP API",
@@ -444,7 +443,8 @@
     "everythingIn": "{plan} içindeki her şey, ayrıca",
     "includes": "Dahil olanlar",
     "getFreeKey": "Ücretsiz anahtar alın",
-    "joinWaitlist": "{plan} bekleme listesine katılın",
+    "getPlan": "{plan} alın",
+    "yearlyHint": "yıllık",
     "fine": "<strong>Limite ulaşınca arama durmaz.</strong> Aylık yapay zekâ çağrılarınız bitse de cihazdaki, hazır ve önbellekteki yanıtlar gelecek aya kadar çalışır. <link>Neler çağrı sayılır?</link>",
     "unlimited": "Sınırsız",
     "groups": {
@@ -547,8 +547,7 @@
       "lead": "Her plan tüm emoji platformunu sunar. Üst planlar daha fazla kullanım, özel emoji, ekipler ve müşteri alanları ekler.",
       "caption": "Her Emojisense planının özellikleri ve limitleri",
       "included": "Dahil",
-      "notIncluded": "Dahil değil",
-      "join": "<hidden>{plan} </hidden>bekleme listesine katılın"
+      "notIncluded": "Dahil değil"
     },
     "calls": {
       "kicker": "Kullanım nasıl hesaplanır?",
@@ -664,10 +663,21 @@
           "item": "{plan} yıllık {monthly} yerine {yearly} tutarındadır",
           "a": "{items}. Diğer planlar aylık faturalandırılır."
         },
-        "pay": {
-          "q": "Bir plan için ne zaman ödeme yapabilirim?",
-          "a": "Ücretli planlar yakında açılacak. Bekleme listesine katılın; planınız açıldığında size bir kez e-posta göndeririz. Ücretsiz planı bugün kullanabilirsiniz.",
-          "link": "Bekleme listesine katılın"
+        "billing": {
+          "q": "Faturalandırma nasıl işler?",
+          "a": "Bu sayfadan bir plan seçin. Ardından kontrol paneline giriş yapın ve Whop'un ödeme sayfasında ödeme yapın. Whop, ödeme sağlayıcımızdır. Kart veya başka bir yerel ödeme yöntemiyle ödeme alır ve makbuzları gönderir. Ödeme başarılı olduğunda tüm uygulamalarınızın planı değişir."
+        },
+        "cancel": {
+          "q": "Planımı iptal edebilir veya değiştirebilir miyim?",
+          "a": "Evet, istediğiniz zaman. Kontrol panelinde Faturalandırma → Aboneliği yönet seçeneği Whop'u açar. İptali orada yapabilirsiniz. Ödediğiniz dönemin sonuna kadar planınızı kullanmaya devam edersiniz. Sonra hesabınız Free planına geçer ve uygulamalarınız Free limitleri içinde çalışmaya devam eder. Plan değiştirmek için Faturalandırma sayfasından başka bir plan seçin. Ödeme yapıldığında yeni plan başlar ve eski plan artık yenilenmez. Whop, kullanılan süreye göre orantılı ücret hesaplamaz."
+        },
+        "paymentFailed": {
+          "q": "Ödeme başarısız olursa ne olur?",
+          "a": "Whop ödemeyi tekrar almayı dener ve size e-posta gönderir. Planınız {days} gün boyunca çalışmaya devam eder. Faturalandırma → Aboneliği yönet bölümünden ödeme yöntemini güncelleyin. Bu süre içinde ödeme alınamazsa hesabınız Free planına geçer."
+        },
+        "refunds": {
+          "q": "Para iadesi yapıyor musunuz?",
+          "a": "[İade politikası: kullanıma açılmadan önce belirlenecek.] Politika yayımlanana kadar her türlü ödeme konusunda [destek e-posta adresi] üzerinden yazın."
         },
         "selfHost": {
           "q": "Bunun yerine kendim barındırabilir miyim?",
@@ -690,8 +700,8 @@
   },
   "waitlist": {
     "hero": {
-      "title": "Ücretli planlar açıldığında ilk siz katılın.",
-      "lead": "Ücretli planlar henüz satışta değil. E-posta adresinizi bırakın; planınız açıldığında size bir kez yazalım. Ücretsiz planı bugün kullanabilirsiniz."
+      "title": "Ücretli planlar artık satışta.",
+      "lead": "<link>Fiyatlar sayfasından</link> Solo, Pro veya Scale seçin ve kontrol panelinde ödeme yapın. Bu form eski bağlantılar için burada kalır. Yalnızca e-posta adresinizi listemize ekler."
     },
     "formLabel": "Bekleme listesi formu",
     "plansTitle": "Bir bakışta ücretli planlar",
@@ -765,11 +775,11 @@
     },
     "money": {
       "title": "Nasıl gelir elde ediyoruz?",
-      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, fotoğraftan emoji, özel emoji, analizler, ekipler ve müşteri alanları ekler. Reklam yok, veri satmıyoruz. Ücretli planlar henüz satışta değil. <waitlist>Bekleme listesine katılabilir</waitlist> veya bugün <free>ücretsiz başlayabilirsiniz</free>."
+      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, fotoğraftan emoji, özel emoji, analizler, ekipler ve müşteri alanları ekler. Reklam yok, veri satmıyoruz. Bugün <pricing>bir plan seçin</pricing> veya <free>ücretsiz başlayın</free>."
     },
     "now": {
       "title": "Ne durumdayız?",
-      "body": "Henüz baştayız. Bugün motor, {pack}, API ve kontrol paneli çalışıyor. Sırada ödemeler var. <changelog>Değişiklik günlüğü</changelog> gelişmeleri kaydeder.",
+      "body": "Henüz baştayız. Bugün motor, {pack}, API, kontrol paneli ve ücretli planlar çalışıyor. <changelog>Değişiklik günlüğü</changelog> gelişmeleri kaydeder.",
       "pack": "veri paketi ({count} emoji, Emoji {emojiVersion}, {languages} dil)",
       "packs": "veri paketleri",
       "independent": "Emojisense bağımsız bir projedir. Sorularınızı, fikirlerinizi ve hata bildirimlerinizi <issues>GitHub sorunları</issues> üzerinden paylaşabilirsiniz."

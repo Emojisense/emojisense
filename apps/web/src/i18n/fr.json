@@ -15,7 +15,7 @@
     },
     "waitlist": {
       "title": "Liste d’attente",
-      "description": "Rejoignez la liste d’attente Emojisense pour Solo, Pro ou Scale. Nous vous envoyons un seul e-mail, à l’ouverture de votre forfait."
+      "description": "Les forfaits payants Emojisense sont disponibles. Choisissez Solo, Pro ou Scale sur la page des tarifs."
     },
     "about": {
       "title": "À propos",
@@ -60,7 +60,6 @@
       "integrations": "Intégrations",
       "playground": "Bac à sable",
       "pricing": "Tarifs",
-      "waitlist": "Liste d’attente",
       "docs": "Docs",
       "quickstart": "Bien démarrer",
       "httpApi": "HTTP API",
@@ -444,7 +443,8 @@
     "everythingIn": "Tout le forfait {plan}, plus",
     "includes": "Inclus",
     "getFreeKey": "Obtenir une clé gratuite",
-    "joinWaitlist": "Liste d’attente {plan}",
+    "getPlan": "Obtenir {plan}",
+    "yearlyHint": "facturation annuelle",
     "fine": "<strong>La recherche fonctionne même à la limite.</strong> Une fois vos appels IA mensuels utilisés, les réponses sur l’appareil, les réponses préparées et les réponses en cache continuent jusqu’au mois suivant. <link>Qu’est-ce qui compte comme un appel ?</link>",
     "unlimited": "Illimité",
     "groups": {
@@ -548,8 +548,7 @@
       "lead": "Chaque forfait inclut toute la plateforme emoji. Les forfaits supérieurs ajoutent du volume, des emoji personnalisés, des équipes et des locataires.",
       "caption": "Fonctions et limites de chaque forfait Emojisense",
       "included": "Inclus",
-      "notIncluded": "Non inclus",
-      "join": "S’inscrire<hidden> à la liste d’attente {plan}</hidden>"
+      "notIncluded": "Non inclus"
     },
     "calls": {
       "kicker": "Votre consommation",
@@ -665,10 +664,21 @@
           "item": "{plan} coûte {yearly} par an au lieu de {monthly}",
           "a": "{items}. Les autres forfaits sont facturés au mois."
         },
-        "pay": {
-          "q": "Quand pourrai-je payer un forfait ?",
-          "a": "Les forfaits payants seront bientôt disponibles. Rejoignez la liste d’attente. Nous vous envoyons un seul e-mail à l’ouverture de votre forfait. Le forfait gratuit fonctionne dès aujourd’hui.",
-          "link": "Rejoindre la liste d’attente"
+        "billing": {
+          "q": "Comment fonctionne la facturation ?",
+          "a": "Choisissez un forfait sur cette page, puis connectez-vous au tableau de bord et payez sur la page de paiement de Whop. Whop est notre prestataire de paiement. Il accepte les cartes ou d’autres moyens de paiement locaux et envoie les reçus. Le forfait change pour toutes vos applications dès que le paiement est confirmé."
+        },
+        "cancel": {
+          "q": "Puis-je résilier ou changer mon forfait ?",
+          "a": "Oui, à tout moment. Dans le tableau de bord, Facturation → Gérer l’abonnement ouvre Whop, où vous pouvez résilier. Vous conservez le forfait jusqu’à la fin de la période payée. Ensuite, le compte passe à Free et vos applications continuent de fonctionner dans les limites de Free. Pour changer de forfait, choisissez-en un autre sur la page Facturation. Le nouveau forfait commence dès son paiement et l’ancien cesse de se renouveler. Whop ne calcule pas les montants au prorata."
+        },
+        "paymentFailed": {
+          "q": "Que se passe-t-il si un paiement échoue ?",
+          "a": "Whop tente à nouveau le prélèvement et vous envoie un e-mail. Votre forfait continue de fonctionner pendant {days} jours. Mettez à jour le moyen de paiement dans Facturation → Gérer l’abonnement. Si aucun paiement n’est confirmé dans ce délai, le compte passe à Free."
+        },
+        "refunds": {
+          "q": "Proposez-vous des remboursements ?",
+          "a": "[Politique de remboursement : à définir avant le lancement.] Jusqu’à sa publication, écrivez à [adresse e-mail de l’assistance] pour toute question sur un paiement."
         },
         "selfHost": {
           "q": "Puis-je auto-héberger le service ?",
@@ -691,8 +701,8 @@
   },
   "waitlist": {
     "hero": {
-      "title": "Soyez parmi les premiers à accéder aux forfaits payants.",
-      "lead": "Les forfaits payants ne sont pas encore en vente. Laissez votre e-mail. Nous vous écrivons une seule fois, à l’ouverture de votre forfait. Le forfait gratuit fonctionne dès aujourd’hui."
+      "title": "Les forfaits payants sont disponibles.",
+      "lead": "Choisissez Solo, Pro ou Scale sur la <link>page des tarifs</link> et payez dans le tableau de bord. Ce formulaire reste disponible pour les anciens liens. Il ajoute seulement votre adresse e-mail à notre liste."
     },
     "formLabel": "Formulaire de liste d’attente",
     "plansTitle": "Les forfaits payants en bref",
@@ -766,11 +776,11 @@
     },
     "money": {
       "title": "Comment nous gagnons de l’argent",
-      "body": "La recherche et les suggestions de réactions sont gratuites dans chaque forfait. Les forfaits payants ajoutent du volume, la photo en emoji, les emoji personnalisés, les statistiques, les équipes et les locataires. Aucune publicité. Nous ne vendons pas les données. Les forfaits payants ne sont pas encore en vente. Vous pouvez <waitlist>rejoindre la liste d’attente</waitlist> ou <free>commencer gratuitement</free> dès aujourd’hui."
+      "body": "La recherche et les suggestions de réactions sont gratuites dans chaque forfait. Les forfaits payants ajoutent du volume, la photo en emoji, les emoji personnalisés, les statistiques, les équipes et les locataires. Aucune publicité. Nous ne vendons pas les données. <pricing>Choisissez un forfait</pricing> ou <free>commencez gratuitement</free> dès aujourd’hui."
     },
     "now": {
       "title": "Où nous en sommes",
-      "body": "Au début. Le moteur, {pack}, l’API et le tableau de bord fonctionnent déjà. Les paiements sont la prochaine étape. Le <changelog>journal des modifications</changelog> suit les avancées.",
+      "body": "Nous en sommes au début. Le moteur, {pack}, l’API, le tableau de bord et les forfaits payants fonctionnent déjà. Le <changelog>journal des modifications</changelog> suit les avancées.",
       "pack": "le pack de données ({count} emoji, Emoji {emojiVersion}, {languages} langues)",
       "packs": "les packs de données",
       "independent": "Emojisense est un projet indépendant. Vos questions, idées et signalements de bugs sont les bienvenus dans les <issues>tickets GitHub</issues>."

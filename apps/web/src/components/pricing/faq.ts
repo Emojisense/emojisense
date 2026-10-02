@@ -32,7 +32,11 @@ export function pricingFaqs(plans: Record<PlanId, Plan> = PLANS, page: FaqLocale
   const { t } = createTranslator(page.items, page.tag);
   const usd = (value: number) => formatUsdIn(page.tag, value);
   const count = (value: number) => formatCountIn(page.tag, value, page.unlimited);
-  const docs = (href: string, label: string) => ({ href, label, ...(page.docsInEnglish ? { hreflang: "en" } : {}) });
+  const docs = (href: string, label: string) => ({
+    href,
+    label,
+    ...(page.docsInEnglish ? { hreflang: "en" } : {}),
+  });
   const free = plans.free;
   const yearly = PLAN_IDS.map((id) => plans[id]).filter((plan) => plan.priceUsdYearly !== undefined);
   const yearlyAnswer =

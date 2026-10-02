@@ -15,7 +15,7 @@
     },
     "waitlist": {
       "title": "候补名单",
-      "description": "加入Emojisense的Solo、Pro或Scale候补名单。你选择的套餐开放时，我们只发一封邮件通知你。"
+      "description": "Emojisense付费套餐现已开售：在定价页面选择Solo、Pro或Scale。"
     },
     "about": {
       "title": "关于",
@@ -60,7 +60,6 @@
       "integrations": "集成",
       "playground": "试用",
       "pricing": "定价",
-      "waitlist": "候补名单",
       "docs": "文档",
       "quickstart": "快速入门",
       "httpApi": "HTTP API",
@@ -444,7 +443,8 @@
     "everythingIn": "包含{plan}全部功能，另加",
     "includes": "包含",
     "getFreeKey": "获取免费密钥",
-    "joinWaitlist": "加入{plan}候补名单",
+    "getPlan": "订购{plan}",
+    "yearlyHint": "按年计费",
     "fine": "<strong>达到限额，搜索仍可用。</strong>用完每月AI调用额度后，设备端答案、预置答案和缓存答案仍会提供服务，直到下个月。<link>哪些请求计为调用？</link>",
     "unlimited": "不限量",
     "groups": {
@@ -546,8 +546,7 @@
       "lead": "每个套餐都能使用完整emoji平台。更高档套餐增加用量、自定义emoji、团队和租户功能。",
       "caption": "Emojisense各套餐的功能和限额",
       "included": "包含",
-      "notIncluded": "不包含",
-      "join": "加入<hidden>{plan}</hidden>候补名单"
+      "notIncluded": "不包含"
     },
     "calls": {
       "kicker": "用量如何计算",
@@ -663,10 +662,21 @@
           "item": "{plan}每年{yearly}，原价{monthly}",
           "a": "{items}。其他套餐按月计费。"
         },
-        "pay": {
-          "q": "何时可以购买套餐？",
-          "a": "付费套餐即将开放。加入候补名单，你选择的套餐开放时，我们只发一封邮件通知你。免费套餐现在即可使用。",
-          "link": "加入候补名单"
+        "billing": {
+          "q": "如何计费？",
+          "a": "在此页面选择套餐，然后登录控制台，在Whop的结账页面付款。Whop是我们的支付服务商，支持银行卡或其他本地支付方式，并发送收据。付款成功后，你所有应用的套餐会立即变更。"
+        },
+        "cancel": {
+          "q": "可以取消或更换套餐吗？",
+          "a": "可以，随时都可以。在控制台中，点击“账单 → 管理订阅”即可打开Whop，在那里取消订阅。你可以继续使用套餐，直到已付费的周期结束。之后账户会转为Free，你的应用仍可在Free的限额内正常运行。要更换套餐，请在账单页面选择其他套餐。新套餐在付款后生效，旧套餐停止续订。Whop不按使用时长比例计费。"
+        },
+        "paymentFailed": {
+          "q": "付款失败会怎样？",
+          "a": "Whop会再次尝试扣款，并向你发送邮件。你的套餐可继续使用{days}天。请在“账单 → 管理订阅”中更新支付方式。如果到期前仍未付款成功，账户会转为Free。"
+        },
+        "refunds": {
+          "q": "可以退款吗？",
+          "a": "[退款政策：将在上线前确定。] 政策公布前，如有任何付款问题，请发送邮件至[支持邮箱]。"
         },
         "selfHost": {
           "q": "可以自行托管吗？",
@@ -689,8 +699,8 @@
   },
   "waitlist": {
     "hero": {
-      "title": "付费套餐开放时，第一时间获知。",
-      "lead": "付费套餐尚未开售。留下邮箱，你选择的套餐开放时，我们只发一封邮件通知你。免费套餐现在即可使用。"
+      "title": "付费套餐现已开售。",
+      "lead": "在<link>定价页面</link>选择Solo、Pro或Scale，并在控制台付款。此表单保留供旧链接使用，仅将你的邮箱添加到我们的列表中。"
     },
     "formLabel": "候补名单表单",
     "plansTitle": "付费套餐一览",
@@ -764,11 +774,11 @@
     },
     "money": {
       "title": "收入来源",
-      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、照片转emoji、自定义emoji、数据分析、团队和租户功能。没有广告，也不出售数据。付费套餐尚未开售：你可以<waitlist>加入候补名单</waitlist>，也可以现在就<free>免费开始</free>。"
+      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、照片转emoji、自定义emoji、数据分析、团队和租户功能。没有广告，也不出售数据。现在就<pricing>选择套餐</pricing>，或<free>免费开始</free>。"
     },
     "now": {
       "title": "当前进展",
-      "body": "还在早期阶段。引擎、{pack}、API和控制台现在都可使用。接下来将支持付款。进展记录在<changelog>更新日志</changelog>中。",
+      "body": "还在早期阶段。引擎、{pack}、API、控制台和付费套餐现在都可使用。进展记录在<changelog>更新日志</changelog>中。",
       "pack": "数据包（{count}个emoji，Emoji {emojiVersion}，{languages}种语言）",
       "packs": "数据包",
       "independent": "Emojisense是一个独立项目。欢迎在<issues>GitHub问题区</issues>提问、分享想法或报告错误。"

@@ -392,13 +392,14 @@ describe("languages", () => {
     }
   });
 
-  it("lists every language version in the sitemap, with its alternates", () => {
+  it("lists every language version in the sitemap, with its alternates, but not the waitlist", () => {
     const sitemap = readFileSync(file("/sitemap.xml"), "utf8");
-    for (const [locale, path] of everyVersion) {
+    for (const [locale, path] of everyVersion.filter(([, path]) => path !== "/waitlist/")) {
       expect(sitemap).toContain(`<loc>${SITE}${localized(path, locale)}</loc>`);
     }
     expect(sitemap).toContain(`hreflang="ar" href="${SITE}/ar/pricing/"`);
     expect(sitemap).not.toContain(`${SITE}/es/docs/`);
+    expect(sitemap).not.toContain("/waitlist/");
   });
 
   it("links every language from the footer, named in its own language, without flags", () => {
@@ -420,7 +421,10 @@ describe("languages", () => {
     expect(nav).toContain("/fr/pricing/");
     expect(nav).toContain("/docs/");
     expect(doc.querySelector('.nav-main a[href="/docs/"]')?.getAttribute("hreflang")).toBe("en");
-    expect(doc.querySelector('[data-plan="pro"] a.btn')?.getAttribute("href")).toBe("/fr/waitlist/?plan=pro");
+    // Paid plans open the dashboard's checkout, which is not translated.
+    expect(doc.querySelector('[data-plan="pro"] a.btn')?.getAttribute("href")).toBe(
+      `${DASHBOARD}/billing?plan=pro&interval=month`,
+    );
   });
 
   it("hands the hero and the demos the page's language", () => {

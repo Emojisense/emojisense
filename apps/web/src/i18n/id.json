@@ -15,7 +15,7 @@
     },
     "waitlist": {
       "title": "Daftar tunggu",
-      "description": "Bergabunglah dalam daftar tunggu Emojisense untuk Solo, Pro, atau Scale. Kami mengirim satu email saat paket Anda tersedia."
+      "description": "Paket berbayar Emojisense sudah tersedia. Pilih Solo, Pro, atau Scale di halaman harga."
     },
     "about": {
       "title": "Tentang",
@@ -60,7 +60,6 @@
       "integrations": "Integrasi",
       "playground": "Uji coba",
       "pricing": "Harga",
-      "waitlist": "Daftar tunggu",
       "docs": "Panduan",
       "quickstart": "Mulai cepat",
       "httpApi": "HTTP API",
@@ -444,7 +443,8 @@
     "everythingIn": "Semua di {plan}, ditambah",
     "includes": "Termasuk",
     "getFreeKey": "Dapatkan kunci gratis",
-    "joinWaitlist": "Masuk daftar tunggu {plan}",
+    "getPlan": "Dapatkan {plan}",
+    "yearlyHint": "tahunan",
     "fine": "<strong>Pencarian tetap bekerja saat batas tercapai.</strong> Setelah jatah panggilan AI bulanan habis, jawaban di perangkat, jawaban siap pakai, dan jawaban dalam cache tetap tersedia sampai bulan berikutnya. <link>Apa yang dihitung sebagai panggilan?</link>",
     "unlimited": "Tanpa batas",
     "groups": {
@@ -546,8 +546,7 @@
       "lead": "Setiap paket mendapat seluruh platform emoji. Paket lebih tinggi menambahkan volume, emoji khusus, tim, dan tenant.",
       "caption": "Fitur dan batas setiap paket Emojisense",
       "included": "Termasuk",
-      "notIncluded": "Tidak termasuk",
-      "join": "Masuk daftar tunggu<hidden> {plan}</hidden>"
+      "notIncluded": "Tidak termasuk"
     },
     "calls": {
       "kicker": "Cara hitung penggunaan",
@@ -663,10 +662,21 @@
           "item": "{plan} seharga {yearly} per tahun, alih-alih {monthly}",
           "a": "{items}. Paket lainnya ditagih bulanan."
         },
-        "pay": {
-          "q": "Kapan saya dapat membayar paket?",
-          "a": "Paket berbayar segera tersedia. Masuk daftar tunggu dan kami mengirim satu email saat paket Anda tersedia. Paket gratis dapat digunakan sekarang.",
-          "link": "Masuk daftar tunggu"
+        "billing": {
+          "q": "Bagaimana cara penagihan?",
+          "a": "Pilih paket di halaman ini. Lalu masuk ke dasbor dan bayar di halaman pembayaran Whop. Whop adalah penyedia layanan pembayaran kami. Whop menerima pembayaran dengan kartu atau metode pembayaran lokal lain dan mengirim bukti pembayaran. Paket berubah untuk semua aplikasi Anda segera setelah pembayaran berhasil."
+        },
+        "cancel": {
+          "q": "Apakah saya dapat membatalkan atau mengganti paket?",
+          "a": "Ya, kapan saja. Di dasbor, Tagihan → Kelola langganan membuka Whop, tempat Anda dapat membatalkan langganan. Anda tetap menggunakan paket hingga akhir periode yang sudah dibayar. Setelah itu, akun beralih ke Free, dan aplikasi Anda tetap bekerja dalam batas Free. Untuk mengganti paket, pilih paket lain di halaman Tagihan. Paket baru mulai berlaku setelah dibayar, dan paket lama tidak lagi diperpanjang. Whop tidak menghitung biaya secara proporsional berdasarkan waktu penggunaan."
+        },
+        "paymentFailed": {
+          "q": "Apa yang terjadi jika pembayaran gagal?",
+          "a": "Whop mencoba menagih lagi dan mengirim email kepada Anda. Paket Anda tetap bekerja selama {days} hari. Perbarui metode pembayaran di Tagihan → Kelola langganan. Jika tidak ada pembayaran yang berhasil dalam waktu tersebut, akun beralih ke Free."
+        },
+        "refunds": {
+          "q": "Apakah Anda memberikan pengembalian dana?",
+          "a": "[Kebijakan pengembalian dana: akan ditentukan sebelum peluncuran.] Sebelum kebijakan diterbitkan, kirim pertanyaan tentang pembayaran apa pun ke [email dukungan]."
         },
         "selfHost": {
           "q": "Apakah saya dapat host sendiri?",
@@ -689,8 +699,8 @@
   },
   "waitlist": {
     "hero": {
-      "title": "Jadi yang pertama saat paket berbayar tersedia.",
-      "lead": "Paket berbayar belum dijual. Tinggalkan email Anda dan kami mengirim satu email saat paket Anda tersedia. Paket gratis dapat digunakan sekarang."
+      "title": "Paket berbayar sudah tersedia.",
+      "lead": "Pilih Solo, Pro, atau Scale di <link>halaman harga</link> dan bayar di dasbor. Formulir ini tetap tersedia untuk tautan lama. Formulir ini hanya menambahkan email Anda ke daftar kami."
     },
     "formLabel": "Formulir daftar tunggu",
     "plansTitle": "Sekilas paket berbayar",
@@ -764,11 +774,11 @@
     },
     "money": {
       "title": "Sumber pendapatan kami",
-      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, foto ke emoji, emoji khusus, analitik, tim, dan tenant. Tanpa iklan, dan kami tidak menjual data. Paket berbayar belum dijual: Anda dapat <waitlist>masuk daftar tunggu</waitlist>, atau <free>mulai gratis</free> hari ini."
+      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, foto ke emoji, emoji khusus, analitik, tim, dan tenant. Tanpa iklan, dan kami tidak menjual data. <pricing>Pilih paket</pricing>, atau <free>mulai gratis</free> hari ini."
     },
     "now": {
       "title": "Perkembangan saat ini",
-      "body": "Masih tahap awal. Mesin, {pack}, API, dan dasbor dapat digunakan sekarang. Pembayaran menyusul. Ikuti perkembangannya di <changelog>catatan perubahan</changelog>.",
+      "body": "Masih tahap awal. Mesin, {pack}, API, dasbor, dan paket berbayar dapat digunakan sekarang. Ikuti perkembangannya di <changelog>catatan perubahan</changelog>.",
       "pack": "paket data ({count} emoji, Emoji {emojiVersion}, {languages} bahasa)",
       "packs": "paket data",
       "independent": "Emojisense adalah proyek independen. Sampaikan pertanyaan, ide, dan laporan bug melalui <issues>isu GitHub</issues>."
