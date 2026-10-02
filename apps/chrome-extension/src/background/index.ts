@@ -38,22 +38,28 @@ const search = createSearchService({
 });
 
 const UNAVAILABLE_TITLE =
-  "Emojisense cannot open on this page. Browser pages and the Chrome Web Store do not allow extensions.";
+  "Emojisense cannot open on this page. Browser settings pages and the extension store do not allow extensions.";
+
+/** Tab-specific badge and title; they survive navigation, so success clears them again. */
+async function markTab(tabId: number, available: boolean): Promise<void> {
+  await chrome.action.setBadgeBackgroundColor({ tabId, color: "#FF5B3A" });
+  await chrome.action.setBadgeText({ tabId, text: available ? "" : "!" });
+  await chrome.action.setTitle({ tabId, title: available ? ACTION_TITLE : UNAVAILABLE_TITLE });
+}
 
 async function open(tabId: number): Promise<void> {
   // Build the index while the content script loads; the first keystroke rarely waits for it.
   search.warm().catch(() => undefined);
+  let available = true;
   try {
     await openPicker(tabId, chromeInjector);
-    // Tab-specific badge and title survive navigation; clear a mark left by a protected page.
-    await chrome.action.setBadgeText({ tabId, text: "" });
-    await chrome.action.setTitle({ tabId, title: ACTION_TITLE });
-  } catch {
-    // Without this signal the shortcut would look broken on protected pages.
-    await chrome.action.setBadgeBackgroundColor({ tabId, color: "#FF5B3A" });
-    await chrome.action.setBadgeText({ tabId, text: "!" });
-    await chrome.action.setTitle({ tabId, title: UNAVAILABLE_TITLE });
+  } catch (error) {
+    // Protected pages refuse scripts; without a signal the shortcut would look broken.
+    available = false;
+    console.debug("emojisense: cannot open the picker in this tab", error);
   }
+  // The tab may have closed meanwhile; the badge is cosmetic.
+  await markTab(tabId, available).catch(() => undefined);
 }
 
 chrome.commands.onCommand.addListener((command, tab) => {
