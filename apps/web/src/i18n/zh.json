@@ -794,7 +794,6 @@
     "matched": "匹配到<q>{match}</q>",
     "bestMatch": "最佳匹配",
     "unsure": "没有明确的匹配，换个词试试",
-    "understoodAs": "理解为 <q>{terms}</q>",
     "idle": "电影、感受、错别字或其他语言，都可以试试。",
     "try": "试试",
     "play": "播放演示",

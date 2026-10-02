@@ -119,7 +119,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   };
 
   const results: SearchResult[] = query.trim() ? (state?.results ?? []) : [];
-  const { guessing, terms } = honestyOf(state, query);
+  const { guessing } = honestyOf(state, query);
   const current = results[active];
   const label = (r: SearchResult) => labelOf(engine, r.id, locale) ?? r.emoji;
   const matched = current && state?.alias.results.find((r) => r.id === current.id)?.match;
@@ -245,22 +245,16 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
           <span className="hs-unsure">{t.t("unsure")}</span>
         ) : current ? (
           // A new key per answer replaces the line instead of moving its parts (no layout shift).
-          <Fragment key={`${current.id}|${current.source}|${matched}|${terms.join()}|${auto && example}`}>
+          <Fragment key={`${current.id}|${current.source}|${matched}|${auto && example}`}>
             <span className="hs-name">{label(current)}</span>
             <span className="hs-sep" aria-hidden="true">
               ·
             </span>
-            {current.source === "concept" && terms.length > 0
-              ? rich(
-                  t.raw("understoodAs"),
-                  { q: (text) => <q dir="auto">{text}</q> },
-                  { terms: terms.join(", ") },
-                )
-              : current.source === "semantic" || current.source === "concept"
-                ? t.t("byMeaning")
-                : matched
-                  ? rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched })
-                  : t.t("bestMatch")}
+            {current.source === "semantic"
+              ? t.t("byMeaning")
+              : matched
+                ? rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched })
+                : t.t("bestMatch")}
             {auto && <span className="hs-kind">{kindOf(shown)}</span>}
           </Fragment>
         ) : (

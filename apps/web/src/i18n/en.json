@@ -795,7 +795,6 @@
     "matched": "matched <q>{match}</q>",
     "bestMatch": "best match",
     "unsure": "No strong match — try another word",
-    "understoodAs": "understood as <q>{terms}</q>",
     "idle": "A film, a feeling, a typo, another language — try anything.",
     "try": "Try",
     "play": "Play demo",

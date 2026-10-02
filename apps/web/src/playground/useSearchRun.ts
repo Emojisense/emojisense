@@ -2,7 +2,6 @@ import {
   type AliasEngine,
   type AliasSearchOutput,
   type CanonicalSearchOutput,
-  type ConceptInfo,
   createSearchSession,
   type SearchResult,
   type SessionState,
@@ -36,8 +35,6 @@ export interface SearchRun {
   edge: EdgeStatus;
   /** No tier understood the query (the session's verdict, or the API's in meaning-only mode). */
   unsure?: boolean;
-  /** The API's concept tier for an unsure query. */
-  concept?: ConceptInfo;
 }
 
 /** Hybrid "always ask": every query with words in it goes to the edge. */
@@ -65,7 +62,6 @@ export function useSearchRun({ engine, online, traced, settings }: Inputs): Sear
         alias: state.alias,
         deviceMs: state.aliasMs,
         unsure: state.unsure,
-        ...(state.concept ? { concept: state.concept } : {}),
       };
       switch (state.status) {
         case "idle":
@@ -142,7 +138,6 @@ export function useSearchRun({ engine, online, traced, settings }: Inputs): Sear
                 query,
                 results: response.results,
                 ...(response.unsure !== undefined ? { unsure: response.unsure } : {}),
-                ...(response.concept ? { concept: response.concept } : {}),
                 edge: {
                   kind: "answered",
                   ms: performance.now() - started,

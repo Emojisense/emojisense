@@ -111,7 +111,6 @@ const session = `function createSearchSession(options: {
   shouldUseSemantic?: (alias: AliasSearchOutput) => boolean;
   culture?: Culture | false; // default: the engine's; false = canonical ranking only
   region?: string; // for regional culture entries, e.g. "BR"
-  conceptRetryMs?: number; // default 1500: wait before asking again for a pending concept answer
   onChange: (state: SessionState) => void;
 }): { update(query: string): void; dispose(): void };
 
@@ -127,7 +126,6 @@ interface SessionState {
   error?: unknown;
   unsure: boolean; // no tier understood the query: show the results as guesses
   confidence: number; // 0–1
-  concept?: { status: "ok" | "none" | "pending" | "unavailable"; kind?: string; terms?: string[] };
 }`;
 
 const providers = `interface SemanticProvider {
@@ -230,9 +228,8 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
     <li>With <code>{"{ rerank: false }"}</code> as <code>ranking</code>, <code>fuse</code> merges with weights from the confidence of each tier instead. The dictionary weight is 0.4 + its confidence. The semantic weight goes from 0.4 to 1 as its best cosine goes from <code>calibration.floor</code> to <code>calibration.ceiling</code> (default <code>DEFAULT_SEMANTIC_CALIBRATION</code>, 0.44–0.58, for bge-m3). Results with a score of 0.9 or more stay pinned on top. When the dictionary is sure (confidence 0.6 or more), its results within 0.1 of its top score come next, in fused order. Semantic country flags that the dictionary results do not hold go last, unless their cosine reaches the calibration ceiling.</li>
     <li><code>semanticConfidence(semantic, calibration)</code>: that 0–1 value. Use your own calibration if you embed with another model.</li>
     <li><code>fuseResults(alias, semantic, options)</code>: the same, with your own <code>k</code> (60), <code>pinScore</code> (0.9), <code>aliasFloor</code> (off), <code>aliasWeight</code> and <code>semanticWeight</code>.</li>
-    <li><code>assessConfidence(alias, semantic)</code>: <code>{"{ confidence, unsure }"}</code>. A query is unsure when the dictionary does not cover it with confidence (one phrase matches all its words, <code>alias.coverage</code> 0.85 or more, and the top score is 0.6 or more) and the semantic list is flat or low. The session sets <code>state.unsure</code> with it; the API answers unsure keyed searches with its concept tier.</li>
+    <li><code>assessConfidence(alias, semantic)</code>: <code>{"{ confidence, unsure }"}</code>. A query is unsure when the dictionary does not cover it with confidence (one phrase matches all its words, <code>alias.coverage</code> 0.85 or more, and the top score is 0.6 or more) and the semantic list is flat or low. The session sets <code>state.unsure</code> with it; show the results as guesses then.</li>
     <li><code>semanticStrength(semantic, calibration)</code>: how strong a semantic list is, 0–1: the best cosine on the calibration scale, halved when it does not stand out from results 2–5. Below <code>SEMANTIC_SURE</code> (0.5) the list is flat or low.</li>
-    <li><code>mergeConcept(results, concept, alias, limit)</code>: puts the API's concept results (<code>source: "concept"</code>) after the confident dictionary hits and before the rest. The session does it for you; <code>state.concept.terms</code> holds the “understood as” words (catalog phrases).</li>
   </ul>
 
   <h2 id="helpers">Helpers</h2>
