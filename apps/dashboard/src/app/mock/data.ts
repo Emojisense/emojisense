@@ -38,8 +38,10 @@ export interface MockDb {
   keys: KeySummary[];
   emoji: (CustomEmoji & { appId: string })[];
   tenants: (Omit<Tenant, "emojiCount"> & { appId: string })[];
-  webhooks: Webhook[];
-  deliveries: WebhookDelivery[];
+  /** `lastDelivery` is derived from `deliveries` when a webhook is served. */
+  webhooks: Omit<Webhook, "lastDelivery">[];
+  /** Newest first, per webhook id. */
+  deliveries: Record<string, WebhookDelivery[]>;
   /** The own team; the first member is the owner. */
   members: TeamMemberSummary[];
   invites: TeamInviteSummary[];
@@ -134,7 +136,7 @@ function key(
 }
 
 export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
-  const deliveries: WebhookDelivery[] = [
+  const rows: [WebhookDelivery["event"], number | null, number | null, number][] = [
     ["custom_emoji.created", 200, 142, 0.2],
     ["custom_emoji.created", 200, 118, 3],
     ["tenant.created", 200, 96, 9],
@@ -143,13 +145,14 @@ export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
     ["custom_emoji.deleted", 200, 155, 26.1],
     ["custom_emoji.created", null, null, 50],
     ["custom_emoji.created", 200, 109, 50.3],
-  ].map(([event, status, durationMs, hoursAgo], index) => ({
+  ];
+  const deliveries: WebhookDelivery[] = rows.map(([event, status, durationMs, hoursAgo], index) => ({
     id: `dlv_${index}`,
-    webhookId: "whk_relay_main",
-    event: event as string,
-    status: status as number | null,
-    durationMs: durationMs as number | null,
-    createdAt: NOW - (hoursAgo as number) * 3_600_000,
+    event,
+    status,
+    ok: status !== null && status >= 200 && status < 300,
+    durationMs,
+    createdAt: NOW - hoursAgo * 3_600_000,
   }));
 
   return {
@@ -235,6 +238,7 @@ export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
           "tenant.deleted",
           "usage.threshold",
         ],
+        enabled: true,
         createdAt: ago(60),
         disabledAt: null,
       },
@@ -243,11 +247,12 @@ export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
         appId: RELAY,
         url: "https://ops.relay.chat/alerts/usage",
         events: ["usage.threshold"],
+        enabled: false,
         createdAt: ago(33),
         disabledAt: ago(2),
       },
     ],
-    deliveries,
+    deliveries: { whk_relay_main: deliveries, whk_relay_ops: [] },
     members: [
       {
         id: "acc_maya",

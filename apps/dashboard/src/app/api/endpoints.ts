@@ -8,15 +8,22 @@ import type {
   BillingResponse,
   CreatedInviteResponse,
   CreatedKeyResponse,
+  DeletedTenantResponse,
   Environment,
   KeyResponse,
   MeResponse,
   OkResponse,
   TeamMemberResponse,
   TeamResponse,
+  TenantResponse,
+  TenantsResponse,
   UpgradeResponse,
   UsageResponse,
   WaitlistResponse,
+  WebhookDeliveriesResponse,
+  WebhookResponse,
+  WebhooksResponse,
+  WebhookTestResponse,
 } from "../../shared/contract";
 import { request, unwrap } from "./client";
 import type {
@@ -26,9 +33,6 @@ import type {
   EmojiUpload,
   ImportResult,
   TeamRole,
-  Tenant,
-  Webhook,
-  WebhookDelivery,
   WebhookEvent,
 } from "./types";
 
@@ -93,28 +97,31 @@ export const api = {
   analytics: (appId: string, days: AnalyticsWindow) =>
     request<AnalyticsResponse>("GET", `${appPath(appId)}/analytics?days=${days}`),
 
-  listTenants: (appId: string) => request<{ tenants: Tenant[] }>("GET", `${appPath(appId)}/tenants`),
-  createTenant: (appId: string, input: { externalId: string; name?: string }) =>
-    request<unknown>("POST", `${appPath(appId)}/tenants`, input).then((data) =>
-      unwrap<Tenant>(data, "tenant"),
+  /** One page, ordered by externalId. Pass `nextCursor` back for the next one. */
+  listTenants: (appId: string, cursor?: string) =>
+    request<TenantsResponse>(
+      "GET",
+      `${appPath(appId)}/tenants?limit=100${cursor ? `&cursor=${segment(cursor)}` : ""}`,
     ),
+  createTenant: (appId: string, input: { externalId: string; name?: string }) =>
+    request<TenantResponse>("POST", `${appPath(appId)}/tenants`, input).then((data) => data.tenant),
   deleteTenant: (appId: string, tenantId: string) =>
-    request<unknown>("DELETE", `${appPath(appId)}/tenants/${segment(tenantId)}`),
+    request<DeletedTenantResponse>("DELETE", `${appPath(appId)}/tenants/${segment(tenantId)}`),
 
-  listWebhooks: (appId: string) => request<{ webhooks: Webhook[] }>("GET", `${appPath(appId)}/webhooks`),
+  listWebhooks: (appId: string) => request<WebhooksResponse>("GET", `${appPath(appId)}/webhooks`),
   createWebhook: (appId: string, input: { url: string; events: WebhookEvent[] }) =>
     request<CreatedWebhook>("POST", `${appPath(appId)}/webhooks`, input),
-  updateWebhook: (webhookId: string, input: { url?: string; events?: WebhookEvent[]; disabled?: boolean }) =>
-    request<unknown>("PATCH", `/api/webhooks/${segment(webhookId)}`, input).then((data) =>
-      unwrap<Webhook>(data, "webhook"),
+  updateWebhook: (webhookId: string, input: { url?: string; events?: WebhookEvent[]; enabled?: boolean }) =>
+    request<WebhookResponse>("PATCH", `/api/webhooks/${segment(webhookId)}`, input).then(
+      (data) => data.webhook,
     ),
-  deleteWebhook: (webhookId: string) => request<unknown>("DELETE", `/api/webhooks/${segment(webhookId)}`),
+  deleteWebhook: (webhookId: string) => request<OkResponse>("DELETE", `/api/webhooks/${segment(webhookId)}`),
   testWebhook: (webhookId: string) =>
-    request<unknown>("POST", `/api/webhooks/${segment(webhookId)}/test`).then((data) =>
-      unwrap<WebhookDelivery>(data, "delivery"),
+    request<WebhookTestResponse>("POST", `/api/webhooks/${segment(webhookId)}/test`).then(
+      (data) => data.delivery,
     ),
   listDeliveries: (webhookId: string) =>
-    request<{ deliveries: WebhookDelivery[] }>("GET", `/api/webhooks/${segment(webhookId)}/deliveries`),
+    request<WebhookDeliveriesResponse>("GET", `/api/webhooks/${segment(webhookId)}/deliveries`),
 
   team: (owner?: string) => request<TeamResponse>("GET", `/api/team${ownerQuery(owner)}`),
   createInvite: (input: { role: TeamRole; email?: string }, owner?: string) =>

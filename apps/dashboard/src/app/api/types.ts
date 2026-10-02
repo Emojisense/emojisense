@@ -1,10 +1,17 @@
 /**
  * Dashboard API shapes. Everything the Worker already serves comes from src/shared/contract.ts;
- * the product routes that have not landed yet (custom emoji, tenants, webhooks) mirror the
- * product contract (v1) here until they move there too.
+ * custom emoji, whose routes have not landed yet, mirror the product contract (v1) here until
+ * they move there too.
  */
-import type { CustomEmojiSource } from "@emojisense/platform";
-import type { AppSummary, MeResponse } from "../../shared/contract";
+import type { CustomEmojiSource, WebhookEventType } from "@emojisense/platform";
+import type {
+  AppSummary,
+  CreatedWebhookResponse,
+  MeResponse,
+  TenantSummary,
+  WebhookDeliverySummary,
+  WebhookSummary,
+} from "../../shared/contract";
 
 export { EMOJI_SETS, type EmojiSet, type PlanId, TEAM_ROLES, type TeamRole } from "@emojisense/platform";
 export type {
@@ -13,12 +20,14 @@ export type {
   AnalyticsResponse,
   BillingResponse,
   CreatedInviteResponse,
+  DeletedTenantResponse,
   Role,
   TeamInviteSummary,
   TeamMemberResponse,
   TeamMemberSummary,
   TeamResponse,
   TeamSummary,
+  TenantsResponse,
   UpgradeResponse,
 } from "../../shared/contract";
 
@@ -58,44 +67,10 @@ export interface ImportResult {
   skipped: number;
 }
 
-export interface Tenant {
-  id: string;
-  externalId: string;
-  name: string | null;
-  createdAt: number;
-  emojiCount: number;
-}
-
-export const WEBHOOK_EVENTS = [
-  "custom_emoji.created",
-  "custom_emoji.deleted",
-  "tenant.created",
-  "tenant.deleted",
-  "usage.threshold",
-] as const;
-export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
-
-export interface Webhook {
-  id: string;
-  appId: string;
-  url: string;
-  events: WebhookEvent[];
-  createdAt: number;
-  disabledAt: number | null;
-}
-
+export { WEBHOOK_EVENTS } from "@emojisense/platform";
+export type Tenant = TenantSummary;
+export type Webhook = WebhookSummary;
+export type WebhookEvent = WebhookEventType;
+export type WebhookDelivery = WebhookDeliverySummary;
 /** Only the create response carries the signing secret. */
-export interface CreatedWebhook {
-  webhook: Webhook;
-  secret: string;
-}
-
-export interface WebhookDelivery {
-  id: string;
-  webhookId: string;
-  event: string;
-  /** HTTP status; `null` = network error. */
-  status: number | null;
-  durationMs: number | null;
-  createdAt: number;
-}
+export type CreatedWebhook = CreatedWebhookResponse;

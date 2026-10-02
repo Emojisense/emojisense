@@ -12,6 +12,9 @@ import { PageHeader } from "../ui/PageHeader";
 import { PlanGate } from "../ui/PlanGate";
 import { useToast } from "../ui/Toast";
 
+/** The API allows this many endpoints per app (`409 webhook_limit` past it). */
+const MAX_WEBHOOKS = 10;
+
 function hostOf(url: string): string {
   try {
     const parsed = new URL(url);
@@ -33,6 +36,7 @@ export function WebhooksPage() {
 
   const list = hooks.status === "ready" ? hooks.data : [];
   const selected = list.find((hook) => hook.id === selectedId) ?? list[0] ?? null;
+  const full = list.length >= MAX_WEBHOOKS;
 
   const header = (
     <PageHeader
@@ -42,7 +46,13 @@ export function WebhooksPage() {
       actions={
         list.length > 0 &&
         !readOnly && (
-          <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={full}
+            title={full ? `An app can have ${MAX_WEBHOOKS} endpoints.` : undefined}
+            onClick={() => setCreating(true)}
+          >
             <Icon name="plus" />
             Add endpoint
           </button>
@@ -96,11 +106,13 @@ export function WebhooksPage() {
                   >
                     <span className="hook-url mono">{hostOf(hook.url)}</span>
                     <span className="hook-meta">
-                      <StatusBadge tone={hook.disabledAt ? "idle" : "good"}>
-                        {hook.disabledAt ? "Paused" : "Active"}
+                      <StatusBadge tone={hook.enabled ? "good" : "idle"}>
+                        {hook.enabled ? "Active" : "Paused"}
                       </StatusBadge>
                       <span>
-                        {hook.events.length} event{hook.events.length === 1 ? "" : "s"}
+                        {hook.lastDelivery
+                          ? `${hook.lastDelivery.ok ? "Last sent" : "Last failed"} ${formatRelative(hook.lastDelivery.createdAt)}`
+                          : `${hook.events.length} event${hook.events.length === 1 ? "" : "s"}`}
                       </span>
                     </span>
                   </button>
@@ -167,11 +179,12 @@ function WebhookDetail({
     setError(null);
     try {
       const delivery = await api.testWebhook(hook.id);
+      const answer = delivery.status === null ? "no answer" : `HTTP ${delivery.status}`;
+      const time = delivery.durationMs === null ? "" : ` in ${formatNumber(delivery.durationMs)} ms`;
       toast(
-        delivery?.status
-          ? `Test sent: HTTP ${delivery.status} in ${delivery.durationMs ?? "?"} ms`
-          : "Test sent. Check the delivery log.",
+        delivery.ok ? `Test event delivered: ${answer}${time}` : `Test event not accepted: ${answer}${time}`,
       );
+      onChange({ ...hook, lastDelivery: delivery });
       reload();
     } catch (caught) {
       setError(errorMessage(caught));
@@ -184,9 +197,9 @@ function WebhookDetail({
     setBusy("toggle");
     setError(null);
     try {
-      const updated = await api.updateWebhook(hook.id, { disabled: hook.disabledAt === null });
-      onChange({ ...hook, ...updated });
-      toast(updated.disabledAt ? "Endpoint paused" : "Endpoint resumed");
+      const updated = await api.updateWebhook(hook.id, { enabled: !hook.enabled });
+      onChange(updated);
+      toast(updated.enabled ? "Endpoint resumed" : "Endpoint paused");
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {
@@ -203,22 +216,17 @@ function WebhookDetail({
           </h2>
           <p className="card-sub">
             Added {formatDateTime(hook.createdAt)}
-            {hook.disabledAt ? ` · paused ${formatRelative(hook.disabledAt)}` : ""}
+            {!hook.enabled && hook.disabledAt ? ` · paused ${formatRelative(hook.disabledAt)}` : ""}
           </p>
         </div>
         {!readOnly && (
           <div className="btn-row">
-            <button
-              type="button"
-              className="btn btn-sm"
-              disabled={busy !== null || !!hook.disabledAt}
-              onClick={sendTest}
-            >
+            <button type="button" className="btn btn-sm" disabled={busy !== null} onClick={sendTest}>
               <Icon name="send" />
               {busy === "test" ? "Sending…" : "Send test event"}
             </button>
             <button type="button" className="btn btn-sm" disabled={busy !== null} onClick={toggle}>
-              {hook.disabledAt ? "Resume" : "Pause"}
+              {hook.enabled ? "Pause" : "Resume"}
             </button>
             <button
               type="button"
@@ -289,14 +297,13 @@ function DeliveriesTable({ deliveries }: { deliveries: WebhookDelivery[] }) {
         </thead>
         <tbody>
           {deliveries.map((delivery) => {
-            const ok = delivery.status !== null && delivery.status >= 200 && delivery.status < 300;
             return (
               <tr key={delivery.id}>
                 <th scope="row" className="mono">
                   {delivery.event}
                 </th>
                 <td>
-                  <StatusBadge tone={ok ? "good" : "bad"}>
+                  <StatusBadge tone={delivery.ok ? "good" : "bad"}>
                     {delivery.status === null ? "No response" : `HTTP ${delivery.status}`}
                   </StatusBadge>
                 </td>

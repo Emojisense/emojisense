@@ -1,5 +1,13 @@
 import { type FormEvent, useEffect, useId, useState } from "react";
-import { ApiError, api, type CustomEmoji, errorMessage, type Tenant } from "../api";
+import {
+  ApiError,
+  api,
+  type CustomEmoji,
+  type DeletedTenantResponse,
+  errorMessage,
+  type Tenant,
+  type TenantsResponse,
+} from "../api";
 import { formatDate, formatNumber } from "../format";
 import { API_URL } from "../lib/config";
 import { useResource } from "../lib/useResource";
@@ -15,9 +23,22 @@ import { useToast } from "../ui/Toast";
 export function TenantsPage() {
   const { app, readOnly } = useAppDetail();
   const toast = useToast();
-  const [tenants, { reload, mutate }] = useResource(`tenants:${app.id}`, () =>
-    api.listTenants(app.id).then((data) => data.tenants),
+  const [tenants, { reload, mutate }] = useResource<TenantsResponse>(`tenants:${app.id}`, () =>
+    api.listTenants(app.id),
   );
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  async function loadMore(cursor: string) {
+    setLoadingMore(true);
+    try {
+      const next = await api.listTenants(app.id, cursor);
+      mutate((data) => ({ tenants: [...data.tenants, ...next.tenants], nextCursor: next.nextCursor }));
+    } catch (caught) {
+      toast(errorMessage(caught));
+    } finally {
+      setLoadingMore(false);
+    }
+  }
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Tenant | null>(null);
   const previews = useTenantPreviews(app.id);
@@ -29,7 +50,7 @@ export function TenantsPage() {
       lede="Your customers, each with their own custom emoji. Search with a tenant’s ID to add theirs to yours."
       actions={
         tenants.status === "ready" &&
-        tenants.data.length > 0 &&
+        tenants.data.tenants.length > 0 &&
         !readOnly && (
           <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
             <Icon name="plus" />
@@ -57,7 +78,7 @@ export function TenantsPage() {
         {tenants.status === "error" && <ErrorState message={tenants.message} onRetry={reload} />}
         {tenants.status === "ready" && (
           <section className="card" aria-label="Tenants">
-            {tenants.data.length === 0 ? (
+            {tenants.data.tenants.length === 0 ? (
               <EmptyState
                 emoji="🏢"
                 title="No tenants yet"
@@ -90,7 +111,7 @@ export function TenantsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {tenants.data.map((tenant) => (
+                    {tenants.data.tenants.map((tenant) => (
                       <tr key={tenant.id}>
                         <th scope="row">{tenant.name ?? <span className="muted">Unnamed</span>}</th>
                         <td className="mono">{tenant.externalId}</td>
@@ -123,6 +144,19 @@ export function TenantsPage() {
                   </tbody>
                 </table>
               </section>
+            )}
+            {tenants.data.nextCursor && (
+              <div className="card-foot">
+                <span>Ordered by external ID.</span>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  disabled={loadingMore}
+                  onClick={() => tenants.data.nextCursor && loadMore(tenants.data.nextCursor)}
+                >
+                  {loadingMore ? "Loading…" : "Load more"}
+                </button>
+              </div>
             )}
           </section>
         )}
@@ -159,7 +193,7 @@ curl -X POST "${API_URL}/v1/tenants" \\
         open={creating}
         onClose={() => setCreating(false)}
         onCreated={(tenant) => {
-          mutate((list) => [tenant, ...list]);
+          mutate((data) => ({ ...data, tenants: [...data.tenants, tenant] }));
           setCreating(false);
           toast(`Added ${tenant.name ?? tenant.externalId}`);
         }}
@@ -168,10 +202,12 @@ curl -X POST "${API_URL}/v1/tenants" \\
         appId={app.id}
         tenant={deleting}
         onClose={() => setDeleting(null)}
-        onDeleted={(tenant) => {
-          mutate((list) => list.filter((item) => item.id !== tenant.id));
+        onDeleted={({ tenant, emojiDeleted }) => {
+          mutate((data) => ({ ...data, tenants: data.tenants.filter((item) => item.id !== tenant.id) }));
           setDeleting(null);
-          toast(`Deleted ${tenant.name ?? tenant.externalId}`);
+          toast(
+            `Deleted ${tenant.name ?? tenant.externalId}${emojiDeleted ? ` and ${formatNumber(emojiDeleted)} custom emoji` : ""}`,
+          );
         }}
       />
     </>
@@ -311,7 +347,7 @@ function DeleteTenantDialog({
   appId: string;
   tenant: Tenant | null;
   onClose: () => void;
-  onDeleted: (tenant: Tenant) => void;
+  onDeleted: (result: DeletedTenantResponse) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -321,8 +357,7 @@ function DeleteTenantDialog({
     setBusy(true);
     setError(null);
     try {
-      await api.deleteTenant(appId, tenant.id);
-      onDeleted(tenant);
+      onDeleted(await api.deleteTenant(appId, tenant.id));
     } catch (caught) {
       setError(errorMessage(caught));
     } finally {

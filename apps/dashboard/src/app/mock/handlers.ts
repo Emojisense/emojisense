@@ -7,24 +7,46 @@ import {
   PLANS,
   type PlanId,
   periodOf,
+  WEBHOOK_EVENTS,
 } from "@emojisense/platform";
-import type { KeySummary, PlanSummary } from "../../shared/contract";
+import type {
+  CreatedWebhookResponse,
+  DeletedTenantResponse,
+  KeySummary,
+  PlanSummary,
+  TenantResponse,
+  TenantSummary,
+  TenantsResponse,
+  WebhookDeliveriesResponse,
+  WebhookDeliverySummary,
+  WebhookResponse,
+  WebhookSummary,
+  WebhooksResponse,
+  WebhookTestResponse,
+} from "../../shared/contract";
 import type {
   AcceptInviteResponse,
   App,
   BillingResponse,
   CustomEmoji,
-  EmojiSet,
   Me,
   TeamInviteSummary,
   TeamResponse,
   TeamRole,
   UpgradeResponse,
-  Webhook,
   WebhookEvent,
 } from "../api";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
 import { analyticsFor, type MockDb, measure, seeded, usageFor } from "./data";
+
+function tenantView(db: MockDb, tenant: MockDb["tenants"][number]): TenantSummary {
+  const { appId: _, ...rest } = tenant;
+  return { ...rest, emojiCount: db.emoji.filter((emoji) => emoji.tenantId === tenant.id).length };
+}
+
+function webhookView(db: MockDb, hook: MockDb["webhooks"][number]): WebhookSummary {
+  return { ...hook, lastDelivery: db.deliveries[hook.id]?.[0] ?? null };
+}
 
 export interface MockRequest {
   method: string;
@@ -180,7 +202,7 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
         if (!json.name.trim()) return fail(400, "invalid_request", "Give the app a name.", { field: "name" });
         app.name = json.name.trim();
       }
-      if (typeof json.emojiSet === "string") app.emojiSet = json.emojiSet as EmojiSet;
+      if (typeof json.emojiSet === "string") app.emojiSet = json.emojiSet as App["emojiSet"];
       return ok({ app: appView(db, app) });
     },
   ],
@@ -358,14 +380,12 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     (db, { params }) => {
       const blocked = gate(appPlan(db, params[0]), "tenants");
       if (blocked) return blocked;
-      return ok({
-        tenants: db.tenants
-          .filter((tenant) => tenant.appId === params[0])
-          .map(({ appId: _, ...tenant }) => ({
-            ...tenant,
-            emojiCount: db.emoji.filter((emoji) => emoji.tenantId === tenant.id).length,
-          })),
-      });
+      const tenants = db.tenants
+        .filter((tenant) => tenant.appId === params[0])
+        .sort((a, b) => a.externalId.localeCompare(b.externalId))
+        .map((tenant) => tenantView(db, tenant));
+      const response: TenantsResponse = { tenants, nextCursor: null };
+      return ok(response);
     },
   ],
   [
@@ -375,8 +395,9 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
       const blocked = gate(appPlan(db, params[0]), "tenants");
       if (blocked) return blocked;
       const externalId = String(json.externalId ?? "").trim();
+      if (!externalId) return fail(400, "invalid_request", "Add an external ID.", { field: "externalId" });
       if (db.tenants.some((tenant) => tenant.appId === params[0] && tenant.externalId === externalId)) {
-        return fail(409, "conflict", `A tenant with the ID ${externalId} already exists.`, {
+        return fail(409, "tenant_exists", `A tenant with the ID ${externalId} already exists.`, {
           field: "externalId",
         });
       }
@@ -387,27 +408,38 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
         name: typeof json.name === "string" ? json.name : null,
         createdAt: Date.now(),
       };
-      db.tenants.unshift(tenant);
-      const { appId: _, ...body } = tenant;
-      return ok({ tenant: { ...body, emojiCount: 0 } }, 201);
+      db.tenants.push(tenant);
+      const response: TenantResponse = { tenant: tenantView(db, tenant) };
+      return ok(response, 201);
     },
   ],
   [
     "DELETE",
     /^\/api\/apps\/([^/]+)\/tenants\/([^/]+)$/,
     (db, { params }) => {
-      db.tenants = db.tenants.filter((tenant) => tenant.id !== params[1]);
-      db.emoji = db.emoji.filter((emoji) => emoji.tenantId !== params[1]);
-      return ok({ ok: true });
+      const tenant = db.tenants.find((item) => item.appId === params[0] && item.id === params[1]);
+      if (!tenant) return notFound();
+      const response: DeletedTenantResponse = {
+        tenant: tenantView(db, tenant),
+        emojiDeleted: db.emoji.filter((emoji) => emoji.tenantId === tenant.id).length,
+      };
+      db.tenants = db.tenants.filter((item) => item.id !== tenant.id);
+      db.emoji = db.emoji.filter((emoji) => emoji.tenantId !== tenant.id);
+      return ok(response);
     },
   ],
 
   [
     "GET",
     /^\/api\/apps\/([^/]+)\/webhooks$/,
-    (db, { params }) =>
-      gate(appPlan(db, params[0]), "webhooks") ??
-      ok({ webhooks: db.webhooks.filter((hook) => hook.appId === params[0]) }),
+    (db, { params }) => {
+      const blocked = gate(appPlan(db, params[0]), "webhooks");
+      if (blocked) return blocked;
+      const response: WebhooksResponse = {
+        webhooks: db.webhooks.filter((hook) => hook.appId === params[0]).map((hook) => webhookView(db, hook)),
+      };
+      return ok(response);
+    },
   ],
   [
     "POST",
@@ -415,16 +447,29 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     (db, { params, json }) => {
       const blocked = gate(appPlan(db, params[0]), "webhooks");
       if (blocked) return blocked;
-      const webhook: Webhook = {
+      if (db.webhooks.filter((hook) => hook.appId === params[0]).length >= 10) {
+        return fail(409, "webhook_limit", "An app can have at most 10 webhooks. Delete one first.");
+      }
+      const url = String(json.url ?? "");
+      if (!url.startsWith("https://")) {
+        return fail(400, "invalid_url", "Use an https:// URL.", { field: "url" });
+      }
+      const webhook: MockDb["webhooks"][number] = {
         id: newId("whk"),
         appId: params[0] ?? "",
-        url: String(json.url ?? ""),
-        events: (json.events as WebhookEvent[]) ?? [],
+        url,
+        events: (json.events as WebhookEvent[] | undefined) ?? [...WEBHOOK_EVENTS],
+        enabled: true,
         createdAt: Date.now(),
         disabledAt: null,
       };
       db.webhooks.unshift(webhook);
-      return ok({ webhook, secret: `whsec_${randomText(32)}` }, 201);
+      db.deliveries[webhook.id] = [];
+      const response: CreatedWebhookResponse = {
+        webhook: webhookView(db, webhook),
+        secret: `whsec_${randomText(32)}`,
+      };
+      return ok(response, 201);
     },
   ],
   [
@@ -433,8 +478,14 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     (db, { params, json }) => {
       const hook = db.webhooks.find((item) => item.id === params[0]);
       if (!hook) return notFound();
-      if (typeof json.disabled === "boolean") hook.disabledAt = json.disabled ? Date.now() : null;
-      return ok({ webhook: hook });
+      if (typeof json.enabled === "boolean" && json.enabled !== hook.enabled) {
+        hook.enabled = json.enabled;
+        hook.disabledAt = json.enabled ? null : Date.now();
+      }
+      if (typeof json.url === "string") hook.url = json.url;
+      if (Array.isArray(json.events)) hook.events = json.events as WebhookEvent[];
+      const response: WebhookResponse = { webhook: webhookView(db, hook) };
+      return ok(response);
     },
   ],
   [
@@ -442,6 +493,7 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     /^\/api\/webhooks\/([^/]+)$/,
     (db, { params }) => {
       db.webhooks = db.webhooks.filter((hook) => hook.id !== params[0]);
+      delete db.deliveries[params[0] ?? ""];
       return ok({ ok: true });
     },
   ],
@@ -449,23 +501,29 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     "POST",
     /^\/api\/webhooks\/([^/]+)\/test$/,
     (db, { params }) => {
-      const delivery = {
+      const hook = db.webhooks.find((item) => item.id === params[0]);
+      if (!hook) return notFound();
+      const delivery: WebhookDeliverySummary = {
         id: newId("dlv"),
-        webhookId: params[0] ?? "",
         event: "webhook.test",
         status: 200,
+        ok: true,
         durationMs: 80 + Math.round(Math.random() * 160),
         createdAt: Date.now(),
       };
-      db.deliveries.unshift(delivery);
-      return ok({ delivery });
+      db.deliveries[hook.id] = [delivery, ...(db.deliveries[hook.id] ?? [])].slice(0, 50);
+      const response: WebhookTestResponse = { delivery };
+      return ok(response);
     },
   ],
   [
     "GET",
     /^\/api\/webhooks\/([^/]+)\/deliveries$/,
-    (db, { params }) =>
-      ok({ deliveries: db.deliveries.filter((delivery) => delivery.webhookId === params[0]) }),
+    (db, { params }) => {
+      if (!db.webhooks.some((hook) => hook.id === params[0])) return notFound();
+      const response: WebhookDeliveriesResponse = { deliveries: db.deliveries[params[0] ?? ""] ?? [] };
+      return ok(response);
+    },
   ],
 
   [
