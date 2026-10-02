@@ -113,6 +113,7 @@ describe("over the plan limit", () => {
     expect(img).toEqual({
       caption: "",
       reaction: "",
+      keywords: [],
       results: [],
       cached: false,
       degraded: false,

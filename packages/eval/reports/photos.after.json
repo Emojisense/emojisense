@@ -1,0 +1,1935 @@
+{
+ "kind": "photos",
+ "label": "after",
+ "date": "2026-10-02T04:15:03.858Z",
+ "api": "http://localhost:8818",
+ "summary": {
+  "n": 31,
+  "p1": 93.5,
+  "p4": 54,
+  "hit4": 96.8,
+  "ceiling4": 82.3,
+  "trap4": 0
+ },
+ "failed": 0,
+ "items": [
+  {
+   "id": "puppy",
+   "answers": [
+    "🐶",
+    "🐕",
+    "🥰",
+    "😍"
+   ],
+   "input": "A happy corgi standing on its hind legs outdoors",
+   "keywords": [
+    "corgi",
+    "dog",
+    "standing",
+    "happy",
+    "pet"
+   ],
+   "judged": {
+    "top": [
+     "🐕️",
+     "🐶",
+     "🐾",
+     "🌳"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐾",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❤️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 5161
+  },
+  {
+   "id": "cake",
+   "answers": [
+    "🎂",
+    "🍰",
+    "🥳",
+    "🎉"
+   ],
+   "input": "A birthday cake with a lit number three candle and star decorations",
+   "keywords": [
+    "birthday cake",
+    "number three candle",
+    "celebration",
+    "star decorations",
+    "party"
+   ],
+   "judged": {
+    "top": [
+     "🎂",
+     "🥳",
+     "🕯️",
+     "🎉"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕯️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⭐️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎊",
+     "source": "alias"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2594
+  },
+  {
+   "id": "sunset",
+   "answers": [
+    "🌅",
+    "🏖️",
+    "🌊",
+    "🙌"
+   ],
+   "input": "Silhouettes of people enjoying a sunset on the beach",
+   "keywords": [
+    "sunset",
+    "beach",
+    "silhouette",
+    "ocean",
+    "people"
+   ],
+   "judged": {
+    "top": [
+     "🌅",
+     "🏖️",
+     "🌇",
+     "🌊"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🌅",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏖️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👥",
+     "source": "alias"
+    },
+    {
+     "emoji": "🐚",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1771
+  },
+  {
+   "id": "pizza",
+   "answers": [
+    "🍕",
+    "🍄‍🟫",
+    "🍄",
+    "😋"
+   ],
+   "input": "Mushroom and cheese pizza sliced on a wooden cutting board",
+   "keywords": [
+    "pizza",
+    "mushroom",
+    "cheese",
+    "wooden board",
+    "food"
+   ],
+   "judged": {
+    "top": [
+     "🍕",
+     "🧀",
+     "🍄",
+     "🍄‍🟫"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🍕",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧀",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍄",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍄‍🟫",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍴",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1923
+  },
+  {
+   "id": "cat",
+   "answers": [
+    "🐱",
+    "🐈",
+    "😴",
+    "⌨️"
+   ],
+   "input": "A tabby cat lying across a laptop and computer keyboard",
+   "keywords": [
+    "cat",
+    "keyboard",
+    "laptop",
+    "tabby",
+    "workspace"
+   ],
+   "judged": {
+    "top": [
+     "🐈️",
+     "💻️",
+     "⌨️",
+     "🐱"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐈️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💻️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⌨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐱",
+     "source": "alias"
+    },
+    {
+     "emoji": "😻",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎹",
+     "source": "alias"
+    },
+    {
+     "emoji": "🐾",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2675
+  },
+  {
+   "id": "hike",
+   "answers": [
+    "⛰️",
+    "🏔️",
+    "🥾",
+    "🏞️"
+   ],
+   "input": "A person standing on a rocky mountain ridge overlooking misty valleys",
+   "keywords": [
+    "mountain",
+    "hiking",
+    "landscape",
+    "mist",
+    "ridge"
+   ],
+   "judged": {
+    "top": [
+     "⛰️",
+     "🏔️",
+     "☁️",
+     "🚶"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "⛰️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏔️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☁️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚵‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🗻",
+     "source": "alias"
+    }
+   ],
+   "ms": 2501
+  },
+  {
+   "id": "robin",
+   "answers": [
+    "🐦",
+    "🌿",
+    "🍃",
+    "🌳"
+   ],
+   "input": "A small robin bird singing with its beak wide open in a tree",
+   "keywords": [
+    "robin",
+    "bird",
+    "singing",
+    "tree",
+    "nature"
+   ],
+   "judged": {
+    "top": [
+     "🐦️",
+     "🌳",
+     "🎶",
+     "✨️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐦️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐓",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🪺",
+     "source": "alias"
+    }
+   ],
+   "ms": 2773
+  },
+  {
+   "id": "horse",
+   "answers": [
+    "🐴",
+    "🐎",
+    "🌾"
+   ],
+   "input": "A brown horse standing in a grassy field",
+   "keywords": [
+    "horse",
+    "field",
+    "grass",
+    "nature",
+    "brown"
+   ],
+   "judged": {
+    "top": [
+     "🐎",
+     "🐴",
+     "🌾",
+     "🏇"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐎",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐴",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌾",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏞️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏑",
+     "source": "alias"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1221
+  },
+  {
+   "id": "goldfish",
+   "answers": [
+    "🐠",
+    "🐟"
+   ],
+   "input": "Many bright orange goldfish swimming in a blue aquarium",
+   "keywords": [
+    "goldfish",
+    "fish",
+    "aquarium",
+    "swimming",
+    "orange"
+   ],
+   "judged": {
+    "top": [
+     "🐟️",
+     "🐠",
+     "🐡",
+     "🧡"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐟️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐠",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🪼",
+     "source": "alias"
+    },
+    {
+     "emoji": "🌊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2263
+  },
+  {
+   "id": "butterfly",
+   "answers": [
+    "🦋",
+    "🪻",
+    "🌸"
+   ],
+   "input": "A monarch butterfly resting on purple flowers in a garden",
+   "keywords": [
+    "monarch butterfly",
+    "purple flowers",
+    "garden",
+    "nature"
+   ],
+   "judged": {
+    "top": [
+     "🦋",
+     "🌸",
+     "🌿",
+     "🐌"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🦋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌸",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌿",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐌",
+     "source": "alias"
+    },
+    {
+     "emoji": "☀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐞",
+     "source": "alias"
+    }
+   ],
+   "ms": 2081
+  },
+  {
+   "id": "latte",
+   "answers": [
+    "☕",
+    "🤎",
+    "❤️"
+   ],
+   "input": "A white cup of cappuccino with heart latte art on a saucer",
+   "keywords": [
+    "cappuccino",
+    "latte art",
+    "coffee cup",
+    "heart"
+   ],
+   "judged": {
+    "top": [
+     "☕️",
+     "❤️",
+     "😋",
+     "😍"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "☕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤎",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1790
+  },
+  {
+   "id": "burger",
+   "answers": [
+    "🍔",
+    "🍟",
+    "😋"
+   ],
+   "input": "A hamburger in paper and a side of french fries",
+   "keywords": [
+    "hamburger",
+    "french fries",
+    "fast food",
+    "meal"
+   ],
+   "judged": {
+    "top": [
+     "🍔",
+     "🍟",
+     "😋",
+     "🤤"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🍔",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍟",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍴",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1709
+  },
+  {
+   "id": "sushi",
+   "answers": [
+    "🍣",
+    "🐟",
+    "🦐",
+    "😋"
+   ],
+   "input": "An assortment of fresh nigiri and maki sushi on a black platter",
+   "keywords": [
+    "sushi",
+    "nigiri",
+    "maki",
+    "seafood",
+    "japanese food"
+   ],
+   "judged": {
+    "top": [
+     "🍣",
+     "🍱",
+     "🥢",
+     "🍤"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🍣",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍱",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥢",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍢",
+     "source": "alias"
+    },
+    {
+     "emoji": "😋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2657
+  },
+  {
+   "id": "strawberries",
+   "answers": [
+    "🍓",
+    "😋"
+   ],
+   "input": "A clear plastic container filled with fresh red strawberries",
+   "keywords": [
+    "strawberries",
+    "fruit",
+    "plastic container",
+    "fresh",
+    "berries"
+   ],
+   "judged": {
+    "top": [
+     "🍓",
+     "😋",
+     "❤️",
+     "🫐"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🍓",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫐",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛒",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍒",
+     "source": "alias"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1333
+  },
+  {
+   "id": "fireworks",
+   "answers": [
+    "🎆",
+    "🎇",
+    "🎉",
+    "🥳"
+   ],
+   "input": "Bright fireworks exploding in the night sky over a dark town",
+   "keywords": [
+    "fireworks",
+    "night sky",
+    "celebration",
+    "smoke",
+    "town"
+   ],
+   "judged": {
+    "top": [
+     "🎆",
+     "🌃",
+     "🎇",
+     "✨️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎆",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌃",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧨",
+     "source": "alias"
+    },
+    {
+     "emoji": "🌠",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1664
+  },
+  {
+   "id": "balloons",
+   "answers": [
+    "🎈",
+    "🥳",
+    "🎉",
+    "🎂"
+   ],
+   "input": "Colorful balloons and a Happy Birthday banner on a teal wall",
+   "keywords": [
+    "birthday",
+    "balloons",
+    "banner",
+    "celebration",
+    "party"
+   ],
+   "judged": {
+    "top": [
+     "🥳",
+     "🎈",
+     "🎂",
+     "🎉"
+    ],
+    "p1": 1,
+    "p4": 1,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🥳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎈",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎆",
+     "source": "alias"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💙",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1058
+  },
+  {
+   "id": "christmas-tree",
+   "answers": [
+    "🎄",
+    "✨",
+    "🎁"
+   ],
+   "input": "A decorated Christmas tree with lights and ornaments in a room",
+   "keywords": [
+    "christmas tree",
+    "ornaments",
+    "holiday lights",
+    "decorations",
+    "festive"
+   ],
+   "judged": {
+    "top": [
+     "🎄",
+     "✨️",
+     "🌲",
+     "🎁"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎄",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌲",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎁",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌟",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    }
+   ],
+   "ms": 3887
+  },
+  {
+   "id": "snowman",
+   "answers": [
+    "☃️",
+    "⛄"
+   ],
+   "input": "A large snowman statue standing in front of a grain elevator.",
+   "keywords": [
+    "snowman",
+    "grain elevator",
+    "kenaston",
+    "town sign",
+    "outdoor"
+   ],
+   "judged": {
+    "top": [
+     "⛄️",
+     "☃️",
+     "🌾",
+     "🏙️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "⛄️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☃️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🌾",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏙️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☁️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👋",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2115
+  },
+  {
+   "id": "umbrella",
+   "answers": [
+    "💧",
+    "☔",
+    "🌧️"
+   ],
+   "input": "Water droplets on a blue waterproof fabric surface",
+   "keywords": [
+    "water droplets",
+    "blue fabric",
+    "waterproof",
+    "texture",
+    "moisture"
+   ],
+   "judged": {
+    "top": [
+     "💧",
+     "💦",
+     "☔️",
+     "🌊"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💧",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💦",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☔️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💙",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌧️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2813
+  },
+  {
+   "id": "rainbow",
+   "answers": [
+    "🌈",
+    "🌦️",
+    "☁️"
+   ],
+   "input": "A vibrant rainbow arches over a green valley and small town.",
+   "keywords": [
+    "rainbow",
+    "landscape",
+    "valley",
+    "sky",
+    "nature"
+   ],
+   "judged": {
+    "top": [
+     "🌈",
+     "🌤️",
+     "🌳",
+     "🏘️"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🌈",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏘️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌦️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1317
+  },
+  {
+   "id": "snow-forest",
+   "answers": [
+    "🌲",
+    "❄️",
+    "🌨️",
+    "🥶"
+   ],
+   "input": "A snow-covered road winding through a dense pine forest under blue sky",
+   "keywords": [
+    "snow",
+    "forest",
+    "road",
+    "winter",
+    "trees"
+   ],
+   "judged": {
+    "top": [
+     "🌲",
+     "🏔️",
+     "🛣️",
+     "❄️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🌲",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏔️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛣️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❄️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🪾",
+     "source": "alias"
+    },
+    {
+     "emoji": "🌳",
+     "source": "alias"
+    }
+   ],
+   "ms": 2383
+  },
+  {
+   "id": "soccer-ball",
+   "answers": [
+    "⚽",
+    "🥅"
+   ],
+   "input": "A white soccer ball with black and yellow patterns on grass",
+   "keywords": [
+    "soccer ball",
+    "football",
+    "grass",
+    "sports",
+    "white"
+   ],
+   "judged": {
+    "top": [
+     "⚽️",
+     "🏟️",
+     "🏈",
+     "🏃"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "⚽️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏟️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏈",
+     "source": "alias"
+    },
+    {
+     "emoji": "🏃",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⚪️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔥",
+     "source": "semantic"
+    }
+   ],
+   "ms": 5055
+  },
+  {
+   "id": "dumbbells",
+   "answers": [
+    "🏋️",
+    "💪",
+    "🏋️‍♂️",
+    "🏋️‍♀️"
+   ],
+   "input": "Two black adjustable dumbbells and two weight plates on a dark surface",
+   "keywords": [
+    "dumbbells",
+    "weights",
+    "fitness",
+    "gym",
+    "workout"
+   ],
+   "judged": {
+    "top": [
+     "🏋️",
+     "💪",
+     "🖤",
+     "⚙️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🏋️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💪",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🖤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⚙️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥵",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎛️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 992
+  },
+  {
+   "id": "bicycle",
+   "answers": [
+    "🚲",
+    "🚴"
+   ],
+   "input": "An old, rusty bicycle parked on a sidewalk near bushes.",
+   "keywords": [
+    "bicycle",
+    "rusty",
+    "old",
+    "sidewalk",
+    "outdoor"
+   ],
+   "judged": {
+    "top": [
+     "🚲️",
+     "🏚️",
+     "🛠️",
+     "😔"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🚲️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏚️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛠️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😔",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚵",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😢",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚴‍♀️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🗝️",
+     "source": "alias"
+    }
+   ],
+   "ms": 2074
+  },
+  {
+   "id": "code",
+   "answers": [
+    "🧑‍💻",
+    "💻",
+    "🖥️",
+    "👨‍💻"
+   ],
+   "input": "Close up of computer screen displaying Rust programming code",
+   "keywords": [
+    "programming",
+    "code",
+    "rust",
+    "software",
+    "developer"
+   ],
+   "judged": {
+    "top": [
+     "💻️",
+     "👨‍💻",
+     "⌨️",
+     "🚀"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💻️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👨‍💻",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⌨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚀",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤯",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐛",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🖥️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2177
+  },
+  {
+   "id": "heart-hands",
+   "answers": [
+    "🫶",
+    "❤️",
+    "🌅",
+    "🥰"
+   ],
+   "input": "Silhouette of hands forming a heart shape around the setting sun",
+   "keywords": [
+    "sunset",
+    "heart hands",
+    "silhouette",
+    "ocean",
+    "love"
+   ],
+   "judged": {
+    "top": [
+     "🫶",
+     "🌅",
+     "😍",
+     "🥰"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🫶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌅",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥰",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2157
+  },
+  {
+   "id": "broken-phone",
+   "answers": [
+    "📱",
+    "😱",
+    "😭",
+    "💔"
+   ],
+   "input": "A blue Samsung smartphone with a severely cracked glass back",
+   "keywords": [
+    "smartphone",
+    "cracked screen",
+    "blue phone",
+    "broken glass",
+    "samsung"
+   ],
+   "judged": {
+    "top": [
+     "📱",
+     "💙",
+     "💔",
+     "😱"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "📱",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💙",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💔",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😱",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤕",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1656
+  },
+  {
+   "id": "keys",
+   "answers": [
+    "🔑",
+    "🗝️",
+    "🏨"
+   ],
+   "input": "many colorful key tags hanging on a gray wall",
+   "keywords": [
+    "key tags",
+    "identification",
+    "colorful",
+    "organization",
+    "storage"
+   ],
+   "judged": {
+    "top": [
+     "🌈",
+     "🔑",
+     "🏷️",
+     "🏢"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 0.75,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🌈",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔑",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏷️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏢",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😲",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤯",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📑",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1881
+  },
+  {
+   "id": "roses",
+   "answers": [
+    "🌹",
+    "💐",
+    "❤️",
+    "😍"
+   ],
+   "input": "A large bouquet of vibrant red roses wrapped in clear plastic.",
+   "keywords": [
+    "red roses",
+    "bouquet",
+    "flowers",
+    "gift",
+    "romance"
+   ],
+   "judged": {
+    "top": [
+     "💐",
+     "🌹",
+     "🥰",
+     "😍"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💐",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥰",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧧",
+     "source": "alias"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎀",
+     "source": "semantic"
+    }
+   ],
+   "ms": 1886
+  },
+  {
+   "id": "beer",
+   "answers": [
+    "🍺",
+    "🍻"
+   ],
+   "input": "A glass of amber beer next to a Staropramen beer can",
+   "keywords": [
+    "beer",
+    "can",
+    "glass",
+    "staropramen",
+    "alcohol"
+   ],
+   "judged": {
+    "top": [
+     "🍺",
+     "🍻",
+     "🍷",
+     "🇨🇿"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🍺",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍻",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍷",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🇨🇿",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍸️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🥃",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2180
+  },
+  {
+   "id": "rocket",
+   "answers": [
+    "🚀",
+    "🌠"
+   ],
+   "input": "A long white vapor trail stretching across a dark blue sky",
+   "keywords": [
+    "vapor trail",
+    "sky",
+    "contrail",
+    "airplane",
+    "clouds"
+   ],
+   "judged": {
+    "top": [
+     "☁️",
+     "🌌",
+     "✈️",
+     "😶‍🌫️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 0.5,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "☁️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✈️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😶‍🌫️",
+     "source": "alias"
+    },
+    {
+     "emoji": "✨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😲",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌆",
+     "source": "semantic"
+    }
+   ],
+   "ms": 2397
+  }
+ ]
+}

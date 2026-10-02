@@ -7,7 +7,7 @@
  */
 export const VISION_MODEL = "@cf/google/gemma-4-26b-a4b-it";
 /** Bump when the vision prompt changes, so cached captions from the old prompt are not reused. */
-export const VISION_PROMPT_VERSION = 1;
+export const VISION_PROMPT_VERSION = 2;
 
 export const SEARCH_DEFAULT_LIMIT = 24;
 export const REACTIONS_DEFAULT_LIMIT = 8;
