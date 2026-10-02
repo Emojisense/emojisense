@@ -57,9 +57,7 @@ export function aggregateQueries(rows: Iterable<QueryLogRow>, options: Aggregate
     query.locales.sort();
     kept.push(query);
   }
-  return kept
-    .sort((a, b) => b.n - a.n || (a.q < b.q ? -1 : a.q > b.q ? 1 : 0))
-    .slice(0, options.maxQueries);
+  return kept.sort((a, b) => b.n - a.n || (a.q < b.q ? -1 : a.q > b.q ? 1 : 0)).slice(0, options.maxQueries);
 }
 
 /**
