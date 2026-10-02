@@ -42,6 +42,8 @@ no_index() {
 
 echo "→ Build packages and data"
 pnpm -C "$ROOT" exec turbo run build --filter=emojisense --filter=@emojisense/platform --filter=@emojisense/data
+# Vectors come from the embedding cache; only changed documents call Workers AI.
+pnpm -C "$ROOT" --filter @emojisense/data embed -- --models bge-m3 --dims 1024
 pnpm -C "$ROOT" --filter @emojisense/worker sync
 
 echo "→ API Worker ($API_URL)"

@@ -47,5 +47,8 @@ execFileSync(
 );
 
 mkdirSync(dirname(envFile), { recursive: true });
-writeFileSync(envFile, `${existing}${existing && !existing.endsWith("\n") ? "\n" : ""}PUBLIC_PUBLISHABLE_KEY=${key}\n`);
+writeFileSync(
+  envFile,
+  `${existing}${existing && !existing.endsWith("\n") ? "\n" : ""}PUBLIC_PUBLISHABLE_KEY=${key}\n`,
+);
 console.log(`Created the website key ${displayPrefix(key)}… for ${origins.join(", ")} → ${envFile}`);
