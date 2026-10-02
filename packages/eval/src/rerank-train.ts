@@ -22,18 +22,17 @@ import {
   embeddingText,
   fuse,
   type Pack,
-  RERANK_WEIGHTS,
   type RerankInput,
   rerank,
-  rerankFeatures,
   type SearchResult,
   semanticConfidence,
   shouldUseSemantic,
 } from "emojisense";
 import { l2normalize } from "emojisense/vectors";
 import { judge, type QueryOutcome, summarize } from "./metrics.ts";
-import { type EvalQuery, loadQueries, stripVariation } from "./queries.ts";
+import { type EvalQuery, loadQueries } from "./queries.ts";
 import { RANKING, rankingEngine, semanticSearch } from "./ranking.ts";
+import { createRerankFit, type RerankCandidates, rerankCandidates, roundWeights } from "./rerank-fit.ts";
 import { loadVectorLayout } from "./vector-layout.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
@@ -46,8 +45,6 @@ export const TRAINING_SETS: [suite: string, file: string][] = [
   ["ranking-dev", "ranking-dev.jsonl"],
 ];
 const FOLDS = 5;
-const L2 = 0.01;
-const EPOCHS = 400;
 const LIMIT = 10;
 
 const { values: args } = parseArgs({
@@ -92,14 +89,12 @@ try {
   await disposeEmbeddings();
 }
 
-interface Item {
+interface Item extends RerankCandidates {
   q: EvalQuery & { suite: string };
   alias: AliasSearchOutput;
   semantic: SearchResult[];
   input: RerankInput;
   gate: boolean;
-  /** Features of each candidate below the pinned alias results, and whether it is an answer. */
-  candidates: { features: number[]; positive: boolean }[];
 }
 
 const items: Item[] = queries.map((q, i) => {
@@ -114,77 +109,16 @@ const items: Item[] = queries.map((q, i) => {
     semanticConfidence: semanticConfidence(semantic),
     popularity: engine.popularity,
   };
-  const answers = new Set(q.answers.map(stripVariation));
-  const seen = new Set(alias.results.filter((r) => r.score >= 0.9).map((r) => r.id));
-  const candidates: Item["candidates"] = [];
-  for (const r of [...alias.results, ...semantic]) {
-    if (seen.has(r.id)) continue;
-    seen.add(r.id);
-    candidates.push({
-      features: rerankFeatures(input, r.id),
-      positive: answers.has(stripVariation(r.emoji)),
-    });
-  }
-  return { q, alias, semantic, input, gate: shouldUseSemantic(alias), candidates };
+  return { q, alias, semantic, input, gate: shouldUseSemantic(alias), ...rerankCandidates(input, q.answers) };
 });
 
-// ── Listwise softmax on standardized features (Adam, L2) ─────────────────────────────────────
-const dim = RERANK_WEIGHTS.length;
-const rows = items.flatMap((it) => it.candidates.map((c) => c.features));
-const mean = Array.from(
-  { length: dim },
-  (_, d) => rows.reduce((s, x) => s + (x[d] as number), 0) / rows.length,
-);
-const std = Array.from(
-  { length: dim },
-  (_, d) =>
-    Math.sqrt(rows.reduce((s, x) => s + ((x[d] as number) - (mean[d] as number)) ** 2, 0) / rows.length) || 1,
-);
-
-/** Raw-feature weights (the standardization folded in; the constant term does not change a ranking). */
-function train(training: Item[]): number[] {
-  const usable = training.filter((it) => it.candidates.some((c) => c.positive));
-  const X = usable.map((it) =>
-    it.candidates.map((c) => c.features.map((v, d) => (v - (mean[d] as number)) / (std[d] as number))),
-  );
-  const w = new Array<number>(dim).fill(0);
-  const m = new Array<number>(dim).fill(0);
-  const v = new Array<number>(dim).fill(0);
-  for (let t = 1; t <= EPOCHS; t++) {
-    const grad = new Array<number>(dim).fill(0);
-    usable.forEach((it, qi) => {
-      const xs = X[qi] as number[][];
-      const s = xs.map((x) => x.reduce((acc, xv, d) => acc + xv * (w[d] as number), 0));
-      const max = Math.max(...s);
-      const e = s.map((value) => Math.exp(value - max));
-      const total = e.reduce((a, b) => a + b, 0);
-      const positive = it.candidates.reduce((a, c, k) => a + (c.positive ? (e[k] as number) : 0), 0);
-      xs.forEach((x, k) => {
-        const coef =
-          (e[k] as number) / total -
-          ((it.candidates[k] as { positive: boolean }).positive ? (e[k] as number) / positive : 0);
-        for (let d = 0; d < dim; d++) grad[d] = (grad[d] as number) + coef * (x[d] as number);
-      });
-    });
-    for (let d = 0; d < dim; d++) {
-      const g = (grad[d] as number) / usable.length + L2 * (w[d] as number);
-      m[d] = 0.9 * (m[d] as number) + 0.1 * g;
-      v[d] = 0.999 * (v[d] as number) + 0.001 * g * g;
-      const step =
-        (0.05 * ((m[d] as number) / (1 - 0.9 ** t))) /
-        (Math.sqrt((v[d] as number) / (1 - 0.999 ** t)) + 1e-8);
-      w[d] = (w[d] as number) - step;
-    }
-  }
-  return w.map((value, d) => value / (std[d] as number));
-}
-
-/** Four significant digits: what the ports copy. */
-const round = (weights: number[]) => weights.map((w) => Number(w.toPrecision(4)));
+// ── Listwise softmax on standardized features (Adam, L2; rerank-fit.ts) ──────────────────────
+const train = createRerankFit(items);
+const rows = items.flatMap((it) => it.candidates);
 
 const cv = new Map<Item, string[]>();
 for (let fold = 0; fold < FOLDS; fold++) {
-  const weights = round(train(items.filter((_, i) => i % FOLDS !== fold)));
+  const weights = roundWeights(train(items.filter((_, i) => i % FOLDS !== fold)));
   items.forEach((it, i) => {
     if (i % FOLDS === fold)
       cv.set(
@@ -193,7 +127,7 @@ for (let fold = 0; fold < FOLDS; fold++) {
       );
   });
 }
-const trained = round(train(items));
+const trained = roundWeights(train(items));
 
 const suites = [...TRAINING_SETS.map(([suite]) => suite), "all"];
 const lines = [

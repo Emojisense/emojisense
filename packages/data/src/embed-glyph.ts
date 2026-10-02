@@ -2,13 +2,16 @@
  * Glyph vectors: build/emoji.base.json + enrichment → vectors.<model>.<dims>.glyph.bin
  *
  *   tsx src/embed-glyph.ts [--kinds glyph,name,context] [--locales en] [--contexts 3]
- *                          [--no-inherit] [--split DIR] [--concurrency 4]
+ *                          [--no-inherit] [--split DIR] [--concurrency 4] [--model M --dims D]
+ *                          [--template]
  *
  * One multi-vector file per model × dims with every selected kind (default: the bare glyph;
  * glyph-documents.ts), rows in
  * pack order per kind (PACK_FORMAT.md §5, "Glyph file"). `--split DIR` writes one file per kind
  * to DIR instead (`glyph.<kind>.bin`), for `eval:glyph`. Texts are embedded as they are (no
- * document template) through the same cached Workers AI path as `embed`.
+ * document template) through the same cached Workers AI path as `embed`. `--template` (default:
+ * `glyph.template` in pack.config.json) wraps each text in the model's document template with the
+ * title "none": EmbeddingGemma's documented prompt for a document without a title.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -24,7 +27,7 @@ import {
   type ValidatedAliases,
 } from "./glyph-documents.ts";
 import { writeManifest } from "./manifest.ts";
-import { getModel } from "./models.ts";
+import { formatDocument, getModel } from "./models.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
 import { degenerateRows } from "./semantic-score.ts";
 import type { BaseEmoji } from "./types.ts";
@@ -41,11 +44,14 @@ const { values: args } = parseArgs({
     "no-inherit": { type: "boolean", default: false },
     split: { type: "string" },
     concurrency: { type: "string", default: "4" },
+    template: { type: "boolean" },
   },
 });
 
 const config = JSON.parse(readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8"));
-const glyphConfig: { kinds: GlyphKind[]; locales: string[]; contexts: number } | undefined = config.glyph;
+const glyphConfig:
+  | { kinds?: GlyphKind[]; locales?: string[]; contexts?: number; template?: boolean }
+  | undefined = config.glyph;
 const model = getModel(args.model ?? config.model.key);
 const dims = Number(args.dims ?? config.model.dims);
 const kinds = (args.kinds?.split(",") ?? glyphConfig?.kinds ?? ["glyph"]) as GlyphKind[];
@@ -54,6 +60,8 @@ if (unknownKinds.length)
   throw new Error(`unknown glyph kinds ${unknownKinds.join(", ")} (known: ${GLYPH_KINDS.join(", ")})`);
 const locales = args.locales?.split(",") ?? glyphConfig?.locales ?? ["en"];
 const contexts = Number(args.contexts ?? glyphConfig?.contexts ?? DEFAULT_CONTEXTS);
+// pack.config.json `glyph.template`: the production model's glyph rows use its document prompt.
+const template = args.template ?? glyphConfig?.template ?? false;
 
 const { emoji }: { emoji: BaseEmoji[] } = JSON.parse(readFileSync(BASE_FILE, "utf8"));
 const validated: ValidatedAliases = JSON.parse(readFileSync(join(BUILD_DIR, "validated.json"), "utf8"));
@@ -72,7 +80,7 @@ try {
   const started = performance.now();
   const { vectors, stats } = await embedTexts(
     model,
-    texts.map((t) => t.text),
+    texts.map((t) => (template ? formatDocument(model, "none", t.text) : t.text)),
     "document",
     {
       concurrency: Number(args.concurrency),

@@ -7,10 +7,10 @@ package com.emojisense
 public object Rerank {
     /**
      * One weight per [features] value. The same as `RERANK_WEIGHTS` in packages/core, trained for
-     * bge-m3 @1024 with the popularity prior in the semantic scores.
+     * EmbeddingGemma @768 with the popularity prior in the semantic scores.
      */
     @JvmField
-    public val WEIGHTS: List<Double> = listOf(0.04023, 1.781, 1.697, 0.8871, 13.72, -19.46, 2.342, 2.146, 3.891)
+    public val WEIGHTS: List<Double> = listOf(-0.3173, 1.715, 1.57, 0.4408, 12.39, -8.606, 3.18, 2.129, 1.067)
 
     public data class Input @JvmOverloads constructor(
         val alias: AliasSearchOutput<SearchResult>,

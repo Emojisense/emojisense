@@ -151,8 +151,8 @@ lines.push(
     `(the model did not know it, or a blocked word), ${count(rows, "missing")} missing (offline or failed).`,
   `- One model call: ${mean(priced.map((c) => c.usage?.prompt_tokens ?? 0)).toFixed(0)} tokens in, ` +
     `${mean(priced.map((c) => c.usage?.completion_tokens ?? 0)).toFixed(0)} out, ${meanNeurons.toFixed(2)} neurons ` +
-    `→ $${usdPer1k.toFixed(4)} per 1,000 unsure queries that miss every cache; plus one bge-m3 embedding of ` +
-    "the terms (≈ 15 tokens, $0.012 per M tokens).",
+    `→ $${usdPer1k.toFixed(4)} per 1,000 unsure queries that miss every cache; plus one ${packConfig.model.key} ` +
+    "embedding of the terms (≈ 15 tokens).",
   `- Model call from this machine (Workers AI round trip, cold; n = ${ms.length}): p50 ${percentile(ms, 50)?.toFixed(0)} ms, ` +
     `p95 ${percentile(ms, 95)?.toFixed(0)} ms. Embedding of the terms (uncached this run; n = ${stats.embedMs.length}): ` +
     `p50 ${stats.embedMs.length ? percentile(stats.embedMs, 50).toFixed(0) : "–"} ms.`,

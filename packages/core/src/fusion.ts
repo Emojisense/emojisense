@@ -124,6 +124,8 @@ export interface FuseRanking {
   popularity?: ((id: string) => number) | undefined;
   /** false = the confidence-weighted reciprocal rank fusion below (the ranking before the reranker). */
   rerank?: boolean;
+  /** Learned-fusion weights; default `RERANK_WEIGHTS` (fitted for the production model). */
+  weights?: readonly number[] | undefined;
 }
 
 /**
@@ -154,7 +156,10 @@ export function fuse(
       semanticConfidence: confidence,
       popularity: ranking.popularity,
     };
-    return demoteUnsupportedFlags(rerank(input, Infinity), alias.results, calibration).slice(0, limit);
+    return demoteUnsupportedFlags(rerank(input, Infinity, ranking.weights), alias.results, calibration).slice(
+      0,
+      limit,
+    );
   }
   return fuseResults(alias.results, guarded, {
     limit,

@@ -6,31 +6,31 @@
 
 ## Per locale
 
-| Locale | n | alias (core + ext) R@1 | R@5 | MRR | fused bge-m3@1024 R@1 | R@5 | MRR | Fused − alias R@5 |
+| Locale | n | alias (core + ext) R@1 | R@5 | MRR | fused embeddinggemma@768 R@1 | R@5 | MRR | Fused − alias R@5 |
 | --- | --: | --: | --: | --: | --: | --: | --: | --: |
-| en English | 64 | 31.3 | 64.1 | 0.455 | 35.9 | 70.3 | 0.51 | +6.2 |
-| zh 中文 | 64 | 39.1 | 59.4 | 0.473 | 39.1 | 68.8 | 0.524 | +9.4 |
-| hi हिन्दी | 84 | 19 | 45.2 | 0.3 | 23.8 | 51.2 | 0.351 | +6.0 |
-| es Español | 64 | 35.9 | 65.6 | 0.481 | 39.1 | 68.8 | 0.506 | +3.2 |
-| ar العربية | 60 | 5 | 25 | 0.135 | 8.3 | 33.3 | 0.197 | +8.3 |
-| fr Français | 61 | 34.4 | 60.7 | 0.464 | 34.4 | 57.4 | 0.443 | -3.3 |
-| bn বাংলা | 84 | 14.3 | 28.6 | 0.213 | 23.8 | 34.5 | 0.29 | +5.9 |
-| pt Português | 64 | 29.7 | 64.1 | 0.433 | 28.1 | 67.2 | 0.44 | +3.1 |
-| ru Русский | 64 | 34.4 | 57.8 | 0.443 | 43.8 | 67.2 | 0.545 | +9.4 |
-| id Bahasa Indonesia | 63 | 28.6 | 60.3 | 0.4 | 31.7 | 65.1 | 0.446 | +4.8 |
-| tr Türkçe | 62 | 32.3 | 59.7 | 0.445 | 37.1 | 64.5 | 0.51 | +4.8 |
-| **All (micro)** | 734 | 27.1 | 52.9 | 0.379 | 31.1 | 58.2 | 0.428 | +5.3 |
-| **Mean of locales (macro)** | 734 | 27.6 | 53.7 | 0.386 | 31.4 | 58.9 | 0.433 | +5.2 |
+| en English | 64 | 31.3 | 67.2 | 0.464 | 42.2 | 82.8 | 0.589 | +15.6 |
+| zh 中文 | 64 | 37.5 | 59.4 | 0.476 | 43.8 | 71.9 | 0.557 | +12.5 |
+| hi हिन्दी | 84 | 31 | 58.3 | 0.431 | 38.1 | 66.7 | 0.51 | +8.4 |
+| es Español | 64 | 39.1 | 65.6 | 0.492 | 35.9 | 67.2 | 0.491 | +1.6 |
+| ar العربية | 60 | 15 | 30 | 0.211 | 26.7 | 53.3 | 0.36 | +23.3 |
+| fr Français | 61 | 37.7 | 60.7 | 0.472 | 42.6 | 70.5 | 0.54 | +9.8 |
+| bn বাংলা | 84 | 20.2 | 36.9 | 0.286 | 25 | 41.7 | 0.334 | +4.8 |
+| pt Português | 64 | 32.8 | 62.5 | 0.454 | 40.6 | 68.8 | 0.527 | +6.3 |
+| ru Русский | 64 | 37.5 | 65.6 | 0.502 | 45.3 | 68.8 | 0.557 | +3.2 |
+| id Bahasa Indonesia | 63 | 34.9 | 60.3 | 0.439 | 38.1 | 63.5 | 0.49 | +3.2 |
+| tr Türkçe | 62 | 41.9 | 58.1 | 0.491 | 54.8 | 77.4 | 0.638 | +19.3 |
+| **All (micro)** | 734 | 32.3 | 56.4 | 0.426 | 39 | 65.9 | 0.504 | +9.5 |
+| **Mean of locales (macro)** | 734 | 32.6 | 56.8 | 0.429 | 39.4 | 66.6 | 0.508 | +9.8 |
 
 ## Next to the in-house suite
 
-In-house numbers: this run. The in-house set has only en and tr queries; the second row compares like with like.
+In-house numbers: reports/latest.json (2026-10-02). The in-house set has only en and tr queries; the second row compares like with like.
 
 | Suite | n | Alias R@5 | Alias MRR | Fused R@5 | Fused MRR |
 | --- | --: | --: | --: | --: | --: |
-| In-house (written by Claude) | 214 | 99.1 | 0.888 | 98.6 | 0.91 |
-| Held-out, en + tr | 126 | 61.9 | 0.45 | 67.5 | 0.51 |
-| Held-out, all locales | 734 | 52.9 | 0.379 | 58.2 | 0.428 |
+| In-house (written by Claude) | 214 | 98.6 | 0.908 | 99.1 | 0.936 |
+| Held-out, en + tr | 126 | 62.7 | 0.477 | 80.2 | 0.613 |
+| Held-out, all locales | 734 | 56.4 | 0.426 | 65.9 | 0.504 |
 
 ## Soft gate
 
@@ -38,171 +38,171 @@ This run wrote `reports/heldout-baseline.json`.
 
 No recall@5 drop beyond tolerance (2 points overall, 5 per locale) against the baseline.
 
-## Worst misses per locale (fused bge-m3@1024)
+## Worst misses per locale (fused embeddinggemma@768)
 
 A miss has no label in the top 5. Worst first: not in the top 10, then lowest rank; ties go to queries that the other mode also misses, then to the lower id. – = not in the top 10. The full list is in heldout.json.
 
-### en — English (19 misses of 64)
+### en — English (11 misses of 64)
 
 | Query | id | Labels | fused rank | alias rank | Got (top 5) |
 | --- | --- | --- | --: | --: | --- |
-| feeling so achy | held-en-026 | 😫🤕😣 | – | – | 🤧 😖 😭 🫪 😥 |
-| treat yourself | held-en-034 | 💅✨️🍰🥂 | – | – | 🧁 💆 💆‍♂️ 💆‍♀️ 🎁 |
-| pure chaos | held-en-042 | 💀🤣🌀 | – | – | 🌪️ 🪿 🤪 🤍 🦝 |
-| absolute washout | held-en-044 | 🌧️☔️⛈️🌊 | – | – | 🗑️ 🐋 🔥 🎬️ 🚮 |
-| another long shift from hell | held-en-050 | 😩💀🫠 | – | – | 🧑‍🏭 👨‍🏭 🫩 ⏰️ 👩‍🏭 |
-| finally off duty | held-en-054 | 💃🥂✌️ | – | – | 😮‍💨 😌 ⌛️ 🌆 ⛓️‍💥 |
-| no wayyy | held-en-055 | 😱🤯😲 | – | – | ⛔️ 🙅‍♀️ 🙅‍♂️ 🙂‍↔️ 🚷 |
-| we lost | held-en-058 | 💀📉😞 | – | – | 😔 😶‍🌫️ 🥀 🧭 😕 |
-| thinking of you | held-en-064 | 🥰🫂💌 | – | – | 💭 💐 💕 🕯️ 🤔 |
-| it is roasting | held-en-072 | 🥵☀️🌡️ | – | – | 🌰 🍳 🦞 🍽️ 🍗 |
+| pure chaos | held-en-042 | 💀🤣🌀 | – | – | 🤪 🌪️ 😇 🤍 🎪 |
+| absolute washout | held-en-044 | 🌧️☔️⛈️🌊 | – | – | 🔥 😓 💨 😭 🤮 |
+| sending so much strength | held-en-051 | 🤍🫂🙏 | – | – | 💪 ✊️ 🤗 🏋️‍♀️ 👊 |
+| summer is coming | held-en-048 | ☀️🏖️🕶️ | – | 3 | 🥵 🍉 👙 🌞 🌺 |
+| treat yourself | held-en-034 | 💅✨️🍰🥂 | 10 | – | 🧁 💆 💸 🎁 💆‍♀️ |
+| where is the sun | held-en-075 | 🌤️😒❓️ | 8 | 9 | 🌥️ 🌞 🌅 ☀️ ⛅️ |
+| oh dear | held-en-065 | 🤦‍♀️😟😰 | 7 | – | 🦌 😧 🙀 😮 😦 |
+| huge win for the ward | held-en-049 | 🥳🙌✨️ | 6 | – | 🤯 🎉 🎊 👏 🤩 |
+| finally off duty | held-en-054 | 💃🥂✌️ | 6 | – | 😌 🙌 🌆 😥 😮‍💨 |
+| no wayyy | held-en-055 | 😱🤯😲 | 6 | – | 🙅‍♀️ 🙀 🙅‍♂️ 🙅 😮 |
 
-### zh — Chinese (Simplified) (20 misses of 64)
-
-| Query | id | Labels | fused rank | alias rank | Got (top 5) |
-| --- | --- | --- | --: | --: | --- |
-| 下班 | held-zh-045 | 🏃💨🥳 | – | – | 🌆 🕔️ 🕠️ 🕕️ 🧑‍🏭 |
-| 这天气没谁了 | held-zh-060 | 🙄☁️🌫️ | – | – | 🌤️ ⛅️ 🌧️ 🌨️ 🌁 |
-| 人山人海 | held-zh-063 | 👨‍👩‍👧‍👦👣🌊 | – | – | 🤽 ⛰️ 🚵‍♂️ 🚵 🏄‍♂️ |
-| 这也太远了 | held-zh-067 | 😱🗺️🚶 | – | – | 🔥 🫤 👽️ 🌵 🛸 |
-| 进球了 | held-zh-068 | 🙌 | – | – | ⚽️ 🥅 🤾 🤾‍♂️ 🏌️ |
-| 绝杀 | held-zh-069 | 🔥 | – | – | ⚽️ 🏑 ⛹️ 🥅 ⚔️ |
-| 太菜了 | held-zh-070 | 🤮 | – | – | 🔪 🥔 🌶️ 😞 💸 |
-| 又是这种球 | held-zh-071 | 💀 | – | – | 🤾 🪀 ⚽️ 🤾‍♂️ 🤾‍♀️ |
-| 唉 | held-zh-072 | 🥀 | – | – | 😮‍💨 😦 🪊 🙍‍♂️ 🫤 |
-| 寄了 | held-zh-073 | 🏳️ | – | – | 💀 😵 😦 ☠️ 🦤 |
-
-### hi — Hindi (41 misses of 84)
+### zh — Chinese (Simplified) (18 misses of 64)
 
 | Query | id | Labels | fused rank | alias rank | Got (top 5) |
 | --- | --- | --- | --: | --: | --- |
-| hasna | held-hi-071 | 😂🤣 | – | – | 😀 🦢 🍯 👭 🧕 |
-| kitna lamba safar hai | held-hi-076 | 😫😴🛤️⏳️ | – | – | 🦙 🚊 🦞 🧳 🚋 |
-| paisa khatam ho gaya | held-hi-078 | 💸😭📉👛 | – | – | ✅️ 🪊 😝 😮‍💨 ☑️ |
-| bheed bohot zyada hai | held-hi-079 | 😵🫂🚉🤯 | – | – | ☣️ 🦡 ❕️ 🐯 ☸️ |
-| pahunche kya? | held-hi-081 | 📍🚗🏠️❓️ | – | – | 🛬 🥘 👝 🐾 🪈 |
-| bas nikal gaya | held-hi-083 | 🏃‍♂️💨😰 | – | – | ⏏️ 🛑 🚌 🛫 😩 |
-| bhagwan bachaye | held-hi-086 | 🙏🙌😰 | – | – | 🤷‍♂️ ☝️ 🛕 🛐 🤞 |
-| kya acting thi yaar | held-hi-089 | 😱👏🔥 | – | – | 🙄 🤌 🤦 🤦‍♂️ 🤦‍♀️ |
-| vibe hi alag hai | held-hi-090 | ✨️🌈🌊 | – | – | 🌺 🦩 🦔 😎 🥑 |
-| isne toh aag laga di | held-hi-091 | 🔥🥵💥 | – | – | ❤️‍🔥 😣 🧞‍♂️ 😤 🤷‍♀️ |
+| 下班 | held-zh-045 | 🏃💨🥳 | – | – | 🌆 🕔️ 😙 🥱 😌 |
+| 这天气没谁了 | held-zh-060 | 🙄☁️🌫️ | – | – | ⛅️ ☔️ 🌥️ 🥶 🌂 |
+| 想念夏天 | held-zh-061 | 🏖️🍦🌊 | – | – | 😓 🌻 😔 🌺 💛 |
+| 挤不动了 | held-zh-062 | 😫😵‍💫🚋 | – | – | 😪 😌 😐️ 😑 😩 |
+| 出发啦 | held-zh-066 | ✈️🥳🗺️ | – | – | 🤠 🛫 🎉 🚶 💨 |
+| 绝杀 | held-zh-069 | 🔥 | – | – | ⚽️ 🔪 🥀 ⛹️ 😱 |
+| 太菜了 | held-zh-070 | 🤮 | – | – | 🔪 😭 😋 😧 🤤 |
+| 又是这种球 | held-zh-071 | 💀 | – | – | ⚽️ 🎊 ⛹️ 🎳 ⛹️‍♀️ |
+| 唉 | held-zh-072 | 🥀 | – | – | 😢 😭 🙁 😩 😮‍💨 |
+| 寄了 | held-zh-073 | 🏳️ | – | – | 💀 😦 📤️ 🎁 📩 |
 
-### es — Spanish (20 misses of 64)
-
-| Query | id | Labels | fused rank | alias rank | Got (top 5) |
-| --- | --- | --- | --: | --: | --- |
-| qué bien | held-es-101 | 🙌🎉✨️ | – | – | 😃 😌 😎 🙆 🙆‍♀️ |
-| una locura | held-es-117 | 😵‍💫 | – | – | 😜 🤪 🤯 🤩 😮 |
-| qué fuerte | held-es-120 | 😧 | – | – | 😲 🫢 🤯 😮 😱 |
-| un sueño | held-es-121 | 🤩 | – | – | 😪 💤 😴 🛌 🫩 |
-| qué robo | held-es-129 | 🤡💸😡 | – | – | 🤖 👮 🏦 🦾 🦿 |
-| estamos limpios | held-es-131 | 💸💀🌵 | – | – | 🪥 🙆‍♂️ 🙆 🙆‍♀️ 🤍 |
-| un gustito | held-es-133 | 🍷🍰💅✨️ | – | – | 😌 😉 😋 😜 🍋‍🟩 |
-| estoy de milagro | held-es-137 | 🙏✨️🤕 | – | – | 😅 🟣 🟪 🏒 🕎 |
-| qué ganas de verlos | held-es-152 | 🫂🥺✨️ | – | – | 🤩 😃 🥰 😋 🤤 |
-| mi familia es un lío | held-es-153 | 🤦‍♂️🤪💥🤯 | – | – | 👩‍👩‍👧‍👦 👨‍👨‍👧‍👦 👪️ 👨‍👩‍👦‍👦 👩‍👩‍👧 |
-
-### ar — Arabic (40 misses of 60)
+### hi — Hindi (28 misses of 84)
 
 | Query | id | Labels | fused rank | alias rank | Got (top 5) |
 | --- | --- | --- | --: | --: | --- |
-| جلد | held-ar-001 | ⚔️💪🔥😤 | – | – | 🧼 👞 🦏 🧥 🐊 |
-| لا لا لا | held-ar-002 | 🤦‍♂️🚫❌️😩 | – | – | 🤷‍♂️ 🤷‍♀️ 🙊 🤷 🚯 |
-| mish momken 😂😂😂 | held-ar-006 | 😂🤣🤦‍♂️ | – | – | 🤷 🤷‍♂️ 🍜 🦛 🥟 |
-| el haysat keteer 💸 | held-ar-007 | 💸💰️📉 | – | – | 🔐 🛄 🧉 ⛓️‍💥 🕔️ |
-| akher sa3d 🥲 | held-ar-010 | 🥲💔🥀 | – | – | 🇦🇲 🛠️ 🌃 📤️ 🦯 |
-| yalla bina 🚀 | held-ar-011 | 🚀🏃‍♂️✨️ | – | – | 🏗️ 👷 📣 👷‍♀️ 👷‍♂️ |
-| مش طبيعي | held-ar-014 | 🤯🔥😱 | – | – | 🤪 🕵️ 🕵️‍♂️ 🕵️‍♀️ 😲 |
-| eid mubarak ya habibi | held-ar-018 | 🍬 | – | – | 🧕 🕋 🕌 🌙 🤲 |
-| mabrouk el eid | held-ar-019 | 🎊 | – | – | 🕌 🕋 🧕 🧑‍🎓 👨‍🎓 |
-| el jaw helw awy | held-ar-021 | 🌟 | – | – | 🧝 🧝‍♂️ 🐺 🧝‍♀️ 🤦‍♂️ |
+| kitna lamba safar hai | held-hi-076 | 😫😴🛤️⏳️ | – | – | 🌸 💘 🌊 🍀 🌙 |
+| bheed bohot zyada hai | held-hi-079 | 😵🫂🚉🤯 | – | – | 👻 🐻 🌝 🤦 🙎‍♀️ |
+| bas nikal gaya | held-hi-083 | 🏃‍♂️💨😰 | – | – | 😩 💪 😫 😐️ 🙄 |
+| kya acting thi yaar | held-hi-089 | 😱👏🔥 | – | – | 🙄 🤦 🎭️ 🤦‍♀️ 🤦‍♂️ |
+| kya swaad hai | held-hi-095 | 👌😋✨️🥘 | – | – | 👅 😴 🤷 🤷‍♀️ 🤦 |
+| pet bhar gaya | held-hi-097 | 🤰🈵😵‍💫 | – | – | 🫃 🫄 🐾 🐶 🐕️ |
+| itna sannata kyun hai | held-hi-103 | 🦗😶❓️ | – | – | 💁 😉 🙃 😓 😦 |
+| acha bey | held-hi-104 | 🤨😏 | – | – | 😮 🙁 😍 🙂 😑 |
+| sharam ki baat hai | held-hi-116 | 🤦‍♂️🙄 | – | – | 😳 🙈 😬 🤫 😦 |
+| chutti chahiye yaar | held-hi-120 | 🏖️😴🥳 | – | – | 🎄 👯‍♂️ 👯‍♀️ 🥺 😋 |
 
-### fr — French (26 misses of 61)
-
-| Query | id | Labels | fused rank | alias rank | Got (top 5) |
-| --- | --- | --- | --: | --: | --- |
-| n'importe quoi | held-fr-153 | 🙄🤦 | – | – | 🤨 🤡 🧑 👕 🤬 |
-| enfin le weekend | held-fr-164 | 🥳🥂💃 | – | – | 🙌 ⛱️ 🕺 👖 😮‍💨 |
-| un pur délice | held-fr-178 | ✨️🤤🍰😍 | – | – | 🤍 🤌 😇 ⚪️ 🏇 |
-| je craque | held-fr-183 | 😂🤣💀 | – | – | 🙃 🫠 😖 😻 🛍️ |
-| quel enfer | held-fr-184 | 🤦‍♂️🙄😩 | – | – | 🔑 🌋 ☣️ 🤮 ⚰️ |
-| trop de dossier | held-fr-186 | 🤭🙊📸 | – | – | 🗄️ 📁 📂 🗂️ 🥴 |
-| ça va chauffer | held-fr-192 | 🥵🔥🌡️ | – | – | 🫯 ⚔️ ❤️‍🔥 🧨 ⛈️ |
-| je suis trop refait | held-fr-196 | 🥳😎✨️ | – | – | 💄 😫 🤩 🥴 😏 |
-| dans le jus | held-fr-200 | 🌊🏃‍♂️😰 | – | – | 🧃 🥤 🍊 🧑‍⚖️ 👨‍⚖️ |
-| une pépite | held-fr-206 | 🎶 | – | – | 🍪 💎 🐤 🦄 👧 |
-
-### bn — Bengali (55 misses of 84)
+### es — Spanish (21 misses of 64)
 
 | Query | id | Labels | fused rank | alias rank | Got (top 5) |
 | --- | --- | --- | --: | --: | --- |
-| ki obostha | held-bn-186 | 😂🤣💀 | – | – | 👋 🥱 😔 😩 🌑 |
-| amader obostha | held-bn-188 | 🤡🫠🥲 | – | – | 👋 🥑 🌑 🫙 🥺 |
-| prothom bar dekhlam | held-bn-189 | 👁️👄😲 | – | – | 1️⃣ 🛢️ 🍫 🪩 💂‍♂️ |
-| beshi kotha bolis na | held-bn-190 | 🤫🤐😑 | – | – | 🤥 😠 😾 🙎 🙎‍♂️ |
-| ekdom matha kharap | held-bn-191 | 🤯🥴😵‍💫 | – | – | 🤪 🙂‍↕️ 👌 💯 ♠️ |
-| ghura ghuri korte hobe | held-bn-192 | 🚗🗺️✈️ | – | – | 🪁 🧉 🍻 ⛳️ 🔍️ |
-| rasta khub baje | held-bn-194 | 🚧🚗😡 | – | – | 🚷 🇯🇲 🥙 🕋 🧕 |
-| ki bhalo jayga | held-bn-196 | 😍🏞️✨️ | – | – | 📍 🅿️ 🕚️ 🤹 🥋 |
-| dekhte hobe | held-bn-197 | 👀🧐🔍️ | – | – | 🎦 🤔 🏔️ 🏟️ 🙂‍↔️ |
-| matha thik nai | held-bn-198 | 🤯😵‍💫🧠 | – | – | 💅 🪫 🔨 📪️ ⛔️ |
+| qué bien | held-es-101 | 🙌🎉✨️ | – | – | 👌 😃 👍️ 🙆 🙆‍♂️ |
+| una locura | held-es-117 | 😵‍💫 | – | – | 🤪 😜 🤯 😮 😱 |
+| qué fuerte | held-es-120 | 😧 | – | – | 😲 😮 😱 🤯 🫢 |
+| un sueño | held-es-121 | 🤩 | – | – | 😴 😪 💤 🥱 🛌 |
+| estamos limpios | held-es-131 | 💸💀🌵 | – | – | 🤍 ✨️ 🧹 😇 🚿 |
+| qué ganas de verlos | held-es-152 | 🫂🥺✨️ | – | – | 🤩 😃 🤤 👀 😋 |
+| mi familia es un lío | held-es-153 | 🤦‍♂️🤪💥🤯 | – | – | 👨‍👩‍👧 👨‍👩‍👧‍👧 👪️ 👨‍👩‍👦‍👦 👨‍👩‍👧‍👦 |
+| literalmente yo | held-es-157 | 🤡🫠💀 | – | – | 😏 🙂 🙋 🙁 🤷 |
+| a pie hasta casa | held-es-164 | 👟 | – | – | 🚶 🏠️ 🚶‍♀️ 🚶‍♂️ 👣 |
+| qué odisea | held-es-165 | 🚉 | – | – | 💿️ 🌊 😧 🏺 🔱 |
 
-### pt — Portuguese (Brazil) (21 misses of 64)
-
-| Query | id | Labels | fused rank | alias rank | Got (top 5) |
-| --- | --- | --- | --: | --: | --- |
-| bora | held-pt-223 | 🚀🔥🙌 | – | – | 🥳 ✊️ 🚶 😃 🚶‍♂️ |
-| tô exausta | held-pt-240 | 😴🔋🫠 | – | – | 😮‍💨 🫩 😫 😓 😩 |
-| viva o descanso | held-pt-241 | 🧘‍♀️🍃💆‍♀️ | – | – | 💤 🛌 🧖‍♀️ 🛏️ 🪼 |
-| paz | held-pt-246 | 🍃🧘🌊✨️ | – | – | ✌️ 🕊️ 🪷 ☮️ 🏳️ |
-| perdi tudo | held-pt-248 | 🫠 | – | – | 😩 😵 🧭 😶‍🌫️ 🚆 |
-| icônico | held-pt-249 | 🕶️ | – | – | 😼 🙃 💁 💁‍♂️ 🤩 |
-| zerou a vida | held-pt-251 | 🙌 | – | – | 0️⃣ 👎️ 🙃 📥️ 🥰 |
-| muito bom | held-pt-252 | 🔝 | – | – | 😄 💮 🆒 😂 💣️ |
-| tá impossível | held-pt-256 | 💀🤡🫠 | – | – | 😲 🎋 😩 😑 🤦‍♂️ |
-| o pai tá on | held-pt-257 | 😎🔥🤙 | – | – | 👨‍🍼 👨‍👦 🧑‍🍼 👨‍👦‍👦 👨‍👧 |
-
-### ru — Russian (21 misses of 64)
+### ar — Arabic (28 misses of 60)
 
 | Query | id | Labels | fused rank | alias rank | Got (top 5) |
 | --- | --- | --- | --: | --: | --- |
-| жиза | held-ru-241 | 🤝🫠😩 | – | – | 💯 🥲 😬 🙃 🪼 |
-| фейл | held-ru-251 | 🤦‍♂️🤦‍♀️🤡 | – | – | ❌️ 🆖 🪊 🤦 🐥 |
-| что происходит | held-ru-254 | 🤔🤨❓️ | – | – | 😵‍💫 🫪 ⁉️ 🫨 👀 |
-| люблю не могу | held-ru-269 | 🥰❤️🥺 | – | – | 😭 🫠 🥹 🫣 🤣 |
-| душевно | held-ru-273 | 🙏🕯️😌 | – | – | 🥲 ☺️ 🪗 😔 💜 |
-| святая еда | held-ru-275 | 🥧🍞🍯 | – | – | 🫔 ☦️ 🧆 ✡️ 🦑 |
-| мама дорогая | held-ru-280 | 🤦‍♀️🙏😱😰 | – | – | 😨 👩‍👧 🤱 👩‍🍼 👩‍👧‍👧 |
-| всем здоровья | held-ru-282 | 🙏❤️🍀✨️ | – | – | 📢 🌍️ 👋 🧑‍⚕️ ⚕️ |
-| как же это тепло | held-ru-290 | ❤️🥰✨️ | – | – | 🧡 🆒 🤗 ☀️ 🌤️ |
-| вместе веселее | held-ru-294 | 🥳👯‍♂️🎮️ | – | – | 🧑‍🤝‍🧑 🎉 🎊 👭 👫 |
+| جلد | held-ar-001 | ⚔️💪🔥😤 | – | – | 🧤 👞 🤎 🧼 👜 |
+| لا لا لا | held-ar-002 | 🤦‍♂️🚫❌️😩 | – | – | 🤷‍♀️ 🤷‍♂️ 🤷 🙊 🚯 |
+| مش طبيعي | held-ar-014 | 🤯🔥😱 | – | – | 🤪 😲 🥵 😮 😦 |
+| eid mubarak ya habibi | held-ar-018 | 🍬 | – | – | 🌙 ☪️ 🕋 🕌 🤲 |
+| el jaw helw awy | held-ar-021 | 🌟 | – | – | 😍 👋 😮 👌 😦 |
+| ya rab kollo tamam | held-ar-022 | 🤍 | – | – | 🙂 🤲 🤦 🤦‍♀️ 👍️ |
+| fari7a kbira | held-ar-023 | 🥳 | – | – | 😕 🍻 📚️ 💇‍♀️ 🐁 |
+| akla tayeret el 3a2l | held-ar-024 | 😋🤤🥘👌 | – | – | 😥 😅 🕒️ 👪️ 🌜️ |
+| teslam el eed | held-ar-026 | 🙏❤️👌🍽️ | – | – | 👏 😊 👋 🤲 😋 |
+| da3a el rishm | held-ar-027 | 💸😩💰️ | – | – | 💊 😥 🤲 😌 🙌 |
 
-### id — Indonesian (22 misses of 63)
-
-| Query | id | Labels | fused rank | alias rank | Got (top 5) |
-| --- | --- | --- | --: | --: | --- |
-| seru banget | held-id-296 | 🥳🎉✨️ | – | – | 😄 ‼️ ❣️ ❕️ ❗️ |
-| suasana syahdu | held-id-297 | 🙏✨️🕯️ | – | – | 🌆 💂‍♂️ 🧘 🏟️ 💂‍♀️ |
-| ramai pol | held-id-298 | 🎎🏮🎊 | – | – | 🚓 👮 👮‍♂️ 🎆 🎪 |
-| meriah parah | held-id-300 | 🎆🎇🎈 | – | – | 🪅 😭 ✨️ 😬 👏 |
-| lemes bgt asli | held-id-304 | 😩😫🤒🤕 | – | – | 🍋‍🟩 🍯 🍃 🫀 💎 |
-| sehat selalu ya | held-id-306 | 💪✨️🙏 | – | – | ❤️ 🥗 ❤️‍🩹 🤲 🎂 |
-| diet mulai besok | held-id-313 | 🤣🍕🍟🙈 | – | – | 🥗 🥩 🥬 🍏 🎬️ |
-| riil no fek | held-id-315 | 💯📠✅️ | – | – | 🚯 🪦 🤳 🙂‍↔️ ⛔️ |
-| capek bgt luv | held-id-319 | 💀🤡🫠 | – | – | 😩 😫 🥱 😓 😑 |
-| panas pol | held-id-320 | 🌡️ | – | – | ☀️ 🥵 🫠 ♨️ 🇵🇱 |
-
-### tr — Turkish (22 misses of 62)
+### fr — French (18 misses of 61)
 
 | Query | id | Labels | fused rank | alias rank | Got (top 5) |
 | --- | --- | --- | --: | --: | --- |
-| çok yoğun | held-tr-312 | 🤯🏃‍♂️💻️ | – | – | 🤹 🤹‍♀️ 🤹‍♂️ 🗓️ 🚥 |
-| ay çok tatlı | held-tr-328 | 😻✨️🍭 | – | – | 😍 🌕️ 🌒 🌓 🌛 |
-| kafa gidik | held-tr-333 | 🥴😵‍💫🤪 | – | – | 🪶 🦶 🥣 💁 🐩 |
-| asla inanmadım | held-tr-334 | 🤨🧐😒 | – | – | 🐘 🙅 ❌️ 🙂‍↔️ ⛔️ |
-| patladım | held-tr-335 | 💀😂🤣 | – | – | 🫃 🫄 💥 🤯 🛒 |
-| hayatım kaydı | held-tr-336 | 🫠📉🆘 | – | – | 📹️ ⏺️ 🎙️ 🎥 👫 |
-| bitti bittim | held-tr-348 | 😫😵‍💫🆘 | – | – | 🪫 😩 💀 🔚 😂 |
-| doğa harika | held-tr-357 | 🌿🍃🌳✨️ | – | – | 🏞️ 🪸 🌲 ⛰️ 🥾 |
-| kafa yerinde değil | held-tr-362 | 😵‍💫🧠🌀 | – | – | 🌫️ 😖 🤯 😕 😶‍🌫️ |
-| canım yanıyor | held-tr-364 | 🤕🩹😫 | – | – | 🥵 ❤️‍🔥 🔥 🌡️ 🪭 |
+| n'importe quoi | held-fr-153 | 🙄🤦 | – | – | 🤨 🤡 💩 🤷 🙃 |
+| quel enfer | held-fr-184 | 🤦‍♂️🙄😩 | – | – | 👿 😈 🤘 💀 😱 |
+| trop de dossier | held-fr-186 | 🤭🙊📸 | – | – | 📁 🗃️ 🗄️ 📂 😫 |
+| je suis trop refait | held-fr-196 | 🥳😎✨️ | – | – | 😫 🥴 😓 💄 😩 |
+| dans le jus | held-fr-200 | 🌊🏃‍♂️😰 | – | – | 🧃 🥤 🍉 ☕️ 🍊 |
+| une pépite | held-fr-206 | 🎶 | – | – | 💎 🍪 🐤 🐥 🐣 |
+| j'ai les boules | held-fr-207 | 😢 | – | – | 😟 🙍 😰 😨 🙍‍♂️ |
+| une légende | held-fr-210 | 🌟 | – | – | 🐲 🧌 🤥 😓 😛 |
+| ça me fume | held-fr-211 | 😭 | – | – | 🚬 😤 💨 🚭️ 🥴 |
+| quel skill | held-fr-213 | 🐐🎯👑 | – | – | 🤹 🤓 👩‍🍳 🙄 🧑‍🍳 |
+
+### bn — Bengali (49 misses of 84)
+
+| Query | id | Labels | fused rank | alias rank | Got (top 5) |
+| --- | --- | --- | --: | --: | --- |
+| ki obostha | held-bn-186 | 😂🤣💀 | – | – | 👋 😬 😮 🙆‍♀️ 😖 |
+| vab dekh | held-bn-187 | 🙄🤨😏 | – | – | 🙈 😎 😝 🧐 👀 |
+| amader obostha | held-bn-188 | 🤡🫠🥲 | – | – | 👋 😬 🙋‍♀️ 🌑 🙋‍♂️ |
+| prothom bar dekhlam | held-bn-189 | 👁️👄😲 | – | – | 👀 🥇 💘 🌟 🎣 |
+| beshi kotha bolis na | held-bn-190 | 🤫🤐😑 | – | – | 🤥 😘 😠 🙊 🙎 |
+| ghura ghuri korte hobe | held-bn-192 | 🚗🗺️✈️ | – | – | 🪁 👻 🤤 🐄 💀 |
+| ki bhalo jayga | held-bn-196 | 😍🏞️✨️ | – | – | 🌺 📍 🙌 ✌️ 😇 |
+| dekhte hobe | held-bn-197 | 👀🧐🔍️ | – | – | 🎪 🍺 🌕️ 🌅 🍿 |
+| matha thik nai | held-bn-198 | 🤯😵‍💫🧠 | – | – | 👌 🙏 🤚 👩‍🦲 🤕 |
+| khub chap | held-bn-200 | 😫🥵🆘🌋 | – | – | 🤫 🤭 🐾 😰 👊 |
+
+### pt — Portuguese (Brazil) (20 misses of 64)
+
+| Query | id | Labels | fused rank | alias rank | Got (top 5) |
+| --- | --- | --- | --: | --: | --- |
+| bora | held-pt-223 | 🚀🔥🙌 | – | – | 🥳 😃 ✊️ 🚶 🚶‍♀️ |
+| tô exausta | held-pt-240 | 😴🔋🫠 | – | – | 😫 😓 😩 😮‍💨 😪 |
+| viva o descanso | held-pt-241 | 🧘‍♀️🍃💆‍♀️ | – | – | 💤 😴 🛌 😫 😪 |
+| perdi tudo | held-pt-248 | 🫠 | – | – | 😩 💔 😢 😵 😭 |
+| icônico | held-pt-249 | 🕶️ | – | – | 😼 🙃 🤩 💁 💁‍♂️ |
+| zerou a vida | held-pt-251 | 🙌 | – | – | 😵 💀 🥀 🤣 😫 |
+| muito bom | held-pt-252 | 🔝 | – | – | 😄 💮 🙂 👏 👌 |
+| tá impossível | held-pt-256 | 💀🤡🫠 | – | – | 😲 🙅 🤦 🤦‍♀️ 🤦‍♂️ |
+| o pai tá on | held-pt-257 | 😎🔥🤙 | – | – | 👨‍👧‍👦 👨‍👧‍👧 👨‍👦 👨‍👦‍👦 👨‍👧 |
+| tô quebrada | held-pt-262 | 💸🤡🥀📉 | – | – | ⛓️‍💥 💔 🤕 😢 😭 |
+
+### ru — Russian (20 misses of 64)
+
+| Query | id | Labels | fused rank | alias rank | Got (top 5) |
+| --- | --- | --- | --: | --: | --- |
+| жиза | held-ru-241 | 🤝🫠😩 | – | – | 💯 🙃 😬 🤐 🐐 |
+| что происходит | held-ru-254 | 🤔🤨❓️ | – | – | 😵‍💫 👀 😱 🤯 😲 |
+| душевно | held-ru-273 | 🙏🕯️😌 | – | – | ☺️ 😔 🙍 🙍‍♂️ 😢 |
+| святая еда | held-ru-275 | 🥧🍞🍯 | – | – | 😋 🥞 🍴 🥑 🫔 |
+| наконец-то выходные | held-ru-276 | 🥂💃🕺 | – | – | 🙌 😌 🎉 👪️ 😮‍💨 |
+| светлый праздник | held-ru-277 | 🌟☀️🕊️ | – | – | 🤍 🎊 🥳 🎉 😇 |
+| мама дорогая | held-ru-280 | 🤦‍♀️🙏😱😰 | – | – | 😨 👩‍👧 👩‍👦 👩 💕 |
+| всем здоровья | held-ru-282 | 🙏❤️🍀✨️ | – | – | 👌 👋 😀 ✌️ 🥦 |
+| лучшие люди | held-ru-291 | 🫂🤝💎 | – | – | 🧑‍🤝‍🧑 👯 👭 👑 😇 |
+| вместе веселее | held-ru-294 | 🥳👯‍♂️🎮️ | – | – | 🎉 😄 🎊 😃 😜 |
+
+### id — Indonesian (23 misses of 63)
+
+| Query | id | Labels | fused rank | alias rank | Got (top 5) |
+| --- | --- | --- | --: | --: | --- |
+| seru banget | held-id-296 | 🥳🎉✨️ | – | – | 😄 😃 😁 🤩 😀 |
+| suasana syahdu | held-id-297 | 🙏✨️🕯️ | – | – | 😌 🌺 😓 😥 😔 |
+| ramai pol | held-id-298 | 🎎🏮🎊 | – | – | 👮 👮‍♂️ 🚓 🚔️ 🤣 |
+| meriah parah | held-id-300 | 🎆🎇🎈 | – | – | ✨️ 👏 😭 🤕 😩 |
+| lemes bgt asli | held-id-304 | 😩😫🤒🤕 | – | – | 😛 😝 🍋 😅 👅 |
+| sehat selalu ya | held-id-306 | 💪✨️🙏 | – | – | ❤️ 🎂 🤲 🤒 💕 |
+| pengen jajan | held-id-309 | 🍦🍩🍡🛍️ | – | – | 😋 🤤 🍴 🍰 💸 |
+| diet mulai besok | held-id-313 | 🤣🍕🍟🙈 | – | – | 🥗 🎬️ 🍏 👋 😰 |
+| riil no fek | held-id-315 | 💯📠✅️ | – | – | 🤤 🖕 😘 👌 😉 |
+| agak laen emang | held-id-316 | 🤨🤡🙃 | – | – | 🤤 😅 😝 🐐 🙆‍♂️ |
+
+### tr — Turkish (14 misses of 62)
+
+| Query | id | Labels | fused rank | alias rank | Got (top 5) |
+| --- | --- | --- | --: | --: | --- |
+| çok yoğun | held-tr-312 | 🤯🏃‍♂️💻️ | – | – | 😩 😖 😓 😰 😣 |
+| ay çok tatlı | held-tr-328 | 😻✨️🍭 | – | – | 😍 🌛 🌜️ 🌙 🌝 |
+| patladım | held-tr-335 | 💀😂🤣 | – | – | 🫄 🫃 💥 🧨 🤡 |
+| hayatım kaydı | held-tr-336 | 🫠📉🆘 | – | – | 📒 👫 🎥 ✍️ 🎬️ |
+| hava çok bozdu | held-tr-338 | ☁️🌧️🌫️ | – | – | ⛅️ 💨 🌬️ 😓 🌥️ |
+| bitti bittim | held-tr-348 | 😫😵‍💫🆘 | – | – | 😩 🔚 🤏 🪫 😂 |
+| delireceğim | held-tr-352 | 🫠🤪💢 | – | – | 😛 🤚 😡 🙋 🤭 |
+| canım yanıyor | held-tr-364 | 🤕🩹😫 | – | – | 🔥 🥵 ❤️‍🔥 💨 🤤 |
+| rejim bitti | held-tr-371 | 🍩🍕🍔🫠 | – | – | 😩 🔚 👎️ 💪 🧑‍🎨 |
+| doğa harika | held-tr-357 | 🌿🍃🌳✨️ | 8 | – | 💚 🏞️ 🌲 👌 🎉 |
