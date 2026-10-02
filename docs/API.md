@@ -359,9 +359,11 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
   minute, as after a revocation. Usage that an isolate has not flushed yet for a deleted app is
   dropped.
 - Not deleted: invites that other owners sent to this email (their data), anonymous Analytics
-  Engine points (they have no app, key or account), and D1 Time Travel history (see
+  Engine points (they have no app, key or account), copies of custom emoji images that an edge
+  cache or a browser already holds (until evicted), and D1 Time Travel history (see
   [Privacy](#privacy)).
-- The dashboard has no settings page yet, so the SPA has no button for this route.
+- The dashboard's Settings page has a "Delete account" dialog that asks for the same `confirm`
+  text (`isDeleteAccountConfirmed` in `apps/dashboard/src/shared/contract.ts`).
 
 Custom emoji routes add these codes:
 

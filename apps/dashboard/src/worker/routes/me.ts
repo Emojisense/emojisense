@@ -1,5 +1,10 @@
 import type { AccountRow } from "@emojisense/platform";
-import { DELETE_ACCOUNT_PHRASE, type MeResponse, type OkResponse } from "../../shared/contract";
+import {
+  DELETE_ACCOUNT_PHRASE,
+  isDeleteAccountConfirmed,
+  type MeResponse,
+  type OkResponse,
+} from "../../shared/contract";
 import { listMemberships } from "../access";
 import { deleteAccount } from "../account-deletion";
 import type { AuthedContext } from "../env";
@@ -27,8 +32,7 @@ export async function getMe({ env, account }: AuthedContext): Promise<Response> 
 
 /** The person must type the account's email (any case), or the phrase when there is no email. */
 function assertConfirmed(account: AccountRow, confirm: unknown): void {
-  const expected = (account.email ?? DELETE_ACCOUNT_PHRASE).toLowerCase();
-  if (typeof confirm === "string" && confirm.trim().toLowerCase() === expected) return;
+  if (isDeleteAccountConfirmed(account.email, confirm)) return;
   throw new HttpError(
     400,
     "confirmation_required",

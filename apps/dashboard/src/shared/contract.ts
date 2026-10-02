@@ -80,6 +80,18 @@ export interface DeleteAccountRequest {
   confirm: string;
 }
 
+/** The text that confirms the deletion of an account with this email. */
+export function deleteAccountConfirmation(email: string | null): string {
+  return email ?? DELETE_ACCOUNT_PHRASE;
+}
+
+/** Case and surrounding spaces do not matter, so a pasted address still matches. */
+export function isDeleteAccountConfirmed(email: string | null, typed: unknown): boolean {
+  return (
+    typeof typed === "string" && typed.trim().toLowerCase() === deleteAccountConfirmation(email).toLowerCase()
+  );
+}
+
 export interface AppSummary {
   id: string;
   name: string;
