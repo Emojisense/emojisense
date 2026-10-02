@@ -213,5 +213,5 @@
 {"id":"neg-09","q":"heart broken","locale":"en","cat":"negative","answers":["💔","😢","😭"],"forbid":["🫀"]}
 {"id":"neg-10","q":"pie chart","locale":"en","cat":"negative","answers":["📊","📈"],"forbid":["🥧"],"review":true,"note":"no pie-chart emoji; bar chart is the closest"}
 {"id":"neg-11","q":"qxzvbn","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}
-{"id":"neg-12","q":"asdfgh","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}
+{"id":"neg-12","q":"vbqxzrw","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}
 {"id":"neg-13","q":"zzzzqqq","locale":"en","cat":"noise","answers":[],"note":"gibberish: should produce no confident result"}

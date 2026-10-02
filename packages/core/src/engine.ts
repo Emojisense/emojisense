@@ -1,4 +1,4 @@
-import { boundedEditDistance, maxEditsFor } from "./fuzzy.js";
+import { boundedEditDistance, maxEditsFor, plausibleTypo } from "./fuzzy.js";
 import { normalize, tokenize } from "./normalize.js";
 import { assertPack, DEFAULT_WEIGHTS, FIELDS, type Field, type Pack, ROW } from "./pack.js";
 
@@ -83,10 +83,6 @@ const STOPWORDS = new Set(
   ).split(" "),
 );
 
-interface PhraseState {
-  quality: Float64Array;
-}
-
 /** Build an in-memory Tier 0 index from one or more packs (same emoji set, different locales). */
 export function createEngine(input: Pack | Pack[], options: EngineOptions = {}): AliasEngine {
   const minCoverage = options.minCoverage ?? MIN_COVERAGE;
@@ -111,7 +107,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   }
 
   // Pass 1: collect phrases, deduplicated per emoji (strongest field / first pack wins).
-  const phraseEmoji: number[] = [];
+  const phraseEmojiList: number[] = [];
   const phraseField: number[] = [];
   const phraseLocaleMask: number[] = [];
   const phraseText: string[] = [];
@@ -136,7 +132,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
             continue;
           }
           seen.set(phrase, phraseText.length);
-          phraseEmoji.push(emojiIndex);
+          phraseEmojiList.push(emojiIndex);
           phraseField.push(fieldIndex);
           phraseLocaleMask.push(1 << packIndex);
           phraseText.push(phrase);
@@ -181,7 +177,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   for (let t = 0; t < vocab.length; t++) {
     let df = 0;
     for (let k = postingStart[t] as number; k < (postingStart[t + 1] as number); k++) {
-      const e = phraseEmoji[postings[k] as number] as number;
+      const e = phraseEmojiList[postings[k] as number] as number;
       if (lastSeen[e] !== t) {
         lastSeen[e] = t;
         df++;
@@ -197,6 +193,30 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     if (bucket) bucket.push(id);
     else tokensByLength.set(token.length, [id]);
   });
+
+  // Per-phrase / per-emoji scratch space, reused by every search (no allocation per keystroke:
+  // common words touch thousands of phrases and per-phrase objects caused GC pauses).
+  const phraseCount = phraseText.length;
+  const phraseEmoji = Int32Array.from(phraseEmojiList);
+  const phraseLength = Int32Array.from(phraseTokenIds, (ids) => ids.length);
+  const phraseFieldWeight = Float64Array.from(
+    phraseField,
+    (field, phrase) =>
+      (
+        fieldWeights[
+          Math.log2((phraseLocaleMask[phrase] as number) & -(phraseLocaleMask[phrase] as number))
+        ] as number[]
+      )[field] as number,
+  );
+  const quality = new Float32Array(phraseCount * MAX_QUERY_TOKENS);
+  const phraseStamp = new Uint32Array(phraseCount);
+  const touchedPhrases = new Int32Array(phraseCount);
+  const emojiStamp = new Uint32Array(entries.length);
+  const emojiScore = new Float64Array(entries.length);
+  const emojiPhrase = new Int32Array(entries.length);
+  const emojiSupport = new Int32Array(entries.length);
+  const touchedEmoji = new Int32Array(entries.length);
+  let generation = 0;
 
   function lowerBound(prefix: string): number {
     let lo = 0;
@@ -218,16 +238,21 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const exact = tokenId.get(token);
     if (exact !== undefined) add(exact, 1);
 
+    let prefixMatches = 0;
     if (asPrefix) {
       const start = lowerBound(token);
       for (let i = start; i < vocab.length && i < start + MAX_PREFIX_EXPANSION; i++) {
         const candidate = vocab[i] as string;
         if (!candidate.startsWith(token)) break;
-        if (candidate.length > token.length) add(i, 0.6 + (0.35 * token.length) / candidate.length);
+        if (candidate.length > token.length) {
+          add(i, 0.6 + (0.35 * token.length) / candidate.length);
+          prefixMatches++;
+        }
       }
     }
 
-    if (exact === undefined) {
+    // While a word is still being typed and it already completes to real words, it is not a typo.
+    if (exact === undefined && prefixMatches === 0) {
       // "upp" → "up", "happpy" → "happy": a repeated final letter is the most common slip.
       const squeezed = token.replace(/(.)\1+$/, "$1");
       const squeezedId = squeezed !== token ? tokenId.get(squeezed) : undefined;
@@ -236,6 +261,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       const maxEdits = maxEditsFor(token.length);
       for (let length = token.length - maxEdits; length <= token.length + maxEdits; length++) {
         for (const id of tokensByLength.get(length) ?? []) {
+          if (!plausibleTypo(token, vocab[id] as string)) continue;
           const distance = boundedEditDistance(token, vocab[id] as string, maxEdits);
           if (distance <= maxEdits) add(id, distance === 1 ? 0.8 : 0.65);
         }
@@ -252,39 +278,44 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
 
     const preferredPack = locale === undefined ? 0 : Math.max(0, locales.indexOf(locale));
     const lastIsPrefix = prefix && !/\s$/.test(query);
+    const n = tokens.length;
     const weights: number[] = [];
-    const states = new Map<number, PhraseState>();
+    generation++;
+    let touchedPhraseCount = 0;
 
     tokens.forEach((token, i) => {
-      const candidates = expand(token, lastIsPrefix && i === tokens.length - 1);
+      const candidates = expand(token, lastIsPrefix && i === n - 1);
       let bestQuality = 0;
       let weight = maxIdf;
-      for (const [id, quality] of candidates) {
-        if (quality > bestQuality) {
-          bestQuality = quality;
+      for (const [id, q] of candidates) {
+        if (q > bestQuality) {
+          bestQuality = q;
           weight = idf[id] as number;
         }
         for (let k = postingStart[id] as number; k < (postingStart[id + 1] as number); k++) {
           const phrase = postings[k] as number;
-          let state = states.get(phrase);
-          if (!state) {
-            state = { quality: new Float64Array(tokens.length) };
-            states.set(phrase, state);
+          const base = phrase * MAX_QUERY_TOKENS;
+          if (phraseStamp[phrase] !== generation) {
+            phraseStamp[phrase] = generation;
+            quality.fill(0, base, base + n);
+            touchedPhrases[touchedPhraseCount++] = phrase;
           }
-          if (quality > (state.quality[i] as number)) state.quality[i] = quality;
+          if (q > (quality[base + i] as number)) quality[base + i] = q;
         }
       }
       weights.push(STOPWORDS.has(token) ? Math.min(weight, STOPWORD_WEIGHT_CAP) : weight);
     });
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
-    const best = new Map<number, { score: number; phrase: number; support: number }>();
-    for (const [phrase, { quality }] of states) {
+    let touchedEmojiCount = 0;
+    for (let t = 0; t < touchedPhraseCount; t++) {
+      const phrase = touchedPhrases[t] as number;
+      const base = phrase * MAX_QUERY_TOKENS;
       let covered = 0;
       let matched = 0;
       let allExact = true;
-      for (let i = 0; i < tokens.length; i++) {
-        const q = quality[i] as number;
+      for (let i = 0; i < n; i++) {
+        const q = quality[base + i] as number;
         if (q > 0) matched++;
         if (q !== 1) allExact = false;
         covered += q * (weights[i] as number);
@@ -292,36 +323,40 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       const coverage = covered / totalWeight;
       if (coverage < minCoverage) continue;
 
-      const phraseLength = (phraseTokenIds[phrase] as number[]).length;
-      const exactPhrase = allExact && phraseLength === tokens.length;
+      const length = phraseLength[phrase] as number;
       const mask = phraseLocaleMask[phrase] as number;
-      const field = phraseField[phrase] as number;
-      const fieldWeight = (fieldWeights[Math.log2(mask & -mask)] as number[])[field] as number;
       const score =
-        fieldWeight *
+        (phraseFieldWeight[phrase] as number) *
         coverage *
-        (0.6 + 0.4 * Math.min(1, matched / phraseLength)) *
-        (exactPhrase ? 1 : NON_EXACT_FACTOR) *
+        (0.6 + 0.4 * Math.min(1, matched / length)) *
+        (allExact && length === n ? 1 : NON_EXACT_FACTOR) *
         (mask & (1 << preferredPack) ? 1 : FOREIGN_LOCALE_FACTOR);
 
       const emoji = phraseEmoji[phrase] as number;
-      const current = best.get(emoji);
-      if (!current) best.set(emoji, { score, phrase, support: 0 });
-      else {
-        if (score > current.score) {
-          current.score = score;
-          current.phrase = phrase;
+      if (emojiStamp[emoji] !== generation) {
+        emojiStamp[emoji] = generation;
+        emojiScore[emoji] = score;
+        emojiPhrase[emoji] = phrase;
+        emojiSupport[emoji] = 0;
+        touchedEmoji[touchedEmojiCount++] = emoji;
+      } else {
+        if (score > (emojiScore[emoji] as number)) {
+          emojiScore[emoji] = score;
+          emojiPhrase[emoji] = phrase;
         }
-        current.support++;
+        emojiSupport[emoji] = (emojiSupport[emoji] as number) + 1;
       }
     }
 
-    const ranked = [...best.entries()]
-      .map(([emoji, { score, phrase, support }]) => ({
-        emoji,
-        phrase,
-        score: Math.min(1, score + Math.min(MAX_EVIDENCE_BONUS, support * EVIDENCE_BONUS)),
-      }))
+    const ranked = Array.from(touchedEmoji.subarray(0, touchedEmojiCount), (emoji) => ({
+      emoji,
+      phrase: emojiPhrase[emoji] as number,
+      score: Math.min(
+        1,
+        (emojiScore[emoji] as number) +
+          Math.min(MAX_EVIDENCE_BONUS, (emojiSupport[emoji] as number) * EVIDENCE_BONUS),
+      ),
+    }))
       .sort((a, b) => b.score - a.score || a.emoji - b.emoji)
       .slice(0, limit);
 
