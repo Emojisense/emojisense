@@ -55,9 +55,11 @@ export interface CultureFiles {
 }
 
 /**
- * Culture files per locale, loaded on first use and kept per isolate for the rest of the UTC day
- * (a deploy brings new files and new isolates; the next day re-reads them). A missing file is
- * remembered for the day; a failed load is not, so the next request tries again.
+ * Culture files per locale, loaded on first use and kept per isolate for the rest of the UTC day.
+ * A file covers at least 12 months and each request checks the windows against its own UTC day,
+ * so the file itself does not change from day to day; a deploy brings new files and new isolates.
+ * Reading it again each day keeps the stale check below running. A missing file is remembered for
+ * the day; a failed load is not, so the next request tries again.
  */
 export function createCultureFiles(options: { read: CultureReader; now?: () => number }): CultureFiles {
   const now = options.now ?? Date.now;
@@ -69,7 +71,7 @@ export function createCultureFiles(options: { read: CultureReader; now?: () => n
         throw new Error(`culture.${locale}.json holds locale "${culture.locale}"`);
       }
       if (culture && culture.until < day) {
-        // Seasonal and event entries after `until` are not in the file: sync and deploy again.
+        // No sync and deploy since the file's last day: later events may be missing from it.
         console.warn(JSON.stringify({ event: "culture_file_stale", locale, until: culture.until, day }));
       }
       return culture;
@@ -161,7 +163,8 @@ export function applyServerCulture(
     engine,
     locale,
     limit,
-    now,
+    // The UTC day, whatever the runtime's time zone: the server does not know the user's.
+    day: utcDay(now),
     ...(region ? { region } : {}),
   }).map((result) =>
     result.source === "culture"

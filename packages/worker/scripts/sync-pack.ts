@@ -9,9 +9,11 @@
  * public/p/        layer 2 shards served at /p/<version>/…, if the data package built them
  *                  — generated, not committed
  * public/v1/culture/  culture files served at /v1/culture/<version>/…, built here from the approved
- *                  entries (the `culture:build` step) for today (UTC) + 14 days — generated, not
- *                  committed; cached for an hour, not immutable. `--culture-date YYYY-MM-DD` picks
- *                  another first day, `--no-culture` publishes none (the API then answers without).
+ *                  entries (the `culture:build` step) for yesterday (UTC) + 366 days — generated, not
+ *                  committed; cached for an hour, not immutable. Clients check the windows by their
+ *                  own day, so the files need no daily rebuild; approving entries needs a sync and
+ *                  a deploy. `--culture-date YYYY-MM-DD` picks another first day, `--no-culture`
+ *                  publishes none (the API then answers without).
  */
 import {
   copyFileSync,
@@ -26,7 +28,7 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { buildCultureFiles } from "@emojisense/data/culture";
+import { addDays, buildCultureFiles } from "@emojisense/data/culture";
 import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
@@ -161,15 +163,18 @@ if (existsSync(join(shardSource, "index.json"))) {
   }
 }
 
-// Culture files (PACK_FORMAT §9). The approved entries are built for today (UTC, the day the API
-// checks windows against) and copied; the SDKs load the same files. They are rebuilt daily under
-// the same pack version, so they are cached for an hour, never `immutable`. The API reads them
-// through ASSETS (src/culture.ts). A validation error stops the sync: culture:check names it.
+// Culture files (PACK_FORMAT §9). The approved entries are built for the next 12 months and
+// copied; the SDKs load the same files. Each client checks the windows by its own day (the API by
+// the UTC day), so the files stay right without a daily rebuild. They change when a deploy brings
+// new entries under the same pack version, so they are cached for an hour, never `immutable`. The
+// API reads them through ASSETS (src/culture.ts). A validation error stops the sync: culture:check
+// names it. The first day is yesterday (UTC): a device west of UTC may still be on that day.
 const publicCulture = join(workerRoot, "public", "v1", "culture");
 rmSync(publicCulture, { recursive: true, force: true });
 let cultureNote = "no culture files (--no-culture)";
 if (args.culture) {
-  const build = buildCultureFiles({ from: args["culture-date"] ?? new Date().toISOString().slice(0, 10) });
+  const from = args["culture-date"] ?? addDays(new Date().toISOString().slice(0, 10), -1);
+  const build = buildCultureFiles({ from });
   if (build.packVersion !== packVersion) {
     throw new Error(`culture files are for pack ${build.packVersion}, the Worker serves ${packVersion}`);
   }

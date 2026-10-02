@@ -10,6 +10,7 @@ import {
   loadCulture,
   loadCustomPack,
   loadPacks,
+  localDay,
   type Pack,
   type RelevantEmoji,
   relevantNow,
@@ -304,9 +305,11 @@ export function useRelevantNow(
 ): RelevantEmoji[] {
   const { culture, region, engine } = emojisense;
   const { limit = 8, now } = options;
+  // The device's calendar day: a render after midnight shows the new day's shelf.
+  const day = localDay(now);
   return useMemo(() => {
     if (!culture) return [];
-    const shelf = relevantNow(culture, { limit, ...(region ? { region } : {}), ...(now ? { now } : {}) });
+    const shelf = relevantNow(culture, { limit, day, ...(region ? { region } : {}) });
     // Only emoji the loaded packs know, drawn with the packs' glyph.
     return engine
       ? shelf.flatMap((item) => {
@@ -314,7 +317,7 @@ export function useRelevantNow(
           return entry ? [{ ...item, emoji: entry.emoji }] : [];
         })
       : shelf;
-  }, [culture, region, engine, limit, now]);
+  }, [culture, region, engine, limit, day]);
 }
 
 function layerOf(state: SessionState): SemanticLayer | undefined {

@@ -8,7 +8,7 @@ import {
   SEARCH_DEFAULT_LIMIT,
 } from "./config.ts";
 import type { Handler } from "./context.ts";
-import { type ApiCultureResult, applyServerCulture, parseCultureParams } from "./culture.ts";
+import { type ApiCultureResult, applyServerCulture, parseCultureParams, utcDay } from "./culture.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
 import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
@@ -31,10 +31,11 @@ export interface SearchBody {
    */
   aliasLocale: string | null;
   /**
-   * Search only. The culture file applied with `culture=1`: its first day and the caller's
-   * region. null when culture is off, or no culture file could be loaded for the locale.
+   * Search only. The culture file applied with `culture=1`: its first day, the UTC day its windows
+   * were checked against, and the caller's region. null when culture is off, or no culture file
+   * could be loaded for the locale.
    */
-  culture?: { from: string; region: string | null } | null;
+  culture?: { from: string; day: string; region: string | null } | null;
 }
 
 function parseParams(url: URL) {
@@ -83,10 +84,12 @@ export const handleSearch: Handler = async (
           locale,
           region: cultureParams.region,
           limit: params.limit,
-          now: Date.now(),
+          now: started,
         })
       : results;
-  const culture = cultureFile ? { from: cultureFile.from, region: cultureParams.region ?? null } : null;
+  const culture = cultureFile
+    ? { from: cultureFile.from, day: utcDay(started), region: cultureParams.region ?? null }
+    : null;
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
   const customSet = await custom.forCaller(caller, tenant);
   const customResults = customSet.search(imageOrigin(env, url), params.query, {

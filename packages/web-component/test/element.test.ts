@@ -281,6 +281,26 @@ describe("<emojisense-picker> culture layer", () => {
     await vi.waitFor(() => expect($$(on, "#browse [role=group]")).toHaveLength(4));
   });
 
+  it("draws the relevant-now row for the device's new day when it gets focus after midnight", async () => {
+    const [season] = culture.entries;
+    const oneDay = {
+      ...culture,
+      entries: [{ ...season, when: { from: "10-31", to: "10-31", recurs: "yearly" } }],
+    } as Culture;
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date(2026, 9, 31, 23, 50));
+      const picker = await mount({ "show-relevant-now": "" });
+      picker.culture = oneDay;
+      await vi.waitFor(() => expect($$(picker, "#browse [role=group]")).toHaveLength(5));
+      vi.setSystemTime(new Date(2026, 10, 1, 0, 10));
+      input(picker).dispatchEvent(new FocusEvent("focus"));
+      expect($$(picker, "#browse [role=group]")).toHaveLength(4);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("uses a culture file set as a property", async () => {
     const picker = await mount();
     picker.culture = culture as Culture;

@@ -14,9 +14,10 @@ export interface SemanticResponse {
   overLimit?: boolean;
   /**
    * Server, `/v1/search?culture=1` only (the SDK applies culture on the device instead): the
-   * culture file applied (its first day) and the region, or null when none was applied.
+   * culture file applied (its first day), the UTC day its windows were checked against (servers
+   * since 2026-10-02) and the region, or null when none was applied.
    */
-  culture?: { from: string; region: string | null } | null;
+  culture?: { from: string; day?: string; region: string | null } | null;
   /** Set by the provider that answered. */
   layer?: SemanticLayer;
 }

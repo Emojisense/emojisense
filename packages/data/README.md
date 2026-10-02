@@ -36,8 +36,10 @@ file format: docs/PACK_FORMAT.md §9).
 Workflow: `culture:propose` writes `status: "draft"` files (Workers AI, `@cf/meta/llama-3.3-70b-instruct-fp8-fast`
 by default; `--provider none` drafts from the sources alone; `--misses misses.jsonl` adds
 queries seen ≥ 5 times) → an editor runs `culture:review`, edits the file and approves it →
-`culture:check` (also a unit test) → `culture:build` daily → the Worker sync publishes it. The CI
-culture gate (`packages/eval`, `culture:gate`) checks that no eval top-1 answer changes.
+`culture:check` (also a unit test) → the Worker sync runs `culture:build` and the deploy publishes
+it. A build covers 366 days and clients check the windows by their own day, so it needs no daily
+rebuild, only a sync and a deploy when entries change. The CI culture gate (`packages/eval`,
+`culture:gate`) checks that no eval top-1 answer changes.
 
 Writing rules: context is neutral, ≤ 90 characters, no emoji or exclamation marks, in English and
 every targeted locale. Triggers are what people of that locale type, normalized. A lunar-calendar

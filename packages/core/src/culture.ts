@@ -60,11 +60,19 @@ export interface Culture {
   formatVersion: number;
   packVersion: string;
   locale: string;
-  /** Days the build covered (YYYY-MM-DD). Seasonal and event entries outside them are not in the file. */
+  /**
+   * Days the build covered (YYYY-MM-DD): every lasting and regional entry, plus the seasonal and
+   * event entries active on any day of [`from`, `until`]. Builds cover at least 12 months, so a
+   * client checks each entry's `when` against its own day and needs no new file every day.
+   */
   from: string;
   until: string;
   entries: CultureEntry[];
-  /** Ids of the featured entries active on `from`, in shelf order (for clients without this SDK). */
+  /**
+   * Ids of the featured entries active on `from`, for clients that do not check windows. Files that
+   * cover 12 months write `[]`: a list for one day would be out of date until the next deploy. Use
+   * {@link relevantNow}, which checks the windows on the device.
+   */
   relevantNow: string[];
 }
 
@@ -89,6 +97,11 @@ export interface CultureScope {
   region?: string;
   /** The moment to check windows against, as a local calendar day. Default: now. */
   now?: Date | number;
+  /**
+   * The calendar day to check windows against, "YYYY-MM-DD". It wins over `now`. The search API
+   * passes the request's UTC day, because it does not know the user's.
+   */
+  day?: string;
 }
 
 export interface MatchCultureOptions extends CultureScope {
@@ -133,7 +146,10 @@ export interface LoadCultureOptions {
 /** A BCP 47-style locale tag: "en", "pt", "zh-Hans", "pt-BR". Nothing that can change the URL path. */
 const LOCALE_TAG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/;
 
-/** Fetch one locale's culture file. It changes daily, so it is cached for an hour, not forever. */
+/**
+ * Fetch one locale's culture file. It holds the windows of the next 12 months and changes only
+ * when a deploy brings new entries, so it is cached for an hour, not forever.
+ */
 export async function loadCulture(options: LoadCultureOptions): Promise<Culture> {
   if (!LOCALE_TAG.test(options.locale)) {
     throw new Error(`emojisense: "${options.locale}" is not a locale tag`);
@@ -182,6 +198,15 @@ export function localDay(now: Date | number = Date.now()): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The day a scope checks windows against: its `day`, else the local calendar day of `now`. */
+export function scopeDay(scope: CultureScope = {}): string {
+  if (scope.day === undefined) return localDay(scope.now);
+  if (!DAY.test(scope.day)) throw new Error(`emojisense: culture day must be YYYY-MM-DD, got "${scope.day}"`);
+  return scope.day;
+}
+
 /** Is a `when` active on `day` ("YYYY-MM-DD")? Yearly windows may wrap the year end (12-26 → 01-02). */
 export function isActiveOn(when: CultureWhen, day: string): boolean {
   if (when === null) return true;
@@ -221,7 +246,7 @@ export function matchCulture(
   const normalized = normalize(query);
   if (normalized === "") return [];
   const typing = (options.prefix ?? true) && !/\s$/.test(query);
-  const day = localDay(options.now);
+  const day = scopeDay(options);
   const best = new Map<string, CultureResult>();
   for (const entry of culture.entries) {
     if (!inScope(entry, options.region, day)) continue;
@@ -266,7 +291,7 @@ export function matchRegionalLead(
 ): CultureResult | undefined {
   if (!options.region || canonicalTopId === undefined) return undefined;
   const normalized = normalize(query);
-  const day = localDay(options.now);
+  const day = scopeDay(options);
   let lead: CultureResult | undefined;
   for (const entry of culture.entries) {
     if (entry.kind !== "regional" || !entry.outranks?.includes(canonicalTopId)) continue;
@@ -359,7 +384,7 @@ export function relevantNow(
   const file = options.locale ? files.find((c) => c.locale === options.locale) : files[0];
   if (!file) return [];
   const limit = options.limit ?? 8;
-  const day = localDay(options.now);
+  const day = scopeDay(options);
   const entries = file.entries.filter(
     (e) =>
       e.featured === true && (e.kind === "seasonal" || e.kind === "event") && inScope(e, options.region, day),

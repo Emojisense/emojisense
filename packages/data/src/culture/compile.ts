@@ -1,5 +1,7 @@
 /**
- * Approved records → one locale's culture file (core `Culture`, docs/PACK_FORMAT.md §9).
+ * Approved records → one locale's culture file (core `Culture`, docs/PACK_FORMAT.md §9). A file
+ * covers at least 12 months with each entry's own window, so clients decide on their own day what
+ * is active and nobody has to rebuild it daily.
  */
 import {
   CULTURE_FORMAT,
@@ -16,7 +18,7 @@ export interface CompileOptions {
   packVersion: string;
   /** First day the file covers, "YYYY-MM-DD". */
   from: string;
-  /** Days after `from` whose seasonal and event entries are included. Default 14. */
+  /** Days after `from` whose seasonal and event entries are included. Default {@link CULTURE_DAYS}. */
   days?: number;
   /** hexcode → emoji. Emoji missing here are left out. */
   catalog: ReadonlyMap<string, string>;
@@ -28,6 +30,12 @@ export interface CompileOptions {
    */
   forceActive?: boolean;
 }
+
+/**
+ * Days a build covers after its first day: 366, so the files hold at least 12 months also across
+ * a leap day. Every yearly entry is in them, and every event that is on within that time.
+ */
+export const CULTURE_DAYS = 366;
 
 const DAY_MS = 86_400_000;
 const KIND_ORDER = { event: 0, seasonal: 1, regional: 2, lasting: 3 } as const;
@@ -56,7 +64,14 @@ export function compileCulture(
   locale: string,
   options: CompileOptions,
 ): Culture {
-  const { packVersion, from, days = 14, catalog, statuses = ["approved"], forceActive = false } = options;
+  const {
+    packVersion,
+    from,
+    days = CULTURE_DAYS,
+    catalog,
+    statuses = ["approved"],
+    forceActive = false,
+  } = options;
   const until = addDays(from, days);
   const entries: CultureEntry[] = [];
   for (const record of records) {
@@ -84,7 +99,6 @@ export function compileCulture(
     });
   }
   entries.sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.id.localeCompare(b.id));
-  const relevantNow = entries.filter((e) => e.featured && isActiveOn(e.when, from)).map((e) => e.id);
   return {
     format: CULTURE_FORMAT,
     formatVersion: CULTURE_FORMAT_VERSION,
@@ -93,6 +107,13 @@ export function compileCulture(
     from,
     until,
     entries,
-    relevantNow,
+    // A list for one day would be out of date until the next deploy. Clients check the windows
+    // (core `relevantNow`); a client that reads this list shows no shelf instead of an old one.
+    relevantNow: [],
   };
+}
+
+/** Ids of the featured entries of a file that are active on `day` (build log, previews). */
+export function featuredOn(culture: Culture, day: string): string[] {
+  return culture.entries.filter((e) => e.featured && isActiveOn(e.when, day)).map((e) => e.id);
 }

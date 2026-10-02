@@ -1,6 +1,11 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { type Culture, matchCulture, relevantNow } from "emojisense";
 import { describe, expect, it } from "vitest";
+import { buildCultureFiles, CULTURE_GZIP_BUDGET } from "../src/culture/build-files.ts";
 import { loadCatalog } from "../src/culture/catalog.ts";
-import { addDays, compileCulture } from "../src/culture/compile.ts";
+import { addDays, CULTURE_DAYS, compileCulture, featuredOn } from "../src/culture/compile.ts";
 import { findExcluded, loadExclusions, parseExclusions } from "../src/culture/exclusions.ts";
 import { loadRecords } from "../src/culture/records.ts";
 import { type DatedSource, loadSources, occurrencesBetween } from "../src/culture/sources.ts";
@@ -177,15 +182,116 @@ describe("culture compiler", () => {
   const draft = record({ id: "draft", status: "draft" });
   const options = { packVersion: "test", catalog };
 
-  it("keeps lasting entries and the seasonal ones active within the next 14 days", () => {
-    const early = compileCulture([record(), halloween, draft], "es", { ...options, from: "2026-09-20" });
+  const event = (id: string, from: string, to: string, trigger = id) =>
+    record({
+      id,
+      kind: "event",
+      context: { en: `The ${trigger} event`, es: `El evento ${trigger}` },
+      when: { from, to },
+      triggers: { en: [trigger], es: [trigger] },
+      emoji: [{ hexcode: "1F383", weight: 0.8 }],
+      featured: true,
+    });
+  const newYear = record({
+    id: "new-year",
+    kind: "seasonal",
+    context: { en: "New Year", es: "Año Nuevo" },
+    when: { from: "12-26", to: "01-02", recurs: "yearly" },
+    triggers: { en: ["new year"], es: ["ano nuevo"] },
+    emoji: [{ hexcode: "1F47B", weight: 0.8 }],
+    featured: true,
+  });
+
+  it("covers at least 12 months: every yearly entry and the events of that time", () => {
+    expect(CULTURE_DAYS).toBe(366);
+    const records = [
+      record(),
+      halloween,
+      draft,
+      event("ended", "2026-09-01", "2026-10-01"),
+      event("last-day", "2026-09-20", "2026-10-02"),
+      event("next-year", "2027-09-30", "2027-10-10"),
+      event("too-late", "2027-10-04", "2027-10-10"),
+    ];
+    const file = compileCulture(records, "es", { ...options, from: "2026-10-02" });
+    expect(file).toMatchObject({
+      format: "emojisense-culture",
+      formatVersion: 1,
+      locale: "es",
+      from: "2026-10-02",
+      until: "2027-10-03",
+    });
+    expect(file.entries.map((e) => e.id)).toEqual(["last-day", "next-year", "halloween", "goat-football"]);
+    // Built in spring, the file still holds Halloween: the client switches it on by its own day.
+    const spring = compileCulture([halloween], "es", { ...options, from: "2027-03-01" });
+    expect(spring.entries.map((e) => e.id)).toEqual(["halloween"]);
+  });
+
+  it("holds 12 months across a leap day", () => {
+    expect(compileCulture([halloween], "es", { ...options, from: "2027-10-02" }).until).toBe("2028-10-02");
+    expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+    const leap = event("leap", "2028-02-29", "2028-03-01");
+    expect(compileCulture([leap], "es", { ...options, from: "2027-03-01" }).entries).toHaveLength(1);
+  });
+
+  it("writes no relevantNow list: a list for one day would be out of date before the next deploy", () => {
+    const file = compileCulture([halloween, newYear], "es", { ...options, from: "2026-10-20" });
+    expect(file.relevantNow).toEqual([]);
+    expect(featuredOn(file, "2026-10-20")).toEqual(["halloween"]);
+    expect(featuredOn(file, "2027-01-01")).toEqual(["new-year"]);
+    expect(featuredOn(file, "2027-03-01")).toEqual([]);
+  });
+
+  it("keeps a shorter window on request", () => {
+    const early = compileCulture([record(), halloween, draft], "es", {
+      ...options,
+      from: "2026-09-20",
+      days: 14,
+    });
+    expect(early.until).toBe("2026-10-04");
     expect(early.entries.map((e) => e.id)).toEqual(["goat-football"]);
-    const soon = compileCulture([record(), halloween], "es", { ...options, from: "2026-10-02" });
-    expect(soon).toMatchObject({ format: "emojisense-culture", locale: "es", until: "2026-10-16" });
-    expect(soon.entries.map((e) => e.id)).toEqual(["halloween", "goat-football"]);
-    expect(soon.relevantNow).toEqual([]);
-    const now = compileCulture([halloween], "es", { ...options, from: "2026-10-20" });
-    expect(now.relevantNow).toEqual(["halloween"]);
+  });
+
+  it("lets the consumer decide by date what is active (one build, a whole year)", () => {
+    const diwali = event("diwali-2026", "2026-10-30", "2026-11-11", "diwali");
+    const file = compileCulture([record(), halloween, newYear, diwali], "es", {
+      ...options,
+      from: "2026-10-02",
+    });
+    const active = (day: string) =>
+      file.entries
+        .filter((e) => matchCulture(file, e.triggers[0] ?? "", { day, prefix: false }).length > 0)
+        .map((e) => e.id);
+    const shelf = (day: string) => [...new Set(relevantNow(file, { day }).map((r) => r.cultureId))];
+    const days = [
+      "2026-10-02",
+      "2026-10-14",
+      "2026-10-15",
+      "2026-10-31",
+      "2026-11-01",
+      "2026-11-11",
+      "2026-11-12",
+      "2026-12-31",
+      "2027-01-02",
+      "2027-01-03",
+      "2027-10-15",
+    ];
+    expect(Object.fromEntries(days.map((day) => [day, [active(day), shelf(day)]]))).toEqual({
+      "2026-10-02": [["goat-football"], []],
+      "2026-10-14": [["goat-football"], []],
+      "2026-10-15": [["halloween", "goat-football"], ["halloween"]],
+      "2026-10-31": [
+        ["diwali-2026", "halloween", "goat-football"],
+        ["diwali-2026", "halloween"],
+      ],
+      "2026-11-01": [["diwali-2026", "goat-football"], ["diwali-2026"]],
+      "2026-11-11": [["diwali-2026", "goat-football"], ["diwali-2026"]],
+      "2026-11-12": [["goat-football"], []],
+      "2026-12-31": [["new-year", "goat-football"], ["new-year"]],
+      "2027-01-02": [["new-year", "goat-football"], ["new-year"]],
+      "2027-01-03": [["goat-football"], []],
+      "2027-10-15": [["halloween", "goat-football"], ["halloween"]],
+    });
   });
 
   it("writes the locale's context and triggers, and emoji strongest first", () => {
@@ -256,6 +362,39 @@ describe("committed culture data", () => {
     const loaded = loadRecords();
     const issues = validateRecords(loaded, { catalog: realCatalog, exclusions: loadExclusions() });
     expect(issues.filter((i) => i.level === "error")).toEqual([]);
+  });
+
+  it("build into small files that hold every yearly entry, without a relevantNow list", () => {
+    const outDir = mkdtempSync(join(tmpdir(), "culture-"));
+    try {
+      const build = buildCultureFiles({ from: "2026-10-02", outDir });
+      expect(build.until).toBe("2027-10-03");
+      const records = loadRecords().map((l) => l.record);
+      for (const [locale, summary] of Object.entries(build.locales)) {
+        const file: Culture = JSON.parse(readFileSync(join(outDir, `culture.${locale}.json`), "utf8"));
+        expect(file.relevantNow).toEqual([]);
+        // Every entry that is not a dated event is in, whatever the build day.
+        const always = compileCulture(records, locale, {
+          packVersion: build.packVersion,
+          from: "2026-10-02",
+          catalog: realCatalog,
+          forceActive: true,
+        })
+          .entries.filter((e) => e.kind !== "event")
+          .map((e) => e.id);
+        expect(file.entries.map((e) => e.id)).toEqual(expect.arrayContaining(always));
+        expect(summary.gzipBytes, locale).toBeLessThanOrEqual(CULTURE_GZIP_BUDGET);
+      }
+      const index = JSON.parse(readFileSync(join(outDir, "index.json"), "utf8"));
+      expect(index).toMatchObject({
+        format: "emojisense-culture-index",
+        from: "2026-10-02",
+        until: "2027-10-03",
+      });
+      expect(index.locales.en).not.toHaveProperty("relevantNow");
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
   });
 
   it("sources use catalog emoji, valid windows and English titles", () => {

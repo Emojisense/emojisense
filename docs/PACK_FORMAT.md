@@ -354,7 +354,8 @@ and their rows never match catalog hexcodes.
 ## 9. Culture files (the culture layer)
 
 Editorial associations that add emoji next to the canonical answer, by culture, region and
-moment (docs/ARCHITECTURE.md, "Culture layer"). One small file per locale, rebuilt daily:
+moment (docs/ARCHITECTURE.md, "Culture layer"). One small file per locale, built at deploy for
+the next 12 months; clients decide by their own day what is active, so it needs no daily rebuild:
 
 ```
 /v1/culture/<packVersion>/culture.<locale>.json     Cache-Control: public, max-age=3600 (not immutable)
@@ -368,7 +369,7 @@ moment (docs/ARCHITECTURE.md, "Culture layer"). One small file per locale, rebui
   "packVersion": "0.1.0",
   "locale": "es",
   "from": "2026-10-02",
-  "until": "2026-10-16",
+  "until": "2027-10-03",
   "entries": [
     {
       "id": "goat-football",
@@ -398,17 +399,17 @@ A client MUST reject a file whose `format` differs or whose `formatVersion` it d
 
 | Key | Meaning |
 | --- | ------- |
-| `from`, `until` | Days the build covered: the file holds every lasting entry, plus the seasonal and event entries active on any day of [`from`, `until`]. |
+| `from`, `until` | Days the build covered: the file holds every lasting entry, plus the seasonal and event entries active on any day of [`from`, `until`]. A build covers 366 days (at least 12 months, also across a leap day), so every yearly entry is in the file. |
 | `entries[].kind` | `lasting`, `seasonal` (a yearly window), `event` (one dated window, ≤ 60 days) or `regional` (a word whose main sense differs by region, always active; see step 3). A festival on a lunar calendar is one event entry per year (`diwali-2026`). |
 | `entries[].context` | The reason, in this file's locale. Neutral, ≤ 90 characters. |
-| `entries[].when` | `null` (always), `{ from: "MM-DD", to: "MM-DD", recurs: "yearly" }` (may wrap the year end, e.g. `12-26` → `01-02`) or `{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`. Days are inclusive and compared with the user's **local** calendar day. |
+| `entries[].when` | `null` (always), `{ from: "MM-DD", to: "MM-DD", recurs: "yearly" }` (may wrap the year end, e.g. `12-26` → `01-02`) or `{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`. Days are inclusive and compared with the user's **local** calendar day (the search API: the request's UTC day). |
 | `entries[].regions` | ISO 3166-1 alpha-2 codes, or `["*"]`. Without a region from the app, only `"*"` entries apply. |
 | `entries[].exceptRegions` | Optional, with `regions: ["*"]`: codes where the entry does not apply when the app names one of them. |
 | `entries[].outranks` | `regional` entries only: hexcodes of the canonical top answers the regional sense may move to second place. |
 | `entries[].triggers` | Normalized phrases (§3) that people of this locale type. |
 | `entries[].emoji` | `[emoji, hexcode, weight]`, strongest first; weight in (0, 1]. Base hexcodes only. |
 | `entries[].featured` | May appear on an optional "relevant now" shelf (seasonal and event entries only). |
-| `relevantNow` | Ids of the featured entries active on `from`, in shelf order, for clients that do not evaluate windows. |
+| `relevantNow` | Always `[]` in 12-month files (see below). In older files: ids of the featured entries active on `from`, in shelf order, for clients that do not evaluate windows. |
 
 **Applying it (reference: `packages/core/src/culture.ts`).**
 
@@ -439,3 +440,18 @@ order, which puts events first), taking one emoji from each entry in turn.
 The source format (`packages/data/culture/entries/<id>.json`, one file per association with a
 status, context and triggers per locale, and provenance) is described by
 `packages/data/culture/schema.json`.
+
+**12-month files (2026-10-02), same `formatVersion: 1`.** Files used to cover 14 days and needed a
+daily rebuild. Now a build covers 366 days from the day before the deploy (UTC, so a device west
+of UTC that is still on that day finds it), and the client checks every entry's `when` against its
+own day at query time, as step 1 always required. The keys and their types did not change, so
+old clients keep loading the files:
+
+| Client | Behaviour with a 12-month file |
+| ------ | ------------------------------ |
+| Checks windows (every emojisense SDK so far, the search API) | Correct on every day of the 12 months, with no new download. |
+| Reads `relevantNow` instead of checking windows | Gets `[]` and shows no shelf, never an out-of-date one. |
+| Ignores `when` (breaks step 1) | Already wrong with 14-day files; now shows seasonal entries all year. Fix the client. |
+
+The files change only at a deploy, so new or edited entries still need a sync and a deploy. A
+file whose `until` has passed still works for lasting and yearly entries but misses later events.
