@@ -1,0 +1,11 @@
+# Copy to .dev.vars (gitignored). `wrangler dev` reads it and overrides the vars in wrangler.jsonc.
+
+# Enables the dev sign-in at /api/auth/dev (it also requires a localhost URL).
+ENVIRONMENT=development
+
+# Website origins that may POST /api/waitlist (comma-separated).
+WEBSITE_ORIGINS=http://localhost:5173,http://localhost:4321
+
+# GitHub OAuth app for local sign-in. Callback URL: http://localhost:8790/api/auth/github/callback
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=

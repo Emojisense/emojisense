@@ -1,0 +1,32 @@
+{
+  "name": "@emojisense/dashboard",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Developer dashboard: GitHub sign-in, apps, API keys, usage and the Pro waitlist.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite build && wrangler dev --persist-to ../../.wrangler/state",
+    "dev:ui": "vite build --watch",
+    "db:migrate": "wrangler d1 migrations apply emojisense --local --persist-to ../../.wrangler/state",
+    "build": "vite build",
+    "check:worker": "wrangler deploy --dry-run --outdir dist/worker",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.worker.json && tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "dependencies": {
+    "@emojisense/platform": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "happy-dom": "20.14.5",
+    "vite": "8.3.1",
+    "wrangler": "4.139.0"
+  }
+}
