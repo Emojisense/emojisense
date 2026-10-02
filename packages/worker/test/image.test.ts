@@ -2,12 +2,22 @@ import { createEngine } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import { MAX_IMAGE_BYTES, VISION_MODEL, VISION_PROMPT_VERSION } from "../src/config.ts";
 import { resolveEmoji } from "../src/emoji-lookup.ts";
-import { type ClassifyImageBody, labelCacheKey } from "../src/image.ts";
+import { type ClassifyImageBody, labelCacheKey, sha256Hex } from "../src/image.ts";
 import { parseLabel, sniffImage, toBase64 } from "../src/vision.ts";
 import { API, catalog, DEFAULT_LABEL, EMBEDDING_MODEL, harness, image, jpeg, ROW } from "./fixtures.ts";
 
 const HASH = "0123456789abcdef";
 const { emoji: _proposed, ...PUBLIC_LABEL } = DEFAULT_LABEL;
+/** The cache key of `jpeg()`: the SHA-256 of its bytes. */
+const jpegKey = async () => labelCacheKey(API, await sha256Hex(jpeg()));
+/** Another valid JPEG with other bytes. */
+const otherJpeg = () => {
+  const bytes = jpeg();
+  bytes[10] = 9;
+  return bytes;
+};
+const visionCalls = (h: ReturnType<typeof harness>) =>
+  h.ai.mock.calls.filter(([model]) => model === VISION_MODEL).length;
 
 describe("POST /v1/classify-image", () => {
   it("labels the image with the vision model, then embeds the caption alone", async () => {
@@ -50,7 +60,7 @@ describe("POST /v1/classify-image", () => {
     expect(body.results[0]?.score).toBeGreaterThan(body.results[1]?.score ?? 1);
   });
 
-  it("caches only the label, keyed by X-Image-Hash and the prompt version", async () => {
+  it("caches only the label, keyed by the image's SHA-256 and the prompt version", async () => {
     const h = harness();
     await h.call(image(jpeg(), { "X-Image-Hash": HASH }));
     await h.ctx.settle();
@@ -58,23 +68,56 @@ describe("POST /v1/classify-image", () => {
       await h.call(image(jpeg(), { "X-Image-Hash": HASH.toUpperCase() }))
     ).json()) as ClassifyImageBody;
     expect(second).toMatchObject({ ...PUBLIC_LABEL, cached: true });
-    expect(h.ai.mock.calls.filter(([model]) => model === VISION_MODEL)).toHaveLength(1);
+    expect(visionCalls(h)).toBe(1);
 
-    expect(h.cache.puts).toEqual([labelCacheKey(API, HASH).url]);
-    expect(h.cache.puts[0]).toContain(`h=${HASH}`);
+    const key = await jpegKey();
+    expect(h.cache.puts).toEqual([key.url]);
+    expect(h.cache.puts[0]).toContain(`sha256=${await sha256Hex(jpeg())}`);
+    expect(h.cache.puts[0]).not.toContain(HASH);
     const stored = await h.cache.store.values().next().value?.clone().json();
     expect(stored).toEqual(DEFAULT_LABEL);
+  });
+
+  it("never lets X-Image-Hash reach the label of another image", async () => {
+    const h = harness({ label: { ...DEFAULT_LABEL, caption: "a cat on a keyboard" } });
+    // A poisoned entry under the victim's bytes cannot be written with the attacker's image…
+    await h.call(image(otherJpeg(), { "X-Image-Hash": HASH }));
+    await h.ctx.settle();
+    // …and the victim's image with the same hash gets its own label, not the cached one.
+    const victim = (await (
+      await h.call(image(jpeg(), { "X-Image-Hash": HASH }))
+    ).json()) as ClassifyImageBody;
+    expect(victim.cached).toBe(false);
+    expect(visionCalls(h)).toBe(2);
+    expect(new Set(h.cache.puts).size).toBe(2);
+
+    // The same bytes with any other valid hash still hit their own entry.
+    const again = (await (
+      await h.call(image(jpeg(), { "X-Image-Hash": "fedcba9876543210" }))
+    ).json()) as ClassifyImageBody;
+    expect(again.cached).toBe(true);
+    expect(visionCalls(h)).toBe(2);
+  });
+
+  it("does not read a label stored under the client's hash, as before", async () => {
+    const h = harness();
+    const legacy = new Request(
+      `${API}/v1/classify-image?${new URLSearchParams({ h: HASH, v: `${VISION_MODEL}:${VISION_PROMPT_VERSION}` })}`,
+    );
+    await h.cache.put(legacy, Response.json({ caption: "a poisoned caption", reaction: "" }));
+    const body = (await (await h.call(image(jpeg(), { "X-Image-Hash": HASH }))).json()) as ClassifyImageBody;
+    expect(body).toMatchObject({ caption: DEFAULT_LABEL.caption, cached: false });
   });
 
   it("does not read a label cached by an older prompt version", async () => {
     const h = harness();
     const old = new Request(
-      `${API}/v1/classify-image?${new URLSearchParams({ h: HASH, v: `${VISION_MODEL}:${VISION_PROMPT_VERSION - 1}` })}`,
+      `${API}/v1/classify-image?${new URLSearchParams({ sha256: await sha256Hex(jpeg()), v: `${VISION_MODEL}:${VISION_PROMPT_VERSION - 1}` })}`,
     );
     await h.cache.put(old, Response.json({ caption: "an old caption", reaction: "" }));
     const body = (await (await h.call(image(jpeg(), { "X-Image-Hash": HASH }))).json()) as ClassifyImageBody;
     expect(body).toMatchObject({ caption: DEFAULT_LABEL.caption, cached: false });
-    expect(labelCacheKey(API, HASH).url).toContain(
+    expect((await jpegKey()).url).toContain(
       `v=${encodeURIComponent(`${VISION_MODEL}:${VISION_PROMPT_VERSION}`)}`,
     );
     expect(VISION_PROMPT_VERSION).toBeGreaterThanOrEqual(2);
@@ -82,11 +125,11 @@ describe("POST /v1/classify-image", () => {
 
   it("reads a cached label without keywords or emoji", async () => {
     const h = harness({ embedTo: ROW.dog });
-    await h.cache.put(labelCacheKey(API, HASH), Response.json({ caption: "a puppy", reaction: "aww" }));
+    await h.cache.put(await jpegKey(), Response.json({ caption: "a puppy", reaction: "aww" }));
     const body = (await (await h.call(image(jpeg(), { "X-Image-Hash": HASH }))).json()) as ClassifyImageBody;
     expect(body).toMatchObject({ caption: "a puppy", keywords: [], cached: true });
     expect(body.results[0]?.emoji).toBe("🐶");
-    expect(h.ai.mock.calls.filter(([model]) => model === VISION_MODEL)).toHaveLength(0);
+    expect(visionCalls(h)).toBe(0);
   });
 
   it("does not cache without a hash and never logs captions", async () => {
@@ -219,5 +262,11 @@ describe("image helpers", () => {
     expect(sniffImage(new TextEncoder().encode("\x89PNG\r\n\x1a\n"))).toBeUndefined();
     const bytes = Uint8Array.from({ length: 70_000 }, (_, i) => i % 256);
     expect(toBase64(bytes)).toBe(btoa(String.fromCharCode(...bytes)));
+  });
+
+  it("hash the image bytes with SHA-256", async () => {
+    expect(await sha256Hex(new TextEncoder().encode("abc"))).toBe(
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    );
   });
 });

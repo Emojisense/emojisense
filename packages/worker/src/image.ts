@@ -28,20 +28,28 @@ export interface ClassifyImageBody {
 }
 
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/webp"]);
+/** `X-Image-Hash`: the client's opt-in to the label cache. It is never part of the cache key. */
 const IMAGE_HASH = /^[0-9a-f]{16}$/i;
 /** Semantic neighbours of the caption that take part in the fusion. */
 const CAPTION_NEIGHBOURS = 8;
 
 /**
- * The cache key holds the model and the prompt version, so a new prompt never reads labels
- * written by an older one.
+ * The label cache key: the SHA-256 of the bytes the Worker received, the model and the prompt
+ * version. No client-sent value is in it, so a caller cannot read or overwrite the label of an
+ * image it did not send, and a new prompt never reads labels written by an older one.
  */
-export function labelCacheKey(origin: string, hash: string): Request {
+export function labelCacheKey(origin: string, imageSha256: string): Request {
   const params = new URLSearchParams({
-    h: hash.toLowerCase(),
+    sha256: imageSha256,
     v: `${VISION_MODEL}:${VISION_PROMPT_VERSION}`,
   });
   return new Request(`${origin}/v1/classify-image?${params}`);
+}
+
+/** Lowercase hex SHA-256 of the image bytes. */
+export async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 const strings = (value: unknown) =>
@@ -73,7 +81,8 @@ const catalogEmoji = (engine: AliasEngine) => (text: string) =>
  * writes a caption, a likely reaction, keywords and the emoji it would pick. The ranking fuses
  * those emoji (checked against the catalog), an alias search per keyword and the semantic
  * neighbours of the caption (image-rank.ts). With `X-Image-Hash`, only the label is cached, keyed
- * by the perceptual hash and the prompt version. The image itself is never stored or logged.
+ * by the SHA-256 of the received bytes and the prompt version, never by the client's hash. The
+ * image itself is never stored or logged.
  * Metered as image_classifications, cache hits included.
  */
 export const handleClassifyImage: Handler = async (request, env, ctx, { catalog, cache }, metering) => {
@@ -115,7 +124,7 @@ export const handleClassifyImage: Handler = async (request, env, ctx, { catalog,
   }
 
   const engine = catalog.engine();
-  const cacheKey = hash ? labelCacheKey(url.origin, hash) : undefined;
+  const cacheKey = hash ? labelCacheKey(url.origin, await sha256Hex(bytes)) : undefined;
   let label = cacheKey ? await cachedLabel(cache, cacheKey) : undefined;
   const cached = label !== undefined;
   let visionMs = 0;

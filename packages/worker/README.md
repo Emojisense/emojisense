@@ -8,7 +8,7 @@ The Emojisense Search API: a Cloudflare Worker, deployed at `https://api.emojise
 | ----- | ---- | ---------- |
 | `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API; `culture=1` (+ `region`) applies the culture layer after the cache (`src/culture.ts`) | `semantic_calls` (cache hits too) |
 | `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), no cache | `semantic_calls` |
-| `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
+| `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached (with `X-Image-Hash`) by the SHA-256 of the bytes | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API, no key | — |
 | `/v1/tenants[/:externalId[/emoji[/:shortcode]]]` | tenants and their custom emoji (Scale, secret key); D1 + R2 `EMOJI`; sends webhooks | — |
 | `GET /v1/custom/:appId/:emojiId` | custom emoji image from R2 (`EMOJI`), immutable, Cache API, no key | — |

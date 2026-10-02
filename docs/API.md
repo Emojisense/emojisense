@@ -174,10 +174,12 @@ embedding call per request, no LLM. `source` is `semantic` for the embedding sig
 ## `POST /v1/classify-image`
 
 Request: `Content-Type: image/jpeg` or `image/webp`, max 256 KB. Clients downscale to ~384 px
-first. Optional header `X-Image-Hash: <16 hex>` (64-bit perceptual hash) enables the cache, so the
-same meme shared many times costs one call. Query: `?locale=&limit=` (`locale` is checked as in
-[search](#locales); the label is English, so the keywords are ranked with English aliases;
-`limit` 1–50, default 8). Answers are `Cache-Control: no-store`.
+first. Optional header `X-Image-Hash: <16 hex>` (for example a 64-bit perceptual hash) turns on
+the label cache, so the same image sent many times costs one vision call. The cache key is the
+SHA-256 of the bytes the API received, never the header, so only byte-identical images share a
+label. Query: `?locale=&limit=` (`locale` is checked as in [search](#locales); the label is
+English, so the keywords are ranked with English aliases; `limit` 1–50, default 8). Answers are
+`Cache-Control: no-store`.
 
 ```json
 { "caption": "a puppy asleep on a sofa", "reaction": "aww, so cute", "keywords": ["puppy", "sofa", "sleeping"], "results": [{ "emoji": "🐶", "id": "1F436", "score": 0.92, "source": "semantic" }], "cached": false, "degraded": false, "overLimit": false }
@@ -192,7 +194,8 @@ caption embedding (fewer results).
 
 The image is never stored or logged. It is processed in memory and dropped. Only the label
 (caption, reaction, keywords, proposed emoji) is cached, and only with `X-Image-Hash`, keyed by
-the perceptual hash, the vision model and the prompt version.
+the SHA-256 of the image bytes, the vision model and the prompt version. A wrong or reused
+`X-Image-Hash` can never read or replace the label of another image.
 
 ## Static files
 
