@@ -1,0 +1,44 @@
+---
+import { type ExampleOptions, topEmoji } from "./facts";
+
+interface Props {
+  /** Each query runs through the real engine at build time. */
+  queries: { query: string; locale?: string; note?: string }[];
+  part?: ExampleOptions["part"];
+  limit?: number;
+  label?: string;
+}
+
+const {
+  queries,
+  part = "full",
+  limit = 3,
+  label = "Example searches and their real top results",
+} = Astro.props;
+const rows = queries
+  .map((q) => ({ ...q, top: topEmoji(q.query, { locale: q.locale ?? "en", part, limit }) }))
+  .filter((row) => row.top.length > 0);
+---
+
+{
+  rows.length > 0 && (
+    <ul class="docs-results" aria-label={label}>
+      {rows.map((row) => (
+        <li>
+          <span class="docs-results-query">
+            “{row.query}”{row.note && <span class="docs-results-note"> · {row.note}</span>}
+          </span>
+          <span class="docs-results-emoji emoji">{row.top.join(" ")}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .docs-results-note {
+    color: var(--ink-2);
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+  }
+</style>

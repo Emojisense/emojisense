@@ -1,0 +1,117 @@
+---
+import PageHero from "../../components/PageHero.astro";
+import { LEGAL_PAGES } from "../../content/legal";
+import Base from "../../layouts/Base.astro";
+---
+
+<Base
+  title="Legal"
+  description="The Emojisense terms, privacy policy, acceptable use policy and subprocessors, in plain language."
+  path="/legal/"
+>
+  <PageHero eyebrow="Legal" emoji="⚖️" title="The fine print, in plain words.">
+    <p>These documents are drafts that still need legal review. They describe how Emojisense works today.</p>
+  </PageHero>
+
+  <section class="container legal-index" aria-label="Legal documents">
+    <ul>
+      {
+        LEGAL_PAGES.map((page) => (
+          <li>
+            <a class="card legal-card" href={page.href}>
+              <span class="legal-card-icon" aria-hidden="true">
+                <span class="emoji">{page.emoji}</span>
+              </span>
+              <span class="legal-card-text">
+                <span class="legal-card-title">{page.title}</span>
+                <span class="legal-card-description">{page.description}</span>
+              </span>
+              <svg class="legal-card-arrow" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M6 3.5 10.5 8 6 12.5" />
+              </svg>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>
+
+<style>
+  .legal-index {
+    max-width: 52rem;
+    padding-bottom: clamp(4rem, 8vw, 6rem);
+  }
+
+  ul {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .legal-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.125rem 1.25rem;
+    text-decoration: none;
+    transition:
+      border-color 160ms,
+      box-shadow 200ms var(--ease-out),
+      transform 200ms var(--ease-out);
+  }
+
+  .legal-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+    transform: translateY(-0.0625rem);
+  }
+
+  .legal-card-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    font-size: 1.5rem;
+  }
+
+  .legal-card-text {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .legal-card-title {
+    font: 650 1.125rem / 1.2 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .legal-card-description {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .legal-card-arrow {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    margin-left: auto;
+    fill: none;
+    stroke: var(--ink-3);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 200ms var(--spring);
+  }
+
+  .legal-card:hover .legal-card-arrow {
+    transform: translateX(0.1875rem);
+    stroke: var(--ink);
+  }
+</style>

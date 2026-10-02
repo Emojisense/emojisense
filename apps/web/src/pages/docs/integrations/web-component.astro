@@ -1,0 +1,156 @@
+---
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, SHARDS_URL } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const html = `<emojisense-picker
+  pack-url="${PACK_URL}"
+  shards-url="${SHARDS_URL}"
+  endpoint="${API_HOST}"
+  key="pk_live_…"
+  locale="en"
+  columns="9"
+  skin-tone="none"
+  emoji-set="native"
+></emojisense-picker>
+
+<script type="module">
+  import "@emojisense/web-component"; // registers <emojisense-picker>
+
+  const picker = document.querySelector("emojisense-picker");
+  picker.addEventListener("emoji-select", (event) => {
+    const { emoji, label, id } = event.detail; // "👍🏽", "thumbs up", "1F44D"
+  });
+</script>`;
+
+const noBundler = `<script type="module" src="/vendor/emojisense-picker.js"></script>`;
+
+const vue = `<script setup lang="ts">
+import "@emojisense/web-component";
+import type { EmojiSelectEvent } from "@emojisense/web-component";
+
+const packUrl = "${PACK_URL}";
+const onSelect = (event: EmojiSelectEvent) => insert(event.detail.emoji);
+</script>
+
+<template>
+  <emojisense-picker
+    :pack-url="packUrl"
+    publishable-key="pk_live_…"
+    @emoji-select="onSelect"
+  />
+</template>`;
+
+const vueConfig = `// vite.config.ts
+vue({
+  template: {
+    compilerOptions: { isCustomElement: (tag) => tag.startsWith("emojisense-") },
+  },
+});`;
+
+const svelte = `<script lang="ts">
+  import "@emojisense/web-component";
+  let skinTone = $state("none");
+</script>
+
+<emojisense-picker
+  pack-url={packUrl}
+  skin-tone={skinTone}
+  onemoji-select={(event) => insert(event.detail.emoji)}
+></emojisense-picker>`;
+
+const angular = `import { Component, CUSTOM_ELEMENTS_SCHEMA } from "@angular/core";
+import "@emojisense/web-component";
+import type { EmojiSelectEvent } from "@emojisense/web-component";
+
+@Component({
+  selector: "app-reactions",
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: \`<emojisense-picker
+    [attr.pack-url]="packUrl"
+    (emoji-select)="onSelect($event)"
+  ></emojisense-picker>\`,
+})
+export class ReactionsComponent {
+  packUrl = "${PACK_URL}";
+  onSelect(event: Event) {
+    insert((event as EmojiSelectEvent).detail.emoji);
+  }
+}`;
+
+const theme = `emojisense-picker {
+  --emojisense-accent: #ffd23f; /* selected tile */
+  --emojisense-ink: #1e1631; /* text and outlines */
+  --emojisense-background: #ffffff;
+  --emojisense-radius: 1.25rem;
+  --emojisense-cell-size: 2.5rem;
+  --emojisense-height: 20rem;
+  --emojisense-font-family: "Figtree", system-ui, sans-serif;
+}
+
+/* A flat look: no outlines, no depth. */
+emojisense-picker::part(root) { border: 0; box-shadow: none; }
+emojisense-picker::part(option) { border-color: transparent; box-shadow: none; }`;
+
+const tagName = `import { defineEmojisensePicker } from "@emojisense/web-component";
+
+defineEmojisensePicker("my-emoji-picker");`;
+---
+
+<DocsLayout path="/docs/integrations/web-component/">
+  <p><code>&lt;emojisense-picker&gt;</code> is a complete emoji picker as a custom element. It works without a framework and inside Vue, Svelte and Angular. With an empty query it shows every emoji by category. While someone types, it shows the ranked results.</p>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/web-component" />
+  <p>Without a bundler, load the self-contained build, <code>dist/emojisense-picker.js</code> (about 10 KB compressed, search engine included):</p>
+  <CodeBlock code={noBundler} lang="html" />
+
+  <h2 id="use">Use</h2>
+  <CodeBlock code={html} lang="html" />
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Attribute</th><th scope="col">Property</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>pack-url</code></td><td><code>packUrl</code></td><td>—</td><td>Pack version directory. The core pack renders first, the extension pack loads when idle.</td></tr>
+        <tr><td><code>shards-url</code></td><td><code>shardsUrl</code></td><td>—</td><td>Precomputed results (layer 2), asked before the API.</td></tr>
+        <tr><td><code>endpoint</code></td><td><code>endpoint</code></td><td>—</td><td>The API (layer 3). Omit it and <code>shards-url</code> for fully offline search.</td></tr>
+        <tr><td><code>key</code>, <code>publishable-key</code></td><td><code>publishableKey</code></td><td>—</td><td>Publishable key. Use <code>publishable-key</code> in Vue and React, which reserve <code>key</code>.</td></tr>
+        <tr><td><code>locale</code></td><td><code>locale</code></td><td><code>en</code></td><td>Another locale loads that pack next to English.</td></tr>
+        <tr><td><code>columns</code></td><td><code>columns</code></td><td><code>9</code></td><td>Emoji per row (1–24)</td></tr>
+        <tr><td><code>skin-tone</code></td><td><code>skinTone</code></td><td><code>none</code></td><td><code>none</code>, <code>light</code>, <code>medium-light</code>, <code>medium</code>, <code>medium-dark</code>, <code>dark</code></td></tr>
+        <tr><td><code>emoji-set</code></td><td><code>emojiSet</code></td><td><code>native</code></td><td><code>native</code> draws the system font. <code>twemoji</code>, <code>noto</code> and <code>fluent</code> draw images of a <a href="/docs/guides/emoji-sets/">hosted set</a> and need <code>endpoint</code>.</td></tr>
+        <tr><td><code>placeholder</code></td><td><code>placeholder</code></td><td><code>Search emoji…</code></td><td>Input placeholder and accessible name</td></tr>
+        <tr><td>—</td><td><code>packs</code></td><td>—</td><td>Pack objects to use instead of fetching <code>pack-url</code></td></tr>
+        <tr><td>—</td><td><code>query</code></td><td><code>""</code></td><td>Read or set the search text</td></tr>
+        <tr><td>—</td><td><code>status</code>, <code>engine</code></td><td>—</td><td><code>idle</code>, <code>loading</code>, <code>ready</code> or <code>error</code>; the engine once ready</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The <code>emoji-select</code> event bubbles and crosses shadow roots. Its <code>detail</code> is <code>{"{ emoji, label, id }"}</code>, with the skin tone applied to <code>emoji</code>.</p>
+  <p><strong>Keyboard:</strong> focus stays in the input. Arrow keys move through the grid by visual rows, Enter selects, the first Escape clears the query and the next Escape reaches your page, for example to close a popover.</p>
+
+  <h2 id="frameworks">Frameworks</h2>
+  <CodeTabs
+    tabs={[
+      { label: "Vue", code: vue, lang: "vue" },
+      { label: "Svelte", code: svelte, lang: "svelte" },
+      { label: "Angular", code: angular, lang: "ts" },
+    ]}
+    group="wc-framework"
+    label="Framework"
+  />
+  <p>Vue must know that the tag is a custom element:</p>
+  <CodeBlock code={vueConfig} lang="ts" title="vite.config.ts" />
+  <p>Svelte 4 uses <code>on:emoji-select={"{…}"}</code> instead of <code>onemoji-select</code>.</p>
+
+  <h2 id="theme">Theme</h2>
+  <p>The default theme follows <code>prefers-color-scheme</code> or the host’s <code>color-scheme</code>, and animates only when the person allows motion. Change it with CSS custom properties and parts:</p>
+  <CodeBlock code={theme} lang="css" />
+  <p>Parts: <code>root</code>, <code>search</code>, <code>pill</code>, <code>viewport</code>, <code>listbox</code>, <code>group</code>, <code>group-label</code>, <code>option</code>, <code>image</code> (an image of a hosted set), <code>active</code>, <code>message</code>, <code>sticker</code>.</p>
+
+  <h2 id="tag-name">Another tag name</h2>
+  <CodeBlock code={tagName} lang="ts" />
+  <p><code>@emojisense/web-component/element</code> exports the class without registering anything.</p>
+</DocsLayout>

@@ -1,0 +1,147 @@
+---
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, shown } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const vanilla = `import { EmojiAutocomplete } from "@emojisense/tiptap";
+import "@emojisense/tiptap/styles.css"; // optional default look
+import { Editor } from "@tiptap/core";
+import StarterKit from "@tiptap/starter-kit";
+import { createEngine, createSemanticClient, loadPacks } from "emojisense";
+
+const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
+const engine = createEngine(packs);
+
+new Editor({
+  element: document.querySelector("#editor")!,
+  extensions: [
+    StarterKit,
+    EmojiAutocomplete.configure({
+      engine,
+      // Optional: meaning results from the API, and a skin tone.
+      semantic: createSemanticClient({ endpoint: "${API_HOST}", key: "pk_live_…" }),
+      skinTone: "medium",
+    }),
+  ],
+});`;
+
+const react = `import { useEmojisense } from "@emojisense/react";
+import { EmojiAutocomplete } from "@emojisense/tiptap";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useRef } from "react";
+
+export function Composer() {
+  const sense = useEmojisense({
+    packBaseUrl: "${PACK_URL}",
+    endpoint: "${API_HOST}",
+  });
+  const senseRef = useRef(sense);
+  senseRef.current = sense;
+
+  // The packs load after the editor exists, so pass getters, read on each keystroke.
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      EmojiAutocomplete.configure({
+        engine: () => senseRef.current.engine,
+        semantic: () => senseRef.current.semantic,
+      }),
+    ],
+  });
+
+  return <EditorContent editor={editor} />;
+}`;
+
+const container = `const frameRef = useRef<HTMLDivElement>(null);
+
+const editor = useEditor({
+  extensions: [
+    StarterKit,
+    EmojiAutocomplete.configure({ engine, menuContainer: () => frameRef.current }),
+  ],
+});
+
+return (
+  <div ref={frameRef} style={{ position: "relative" }}>
+    <EditorContent editor={editor} />
+  </div>
+);`;
+
+const customMenu = `EmojiAutocomplete.configure({
+  engine,
+  render: () => ({
+    onStart: (props) => myMenu.open(props.items, props.command, props.mount),
+    onUpdate: (props) => myMenu.update(props.items),
+    onExit: () => myMenu.close(),
+    onKeyDown: ({ event }) => myMenu.handleKey(event),
+  }),
+});`;
+---
+
+<DocsLayout path="/docs/integrations/tiptap/">
+  <p><code>@emojisense/tiptap</code> adds <code>:</code> emoji autocomplete to Tiptap 3. Type <code>:jurassic</code> and the menu shows <span class="emoji">{shown("jurassic", { part: "core" })}</span>. Type <code>:fire:</code> and it becomes <span class="emoji">🔥</span>. It is built on the official <code>@tiptap/suggestion</code> utility.</p>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/tiptap emojisense @tiptap/core @tiptap/pm @tiptap/suggestion @floating-ui/dom" />
+  <p><code>@floating-ui/dom</code> is a peer dependency of <code>@tiptap/suggestion</code> 3.28 and later. It positions the menu. In React, also add <code>@tiptap/react</code> and <code>@emojisense/react</code>.</p>
+
+  <h2 id="setup">Setup</h2>
+  <CodeTabs
+    tabs={[
+      { label: "JavaScript", code: vanilla, lang: "ts" },
+      { label: "React", code: react, lang: "tsx" },
+    ]}
+    group="framework"
+    label="Stack"
+  />
+
+  <h2 id="options">Options</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine</code></td><td>—</td><td>The engine, or a getter. The menu stays closed while it is <code>undefined</code>.</td></tr>
+        <tr><td><code>semantic</code></td><td>—</td><td>A semantic provider (for example <code>createSemanticClient</code>, or <code>chainProviders(shards, api)</code>), or a getter</td></tr>
+        <tr><td><code>locale</code></td><td>first pack</td><td>Preferred locale for ranking and labels</td></tr>
+        <tr><td><code>limit</code></td><td><code>8</code></td><td>Menu size</td></tr>
+        <tr><td><code>debounceMs</code></td><td><code>200</code></td><td>Delay before a semantic request</td></tr>
+        <tr><td><code>skinTone</code></td><td><code>"none"</code></td><td>A skin tone, or a getter that follows a user preference</td></tr>
+        <tr><td><code>char</code></td><td><code>":"</code></td><td>Trigger character. The menu opens after a space, a <code>(</code> or a line start.</td></tr>
+        <tr><td><code>minQueryLength</code></td><td><code>1</code></td><td>Characters after the trigger before the menu opens</td></tr>
+        <tr><td><code>shortcodes</code></td><td><code>true</code></td><td>Replace a typed <code>:name:</code> when <code>name</code> is an exact shortcode or emoji name</td></tr>
+        <tr><td><code>render</code></td><td><code>createEmojiMenu()</code></td><td>Menu renderer, with the contract of the suggestion utility’s <code>render</code></td></tr>
+        <tr><td><code>menuContainer</code></td><td><code>document.body</code></td><td>The element the menu mounts into, or a getter. See <a href="#menu-container">below</a>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="behaviour">Keyboard</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Input</th><th scope="col">Result</th></tr></thead>
+      <tbody>
+        <tr><td><code>:</code> and one or more characters</td><td>The menu opens with the dictionary results of this keystroke</td></tr>
+        <tr><td>↑ ↓</td><td>Move the active option (wraps)</td></tr>
+        <tr><td>Enter, Tab</td><td>Insert the active emoji as text, in place of <code>:query</code></td></tr>
+        <tr><td>Escape</td><td>Close the menu and keep the typed text, until the next word</td></tr>
+        <tr><td><code>:trex:</code>, <code>:+1:</code>, <code>:sweat_smile:</code></td><td>Replaced by the emoji while you type</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Meaning results arrive after <code>debounceMs</code> and merge into the open menu without moving confident hits. The default menu is a listbox named “Emoji suggestions”. Focus stays in the editor, which gets <code>aria-activedescendant</code> while the menu is open.</p>
+
+  <p>The extension has <code>priority: 101</code>, like Tiptap’s Mention. While the menu is open, it gets Enter, Tab and the arrow keys before list items and other keymaps with the default priority. The menu never scrolls the page.</p>
+
+  <h2 id="menu-container">Mount the menu in your own frame</h2>
+  <p>By default the menu mounts on <code>&lt;body&gt;</code>. To keep it inside a dialog or a scroll panel, pass that element. If it does not exist yet when you create the editor, for example a React ref, pass a getter: it is read when the menu opens.</p>
+  <CodeBlock code={container} lang="tsx" />
+  <p>Give the frame a non-static <code>position</code>, such as <code>relative</code>, if it must clip the menu or set its stacking order.</p>
+
+  <h2 id="custom-menu">Your own menu</h2>
+  <p><code>render</code> follows the <code>@tiptap/suggestion</code> contract. <code>props.items</code> are suggestions with <code>{"{ emoji, id, label, source }"}</code> and the skin tone applied. Call <code>props.command(item)</code> to insert one. Late meaning results arrive as another <code>onUpdate</code> with the same query.</p>
+  <CodeBlock code={customMenu} lang="ts" />
+  <p>To restyle the default menu instead, pass <code>createEmojiMenu({"{ className, ariaLabel }"})</code> or override the CSS custom properties in <code>styles.css</code>.</p>
+</DocsLayout>

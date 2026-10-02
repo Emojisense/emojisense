@@ -1,0 +1,84 @@
+---
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_FIXTURES, API_HOST, prettyResponse } from "../../../components/docs/facts";
+
+const { search } = API_FIXTURES;
+const q = search.response.query;
+const encoded = encodeURIComponent(q);
+
+const curl = `curl "${API_HOST}/v1/search?q=${encoded}&limit=5" \\
+  -H "Authorization: Bearer sk_live_…"`;
+
+const node = `const params = new URLSearchParams({ q: "${q}", limit: "5" });
+const response = await fetch(\`${API_HOST}/v1/search?\${params}\`, {
+  headers: { Authorization: \`Bearer \${process.env.EMOJISENSE_SECRET_KEY}\` },
+});
+const { results } = await response.json();`;
+
+const python = `import os, requests
+
+response = requests.get(
+    "${API_HOST}/v1/search",
+    params={"q": "${q}", "limit": 5},
+    headers={"Authorization": f"Bearer {os.environ['EMOJISENSE_SECRET_KEY']}"},
+    timeout=4,
+)
+results = response.json()["results"]`;
+
+const browser = `// Browsers and extensions: a publishable key in the URL, so no CORS preflight.
+const url = "${API_HOST}/v1/search?q=${encoded}&limit=5&key=pk_live_…";
+const response = await fetch(url);`;
+---
+
+<DocsLayout path="/docs/integrations/http/">
+  <p>Every feature of the API is plain HTTP with JSON, so any language and any server can use it. This page shows the basics. The <a href="/docs/api/">HTTP API reference</a> has every route and field.</p>
+
+  <h2 id="authenticate">Authenticate</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Caller</th><th scope="col">Key</th><th scope="col">Sent as</th></tr></thead>
+      <tbody>
+        <tr><td>Servers, bots, CLIs</td><td>Secret <code>sk_live_…</code></td><td><code>Authorization: Bearer sk_live_…</code>. Refused when the request has an <code>Origin</code> header.</td></tr>
+        <tr><td>Browsers, extensions</td><td>Publishable <code>pk_live_…</code></td><td><code>?key=pk_live_…</code>. The <code>Origin</code> must be one of the key’s allowed origins.</td></tr>
+        <tr><td>Quick tests</td><td>none</td><td>Works, with a stricter rate limit per IP.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="search">Search</h2>
+  <CodeTabs
+    tabs={[
+      { label: "curl", code: curl, lang: "bash" },
+      { label: "Node", code: node, lang: "ts" },
+      { label: "Python", code: python, lang: "python" },
+      { label: "Browser", code: browser, lang: "ts" },
+    ]}
+    group="http-lang"
+    label="Language"
+  />
+  <p>The real answer for “{q}”, captured on {API_FIXTURES.madeOn}:</p>
+  <CodeBlock code={prettyResponse(search.response)} lang="json" title="200 OK" />
+  <p>The default <code>mode</code> is <code>hybrid</code>: the server merges dictionary and meaning results for you. Use <code>mode=semantic</code> only when you merge with your own on-device results, as the SDKs do. The <code>Server-Timing</code> header shows where the time went, for example <code>{search.serverTiming}</code>.</p>
+
+  <h2 id="other-routes">Other routes</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Route</th><th scope="col">Guide</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST /v1/suggest-reactions</code></td><td><a href="/docs/guides/reactions/">Reaction suggestions</a></td></tr>
+        <tr><td><code>POST /v1/classify-image</code></td><td><a href="/docs/guides/photo-to-emoji/">Photo to emoji</a></td></tr>
+        <tr><td><code>GET /v1/pack/:version/…</code></td><td><a href="/docs/pack-format/">Pack format</a>: run the engine in your own language</td></tr>
+        <tr><td><code>GET /v1/health</code></td><td>Status, pack version and model</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="errors">Errors and limits</h2>
+  <ul>
+    <li><code>400</code> for a missing query or text, <code>401</code> for an unknown or revoked key, <code>403</code> for an origin that is not allowed or a secret key from a browser, <code>413</code> for an image over 256 KB.</li>
+    <li><code>429</code> when you call too fast. Wait for the seconds in <code>Retry-After</code>.</li>
+    <li>Over the monthly plan limit, the answer is still <code>200</code>, with <code>"overLimit": true</code>. See <a href="/docs/keys-and-limits/">Keys and limits</a>.</li>
+  </ul>
+</DocsLayout>

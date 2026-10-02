@@ -1,0 +1,179 @@
+---
+import Callout from "../../components/docs/Callout.astro";
+import CodeTabs from "../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, shown } from "../../components/docs/facts";
+import LinkCard from "../../components/docs/LinkCard.astro";
+import QueryResults from "../../components/docs/QueryResults.astro";
+import { DASHBOARD_URL } from "../../config";
+
+const install = [
+  { label: "React", code: "npm install @emojisense/react frimousse", lang: "bash" },
+  { label: "Web component", code: "npm install @emojisense/web-component", lang: "bash" },
+  { label: "JavaScript", code: "npm install emojisense", lang: "bash" },
+];
+
+const searchReact = `import { useState } from "react";
+import { useEmojiSearch, useEmojisense } from "@emojisense/react";
+
+export function EmojiSearch() {
+  const [query, setQuery] = useState("");
+  const sense = useEmojisense({
+    packBaseUrl: "${PACK_URL}",
+    endpoint: "${API_HOST}",
+    publishableKey: "pk_live_…",
+  });
+  // Results on every keystroke; meaning results merge in when unsure.
+  const { results } = useEmojiSearch(query, sense, { limit: 8 });
+
+  return (
+    <>
+      <input
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search emoji…"
+      />
+      <p>{results.map((result) => result.emoji).join(" ")}</p>
+    </>
+  );
+}`;
+
+const searchJs = `import { createEngine, loadPacks } from "emojisense";
+
+const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
+const engine = createEngine(packs);
+
+const { results } = engine.search("jurassic park", { limit: 3 });
+console.log(results.map((result) => result.emoji).join(" "));
+// ${shown("jurassic park", { part: "core", limit: 3 })}`;
+
+const searchWebComponent = `import "@emojisense/web-component";
+
+// The picker (next step) searches as people type. You can also set the query yourself:
+const picker = document.querySelector("emojisense-picker");
+picker.query = "jurassic park"; // sets the search text and searches
+
+// Once picker.status is "ready", picker.engine is the on-device engine.`;
+
+const pickerReact = `import { useEmojisense } from "@emojisense/react";
+import { EmojisensePicker } from "@emojisense/react/frimousse";
+
+export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
+  const sense = useEmojisense({
+    packBaseUrl: "${PACK_URL}",
+    endpoint: "${API_HOST}",
+    publishableKey: "pk_live_…",
+  });
+
+  return (
+    <EmojisensePicker
+      emojisense={sense}
+      onEmojiSelect={({ emoji }) => onPick(emoji)}
+    />
+  );
+}`;
+
+const pickerWebComponent = `<emojisense-picker
+  pack-url="${PACK_URL}"
+  endpoint="${API_HOST}"
+  key="pk_live_…"
+></emojisense-picker>
+
+<script type="module">
+  // With a bundler. Without one, load dist/emojisense-picker.js instead.
+  import "@emojisense/web-component";
+
+  const picker = document.querySelector("emojisense-picker");
+  picker.addEventListener("emoji-select", (event) => {
+    const { emoji, label, id } = event.detail; // e.g. "👍🏽", "thumbs up", "1F44D"
+  });
+</script>`;
+
+const pickerJs = `import {
+  createEngine,
+  createSearchSession,
+  createSemanticClient,
+  loadPacks,
+} from "emojisense";
+
+const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
+const engine = createEngine(packs);
+const session = createSearchSession({
+  engine,
+  semantic: createSemanticClient({
+    endpoint: "${API_HOST}",
+    key: "pk_live_…",
+  }),
+  onChange: (state) => render(state.results), // your own grid
+});
+
+input.addEventListener("input", () => session.update(input.value));`;
+---
+
+<DocsLayout path="/docs/quickstart/">
+  <p>You will get a key, install one package, run a search and put a picker on the page. Pick your stack in the code tabs: the choice carries over to every block on this page.</p>
+
+  <ol class="docs-steps">
+    <li>
+      <h3 id="get-a-key">Get a key</h3>
+      <p>Open the <a href={`${DASHBOARD_URL}/`}>dashboard</a> and sign in with GitHub. Create an app, then choose <strong>Create key</strong> and <strong>Publishable key</strong>. Add the origins your app runs on, for example <code>http://localhost:5173</code> and <code>https://your.app</code>. The key works only from those origins.</p>
+      <p>The Free plan needs no card. You can also skip this step for now: without a key, the API applies a stricter rate limit per IP.</p>
+    </li>
+    <li>
+      <h3 id="install">Install</h3>
+      <CodeTabs tabs={install} group="framework" label="Stack" />
+      <p>React apps get hooks and a ready picker. The web component works in Vue, Svelte, Angular and plain HTML. The <code>emojisense</code> package is the engine alone, with no dependencies.</p>
+    </li>
+    <li>
+      <h3 id="search">Search</h3>
+      <p>The first search runs as soon as the English core pack arrives. Every keystroke is answered on the device. When the dictionary is unsure, the API adds meaning results a moment later.</p>
+      <CodeTabs
+        tabs={[
+          { label: "React", code: searchReact, lang: "tsx" },
+          { label: "Web component", code: searchWebComponent, lang: "ts" },
+          { label: "JavaScript", code: searchJs, lang: "ts" },
+        ]}
+        group="framework"
+        label="Stack"
+      />
+    </li>
+    <li>
+      <h3 id="add-a-picker">Add a picker</h3>
+      <p>The picker shows every emoji by category. As soon as someone types, it shows the Emojisense ranking, with keyboard navigation and skin tones.</p>
+      <CodeTabs
+        tabs={[
+          { label: "React", code: pickerReact, lang: "tsx" },
+          { label: "Web component", code: pickerWebComponent, lang: "html" },
+          { label: "JavaScript", code: pickerJs, lang: "ts" },
+        ]}
+        group="framework"
+        label="Stack"
+      />
+      <p>Frimousse is unstyled, so style it like any Frimousse picker, or use the <a href="/docs/integrations/react/#shadcn">shadcn/ui component</a>. The web component has its own theme.</p>
+    </li>
+    <li>
+      <h3 id="try-it">Try it</h3>
+      <p>Type these into your picker. The emoji below are the real top results of the on-device engine with the English core and extension packs.</p>
+      <QueryResults
+        queries={[
+          { query: "ship it" },
+          { query: "greatest of all time" },
+          { query: "i'm exhausted" },
+          { query: "hallowelen", note: "typo" },
+          { query: "break a leg" },
+        ]}
+      />
+    </li>
+  </ol>
+
+  <Callout type="tip" title="Where did my search go?">
+    <p>Open the network panel and type. Confident queries make no request at all. Phrases and unsure queries call <code>GET /v1/search</code> after a 200 ms pause, and the answer merges in without moving the confident hits.</p>
+  </Callout>
+
+  <h2 id="next-steps">Next steps</h2>
+  <ul class="docs-cards">
+    <li><LinkCard href="/docs/concepts/" emoji="🧠" title="Concepts" description="Layers, caching, limits and privacy." /></li>
+    <li><LinkCard href="/docs/guides/reactions/" emoji="🙌" title="Reaction suggestions" description="Suggest reactions for a message." /></li>
+    <li><LinkCard href="/docs/keys-and-limits/" emoji="🔑" title="Keys and limits" description="Origins, secret keys and plan limits." /></li>
+  </ul>
+</DocsLayout>

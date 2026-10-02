@@ -1,0 +1,18 @@
+---
+import CodeTabs from "./CodeTabs.astro";
+
+interface Props {
+  /** Space-separated package names, e.g. "@emojisense/react frimousse". */
+  packages: string;
+}
+
+const { packages } = Astro.props;
+const tabs = [
+  { label: "npm", code: `npm install ${packages}`, lang: "bash" },
+  { label: "pnpm", code: `pnpm add ${packages}`, lang: "bash" },
+  { label: "yarn", code: `yarn add ${packages}`, lang: "bash" },
+  { label: "bun", code: `bun add ${packages}`, lang: "bash" },
+];
+---
+
+<CodeTabs tabs={tabs} group="pm" label="Package manager" />

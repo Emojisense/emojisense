@@ -69,9 +69,9 @@ export function WaitlistForm(props: WaitlistFormProps) {
 
   if (phase.name === "joined") {
     return (
-      <div className="card waitlist-done" role="status">
-        <span className="sticker" aria-hidden="true">
-          🎟️
+      <div className="wl-done" role="status">
+        <span className="wl-done-ticket" aria-hidden="true">
+          <span className="emoji">🎟️</span>
         </span>
         <h2 ref={doneRef} tabIndex={-1}>
           {phase.alreadyJoined ? "You are already on the list" : "You are on the list"}
@@ -93,7 +93,7 @@ export function WaitlistForm(props: WaitlistFormProps) {
 
   return (
     <form
-      className="waitlist-form"
+      className="wl-form"
       // Without JavaScript the browser posts the form body (never the URL) to the same endpoint.
       action={endpoint}
       method="post"
@@ -102,7 +102,7 @@ export function WaitlistForm(props: WaitlistFormProps) {
       aria-busy={submitting}
       data-testid="waitlist-form"
     >
-      <div className="field">
+      <div className="wl-field">
         <label htmlFor={`${id}-email`}>Email</label>
         <input
           ref={emailRef}
@@ -111,6 +111,7 @@ export function WaitlistForm(props: WaitlistFormProps) {
           type="email"
           autoComplete="email"
           inputMode="email"
+          placeholder="you@company.com"
           required
           maxLength={254}
           value={email}
@@ -119,19 +120,20 @@ export function WaitlistForm(props: WaitlistFormProps) {
           aria-describedby={fieldError ? `${id}-email-error` : `${id}-email-hint`}
         />
         {fieldError ? (
-          <p className="field-error" id={`${id}-email-error`}>
+          <p className="wl-error" id={`${id}-email-error`}>
             {fieldError}
           </p>
         ) : (
-          <p className="field-hint" id={`${id}-email-hint`}>
+          <p className="wl-hint" id={`${id}-email-hint`}>
             We use it only to tell you when the plan opens.
           </p>
         )}
       </div>
 
-      <div className="field">
+      <div className="wl-field">
         <label htmlFor={`${id}-plan`}>Plan</label>
         <select
+          className="wl-select"
           id={`${id}-plan`}
           name="plan"
           value={plan}
@@ -146,15 +148,21 @@ export function WaitlistForm(props: WaitlistFormProps) {
       </div>
 
       {formError && (
-        <p className="form-error" role="alert">
-          <span aria-hidden="true">😬</span>
+        <p className="wl-alert" role="alert">
+          <span className="emoji" aria-hidden="true">
+            😬
+          </span>
           <span>{formError}</span>
         </p>
       )}
 
-      <button className="button button-primary" type="submit" disabled={submitting}>
+      <button className="btn btn-primary btn-lg wl-submit" type="submit" disabled={submitting}>
         {submitting ? "Joining…" : "Join the waitlist"}
       </button>
+
+      <p className="wl-fine">
+        One email when your plan opens. No newsletter. <a href="/legal/privacy/">Privacy policy</a>
+      </p>
     </form>
   );
 }

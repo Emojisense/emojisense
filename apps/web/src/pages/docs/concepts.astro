@@ -1,0 +1,132 @@
+---
+import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import Callout from "../../components/docs/Callout.astro";
+import CodeBlock from "../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { edgeDecision, PACK_FACTS, PACK_URL, resultLiteral } from "../../components/docs/facts";
+import LayerDiagram from "../../components/docs/LayerDiagram.astro";
+import { formatCount } from "../../lib/format";
+
+const decisions = ["fire", "jurassic park", "congrats", "we just shipped", "kolay gelsin"]
+  .map((query) => edgeDecision(query))
+  .filter((d) => d !== undefined);
+
+const engineExample = `import { createEngine, loadPacks } from "emojisense";
+
+const packs = await loadPacks({
+  baseUrl: "${PACK_URL}",
+  locales: ["en", "tr"],
+});
+const engine = createEngine(packs);
+
+const { results, confidence } = engine.search("jurassic park");
+// results: ${resultLiteral("jurassic park", { limit: 1 })}`;
+---
+
+<DocsLayout path="/docs/concepts/">
+  <p>Emojisense is one platform with a few moving parts. This page explains how they work together, so you know what runs where, what it costs and what stays private.</p>
+
+  <h2 id="layers">The layers</h2>
+  <p>Each search goes to the cheapest layer that can answer it well. The device answers almost everything. Only unsure queries go further, and every layer is optional except the first.</p>
+  <LayerDiagram />
+
+  <h2 id="on-device-engine">The on-device engine</h2>
+  <p>The <code>emojisense</code> package is a search engine with no dependencies. It runs in browsers, Node, Deno, Bun, Workers and extensions. It loads <strong>data packs</strong>: JSON files with every emoji’s names, keywords, shortcodes and aliases in one language.</p>
+  <ul>
+    <li><strong>{PACK_FACTS.emojiCount?.toLocaleString("en")} emoji</strong> from Emoji {PACK_FACTS.emojiVersion}. Skin-tone variants map to their base emoji, and the picker applies the person’s tone.</li>
+    <li><strong>{PACK_FACTS.languages} languages.</strong> English always loads first, because it carries the shortcodes. Other languages load next to it.</li>
+    <li><strong>Core and extension parts.</strong> The English core pack is about {PACK_FACTS.englishCoreKb} KB compressed and renders first. The extension part (about {PACK_FACTS.englishExtKb} KB) adds more aliases and typos when the browser is idle.</li>
+    <li><strong>Immutable files.</strong> A pack version never changes, so browsers and CDNs cache it for a year. A data update is a new pack version.</li>
+  </ul>
+  <p>The engine normalizes the query (case, accents, width, emoji), matches the last word as a prefix while people type, forgives typos, and weights rare words higher than common ones. It reports a <strong>confidence</strong> from 0 to 1 with every answer. A keystroke takes 0.4 ms at the 95th percentile.</p>
+  <CodeBlock code={engineExample} lang="ts" />
+  <p>The engine is the same everywhere. The <a href="/docs/integrations/swift/">Swift SDK</a> is a port with conformance tests against it, and <a href="/docs/pack-format/">Pack format</a> is the specification for other ports.</p>
+
+  <h2 id="when-the-edge-is-asked">When the edge is asked</h2>
+  <p>The SDK asks the semantic layers only when the dictionary is unsure. The rule is <code>shouldUseSemantic</code> in the engine: a query with confidence under 0.6, or a phrase of two or more words with confidence under 0.9. The request waits for a 200 ms pause in typing, and a newer keystroke cancels it.</p>
+  {
+    decisions.length > 0 && (
+      <div class="table-scroll" tabindex="0">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Query</th>
+              <th scope="col">On the device</th>
+              <th scope="col">Confidence</th>
+              <th scope="col">Asks the edge</th>
+            </tr>
+          </thead>
+          <tbody>
+            {decisions.map((d) => (
+              <tr>
+                <td><code>{d.query}</code></td>
+                <td><span class="emoji">{d.top.join(" ") || "—"}</span></td>
+                <td>{d.confidence.toFixed(2)}</td>
+                <td>{d.asksEdge ? "Yes" : "No"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+  <p>The table is computed when this page is built, with the English core pack. With the extension pack loaded, the engine knows more phrases and asks the edge less often.</p>
+
+  <h2 id="edge-meaning-search">Edge meaning search</h2>
+  <p>The API is a Cloudflare Worker in more than 300 cities. For a meaning search it embeds the query with Workers AI (<code>bge-m3</code>, 1,024 dimensions) and compares it with the vectors of every emoji, which are bundled into the Worker. The comparison takes about a millisecond. The model call takes about 50 ms inside the Worker at the median.</p>
+  <p>The query and the emoji are always embedded by the same model at the same size. The pack manifest pins both, and the Worker refuses a mismatch.</p>
+
+  <h2 id="fusion">How results merge</h2>
+  <p>When meaning results arrive, the SDK merges them with the dictionary results by weighted reciprocal rank fusion. Dictionary results with a score of 0.9 or more stay pinned at the top in their order, so the list does not jump under the person’s cursor. The more confident the dictionary was, the more weight its results keep.</p>
+  <p>Each result has a <code>source</code>: <code>alias</code> for the dictionary, <code>semantic</code> for meaning search and <code>custom</code> for custom emoji.</p>
+
+  <h2 id="caching">Caching</h2>
+  <ul>
+    <li><strong>Packs and shards</strong> are static files. They are free, cached for a year and never metered.</li>
+    <li><strong>One shared edge cache.</strong> The Worker caches answers in each data center. The cache key is the normalized query, locale, limit, mode and index version. It holds no key, app or origin, so every app warms the same cache for everyone.</li>
+    <li><strong>In the client</strong>, the semantic client keeps the last 200 answers in memory.</li>
+    <li><strong>Reaction suggestions are never cached</strong>, because message text is private. For photos, only the caption is cached, keyed by a perceptual hash of the image.</li>
+  </ul>
+
+  <h2 id="plan-limits">Plan limits never fail</h2>
+  <p>Metered calls are Worker searches, reaction suggestions and photo classifications. Periods are monthly, in UTC, with no daily caps. On-device searches, packs and shards are never metered.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Plan</th>
+          <th scope="col">Worker calls a month</th>
+          <th scope="col">Photo to emoji a month</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          PLAN_IDS.map((id) => (
+            <tr>
+              <td>{PLANS[id].name}</td>
+              <td>{formatCount(PLANS[id].limits.semantic_calls)}</td>
+              <td>{formatCount(PLANS[id].limits.image_classifications)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  <p>Over a limit, the API does not return an error:</p>
+  <ul>
+    <li>A query that is in the shared edge cache is still answered, with <code>"cached": true</code>, and is not metered.</li>
+    <li>Any other query returns <code>200</code> with <code>"overLimit": true</code>: dictionary results only in hybrid mode, no results in semantic mode.</li>
+    <li>The SDK keeps asking, because the edge cache may know the next query. It remembers each over-limit miss and stays on the device and the shards for it.</li>
+  </ul>
+  <Callout type="tip" title="What your users notice">
+    <p>Nothing breaks. Typing still gets instant dictionary results, and popular queries still get meaning results from the shared cache. Only rare phrases lose the meaning layer until the next month or an upgrade.</p>
+  </Callout>
+
+  <h2 id="privacy">Privacy</h2>
+  <ul>
+    <li>Most searches never leave the device.</li>
+    <li>Emojisense never stores IP addresses, keys, user identifiers, message text or images.</li>
+    <li>Search query text that reaches the Worker is normalized and cut to 64 characters. Emojisense’s own jobs use a query only after it was seen at least 5 times.</li>
+  </ul>
+  <p>Read <a href="/docs/privacy/">Privacy</a> for exactly what is kept and for how long.</p>
+</DocsLayout>

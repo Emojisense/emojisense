@@ -1,0 +1,85 @@
+---
+import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST } from "../../../components/docs/facts";
+import { formatCount } from "../../../lib/format";
+
+const shape = `type CustomEmoji = {
+  id: string;
+  shortcode: string;
+  aliases: string[];
+  imageUrl: string; // ${API_HOST}/v1/custom/<appId>/<emojiId>
+  tenantId: string | null;
+  source: string;
+  bytes: number;
+  createdAt: number;
+};`;
+
+const result = `// A custom match in /v1/search, /v1/suggest-reactions or on the device:
+{
+  emoji: ":partyparrot:",
+  id: "C-<emojiId>",
+  score: …,
+  source: "custom",
+  shortcode: "partyparrot",
+  imageUrl: "${API_HOST}/v1/custom/<appId>/<emojiId>",
+}`;
+
+const render = `function EmojiCell({ result }: { result: SearchResult }) {
+  return result.imageUrl ? (
+    <img
+      src={result.imageUrl}
+      alt={result.shortcode ?? result.emoji}
+      width={24}
+      height={24}
+    />
+  ) : (
+    <span>{result.emoji}</span>
+  );
+}`;
+
+const plans = PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
+---
+
+<DocsLayout path="/docs/guides/custom-emoji/">
+  <p>Custom emoji are your own images, such as a team logo, a mascot or the party parrot. Emojisense hosts them and searches them next to Unicode emoji. People find each one by its shortcode or by any alias you give it.</p>
+
+  <h2 id="limits">Plans</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Plan</th><th scope="col">Custom emoji</th><th scope="col">Slack and Discord import</th></tr></thead>
+      <tbody>
+        {plans.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].limits.custom_emoji)}</td><td>{PLAN_IDS.indexOf(id) >= PLAN_IDS.indexOf("pro") ? "Yes" : "—"}</td></tr>)}
+      </tbody>
+    </table>
+  </div>
+  <p>The Free plan has no custom emoji. At the limit, uploads stop. Search keeps working.</p>
+
+  <h2 id="add-emoji">Add emoji</h2>
+  <p>Upload images in the dashboard, under your app. Each emoji has a shortcode and a list of aliases that search uses.</p>
+  <ul>
+    <li><strong>Formats:</strong> PNG, GIF, WebP or SVG, at most 256 KB each. SVG files are checked and rejected if they contain scripts, event handlers, <code>javascript:</code> links or external references.</li>
+    <li><strong>Import from Slack</strong> (Pro and Scale): paste a Slack user token. Emojisense reads the workspace’s emoji list, downloads the images and never stores the token.</li>
+    <li><strong>Import from Discord</strong> (Pro and Scale): give a bot token and a server (guild) id. The token is not stored either.</li>
+  </ul>
+  <p>Imports skip aliases of aliases and anything over your plan’s limit, and report how many emoji they imported and skipped.</p>
+  <p>Each emoji has this shape in the dashboard API:</p>
+  <CodeBlock code={shape} lang="ts" />
+
+  <h2 id="search-them">Search them</h2>
+  <p>Custom emoji are merged into search results with <code>"source": "custom"</code>, before Unicode matches. A custom result carries its <code>shortcode</code> and an <code>imageUrl</code>:</p>
+  <CodeBlock code={result} lang="ts" />
+  <ul>
+    <li><strong>On the API</strong>, <code>/v1/search</code> and <code>/v1/suggest-reactions</code> include the custom emoji of the key’s app.</li>
+    <li><strong>On the device</strong>, the SDK gets a <code>loadCustomPack({"{ endpoint, key }"})</code> function. It fetches the app’s emoji from <code>GET /v1/custom-pack</code> as a normal pack, so custom emoji are searched on every keystroke too.</li>
+    <li><strong>Images</strong> are served from <code>GET /v1/custom/:appId/:emojiId</code> with a one-year immutable cache.</li>
+  </ul>
+
+  <h2 id="render">Render them</h2>
+  <p>The ready pickers show <code>imageUrl</code> as an image when it is present. In your own UI, do the same:</p>
+  <CodeBlock code={render} lang="tsx" />
+
+  <h2 id="per-customer">One set per customer</h2>
+  <p>If your product has many customers and each one needs its own emoji, use <a href="/docs/guides/tenants/">Tenants</a> on the Scale plan.</p>
+</DocsLayout>

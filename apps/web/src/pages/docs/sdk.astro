@@ -1,0 +1,196 @@
+---
+import { applySkinTone, baseId, emojiImageUrl, groupLabel, hexcodeOf, normalize, tokenize } from "emojisense";
+import CodeBlock from "../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, resultLiteral, SHARDS_URL } from "../../components/docs/facts";
+import InstallTabs from "../../components/docs/InstallTabs.astro";
+
+const engine = `function createEngine(
+  input: Pack | Pack[],
+  options?: { minCoverage?: number },
+): AliasEngine;
+
+interface AliasEngine {
+  search(
+    query: string,
+    options?: { limit?: number; locale?: string; prefix?: boolean },
+  ): AliasSearchOutput;
+  get(id: string): EmojiEntry | undefined;
+  readonly entries: readonly EmojiEntry[];
+  readonly locales: readonly string[];
+  readonly packVersion: string;
+}`;
+
+const engineExample = `const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
+const engine = createEngine(packs);
+engine.search("greatest of all time").results;
+// ${resultLiteral("greatest of all time", { limit: 1 })}`;
+
+const types = `type ResultSource = "alias" | "semantic" | "custom";
+
+interface SearchResult {
+  emoji: string; // "🦖"
+  id: string; // Emojibase hexcode of the base emoji, "1F996"
+  score: number; // 0–1, comparable within one source only
+  source: ResultSource;
+}
+
+interface AliasResult extends SearchResult {
+  source: "alias";
+  label: string; // the emoji's name
+  match: string; // the phrase that matched best
+  field: "name" | "shortcode" | "keyword" | "alias" | "typo" | "low";
+}
+
+interface AliasSearchOutput {
+  query: string; // normalized
+  tokens: string[];
+  results: AliasResult[];
+  confidence: number; // the top score, 0 when nothing matched
+}
+
+interface EmojiEntry {
+  emoji: string;
+  id: string;
+  group: string;
+  version: number;
+  hasSkinTones: boolean;
+  labels: Record<string, string>; // per loaded locale
+}`;
+
+const loader = `function loadPacks(options: {
+  baseUrl: string; // "${PACK_URL}"
+  locales?: string[]; // default ["en"]; English always loads first
+  part?: "core" | "ext"; // default "core"
+  fetch?: typeof fetch;
+  signal?: AbortSignal;
+}): Promise<Pack[]>;`;
+
+const session = `function createSearchSession(options: {
+  engine: AliasEngine;
+  semantic?: SemanticProvider; // omit for fully offline search
+  locale?: string;
+  limit?: number; // default 24
+  debounceMs?: number; // default 200
+  shouldUseSemantic?: (alias: AliasSearchOutput) => boolean;
+  onChange: (state: SessionState) => void;
+}): { update(query: string): void; dispose(): void };
+
+interface SessionState {
+  query: string;
+  results: SearchResult[];
+  alias: AliasSearchOutput;
+  status: "idle" | "alias" | "loading" | "fused" | "error";
+  aliasMs: number;
+  semanticMs?: number;
+  semanticCached?: boolean;
+  layer?: "device" | "shard" | "api";
+  error?: unknown;
+}`;
+
+const providers = `interface SemanticProvider {
+  // undefined means "no answer here": the next provider gets the query.
+  search(
+    query: string,
+    options?: { locale?: string; limit?: number; signal?: AbortSignal },
+  ): Promise<SemanticResponse | undefined>;
+}
+
+// Layer 3, the API (GET /v1/search?mode=semantic)
+createSemanticClient({ endpoint: "${API_HOST}", key: "pk_live_…" });
+
+// Layer 2, precomputed results as static files
+createShardProvider({ baseUrl: "${SHARDS_URL}" });
+
+// Both, cheapest first. Returns undefined when neither is configured.
+createLayeredSemantic({ shardsUrl, endpoint, key, packVersion });
+
+// Any providers, in order: the first answer wins.
+chainProviders(shards, api);`;
+
+const helpers = `normalize("¡Feliz cumpleaños!"); // "${normalize("¡Feliz cumpleaños!")}"
+tokenize(normalize("Ship it!")); // ${JSON.stringify(tokenize(normalize("Ship it!")))}
+applySkinTone("👍", "medium-dark"); // "${applySkinTone("👍", "medium-dark")}"
+baseId("1F44D-1F3FD"); // "${baseId("1F44D-1F3FD")}"
+groupLabel("food-drink", "tr"); // "${groupLabel("food-drink", "tr")}"
+hexcodeOf("❤️‍🔥"); // "${hexcodeOf("❤️‍🔥")}"`;
+
+const sets = `EMOJI_SETS; // ["native", "twemoji", "noto", "fluent"]
+isEmojiSet("noto"); // true
+
+emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
+// "${emojiImageUrl("🦖", { endpoint: API_HOST, emojiSet: "noto" })}"`;
+---
+
+<DocsLayout path="/docs/sdk/">
+  <p>The <code>emojisense</code> package is the engine every integration is built on. It has no dependencies and runs in browsers, Node, Deno, Bun, Workers and extensions. Everything below is exported from the package root.</p>
+  <InstallTabs packages="emojisense" />
+
+  <h2 id="engine">Engine</h2>
+  <h3 id="create-engine">createEngine</h3>
+  <p>Builds the in-memory dictionary index from one or more packs: several languages, core and extension parts. Searching is synchronous.</p>
+  <CodeBlock code={engine} lang="ts" />
+  <CodeBlock code={engineExample} lang="ts" title="Example" />
+  <ul>
+    <li><code>limit</code> defaults to 24. <code>prefix</code> (default <code>true</code>) treats the last word as a prefix while someone types. Pass <code>false</code> for complete queries.</li>
+    <li><code>locale</code> prefers phrases from that language’s pack when ranking.</li>
+    <li><code>minCoverage</code> (default 0.34) is the share of a multi-word query a phrase must cover.</li>
+  </ul>
+
+  <h3 id="types">Result types</h3>
+  <CodeBlock code={types} lang="ts" />
+
+  <h2 id="loading">Loading packs</h2>
+  <h3 id="load-packs">loadPacks</h3>
+  <p>Fetches and validates the packs of one pack version. The files are immutable, so the browser’s HTTP cache does the rest.</p>
+  <CodeBlock code={loader} lang="ts" />
+  <p><code>assertPack(value)</code> validates a pack you load yourself, for example from your app bundle. <code>PACK_FORMAT</code>, <code>PACK_FORMAT_VERSION</code>, <code>FIELDS</code>, <code>DEFAULT_WEIGHTS</code> and <code>ROW_INDEX</code> describe the format. See <a href="/docs/pack-format/">Pack format</a>.</p>
+
+  <h2 id="sessions">Search sessions</h2>
+  <h3 id="create-search-session">createSearchSession</h3>
+  <p>The controller behind every picker: dictionary results on every keystroke, then debounced, cancellable meaning results fused in. Stale answers are dropped.</p>
+  <CodeBlock code={session} lang="ts" />
+
+  <h2 id="semantic">Semantic providers</h2>
+  <p>A provider answers a query or returns <code>undefined</code>, so the next provider gets it. With no provider left, the session keeps the dictionary results.</p>
+  <CodeBlock code={providers} lang="ts" />
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">createSemanticClient option</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>endpoint</code></td><td>Required. The API base URL.</td></tr>
+        <tr><td><code>key</code></td><td>Publishable key, sent as <code>?key=</code> so there is no CORS preflight</td></tr>
+        <tr><td><code>packVersion</code></td><td>Pins the data so API results match your packs</td></tr>
+        <tr><td><code>cacheSize</code></td><td>In-memory cache of recent answers. Default 200.</td></tr>
+        <tr><td><code>overLimitCooldownMs</code></td><td>Skip the API for this long after an over-limit answer. Default 0: keep asking, because the edge cache may still know the next query.</td></tr>
+        <tr><td><code>fetch</code></td><td>Your own fetch, for tests or proxies</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>shardKeyFor(keys, query)</code> picks the shard file for a query, for custom shard hosting.</p>
+
+  <h2 id="fusion">Fusion</h2>
+  <ul>
+    <li><code>shouldUseSemantic(alias)</code>: <code>true</code> when the confidence is under 0.6, or for a phrase of two or more words under 0.9.</li>
+    <li><code>fuse(alias, semantic, limit)</code>: merges with weights from the dictionary’s confidence. Results with a score of 0.9 or more stay pinned on top.</li>
+    <li><code>fuseResults(alias, semantic, options)</code>: the same, with your own <code>k</code> (60), <code>pinScore</code> (0.9), <code>aliasWeight</code> and <code>semanticWeight</code>.</li>
+  </ul>
+
+  <h2 id="helpers">Helpers</h2>
+  <CodeBlock code={helpers} lang="ts" />
+  <ul>
+    <li><code>normalize(input, maxLength)</code> and <code>tokenize(normalized)</code> follow the pack format’s normalization. <code>MAX_QUERY_LENGTH</code> is 64.</li>
+    <li><code>applySkinTone(emoji, tone)</code> with a tone from <code>SKIN_TONES</code>.</li>
+    <li><code>baseId(hexcode)</code> maps a skin-tone variant to its base emoji.</li>
+    <li><code>groupLabel(group, locale)</code> names a pack group for the UI.</li>
+    <li><code>hexcodeOf(emoji)</code> gives the Emojibase hexcode of an emoji, skin tone included.</li>
+    <li><code>boundedEditDistance(a, b, max)</code> is the typo distance the engine uses.</li>
+  </ul>
+
+  <h2 id="emoji-sets">Emoji sets</h2>
+  <p>For <a href="/docs/guides/emoji-sets/">hosted emoji sets</a>: <code>EMOJI_SETS</code>, <code>isEmojiSet(value)</code> and <code>emojiImageUrl(emoji, {"{ endpoint, emojiSet }"})</code>, which returns <code>undefined</code> for <code>native</code> or without an endpoint.</p>
+  <CodeBlock code={sets} lang="ts" />
+
+  <h2 id="vectors">Vectors</h2>
+  <p>For on-device meaning search experiments and for building vector files: <code>decodeVectors(buffer)</code>, <code>encodeVectors(model, ids, rows)</code>, <code>l2normalize(vector)</code> and <code>searchVectors(index, query, k)</code>. The file format is in <a href="/docs/pack-format/#5-vectors-vectorsmodeldimsbin-esvec1">Pack format §5</a>.</p>
+</DocsLayout>

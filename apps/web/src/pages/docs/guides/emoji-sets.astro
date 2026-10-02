@@ -1,0 +1,108 @@
+---
+import { emojiImageUrl, hexcodeOf } from "emojisense";
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL } from "../../../components/docs/facts";
+
+const thumbsUrl = emojiImageUrl("👍🏽", { endpoint: API_HOST, emojiSet: "twemoji" });
+
+const react = `import { useEmojisense } from "@emojisense/react";
+import { EmojisensePicker } from "@emojisense/react/frimousse";
+
+const sense = useEmojisense({
+  packBaseUrl: "${PACK_URL}",
+  endpoint: "${API_HOST}", // hosts the images
+  emojiSet: "twemoji",
+});
+
+<EmojisensePicker emojisense={sense} onEmojiSelect={({ emoji }) => insert(emoji)} />;`;
+
+const webComponent = `<emojisense-picker
+  pack-url="${PACK_URL}"
+  endpoint="${API_HOST}"
+  emoji-set="twemoji"
+></emojisense-picker>`;
+
+const glyph = `import { EmojiGlyph } from "@emojisense/react";
+
+// A 1em image of the set, or the text when the set has no image for this emoji.
+<EmojiGlyph emoji="👍🏽" emojiSet={sense.emojiSet} endpoint={sense.endpoint} />;`;
+
+const core = `import { emojiImageUrl, hexcodeOf } from "emojisense";
+
+hexcodeOf("👍🏽"); // "${hexcodeOf("👍🏽")}"
+
+emojiImageUrl("👍🏽", { endpoint: "${API_HOST}", emojiSet: "twemoji" });
+// "${thumbsUrl}"
+
+emojiImageUrl("👍🏽", { endpoint: "${API_HOST}", emojiSet: "native" });
+// undefined: draw the text`;
+
+const swift = `import Emojisense
+
+let endpoint = URL(string: "${API_HOST}")!
+let url = EmojiSet.twemoji.imageURL(for: "👍🏽", endpoint: endpoint)
+// ${thumbsUrl}`;
+
+const route = `GET ${API_HOST}/v1/sets/:set/:hexcode.svg`;
+---
+
+<DocsLayout path="/docs/guides/emoji-sets/">
+  <p>Every operating system draws emoji in its own style, and older systems cannot draw new emoji at all. A hosted emoji set makes every device show the same art. Emojisense serves the images from the edge, for every emoji in the data packs and their skin tones.</p>
+
+  <h2 id="sets">Sets</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Set</th><th scope="col">Value</th><th scope="col">Upstream</th><th scope="col">License</th></tr></thead>
+      <tbody>
+        <tr><td>System font</td><td><code>native</code></td><td>The device</td><td>The default</td></tr>
+        <tr><td>Twemoji</td><td><code>twemoji</code></td><td><code>jdecked/twemoji</code> v17.0.3</td><td>Graphics CC BY 4.0</td></tr>
+        <tr><td>Noto Emoji</td><td><code>noto</code></td><td><code>googlefonts/noto-emoji</code></td><td>Images Apache 2.0, flags public domain</td></tr>
+        <tr><td>Fluent Emoji</td><td><code>fluent</code></td><td><code>microsoft/fluentui-emoji</code></td><td>MIT</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Each set is pinned to one upstream commit, so the art does not change under you. Fluent has no country flags, families, couples or Emoji 16 and 17. When a set has no image for an emoji, the pickers show the native emoji instead.</p>
+
+  <h2 id="use-a-set">Use a set in a picker</h2>
+  <p>Set the picker’s <code>emojiSet</code> option and give it the API <code>endpoint</code>, which hosts the images:</p>
+  <CodeTabs
+    tabs={[
+      { label: "React", code: react, lang: "tsx" },
+      { label: "Web component", code: webComponent, lang: "html" },
+    ]}
+    group="framework"
+    label="Stack"
+  />
+  <p>The pickers draw <code>&lt;img src="…/v1/sets/&lt;set&gt;/&lt;hexcode&gt;.svg" alt="&lt;emoji&gt;" loading="lazy"&gt;</code>, so screen readers still get the emoji. What people insert is always the Unicode emoji.</p>
+
+  <h3 id="your-own-ui">In your own UI</h3>
+  <CodeTabs
+    tabs={[
+      { label: "React", code: glyph, lang: "tsx" },
+      { label: "JavaScript", code: core, lang: "ts" },
+      { label: "Swift", code: swift, lang: "swift" },
+    ]}
+    group="framework"
+    label="Stack"
+  />
+
+  <h2 id="app-setting">The app setting</h2>
+  <p>Each app also stores its set in the dashboard, <code>native</code> by default: <code>PATCH /api/apps/:id</code> with <code>{"{ \"emojiSet\": \"twemoji\" }"}</code>. A set other than <code>native</code> needs the Solo plan or higher, otherwise the answer is <code>402</code> with <code>plan_required</code>.</p>
+
+  <h2 id="urls">Image URLs</h2>
+  <CodeBlock code={route} lang="text" title="Route" />
+  <ul>
+    <li><code>hexcode</code> is the Emojibase hexcode of a pack emoji or of one of its single-tone variants, for example <code>1F44D</code> or <code>1F44D-1F3FD</code>. <code>hexcodeOf(emoji)</code> makes it.</li>
+    <li>No key, not metered and not rate limited, because a picker loads hundreds of images and an <code>&lt;img&gt;</code> cannot carry a key.</li>
+    <li>Answers are <code>image/svg+xml</code>, cached for a year (immutable), with CORS for every origin.</li>
+    <li>Errors: <code>400 invalid_hexcode</code>, <code>404 unknown_set</code>, <code>404 unknown_emoji</code>, <code>404 not_in_set</code> and <code>502 upstream_unavailable</code>.</li>
+  </ul>
+
+  <h2 id="attribution">Attribution</h2>
+  <Callout type="note" title="Credit the set you show">
+    <p>Twemoji graphics © Twitter, Inc. and the jdecked/twemoji contributors, CC BY 4.0. Noto Emoji © Google LLC, Apache 2.0. Fluent Emoji © Microsoft Corporation, MIT. The images are served unmodified. Credit the set in your app, for example on an About screen. The license texts are in the repository’s NOTICE file.</p>
+  </Callout>
+</DocsLayout>

@@ -1,0 +1,73 @@
+---
+import { Code } from "astro:components";
+import type { ComponentProps } from "astro/types";
+import { codeTheme } from "./code-theme";
+
+type CodeLanguage = NonNullable<ComponentProps<typeof Code>["lang"]>;
+
+export interface CodeTab {
+  label: string;
+  code: string;
+  lang?: string;
+}
+
+interface Props {
+  tabs: CodeTab[];
+  /**
+   * Tabs with the same group switch together on the page and the choice is remembered, e.g.
+   * "pm" for package managers or "framework".
+   */
+  group?: string;
+  /** Accessible name of the tab list. */
+  label?: string;
+}
+
+const { tabs, group, label = "Code examples" } = Astro.props;
+// A counter shared by every page of a build keeps the ids unique on a page and stable between builds.
+const g = globalThis as { __docsTabsCounter?: number };
+g.__docsTabsCounter = (g.__docsTabsCounter ?? 0) + 1;
+const base = `docs-tabs-${g.__docsTabsCounter}`;
+---
+
+<div class="docs-code docs-tabs" data-tabs data-group={group}>
+  <div class="docs-code-bar">
+    <div class="docs-tablist" role="tablist" aria-label={label}>
+      {
+        tabs.map((tab, index) => (
+          <button
+            type="button"
+            role="tab"
+            id={`${base}-tab-${index}`}
+            aria-controls={`${base}-panel-${index}`}
+            aria-selected={index === 0 ? "true" : "false"}
+            tabindex={index === 0 ? 0 : -1}
+            data-tab={tab.label}
+          >
+            {tab.label}
+          </button>
+        ))
+      }
+    </div>
+    <button type="button" class="docs-copy" data-copy hidden>
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <rect x="5.25" y="5.25" width="8.5" height="8.5" rx="2"></rect>
+        <path d="M10.75 5.25V4.25a2 2 0 0 0-2-2h-4.5a2 2 0 0 0-2 2v4.5a2 2 0 0 0 2 2h1"></path>
+      </svg>
+      <span data-copy-label>Copy</span>
+    </button>
+  </div>
+  {
+    tabs.map((tab, index) => (
+      <div
+        class="docs-tabpanel"
+        role="tabpanel"
+        id={`${base}-panel-${index}`}
+        aria-labelledby={`${base}-tab-${index}`}
+        data-tab={tab.label}
+        hidden={index !== 0}
+      >
+        <Code code={tab.code} lang={(tab.lang ?? "plaintext") as CodeLanguage} theme={codeTheme} />
+      </div>
+    ))
+  }
+</div>

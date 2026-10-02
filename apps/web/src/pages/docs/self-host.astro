@@ -1,6 +1,9 @@
 ---
+import Callout from "../../components/docs/Callout.astro";
+import CodeBlock from "../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { PACK_VERSION } from "../../components/docs/facts";
 import { REPO_URL } from "../../config";
-import Docs from "../../layouts/Docs.astro";
 
 const build = `git clone ${REPO_URL}.git emojisense
 cd emojisense
@@ -8,89 +11,88 @@ pnpm install
 pnpm data:build`;
 
 const embed = `npx wrangler login
-pnpm --filter @emojisense/data embed -- --models embeddinggemma --dims 256`;
+pnpm --filter @emojisense/data embed -- --models bge-m3 --dims 1024`;
 
-const sync = "pnpm --filter @emojisense/worker sync -- --model embeddinggemma --dims 256";
+const sync = "pnpm --filter @emojisense/worker sync -- --model bge-m3 --dims 1024";
+
+const database = `cd packages/worker
+npx wrangler d1 create emojisense        # copy the database_id into wrangler.jsonc
+npx wrangler d1 migrations apply DB --remote`;
 
 const deploy = "pnpm --filter @emojisense/worker deploy";
 
 const client = `const sense = useEmojisense({
-  packBaseUrl: "https://emojisense-api.<your-subdomain>.workers.dev/v1/pack/0.1.0",
+  packBaseUrl: "https://emojisense-api.<your-subdomain>.workers.dev/v1/pack/${PACK_VERSION}",
   endpoint: "https://emojisense-api.<your-subdomain>.workers.dev",
 });`;
 
 const offline = `pnpm --filter @emojisense/worker sync -- --placeholder
-pnpm --filter @emojisense/worker dev:offline`;
+pnpm --filter @emojisense/worker db:migrate
+pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
 ---
 
-<Docs path="/docs/self-host/" source="README.md">
+<DocsLayout path="/docs/self-host/">
+  <p>The Emojisense API is open source (MIT). You can run it on your own Cloudflare account, with your own Workers AI calls and your own database.</p>
+
   <h2 id="what-you-run">What you run</h2>
-  <p>
-    The search API is one Cloudflare Worker (<code>packages/worker</code>). It serves the data packs as static
-    files, keeps the emoji vectors in its own bundle, embeds queries with Workers AI and caches answers per data
-    center. There are no containers, load balancers or vector databases to run.
-  </p>
-  <p>
-    Everything here is MIT. You call the embedding models on your own account, under each model’s license.
-    The model weights are never part of the repository.
-  </p>
+  <p>The API is one Cloudflare Worker, <code>packages/worker</code>. It serves the data packs as static files, keeps the emoji vectors in its own bundle, embeds queries with Workers AI, caches answers in each data center and stores keys and usage in D1. There are no containers, load balancers or vector databases to run.</p>
+  <p>You call the embedding model on your own account, under the model’s license. Model weights are never part of the repository.</p>
 
   <h2 id="requirements">Requirements</h2>
   <ul>
     <li>Node.js 24 and pnpm 9.</li>
-    <li>
-      A Cloudflare account with Workers AI. The free allowance is 10,000 neurons a day. For production traffic,
-      use Workers Paid ($5 a month).
-    </li>
+    <li>A Cloudflare account with Workers AI. For production traffic, use Workers Paid ($5 a month).</li>
     <li><code>wrangler login</code> on the machine that embeds the emoji and deploys the Worker.</li>
   </ul>
 
   <h2 id="steps">Steps</h2>
-  <h3 id="build-the-pack">1. Build the data pack</h3>
-  <p>This joins Emojibase, Unicode CLDR and the alias files into the locale packs.</p>
-  <pre class="code"><code>{build}</code></pre>
+  <ol class="docs-steps">
+    <li>
+      <h3 id="build-the-pack">Build the data packs</h3>
+      <p>This joins Emojibase, Unicode CLDR and the alias files into the locale packs.</p>
+      <CodeBlock code={build} lang="bash" />
+    </li>
+    <li>
+      <h3 id="embed">Embed the emoji on your account</h3>
+      <p>This sends the emoji descriptions to Workers AI in batches and writes the vector file. Queries and emoji must use the same model at the same size, so keep your choice. <code>bge-m3</code> at 1,024 dimensions is the production model.</p>
+      <CodeBlock code={embed} lang="bash" />
+    </li>
+    <li>
+      <h3 id="sync">Copy the packs and vectors into the Worker</h3>
+      <CodeBlock code={sync} lang="bash" />
+    </li>
+    <li>
+      <h3 id="database">Create the database</h3>
+      <p>D1 holds apps, keys and monthly usage. The schema is in <code>packages/platform/migrations</code>.</p>
+      <CodeBlock code={database} lang="bash" />
+    </li>
+    <li>
+      <h3 id="configure">Configure</h3>
+      <p>Edit <code>packages/worker/wrangler.jsonc</code> before the first deploy:</p>
+      <ul>
+        <li><code>name</code>: the Worker name, which is also its <code>workers.dev</code> subdomain.</li>
+        <li><code>vars.DEV_KEYS</code>: keys that need no database row, as <code>key</code> or <code>key:plan</code>, comma-separated. They allow any origin.</li>
+        <li><code>ratelimits</code>: requests per minute for keyed and anonymous callers.</li>
+      </ul>
+    </li>
+    <li>
+      <h3 id="deploy">Deploy</h3>
+      <CodeBlock code={deploy} lang="bash" />
+    </li>
+    <li>
+      <h3 id="point-clients">Point your apps at it</h3>
+      <CodeBlock code={client} lang="ts" />
+    </li>
+  </ol>
 
-  <h3 id="embed">2. Embed the emoji on your account</h3>
-  <p>
-    This sends the 1,914 emoji descriptions to Workers AI in batches and writes the vector file. Pick one
-    model and one size, and keep them: queries and emoji must use the same model at the same size.
-  </p>
-  <pre class="code"><code>{embed}</code></pre>
-
-  <h3 id="sync">3. Copy the pack and vectors into the Worker</h3>
-  <pre class="code"><code>{sync}</code></pre>
-
-  <h3 id="configure">4. Configure</h3>
-  <p>Edit <code>packages/worker/wrangler.jsonc</code> before the first deploy:</p>
-  <ul>
-    <li><code>name</code>: the Worker name, which is also the <code>workers.dev</code> subdomain.</li>
-    <li><code>vars.PUBLISHABLE_KEYS</code>: a comma-separated list of the keys your apps may send.</li>
-    <li><code>ratelimits</code>: requests per minute for keyed and anonymous callers.</li>
-  </ul>
-
-  <h3 id="deploy">5. Deploy</h3>
-  <pre class="code"><code>{deploy}</code></pre>
-
-  <h3 id="point-clients">6. Point your apps at it</h3>
-  <pre class="code"><code>{client}</code></pre>
-
-  <h2 id="dashboard">Keys and usage (optional)</h2>
-  <p>
-    The dashboard (<code>apps/dashboard</code>) issues keys, binds them to origins and shows usage per month.
-    It runs on Cloudflare too, with a D1 database. The schema lives in <code>packages/platform/migrations</code>.
-  </p>
+  <h2 id="dashboard">Keys and usage</h2>
+  <p>The dashboard, <code>apps/dashboard</code>, issues keys, binds them to origins and shows usage per month. It is a second Worker that uses the same D1 database. Its README explains the GitHub sign-in setup.</p>
 
   <h2 id="without-cloudflare">Try it without a Cloudflare account</h2>
-  <p>
-    Workers AI has no local emulator. The offline mode starts the Worker with an empty vector file, so it
-    answers with dictionary results only and marks them <code>degraded: true</code>.
-  </p>
-  <pre class="code"><code>{offline}</code></pre>
+  <p>Workers AI has no local emulator. The offline mode starts the Worker with an empty vector file, so it answers with dictionary results only and marks them <code>"degraded": true</code>. The development keys <code>pk_demo</code> and <code>sk_live_local</code> work without a database row.</p>
+  <CodeBlock code={offline} lang="bash" />
 
-  <h2 id="what-hosted-adds">What the hosted service adds</h2>
-  <p>
-    Self-hosted data is the open pack, refreshed every quarter. The hosted API also gets daily alias updates
-    learned from searches that missed, photo to emoji, custom emoji hosting and analytics, with no servers or
-    model calls to run yourself. See <a href="/pricing/">pricing</a>.
-  </p>
-</Docs>
+  <Callout type="note" title="What the hosted service adds">
+    <p>Self-hosted data is the open pack, refreshed every quarter. The hosted API also gets daily alias updates learned from searches that found nothing, and you have no servers or model calls to run. See <a href="/pricing/">Pricing</a>.</p>
+  </Callout>
+</DocsLayout>

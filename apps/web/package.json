@@ -10,7 +10,8 @@
     "preview": "astro build && wrangler dev",
     "typecheck": "astro check && tsc --noEmit",
     "test": "vitest run",
-    "deploy": "astro build && wrangler deploy"
+    "deploy": "astro build && wrangler deploy",
+    "brand:assets": "node scripts/brand-assets.mjs"
   },
   "dependencies": {
     "@astrojs/react": "7.0.0",

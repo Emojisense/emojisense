@@ -1,133 +1,92 @@
 ---
-import Docs from "../../layouts/Docs.astro";
-
-const host = "https://api.emojisense.com";
-const pack = `${host}/v1/pack/0.1.0`;
-
-const installReact = "npm install @emojisense/react frimousse";
-
-const frimousse = `import { useEmojisense } from "@emojisense/react";
-import { EmojisensePicker } from "@emojisense/react/frimousse";
-
-export function EmojiButton({ onPick }: { onPick: (emoji: string) => void }) {
-  const sense = useEmojisense({
-    packBaseUrl: "${pack}",
-    endpoint: "${host}",
-    publishableKey: "pk_live_…",
-  });
-
-  return <EmojisensePicker emojisense={sense} onEmojiSelect={({ emoji }) => onPick(emoji)} />;
-}`;
-
-const hooks = `import { useEmojiSearch, useEmojisense } from "@emojisense/react";
-
-const sense = useEmojisense({ packBaseUrl, endpoint, publishableKey });
-const { results, status } = useEmojiSearch(query, sense, { limit: 24 });
-// results: [{ emoji: "🚀", id: "1F680", score: 0.9, source: "alias" }, …]`;
-
-const installCore = "npm install emojisense";
-
-const vanilla = `import { createEngine, loadPacks } from "emojisense";
-
-const engine = createEngine(await loadPacks({ baseUrl: "${pack}" }));
-engine.search("ship it").results;
-// [{ emoji: "🚢", id: "1F6A2", score: …, source: "alias" }, { emoji: "🚀", … }, …]`;
-
-const session = `import {
-  chainProviders,
-  createSearchSession,
-  createSemanticClient,
-  createShardProvider,
-} from "emojisense";
-
-const session = createSearchSession({
-  engine,
-  // Cheapest first: precomputed shards (free static files), then the API.
-  semantic: chainProviders(
-    createShardProvider({ baseUrl: "${host}/p/0.1.0" }),
-    createSemanticClient({ endpoint: "${host}", key: "pk_live_…" }),
-  ),
-  onChange: (state) => render(state.results),
-});
-
-input.addEventListener("input", () => session.update(input.value));`;
-
-const installWebComponent = "npm install @emojisense/web-component";
-
-const webComponent = `<script type="module">
-  import "@emojisense/web-component";
-</script>
-
-<emojisense-picker
-  pack-base-url="${pack}"
-  endpoint="${host}"
-  publishable-key="pk_live_…"
-></emojisense-picker>
-
-<script type="module">
-  document
-    .querySelector("emojisense-picker")
-    .addEventListener("emoji-select", (event) => insert(event.detail.emoji));
-</script>`;
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { PACK_FACTS } from "../../components/docs/facts";
+import LayerDiagram from "../../components/docs/LayerDiagram.astro";
+import LinkCard from "../../components/docs/LinkCard.astro";
+import QueryResults from "../../components/docs/QueryResults.astro";
+import { DASHBOARD_URL } from "../../config";
 ---
 
-<Docs path="/docs/" source="README.md">
-  <h2 id="before-you-start">Before you start</h2>
-  <p>You need two URLs and, for production, one key:</p>
-  <ul>
-    <li><strong>Pack base URL</strong>: where the data packs live, for example <code>{pack}</code>.</li>
-    <li><strong>Endpoint</strong>: the search API. Leave it out for offline search with the dictionary only.</li>
+<DocsLayout path="/docs/">
+  <p>Emojisense gives your product everything emoji in one platform. People type what they mean, in their own words and language, and get the right emoji. Messages get reaction suggestions. Photos turn into emoji. Your own custom emoji sit next to Unicode, and every device can show the same emoji art.</p>
+
+  <QueryResults
+    queries={[
+      { query: "jurassic park", note: "a film" },
+      { query: "greatest of all time", note: "slang" },
+      { query: "hallowelen", note: "a typo" },
+      { query: "kolay gelsin", locale: "tr", note: "Turkish" },
+      { query: "feliz cumpleaños", locale: "es", note: "Spanish" },
+    ]}
+  />
+  <p>These results come from the real engine and the shipped data, computed when this page was built. The same engine runs in your users’ browsers.</p>
+
+  <h2 id="what-you-can-build">What you can build</h2>
+  <ul class="docs-cards">
     <li>
-      <strong>Publishable key</strong> (<code>pk_live_…</code>): from the dashboard, bound to your site’s
-      origins. Without a key, the API applies a stricter anonymous rate limit.
+      <LinkCard href="/docs/guides/search/" emoji="🔎" title="Search in your picker" description="Rank emoji by meaning on every keystroke, in any picker." />
+    </li>
+    <li>
+      <LinkCard href="/docs/guides/reactions/" emoji="🙌" title="Reaction suggestions" description="Suggest the reactions a message deserves." />
+    </li>
+    <li>
+      <LinkCard href="/docs/guides/photo-to-emoji/" emoji="📸" title="Photo to emoji" description="Turn a photo into fitting emoji. The image is never stored." />
+    </li>
+    <li>
+      <LinkCard href="/docs/guides/custom-emoji/" emoji="🦄" title="Custom emoji" description="Your own emoji, searchable next to Unicode. Planned." />
+    </li>
+    <li>
+      <LinkCard href="/docs/guides/emoji-sets/" emoji="🎨" title="Hosted emoji sets" description="Twemoji, Noto or Fluent from the edge." />
+    </li>
+    <li>
+      <LinkCard href="/docs/guides/analytics/" emoji="📈" title="Analytics" description="What people search for, and what finds nothing." />
     </li>
   </ul>
-  <p>
-    Search starts as soon as the English core pack (about 180 KB compressed) arrives. The extension pack
-    with more aliases and typos loads when the browser is idle.
-  </p>
+  <p>Teams, tenants and webhooks complete the platform for products with many customers. See the <a href="/docs/guides/teams/">guides</a>.</p>
 
-  <h2 id="react-frimousse">React and Frimousse</h2>
-  <p>
-    The adapter keeps the Frimousse browse view. As soon as someone types, Emojisense ranks the results,
-    with the same <code>onEmojiSelect</code> contract and skin tone.
-  </p>
-  <pre class="code"><code>{installReact}</code></pre>
-  <pre class="code"><code>{frimousse}</code></pre>
-  <p>
-    Style it like any Frimousse picker. The results grid adds <code>[data-emojisense-results]</code> and
-    <code>[data-active]</code> hooks.
-  </p>
+  <h2 id="how-it-fits">How it fits together</h2>
+  <p>Emojisense answers each search in the cheapest place that can answer it well. Most searches never leave the device. Only the unsure ones go to the edge, and the edge result merges in without moving the confident hits.</p>
+  <LayerDiagram />
+  <p>The engine is a small, dependency-free package. The data packs hold {PACK_FACTS.emojiCount?.toLocaleString("en")} emoji (Emoji {PACK_FACTS.emojiVersion}) with aliases in {PACK_FACTS.languages} languages. The English core pack is about {PACK_FACTS.englishCoreKb} KB compressed, and the extension pack with more aliases and typos loads when the browser is idle. Read <a href="/docs/concepts/">Concepts</a> for the details.</p>
 
-  <h3 id="hooks-only">Your own picker UI</h3>
-  <p>
-    Use the hooks directly. Dictionary results update on every keystroke. Semantic results arrive a moment
-    later and merge in without moving confident hits.
-  </p>
-  <pre class="code"><code>{hooks}</code></pre>
-
-  <h2 id="vanilla">Plain JavaScript</h2>
-  <p>
-    The core engine has no dependencies. It runs in browsers, Node, Deno, Bun, Workers and extensions.
-  </p>
-  <pre class="code"><code>{installCore}</code></pre>
-  <pre class="code"><code>{vanilla}</code></pre>
-  <p>For search as you type, with semantic results when the dictionary is unsure, use a search session:</p>
-  <pre class="code"><code>{session}</code></pre>
-
-  <h2 id="web-component">Web component</h2>
-  <p>
-    <code>&lt;emojisense-picker&gt;</code> works in Vue, Svelte, Angular and plain HTML. It is in progress: the
-    attribute and event names below can change before the first release.
-  </p>
-  <pre class="code"><code>{installWebComponent}</code></pre>
-  <pre class="code"><code>{webComponent}</code></pre>
-
-  <h2 id="next">Next steps</h2>
-  <ul>
-    <li><a href="/docs/api/">HTTP API</a>: endpoints, keys, metering and status codes.</li>
-    <li><a href="/docs/pack-format/">Pack format</a>: port the engine to Swift, Kotlin or anything else.</li>
-    <li><a href="/docs/self-host/">Self-host</a>: run the API on your own Cloudflare account.</li>
-    <li><a href="/pricing/">Pricing</a>: what is free and what the plans add.</li>
+  <h2 id="pick-an-integration">Pick an integration</h2>
+  <p>Every integration uses the same engine, packs and API. Pick the one that matches your stack.</p>
+  <ul class="docs-cards">
+    <li>
+      <LinkCard id="react-frimousse" href="/docs/integrations/react/" emoji="⚛️" title="React and Frimousse" description="Hooks, a drop-in picker and a shadcn/ui component." meta="@emojisense/react" />
+    </li>
+    <li>
+      <LinkCard id="web-component" href="/docs/integrations/web-component/" emoji="🧩" title="Web component" description="Vue, Svelte, Angular and plain HTML." meta="@emojisense/web-component" />
+    </li>
+    <li>
+      <LinkCard id="vanilla" href="/docs/sdk/" emoji="📦" title="Plain JavaScript" description="The engine alone, for any runtime and any UI." meta="emojisense" />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/tiptap/" emoji="✍️" title="Tiptap" description="Type a colon, get emoji ranked by meaning." meta="@emojisense/tiptap" />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/lexical/" emoji="📝" title="Lexical" description="Colon autocomplete for Lexical in React." meta="@emojisense/lexical" />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/emoji-mart/" emoji="🗃️" title="emoji-mart" description="Keep emoji-mart, add Emojisense ranking." meta="@emojisense/emoji-mart" />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/swift/" emoji="🍎" title="Swift" description="iOS and macOS, same results as TypeScript." meta="Swift Package" />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/mcp/" emoji="🤖" title="MCP server" description="Emoji tools for AI assistants. Offline by default." meta="@emojisense/mcp" />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/chrome/" emoji="🌐" title="Chrome extension" description="A picker for any text field on the web." />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/raycast/" emoji="🔦" title="Raycast" description="Search emoji and paste them into any app." />
+    </li>
+    <li>
+      <LinkCard href="/docs/integrations/http/" emoji="🔌" title="HTTP" description="Any language, any server, with plain HTTP." />
+    </li>
   </ul>
-</Docs>
+
+  <h2 id="start">Start in five minutes</h2>
+  <p>The <a href="/docs/quickstart/">Quickstart</a> takes you from a key to a working picker. You can start without a key: the API then applies a stricter rate limit. The Free plan needs no card. Get a key from the <a href={`${DASHBOARD_URL}/`}>dashboard</a> when you are ready. To try search, reactions and photos first, open the <a href="/playground/">playground</a>.</p>
+</DocsLayout>

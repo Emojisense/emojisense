@@ -1,0 +1,106 @@
+---
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, shown } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const setup = `import { EmojiAutocompletePlugin } from "@emojisense/lexical";
+import "@emojisense/lexical/styles.css"; // optional default look
+import { useEmojisense } from "@emojisense/react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+
+export function Editor() {
+  const sense = useEmojisense({
+    packBaseUrl: "${PACK_URL}",
+    endpoint: "${API_HOST}",
+  });
+
+  return (
+    <LexicalComposer initialConfig={{ namespace: "chat", onError: console.error }}>
+      <RichTextPlugin
+        contentEditable={<ContentEditable />}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <EmojiAutocompletePlugin
+        engine={sense.engine}
+        semantic={sense.semantic}
+        skinTone="medium"
+      />
+    </LexicalComposer>
+  );
+}`;
+
+const container = `function Editor() {
+  const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+  return (
+    <div ref={setFrame} style={{ position: "relative" }}>
+      <LexicalComposer initialConfig={{ namespace: "demo", onError: console.error }}>
+        <RichTextPlugin
+          contentEditable={<ContentEditable />}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+        <EmojiAutocompletePlugin engine={engine} menuContainer={frame} />
+      </LexicalComposer>
+    </div>
+  );
+}`;
+
+const customMenu = `<EmojiAutocompletePlugin
+  engine={engine}
+  menuRenderFn={(anchor, { options, selectedIndex, selectOptionAndCleanUp }) =>
+    anchor.current &&
+    createPortal(<MyMenu options={options} /* … */ />, anchor.current)
+  }
+/>`;
+---
+
+<DocsLayout path="/docs/integrations/lexical/">
+  <p><code>@emojisense/lexical</code> adds <code>:</code> emoji autocomplete to Lexical editors in React. Type <code>:jurassic</code> and the menu shows <span class="emoji">{shown("jurassic", { part: "core" })}</span>. Type <code>:fire:</code> and it becomes <span class="emoji">🔥</span>. It is built on Lexical’s own <code>LexicalTypeaheadMenuPlugin</code>.</p>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/lexical emojisense lexical @lexical/react react react-dom" />
+
+  <h2 id="setup">Setup</h2>
+  <p>With <code>@emojisense/react</code>, which loads the packs and builds the engine:</p>
+  <CodeBlock code={setup} lang="tsx" title="Editor.tsx" />
+  <p>Without the React hooks, pass <code>engine={"{createEngine(await loadPacks({ baseUrl }))}"}</code> from <code>emojisense</code>. While <code>engine</code> is <code>undefined</code>, because the packs are still loading, the plugin stays inactive.</p>
+
+  <h2 id="props">Props</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Prop</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>engine</code></td><td>—</td><td>The engine, or <code>undefined</code></td></tr>
+        <tr><td><code>semantic</code></td><td>—</td><td>A semantic provider, for example <code>createSemanticClient</code> or <code>chainProviders(shards, api)</code></td></tr>
+        <tr><td><code>locale</code></td><td>first pack</td><td>Preferred locale for ranking and labels</td></tr>
+        <tr><td><code>limit</code></td><td><code>8</code></td><td>Menu size</td></tr>
+        <tr><td><code>debounceMs</code></td><td><code>200</code></td><td>Delay before a semantic request</td></tr>
+        <tr><td><code>skinTone</code></td><td><code>"none"</code></td><td>Applied to the shown and inserted emoji</td></tr>
+        <tr><td><code>trigger</code></td><td><code>":"</code></td><td>The menu opens after a space, a <code>(</code> or a line start</td></tr>
+        <tr><td><code>minQueryLength</code></td><td><code>1</code></td><td>Characters after the trigger before the menu opens</td></tr>
+        <tr><td><code>shortcodes</code></td><td><code>true</code></td><td>Replace a typed <code>:name:</code> when <code>name</code> is an exact shortcode or emoji name</td></tr>
+        <tr><td><code>ariaLabel</code></td><td><code>"Emoji suggestions"</code></td><td>Accessible name of the default menu</td></tr>
+        <tr><td><code>menuRenderFn</code></td><td>default menu</td><td>Lexical’s <code>MenuRenderFn&lt;EmojiOption&gt;</code>, called only while there are results</td></tr>
+        <tr><td><code>anchorClassName</code></td><td>—</td><td>Class for the element Lexical positions at the caret</td></tr>
+        <tr><td><code>commandPriority</code></td><td><code>COMMAND_PRIORITY_CRITICAL</code></td><td>Priority of the open menu’s key handlers</td></tr>
+        <tr><td><code>menuContainer</code></td><td><code>document.body</code></td><td>The element the menu mounts into. See <a href="#menu-container">below</a>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="keyboard">Keyboard</h2>
+  <p>↑ and ↓ move the active option. Enter or Tab inserts it in place of <code>:query</code>, and Shift+Enter is left to the editor. Escape closes the menu and keeps the typed text until the next word. <code>:trex:</code>, <code>:+1:</code> and <code>:sweat_smile:</code> turn into emoji while you type.</p>
+
+  <p>While the menu is open, it gets Enter, Tab, ↑, ↓ and Escape first, because its handlers use <code>COMMAND_PRIORITY_CRITICAL</code>. So <code>TablePlugin</code> and code blocks do not take Tab from it. While the menu is closed, all keys go to the editor. The menu never scrolls the page.</p>
+
+  <h2 id="menu-container">Mount the menu in your own frame</h2>
+  <p>By default the menu mounts on <code>&lt;body&gt;</code>. To keep it inside a dialog or a scroll panel, pass that element as <code>menuContainer</code>. Keep it in state with a callback ref, so the plugin gets it after the first render. While it is <code>null</code>, the menu mounts on <code>&lt;body&gt;</code>.</p>
+  <CodeBlock code={container} lang="tsx" />
+
+  <h2 id="custom-menu">Your own menu</h2>
+  <CodeBlock code={customMenu} lang="tsx" />
+  <p>Each <code>EmojiOption</code> has <code>suggestion: {"{ emoji, id, label, source }"}</code>, with the skin tone applied. Give option rows the ids <code>typeahead-item-&lt;index&gt;</code>, so the editor’s <code>aria-activedescendant</code> resolves. The default <code>EmojiMenu</code> is exported for reuse, and <code>registerShortcodeTransform(editor, resolve)</code> gives <code>:name:</code> completion without a menu.</p>
+</DocsLayout>

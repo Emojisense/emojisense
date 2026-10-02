@@ -1,0 +1,80 @@
+---
+import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { formatCount } from "../../../lib/format";
+
+const invite = `POST /api/team/invites
+{ "role": "developer", "email": "sam@example.com" }
+
+→ 201 { "invite": { … }, "url": "https://…/invite/<token>" }`;
+
+const accept = `POST /api/invites/<token>/accept
+
+→ 200 { "team": { "ownerId": "…", "ownerName": "…", "role": "developer" } }`;
+---
+
+<DocsLayout path="/docs/guides/teams/">
+  <p>Teams let other people work on your apps with their own sign-in. Each person gets a role, so a contractor can manage keys and emoji without managing the team, and a teammate can read usage and analytics without changing anything.</p>
+
+  <h2 id="roles">Roles</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Role</th><th scope="col">Can do</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Owner</strong></td><td>Everything. The account that owns the apps and the plan.</td></tr>
+        <tr><td><strong>Admin</strong></td><td>Everything except changing the plan, including team management.</td></tr>
+        <tr><td><strong>Developer</strong></td><td>Apps, keys, custom emoji and webhooks. No team management.</td></tr>
+        <tr><td><strong>Viewer</strong></td><td>Read only: apps, usage and analytics.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Members work on the owner’s apps and see the owner’s plan. A membership counts only while the owner’s plan includes team members.</p>
+
+  <h2 id="invite">Invite people</h2>
+  <p>The dashboard API serves teams to your signed-in session. An owner or an admin creates an invite with a role. The email address is optional.</p>
+  <CodeBlock code={invite} lang="http" title="Create an invite" />
+  <p>Send the link to the person. It is shown once, works once and expires after 7 days. They sign in and accept it:</p>
+  <CodeBlock code={accept} lang="http" title="Accept an invite" />
+
+  <h2 id="manage">Manage the team</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Route</th><th scope="col">Does</th><th scope="col">Who</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /api/team</code></td><td>Members and open invites</td><td>Any member</td></tr>
+        <tr><td><code>PATCH /api/team/members/:id</code></td><td>Change a role with <code>{"{ role }"}</code>. The owner’s role cannot change.</td><td>Owner, admin</td></tr>
+        <tr><td><code>DELETE /api/team/members/:id</code></td><td>Remove a member, or leave the team yourself</td><td>Owner, admin, the member</td></tr>
+        <tr><td><code>DELETE /api/team/invites/:id</code></td><td>Withdraw an open invite</td><td>Owner, admin</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Team routes act on your own account. Add <code>?owner=&lt;accountId&gt;</code> to act on a team you are a member of, with a high enough role.</p>
+
+  <h3 id="errors">Errors</h3>
+  <p>Errors have the shape <code>{`{ "error": { "code", "message", "field"?, "plan"? } }`}</code>.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Status</th><th scope="col">Code</th><th scope="col">When</th></tr></thead>
+      <tbody>
+        <tr><td>402</td><td><code>plan_required</code></td><td>The owner’s plan has no team members. <code>plan</code> names the cheapest plan that has them.</td></tr>
+        <tr><td>403</td><td><code>forbidden_role</code></td><td>Your role is too low for this action</td></tr>
+        <tr><td>404</td><td><code>invite_not_found</code></td><td>Unknown or withdrawn invite link</td></tr>
+        <tr><td>409</td><td><code>invite_own_team</code>, <code>already_member</code>, <code>owner_immutable</code></td><td>An invite to your own team, a second membership, a change to the owner</td></tr>
+        <tr><td>410</td><td><code>invite_used</code>, <code>invite_expired</code></td><td>The invite was accepted already, or is older than 7 days</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="environments">Apps and environments</h2>
+  <p>Each app has an environment: <code>dev</code>, <code>staging</code> or <code>prod</code>. Use one app per environment, so each one has its own keys, usage and analytics. Only <code>dev</code> apps may have publishable keys that work from any origin.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Plan</th><th scope="col">Apps</th><th scope="col">Team members</th></tr></thead>
+      <tbody>
+        {PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].maxApps)}</td><td>{PLANS[id].teamMembers ? "Yes" : "—"}</td></tr>)}
+      </tbody>
+    </table>
+  </div>
+  <p>Creating an app past your plan’s limit answers <code>402</code> with <code>plan_required</code>.</p>
+</DocsLayout>

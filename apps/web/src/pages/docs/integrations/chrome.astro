@@ -1,0 +1,71 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { shown } from "../../../components/docs/facts";
+
+const build = `pnpm install
+pnpm --filter emojisense build && pnpm data:build
+pnpm --filter @emojisense/chrome-extension build   # → apps/chrome-extension/dist`;
+
+const examples = [
+  { query: "ship it", top: shown("ship it", { part: "full", limit: 1 }) },
+  { query: "jurassic park", top: shown("jurassic park", { part: "full", limit: 1 }) },
+  { query: "kolay gelsin", top: shown("kolay gelsin", { part: "full", locale: "tr", limit: 1 }) },
+];
+---
+
+<DocsLayout path="/docs/integrations/chrome/">
+  <p>An emoji picker for any text field in Chrome. Put the caret in a field, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> (<kbd>⌘</kbd><kbd>⇧</kbd><kbd>Space</kbd> on macOS), type what you mean and press Enter. Search runs on the device, with the English and Turkish packs inside the extension.</p>
+  <ul class="docs-results" aria-label="Examples">
+    {examples.map((e) => <li><span class="docs-results-query">“{e.query}”</span><span class="docs-results-emoji emoji">{e.top}</span></li>)}
+  </ul>
+
+  <h2 id="install">Install</h2>
+  <Callout type="note" title="Not in the Chrome Web Store yet">
+    <p>Build the extension from the repository and load it unpacked.</p>
+  </Callout>
+  <CodeBlock code={build} lang="bash" />
+  <ol>
+    <li>Open <code>chrome://extensions</code> and switch on <strong>Developer mode</strong>.</li>
+    <li>Choose <strong>Load unpacked</strong> and select <code>apps/chrome-extension/dist</code>.</li>
+    <li>The settings page opens once. Change the shortcut at <code>chrome://extensions/shortcuts</code>.</li>
+  </ol>
+
+  <h2 id="use">Use</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Key</th><th scope="col">Action</th></tr></thead>
+      <tbody>
+        <tr><td>Shortcut</td><td>Open the picker next to the caret. Press again to close.</td></tr>
+        <tr><td>Arrow keys</td><td>Move through the results</td></tr>
+        <tr><td>Enter</td><td>Insert the emoji, or copy it where inserting is impossible</td></tr>
+        <tr><td>Shift+Enter</td><td>Copy instead of insert</td></tr>
+        <tr><td>Escape, Tab</td><td>Close. Focus and caret go back to the field.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>An empty search box shows recently used emoji. The toolbar button does the same as the shortcut.</p>
+
+  <h2 id="where-it-inserts">Where it inserts</h2>
+  <ul>
+    <li><strong>Text inputs and text areas:</strong> inserted at the caret, and undo works.</li>
+    <li><strong>Rich editors</strong> (mail composers, comment boxes, ProseMirror, Lexical, Slate): inserted at the caret through the editor’s own input handling.</li>
+    <li><strong>Google Docs, Slides, canvas apps and password fields:</strong> the emoji is copied and a card says “press ⌘V to paste”.</li>
+    <li><strong><code>chrome://</code> pages and the Chrome Web Store:</strong> Chrome does not allow extensions there.</li>
+  </ul>
+
+  <h2 id="privacy">Permissions and privacy</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Permission</th><th scope="col">Why</th></tr></thead>
+      <tbody>
+        <tr><td><code>activeTab</code></td><td>Access to the current tab only after the shortcut or a toolbar click. No host permissions, no script on every page.</td></tr>
+        <tr><td><code>scripting</code></td><td>Put the picker into that tab</td></tr>
+        <tr><td><code>storage</code></td><td>Settings and recently used emoji, on this device only</td></tr>
+        <tr><td><code>clipboardWrite</code></td><td>Copy the emoji where inserting is impossible</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Search is offline by default. <strong>Search by meaning</strong>, on the options page, sends the normalized query to the API address you enter, with a publishable key. Secret keys are refused. Add the extension origin shown on the options page to the key’s allowed origins.</p>
+</DocsLayout>

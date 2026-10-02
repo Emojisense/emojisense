@@ -3,7 +3,9 @@
   "name": "emojisense-dashboard",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-09-24",
-  "observability": { "enabled": true },
+  // Invocation logs would record full request URLs (search text, keys, invite tokens); only our
+  // own structured logs, which never contain them, are kept.
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
   "dev": { "port": 8790 },
   "assets": {
     "directory": "./dist/client",

@@ -1,0 +1,87 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, SHARDS_URL } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const setup = `import data from "@emoji-mart/data";
+import { Picker, Store } from "emoji-mart";
+import { createEngine, createLayeredSemantic, loadPacks } from "emojisense";
+
+const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
+const engine = createEngine(packs);
+const semantic = createLayeredSemantic({
+  shardsUrl: "${SHARDS_URL}",
+  endpoint: "${API_HOST}",
+  key: "pk_live_…",
+});`;
+
+const attach = `import { attachEmojisense } from "@emojisense/emoji-mart";
+
+const onEmojiSelect = (emoji) => insert(emoji.native);
+const picker = new Picker({ data, onEmojiSelect, searchPosition: "none" });
+document.querySelector("#picker").append(picker);
+
+attachEmojisense({
+  picker,
+  input: document.querySelector("#emoji-search"), // your <input>
+  results: document.querySelector("#emoji-results"), // an empty element
+  data,
+  engine,
+  semantic,
+  onEmojiSelect,
+  skin: () => Store.get("skin") ?? 1, // the skin chosen in emoji-mart's picker
+});`;
+
+const override = `import { SearchIndex } from "emoji-mart";
+import { overrideSearchIndex } from "@emojisense/emoji-mart";
+
+const restore = overrideSearchIndex(SearchIndex, { data, engine });
+// emoji-mart's own search box now ranks with the Emojisense dictionary.
+// restore() undoes it.`;
+---
+
+<DocsLayout path="/docs/integrations/emoji-mart/">
+  <p>Keep emoji-mart 5 and give it Emojisense ranking. emoji-mart has no search hook, so <code>@emojisense/emoji-mart</code> offers two ways in. Both hand you emoji-mart’s own <code>onEmojiSelect</code> payload (<code>id</code>, <code>native</code>, <code>unified</code>, <code>shortcodes</code>, <code>skin</code> and more).</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col"><code>attachEmojisense</code> (recommended)</th><th scope="col"><code>overrideSearchIndex</code> (experimental)</th></tr></thead>
+      <tbody>
+        <tr><td>How</td><td>Hides emoji-mart’s search. Your input drives a ranked list next to the picker.</td><td>Replaces <code>SearchIndex.search</code>, which emoji-mart’s own search box calls.</td></tr>
+        <tr><td>Layers</td><td>Device, shards and API</td><td>Device only</td></tr>
+        <tr><td>Relies on</td><td>Public API only</td><td>An internal detail of emoji-mart 5.6</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/emoji-mart emojisense emoji-mart @emoji-mart/data" />
+  <CodeBlock code={setup} lang="ts" />
+
+  <h2 id="attach">attachEmojisense</h2>
+  <CodeBlock code={attach} lang="ts" />
+  <ul>
+    <li>An empty query shows emoji-mart’s picker. A typed query hides it and shows the ranking.</li>
+    <li>The input becomes an ARIA combobox and the results element an ARIA listbox. Arrow keys move, Enter selects, Escape clears the query.</li>
+    <li>Style the list with <code>[data-emojisense-results]</code> (a CSS grid), <code>[role="option"][data-active]</code> and <code>[data-emojisense-results][data-empty]</code>.</li>
+    <li><code>renderEmoji: (emoji, selection) =&gt; node</code> changes what a result shows, for example <code>&lt;em-emoji&gt;</code> for an image set.</li>
+    <li><code>dispose()</code> removes the listeners and shows the picker again.</li>
+  </ul>
+  <p><code>createEmojiMartSearch({"{ data, engine, semantic, onResults }"})</code> is the same search without a UI, for a list rendered by React, Vue or anything else.</p>
+
+  <h2 id="override">overrideSearchIndex</h2>
+  <Callout type="experimental" title="Relies on an internal detail">
+    <p>This replaces a method that emoji-mart 5.6 calls on every input. It is not a documented API and can break in a future emoji-mart release. Meaning results cannot merge in, because the picker renders one answer per keystroke.</p>
+  </Callout>
+  <CodeBlock code={override} lang="ts" />
+
+  <h2 id="limits">Limits</h2>
+  <ul>
+    <li><code>@emoji-mart/data</code> 1.2.1 stops at Emoji 15.0. Results for newer emoji are dropped.</li>
+    <li>After emoji-mart’s <code>init</code> has run, results are limited to the emoji its picker lists.</li>
+    <li>Selections from the Emojisense list do not update emoji-mart’s “Frequently used” row. Call <code>FrequentlyUsed.add(emoji)</code> in your <code>onEmojiSelect</code> for that.</li>
+    <li>The override applies to every emoji-mart picker on the page, because <code>SearchIndex</code> is a singleton.</li>
+    <li>Always pass emoji-mart its <code>data</code>. Without it, emoji-mart fetches the data from a public CDN.</li>
+  </ul>
+</DocsLayout>

@@ -1,10 +1,128 @@
 ---
 import PageHero from "../components/PageHero.astro";
+import { NotFoundSearch } from "../islands/NotFoundSearch";
 import Base from "../layouts/Base.astro";
+
+const destinations = [
+  { href: "/", emoji: "🏠", title: "Home", text: "Start from the top" },
+  { href: "/docs/", emoji: "📖", title: "Docs", text: "Quickstart and guides" },
+  { href: "/playground/", emoji: "🧪", title: "Playground", text: "Try every feature" },
+  { href: "/pricing/", emoji: "🏷️", title: "Pricing", text: "Free to start" },
+];
 ---
 
-<Base title="Page not found" description="This page does not exist." path="/404/">
-  <PageHero eyebrow="404" emoji="🫥" title="This page went missing.">
-    <p>Try the <a href="/">home page</a>, the <a href="/docs/">docs</a> or <a href="/pricing/">pricing</a>.</p>
-  </PageHero>
+<Base
+  title="Page not found"
+  description="This page does not exist. Search emoji instead, or go to the docs, the playground or pricing."
+  path="/404/"
+>
+  <PageHero eyebrow="404 · not found" emoji="🫥" title="This page wandered off." />
+
+  <section class="container not-found" aria-label="Emoji search for this address">
+    <NotFoundSearch client:load />
+
+    <nav class="not-found-links" aria-label="Places to go">
+      <ul>
+        {
+          destinations.map((place) => (
+            <li>
+              <a href={place.href}>
+                <span class="not-found-link-icon emoji" aria-hidden="true">
+                  {place.emoji}
+                </span>
+                <span class="not-found-link-text">
+                  <span class="not-found-link-title">{place.title}</span>
+                  <span>{place.text}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </section>
 </Base>
+
+<style>
+  .not-found {
+    padding-bottom: clamp(4rem, 9vw, 7rem);
+  }
+
+  .not-found-links {
+    width: min(100%, 40rem);
+    margin: 3rem auto 0;
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 100%;
+    padding: 0.75rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    text-decoration: none;
+    transition:
+      border-color 160ms,
+      background 160ms,
+      transform 200ms var(--ease-out);
+  }
+
+  a:hover {
+    border-color: var(--line-strong);
+    background: var(--bg-soft);
+    transform: translateY(-0.0625rem);
+  }
+
+  .not-found-link-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    font-size: 1.25rem;
+    transition: transform 240ms var(--spring);
+  }
+
+  a:hover .not-found-link-icon {
+    background: var(--bg-sunk);
+    transform: rotate(-8deg) scale(1.06);
+  }
+
+  .not-found-link-text {
+    display: grid;
+    min-width: 0;
+    color: var(--ink-3);
+    font-size: 0.875rem;
+    line-height: 1.35;
+  }
+
+  .not-found-link-title {
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  @media (min-width: 40rem) {
+    ul {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    a {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

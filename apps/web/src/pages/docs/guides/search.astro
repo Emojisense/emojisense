@@ -1,0 +1,162 @@
+---
+import { applySkinTone, SKIN_TONES } from "emojisense";
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, SHARDS_URL, shown } from "../../../components/docs/facts";
+import LinkCard from "../../../components/docs/LinkCard.astro";
+import QueryResults from "../../../components/docs/QueryResults.astro";
+
+const react = `import { useEmojiSearch, useEmojisense } from "@emojisense/react";
+
+export function EmojiResults({ query }: { query: string }) {
+  const sense = useEmojisense({
+    packBaseUrl: "${PACK_URL}",
+    shardsUrl: "${SHARDS_URL}", // optional, layer 2: free
+    endpoint: "${API_HOST}", // optional, layer 3: metered
+    publishableKey: "pk_live_…",
+  });
+  const { results, status, layer } = useEmojiSearch(query, sense, { limit: 24 });
+
+  return (
+    <ul role="listbox" aria-label="Emoji" aria-busy={status === "loading"}>
+      {results.map((result) => (
+        <li key={result.id} role="option" aria-selected={false}>
+          {result.emoji}
+        </li>
+      ))}
+    </ul>
+  );
+}`;
+
+const session = `import {
+  createEngine,
+  createLayeredSemantic,
+  createSearchSession,
+  loadPacks,
+} from "emojisense";
+
+const packs = await loadPacks({ baseUrl: "${PACK_URL}" });
+const engine = createEngine(packs);
+
+const session = createSearchSession({
+  engine,
+  // Shards first (free), then the API. Leave it out for fully offline search.
+  semantic: createLayeredSemantic({
+    shardsUrl: "${SHARDS_URL}",
+    endpoint: "${API_HOST}",
+    key: "pk_live_…",
+    packVersion: engine.packVersion,
+  }),
+  limit: 24,
+  onChange: ({ results, status, layer }) => render(results, status, layer),
+});
+
+input.addEventListener("input", () => session.update(input.value));
+// When the picker closes: session.dispose();`;
+
+const languages = `// React: "es" loads the Spanish pack next to English.
+const sense = useEmojisense({
+  packBaseUrl: "${PACK_URL}",
+  locale: "es",
+});
+
+// Any framework:
+const packs = await loadPacks({
+  baseUrl: "${PACK_URL}",
+  locales: ["es"],
+});
+const engine = createEngine(packs);
+engine.search("feliz cumpleaños", { locale: "es" });`;
+
+const extension = `import { createEngine, loadPacks } from "emojisense";
+
+const core = await loadPacks({ baseUrl: "${PACK_URL}" });
+let engine = createEngine(core); // search works now
+
+requestIdleCallback(async () => {
+  const ext = await loadPacks({
+    baseUrl: "${PACK_URL}",
+    part: "ext",
+  });
+  engine = createEngine([...core, ...ext]); // more aliases and typos
+});`;
+
+const labels = `const entry = engine.get(result.id);
+const label = entry?.labels[locale] ?? entry?.labels.en ?? result.emoji;`;
+
+const tones = `import { applySkinTone } from "emojisense";
+
+applySkinTone("👍", "medium"); // "${applySkinTone("👍", "medium")}"
+applySkinTone("🧑‍🤝‍🧑", "dark"); // "${applySkinTone("🧑‍🤝‍🧑", "dark")}"`;
+---
+
+<DocsLayout path="/docs/guides/search/">
+  <p>Search is free on every plan. People type what they mean, and the picker shows the right emoji on the same keystroke. This guide shows the two ways to add it: a ready picker, or your own UI on top of the SDK.</p>
+
+  <h2 id="ready-pickers">Use a ready picker</h2>
+  <p>If you do not have a picker yet, start with one of these. They show every emoji by category, switch to the Emojisense ranking as soon as someone types, and handle the keyboard, skin tones and loading for you.</p>
+  <ul class="docs-cards">
+    <li><LinkCard href="/docs/integrations/react/" emoji="⚛️" title="React and Frimousse" description="A drop-in picker, or a shadcn/ui component." /></li>
+    <li><LinkCard href="/docs/integrations/web-component/" emoji="🧩" title="Web component" description="Vue, Svelte, Angular and plain HTML." /></li>
+    <li><LinkCard href="/docs/integrations/emoji-mart/" emoji="🗃️" title="emoji-mart" description="Keep emoji-mart and add the ranking." /></li>
+  </ul>
+
+  <h2 id="your-own-ui">Search in your own picker</h2>
+  <p>If you already have a picker, keep it and replace its search. Call the SDK on every keystroke and render the results. Dictionary results come back on the same keystroke. When the dictionary is unsure, meaning results arrive after a short pause and merge in.</p>
+  <CodeTabs
+    tabs={[
+      { label: "React", code: react, lang: "tsx" },
+      { label: "JavaScript", code: session, lang: "ts" },
+    ]}
+    group="framework"
+    label="Stack"
+  />
+  <p>Each result is <code>{"{ emoji, id, score, source }"}</code>. The <code>id</code> is the Emojibase hexcode of the base emoji, for example <code>1F996</code>. The <code>source</code> is <code>alias</code> for the dictionary and <code>semantic</code> for meaning search.</p>
+
+  <h3 id="states">States and layers</h3>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">status</th><th scope="col">Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>idle</code></td><td>The query is empty.</td></tr>
+        <tr><td><code>alias</code></td><td>Dictionary results only. The dictionary was confident, or no semantic layer had an answer.</td></tr>
+        <tr><td><code>loading</code></td><td>Dictionary results are shown and a semantic request is on its way.</td></tr>
+        <tr><td><code>fused</code></td><td>Meaning results are merged in. <code>layer</code> says which layer answered: <code>shard</code> or <code>api</code>.</td></tr>
+        <tr><td><code>error</code></td><td>The semantic request failed. The dictionary results stay on screen.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Never block the list on <code>loading</code>: the dictionary results are already good. Use it for a subtle hint at most.</p>
+
+  <h2 id="languages">Languages</h2>
+  <p>Set a locale and the engine loads that language next to English and prefers it when ranking. People can still type English words.</p>
+  <CodeBlock code={languages} lang="ts" />
+  <QueryResults
+    queries={[
+      { query: "feliz cumpleaños", locale: "es", note: "es" },
+      { query: "joyeux anniversaire", locale: "fr", note: "fr" },
+      { query: "生日快乐", locale: "zh", note: "zh" },
+      { query: "kolay gelsin", locale: "tr", note: "tr" },
+    ]}
+  />
+
+  <h2 id="extension-packs">Load more aliases when idle</h2>
+  <p>Each language has a core part and an extension part. The core part is enough for the first search. The extension part adds more aliases and typos. <code>useEmojisense</code> and the web component load it for you when the browser is idle. With the engine alone, do it yourself:</p>
+  <CodeBlock code={extension} lang="ts" />
+  <p>For example, with the core part “ship it” gives <span class="emoji">{shown("ship it", { part: "core" })}</span>, and with the extension part <span class="emoji">{shown("ship it", { part: "full" })}</span>.</p>
+
+  <h2 id="labels">Labels and accessibility</h2>
+  <p>Give each result an accessible name. The engine has the emoji’s name in every loaded language:</p>
+  <CodeBlock code={labels} lang="ts" />
+  <p>Render the results as an ARIA listbox with options, keep focus in the search input, and move the active option with <code>aria-activedescendant</code>. The ready pickers do all of this.</p>
+
+  <h2 id="skin-tones">Skin tones</h2>
+  <p>Results are base emoji. Apply the person’s tone when you show and insert them. The tones are <code>{SKIN_TONES.join(", ")}</code>.</p>
+  <CodeBlock code={tones} lang="ts" />
+
+  <Callout type="note" title="Offline and over the limit">
+    <p>Leave out <code>shardsUrl</code> and <code>endpoint</code>, and search runs fully on the device with no network after the packs load. With them, a failed or over-limit request only means the dictionary results stay. Search never shows an error to the person typing.</p>
+  </Callout>
+</DocsLayout>

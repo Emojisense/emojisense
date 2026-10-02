@@ -1,0 +1,314 @@
+---
+import PageHero from "../components/PageHero.astro";
+import { LEGAL_PAGES, LEGAL_UPDATED, legalPage, markPlaceholders } from "../content/legal";
+import { renderMarkdown } from "../lib/markdown";
+import Base from "./Base.astro";
+
+interface Props {
+  /** Must match an entry of LEGAL_PAGES. */
+  path: string;
+}
+
+const { path } = Astro.props;
+const page = legalPage(path);
+const doc = renderMarkdown(page.source);
+const updated = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(
+  new Date(`${LEGAL_UPDATED}T00:00:00Z`),
+);
+---
+
+<Base title={page.title} description={page.description} path={path}>
+  <PageHero eyebrow="Legal" emoji={page.emoji} title={page.title} align="start">
+    <p>{page.description}</p>
+  </PageHero>
+
+  <div class="container legal">
+    <aside class="legal-aside">
+      <nav class="legal-docs" aria-label="Legal documents">
+        <p class="legal-aside-title">Legal</p>
+        <ul>
+          {
+            LEGAL_PAGES.map((item) => (
+              <li>
+                <a href={item.href} aria-current={item.href === path ? "page" : undefined}>
+                  <span class="emoji" aria-hidden="true">
+                    {item.emoji}
+                  </span>
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      {
+        doc.headings.length > 0 && (
+          <nav class="legal-toc" aria-label="On this page">
+            <p class="legal-aside-title">On this page</p>
+            <ol>
+              {doc.headings.map((heading) => (
+                <li>
+                  <a href={`#${heading.id}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+    </aside>
+
+    <article class="legal-article">
+      <div class="legal-draft" role="note" aria-label="Draft notice">
+        <span class="legal-draft-badge">Draft</span>
+        <p>
+          <strong>This text needs legal review before launch.</strong> It describes how Emojisense works today,
+          but it is not final. Text in <span class="legal-placeholder">[brackets]</span> is still to be filled in.
+        </p>
+      </div>
+      <p class="legal-meta">Last updated <time datetime={LEGAL_UPDATED}>{updated}</time></p>
+      <div class="prose legal-prose" set:html={markPlaceholders(doc.html)} />
+    </article>
+  </div>
+</Base>
+
+<style>
+  .legal {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    padding-bottom: clamp(4rem, 8vw, 6rem);
+  }
+
+  .legal-aside-title {
+    margin-bottom: 0.625rem;
+    color: var(--ink-3);
+    font: 500 0.75rem / 1 var(--font-mono);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .legal-aside {
+    min-width: 0;
+  }
+
+  .legal-docs ul {
+    display: flex;
+    gap: 0.375rem;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 0 var(--gutter) 0.25rem;
+    overflow-x: auto;
+    list-style: none;
+    scrollbar-width: none;
+  }
+
+  .legal-docs a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    background: var(--bg);
+    color: var(--ink-2);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background 160ms,
+      color 160ms,
+      border-color 160ms;
+  }
+
+  .legal-docs a:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+  }
+
+  .legal-docs a[aria-current="page"] {
+    border-color: var(--line-strong);
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+
+  .legal-toc {
+    display: none;
+  }
+
+  .legal-article {
+    min-width: 0;
+    max-width: 46rem;
+  }
+
+  .legal-draft {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    padding: 1rem 1.125rem;
+    border: 0.0625rem dashed var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+
+  .legal-draft strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .legal-draft-badge {
+    flex: none;
+    margin-top: 0.125rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--on-accent);
+    font: 500 0.6875rem / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .legal-meta {
+    margin: 1.25rem 0 0;
+    color: var(--ink-3);
+    font: 400 0.8125rem / 1.4 var(--font-mono);
+  }
+
+  :global(.legal-placeholder) {
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+    background: var(--bg-sunk);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .legal-prose :global(h2) {
+    scroll-margin-top: 5.5rem;
+    font-size: 1.5rem;
+    letter-spacing: -0.025em;
+  }
+
+  .legal-prose :global(h3) {
+    font-size: 1.125rem;
+  }
+
+  .legal-prose :global(p),
+  .legal-prose :global(li) {
+    line-height: 1.7;
+  }
+
+  .legal-prose :global(li + li) {
+    margin-top: 0.375rem;
+  }
+
+  .legal-prose :global(a) {
+    color: var(--ink);
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.2em;
+  }
+
+  .legal-prose :global(a:hover) {
+    text-decoration-color: currentColor;
+  }
+
+  .legal-prose :global(.table-scroll) {
+    overflow-x: auto;
+    margin: 1.25rem 0;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+  }
+
+  .legal-prose :global(.table-scroll table) {
+    display: table;
+    min-width: 36rem;
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .legal-prose :global(.table-scroll th) {
+    background: var(--bg-soft);
+    color: var(--ink);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .legal-prose :global(.table-scroll th),
+  .legal-prose :global(.table-scroll td) {
+    padding: 0.75rem 1rem;
+    line-height: 1.5;
+  }
+
+  .legal-prose :global(.table-scroll tr:last-child td) {
+    border-bottom: 0;
+  }
+
+  @media (min-width: 60rem) {
+    .legal {
+      grid-template-columns: 14rem minmax(0, 1fr);
+      gap: 4rem;
+    }
+
+    .legal-aside {
+      position: sticky;
+      top: 6rem;
+      align-self: start;
+      display: grid;
+      gap: 2rem;
+    }
+
+    .legal-docs ul {
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+    }
+
+    .legal-docs a {
+      border-color: transparent;
+      border-radius: var(--radius-sm);
+      background: none;
+    }
+
+    .legal-docs a:hover {
+      border-color: transparent;
+      background: var(--bg-soft);
+    }
+
+    .legal-docs a[aria-current="page"] {
+      border-color: var(--line);
+      background: var(--bg-soft);
+    }
+
+    .legal-toc {
+      display: block;
+    }
+
+    .legal-toc ol {
+      display: grid;
+      gap: 0.25rem;
+      margin: 0;
+      padding: 0 0 0 0.875rem;
+      border-left: 0.0625rem solid var(--line);
+      list-style: none;
+    }
+
+    .legal-toc a {
+      display: block;
+      padding: 0.25rem 0;
+      color: var(--ink-3);
+      font-size: 0.875rem;
+      line-height: 1.4;
+      text-decoration: none;
+      transition: color 160ms;
+    }
+
+    .legal-toc a:hover {
+      color: var(--ink);
+    }
+  }
+</style>

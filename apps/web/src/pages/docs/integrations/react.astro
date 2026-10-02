@@ -1,0 +1,154 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, SHARDS_URL } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const picker = `import { useEmojisense } from "@emojisense/react";
+import { EmojisensePicker } from "@emojisense/react/frimousse";
+
+export function EmojiPicker({ onPick }: { onPick: (emoji: string) => void }) {
+  const sense = useEmojisense({
+    packBaseUrl: "${PACK_URL}",
+    endpoint: "${API_HOST}",
+    publishableKey: "pk_live_…",
+  });
+
+  return (
+    <EmojisensePicker
+      emojisense={sense}
+      onEmojiSelect={({ emoji }) => onPick(emoji)}
+      columns={9}
+    />
+  );
+}`;
+
+const styles = `/* Frimousse is unstyled. The ranked results add these hooks: */
+[data-emojisense-results] { gap: 0.25rem; }
+[data-emojisense-results] [role="option"] { border-radius: 0.5rem; font-size: 1.5rem; }
+[data-emojisense-results] [data-active] { background: #f0f0f4; }`;
+
+const hooks = `import { useEmojiSearch, useEmojisense } from "@emojisense/react";
+
+const sense = useEmojisense({
+  packBaseUrl: "${PACK_URL}",
+  shardsUrl: "${SHARDS_URL}",
+  endpoint: "${API_HOST}",
+  publishableKey: "pk_live_…",
+});
+const { results, status, layer } = useEmojiSearch(query, sense, { limit: 24 });`;
+
+const shadcnAdd = "npx shadcn@latest add https://<registry-host>/r/emoji-picker.json";
+
+const shadcn = `import { useEmojisense } from "@emojisense/react";
+import {
+  EmojiPicker,
+  EmojiPickerContent,
+  EmojiPickerFooter,
+  EmojiPickerSearch,
+} from "@/components/ui/emoji-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) {
+  const sense = useEmojisense({ packBaseUrl, shardsUrl, endpoint });
+  return (
+    <Popover>
+      <PopoverTrigger>😀</PopoverTrigger>
+      <PopoverContent className="w-fit p-0">
+        <EmojiPicker
+          className="h-[21rem]"
+          emojisense={sense}
+          onEmojiSelect={({ emoji }) => onPick(emoji)}
+        >
+          <EmojiPickerSearch />
+          <EmojiPickerContent />
+          <EmojiPickerFooter />
+        </EmojiPicker>
+      </PopoverContent>
+    </Popover>
+  );
+}`;
+---
+
+<DocsLayout path="/docs/integrations/react/">
+  <p><code>@emojisense/react</code> has two hooks for any React picker, a drop-in picker built on <a href="https://frimousse.liveblocks.io">Frimousse</a>, and a shadcn/ui component. It works with React 18 and 19.</p>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/react frimousse" />
+  <p>Frimousse is optional: leave it out if you only use the hooks.</p>
+
+  <h2 id="frimousse">Drop-in picker</h2>
+  <p><code>EmojisensePicker</code> keeps Frimousse’s browse view by category. While someone types, it shows the Emojisense ranking as an ARIA listbox, with the same <code>onEmojiSelect</code> contract and skin tone. It can mount before the packs arrive: it shows Frimousse’s loading state and remounts when they are ready.</p>
+  <CodeBlock code={picker} lang="tsx" title="EmojiPicker.tsx" />
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Prop</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>emojisense</code></td><td>—</td><td>Required. The value of <code>useEmojisense</code>.</td></tr>
+        <tr><td><code>onEmojiSelect</code></td><td>—</td><td>Required. Gets <code>{"{ emoji, label }"}</code>, with the skin tone applied.</td></tr>
+        <tr><td><code>placeholder</code></td><td><code>"Search emoji…"</code></td><td>Search input placeholder</td></tr>
+        <tr><td><code>empty</code></td><td>—</td><td>Rendered when a query has no results</td></tr>
+        <tr><td><code>limit</code></td><td><code>24</code></td><td>Number of ranked results</td></tr>
+        <tr><td><code>columns</code></td><td><code>9</code></td><td>Emoji per row</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Every other Frimousse root prop passes through. Style the picker like any Frimousse picker. The ranked results add two hooks:</p>
+  <CodeBlock code={styles} lang="css" />
+
+  <h2 id="hooks">Hooks for your own picker</h2>
+  <CodeBlock code={hooks} lang="tsx" />
+  <h3 id="use-emojisense"><code>useEmojisense(options)</code></h3>
+  <p>Loads the packs once and builds the engine and the semantic layers.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Option</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>packBaseUrl</code></td><td>Required. The pack version directory. The core pack renders first.</td></tr>
+        <tr><td><code>locale</code></td><td>Default <code>"en"</code>. Another locale, such as <code>"es"</code>, loads that pack next to English.</td></tr>
+        <tr><td><code>shardsUrl</code></td><td>Precomputed results (layer 2), asked before the API. Omit it when no shards are deployed.</td></tr>
+        <tr><td><code>endpoint</code></td><td>The API (layer 3). Omit <code>shardsUrl</code> and <code>endpoint</code> for fully offline search.</td></tr>
+        <tr><td><code>publishableKey</code></td><td>Your <code>pk_live_…</code> key for the API.</td></tr>
+        <tr><td><code>extended</code></td><td>Default <code>true</code>: load the extension packs when the browser is idle.</td></tr>
+        <tr><td><code>emojiSet</code></td><td>How the pickers draw emoji. <code>"native"</code> (default) uses the system font. <code>"twemoji"</code>, <code>"noto"</code> and <code>"fluent"</code> draw images of a <a href="/docs/guides/emoji-sets/">hosted set</a> and need <code>endpoint</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>It returns <code>{"{ engine, semantic, packs, locale, status, extended, emojiSet, endpoint, error }"}</code>. <code>status</code> is <code>loading</code>, <code>ready</code> or <code>error</code>. To draw one emoji the same way as the pickers in your own components, use <code>{"<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />"}</code>.</p>
+
+  <h3 id="use-emoji-search"><code>useEmojiSearch(query, sense, options)</code></h3>
+  <p>Searches as the query changes. Dictionary results update on every keystroke. Meaning results arrive after <code>debounceMs</code> (default 200) and merge in without moving confident hits. Options: <code>limit</code> (default 24) and <code>debounceMs</code>.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>results</code></td><td><code>{"{ emoji, id, score, source }[]"}</code></td></tr>
+        <tr><td><code>status</code></td><td><code>idle</code>, <code>alias</code>, <code>loading</code>, <code>fused</code> or <code>error</code></td></tr>
+        <tr><td><code>layer</code></td><td>Which layer produced the results: <code>device</code>, <code>shard</code> or <code>api</code>. <code>undefined</code> while idle or loading.</td></tr>
+        <tr><td><code>aliasMs</code>, <code>semanticMs</code>, <code>semanticCached</code></td><td>Timings, for latency displays</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="shadcn">shadcn/ui</h2>
+  <Callout type="experimental" title="The registry is in progress">
+    <p>The registry item is built from the repository today. Its public URL comes with the first release.</p>
+  </Callout>
+  <p>The <code>emoji-picker</code> registry item is the Frimousse picker with Emojisense search, styled with Tailwind v4 theme tokens and your <code>cn</code> helper.</p>
+  <CodeBlock code={shadcnAdd} lang="bash" />
+  <p>The command copies <code>components/ui/emoji-picker.tsx</code> and installs <code>@emojisense/react</code>, <code>emojisense</code> and <code>frimousse</code>.</p>
+  <CodeBlock code={shadcn} lang="tsx" title="ReactionButton.tsx" />
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Part</th><th scope="col">Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>EmojiPicker</code></td><td>Frimousse root. Props: <code>emojisense</code>, <code>onEmojiSelect</code>, <code>columns</code> (9), <code>limit</code> (36) and the Frimousse root props.</td></tr>
+        <tr><td><code>EmojiPickerSearch</code></td><td>Combobox input. Arrow keys move through the results, Enter selects.</td></tr>
+        <tr><td><code>EmojiPickerContent</code></td><td>Browse list for an empty query, ranked listbox for a typed query. <code>empty</code> sets the no-results text.</td></tr>
+        <tr><td><code>EmojiPickerFooter</code></td><td>Active emoji preview and the skin tone selector</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>To build and host the registry yourself, run <code>pnpm --filter @emojisense/react build</code> and serve <code>packages/react/dist/r</code> at <code>/r/</code> on any static host.</p>
+</DocsLayout>

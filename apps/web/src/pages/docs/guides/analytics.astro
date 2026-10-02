@@ -1,0 +1,67 @@
+---
+import {
+  ANALYTICS_MIN_QUERY_SEARCHES,
+  ANALYTICS_WINDOWS,
+  analyticsKeepDays,
+  PLAN_IDS,
+  PLANS,
+} from "@emojisense/platform";
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { formatDays } from "../../../lib/format";
+
+const shape = `{
+  "days": [{ "day": "2026-10-14", "searches": 0, "misses": 0 }, { "day": "2026-10-15", "searches": 412, "misses": 9 }],
+  "topQueries": [{ "query": "ship it", "searches": 120 }],
+  "topMisses": [{ "query": "lgtm", "misses": 7 }]
+}`;
+
+const windows = ANALYTICS_WINDOWS.join(", ");
+---
+
+<DocsLayout path="/docs/guides/analytics/">
+  <p>Analytics show what people search for in your app, day by day, and which searches find nothing. Use the misses to add custom emoji or aliases, and the top queries to tune your quick-reaction row.</p>
+
+  <h2 id="what-is-recorded">What is recorded</h2>
+  <p>For each app, UTC day and normalized query, the API counts searches and misses. A miss is a search that returned no result.</p>
+  <ul>
+    <li>Only keyed <code>/v1/search</code> calls count, including cache hits and over-limit answers.</li>
+    <li>Searches answered on the device never reach the API, so they are not in analytics. They are the confident ones.</li>
+    <li>Anonymous calls and development keys are not recorded.</li>
+    <li>Counts arrive in batches, about 10 seconds after the search.</li>
+  </ul>
+  <Callout type="privacy" title={`A query is named only after ${ANALYTICS_MIN_QUERY_SEARCHES} searches`}>
+    <p>Day totals count every search. The top lists name a query only when your app saw it at least {ANALYTICS_MIN_QUERY_SEARCHES} times in the window, because rare strings can be personal. No IP address, key or user id is stored with a query.</p>
+  </Callout>
+
+  <h2 id="retention">Plans and retention</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Plan</th><th scope="col">Analytics in the dashboard</th><th scope="col">Rows kept</th></tr></thead>
+      <tbody>
+        {
+          PLAN_IDS.map((id) => (
+            <tr>
+              <td>{PLANS[id].name}</td>
+              <td>{PLANS[id].analyticsRetentionDays > 0 ? formatDays(PLANS[id].analyticsRetentionDays) : "—"}</td>
+              <td>{formatDays(analyticsKeepDays(PLANS[id]))}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  <p>Plans without analytics keep the last week of rows, so an upgrade shows data at once. A daily job deletes older rows.</p>
+
+  <h2 id="read-them">Read them</h2>
+  <p>The dashboard reads analytics from its own API, with your signed-in session: <code>GET /api/apps/:id/analytics?days=</code>. The window is {windows} days, cut to your plan’s retention. The default is 30.</p>
+  <CodeBlock code={shape} lang="json" title="Response shape" />
+  <ul>
+    <li><code>days</code> has one entry per UTC day of the window, oldest first and today last, with <code>0</code> for days without searches.</li>
+    <li><code>topQueries</code> and <code>topMisses</code> have up to 20 entries for the whole window.</li>
+    <li>On a plan without analytics, the answer is <code>402</code> with <code>{`{ "error": { "code": "plan_required", "plan": "pro", "message": "…" } }`}</code>.</li>
+    <li>Every team role can read analytics. Team members see the owner’s plan.</li>
+  </ul>
+  <p>The full contract is in the <a href="/docs/api/#get-apiappsidanalytics">HTTP API reference</a>.</p>
+</DocsLayout>

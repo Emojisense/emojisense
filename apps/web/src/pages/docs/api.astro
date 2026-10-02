@@ -1,8 +1,9 @@
 ---
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import MarkdownArticle from "../../components/docs/MarkdownArticle.astro";
 import { API_DOC } from "../../content/docs";
-import Docs from "../../layouts/Docs.astro";
 ---
 
-<Docs path="/docs/api/" headings={API_DOC.headings} source="docs/API.md">
-  <Fragment set:html={API_DOC.html} />
-</Docs>
+<DocsLayout path="/docs/api/">
+  <MarkdownArticle html={API_DOC.html} />
+</DocsLayout>

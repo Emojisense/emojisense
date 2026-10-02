@@ -1,8 +1,9 @@
 ---
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import MarkdownArticle from "../../components/docs/MarkdownArticle.astro";
 import { PACK_FORMAT_DOC } from "../../content/docs";
-import Docs from "../../layouts/Docs.astro";
 ---
 
-<Docs path="/docs/pack-format/" headings={PACK_FORMAT_DOC.headings} source="docs/PACK_FORMAT.md">
-  <Fragment set:html={PACK_FORMAT_DOC.html} />
-</Docs>
+<DocsLayout path="/docs/pack-format/">
+  <MarkdownArticle html={PACK_FORMAT_DOC.html} />
+</DocsLayout>

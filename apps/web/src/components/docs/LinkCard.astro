@@ -1,0 +1,27 @@
+---
+interface Props {
+  href: string;
+  title: string;
+  description: string;
+  /** One emoji glyph shown as the card's mark. */
+  emoji?: string;
+  /** Keeps an old in-page anchor (e.g. "/docs/#web-component") pointing at this card. */
+  id?: string;
+  /** Small mono label under the title, e.g. a package name. */
+  meta?: string;
+}
+
+const { href, title, description, emoji, id, meta } = Astro.props;
+---
+
+<a class="docs-card" href={href} id={id}>
+  {emoji && <span class="docs-card-mark emoji" aria-hidden="true">{emoji}</span>}
+  <span class="docs-card-text">
+    <span class="docs-card-title">{title}</span>
+    <span class="docs-card-description">{description}</span>
+    {meta && <code class="docs-card-meta">{meta}</code>}
+  </span>
+  <svg class="docs-card-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+    <path d="M6 3.5 10.5 8 6 12.5"></path>
+  </svg>
+</a>

@@ -1,0 +1,86 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, SHARDS_URL } from "../../../components/docs/facts";
+
+const pkg = `dependencies: [
+  .package(url: "https://github.com/emojisense/emojisense-swift.git", from: "0.1.0"),
+],
+targets: [
+  .target(
+    name: "App",
+    dependencies: [.product(name: "Emojisense", package: "emojisense-swift")]
+  ),
+]`;
+
+const usage = `import Emojisense
+
+// 1. Load the core packs. English is always first.
+let packURL = URL(string: "${PACK_URL}")!
+let loader = PackLoader(baseURL: packURL)
+let manifest = try await loader.loadManifest()
+let core = try await loader.loadPacks(locales: ["en", "tr"], manifest: manifest)
+var engine = try AliasEngine(core: core)
+
+// 2. Search on every keystroke. Synchronous and fast.
+let alias = engine.search("jurassic pa", options: AliasSearchOptions(locale: "en"))
+var results = alias.results.map(\\.searchResult)
+
+// 3. When the device is idle, add the extension parts and rebuild the index.
+let extensions = try await loader.loadPacks(
+  locales: ["en", "tr"], part: .ext, manifest: manifest)
+engine = try AliasEngine(core: core, extensions: extensions)
+
+// 4. Semantic layers: static shards first, then the API.
+let semantic = ProviderChain([
+  ShardProvider(baseURL: URL(string: "${SHARDS_URL}")!),
+  SemanticClient(
+    configuration: .init(
+      endpoint: URL(string: "${API_HOST}")!, key: "pk_live_…",
+      packVersion: engine.packVersion)),
+])
+if Fusion.shouldUseSemantic(alias),
+  let response = try await semantic.search("jurassic pa", options: .init(locale: "en"))
+{
+  results = Fusion.fuse(alias: alias, semantic: response.results)
+}`;
+---
+
+<DocsLayout path="/docs/integrations/swift/">
+  <p>The Swift SDK brings the engine to iOS 16+ and macOS 13+, with no third-party dependencies. It is a port of the TypeScript engine and gives the same results: conformance tests compare the two on every query of the eval set.</p>
+
+  <h2 id="install">Install</h2>
+  <Callout type="note" title="Package URL">
+    <p>The package is published from <code>sdks/swift</code>. The repository URL below is a placeholder until the first release. For local development, use <code>.package(path: "../emojisense/sdks/swift")</code>.</p>
+  </Callout>
+  <CodeBlock code={pkg} lang="swift" title="Package.swift" />
+
+  <h2 id="usage">Usage</h2>
+  <CodeBlock code={usage} lang="swift" />
+  <ul>
+    <li>Debounce the semantic call, for example by 200 ms, and cancel the task when the query changes.</li>
+    <li><code>AliasEngine</code> is thread-safe.</li>
+    <li><code>SemanticClient</code> returns <code>nil</code> while it pauses after an <code>overLimit</code> answer, and throws <code>EmojisenseError.httpStatus</code> for HTTP errors. <code>ShardProvider</code> returns <code>nil</code> on network errors, so the next provider gets the query.</li>
+    <li>Inject an <code>HTTPTransport</code> to add headers, logging or a stub for tests.</li>
+  </ul>
+
+  <h2 id="parts">Parts</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Type</th><th scope="col">What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>AliasEngine</code></td><td>Offline dictionary search over the packs. Runs on every keystroke.</td></tr>
+        <tr><td><code>Normalizer</code></td><td>Query and label normalization, as in the pack format.</td></tr>
+        <tr><td><code>Pack</code>, <code>PackLoader</code>, <code>Manifest</code></td><td>Decode the core and extension packs and verify their SHA-256.</td></tr>
+        <tr><td><code>ShardProvider</code></td><td>Precomputed semantic results from static shards (layer 2).</td></tr>
+        <tr><td><code>SemanticClient</code></td><td>The API in semantic mode, with an LRU cache. Over the limit it still gets the edge’s cached answers.</td></tr>
+        <tr><td><code>Fusion</code></td><td>The same pinned reciprocal rank fusion as the TypeScript SDK.</td></tr>
+        <tr><td><code>EmojiSet</code>, <code>Hexcode</code></td><td>The <code>emojiSet</code> option of the pickers: <code>.native</code> or a <a href="/docs/guides/emoji-sets/">hosted set</a>. <code>imageURL(for:endpoint:)</code> gives the image URL. No UI.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="performance">Performance</h2>
+  <p>In a release build on Apple silicon, with the English and Turkish core and extension packs, a keystroke takes 0.04 ms at the median and 0.28 ms at the 95th percentile. Building the index from decoded packs takes 0.27 s. You can also bundle the pack files in your app and decode them with <code>try Pack(jsonData: data)</code>.</p>
+</DocsLayout>

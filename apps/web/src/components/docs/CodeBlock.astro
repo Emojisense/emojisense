@@ -1,0 +1,50 @@
+---
+import { Code } from "astro:components";
+import type { ComponentProps } from "astro/types";
+import { codeTheme } from "./code-theme";
+
+type CodeLanguage = NonNullable<ComponentProps<typeof Code>["lang"]>;
+
+interface Props {
+  code: string;
+  /** Shiki language id: ts, tsx, js, json, bash, html, vue, svelte, swift, css, http, text. */
+  lang?: string;
+  /** Shown in the bar instead of the language name, e.g. a file name. */
+  title?: string;
+}
+
+const LANGUAGE_NAMES: Record<string, string> = {
+  ts: "TypeScript",
+  tsx: "TSX",
+  js: "JavaScript",
+  json: "JSON",
+  jsonc: "JSON",
+  bash: "Terminal",
+  sh: "Terminal",
+  html: "HTML",
+  vue: "Vue",
+  svelte: "Svelte",
+  swift: "Swift",
+  python: "Python",
+  css: "CSS",
+  http: "HTTP",
+  text: "Text",
+};
+
+const { code, lang = "text", title } = Astro.props;
+const label = title ?? LANGUAGE_NAMES[lang] ?? lang;
+---
+
+<div class="docs-code" data-lang={lang}>
+  <div class="docs-code-bar">
+    <span class="docs-code-title">{label}</span>
+    <button type="button" class="docs-copy" data-copy hidden>
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+        <rect x="5.25" y="5.25" width="8.5" height="8.5" rx="2"></rect>
+        <path d="M10.75 5.25V4.25a2 2 0 0 0-2-2h-4.5a2 2 0 0 0-2 2v4.5a2 2 0 0 0 2 2h1"></path>
+      </svg>
+      <span data-copy-label>Copy</span>
+    </button>
+  </div>
+  <Code code={code} lang={(lang === "text" ? "plaintext" : lang) as CodeLanguage} theme={codeTheme} />
+</div>

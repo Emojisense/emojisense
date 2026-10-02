@@ -1,0 +1,93 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_FIXTURES, API_HOST, prettyResponse } from "../../../components/docs/facts";
+
+const { reactions } = API_FIXTURES;
+const text = reactions.request.text;
+
+const browser = `const DEFAULT_REACTIONS = ["👍", "❤️", "😂", "🎉"];
+
+export async function suggestReactions(text: string): Promise<string[]> {
+  try {
+    const url = "${API_HOST}/v1/suggest-reactions?key=pk_live_…";
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, locale: "en", limit: 5 }),
+    });
+    if (!response.ok) return DEFAULT_REACTIONS;
+    const { results } = await response.json();
+    if (results.length === 0) return DEFAULT_REACTIONS;
+    return results.map((result) => result.emoji);
+  } catch {
+    return DEFAULT_REACTIONS; // offline: keep the usual reactions
+  }
+}`;
+
+const server = `// A bot or back end: use a secret key, never in a browser.
+const response = await fetch("${API_HOST}/v1/suggest-reactions", {
+  method: "POST",
+  headers: {
+    "Authorization": \`Bearer \${process.env.EMOJISENSE_SECRET_KEY}\`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ text: message.text, locale: "en", limit: 3 }),
+});`;
+
+const curl = `curl -X POST "${API_HOST}/v1/suggest-reactions" \\
+  -H "Authorization: Bearer sk_live_…" \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(reactions.request)}'`;
+---
+
+<DocsLayout path="/docs/guides/reactions/">
+  <p>Reaction suggestions read a message and return the emoji people would react with. Show them in a hover bar or a quick-reaction row, so the right reaction is one click away. They are part of every plan.</p>
+
+  <h2 id="how-it-works">How it works</h2>
+  <p>You send the message text to <code>POST /v1/suggest-reactions</code>. The API reads the first 256 characters, ranks emoji with the dictionary and meaning search together, and answers in the same shape as search. Each call counts as one Worker call.</p>
+  <Callout type="privacy" title="Message text is never kept">
+    <p>The text goes to the embedding model and nowhere else. It is never logged, cached or stored.</p>
+  </Callout>
+
+  <h2 id="call-it">Call it</h2>
+  <p>From a browser or an extension, use a publishable key in the URL. From a server or a bot, use a secret key in the <code>Authorization</code> header.</p>
+  <CodeTabs
+    tabs={[
+      { label: "Browser", code: browser, lang: "ts" },
+      { label: "Server", code: server, lang: "ts" },
+      { label: "curl", code: curl, lang: "bash" },
+    ]}
+    label="Where you call from"
+  />
+
+  <h3 id="request">Request</h3>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Field</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>text</code></td><td>—</td><td>Required. Whitespace is collapsed, then the text is cut to 256 characters.</td></tr>
+        <tr><td><code>locale</code></td><td><code>en</code></td><td>Language of the dictionary part: <code>en</code> or <code>tr</code> today. Other values use <code>en</code>. Meaning search is multilingual either way.</td></tr>
+        <tr><td><code>limit</code></td><td><code>8</code></td><td>Number of results, 1–50.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="response">Response</h3>
+  <p>This is the real answer of the API for “{text}”, captured on {API_FIXTURES.madeOn}:</p>
+  <CodeBlock code={prettyResponse(reactions.response)} lang="json" title="200 OK" />
+  <p>No word of this message names an emoji, so every result comes from meaning search (<code>"source": "semantic"</code>). The <code>query</code> field echoes the normalized text in the response only. It is not stored.</p>
+
+  <h2 id="fallbacks">Fallbacks</h2>
+  <ul>
+    <li><strong>Over the plan limit</strong>, the answer has <code>"overLimit": true</code> and dictionary results only.</li>
+    <li><strong>Workers AI unavailable</strong>: <code>"degraded": true</code> and dictionary results only.</li>
+    <li><strong>Offline or an HTTP error</strong>: keep your usual reactions, as in the browser example.</li>
+  </ul>
+  <p>The status codes are in the <a href="/docs/api/#status-codes">HTTP API reference</a>.</p>
+
+  <h2 id="ai-assistants">For AI assistants</h2>
+  <p>The <a href="/docs/integrations/mcp/">MCP server</a> has a <code>suggest_reactions</code> tool. It works offline with the bundled packs and calls this endpoint when you give it a secret key.</p>
+</DocsLayout>

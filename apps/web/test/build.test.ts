@@ -3,31 +3,52 @@
  * pages the way a crawler or a visitor without JavaScript would see them.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { METRICS, PLAN_IDS, PLANS } from "@emojisense/platform";
+import * as core from "emojisense";
 import { Window } from "happy-dom";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { formatCount } from "../src/lib/format";
-import { featuresOf } from "../src/lib/pricing";
+import { DOCS_PAGES } from "../src/lib/docs-nav";
+import { formatCount, formatDays } from "../src/lib/format";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const SITE = "https://site.test";
 const DASHBOARD = "https://dashboard.test";
 const API = "https://api.test";
 
+const LEGAL = ["/legal/terms/", "/legal/privacy/", "/legal/acceptable-use/", "/legal/subprocessors/"];
+
 const PAGES = [
   "/",
   "/pricing/",
   "/waitlist/",
+  "/about/",
+  "/changelog/",
+  "/legal/",
+  ...LEGAL,
   "/docs/",
   "/docs/api/",
   "/docs/pack-format/",
   "/docs/self-host/",
   "/docs/privacy/",
+];
+
+/** Made by scripts/brand-assets.mjs and committed under public/. */
+const BRAND_ASSETS = [
+  "/favicon.svg",
+  "/favicon.ico",
+  "/apple-touch-icon.png",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-maskable-512.png",
+  "/site.webmanifest",
+  "/og/home.png",
+  "/og/pricing.png",
+  "/og/docs.png",
 ];
 
 let outDir = "";
@@ -65,7 +86,7 @@ afterAll(() => {
 });
 
 describe("emitted files", () => {
-  it.each([...PAGES, "/404.html", "/sitemap.xml", "/robots.txt", "/favicon.svg", "/_headers"])(
+  it.each([...PAGES, ...BRAND_ASSETS, "/404.html", "/sitemap.xml", "/robots.txt", "/_headers"])(
     "emits %s",
     (path) => {
       expect(existsSync(file(path))).toBe(true);
@@ -100,20 +121,25 @@ describe.each(PAGES)("page %s", (path) => {
         (el) => el.getAttribute("href") ?? "",
       ),
     ];
-    for (const url of urls) expect(url).toMatch(/^\//);
+    // Our own API is first party: a page may preconnect to it or preload a data pack from it.
+    const isOwnApiHint = (url: string) =>
+      url.startsWith(`${API}/`) || url === API
+        ? doc.querySelector(`link[href="${url}"]`)?.matches("[rel=preconnect], [rel=preload]") === true
+        : false;
+    for (const url of urls) if (!isOwnApiHint(url)) expect(url).toMatch(/^\//);
   });
 });
 
 describe("landing page", () => {
-  it("renders the live demo with the packs and API from the configuration", () => {
-    const island = page("/").querySelector('astro-island[component-url*="HeroDemo"]');
-    expect(island).not.toBeNull();
-    expect(island?.getAttribute("props")).toContain(`${API}/v1/pack/0.1.0`);
+  it("renders the live hero search and the use-case demos as islands", () => {
+    const doc = page("/");
+    expect(doc.querySelector('astro-island[component-url*="HeroSearch"]')).not.toBeNull();
+    expect(doc.querySelector('astro-island[component-url*="UseCases"]')).not.toBeNull();
   });
 
-  it("has the edge, network effect, features, languages, developers, pricing and FAQ sections", () => {
+  it("has every main section", () => {
     const doc = page("/");
-    for (const id of ["edge", "network", "features", "languages", "developers", "pricing", "faq"]) {
+    for (const id of ["use-cases", "features", "edge", "network", "developers", "pricing", "faq"]) {
       expect(doc.getElementById(id), id).not.toBeNull();
     }
     const text = doc.body.textContent ?? "";
@@ -121,6 +147,19 @@ describe("landing page", () => {
       expect(text).toContain(name);
     }
     expect(doc.querySelectorAll("#faq details").length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("explains every paid feature from the plans", () => {
+    const text = page("/").getElementById("features")?.textContent ?? "";
+    for (const feature of [
+      "custom emoji",
+      "Hosted emoji sets",
+      "Analytics",
+      "Teams and environments",
+      "Tenants",
+    ]) {
+      expect(text).toContain(feature);
+    }
   });
 
   it("states the edge facts and the over-limit switch", () => {
@@ -149,16 +188,71 @@ describe("pricing page", () => {
     expect(solo?.textContent).toContain("$48 a year");
   });
 
+  // Cards read "Everything in <previous plan>, plus", so each lists the limits it includes. The
+  // comparison table below lists every feature of every plan, included or not.
   it.each(PLAN_IDS)("shows every %s limit from PLANS", (id) => {
     const card = doc().querySelector(`[data-plan="${id}"]`);
-    for (const feature of featuresOf(PLANS[id])) {
-      const row = card?.querySelector(`[data-feature="${feature.key}"]`);
-      expect(row, feature.key).not.toBeNull();
-      if (feature.raw !== undefined)
-        expect(Number(row?.getAttribute("data-raw")), feature.key).toBe(feature.raw);
+    for (const metric of METRICS) {
+      const limit = PLANS[id].limits[metric];
+      const row = card?.querySelector(`[data-feature="${metric}"]`);
+      if (limit === 0) {
+        expect(row, metric).toBeNull();
+        continue;
+      }
+      expect(row, metric).not.toBeNull();
+      expect(Number(row?.getAttribute("data-raw")), metric).toBe(limit);
     }
     const calls = card?.querySelector('[data-feature="semantic_calls"] strong')?.textContent?.trim();
     expect(calls).toBe(formatCount(PLANS[id].limits.semantic_calls));
+  });
+
+  it("builds the comparison table with a header per plan and a cell per plan in every row", () => {
+    const table = doc().querySelector("#compare table");
+    expect(table?.querySelector("caption")).not.toBeNull();
+    const columns = Array.from(table?.querySelectorAll('thead th[scope="col"]') ?? [], (th) =>
+      th.getAttribute("data-col"),
+    );
+    expect(columns).toEqual([...PLAN_IDS]);
+    const rows = table?.querySelectorAll("tbody tr[data-feature]") ?? [];
+    expect(rows.length).toBeGreaterThanOrEqual(12);
+    for (const row of Array.from(rows)) {
+      expect(row.querySelector('th[scope="row"]')).not.toBeNull();
+      expect(row.querySelectorAll("td[data-col]")).toHaveLength(PLAN_IDS.length);
+    }
+  });
+
+  it.each(PLAN_IDS)("lists every %s limit from PLANS in the comparison table", (id) => {
+    const plan = PLANS[id];
+    const cell = (key: string) =>
+      doc().querySelector(`#compare table tr[data-feature="${key}"] td[data-col="${id}"]`);
+    const numbers: [string, number, (value: number) => string][] = [
+      ...METRICS.map((metric): [string, number, (value: number) => string] => [
+        metric,
+        plan.limits[metric],
+        formatCount,
+      ]),
+      ["analytics", plan.analyticsRetentionDays, formatDays],
+      ["apps", plan.maxApps, formatCount],
+    ];
+    for (const [key, value, format] of numbers) {
+      const td = cell(key);
+      expect(td, key).not.toBeNull();
+      if (Number.isFinite(value)) expect(Number(td?.getAttribute("data-raw")), key).toBe(value);
+      expect(td?.textContent?.trim(), key).toBe(value === 0 ? "Not included" : format(value));
+    }
+    const flags: [string, boolean][] = [
+      ["hosted_sets", plan.hostedEmojiSets],
+      ["team", plan.teamMembers],
+      ["tenants", plan.tenants],
+    ];
+    for (const [key, included] of flags) {
+      expect(cell(key)?.textContent?.trim(), key).toBe(included ? "Included" : "Not included");
+    }
+  });
+
+  it.each(PLAN_IDS)("sends the %s card to the dashboard or the waitlist", (id) => {
+    const href = doc().querySelector(`[data-plan="${id}"] a.btn`)?.getAttribute("href");
+    expect(href).toBe(PLANS[id].priceUsdMonthly === 0 ? `${DASHBOARD}/` : `/waitlist/?plan=${id}`);
   });
 
   it("sends Pro to the waitlist", () => {
@@ -191,26 +285,252 @@ describe("waitlist page", () => {
 });
 
 describe("docs", () => {
+  const DOCS = DOCS_PAGES.map((p) => p.href);
+
+  /** Internal links of a built page as [path, hash]. External links and mailto are skipped. */
+  function internalLinks(doc: Document, scope = "body"): [string, string][] {
+    return Array.from(doc.querySelectorAll(`${scope} a[href]`), (a) => a.getAttribute("href") ?? "")
+      .filter((href) => href.startsWith("/") || href.startsWith("#"))
+      .map((href) => {
+        const [path = "", hash = ""] = href.split("#");
+        return [path, hash];
+      });
+  }
+
+  it.each(DOCS)("emits %s with one h1, a title, a description and a canonical URL", (path) => {
+    const doc = page(path);
+    expect(doc.querySelectorAll("h1")).toHaveLength(1);
+    expect(doc.title).toContain("Emojisense");
+    expect(doc.querySelector('meta[name="description"]')?.getAttribute("content")?.length).toBeGreaterThan(
+      30,
+    );
+    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(`${SITE}${path}`);
+    const assets = Array.from(doc.querySelectorAll("script[src], link[rel=stylesheet]"), (el) =>
+      String(el.getAttribute("src") ?? el.getAttribute("href")),
+    );
+    for (const url of assets) expect(url).toMatch(/^\//);
+  });
+
+  it("links every docs nav entry to a built page, in order, with the current page marked", () => {
+    for (const path of DOCS) {
+      const nav = Array.from(page(path).querySelectorAll('nav[aria-label="Docs"] a[href^="/docs/"]'));
+      expect(nav.map((a) => a.getAttribute("href"))).toEqual(DOCS);
+      for (const href of DOCS) expect(existsSync(file(href)), href).toBe(true);
+      const current = nav.filter((a) => a.getAttribute("aria-current") === "page");
+      expect(current.map((a) => a.getAttribute("href"))).toEqual([path]);
+    }
+  });
+
+  it.each(DOCS)("resolves every internal link and anchor on %s", (path) => {
+    const doc = page(path);
+    for (const [target, hash] of internalLinks(doc)) {
+      const resolved = target === "" ? path : target;
+      if (resolved.startsWith("/docs/") || resolved === "/") {
+        expect(existsSync(file(resolved.endsWith("/") ? resolved : `${resolved}/`)), resolved).toBe(true);
+      }
+      if (hash && resolved.startsWith("/docs/")) {
+        const other = resolved === path ? doc : page(resolved);
+        expect(other.getElementById(decodeURIComponent(hash)), `${resolved}#${hash}`).not.toBeNull();
+      }
+    }
+  });
+
+  it("links each page to the previous and next page in reading order", () => {
+    DOCS.forEach((path, index) => {
+      const doc = page(path);
+      const prev = doc.querySelector('a[rel="prev"]')?.getAttribute("href");
+      const next = doc.querySelector('a[rel="next"]')?.getAttribute("href");
+      expect(prev, path).toBe(DOCS[index - 1]);
+      expect(next, path).toBe(DOCS[index + 1]);
+    });
+  });
+
+  it("builds an On this page list whose links all resolve", () => {
+    for (const path of ["/docs/concepts/", "/docs/pack-format/", "/docs/guides/search/"]) {
+      const doc = page(path);
+      const toc = Array.from(doc.querySelectorAll('nav[aria-label="On this page"] a'), (a) =>
+        a.getAttribute("href"),
+      );
+      expect(toc.length, path).toBeGreaterThan(4);
+      for (const href of toc) expect(doc.getElementById(String(href).slice(1)), String(href)).not.toBeNull();
+    }
+  });
+
   it("renders docs/API.md with internal links pointing at site pages", () => {
     const doc = page("/docs/api/");
     expect(doc.querySelector("h1")?.textContent).toBe("HTTP API");
     expect(doc.getElementById("get-v1search")?.textContent).toContain("GET /v1/search");
     expect(doc.querySelector('a[href="/docs/pack-format/"]')).not.toBeNull();
+    // Code blocks from the Markdown are highlighted and get a copy button.
+    expect(doc.querySelectorAll(".docs-code pre").length).toBeGreaterThan(2);
+    expect(doc.querySelectorAll(".docs-code [data-copy]").length).toBeGreaterThan(2);
   });
 
-  it("renders docs/PACK_FORMAT.md with its table of contents", () => {
-    const doc = page("/docs/pack-format/");
-    const toc = Array.from(doc.querySelectorAll('nav[aria-label="On this page"] a'), (a) =>
-      a.getAttribute("href"),
-    );
-    expect(toc.length).toBeGreaterThan(4);
-    for (const href of toc) expect(doc.getElementById(String(href).slice(1)), String(href)).not.toBeNull();
+  it("keeps the old quickstart anchors on the introduction", () => {
+    const doc = page("/docs/");
+    for (const id of ["react-frimousse", "web-component", "vanilla"]) {
+      expect(doc.getElementById(id)?.getAttribute("href"), id).toMatch(/^\/docs\//);
+    }
   });
 
   it("covers React and Frimousse, plain JavaScript and the web component in the quickstart", () => {
-    const text = page("/docs/").body.textContent ?? "";
+    const doc = page("/docs/quickstart/");
+    const text = doc.body.textContent ?? "";
     expect(text).toContain("EmojisensePicker");
     expect(text).toContain("createEngine");
     expect(text).toContain("<emojisense-picker");
+    const tabs = Array.from(
+      doc.querySelectorAll('[data-group="framework"] [role="tab"]'),
+      (t) => t.textContent,
+    );
+    expect(tabs).toContain("Web component");
+  });
+
+  it("names every runtime export of the emojisense package in the SDK reference", () => {
+    const text = page("/docs/sdk/").body.textContent ?? "";
+    for (const name of Object.keys(core)) expect(text, name).toContain(name);
+  });
+
+  it("marks a feature planned exactly while its routes are missing from the server source", () => {
+    const repo = join(root, "../..");
+    const sources = ["packages/worker/src", "apps/dashboard/src/worker"]
+      .flatMap((dir) =>
+        (readdirSync(join(repo, dir), { recursive: true }) as string[]).map((f) => join(repo, dir, f)),
+      )
+      .filter((f) => f.endsWith(".ts"))
+      .map((f) => readFileSync(f, "utf8"))
+      .join("\n");
+    for (const docsPage of DOCS_PAGES.filter((p) => p.routes)) {
+      const shipped = (docsPage.routes ?? []).every((route) => sources.includes(route));
+      expect(docsPage.status === "planned", `${docsPage.href}: update its status in docs-nav.ts`).toBe(
+        !shipped,
+      );
+    }
+  });
+
+  it("lists every docs page in the sitemap", () => {
+    const sitemap = readFileSync(file("/sitemap.xml"), "utf8");
+    for (const path of DOCS) expect(sitemap, path).toContain(`<loc>${SITE}${path}</loc>`);
+  });
+});
+
+describe("share cards and icons", () => {
+  /** PNG width and height from the IHDR chunk. */
+  function pngSize(path: string): [number, number] {
+    const png = readFileSync(file(path));
+    return [png.readUInt32BE(16), png.readUInt32BE(20)];
+  }
+
+  it.each(["/og/home.png", "/og/pricing.png", "/og/docs.png"])("%s is 1200 × 630", (path) => {
+    expect(pngSize(path)).toEqual([1200, 630]);
+  });
+
+  it.each([
+    ["/", "/og/home.png"],
+    ["/pricing/", "/og/pricing.png"],
+    ["/docs/api/", "/og/docs.png"],
+    ["/legal/privacy/", "/og/home.png"],
+  ])("%s shares %s as a large card with alt text", (path, image) => {
+    const doc = page(path);
+    const meta = (selector: string) => doc.querySelector(selector)?.getAttribute("content");
+    expect(meta('meta[property="og:image"]')).toBe(`${SITE}${image}`);
+    expect(meta('meta[name="twitter:image"]')).toBe(`${SITE}${image}`);
+    expect(meta('meta[name="twitter:card"]')).toBe("summary_large_image");
+    expect(meta('meta[property="og:image:alt"]')?.length).toBeGreaterThan(20);
+  });
+
+  it("lists icons in the manifest that exist, in the sizes they claim", () => {
+    const manifest = JSON.parse(readFileSync(file("/site.webmanifest"), "utf8")) as {
+      icons: { src: string; sizes: string; purpose: string }[];
+    };
+    expect(manifest.icons.some((icon) => icon.purpose === "maskable")).toBe(true);
+    for (const icon of manifest.icons) {
+      expect(existsSync(file(icon.src)), icon.src).toBe(true);
+      if (icon.src.endsWith(".png")) expect(pngSize(icon.src).join("x")).toBe(icon.sizes);
+    }
+    expect(pngSize("/apple-touch-icon.png")).toEqual([180, 180]);
+  });
+
+  it("links the favicon set and the manifest from every page", () => {
+    const doc = page("/");
+    for (const href of ["/favicon.ico", "/favicon.svg", "/apple-touch-icon.png", "/site.webmanifest"]) {
+      expect(doc.querySelector(`link[href="${href}"]`), href).not.toBeNull();
+    }
+  });
+});
+
+describe("footer", () => {
+  it("has the product, developers, company and legal columns", () => {
+    const titles = Array.from(page("/").querySelectorAll(".footer-column-title"), (el) => el.textContent);
+    expect(titles).toEqual(["Product", "Developers", "Company", "Legal"]);
+  });
+
+  it("links only to pages and sections that exist", () => {
+    const doc = page("/about/");
+    const links = Array.from(
+      doc.querySelectorAll("footer a[href^='/']"),
+      (a) => a.getAttribute("href") ?? "",
+    );
+    expect(links.length).toBeGreaterThan(15);
+    for (const href of links) {
+      const [path = "/", hash] = href.split("#");
+      expect(existsSync(file(path)), href).toBe(true);
+      if (hash) expect(page(path).getElementById(hash), href).not.toBeNull();
+    }
+  });
+
+  it("states the open-source core and the data attribution", () => {
+    const text = page("/").querySelector("footer")?.textContent ?? "";
+    expect(text).toContain("Open-source core");
+    expect(text).toContain("MIT");
+    expect(text).toContain("Emojibase");
+    expect(text).toContain("Unicode CLDR");
+  });
+});
+
+describe("legal pages", () => {
+  it.each(LEGAL)("%s is marked as a draft that needs legal review", (path) => {
+    const doc = page(path);
+    const draft = doc.querySelector(".legal-draft");
+    expect(draft?.textContent).toContain("legal review");
+    expect(doc.querySelector("article")?.firstElementChild).toBe(draft);
+  });
+
+  it.each(LEGAL)("%s uses placeholders for company details instead of inventing them", (path) => {
+    const doc = page(path);
+    const placeholders = Array.from(doc.querySelectorAll(".legal-placeholder"), (el) => el.textContent);
+    expect(placeholders.length).toBeGreaterThan(1);
+    expect(placeholders.every((text) => /^\[[^\]]+\]$/.test(text ?? ""))).toBe(true);
+  });
+
+  it("states the real facts: what is never stored, the subprocessors and the payment status", () => {
+    const privacy = page("/legal/privacy/").body.textContent ?? "";
+    expect(privacy).toContain("[Company legal name]");
+    expect(privacy).toContain("never stored");
+    expect(privacy).toContain("at least 5 times");
+    const subprocessors = page("/legal/subprocessors/").body.textContent ?? "";
+    for (const name of ["Cloudflare, Inc.", "GitHub, Inc.", "Payments"])
+      expect(subprocessors).toContain(name);
+    expect(subprocessors).toContain("not on sale");
+  });
+
+  it("lists every legal page in the sitemap and on the legal index", () => {
+    const sitemap = readFileSync(file("/sitemap.xml"), "utf8");
+    const index = Array.from(page("/legal/").querySelectorAll("main a"), (a) => a.getAttribute("href"));
+    for (const path of LEGAL) {
+      expect(sitemap).toContain(`<loc>${SITE}${path}</loc>`);
+      expect(index).toContain(path);
+    }
+  });
+});
+
+describe("404 page", () => {
+  it("runs the emoji search for the missing address as an island, with links to go on", () => {
+    const doc = page("/404.html");
+    expect(doc.querySelector('astro-island[component-url*="NotFoundSearch"]')).not.toBeNull();
+    const links = Array.from(doc.querySelectorAll('nav[aria-label="Places to go"] a'), (a) =>
+      a.getAttribute("href"),
+    );
+    expect(links).toEqual(["/", "/docs/", "/playground/", "/pricing/"]);
   });
 });

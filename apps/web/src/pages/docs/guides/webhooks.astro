@@ -1,0 +1,64 @@
+---
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+
+const body = `{
+  "id": "…",
+  "type": "custom_emoji.created",
+  "createdAt": …,
+  "appId": "…",
+  "data": { … }
+}`;
+
+const verify = `import { createHmac, timingSafeEqual } from "node:crypto";
+
+/** Check the Emojisense-Signature header of a webhook request. */
+export function verifySignature(
+  rawBody: string,
+  header: string,
+  secret: string,
+): boolean {
+  const parts = Object.fromEntries(header.split(",").map((part) => part.split("=", 2)));
+  const timestamp = Number(parts.t);
+  if (!parts.v1 || !Number.isFinite(timestamp)) return false;
+  // Refuse old deliveries, so a captured request cannot be replayed later.
+  if (Math.abs(Date.now() / 1000 - timestamp) > 300) return false;
+  const expected = createHmac("sha256", secret)
+    .update(\`\${parts.t}.\${rawBody}\`)
+    .digest("hex");
+  const given = Buffer.from(parts.v1, "hex");
+  return given.length === 32 && timingSafeEqual(given, Buffer.from(expected, "hex"));
+}`;
+---
+
+<DocsLayout path="/docs/guides/webhooks/">
+  <p>Webhooks tell your server when something changes in an app, so you can sync your own database, warm a cache or alert someone before a limit is reached.</p>
+
+  <h2 id="events">Events</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Type</th><th scope="col">When</th></tr></thead>
+      <tbody>
+        <tr><td><code>custom_emoji.created</code></td><td>A custom emoji was uploaded or imported.</td></tr>
+        <tr><td><code>custom_emoji.deleted</code></td><td>A custom emoji was deleted.</td></tr>
+        <tr><td><code>tenant.created</code></td><td>A tenant was created.</td></tr>
+        <tr><td><code>tenant.deleted</code></td><td>A tenant was deleted.</td></tr>
+        <tr><td><code>usage.threshold</code></td><td>A metric reached 80% or 100% of the plan’s monthly limit.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="payload">Payload</h2>
+  <p>Each delivery is a <code>POST</code> with a JSON body:</p>
+  <CodeBlock code={body} lang="json" />
+
+  <h2 id="endpoints">Add an endpoint</h2>
+  <p>Add webhook endpoints per app in the dashboard. When you create one, the dashboard shows its signing secret (<code>whsec_…</code>) once. Store it in your server’s secrets. You can send a test event and see every delivery attempt.</p>
+
+  <h2 id="verify">Verify the signature</h2>
+  <p>Every request has an <code>Emojisense-Signature</code> header: <code>t=&lt;unix seconds&gt;,v1=&lt;hex&gt;</code>. The <code>v1</code> value is the HMAC-SHA256 of <code>&lt;t&gt;.&lt;raw body&gt;</code>, keyed with your endpoint’s secret. Check it against the raw body, before you parse the JSON.</p>
+  <CodeBlock code={verify} lang="ts" title="verify.ts" />
+
+  <h2 id="retries">Retries</h2>
+  <p>Answer with a <code>2xx</code> status quickly. If a delivery fails, Emojisense tries up to 3 times in total: at once, after 10 seconds and after 60 seconds. Each attempt is recorded, so you can see it in the dashboard. Make your handler idempotent with the event <code>id</code>, because an event can arrive more than once.</p>
+</DocsLayout>

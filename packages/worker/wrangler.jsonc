@@ -3,7 +3,9 @@
   "name": "emojisense-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-24",
-  "observability": { "enabled": true },
+  // Invocation logs would record full request URLs (search text, keys, invite tokens); only our
+  // own structured logs, which never contain them, are kept.
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
   // docs/API.md: the Search API runs on 8788 locally (8787 is taken on the owner's machine).
   "dev": { "port": 8788 },
   "assets": {

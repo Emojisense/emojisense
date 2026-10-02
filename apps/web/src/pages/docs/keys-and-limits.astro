@@ -1,0 +1,91 @@
+---
+import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import Callout from "../../components/docs/Callout.astro";
+import CodeBlock from "../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { API_HOST } from "../../components/docs/facts";
+import { formatCount } from "../../lib/format";
+
+const overLimit = `{
+  "query": "…",
+  "results": [/* dictionary results only (hybrid), or none (semantic) */],
+  "cached": false,
+  "degraded": false,
+  "overLimit": true
+}`;
+
+const publishable = `fetch("${API_HOST}/v1/search?q=ship%20it&key=pk_live_…");`;
+const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
+  -H "Authorization: Bearer sk_live_…"`;
+---
+
+<DocsLayout path="/docs/keys-and-limits/">
+  <p>Keys tell the API which app is calling, so it can apply that app’s plan and rate limits. There are two kinds, one for code that runs in front of people and one for servers.</p>
+
+  <h2 id="key-types">Publishable and secret keys</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Key</th><th scope="col">Use in</th><th scope="col">Sent as</th><th scope="col">Checks</th></tr></thead>
+      <tbody>
+        <tr><td>Publishable <code>pk_live_…</code></td><td>Browsers and extensions</td><td><code>?key=</code> in the URL</td><td>The <code>Origin</code> must be one of the key’s allowed origins</td></tr>
+        <tr><td>Secret <code>sk_live_…</code></td><td>Servers, bots, MCP, tenant management</td><td><code>Authorization: Bearer</code></td><td>Refused with an <code>Origin</code> header or in the URL</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <CodeBlock code={publishable} lang="ts" title="Publishable key" />
+  <CodeBlock code={secret} lang="bash" title="Secret key" />
+  <p>Create keys in the dashboard, per app. The full key is shown once. The dashboard stores only a hash of it.</p>
+  <Callout type="warning" title="Origins are a browser control">
+    <p>The <code>Origin</code> check stops other websites from using your publishable key. It cannot stop a server, which can send any header, so every key also has a rate limit. Never put a secret key in a browser, an app bundle or a repository.</p>
+  </Callout>
+
+  <h2 id="origins">Allowed origins</h2>
+  <ul>
+    <li>Add every origin your app runs on, for example <code>https://your.app</code> and <code>http://localhost:5173</code>.</li>
+    <li>An empty list allows any origin. Only apps in the <code>dev</code> environment may have such keys.</li>
+    <li>For a Chrome extension, add the extension origin shown on its options page.</li>
+  </ul>
+
+  <h2 id="revoking">Revoking</h2>
+  <p>Revoke a key in the dashboard. The API caches key lookups for up to 60 seconds, so a revoked key stops working within a minute. An unknown or revoked key gets <code>401</code>.</p>
+
+  <h2 id="rate-limits">Rate limits</h2>
+  <p>Every key has a rate limit over a short window, and calls without a key share a stricter limit per IP address. Over it, the API answers <code>429</code> with a <code>Retry-After</code> header. The IP address is only an in-memory key for the limiter. It is never logged or stored.</p>
+
+  <h2 id="plan-limits">Plan limits</h2>
+  <p>Limits are monthly, in UTC, with no daily caps. Only Worker calls are metered: searches and reaction suggestions that reach the API, and photo classifications. On-device searches, packs and shards are free on every plan.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Plan</th>
+          <th scope="col">Price</th>
+          <th scope="col">Worker calls</th>
+          <th scope="col">Photo to emoji</th>
+          <th scope="col">Custom emoji</th>
+          <th scope="col">Apps</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          PLAN_IDS.map((id) => (
+            <tr>
+              <td>{PLANS[id].name}</td>
+              <td>{PLANS[id].priceUsdMonthly === 0 ? "Free" : `$${PLANS[id].priceUsdMonthly} a month`}</td>
+              <td>{formatCount(PLANS[id].limits.semantic_calls)}</td>
+              <td>{formatCount(PLANS[id].limits.image_classifications)}</td>
+              <td>{PLANS[id].limits.custom_emoji > 0 ? formatCount(PLANS[id].limits.custom_emoji) : "—"}</td>
+              <td>{formatCount(PLANS[id].maxApps)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+  <p>See <a href="/pricing/">Pricing</a> for every feature of each plan. The dashboard shows each app’s usage for the month.</p>
+
+  <h2 id="over-the-limit">Over the limit</h2>
+  <p>The API never fails because of a plan limit. A query that is in the shared edge cache is still answered, and is not counted. Any other query returns <code>200</code> with <code>"overLimit": true</code>:</p>
+  <CodeBlock code={overLimit} lang="json" />
+  <p>The SDKs handle this for you: search stays on the device and the shards, and people keep typing as before. Photo classification returns no results until the next month.</p>
+</DocsLayout>

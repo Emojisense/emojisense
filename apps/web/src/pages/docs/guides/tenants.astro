@@ -1,0 +1,51 @@
+---
+import { PLANS } from "@emojisense/platform";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST } from "../../../components/docs/facts";
+import { formatCount } from "../../../lib/format";
+
+const upload = `curl -X POST "${API_HOST}/v1/tenants/acme/emoji" \\
+  -H "Authorization: Bearer sk_live_…" \\
+  -F "file=@shipit.png" \\
+  -F "shortcode=shipit" \\
+  -F "aliases=ship it, launch, deploy"`;
+
+const search = `GET ${API_HOST}/v1/search?q=ship%20it&tenant=acme&key=pk_live_…
+GET ${API_HOST}/v1/custom-pack?key=pk_live_…&tenant=acme`;
+---
+
+<DocsLayout path="/docs/guides/tenants/">
+  <p>If your product serves many customers, such as workspaces in a chat app or communities on a forum, each customer may want its own custom emoji. Tenants give every customer a separate set inside one app, with one key and one bill.</p>
+
+  <h2 id="model">How tenants work</h2>
+  <ul>
+    <li>A tenant has your own <strong>external id</strong>, for example the workspace id from your database. You never need to store an Emojisense id.</li>
+    <li>Custom emoji belong to the whole app or to one tenant.</li>
+    <li>A search with <code>tenant=&lt;externalId&gt;</code> returns the app-wide custom emoji, that tenant’s emoji and Unicode emoji. Other tenants’ emoji never appear.</li>
+    <li>Tenant emoji count toward the plan’s custom emoji limit: {formatCount(PLANS.scale.limits.custom_emoji)} on Scale.</li>
+  </ul>
+
+  <h2 id="manage">Manage tenants from your server</h2>
+  <p>The tenants API takes a <strong>secret key</strong> in <code>Authorization: Bearer sk_live_…</code>, so call it from your back end, for example when a customer creates a workspace.</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Route</th><th scope="col">Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /v1/tenants</code></td><td>List tenants</td></tr>
+        <tr><td><code>POST /v1/tenants</code></td><td>Create a tenant</td></tr>
+        <tr><td><code>DELETE /v1/tenants/:externalId</code></td><td>Delete a tenant</td></tr>
+        <tr><td><code>GET /v1/tenants/:externalId/emoji</code></td><td>List a tenant’s emoji</td></tr>
+        <tr><td><code>POST /v1/tenants/:externalId/emoji</code></td><td>Upload an emoji (multipart: <code>file</code>, <code>shortcode</code>, <code>aliases</code>)</td></tr>
+        <tr><td><code>DELETE /v1/tenants/:externalId/emoji/:shortcode</code></td><td>Delete an emoji</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <CodeBlock code={upload} lang="bash" title="Upload an emoji for a tenant" />
+  <p>The dashboard has the same tenant list, with each tenant’s emoji count.</p>
+
+  <h2 id="search">Search per tenant</h2>
+  <p>Pass the tenant to search, reaction suggestions and the custom pack that the SDK loads on the device:</p>
+  <CodeBlock code={search} lang="http" />
+  <p>The custom pack has a short edge cache (60 seconds), so a new emoji is in the tenant’s custom pack within about a minute.</p>
+</DocsLayout>

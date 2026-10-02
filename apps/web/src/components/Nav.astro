@@ -7,9 +7,10 @@ interface Props {
 
 const { path } = Astro.props;
 const links = [
+  { href: "/#use-cases", label: "Product" },
   { href: "/#features", label: "Features" },
-  { href: "/#edge", label: "Global edge" },
-  { href: "/#languages", label: "Languages" },
+  { href: "/#integrations", label: "Integrations" },
+  { href: "/playground/", label: "Playground" },
   { href: "/pricing/", label: "Pricing" },
   { href: "/docs/", label: "Docs" },
 ];
@@ -32,15 +33,46 @@ const links = [
             </li>
           ))
         }
-        <li><a href={REPO_URL}>GitHub</a></li>
+        <li class="nav-github"><a href={REPO_URL}>GitHub</a></li>
       </ul>
     </nav>
     <div class="actions">
       <a class="signin" href={`${DASHBOARD_URL}/`}>Sign in</a>
       <a class="btn btn-primary cta" href={`${DASHBOARD_URL}/`}>Get API key</a>
+      <details class="menu">
+        <summary aria-label="Menu">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </summary>
+        <nav class="menu-panel" aria-label="Main (mobile)">
+          {
+            links.map((link) => (
+              <a href={link.href} aria-current={path.startsWith(link.href) && link.href !== "/" ? "page" : undefined}>
+                {link.label}
+              </a>
+            ))
+          }
+          <a href={REPO_URL}>GitHub</a>
+          <a href={`${DASHBOARD_URL}/`}>Sign in</a>
+        </nav>
+      </details>
     </div>
   </div>
 </header>
+
+<script>
+  // Close the mobile menu after a pick (in-page anchors do not reload) and on Escape.
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>(".nav .menu")) {
+    menu.querySelector(".menu-panel")?.addEventListener("click", (event) => {
+      if ((event.target as Element).closest("a")) menu.open = false;
+    });
+    menu.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && menu.open) {
+        menu.open = false;
+        menu.querySelector("summary")?.focus();
+      }
+    });
+  }
+</script>
 
 <style>
   .nav {
@@ -56,7 +88,7 @@ const links = [
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    min-height: 4.25rem;
+    min-height: 4rem;
   }
 
   .logo {
@@ -67,13 +99,7 @@ const links = [
   }
 
   .logo-mark {
-    display: grid;
-    place-items: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.75rem;
-    background: var(--brand);
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     transition: transform 240ms var(--spring);
   }
 
@@ -82,8 +108,8 @@ const links = [
   }
 
   .logo-word {
-    font: 800 1.25rem / 1 var(--font-display);
-    letter-spacing: -0.03em;
+    font: 700 1.25rem / 1 var(--font-display);
+    letter-spacing: -0.035em;
   }
 
   .links {
@@ -99,7 +125,7 @@ const links = [
     padding: 0.5rem 0.75rem;
     border-radius: var(--pill);
     color: var(--ink-2);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.9375rem;
     text-decoration: none;
   }
@@ -125,9 +151,88 @@ const links = [
     white-space: nowrap;
   }
 
-  @media (max-width: 52rem) {
-    nav {
+  .signin {
+    white-space: nowrap;
+  }
+
+  /* With Playground in the list, tighten the links before they collide with the actions. */
+  @media (max-width: 66rem) {
+    .nav-inner {
+      gap: 1rem;
+    }
+
+    .links a {
+      padding-inline: 0.5rem;
+    }
+
+    .nav-github {
       display: none;
+    }
+  }
+
+  .menu {
+    display: none;
+    position: relative;
+  }
+
+  .menu summary {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0.0625rem solid var(--line-strong);
+    border-radius: var(--pill);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu summary svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .menu-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    display: grid;
+    min-width: 13rem;
+    padding: 0.375rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .menu-panel a {
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--ink-2);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .menu-panel a:hover,
+  .menu-panel a[aria-current="page"] {
+    background: var(--bg-soft);
+    color: var(--ink);
+  }
+
+  @media (max-width: 56rem) {
+    nav[aria-label="Main"] {
+      display: none;
+    }
+
+    .menu {
+      display: block;
     }
   }
 

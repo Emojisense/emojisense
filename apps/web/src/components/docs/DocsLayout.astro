@@ -1,0 +1,369 @@
+---
+import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { DASHBOARD_URL, REPO_URL, SITE_URL } from "../../config";
+import Base from "../../layouts/Base.astro";
+import {
+  DOCS_SECTIONS,
+  type DocsStatus,
+  docsNeighbors,
+  docsPage,
+  docsSectionOf,
+  docsSourceFile,
+} from "../../lib/docs-nav";
+import { prepareArticle } from "./article";
+import Callout from "./Callout.astro";
+import "./docs.css";
+
+interface Props {
+  /** Must match an entry of DOCS_SECTIONS in src/lib/docs-nav.ts. */
+  path: string;
+}
+
+const { path } = Astro.props;
+const page = docsPage(path);
+const section = docsSectionOf(path);
+const { previous, next } = docsNeighbors(path);
+const isHome = path === "/docs/";
+
+const { html, toc } = prepareArticle(await Astro.slots.render("default"));
+
+const STATUS_LABELS: Record<DocsStatus, string> = {
+  planned: "Planned",
+  next: "Coming in this release",
+  experimental: "Experimental",
+};
+
+/** "Solo, Pro and Scale" for a feature that starts on Solo. */
+function plansFrom(id: (typeof PLAN_IDS)[number]): string {
+  const names = PLAN_IDS.slice(PLAN_IDS.indexOf(id)).map((plan) => PLANS[plan].name);
+  return names.length === 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+}
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "Docs", item: `${SITE_URL}/docs/` },
+    ...(isHome ? [] : [{ "@type": "ListItem", position: 2, name: page.title, item: `${SITE_URL}${path}` }]),
+  ],
+};
+---
+
+<Base title={isHome ? "Docs" : `${page.title} · Docs`} description={page.description} path={path} jsonLd={jsonLd}>
+  <div class="docs-shell">
+    <a class="docs-skip" href="#docs-article">Skip to article</a>
+
+    <div class="docs-bar">
+      <button type="button" class="docs-bar-menu" popovertarget="docs-nav" aria-label="Open docs menu">
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"></path></svg>
+        Menu
+      </button>
+      <span class="docs-bar-crumb"><span class="docs-bar-section">{section.title}</span> / {page.navTitle ?? page.title}</span>
+    </div>
+
+    <nav id="docs-nav" class="docs-sidebar" popover aria-label="Docs">
+      <div class="docs-sidebar-head">
+        <span class="docs-sidebar-heading">Docs</span>
+        <button type="button" class="docs-sidebar-close" popovertarget="docs-nav" popovertargetaction="hide" aria-label="Close docs menu">
+          <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8"></path></svg>
+        </button>
+      </div>
+      {
+        DOCS_SECTIONS.map((group) => (
+          <div class="docs-nav-group">
+            <p class="docs-nav-title" id={`docs-nav-${group.id}`}>
+              {group.title}
+            </p>
+            <ul aria-labelledby={`docs-nav-${group.id}`}>
+              {group.pages.map((item) => (
+                <li>
+                  <a class="docs-nav-link" href={item.href} aria-current={item.href === path ? "page" : undefined}>
+                    <span>{item.navTitle ?? item.title}</span>
+                    {item.status === "planned" && <span class="docs-nav-tag">Soon</span>}
+                    {item.status === "next" && <span class="docs-nav-tag">Next</span>}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+      <a class="docs-sidebar-cta" href={`${DASHBOARD_URL}/`}>
+        <span class="emoji" aria-hidden="true">🔑</span> Get a free API key
+      </a>
+    </nav>
+
+    <article id="docs-article" class="docs-article" tabindex="-1">
+      <header class="docs-header">
+        <nav class="docs-breadcrumbs" aria-label="Breadcrumb">
+          <ol>
+            <li><a class="docs-crumb-link" href="/docs/">Docs</a></li>
+            {!isHome && <li>{section.title}</li>}
+            {!isHome && <li aria-current="page">{page.navTitle ?? page.title}</li>}
+          </ol>
+        </nav>
+        <h1>{page.title}</h1>
+        <p class="docs-lede">{page.description}</p>
+        {
+          (page.plan || page.status) && (
+            <ul class="docs-meta" aria-label="Availability">
+              {page.status && <li class="docs-pill" data-status={page.status}>{STATUS_LABELS[page.status]}</li>}
+              {page.plan && (
+                <li class="docs-pill">
+                  <span class="docs-pill-label">Plans</span> {plansFrom(page.plan)}
+                </li>
+              )}
+            </ul>
+          )
+        }
+      </header>
+
+      {
+        page.status === "planned" && (
+          <Callout type="planned" title="Designed, not live yet">
+            <p>
+              This feature is in the product contract and is being built now. The routes and fields below are the
+              planned design. They can still change before the release, so do not build on them yet.
+            </p>
+          </Callout>
+        )
+      }
+      {
+        page.status === "next" && (
+          <Callout type="next" title="Coming in this release">
+            <p>The routes on this page are merged and ship with the next deploy of the hosted API.</p>
+          </Callout>
+        )
+      }
+
+      {
+        toc.length > 1 && (
+          <details class="docs-toc-inline">
+            <summary>On this page</summary>
+            <nav aria-label="On this page">
+              <ol>
+                {toc.map((item) => (
+                  <li data-depth={item.depth}>
+                    <a class="docs-toc-inline-link" href={`#${item.id}`}>{item.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          </details>
+        )
+      }
+
+      <div class="docs-prose" set:html={html} />
+
+      <footer class="docs-footer">
+        <p class="docs-edit">
+          <a class="docs-edit-link" href={`${REPO_URL}/blob/main/${docsSourceFile(page)}`}>Edit this page on GitHub</a>
+        </p>
+        {
+          (previous || next) && (
+            <nav class="docs-pager" aria-label="Previous and next page">
+              {previous && (
+                <a class="docs-pager-link" rel="prev" href={previous.href}>
+                  <span class="docs-pager-label">← Previous</span>
+                  <span class="docs-pager-title">{previous.title}</span>
+                </a>
+              )}
+              {next && (
+                <a class="docs-pager-link docs-pager-next" rel="next" href={next.href}>
+                  <span class="docs-pager-label">Next →</span>
+                  <span class="docs-pager-title">{next.title}</span>
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </footer>
+    </article>
+
+    {
+      toc.length > 1 && (
+        <aside class="docs-toc">
+          <nav aria-label="On this page">
+            <p class="docs-toc-title" aria-hidden="true">
+              On this page
+            </p>
+            <ol>
+              {toc.map((item) => (
+                <li data-depth={item.depth}>
+                  <a class="docs-toc-link" href={`#${item.id}`} data-toc-link={item.id} data-depth={item.depth}>
+                    {item.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </aside>
+      )
+    }
+    <p class="visually-hidden" role="status" data-docs-status></p>
+  </div>
+</Base>
+
+<script>
+  const STORAGE_KEY = "emojisense-docs-tabs";
+  const status = document.querySelector<HTMLElement>("[data-docs-status]");
+
+  function announce(message: string) {
+    if (!status) return;
+    status.textContent = "";
+    // A new text node after a frame makes screen readers repeat the same message.
+    requestAnimationFrame(() => {
+      status.textContent = message;
+    });
+  }
+
+  // Copy buttons: progressive enhancement, hidden until this script runs.
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
+    button.hidden = false;
+    const label = button.querySelector<HTMLElement>("[data-copy-label]");
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    button.addEventListener("click", async () => {
+      const block = button.closest(".docs-code");
+      const pre = block?.querySelector<HTMLElement>(".docs-tabpanel:not([hidden]) pre, :scope > pre");
+      const text = pre?.textContent ?? "";
+      try {
+        await navigator.clipboard.writeText(text);
+        button.dataset.state = "copied";
+        if (label) label.textContent = "Copied";
+        announce("Copied to the clipboard");
+      } catch {
+        if (pre) window.getSelection()?.selectAllChildren(pre);
+        button.dataset.state = "selected";
+        if (label) label.textContent = "Selected";
+        announce("Code selected. Copy it with your keyboard.");
+      }
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        delete button.dataset.state;
+        if (label) label.textContent = "Copy";
+      }, 1600);
+    });
+  }
+
+  // Tabs (WAI-ARIA tabs pattern, automatic activation). Groups switch together and are remembered.
+  function readChoices(): Record<string, string> {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as Record<string, string>;
+    } catch {
+      return {};
+    }
+  }
+
+  function saveChoice(group: string, tab: string) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...readChoices(), [group]: tab }));
+    } catch {
+      // Storage can be off (private mode). The choice then lasts for this page only.
+    }
+  }
+
+  function selectTab(container: HTMLElement, name: string, focus = false): boolean {
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const target = tabs.find((tab) => tab.dataset.tab === name);
+    if (!target) return false;
+    for (const tab of tabs) {
+      const selected = tab === target;
+      tab.setAttribute("aria-selected", String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    }
+    for (const panel of container.querySelectorAll<HTMLElement>('[role="tabpanel"]')) {
+      panel.hidden = panel.dataset.tab !== name;
+    }
+    if (focus) target.focus();
+    return true;
+  }
+
+  const tabGroups = [...document.querySelectorAll<HTMLElement>("[data-tabs]")];
+  const choices = readChoices();
+  for (const container of tabGroups) {
+    const group = container.dataset.group;
+    if (group && choices[group]) selectTab(container, choices[group]);
+
+    const tabs = [...container.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const choose = (tab: HTMLButtonElement, focus: boolean) => {
+      const name = tab.dataset.tab ?? "";
+      selectTab(container, name, focus);
+      if (!group) return;
+      saveChoice(group, name);
+      // Keep the clicked block in place while blocks above it change height.
+      const before = container.getBoundingClientRect().top;
+      for (const other of tabGroups) if (other !== container && other.dataset.group === group) selectTab(other, name);
+      window.scrollBy(0, container.getBoundingClientRect().top - before);
+    };
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => choose(tab, false));
+      tab.addEventListener("keydown", (event) => {
+        const index = tabs.indexOf(tab);
+        const nextIndex =
+          event.key === "ArrowRight"
+            ? (index + 1) % tabs.length
+            : event.key === "ArrowLeft"
+              ? (index - 1 + tabs.length) % tabs.length
+              : event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? tabs.length - 1
+                  : -1;
+        const nextTab = tabs[nextIndex];
+        if (!nextTab) return;
+        event.preventDefault();
+        choose(nextTab, true);
+      });
+    }
+  }
+
+  // "On this page": mark the section being read.
+  const tocLinks = new Map<string, HTMLAnchorElement>();
+  for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-toc-link]")) {
+    tocLinks.set(link.dataset.tocLink ?? "", link);
+  }
+  if (tocLinks.size > 0 && "IntersectionObserver" in window) {
+    const headings = [...tocLinks.keys()]
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    const visible = new Set<string>();
+    const mark = () => {
+      const current = headings.find((h) => visible.has(h.id)) ?? lastAbove();
+      for (const [id, link] of tocLinks) {
+        if (id === current?.id) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      }
+    };
+    const lastAbove = () => {
+      let found: HTMLElement | undefined;
+      for (const heading of headings) if (heading.getBoundingClientRect().top < 120) found = heading;
+      return found ?? headings[0];
+    };
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) visible.add(entry.target.id);
+          else visible.delete(entry.target.id);
+        }
+        mark();
+      },
+      { rootMargin: "-72px 0px -60% 0px" },
+    );
+    for (const heading of headings) observer.observe(heading);
+  }
+
+  // Mobile drawer (a native popover): move focus into it, and close it when the layout widens.
+  const drawer = document.getElementById("docs-nav");
+  if (drawer && "showPopover" in drawer) {
+    drawer.addEventListener("toggle", (event) => {
+      if ((event as ToggleEvent).newState !== "open") return;
+      const current = drawer.querySelector<HTMLElement>('[aria-current="page"]');
+      (current ?? drawer.querySelector<HTMLElement>("a"))?.focus();
+      current?.scrollIntoView({ block: "center" });
+    });
+    const wide = window.matchMedia("(min-width: 60rem)");
+    wide.addEventListener("change", () => {
+      if (wide.matches && drawer.matches(":popover-open")) drawer.hidePopover();
+    });
+  }
+</script>

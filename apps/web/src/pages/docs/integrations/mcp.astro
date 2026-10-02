@@ -1,0 +1,81 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, shown } from "../../../components/docs/facts";
+
+const offline = `{
+  "mcpServers": {
+    "emojisense": {
+      "command": "npx",
+      "args": ["-y", "@emojisense/mcp"]
+    }
+  }
+}`;
+
+const online = `{
+  "mcpServers": {
+    "emojisense": {
+      "command": "npx",
+      "args": ["-y", "@emojisense/mcp"],
+      "env": {
+        "EMOJISENSE_API_URL": "${API_HOST}",
+        "EMOJISENSE_SECRET_KEY": "sk_live_…"
+      }
+    }
+  }
+}`;
+
+const checkout = `{
+  "mcpServers": {
+    "emojisense": {
+      "command": "node",
+      "args": ["/path/to/emojisense/packages/mcp/dist/cli.js"]
+    }
+  }
+}`;
+
+const goat = shown("greatest of all time", { part: "full", locale: "en", prefix: false, limit: 1 });
+---
+
+<DocsLayout path="/docs/integrations/mcp/">
+  <p><code>@emojisense/mcp</code> is an MCP server (stdio) that gives an AI assistant three emoji tools. It works offline: the engine and the English and Turkish packs ship inside the package. With a secret key, it also adds meaning results from the API.</p>
+
+  <h2 id="tools">Tools</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Tool</th><th scope="col">Input</th><th scope="col">Use it to</th></tr></thead>
+      <tbody>
+        <tr><td><code>search_emoji</code></td><td><code>query</code>, <code>locale?</code>, <code>limit?</code> (10)</td><td>Find emoji for a keyword, slang, a name or a concept, for example “greatest of all time” → <span class="emoji">{goat}</span></td></tr>
+        <tr><td><code>emoji_for_text</code></td><td><code>text</code>, <code>locale?</code>, <code>limit?</code> (5)</td><td>Pick emoji to add to a sentence. Also returns the text with the best emoji appended.</td></tr>
+        <tr><td><code>suggest_reactions</code></td><td><code>text</code>, <code>locale?</code>, <code>limit?</code> (6)</td><td>Pick the emoji a reader would react with</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><code>locale</code> is <code>en</code> or <code>tr</code>. Every tool returns a short text and the same data as structured content. Each result has a <code>source</code>: <code>alias</code> (offline), <code>semantic</code> (API) or <code>default</code> (a generic reaction such as 👍 that fills a short list).</p>
+
+  <h2 id="configure">Configure your client</h2>
+  <p>Most MCP clients read a JSON file with an <code>mcpServers</code> object. Some call it <code>servers</code> and want <code>"type": "stdio"</code> on each entry.</p>
+  <CodeTabs
+    tabs={[
+      { label: "Offline", code: offline, lang: "json" },
+      { label: "With the API", code: online, lang: "json" },
+      { label: "From a checkout", code: checkout, lang: "json" },
+    ]}
+    label="Configuration"
+  />
+  <p>Set both variables or neither. With only one, the server writes a warning to stderr and runs offline. <code>EMOJISENSE_API_URL</code> must use <code>https://</code>, except <code>http://localhost</code> for development.</p>
+
+  <h2 id="api-use">How it uses the API</h2>
+  <ul>
+    <li><code>search_emoji</code> calls <code>GET /v1/search</code> in semantic mode only when the offline engine is unsure, with the same rule as the browser SDK. Confident queries cost nothing.</li>
+    <li><code>emoji_for_text</code> and <code>suggest_reactions</code> send the text, at most 256 characters, to <code>POST /v1/suggest-reactions</code>. Message text never goes to the search endpoint, because the reactions endpoint never logs or caches text.</li>
+    <li>On a network error, a 4-second timeout, an HTTP error or <code>overLimit</code>, a tool returns the offline results. After <code>overLimit</code>, the server stops calling the API for one hour.</li>
+  </ul>
+  <Callout type="warning" title="Keep the secret key secret">
+    <p>The server sends the key as <code>Authorization: Bearer</code>. Keep it in your client’s config, out of repositories and away from browsers.</p>
+  </Callout>
+
+  <h2 id="inspect">Try the tools</h2>
+  <p>From a checkout, after <code>pnpm --filter @emojisense/mcp build</code>, open the tools in a browser UI with <code>npx @modelcontextprotocol/inspector node packages/mcp/dist/cli.js</code>.</p>
+</DocsLayout>

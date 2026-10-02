@@ -1,117 +1,68 @@
 ---
-import Docs from "../../layouts/Docs.astro";
+import { ANALYTICS_MIN_QUERY_SEARCHES, analyticsKeepDays, PLAN_IDS, PLANS } from "@emojisense/platform";
+import Callout from "../../components/docs/Callout.astro";
+import DocsLayout from "../../components/docs/DocsLayout.astro";
+import { formatDays } from "../../lib/format";
+
+const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepDays(PLANS[id]))}`).join(", ");
 ---
 
-<Docs path="/docs/privacy/" source="docs/API.md">
+<DocsLayout path="/docs/privacy/">
   <h2 id="short-version">The short version</h2>
   <ul>
     <li>Most searches never leave the device.</li>
-    <li>We never log IP addresses, keys or user identifiers.</li>
-    <li>We never store reaction text or images.</li>
-    <li>We use a search query only after at least 5 searches for the same text.</li>
-    <li>Search analytics keep daily counts per app and query, for 30 days (Pro) or 365 days (Scale).</li>
+    <li>Emojisense never logs or stores IP addresses, keys or user identifiers.</li>
+    <li>Message text for reaction suggestions and images for photo to emoji are never stored.</li>
+    <li>Query text is normalized and cut to 64 characters. A query is named in analytics, or used by Emojisense’s own jobs, only after it was seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times.</li>
   </ul>
 
-  <h2 id="where-searches-go">Where each search goes</h2>
+  <h2 id="where-searches-go">Where each request goes</h2>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead>
         <tr>
           <th scope="col">Layer</th>
           <th scope="col">What leaves the device</th>
-          <th scope="col">What we keep</th>
+          <th scope="col">What is kept</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>On-device dictionary</td>
-          <td>Nothing</td>
-          <td>Nothing</td>
-        </tr>
-        <tr>
-          <td>Precomputed results</td>
-          <td>A request for one static file, named by the first letters of the query</td>
-          <td>Nothing: static files are not logged or metered</td>
-        </tr>
-        <tr>
-          <td>Worker search</td>
-          <td>The query, normalized and cut to 64 characters</td>
-          <td>
-            The normalized query text, with cache status and latency, for 3 months. With an API key, also a daily
-            count of searches and misses for your app and that query (see below). No IP, key or user id.
-          </td>
-        </tr>
-        <tr>
-          <td>Reaction suggestions</td>
-          <td>The message text, cut to 256 characters</td>
-          <td>Nothing: the text is never logged or cached</td>
-        </tr>
-        <tr>
-          <td>Photo to emoji</td>
-          <td>A small, downscaled image</td>
-          <td>A short caption, cached by a hash of the image. The image itself is dropped after use.</td>
-        </tr>
+        <tr><td>On-device dictionary</td><td>Nothing</td><td>Nothing</td></tr>
+        <tr><td>Precomputed results (shards)</td><td>A request for one static file, named by the first letters of the query</td><td>Nothing. Static files are not logged or metered.</td></tr>
+        <tr><td>Worker search</td><td>The query, normalized and cut to 64 characters</td><td>The normalized query with cache status and latency, without app, key or IP. For keyed calls, also daily counts per app (see below).</td></tr>
+        <tr><td>Reaction suggestions</td><td>The message text, cut to 256 characters</td><td>Nothing. The text is never logged or cached.</td></tr>
+        <tr><td>Photo to emoji</td><td>A small, downscaled image</td><td>With an image hash, a short caption cached by that hash. The image itself is dropped after use.</td></tr>
       </tbody>
     </table>
   </div>
 
-  <h2 id="how-queries-are-used">How we use queries</h2>
-  <p>
-    The Worker writes the normalized text of each query that reaches it to Cloudflare Analytics Engine. A nightly
-    job reads only the queries that appear at least 5 times. Rare strings can be personal, so they are never used.
-  </p>
-  <p>The frequent queries become precomputed results and new aliases, which make search better for everyone.</p>
-  <p>Cloudflare keeps this data for 3 months and then deletes it.</p>
-
-  <h2 id="search-analytics">Search analytics for your app</h2>
-  <p>
-    When a search comes with your API key, the Worker adds it to a daily count. Each row holds exactly these fields:
-    your app, the UTC day, the normalized query (at most 64 characters), the number of searches and the number of
-    misses. A miss is a search that returned no emoji. A row holds no IP address, key or user id. Searches without a
-    key are never counted.
-  </p>
+  <h2 id="what-is-kept">What is kept, and for how long</h2>
   <div class="table-scroll" tabindex="0">
     <table>
-      <thead>
-        <tr>
-          <th scope="col">Plan</th>
-          <th scope="col">How long we keep the rows</th>
-        </tr>
-      </thead>
+      <thead><tr><th scope="col">Data</th><th scope="col">Where</th><th scope="col">Kept</th></tr></thead>
       <tbody>
-        <tr>
-          <td>Scale</td>
-          <td>365 days</td>
-        </tr>
-        <tr>
-          <td>Pro</td>
-          <td>30 days</td>
-        </tr>
-        <tr>
-          <td>Free and Solo</td>
-          <td>7 days. The dashboard does not show them. If you upgrade, you see the last week at once.</td>
-        </tr>
+        <tr><td>Per app, UTC day and normalized query: the number of searches and of misses. Keyed <code>/v1/search</code> calls only.</td><td>D1 <code>query_daily</code></td><td>By plan: {keep}. A daily job deletes older rows.</td></tr>
+        <tr><td>Normalized query text of every search that reached the Worker, with cache status, latency and scores. No app.</td><td>Cloudflare Analytics Engine</td><td>The Analytics Engine retention (3 months)</td></tr>
+        <tr><td>Monthly call counts per app and metric</td><td>D1 <code>usage_monthly</code></td><td>While the app exists</td></tr>
       </tbody>
     </table>
   </div>
-  <p>
-    A job deletes older rows every day. When you delete an app, its rows are deleted with it. The dashboard shows a
-    query by name only after your app saw it at least 5 times in the chosen period. Daily totals include every search.
-  </p>
+  <p>Anonymous calls and development keys never reach the per-app table. The dashboard shows analytics only on plans that include them. The source of truth is the privacy section of the <a href="/docs/api/#privacy">HTTP API reference</a>.</p>
+
+  <h2 id="how-queries-are-used">How Emojisense uses queries</h2>
+  <p>A nightly job reads only the queries that were seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times. Rare strings can be personal, so they are never used. The frequent queries become precomputed results and new aliases, which make search better for every app.</p>
 
   <h2 id="rate-limits">Rate limits without tracking</h2>
-  <p>
-    Rate limits need to tell callers apart. The Worker uses the IP address only as an in-memory key for the
-    limiter. It is never written to logs or storage.
-  </p>
+  <p>Rate limits need to tell callers apart. The Worker uses the IP address only as an in-memory key for the limiter. It is never written to logs or storage.</p>
 
   <h2 id="this-website">This website</h2>
   <ul>
     <li>No cookies, no analytics and no third-party scripts. Fonts are served from this site.</li>
-    <li>The live search on the home page loads the data packs from the Emojisense API and sends unsure queries to it, like any app that uses Emojisense.</li>
-    <li>
-      The waitlist form sends your email and the plan you chose to the dashboard. We use the address only to tell
-      you when the plan opens.
-    </li>
+    <li>The live demos use the Emojisense API like any app. They load the data packs and send unsure searches. They send message text or a photo only when you try those demos, under the rules above.</li>
+    <li>The waitlist form sends your email and the plan you chose to the dashboard. The address is used only to tell you when the plan opens.</li>
   </ul>
-</Docs>
+
+  <Callout type="privacy" title="Questions">
+    <p>The API Worker is open source (MIT). Read <code>packages/worker</code> to see exactly what it records.</p>
+  </Callout>
+</DocsLayout>

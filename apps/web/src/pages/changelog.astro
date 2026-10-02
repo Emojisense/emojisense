@@ -1,0 +1,147 @@
+---
+import PageHero from "../components/PageHero.astro";
+import { REPO_URL } from "../config";
+import Base from "../layouts/Base.astro";
+import { packFacts } from "../lib/pack-facts";
+
+const number = new Intl.NumberFormat("en");
+
+interface Entry {
+  date: string;
+  title: string;
+  tag: string;
+  items: string[];
+}
+
+/** Newest first. Each entry states only what has shipped in this repository. */
+const entries: Entry[] = [
+  {
+    date: "2026-10-02",
+    title: "Early access",
+    tag: "First release",
+    items: [
+      `The engine runs on the device and understands slang, films, feelings and typos${
+        packFacts ? ` in ${packFacts.languages} languages` : ""
+      }.`,
+      packFacts
+        ? `Data pack ${packFacts.packVersion}: ${number.format(packFacts.emojiCount)} emoji from Emoji ${packFacts.emojiVersion}, with search phrases in each language.`
+        : "The first open data pack, with search phrases in each language.",
+      "Search API v1 on Cloudflare: meaning search, reaction suggestions and photo to emoji. It never fails at a plan limit.",
+      "Dashboard: sign in with GitHub, create apps and keys, and see usage against your plan.",
+      "Integrations for React and Frimousse, a web component, Tiptap, Lexical, Swift, Chrome, Raycast and MCP.",
+      "The waitlist for the Solo, Pro and Scale plans is open.",
+    ],
+  },
+];
+
+const formatDate = (iso: string) =>
+  new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${iso}T00:00:00Z`));
+---
+
+<Base title="Changelog" description="What is new in Emojisense: the engine, the data packs, the API and the dashboard." path="/changelog/">
+  <PageHero eyebrow="Changelog" emoji="🗞️" title="What's new." align="start">
+    <p>
+      Emojisense is in early access. Detailed release notes start with the public launch. Until then, the{" "}
+      <a href="/docs/changelog/">docs changelog</a> shows what is coming, and the{" "}
+      <a href={`${REPO_URL}/commits`}>commit history</a> has every change.
+    </p>
+  </PageHero>
+
+  <div class="container changelog">
+    <ol class="changelog-list">
+      {
+        entries.map((entry) => (
+          <li class="changelog-entry">
+            <div class="changelog-when">
+              <time datetime={entry.date}>{formatDate(entry.date)}</time>
+            </div>
+            <article class="changelog-body">
+              <span class="changelog-tag">{entry.tag}</span>
+              <h2>{entry.title}</h2>
+              <ul>
+                {entry.items.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </article>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</Base>
+
+<style>
+  .changelog {
+    padding-bottom: clamp(4rem, 8vw, 6rem);
+  }
+
+  .changelog-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .changelog-entry {
+    display: grid;
+    gap: 0.75rem;
+    padding-top: 2rem;
+    border-top: 0.0625rem solid var(--line);
+  }
+
+  .changelog-when {
+    color: var(--ink-3);
+    font: 400 0.875rem / 1.6 var(--font-mono);
+  }
+
+  .changelog-body {
+    max-width: 44rem;
+  }
+
+  .changelog-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    color: var(--ink-2);
+    font: 500 0.75rem / 1.2 var(--font-mono);
+  }
+
+  .changelog-tag::before {
+    content: "";
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background: var(--live);
+  }
+
+  h2 {
+    margin-bottom: 1rem;
+    font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+    letter-spacing: -0.03em;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0 0 0 1.125rem;
+    list-style: disc;
+    color: var(--ink-2);
+    line-height: 1.6;
+  }
+
+  li::marker {
+    color: var(--ink-3);
+  }
+
+  @media (min-width: 52rem) {
+    .changelog-entry {
+      grid-template-columns: 14rem minmax(0, 1fr);
+      gap: 4rem;
+    }
+  }
+</style>

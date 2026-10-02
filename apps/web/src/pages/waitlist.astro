@@ -1,11 +1,12 @@
 ---
 import { PLANS } from "@emojisense/platform";
 import PageHero from "../components/PageHero.astro";
-import { WAITLIST_ENDPOINT } from "../config";
+import { PLAN_COPY } from "../components/pricing/plan-copy";
+import { DASHBOARD_URL, WAITLIST_ENDPOINT } from "../config";
 import { WaitlistForm } from "../islands/WaitlistForm";
 import Base from "../layouts/Base.astro";
 import { formatUsd } from "../lib/format";
-import { featuresOf } from "../lib/pricing";
+import { type PlanFeature, planViews } from "../lib/pricing";
 import { WAITLIST_PLANS, type WaitlistPlan } from "../lib/waitlist";
 
 const plans = Object.fromEntries(
@@ -15,107 +16,223 @@ const plans = Object.fromEntries(
   ]),
 ) as Record<WaitlistPlan, { name: string; price: string }>;
 
-const pro = featuresOf(PLANS.pro).filter((feature) => feature.value !== false && feature.key !== "search");
+const HIGHLIGHTS_SHOWN = 3;
+const paid = planViews(DASHBOARD_URL).filter((view) =>
+  (WAITLIST_PLANS as readonly string[]).includes(view.id),
+);
+
+/**
+ * AI calls first, then what the plan adds that the one before lacks (tenants, team members),
+ * then custom emoji, then the other raised limits.
+ */
+function keyHighlights(highlights: PlanFeature[]): PlanFeature[] {
+  const rank = (feature: PlanFeature) => {
+    if (feature.key === "semantic_calls") return 0;
+    if (feature.value === true) return 1;
+    return feature.key === "custom_emoji" ? 2 : 3;
+  };
+  return [...highlights].sort((a, b) => rank(a) - rank(b)).slice(0, HIGHLIGHTS_SHOWN);
+}
+
+function describe(feature: PlanFeature): string {
+  return typeof feature.value === "string"
+    ? `${feature.value} ${feature.unit ?? feature.label}`
+    : feature.label;
+}
 ---
 
 <Base
-  title="Pro waitlist"
-  description="Join the Emojisense Pro waitlist. We email you once, when paid plans open."
+  title="Waitlist"
+  description="Join the Emojisense waitlist for Solo, Pro or Scale. We email you once, when your plan opens."
   path="/waitlist/"
 >
-  <PageHero eyebrow="Waitlist" emoji="⏳" title="Join the Pro waitlist.">
-    <p>
-      Paid plans are not on sale yet. Leave your email and we will write once, when your plan opens. The
-      free plan works today.
-    </p>
+  <PageHero eyebrow="Solo · Pro · Scale" emoji="⏳" title="Be first when paid plans open.">
+    <p>Paid plans are not on sale yet. Leave your email and we write once, when your plan opens. The free plan works today.</p>
   </PageHero>
 
-  <div class="wrap layout">
-    <section class="form-panel" aria-label="Waitlist form">
+  <div class="container wl-layout">
+    <section class="card wl-panel" aria-label="Waitlist form">
       <WaitlistForm client:load endpoint={WAITLIST_ENDPOINT} plans={plans} initialPlan="pro" />
       <noscript>
-        <p class="noscript">
-          Without JavaScript the form still sends your address, but you will see the server’s plain reply
-          instead of a confirmation here.
+        <p class="wl-noscript">
+          Without JavaScript the form still sends your address, but you will see the server’s plain reply instead of a
+          confirmation here.
         </p>
       </noscript>
     </section>
 
-    <aside class="card summary" aria-labelledby="pro-title">
-      <h2 id="pro-title">Pro, {formatUsd(PLANS.pro.priceUsdMonthly)} a month</h2>
+    <aside class="wl-plans" aria-labelledby="wl-plans-title">
+      <h2 id="wl-plans-title" class="wl-plans-title">Paid plans at a glance</h2>
       <ul>
         {
-          pro.map((feature) => (
-            <li>
-              <span>{feature.label}</span>
-              <strong>{typeof feature.value === "string" ? feature.value : "Included"}</strong>
+          paid.map((view) => (
+            <li class="wl-plan">
+              <span class="wl-plan-icon" aria-hidden="true">
+                <span class="emoji">{PLAN_COPY[view.id].emoji}</span>
+              </span>
+              <div class="wl-plan-body">
+                <p class="wl-plan-head">
+                  <span class="wl-plan-name">{view.name}</span>
+                  <span class="wl-plan-price">
+                    {view.monthly}
+                    <span>/ month</span>
+                  </span>
+                </p>
+                <p class="wl-plan-inherits">{view.inherits ? `Everything in ${view.inherits}, plus` : "Includes"}</p>
+                <ul class="wl-plan-features">
+                  {keyHighlights(view.highlights).map((feature) => (
+                    <li>{describe(feature)}</li>
+                  ))}
+                </ul>
+              </div>
             </li>
           ))
         }
       </ul>
-      <p><a href="/pricing/">Compare all plans</a></p>
+      <p class="wl-plans-foot">
+        <a href="/pricing/">Compare all plans</a>
+        <span aria-hidden="true">·</span>
+        <a href={`${DASHBOARD_URL}/`}>Start free, no waitlist</a>
+      </p>
     </aside>
   </div>
 </Base>
 
 <style>
-  .layout {
+  .wl-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
     gap: 2.5rem;
-    margin-top: 2.5rem;
+    max-width: 62rem;
+    padding-bottom: clamp(4rem, 8vw, 6rem);
   }
 
-  .form-panel {
-    max-width: 30rem;
-  }
-
-  .noscript {
-    margin: 1rem 0 0;
-    font-size: var(--step--1);
-    color: var(--muted);
-  }
-
-  .summary {
+  .wl-panel {
     align-self: start;
-    padding: 1.25rem 1.5rem;
-    background: var(--sun-soft);
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
   }
 
-  .summary h2 {
-    margin: 0 0 0.75rem;
-    font-size: var(--step-1);
+  .wl-noscript {
+    margin-top: 1rem;
+    color: var(--ink-3);
+    font-size: 0.875rem;
   }
 
-  .summary ul {
+  .wl-plans-title {
+    margin-bottom: 1rem;
+    color: var(--ink-3);
+    font: 500 0.8125rem / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  ul {
     margin: 0;
     padding: 0;
     list-style: none;
-    font-size: var(--step--1);
   }
 
-  .summary li {
+  .wl-plan {
     display: flex;
+    gap: 1rem;
+    padding-block: 1.125rem;
+    border-top: 0.0625rem solid var(--line);
+  }
+
+  .wl-plan:last-child {
+    border-bottom: 0.0625rem solid var(--line);
+  }
+
+  .wl-plan-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    font-size: 1.375rem;
+  }
+
+  .wl-plan-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .wl-plan-head {
+    display: flex;
+    align-items: baseline;
     justify-content: space-between;
     gap: 1rem;
-    padding-block: 0.4375rem;
-    border-bottom: 0.125rem dashed color-mix(in srgb, var(--ink) 15%, transparent);
   }
 
-  .summary strong {
-    font: 400 var(--step--1) / 1.4 var(--font-mono);
+  .wl-plan-name {
+    font: 650 1.125rem / 1.2 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .wl-plan-price {
+    font: 700 1.125rem / 1 var(--font-display);
+    letter-spacing: -0.02em;
     white-space: nowrap;
   }
 
-  .summary p {
-    margin: 1rem 0 0;
-    font-size: var(--step--1);
+  .wl-plan-price span {
+    margin-left: 0.25rem;
+    color: var(--ink-3);
+    font: 400 0.8125rem / 1 var(--font-body);
+    letter-spacing: 0;
+  }
+
+  .wl-plan-inherits {
+    margin: 0.375rem 0 0.25rem;
+    color: var(--ink-3);
+    font-size: 0.8125rem;
+  }
+
+  .wl-plan-features {
+    display: grid;
+    gap: 0.125rem;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .wl-plan-features li::before {
+    content: "+";
+    display: inline-block;
+    width: 1rem;
+    color: var(--ink-3);
+    font-family: var(--font-mono);
+  }
+
+  .wl-plans-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.125rem;
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+  }
+
+  .wl-plans-foot a {
+    color: var(--ink);
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.2em;
+  }
+
+  .wl-plans-foot a:hover {
+    text-decoration-color: currentColor;
   }
 
   @media (min-width: 52rem) {
-    .layout {
-      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    .wl-layout {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
       gap: 4rem;
+    }
+
+    .wl-plans {
+      padding-top: 0.5rem;
     }
   }
 </style>

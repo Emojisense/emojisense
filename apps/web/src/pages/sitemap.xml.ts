@@ -1,10 +1,24 @@
 import { SITE_URL } from "../config";
-import { DOC_PAGES } from "../content/docs";
+import { LEGAL_PAGES } from "../content/legal";
+import { DOCS_PAGES } from "../lib/docs-nav";
 
-const PATHS = ["/", "/pricing/", "/waitlist/", ...DOC_PAGES.map((page) => page.href)];
+/** Every public page. The 404 page and the /dev/ previews are left out on purpose. */
+const SITEMAP_PATHS = [
+  "/",
+  "/pricing/",
+  "/playground/",
+  "/waitlist/",
+  "/about/",
+  "/changelog/",
+  "/legal/",
+  ...LEGAL_PAGES.map((page) => page.href),
+  ...DOCS_PAGES.map((page) => page.href),
+];
 
 export function GET(): Response {
-  const urls = PATHS.map((path) => `  <url><loc>${SITE_URL}${path}</loc></url>`).join("\n");
+  const urls = [...new Set(SITEMAP_PATHS)]
+    .map((path) => `  <url><loc>${SITE_URL}${path}</loc></url>`)
+    .join("\n");
   const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls}

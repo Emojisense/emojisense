@@ -3,35 +3,99 @@ interface Props {
   eyebrow: string;
   emoji: string;
   title: string;
+  /** "start" for long-form pages (legal, changelog); the default centers the hero. */
+  align?: "center" | "start";
 }
 
-const { eyebrow, emoji, title } = Astro.props;
+const { eyebrow, emoji, title, align = "center" } = Astro.props;
 ---
 
-<section class="page-hero">
+<section class:list={["page-hero", `page-hero-${align}`]}>
   <div class="container">
-    <p class="eyebrow"><span class="emoji" aria-hidden="true">{emoji}</span> {eyebrow}</p>
+    <p class="page-hero-eyebrow">
+      <span class="emoji" aria-hidden="true">{emoji}</span>
+      <span>{eyebrow}</span>
+    </p>
     <h1>{title}</h1>
-    <div class="lead"><slot /></div>
+    {
+      Astro.slots.has("default") && (
+        <div class="lead page-hero-lead">
+          <slot />
+        </div>
+      )
+    }
   </div>
 </section>
 
 <style>
   .page-hero {
-    padding: clamp(3rem, 7vw, 5rem) 0 clamp(2rem, 4vw, 3rem);
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(3.5rem, 8vw, 6rem) clamp(2rem, 4vw, 3rem);
+  }
+
+  /* A faint dot grid that fades out: texture without color. */
+  .page-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(var(--line-strong) 0.0625rem, transparent 0.0625rem);
+    background-size: 1.375rem 1.375rem;
+    mask-image: radial-gradient(48rem 20rem at 50% 0%, #000 0%, transparent 75%);
+    opacity: 0.7;
+  }
+
+  .page-hero-start::before {
+    mask-image: radial-gradient(40rem 18rem at 12% 0%, #000 0%, transparent 75%);
+  }
+
+  .page-hero-center {
     text-align: center;
-    background: radial-gradient(50rem 22rem at 50% -20%, var(--lemon), transparent 70%);
+  }
+
+  .page-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.375rem 0.875rem 0.375rem 0.625rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink-2);
+    font: 500 0.8125rem / 1 var(--font-mono);
+    letter-spacing: 0.01em;
+  }
+
+  .page-hero-eyebrow .emoji {
+    font-size: 1rem;
   }
 
   h1 {
-    max-width: 44rem;
-    margin-inline: auto;
-    font-size: clamp(2.5rem, 1.6rem + 3.4vw, 4rem);
-    font-weight: 800;
+    max-width: 48rem;
+    font-size: clamp(2.5rem, 1.5rem + 3.6vw, 4.25rem);
+    letter-spacing: -0.045em;
   }
 
-  .lead {
-    max-width: 38rem;
+  .page-hero-center h1,
+  .page-hero-center .page-hero-lead {
     margin-inline: auto;
+  }
+
+  .page-hero-lead {
+    max-width: 38rem;
+  }
+
+  .page-hero-lead :global(a) {
+    color: var(--ink);
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.2em;
+    transition: text-decoration-color 160ms;
+  }
+
+  .page-hero-lead :global(a:hover) {
+    text-decoration-color: currentColor;
   }
 </style>

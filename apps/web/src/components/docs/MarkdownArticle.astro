@@ -1,0 +1,21 @@
+---
+import { splitCodeBlocks } from "./article";
+import CodeBlock from "./CodeBlock.astro";
+
+interface Props {
+  /** HTML from lib/markdown.ts (renderMarkdown). */
+  html: string;
+}
+
+const segments = splitCodeBlocks(Astro.props.html);
+---
+
+{
+  segments.map((segment) =>
+    segment.kind === "html" ? (
+      <Fragment set:html={segment.html} />
+    ) : (
+      <CodeBlock code={segment.code} lang={segment.lang} />
+    ),
+  )
+}

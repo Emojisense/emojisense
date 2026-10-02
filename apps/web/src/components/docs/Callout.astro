@@ -1,0 +1,38 @@
+---
+export type CalloutType = "note" | "tip" | "warning" | "privacy" | "planned" | "next" | "experimental";
+
+interface Props {
+  type?: CalloutType;
+  title?: string;
+}
+
+const ICONS: Record<CalloutType, string> = {
+  note: "📌",
+  tip: "💡",
+  warning: "⚠️",
+  privacy: "🔒",
+  planned: "🗺️",
+  next: "🚀",
+  experimental: "🧪",
+};
+
+const LABELS: Record<CalloutType, string> = {
+  note: "Note",
+  tip: "Tip",
+  warning: "Warning",
+  privacy: "Privacy",
+  planned: "Planned",
+  next: "Coming in this release",
+  experimental: "Experimental",
+};
+
+const { type = "note", title } = Astro.props;
+---
+
+<aside class="docs-callout" data-type={type} aria-label={title ?? LABELS[type]}>
+  <span class="docs-callout-icon emoji" aria-hidden="true">{ICONS[type]}</span>
+  <div class="docs-callout-body">
+    {title && <p class="docs-callout-title">{title}</p>}
+    <slot />
+  </div>
+</aside>

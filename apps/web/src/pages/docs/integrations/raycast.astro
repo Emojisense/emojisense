@@ -1,0 +1,46 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+
+const dev = `pnpm install && pnpm data:build                  # once, from the repository root
+pnpm --filter emojisense-search build            # copy the packs, then ray build
+pnpm --filter emojisense-search dev              # ray develop: opens it in Raycast`;
+---
+
+<DocsLayout path="/docs/integrations/raycast/">
+  <p>The Raycast extension has one command, <strong>Search Emoji</strong>. Type what you mean, such as “ship it”, “greatest of all time” or “kolay gelsin”, and get ranked emoji. Each row shows the emoji, its name and why it matched: the alias phrase, the shortcode, or “similar meaning” for a meaning result.</p>
+  <p>Search runs on your machine with the engine and the packs inside the extension. It needs no network and no account.</p>
+
+  <h2 id="install">Install</h2>
+  <Callout type="note" title="Not in the Raycast Store yet">
+    <p>Run it from the repository in development mode. It needs the Raycast app.</p>
+  </Callout>
+  <CodeBlock code={dev} lang="bash" />
+
+  <h2 id="use">Use</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Key</th><th scope="col">Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>↵</kbd></td><td>Paste the emoji into the active app (or copy, see preferences)</td></tr>
+        <tr><td><kbd>⌘</kbd> <kbd>↵</kbd></td><td>Copy the emoji (or paste)</td></tr>
+        <tr><td><kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>C</kbd></td><td>Copy the Emojibase hexcode, for example <code>1F680</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="preferences">Preferences</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Preference</th><th scope="col">Default</th><th scope="col">Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>Language</td><td>English</td><td>Labels and ranking. English and Turkish are always both searched.</td></tr>
+        <tr><td>Primary Action</td><td>Paste</td><td>What <kbd>↵</kbd> does</td></tr>
+        <tr><td>API URL</td><td>empty</td><td>Optional. With a URL, unsure queries also get meaning results from the API. Must be <code>https://</code> (or <code>http://localhost</code>).</td></tr>
+        <tr><td>API Key</td><td>empty</td><td>Optional. A secret key is sent as <code>Authorization: Bearer</code>, a publishable key as <code>?key=</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>When the API fails, times out after 4 seconds or reports <code>overLimit</code>, the list keeps the offline results.</p>
+</DocsLayout>

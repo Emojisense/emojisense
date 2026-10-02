@@ -1,0 +1,97 @@
+---
+import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_FIXTURES, API_HOST, prettyResponse } from "../../../components/docs/facts";
+import { formatCount } from "../../../lib/format";
+
+const { image } = API_FIXTURES;
+
+const browser = `/** Downscale to about 384 px on the long edge, as a JPEG, before sending. */
+async function downscale(file: Blob, maxEdge = 384): Promise<Blob> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("encode failed"))),
+      "image/jpeg",
+      0.85,
+    );
+  });
+}
+
+export async function emojiForPhoto(file: File): Promise<string[]> {
+  const url = "${API_HOST}/v1/classify-image?key=pk_live_…&limit=5";
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "image/jpeg" },
+    body: await downscale(file),
+  });
+  if (!response.ok) return [];
+  const { results } = await response.json();
+  return results.map((result) => result.emoji);
+}`;
+
+const curl = `curl -X POST "${API_HOST}/v1/classify-image?locale=en&limit=5" \\
+  -H "Authorization: Bearer sk_live_…" \\
+  -H "Content-Type: image/jpeg" \\
+  --data-binary @photo-384.jpg`;
+---
+
+<DocsLayout path="/docs/guides/photo-to-emoji/">
+  <p>Someone shares a photo, and your app suggests the emoji that fit it: 🎂 for a birthday cake, 🐶 for a puppy. Use it for reaction suggestions on images, for alt-text helpers, or to tag uploads.</p>
+
+  <h2 id="how-it-works">How it works</h2>
+  <p>You send a small image to <code>POST /v1/classify-image</code>. A vision model on Workers AI writes a short caption and the reaction a person would likely have. Emojisense then searches with that text, like a message, and returns ranked emoji.</p>
+  <Callout type="privacy" title="The image is never stored">
+    <p>The image is processed in memory and dropped. It is never logged or saved. With an image hash (see below), only the caption is cached.</p>
+  </Callout>
+
+  <h2 id="call-it">Call it</h2>
+  <p>Downscale the image in the client first, to about 384 px on the long edge. The API accepts JPEG or WebP up to 256 KB. Smaller images are faster and cost the same.</p>
+  <CodeTabs
+    tabs={[
+      { label: "Browser", code: browser, lang: "ts" },
+      { label: "curl", code: curl, lang: "bash" },
+    ]}
+    label="Where you call from"
+  />
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Part</th><th scope="col">Value</th></tr></thead>
+      <tbody>
+        <tr><td>Body</td><td>The image bytes, <code>Content-Type: image/jpeg</code> or <code>image/webp</code>, at most 256 KB.</td></tr>
+        <tr><td><code>?locale=</code></td><td><code>en</code> (default) or <code>tr</code>, for the dictionary part.</td></tr>
+        <tr><td><code>?limit=</code></td><td>Number of results, 1–50. Default 8.</td></tr>
+        <tr><td><code>X-Image-Hash</code></td><td>Optional. A 64-bit perceptual hash of the image as 16 hex characters. It turns on the caption cache.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="response">Response</h2>
+  <p>The real answer for a photo of a birthday cake with a “3” candle, sent as a {image.photo}:</p>
+  <CodeBlock code={prettyResponse(image.response)} lang="json" title="200 OK" />
+  <p>The model’s own <code>reaction</code> text is part of the search, so 🎂 and 🎇 come from the dictionary, and 🧁 🎈 🥳 from meaning search. Vision models are not fully deterministic: the same photo can get a slightly different caption.</p>
+
+  <h2 id="cache">Cache repeated images</h2>
+  <p>The same meme is often shared many times. Send <code>X-Image-Hash</code> with a perceptual hash (for example a 64-bit difference hash), and the API caches the caption for that hash in the data center. Later calls with the same hash skip the vision model. Every call still counts as one classification, also when it is a cache hit.</p>
+
+  <h2 id="limits">Plans and limits</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Plan</th><th scope="col">Classifications a month</th></tr></thead>
+      <tbody>
+        {PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].limits.image_classifications)}</td></tr>)}
+      </tbody>
+    </table>
+  </div>
+  <p>Over the limit, the API answers <code>200</code> with <code>"overLimit": true</code> and no results until the next month. There is no on-device vision model, so show your normal picker in that case. If Workers AI is unavailable, the answer has <code>"degraded": true</code>, no results, and is not counted.</p>
+  <p>Errors: <code>400</code> for a wrong content type, an unreadable image or a bad hash, and <code>413</code> for an image over 256 KB.</p>
+</DocsLayout>
