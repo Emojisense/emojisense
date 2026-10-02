@@ -177,6 +177,12 @@ export const DOCS_SECTIONS: DocsSection[] = [
         description: "Search emoji by meaning from Raycast and paste them into any app.",
       },
       {
+        href: "/docs/integrations/wordpress/",
+        title: "WordPress",
+        description:
+          "Colon autocomplete in the block editor, post reactions and an emoji picker in comments.",
+      },
+      {
         href: "/docs/integrations/http/",
         title: "HTTP",
         description: "Call the API from any language or server with plain HTTP.",

@@ -1,0 +1,58 @@
+// The picker dialog of the classic editor and the comment form. Calm and flat: the emoji are
+// the only color. `is-dark` is set on dark pages (popover.ts reads the background behind the button).
+
+.emojisense-popover {
+  position: absolute;
+  z-index: 100110;
+  width: max-content;
+  max-width: calc(100vw - 1rem);
+  border: 0.0625rem solid rgb(13 13 18 / 0.12);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 0.125rem 0.25rem rgb(13 13 18 / 0.04), 0 1rem 3rem rgb(13 13 18 / 0.14);
+  overflow: hidden;
+}
+
+.emojisense-popover emojisense-picker.emojisense-picker {
+  display: block;
+  --emojisense-accent: #eeeef2;
+  --emojisense-ink: #0d0d12;
+  --emojisense-background: #fff;
+  --emojisense-surface: #f6f6f8;
+  --emojisense-muted: #6b6b76;
+  --emojisense-found: #0d0d12;
+  --emojisense-none: #6b6b76;
+  --emojisense-focus: #3d7bff;
+  --emojisense-depth-color: transparent;
+  --emojisense-outline-width: 0.0625rem;
+  --emojisense-radius: 0.75rem;
+  --emojisense-key-radius: 0.5rem;
+  --emojisense-height: 18rem;
+  --emojisense-font-family: inherit;
+}
+
+.emojisense-popover emojisense-picker.emojisense-picker::part(root) {
+  border: 0;
+  box-shadow: none;
+}
+
+.emojisense-popover emojisense-picker.emojisense-picker::part(option) {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.emojisense-popover.is-dark {
+  border-color: rgb(255 255 255 / 0.12);
+  background: #141419;
+}
+
+.emojisense-popover.is-dark emojisense-picker.emojisense-picker {
+  color-scheme: dark;
+  --emojisense-accent: #24242c;
+  --emojisense-ink: #f3f3f6;
+  --emojisense-background: #141419;
+  --emojisense-surface: #1b1b22;
+  --emojisense-muted: #a0a0ac;
+  --emojisense-found: #f3f3f6;
+  --emojisense-none: #a0a0ac;
+}

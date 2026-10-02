@@ -1,0 +1,37 @@
+.emojisense-settings__lead {
+  max-width: 44rem;
+  font-size: 0.875rem;
+}
+
+// Core styles `.form-table td fieldset label` as inline blocks; one post type per line reads better.
+.form-table td fieldset label.emojisense-settings__choice {
+  display: block;
+  margin: 0 0 0.5rem !important;
+}
+
+.emojisense-settings__emoji {
+  font-size: 1.125rem;
+  letter-spacing: 0.125rem;
+}
+
+.emojisense-settings__origins code {
+  user-select: all;
+}
+
+// API settings stay editable without the connection, but read as inactive.
+.emojisense-settings__row--off th,
+.emojisense-settings__row--off td {
+  opacity: 0.6;
+}
+
+.emojisense-settings__test-result {
+  margin-left: 0.5rem;
+}
+
+.emojisense-settings__test-result.is-ok {
+  color: #00a32a;
+}
+
+.emojisense-settings__test-result.is-error {
+  color: #d63638;
+}

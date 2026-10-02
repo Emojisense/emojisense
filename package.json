@@ -41,7 +41,8 @@
   "pnpm": {
     "overrides": {
       "@clerk/shared": "4.35.0",
-      "@types/react": "19.3.0"
+      "@types/react": "19.3.0",
+      "jsdoc-type-pratt-parser>@types/node": "24.13.6"
     }
   }
 }
