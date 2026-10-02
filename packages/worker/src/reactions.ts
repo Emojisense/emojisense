@@ -41,7 +41,7 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
   const customSet = await custom.forCaller(caller, tenant);
 
   const overLimit = await metering.overLimit("semantic_calls");
-  const embedded = overLimit ? { degraded: false, ms: 0 } : await embedQuery(env, catalog, text, true);
+  const embedded = overLimit ? { degraded: false, ms: 0 } : await embedQuery(env, catalog, text);
   const ranked = rankReactions(catalog.engine(), {
     text,
     locale,

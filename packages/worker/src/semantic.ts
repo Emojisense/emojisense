@@ -48,24 +48,17 @@ export interface Embedded {
 }
 
 /**
- * Embed a query, never throwing: a Workers AI failure is logged (the error name only when the
- * text is user content) and reported as degraded.
+ * Embed a query, never throwing: a Workers AI failure is logged and reported as degraded. The
+ * log holds the error type only, because a message could quote the input, and logs never hold
+ * user text (search queries included).
  */
-export async function embedQuery(
-  env: Env,
-  catalog: Catalog,
-  text: string,
-  privateText = false,
-): Promise<Embedded> {
+export async function embedQuery(env: Env, catalog: Catalog, text: string): Promise<Embedded> {
   const started = Date.now();
   try {
     const vector = await embed(env, catalog, text);
     return { vector, degraded: false, ms: Date.now() - started };
   } catch (error) {
-    const { name, message } = error as Error;
-    console.warn(
-      JSON.stringify({ event: "semantic_unavailable", error: name, ...(privateText ? {} : { message }) }),
-    );
+    console.warn(JSON.stringify({ event: "semantic_unavailable", error: (error as Error).name }));
     return { degraded: true, ms: Date.now() - started };
   }
 }
@@ -79,8 +72,6 @@ export interface RankOptions {
   limit: number;
   /** Treat the last alias token as a prefix (typing). False for whole messages and captions. */
   prefix?: boolean;
-  /** The text is user content (reactions, captions): never put error details in the logs. */
-  privateText?: boolean;
 }
 
 export interface Ranked {
@@ -107,7 +98,7 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
   let degraded = false;
   let embedMs = 0;
   if (embedText !== undefined) {
-    const embedded = await embedQuery(env, catalog, embedText, options.privateText);
+    const embedded = await embedQuery(env, catalog, embedText);
     ({ degraded, ms: embedMs } = embedded);
     if (embedded.vector) {
       semantic = searchVectors(catalog.index(), embedded.vector, limit).map((m) => ({

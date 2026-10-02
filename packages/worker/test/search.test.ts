@@ -73,6 +73,17 @@ describe("GET /v1/search", () => {
     warn.mockRestore();
   });
 
+  it("logs only the error type when Workers AI fails, never the query", async () => {
+    const h = harness();
+    h.env.AI = { run: async () => Promise.reject(new TypeError("model failed on: rocket launch")) };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await h.call(search("rocket launch"));
+    await h.ctx.settle();
+    expect(warn).toHaveBeenCalledWith(JSON.stringify({ event: "semantic_unavailable", error: "TypeError" }));
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("rocket");
+    warn.mockRestore();
+  });
+
   it("rejects empty queries, wrong methods, unknown paths and rate-limited callers", async () => {
     const h = harness();
     expect((await h.call(search("🚀"))).status).toBe(400);

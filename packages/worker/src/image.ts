@@ -139,7 +139,6 @@ export const handleClassifyImage: Handler = async (request, env, ctx, { catalog,
     embedText: label.caption,
     locale,
     limit: CAPTION_NEIGHBOURS,
-    privateText: true,
   });
   const results = rankImage(engine, label, neighbours.semantic ? neighbours.results : undefined, limit);
   const { caption, reaction, keywords } = label;
