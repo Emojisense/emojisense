@@ -56,7 +56,9 @@ export interface ConceptContext {
 
 /** Off with CONCEPTS_ENABLED=false, or without Workers AI. */
 export function conceptsEnabled(env: Env): boolean {
-  return env.CONCEPTS_ENABLED !== "false" && env.AI !== undefined;
+  // The LLM concept tier is removed (owner decision); this stays off until the code is deleted.
+  void env;
+  return false;
 }
 
 /** Part of the search cache key: answers of another model, prompt or setting are never reused. */
