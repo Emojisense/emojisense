@@ -1,7 +1,7 @@
 /**
  * Copy one pack version + the production vector files from packages/data into the Worker.
  *
- *   tsx scripts/sync-pack.ts --model bge-m3 --dims 1024
+ *   tsx scripts/sync-pack.ts [--model embeddinggemma --dims 768]   (default: pack.config.json)
  *
  * src/generated/   bundled into the Worker (config, locale packs, shared vectors) — committed
  * public/v1/pack/  static assets served at /v1/pack/<version>/… (packs, every vector file; the
@@ -41,9 +41,10 @@ const { values: args } = parseArgs({
   // pnpm forwards a literal "--"; drop it so flags after it still parse.
   args: process.argv.slice(2).filter((a) => a !== "--"),
   options: {
-    // The production model (owner decision, 2026-10-02): bge-m3, p95 ≈ 65 ms inside Cloudflare.
-    model: { type: "string", default: "bge-m3" },
-    dims: { type: "string", default: "1024" },
+    // Default: the production model of pack.config.json (DECISIONS.md, "EmbeddingGemma for the
+    // semantic tier"). `--model bge-m3 --dims 1024` rolls back to the previous one.
+    model: { type: "string" },
+    dims: { type: "string" },
     // Local-only: write an empty vector file when embeddings do not exist yet (alias-only Worker).
     placeholder: { type: "boolean", default: false },
     culture: { type: "boolean", default: true },
@@ -51,9 +52,12 @@ const { values: args } = parseArgs({
   },
   allowNegative: true,
 });
-const model = getModel(args.model as string);
-const dims = Number(args.dims);
-const packVersion = JSON.parse(readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8")).packVersion;
+const packConfig: { packVersion: string; model: { key: string; dims: number } } = JSON.parse(
+  readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8"),
+);
+const model = getModel(args.model ?? packConfig.model.key);
+const dims = Number(args.dims ?? packConfig.model.dims);
+const { packVersion } = packConfig;
 const source = join(DATA_ROOT, "dist", "packs", packVersion);
 const vectorFile = vectorFileName(model.key, dims);
 

@@ -2,5 +2,6 @@
   "packVersion": "0.1.0",
   "emojiVersion": "17.0",
   "initialAliases": 16,
-  "model": { "key": "bge-m3", "dims": 1024 }
+  "model": { "key": "embeddinggemma", "dims": 768 },
+  "glyph": { "template": true }
 }
