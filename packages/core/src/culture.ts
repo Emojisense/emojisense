@@ -11,15 +11,18 @@ export const CULTURE_FORMAT_VERSION = 1;
 
 export type CultureKind = "lasting" | "seasonal" | "event";
 
-/** Inclusive days: "MM-DD" with `recurs: "yearly"` (may wrap the year end), else "YYYY-MM-DD". */
+/**
+ * Inclusive days: "MM-DD" with `recurs: "yearly"` (may wrap the year end), else "YYYY-MM-DD".
+ * A festival on a lunar calendar is one dated entry per year (e.g. `diwali-2026`).
+ */
 export interface CultureWindow {
   from: string;
   to: string;
   recurs?: "yearly";
 }
 
-/** `null` = always. A list = several windows, e.g. one per year for a lunar-calendar festival. */
-export type CultureWhen = CultureWindow | CultureWindow[] | null;
+/** `null` = always (lasting entries). */
+export type CultureWhen = CultureWindow | null;
 
 /** `[emoji, hexcode, weight]`, weight 0–1, strongest first. */
 export type CultureEmoji = [emoji: string, hexcode: string, weight: number];
@@ -115,10 +118,17 @@ export interface LoadCultureOptions {
   signal?: AbortSignal;
 }
 
+/** A BCP 47-style locale tag: "en", "pt", "zh-Hans", "pt-BR". Nothing that can change the URL path. */
+const LOCALE_TAG = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/;
+
 /** Fetch one locale's culture file. It changes daily, so it is cached for an hour, not forever. */
 export async function loadCulture(options: LoadCultureOptions): Promise<Culture> {
+  if (!LOCALE_TAG.test(options.locale)) {
+    throw new Error(`emojisense: "${options.locale}" is not a locale tag`);
+  }
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
-  const url = `${options.baseUrl.replace(/\/+$/, "")}/culture.${options.locale}.json`;
+  const file = encodeURIComponent(`culture.${options.locale}.json`);
+  const url = `${options.baseUrl.replace(/\/+$/, "")}/${file}`;
   const response = await doFetch(url, { signal: options.signal ?? null });
   if (!response.ok) {
     throw new Error(`emojisense: culture file for "${options.locale}" failed with HTTP ${response.status}`);
@@ -139,11 +149,10 @@ export function localDay(now: Date | number = Date.now()): string {
 /** Is a `when` active on `day` ("YYYY-MM-DD")? Yearly windows may wrap the year end (12-26 → 01-02). */
 export function isActiveOn(when: CultureWhen, day: string): boolean {
   if (when === null) return true;
+  const { from, to, recurs } = when;
+  if (recurs !== "yearly") return from <= day && day <= to;
   const monthDay = day.slice(5);
-  return (Array.isArray(when) ? when : [when]).some(({ from, to, recurs }) => {
-    if (recurs !== "yearly") return from <= day && day <= to;
-    return from <= to ? from <= monthDay && monthDay <= to : monthDay >= from || monthDay <= to;
-  });
+  return from <= to ? from <= monthDay && monthDay <= to : monthDay >= from || monthDay <= to;
 }
 
 function inScope(entry: CultureEntry, region: string | undefined, day: string): boolean {

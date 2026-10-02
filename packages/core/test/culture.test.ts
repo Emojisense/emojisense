@@ -138,14 +138,11 @@ describe("windows", () => {
     expect(isActiveOn(when, "2027-06-15")).toBe(false);
   });
 
-  it("accepts one window per year for lunar-calendar festivals", () => {
-    const when = [
-      { from: "2026-02-08", to: "2026-03-19" },
-      { from: "2027-01-29", to: "2027-03-08" },
-    ];
-    expect(isActiveOn(when, "2026-03-01")).toBe(true);
-    expect(isActiveOn(when, "2026-12-01")).toBe(false);
-    expect(isActiveOn(when, "2027-02-08")).toBe(true);
+  it("handles a dated window that crosses the year end", () => {
+    const when = { from: "2027-12-24", to: "2028-01-01" };
+    expect(isActiveOn(when, "2027-12-31")).toBe(true);
+    expect(isActiveOn(when, "2028-01-01")).toBe(true);
+    expect(isActiveOn(when, "2026-12-31")).toBe(false);
   });
 
   it("uses the local calendar day", () => {
@@ -384,5 +381,17 @@ describe("loadCulture", () => {
         fetch: async () => new Response(JSON.stringify(en)),
       }),
     ).rejects.toThrow("not an emojisense culture file");
+  });
+
+  it("refuses locales that are not plain locale tags, before any request", async () => {
+    const fetch = vi.fn(async (_url: string | URL | Request) => new Response(JSON.stringify(culture([]))));
+    for (const locale of ["../../v1/pack/0.1.0/pack.en", "en/../x", "en?x=1", "en#", "EN", "", "e"]) {
+      await expect(loadCulture({ baseUrl: "https://x.test", locale, fetch })).rejects.toThrow(
+        "is not a locale tag",
+      );
+    }
+    expect(fetch).not.toHaveBeenCalled();
+    await loadCulture({ baseUrl: "https://x.test", locale: "pt-BR", fetch });
+    expect(String(fetch.mock.calls[0]?.[0])).toBe("https://x.test/culture.pt-BR.json");
   });
 });
