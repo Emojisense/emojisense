@@ -29,6 +29,14 @@ export const USAGE_SNAPSHOT_TTL_MS = 60_000;
 export const FLUSH_INTERVAL_MS = 10_000;
 /** …or when this many calls are waiting, whichever comes first. */
 export const FLUSH_MAX_PENDING = 100;
+/** Search analytics: at most this many query_daily rows per flush (one D1 batch); the rest wait. */
+export const QUERY_FLUSH_MAX_ROWS = 100;
+/** Distinct rows an isolate holds while D1 is down. New rows past it are dropped (best effort). */
+export const QUERY_MAX_PENDING_ROWS = 10_000;
+/** The retention cron deletes query_daily rows in batches of this size… */
+export const RETENTION_DELETE_BATCH = 1_000;
+/** …and at most this many batches per run. A larger backlog is finished by the next runs. */
+export const RETENTION_MAX_BATCHES = 200;
 
 export const BROWSER_CACHE = "public, max-age=3600, s-maxage=86400";
 export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;

@@ -21,22 +21,35 @@ export interface UsageDelta {
 
 export type UsageCounts = Partial<Record<Metric, number>>;
 
+/** Searches of one app for one normalized query on one UTC day (query_daily). */
+export interface QueryCount {
+  appId: string;
+  /** "YYYY-MM-DD", UTC (dayOf). */
+  day: string;
+  query: string;
+  searches: number;
+  misses: number;
+}
+
 /** The Worker's view of the hosted-service database (packages/platform/migrations). */
 export interface Store {
   findKeyByHash(hash: string): Promise<ApiKey | undefined>;
   readUsage(appId: string, period: string): Promise<UsageCounts>;
   /** Adds the deltas to usage_monthly in one batch. */
   addUsage(deltas: readonly UsageDelta[]): Promise<void>;
+  /** Adds the counts to query_daily in one batch. Rows of apps that no longer exist are skipped. */
+  addQueryCounts(counts: readonly QueryCount[]): Promise<void>;
 }
 
 /**
  * The subset of the D1 API this module uses. Declared structurally so the store can be tested
- * against a plain SQLite database (test/d1-store.test.ts) without the Workers runtime.
+ * against a plain SQLite database (test/sqlite-d1.ts) without the Workers runtime.
  */
 export interface D1Statement {
   bind(...values: unknown[]): D1Statement;
   first<T>(): Promise<T | null>;
   all<T>(): Promise<{ results: T[] }>;
+  run(): Promise<{ meta: { changes: number } }>;
 }
 
 export interface D1Like {
@@ -61,6 +74,16 @@ const READ_USAGE = "SELECT metric, count FROM usage_monthly WHERE app_id = ? AND
 const ADD_USAGE = `
   INSERT INTO usage_monthly (app_id, period, metric, count) VALUES (?, ?, ?, ?)
   ON CONFLICT (app_id, period, metric) DO UPDATE SET count = count + excluded.count`;
+/**
+ * Selecting the app id from apps skips the row of a deleted app, instead of failing the whole
+ * batch on the foreign key. (SQLite needs this WHERE to parse INSERT … SELECT … ON CONFLICT.)
+ */
+const ADD_QUERY_COUNT = `
+  INSERT INTO query_daily (app_id, day, query, searches, misses)
+  SELECT a.id, ?, ?, ?, ? FROM apps a WHERE a.id = ?
+  ON CONFLICT (app_id, day, query) DO UPDATE SET
+    searches = searches + excluded.searches,
+    misses = misses + excluded.misses`;
 
 /** Matches no real Origin header. An empty list would mean "any origin". */
 const NO_ORIGIN = ["null:deny"];
@@ -102,6 +125,11 @@ export function createD1Store(db: D1Like): Store {
       const statement = db.prepare(ADD_USAGE);
       await db.batch(deltas.map((d) => statement.bind(d.appId, d.period, d.metric, d.count)));
     },
+    async addQueryCounts(counts) {
+      if (counts.length === 0) return;
+      const statement = db.prepare(ADD_QUERY_COUNT);
+      await db.batch(counts.map((c) => statement.bind(c.day, c.query, c.searches, c.misses, c.appId)));
+    },
   };
 }
 
@@ -110,14 +138,20 @@ export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
   const keysByHash = new Map(Object.entries(keys));
   const usage = new Map<string, number>();
   const usageKey = (appId: string, period: string, metric: string) => `${appId}|${period}|${metric}`;
+  const queries = new Map<string, QueryCount>();
+  const queryKey = (appId: string, day: string, query: string) => `${appId}|${day}|${query}`;
   const store: Store & {
     keys: Map<string, ApiKey>;
     usage: Map<string, number>;
     usageOf(appId: string, period: string, metric: Metric): number;
+    queries: Map<string, QueryCount>;
+    queryCountOf(appId: string, day: string, query: string): QueryCount | undefined;
   } = {
     keys: keysByHash,
     usage,
     usageOf: (appId, period, metric) => usage.get(usageKey(appId, period, metric)) ?? 0,
+    queries,
+    queryCountOf: (appId, day, query) => queries.get(queryKey(appId, day, query)),
     async findKeyByHash(hash) {
       // A copy, like a fresh D1 row: callers may cache it while the "table" changes.
       const key = keysByHash.get(hash);
@@ -133,6 +167,18 @@ export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
       for (const d of deltas) {
         const key = usageKey(d.appId, d.period, d.metric);
         usage.set(key, (usage.get(key) ?? 0) + d.count);
+      }
+    },
+    async addQueryCounts(counts) {
+      for (const c of counts) {
+        const key = queryKey(c.appId, c.day, c.query);
+        const current = queries.get(key);
+        if (current) {
+          current.searches += c.searches;
+          current.misses += c.misses;
+        } else {
+          queries.set(key, { ...c });
+        }
       }
     },
   };
