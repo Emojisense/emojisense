@@ -4,6 +4,7 @@ import type { Env } from "./env.ts";
 import { corsHeaders, errorResponse, json } from "./http.ts";
 import { handleClassifyImage } from "./image.ts";
 import { Meter, type WaitUntil } from "./meter.ts";
+import { QueryStats } from "./query-stats.ts";
 import { handleReactions } from "./reactions.ts";
 import { handleSearch } from "./search.ts";
 import { type Catalog, modelTag } from "./semantic.ts";
@@ -30,7 +31,7 @@ const ROUTES: Record<string, { method: "GET" | "POST"; handle: Handler }> = {
  */
 export function createApp(options: AppOptions) {
   const { catalog } = options;
-  let services: { resolver: KeyResolver; meter: Meter } | undefined;
+  let services: { resolver: KeyResolver; meter: Meter; queryStats: QueryStats } | undefined;
   const servicesFor = (env: Env) => {
     if (!services) {
       const store = options.store?.(env);
@@ -38,6 +39,7 @@ export function createApp(options: AppOptions) {
       services = {
         resolver: new KeyResolver({ store, devKeys: env.DEV_KEYS, ...(now ? { now } : {}) }),
         meter: new Meter({ store, ...(now ? { now } : {}) }),
+        queryStats: new QueryStats({ store, ...(now ? { now } : {}) }),
       };
     }
     return services;
@@ -47,6 +49,10 @@ export function createApp(options: AppOptions) {
     /** Exposed for tests: the per-isolate meter after the first request. */
     get meter() {
       return services?.meter;
+    },
+    /** Exposed for tests: the per-isolate search analytics after the first request. */
+    get queryStats() {
+      return services?.queryStats;
     },
     async fetch(request: Request, env: Env, ctx: WaitUntil): Promise<Response> {
       const url = new URL(request.url);
@@ -67,10 +73,10 @@ export function createApp(options: AppOptions) {
         return errorResponse(405, "method not allowed", { Allow: `${route.method}, OPTIONS` });
       }
 
-      const { resolver, meter } = servicesFor(env);
+      const { resolver, meter, queryStats } = servicesFor(env);
       const principal = await authenticate(request, url, env, resolver);
       if (principal instanceof Response) return principal;
-      const metering = createMetering(principal, meter, ctx);
+      const metering = createMetering(principal, meter, queryStats, ctx);
       return route.handle(request, env, ctx, { catalog, cache: options.cache() }, metering);
     },
   };
