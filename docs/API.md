@@ -102,10 +102,11 @@ are matched against the query and put first, in both modes, within `limit`:
   No `locale` (or an empty one) means `en`.
 - Any other language answers `400` with the supported list, e.g. `unknown locale "de": use one of
   en, zh, hi, es, ar, fr, bn, pt, ru, id, tr (or a BCP 47 tag of one, e.g. pt-BR)`.
-- Search and reactions rank with the English pack plus the requested locale's pack, the same
-  data an SDK loads on the device. English matches still count, slightly below the locale's own.
-- `en` and `tr` are built into the Worker. The other locales load their core pack on the first
-  request in a Worker instance (≈ 0.1–0.3 s once), then answer as fast as `en`.
+- Search and reactions rank with the English core pack plus the requested locale's core and ext
+  packs, close to what an SDK has after its idle-time load (it also has the English ext pack).
+  English matches still count, slightly below the locale's own.
+- `en` and `tr` are built into the Worker. The other locales load their core and ext packs on
+  the first request in a Worker instance (≈ 0.2–0.4 s once), then answer as fast as `en`.
 
 ## `POST /v1/suggest-reactions`
 

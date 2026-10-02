@@ -1,7 +1,7 @@
 import { type AliasEngine, assertPack, createEngine, type Pack } from "emojisense";
 import type { Env } from "./env.ts";
 
-/** Reads one published pack file (e.g. `pack.es.json`) of the Worker's pack version. */
+/** Reads one published pack file (e.g. `pack.es.json`, `pack.es.ext.json`) of the Worker's pack version. */
 export type PackReader = (file: string, env: Env) => Promise<Pack>;
 
 export interface LocaleEnginesOptions {
@@ -22,9 +22,10 @@ export interface LocaleEngines {
 }
 
 /**
- * Alias engines per locale. Locales outside the bundle load their core pack on first use and
- * stay in a small per-isolate LRU (memory budget: DECISIONS.md, "Server-side aliases for every
- * pack locale"). Concurrent requests share one load. A failed load is not kept: the caller ranks
+ * Alias engines per locale. Locales outside the bundle load their core and ext packs on first use
+ * (the ext pack holds most idioms, slang and intent phrases) and stay in a small per-isolate LRU
+ * (memory budget: DECISIONS.md, "Server-side aliases for every pack locale" and "Ranking
+ * follow-ups"). Concurrent requests share one load. A failed load is not kept: the caller ranks
  * without aliases this time, and the next request tries again.
  */
 export function createLocaleEngines(options: LocaleEnginesOptions): LocaleEngines {
@@ -32,10 +33,14 @@ export function createLocaleEngines(options: LocaleEnginesOptions): LocaleEngine
 
   async function build(locale: string, env: Env): Promise<AliasEngine> {
     const started = Date.now();
-    const pack = await options.read(`pack.${locale}.json`, env);
-    if (pack.locale !== locale) throw new Error(`pack.${locale}.json holds locale "${pack.locale}"`);
+    const files = [`pack.${locale}.json`, `pack.${locale}.ext.json`];
+    const packs = await Promise.all(files.map((file) => options.read(file, env)));
+    packs.forEach((pack, i) => {
+      if (pack.locale !== locale) throw new Error(`${files[i]} holds locale "${pack.locale}"`);
+    });
     const readMs = Date.now() - started;
-    const engine = createEngine([...options.base(), pack]);
+    // Index order of PACK_FORMAT.md §2: core parts first (English first), then the ext part.
+    const engine = createEngine([...options.base(), ...packs]);
     console.log(
       JSON.stringify({
         event: "locale_engine_loaded",

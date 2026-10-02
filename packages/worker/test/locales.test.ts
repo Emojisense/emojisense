@@ -1,5 +1,5 @@
 import { LOCALE_CODES } from "@emojisense/data/locales";
-import { createEngine, type Pack } from "emojisense";
+import { createEngine, type Pack, ROW_INDEX } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../src/env.ts";
 import { parseLocale } from "../src/http.ts";
@@ -12,11 +12,27 @@ import { catalog, harness, image, jpeg, reactions, search } from "./fixtures.ts"
 
 const packs = fixturePacks as unknown as Record<string, Pack>;
 
+/**
+ * The ext part of a fixture locale: the same rows with no phrases, except es 🐱 "gatuno", an
+ * alias its core pack does not have (ext packs hold the long tail of idioms and slang).
+ */
+function extOf(core: Pack): Pack {
+  const blank = (row: Pack["emoji"][number]) =>
+    row.map((value, i) => (i >= ROW_INDEX.label && typeof value === "string" ? "" : value));
+  const emoji = core.emoji.map((row) => {
+    const ext = blank(row) as Pack["emoji"][number];
+    if (core.locale === "es" && row[ROW_INDEX.hexcode] === "1F431") ext[ROW_INDEX.alias] = "gatuno";
+    return ext;
+  });
+  return { ...core, part: "ext", emoji };
+}
+
 /** Reads fixture packs like the ASSETS binding reads published ones; 404 for other locales. */
 const readFixturePack: PackReader = async (file) => {
-  const pack = packs[/^pack\.(\w+)\.json$/.exec(file)?.[1] ?? ""];
+  const [, locale = "", ext] = /^pack\.(\w+)(\.ext)?\.json$/.exec(file) ?? [];
+  const pack = packs[locale];
   if (!pack) throw new Error(`${file}: HTTP 404`);
-  return pack;
+  return ext ? extOf(pack) : pack;
 };
 
 /** The fixture app with real alias data: English bundled, es/hi/ar loaded on first use. */
@@ -149,12 +165,20 @@ describe("aliases of every pack locale", () => {
     const h = localeHarness();
     await Promise.all([1, 2, 3].map((n) => h.call(search(`feliz cumpleaños ${n}`, "&locale=es"))));
     await h.searchBody("feliz", "&locale=es");
-    expect(h.read).toHaveBeenCalledTimes(1);
+    expect(h.read).toHaveBeenCalledTimes(2);
     expect(h.read).toHaveBeenCalledWith("pack.es.json", h.env);
+    expect(h.read).toHaveBeenCalledWith("pack.es.ext.json", h.env);
     // Bundled locales and semantic-only searches never read a pack.
     await h.searchBody("rocket", "&locale=en");
     await h.searchBody("नमस्ते", "&locale=hi&mode=semantic");
-    expect(h.read).toHaveBeenCalledTimes(1);
+    expect(h.read).toHaveBeenCalledTimes(2);
+  });
+
+  it("ranks with the locale's ext aliases too, as the SDK does after its idle-time load", async () => {
+    const h = localeHarness();
+    const body = await h.searchBody("gatuno", "&locale=es");
+    expect(body.results[0]).toMatchObject({ emoji: "🐱", source: "alias" });
+    expect(body.aliasLocale).toBe("es");
   });
 
   it("keeps at most two locale engines per isolate, dropping the least recently used", async () => {
@@ -164,10 +188,10 @@ describe("aliases of every pack locale", () => {
       await h.searchBody(`mubarak ${n}`, `&locale=${locale}`);
     }
     expect(h.engines.resident).toEqual(["es", "ar"]);
-    expect(h.read).toHaveBeenCalledTimes(3);
+    expect(h.read).toHaveBeenCalledTimes(6);
     await h.searchBody("बधाई हो", "&locale=hi");
     expect(h.engines.resident).toEqual(["ar", "hi"]);
-    expect(h.read).toHaveBeenCalledTimes(4);
+    expect(h.read).toHaveBeenCalledTimes(8);
   });
 
   it("ranks semantic-only when the pack cannot be loaded, never caches that, and retries", async () => {
@@ -199,7 +223,7 @@ describe("aliases of every pack locale", () => {
     await h.ctx.settle();
     expect(top((await retried.json()) as SearchBody)).toMatchObject({ emoji: "🎂", aliasLocale: "es" });
     expect(h.cache.puts).toHaveLength(1);
-    expect(h.read).toHaveBeenCalledTimes(2);
+    expect(h.read).toHaveBeenCalledTimes(4);
   });
 
   it("suggests reactions with the locale's aliases, and without aliases when its pack is missing", async () => {
