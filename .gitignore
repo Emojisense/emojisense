@@ -15,3 +15,4 @@ packages/data/build/
 # community custom emoji sets: local eval only, never committed or shipped
 packages/eval/private/
 packages/data/enrichment/_batches/
+packages/worker/public/v1/

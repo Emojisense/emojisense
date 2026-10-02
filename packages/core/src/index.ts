@@ -18,6 +18,7 @@ export {
 export { type FuseOptions, fuse, fuseResults, shouldUseSemantic } from "./fusion.js";
 export { boundedEditDistance } from "./fuzzy.js";
 export { baseId } from "./ids.js";
+export { type LoadPacksOptions, loadPacks } from "./loader.js";
 export { MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
 export {
   assertPack,
@@ -28,6 +29,7 @@ export {
   PACK_FORMAT_VERSION,
   type Pack,
   type PackRow,
+  ROW as ROW_INDEX,
 } from "./pack.js";
 export {
   createSearchSession,
@@ -36,6 +38,7 @@ export {
   type SessionState,
   type SessionStatus,
 } from "./session.js";
+export { applySkinTone, SKIN_TONES, type SkinTone } from "./skin.js";
 export {
   decodeVectors,
   encodeVectors,

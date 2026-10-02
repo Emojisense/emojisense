@@ -41,7 +41,8 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
       const q = normalize(query);
       if (q === "") return { results: [], packVersion: packVersion ?? "", cached: true };
 
-      const params = new URLSearchParams({ q, locale, limit: String(limit) });
+      // The client fuses with its own alias results, so it asks for semantic results only.
+      const params = new URLSearchParams({ q, locale, limit: String(limit), mode: "semantic" });
       if (packVersion) params.set("pack", packVersion);
       if (key) params.set("key", key);
       const url = `${base}/v1/search?${params}`;

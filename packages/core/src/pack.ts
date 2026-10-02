@@ -55,6 +55,10 @@ export const ROW = {
   label: 5,
   /** Row index of `shortcode`; the following fields keep {@link FIELDS} order. */
   shortcode: 6,
+  keyword: 7,
+  alias: 8,
+  typo: 9,
+  low: 10,
 } as const;
 
 export function assertPack(value: unknown): asserts value is Pack {
