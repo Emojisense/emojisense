@@ -39,9 +39,16 @@ export function messagesFor(locale: Locale): Messages {
   return messages;
 }
 
+const translators = new Map<Locale, Translator<Messages>>();
+
 /** The translator of a page: `t("nav.pricing")`. Its `locale` is the Intl tag ("zh-Hans"). */
 export function translatorFor(locale: Locale): Translator<Messages> {
-  return createTranslator(messagesFor(locale), LOCALE_INFO[locale].tag);
+  let translator = translators.get(locale);
+  if (!translator) {
+    translator = createTranslator(messagesFor(locale), LOCALE_INFO[locale].tag);
+    translators.set(locale, translator);
+  }
+  return translator;
 }
 
 export { LOCALES };

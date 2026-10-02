@@ -5,7 +5,7 @@
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { createEngine, type Pack } from "emojisense";
+import { type AliasEngine, createEngine, type Pack } from "emojisense";
 import { PACK_VERSION } from "../config";
 import type { Locale } from "./locales";
 
@@ -139,15 +139,28 @@ function readPack(name: string): Pack | undefined {
 }
 
 const cache = new Map<Locale, HeroExample[]>();
+let coreEngine: AliasEngine | undefined | null;
+
+/**
+ * Every core pack in one engine (English first), built once per build. Searching it in a locale
+ * ranks that locale's phrases first, which is what a page's first engine (English core plus that
+ * core pack) answers, without indexing English ten times.
+ */
+function cores(): AliasEngine | undefined {
+  if (coreEngine === undefined) {
+    const packs = (Object.keys(NATIVE) as Locale[]).flatMap((locale) => readPack(locale) ?? []);
+    const english = readPack("en");
+    coreEngine = english && packs.length > 0 ? createEngine([english, ...packs]) : null;
+  }
+  return coreEngine ?? undefined;
+}
 
 /** The hero examples for a page language. English keeps its classic mix of languages. */
 export function heroExamples(locale: Locale): HeroExample[] {
   if (locale === "en") return ENGLISH_PAGE;
   const cached = cache.get(locale);
   if (cached) return cached;
-  const english = readPack("en");
-  const own = readPack(locale);
-  const engine = english && own ? createEngine([english, own]) : undefined;
+  const engine = cores();
   const native = NATIVE[locale]
     .filter((candidate) => {
       const top = engine?.search(candidate.query, { locale, limit: 3, prefix: false }).results ?? [];

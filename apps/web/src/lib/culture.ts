@@ -115,16 +115,29 @@ export interface DateWindow {
 const MONTH_DAY = /^\d{2}-\d{2}$/;
 const dayFormat = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" });
 
-function rangeLabel(from: string, to: string, withYear: boolean, locale = "en"): string {
-  const [a, b] = [new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`)];
-  if (locale !== "en") {
-    // Other languages order day, month and year their own way; Intl knows how.
-    const format = new Intl.DateTimeFormat(locale, {
+const rangeFormats = new Map<string, Intl.DateTimeFormat>();
+
+/** Day and month (and year) in a locale; one formatter per locale, made once. */
+function rangeFormat(locale: string, withYear: boolean): Intl.DateTimeFormat {
+  const key = `${locale}|${withYear}`;
+  let format = rangeFormats.get(key);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, {
       month: "short",
       day: "numeric",
       ...(withYear ? { year: "numeric" } : {}),
       timeZone: "UTC",
     });
+    rangeFormats.set(key, format);
+  }
+  return format;
+}
+
+function rangeLabel(from: string, to: string, withYear: boolean, locale = "en"): string {
+  const [a, b] = [new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`)];
+  if (locale !== "en") {
+    // Other languages order day, month and year their own way; Intl knows how.
+    const format = rangeFormat(locale, withYear);
     return from === to ? format.format(a) : format.formatRange(a, b);
   }
   const sameMonth = a.getUTCMonth() === b.getUTCMonth() && a.getUTCFullYear() === b.getUTCFullYear();
