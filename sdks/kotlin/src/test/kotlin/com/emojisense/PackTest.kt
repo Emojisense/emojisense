@@ -95,6 +95,15 @@ class EmojiSetTest {
     }
 
     @Test
+    fun `hosted sets send the publishable key`() {
+        assertEquals(
+            "https://api.emojisense.com/v1/sets/noto/1F44D.svg?key=pk_live_a%2Bb",
+            EmojiSet.NOTO.imageUrl("👍", "https://api.emojisense.com", "pk_live_a+b"),
+        )
+        assertEquals("https://api.emojisense.com/v1/sets/noto/1F44D.svg", EmojiSet.NOTO.imageUrl("👍", "https://api.emojisense.com", ""))
+    }
+
+    @Test
     fun `matches the TypeScript set list`() {
         assertEquals(listOf("native", "twemoji", "noto", "fluent"), EmojiSet.entries.map { it.key })
         assertEquals(listOf(EmojiSet.TWEMOJI, EmojiSet.NOTO, EmojiSet.FLUENT), EmojiSet.entries.filter { it.isHosted })

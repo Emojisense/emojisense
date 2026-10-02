@@ -18,10 +18,15 @@ public enum class EmojiSet(public val key: String) {
     /**
      * The image URL of an emoji, skin tone included, or null for [NATIVE] (draw the text). A set may
      * not draw every emoji (Fluent has no country flags): the API answers 404 then, and the picker
-     * should draw the text instead.
+     * should draw the text instead. Hosted sets need a publishable [apiKey] whose plan includes
+     * them (the API answers 401 or 402 otherwise), as `emojiImageUrl` in packages/core.
      */
-    public fun imageUrl(emoji: String, endpoint: String): String? =
-        if (isHosted) "${UrlEncoding.trimTrailingSlashes(endpoint)}/v1/sets/$key/${Hexcode.of(emoji)}.svg" else null
+    @JvmOverloads
+    public fun imageUrl(emoji: String, endpoint: String, apiKey: String? = null): String? {
+        if (!isHosted) return null
+        val query = if (apiKey.isNullOrEmpty()) "" else "?key=${UrlEncoding.uriComponent(apiKey)}"
+        return "${UrlEncoding.trimTrailingSlashes(endpoint)}/v1/sets/$key/${Hexcode.of(emoji)}.svg$query"
+    }
 
     public companion object {
         @JvmStatic
