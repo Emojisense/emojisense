@@ -1,7 +1,8 @@
 /**
- * Validation of custom emoji images: size, type by magic bytes (the declared type is never
- * trusted), and SVG checks. SVGs that could run code or load other resources are rejected,
- * not rewritten: a rewrite can be bypassed, a rejection fails closed.
+ * Checks of custom emoji images, for the dashboard upload, the imports and the tenants API:
+ * size, type by magic bytes (the declared type and the file name are never trusted), and SVG
+ * checks. SVGs that could run code or load other resources are rejected, not rewritten: a
+ * rewrite can be bypassed, a rejection fails closed.
  */
 import type { CustomEmojiContentType } from "./types.js";
 
@@ -15,19 +16,20 @@ export interface EmojiImage {
   extension: EmojiImageExtension;
 }
 
-export type EmojiImageErrorCode = "missing_file" | "file_too_large" | "unsupported_image" | "unsafe_svg";
+export type EmojiImageErrorCode = "missing_file" | "image_too_large" | "unsupported_image" | "unsafe_svg";
 
-/** A rejected image. `status` is the HTTP status both Workers answer with. */
-export class EmojiImageError extends Error {
-  readonly field = "file";
-  constructor(
-    readonly code: EmojiImageErrorCode,
-    readonly status: 400 | 413 | 415,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+/** `status` is the HTTP status both Workers answer with; `error` is the code. */
+export type ImageCheck =
+  | { ok: true; image: EmojiImage }
+  | { ok: false; error: EmojiImageErrorCode; status: 400 | 413 | 415; field: "file"; message: string };
+
+const refused = (error: EmojiImageErrorCode, status: 400 | 413 | 415, message: string): ImageCheck => ({
+  ok: false,
+  error,
+  status,
+  field: "file",
+  message,
+});
 
 const startsWith = (bytes: Uint8Array, signature: readonly number[], offset = 0) =>
   signature.every((byte, i) => bytes[offset + i] === byte);
@@ -108,7 +110,7 @@ const CSS_URL = /url\(\s*([^)]*)\)/g;
  * attributes, `javascript:` URLs, links and `url()` references outside the document, DTDs
  * (entity expansion) and embedded documents.
  */
-export function svgProblem(svg: string): string | undefined {
+export function checkSvg(svg: string): string | undefined {
   const text = decodeReferences(svg).toLowerCase();
   const compact = text.replace(/[\s\p{Cc}]+/gu, "");
   if (FORBIDDEN_ELEMENTS.test(text)) return "SVG files cannot contain scripts or embedded documents.";
@@ -133,28 +135,21 @@ export function svgProblem(svg: string): string | undefined {
 }
 
 /**
- * Checks an uploaded or imported image and returns its real type. Throws {@link EmojiImageError}
- * for an empty or oversized file, an unsupported type, or an unsafe SVG.
+ * Checks an uploaded or imported image and returns it with its real type, or why it is refused:
+ * an empty or oversized file, an unsupported type, or an unsafe SVG.
  */
-export function validateEmojiImage(bytes: Uint8Array): EmojiImage {
-  if (bytes.byteLength === 0) throw new EmojiImageError("missing_file", 400, "The image file is empty.");
+export function inspectEmojiImage(bytes: Uint8Array): ImageCheck {
+  if (bytes.byteLength === 0) return refused("missing_file", 400, "The image file is empty.");
   if (bytes.byteLength > CUSTOM_EMOJI_MAX_BYTES) {
-    throw new EmojiImageError(
-      "file_too_large",
-      413,
-      `The image is larger than ${CUSTOM_EMOJI_MAX_BYTES / 1024} KB.`,
-    );
+    return refused("image_too_large", 413, `The image is larger than ${CUSTOM_EMOJI_MAX_BYTES / 1024} KB.`);
   }
   const type = sniffEmojiImage(bytes);
-  if (!type) {
-    throw new EmojiImageError("unsupported_image", 415, "Upload a PNG, GIF, WebP or SVG image.");
-  }
+  if (!type) return refused("unsupported_image", 415, "Upload a PNG, GIF, WebP or SVG image.");
   if (type.contentType === "image/svg+xml") {
     const svg = decodeUtf8(bytes);
-    if (svg === undefined)
-      throw new EmojiImageError("unsupported_image", 415, "The SVG file is not valid UTF-8.");
-    const problem = svgProblem(svg);
-    if (problem) throw new EmojiImageError("unsafe_svg", 400, problem);
+    if (svg === undefined) return refused("unsupported_image", 415, "The SVG file is not valid UTF-8.");
+    const problem = checkSvg(svg);
+    if (problem) return refused("unsafe_svg", 400, problem);
   }
-  return { bytes, ...type };
+  return { ok: true, image: { bytes, ...type } };
 }

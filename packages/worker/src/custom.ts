@@ -4,6 +4,7 @@ import type { Principal } from "./auth.ts";
 import { CUSTOM_CACHE_MAX_ENTRIES, CUSTOM_CACHE_TTL_MS, MAX_TENANT_LENGTH } from "./config.ts";
 import { buildCustomPack } from "./custom-pack.ts";
 import type { CustomEmojiReader } from "./custom-store.ts";
+import type { Env } from "./env.ts";
 
 /** One app's (and tenant's) usable custom emoji, with the pack and engine built on first use. */
 export class CustomEmojiSet {
@@ -45,6 +46,11 @@ export class CustomEmojiSet {
 
 const EMPTY = new CustomEmojiSet([]);
 const UNAVAILABLE = new CustomEmojiSet([], false);
+
+/** Where custom emoji images are served: `API_URL` when set (as in the dashboard), else this origin. */
+export function imageOrigin(env: Env, url: URL): string {
+  return env.API_URL || url.origin;
+}
 
 /** The app of a keyed caller. Development keys have no apps row, so no custom emoji either. */
 export function callerApp(caller: Principal): string | undefined {

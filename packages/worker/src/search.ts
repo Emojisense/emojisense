@@ -2,7 +2,7 @@ import { normalize, type SearchResult } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
 import { BROWSER_CACHE, EDGE_CACHE_SECONDS, MAX_LIMIT, SEARCH_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
-import { CUSTOM_BROWSER_CACHE, mergeCustom, parseTenant } from "./custom.ts";
+import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
 import { errorResponse, json, parseLimit, parseLocale } from "./http.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
 
@@ -50,7 +50,10 @@ export const handleSearch: Handler = async (
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
   const customSet = await custom.forCaller(caller, tenant);
-  const customResults = customSet.search(url.origin, params.query, { limit: params.limit, prefix: true });
+  const customResults = customSet.search(imageOrigin(env, url), params.query, {
+    limit: params.limit,
+    prefix: true,
+  });
   const withCustom = (results: SearchResult[]) => mergeCustom(customResults, results, params.limit);
   const browserCache = customSet.rows.length > 0 ? CUSTOM_BROWSER_CACHE : BROWSER_CACHE;
   const log = (outcome: Outcome, scores: { aliasConfidence?: number; semanticTop?: number } = {}) =>

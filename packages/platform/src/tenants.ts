@@ -2,9 +2,10 @@
  * Tenants (Scale): the app owner's own customers, each with its own custom emoji. Shared by the
  * public tenants API (`/v1/tenants`, keyed by external id) and the dashboard (keyed by tenant id).
  */
+
+import { type EmojiBucket, removeImages } from "./custom-emoji-store.js";
 import type { D1DatabaseLike, Parsed } from "./d1-like.js";
 import { randomId } from "./keys.js";
-import { type EmojiBucket, removeImages } from "./tenant-emoji-storage.js";
 import type { TenantRow } from "./types.js";
 
 /** URL-safe, because it appears in `/v1/tenants/:externalId`: ids, slugs, UUIDs, emails. */

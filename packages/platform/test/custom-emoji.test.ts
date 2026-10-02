@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  CustomEmojiInputError,
   customEmojiImageKey,
   customEmojiImageUrl,
   hasCustomEmoji,
@@ -11,16 +10,12 @@ import {
   storedAliases,
   toCustomEmoji,
 } from "../src/custom-emoji.js";
+import type { Parsed } from "../src/d1-like.js";
 import { lowestPlanWith, PLANS } from "../src/plans.js";
 
-function inputError(run: () => unknown): CustomEmojiInputError {
-  try {
-    run();
-  } catch (error) {
-    if (error instanceof CustomEmojiInputError) return error;
-    throw error;
-  }
-  throw new Error("expected an input error");
+function inputError(parsed: Parsed<unknown>) {
+  if (parsed.ok) throw new Error("expected an input error");
+  return parsed;
 }
 
 describe("parseShortcode", () => {
@@ -31,7 +26,7 @@ describe("parseShortcode", () => {
     ["thumbs-up-2", "thumbs-up-2"],
     ["x".repeat(64), "x".repeat(64)],
   ])("accepts %j as %j", (input, expected) => {
-    expect(parseShortcode(input)).toBe(expected);
+    expect(parseShortcode(input)).toEqual({ ok: true, value: expected });
   });
 
   it.each([
@@ -46,31 +41,33 @@ describe("parseShortcode", () => {
     ["___"],
     ["+-"],
   ])("rejects %j", (input) => {
-    expect(inputError(() => parseShortcode(input))).toMatchObject({
-      field: "shortcode",
-      status: 400,
-      code: "invalid_request",
-    });
+    expect(inputError(parseShortcode(input))).toMatchObject({ ok: false, field: "shortcode" });
   });
 });
 
 describe("parseAliases", () => {
+  const value = (parsed: Parsed<string[]>) => (parsed.ok ? parsed.value : parsed);
+
   it("normalizes a comma-separated string, dropping empty and repeated aliases", () => {
-    expect(parseAliases(" Ship It!, ship it , , Çok Güzel")).toEqual(["ship it", "cok guzel"]);
+    expect(value(parseAliases(" Ship It!, ship it , , Çok Güzel"))).toEqual(["ship it", "cok guzel"]);
   });
 
   it("accepts a string array and treats missing values as none", () => {
-    expect(parseAliases(["Rocket 🚀", "launch"])).toEqual(["rocket", "launch"]);
-    expect(parseAliases(undefined)).toEqual([]);
-    expect(parseAliases(null)).toEqual([]);
-    expect(parseAliases("")).toEqual([]);
+    expect(value(parseAliases(["Rocket 🚀", "launch"]))).toEqual(["rocket", "launch"]);
+    expect(value(parseAliases(undefined))).toEqual([]);
+    expect(value(parseAliases(null))).toEqual([]);
+    expect(value(parseAliases(""))).toEqual([]);
+  });
+
+  it("caps each alias at the query length", () => {
+    expect(value(parseAliases("x".repeat(80)))).toEqual(["x".repeat(64)]);
   });
 
   it("rejects other types and too many aliases", () => {
-    expect(inputError(() => parseAliases(5)).field).toBe("aliases");
-    expect(inputError(() => parseAliases(["ok", 5])).field).toBe("aliases");
+    expect(inputError(parseAliases(5)).field).toBe("aliases");
+    expect(inputError(parseAliases(["ok", 5])).field).toBe("aliases");
     const many = Array.from({ length: MAX_ALIASES + 1 }, (_, i) => `alias ${i}`);
-    expect(inputError(() => parseAliases(many)).message).toMatch(String(MAX_ALIASES));
+    expect(inputError(parseAliases(many)).message).toMatch(String(MAX_ALIASES));
   });
 
   it("reads stored JSON defensively", () => {
@@ -119,6 +116,26 @@ describe("keys, URLs and JSON", () => {
       bytes: 12,
       createdAt: 5,
     });
+  });
+
+  it("adds the tenant's external id when the caller knows it", () => {
+    const row = {
+      id: "e1",
+      app_id: "app1",
+      tenant_id: "t1",
+      shortcode: "logo",
+      aliases: "[]",
+      image_key: "custom/app1/t1/e1.png",
+      content_type: "image/png" as const,
+      bytes: 1,
+      source: "api" as const,
+      created_at: 1,
+    };
+    expect(toCustomEmoji(row, "https://api.test", "acme")).toMatchObject({
+      tenantId: "t1",
+      tenantExternalId: "acme",
+    });
+    expect(toCustomEmoji(row, "https://api.test")).not.toHaveProperty("tenantExternalId");
   });
 });
 

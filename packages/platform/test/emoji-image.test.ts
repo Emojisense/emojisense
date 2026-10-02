@@ -1,23 +1,13 @@
 import { describe, expect, it } from "vitest";
-import {
-  CUSTOM_EMOJI_MAX_BYTES,
-  EmojiImageError,
-  sniffEmojiImage,
-  svgProblem,
-  validateEmojiImage,
-} from "../src/emoji-image.js";
+import { CUSTOM_EMOJI_MAX_BYTES, checkSvg, inspectEmojiImage, sniffEmojiImage } from "../src/emoji-image.js";
 import { IMAGES, svg } from "./fakes.js";
 
 const encode = (text: string) => new TextEncoder().encode(text);
 
-function rejection(bytes: Uint8Array): EmojiImageError {
-  try {
-    validateEmojiImage(bytes);
-  } catch (error) {
-    if (error instanceof EmojiImageError) return error;
-    throw error;
-  }
-  throw new Error("expected the image to be rejected");
+function rejection(bytes: Uint8Array) {
+  const checked = inspectEmojiImage(bytes);
+  if (checked.ok) throw new Error("expected the image to be rejected");
+  return checked;
 }
 
 describe("sniffEmojiImage", () => {
@@ -44,38 +34,49 @@ describe("sniffEmojiImage", () => {
   });
 });
 
-describe("validateEmojiImage", () => {
+describe("inspectEmojiImage", () => {
   it("accepts the four formats and keeps the bytes", () => {
-    const image = validateEmojiImage(IMAGES.png);
-    expect(image).toMatchObject({ contentType: "image/png", extension: "png" });
-    expect(image.bytes).toBe(IMAGES.png);
+    const checked = inspectEmojiImage(IMAGES.png);
+    expect(checked).toMatchObject({ ok: true, image: { contentType: "image/png", extension: "png" } });
+    expect(checked.ok && checked.image.bytes).toBe(IMAGES.png);
+    for (const kind of ["gif", "webp", "svg"] as const) {
+      expect(inspectEmojiImage(IMAGES[kind])).toMatchObject({ ok: true, image: { extension: kind } });
+    }
   });
 
   it("rejects empty, oversized and unsupported files with their status", () => {
-    expect(rejection(new Uint8Array())).toMatchObject({ code: "missing_file", status: 400 });
+    expect(rejection(new Uint8Array())).toMatchObject({ error: "missing_file", status: 400 });
     const large = new Uint8Array(CUSTOM_EMOJI_MAX_BYTES + 1);
     large.set(IMAGES.png);
-    expect(rejection(large)).toMatchObject({ code: "file_too_large", status: 413, field: "file" });
-    expect(rejection(encode("just text"))).toMatchObject({ code: "unsupported_image", status: 415 });
+    expect(rejection(large)).toMatchObject({ error: "image_too_large", status: 413, field: "file" });
+    expect(rejection(encode("just text"))).toMatchObject({ error: "unsupported_image", status: 415 });
+    expect(rejection(encode("<html><body>hi</body></html>"))).toMatchObject({ error: "unsupported_image" });
+    expect(rejection(Uint8Array.from([0xff, 0xd8, 0xff, 0xe0]))).toMatchObject({
+      error: "unsupported_image",
+    });
   });
 
   it("accepts exactly the size limit", () => {
     const limit = new Uint8Array(CUSTOM_EMOJI_MAX_BYTES);
     limit.set(IMAGES.png);
-    expect(validateEmojiImage(limit).contentType).toBe("image/png");
+    expect(inspectEmojiImage(limit)).toMatchObject({ ok: true, image: { contentType: "image/png" } });
   });
 
   it("rejects an SVG that is not valid UTF-8", () => {
     const bytes = new Uint8Array([...encode("<svg>"), 0xff, 0xfe, ...encode("</svg>")]);
-    expect(rejection(bytes)).toMatchObject({ code: "unsupported_image" });
+    expect(rejection(bytes)).toMatchObject({ error: "unsupported_image" });
   });
 
   it("rejects unsafe SVGs with a reason", () => {
-    expect(rejection(svg("<script>alert(1)</script>"))).toMatchObject({ code: "unsafe_svg", status: 400 });
+    expect(rejection(svg("<script>alert(1)</script>"))).toMatchObject({
+      error: "unsafe_svg",
+      status: 400,
+      message: expect.stringContaining("scripts"),
+    });
   });
 });
 
-describe("svgProblem", () => {
+describe("checkSvg", () => {
   const unsafe = [
     ["a script element", "<script>alert(1)</script>"],
     ["an uppercase script element", "<SCRIPT>alert(1)</SCRIPT>"],
@@ -96,12 +97,12 @@ describe("svgProblem", () => {
   ] as const;
 
   it.each(unsafe)("rejects %s", (_, body) => {
-    expect(svgProblem(new TextDecoder().decode(svg(body)))).toEqual(expect.any(String));
+    expect(checkSvg(new TextDecoder().decode(svg(body)))).toEqual(expect.any(String));
   });
 
   it("rejects entity declarations (entity expansion)", () => {
     const text = '<!DOCTYPE svg [<!ENTITY lol "lol">]><svg>&lol;</svg>';
-    expect(svgProblem(text)).toMatch(/entities/);
+    expect(checkSvg(text)).toMatch(/entities/);
   });
 
   it("accepts links and url() references inside the file, and embedded raster images", () => {
@@ -109,12 +110,12 @@ describe("svgProblem", () => {
       '<defs><linearGradient id="g"><stop offset="0"/></linearGradient></defs>' +
       '<rect fill="url(#g)" style="fill:url( \'#g\' )"/><use href="#g"/><use xlink:href="#g"/>' +
       '<image href="data:image/png;base64,iVBORw0KGgo="/><text>Click on me</text>';
-    expect(svgProblem(new TextDecoder().decode(svg(body)))).toBeUndefined();
+    expect(checkSvg(new TextDecoder().decode(svg(body)))).toBeUndefined();
   });
 
   it("accepts a DOCTYPE without an internal subset", () => {
     const text =
       '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"><svg/>';
-    expect(svgProblem(text)).toBeUndefined();
+    expect(checkSvg(text)).toBeUndefined();
   });
 });

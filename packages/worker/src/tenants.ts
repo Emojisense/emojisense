@@ -13,17 +13,20 @@
  */
 import {
   type AppOwner,
+  CUSTOM_EMOJI_MAX_BYTES,
+  countAccountCustomEmoji,
   countTenantEmoji,
-  createCustomEmojiStorage,
+  createCustomEmoji,
   createTenant,
+  deleteCustomEmojiByShortcode,
   deleteTenant,
   emitWebhookEvent as emit,
   findTenantByExternalId,
   inspectEmojiImage,
+  listCustomEmoji,
   listTenants,
   loadAppOwner,
   lowestPlanFor,
-  MAX_EMOJI_BYTES,
   type Parsed,
   parseAliases,
   parseExternalId,
@@ -32,19 +35,19 @@ import {
   parseTenantName,
   planAllows,
   planRequiredMessage,
+  randomId,
   type TenantRow,
   toCustomEmoji,
   toTenant,
   type WebhookRuntime,
 } from "@emojisense/platform";
-import { normalize } from "emojisense";
 import type { Principal } from "./auth.ts";
 import type { Env } from "./env.ts";
 import { json, readBodyCapped } from "./http.ts";
 
 const MAX_JSON_BYTES = 16 * 1024;
 /** One image plus the multipart framing and the text fields. */
-const MAX_UPLOAD_BYTES = MAX_EMOJI_BYTES + 16 * 1024;
+const MAX_UPLOAD_BYTES = CUSTOM_EMOJI_MAX_BYTES + 16 * 1024;
 
 export function isTenantsPath(pathname: string): boolean {
   return pathname === "/v1/tenants" || pathname.startsWith("/v1/tenants/");
@@ -200,18 +203,15 @@ async function remove(scoped: Scoped, tenant: TenantRow): Promise<Response> {
   return json({ tenant: toTenant(tenant), emojiDeleted }, 200, { "Cache-Control": "no-store" });
 }
 
-function storageFor(scoped: Scoped) {
-  const bucket = scoped.env.EMOJI;
-  return bucket ? createCustomEmojiStorage({ db: scoped.db, bucket, now: scoped.now }) : undefined;
-}
+const storageUnavailable = () =>
+  apiError(503, "storage_unavailable", "Custom emoji storage is not configured.");
 
 const apiUrl = (scoped: Scoped) => scoped.env.API_URL || scoped.url.origin;
 
 async function listEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response> {
-  const storage = storageFor(scoped);
-  if (!storage) return apiError(503, "storage_unavailable", "Custom emoji storage is not configured.");
-  const rows = await storage.listCustomEmoji({ appId: tenant.app_id, tenantId: tenant.id });
-  const used = await storage.countAccountCustomEmoji(scoped.owner.accountId);
+  if (!scoped.env.EMOJI) return storageUnavailable();
+  const rows = await listCustomEmoji(scoped.db, tenant.app_id, { tenantId: tenant.id, order: "shortcode" });
+  const used = await countAccountCustomEmoji(scoped.db, scoped.owner.accountId);
   return json(
     {
       emoji: rows.map((row) => toCustomEmoji(row, apiUrl(scoped), tenant.external_id)),
@@ -224,8 +224,8 @@ async function listEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response> {
 }
 
 async function uploadEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response> {
-  const storage = storageFor(scoped);
-  if (!storage) return apiError(503, "storage_unavailable", "Custom emoji storage is not configured.");
+  const bucket = scoped.env.EMOJI;
+  if (!bucket) return storageUnavailable();
   const form = await readMultipart(scoped.request);
   if (form instanceof Response) return form;
 
@@ -237,15 +237,14 @@ async function uploadEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response>
   }
   const shortcode = parseShortcode(form.get("shortcode"));
   if (!shortcode.ok) return invalid(shortcode);
-  const aliases = parseAliases(form.get("aliases") ?? undefined, (text) => normalize(text));
+  const aliases = parseAliases(form.get("aliases") ?? undefined);
   if (!aliases.ok) return invalid(aliases);
   const checked = inspectEmojiImage(new Uint8Array(await file.arrayBuffer()));
   if (!checked.ok) {
-    const status = { image_too_large: 413, unsupported_image: 415, unsafe_svg: 400 }[checked.error];
-    return apiError(status, checked.error, checked.message, { field: "file" });
+    return apiError(checked.status, checked.error, checked.message, { field: checked.field });
   }
 
-  const result = await storage.putCustomEmoji({
+  const result = await createCustomEmoji(scoped.db, bucket, {
     appId: tenant.app_id,
     accountId: scoped.owner.accountId,
     limit: scoped.owner.plan.limits.custom_emoji,
@@ -254,13 +253,15 @@ async function uploadEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response>
     aliases: aliases.value,
     image: checked.image,
     source: "api",
+    now: scoped.now(),
+    id: randomId(),
   });
-  if (!result.ok) {
-    if (result.error === "shortcode_taken") {
-      return apiError(409, "shortcode_taken", `This tenant already has :${shortcode.value}:.`, {
-        field: "shortcode",
-      });
-    }
+  if (result.status === "shortcode_taken") {
+    return apiError(409, "shortcode_taken", `This tenant already has :${shortcode.value}:.`, {
+      field: "shortcode",
+    });
+  }
+  if (result.status === "limit_reached") {
     return apiError(
       403,
       "plan_limit",
@@ -268,21 +269,22 @@ async function uploadEmoji(scoped: Scoped, tenant: TenantRow): Promise<Response>
       { used: result.used, limit: result.limit },
     );
   }
-  const emoji = toCustomEmoji(result.emoji, apiUrl(scoped), tenant.external_id);
+  const emoji = toCustomEmoji(result.row, apiUrl(scoped), tenant.external_id);
   emitEvent(scoped, "custom_emoji.created", emoji);
   return json(emoji, 201, { "Cache-Control": "no-store" });
 }
 
 async function deleteEmoji(scoped: Scoped, tenant: TenantRow, rawShortcode: string): Promise<Response> {
-  const storage = storageFor(scoped);
-  if (!storage) return apiError(503, "storage_unavailable", "Custom emoji storage is not configured.");
+  if (!scoped.env.EMOJI) return storageUnavailable();
   const shortcode = parseShortcode(rawShortcode);
   const deleted = shortcode.ok
-    ? await storage.deleteCustomEmoji({
-        appId: tenant.app_id,
-        tenantId: tenant.id,
-        shortcode: shortcode.value,
-      })
+    ? await deleteCustomEmojiByShortcode(
+        scoped.db,
+        scoped.env.EMOJI,
+        tenant.app_id,
+        tenant.id,
+        shortcode.value,
+      )
     : undefined;
   if (!deleted)
     return apiError(404, "emoji_not_found", "This tenant has no custom emoji with this shortcode.");

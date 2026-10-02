@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { createCustomEmoji } from "../src/custom-emoji-store.js";
 import { PLANS } from "../src/plans.js";
 import { loadAppOwner, lowestPlanFor, planAllows } from "../src/scale-features.js";
-import { createCustomEmojiStorage } from "../src/tenant-emoji-storage.js";
 import {
   createTenant,
   deleteTenant,
@@ -11,8 +11,8 @@ import {
   parsePageLimit,
   parseTenantName,
 } from "../src/tenants.js";
+import { pngImage } from "./fakes.js";
 import { memoryBucket, SqliteD1 } from "./sqlite-d1.js";
-import { PNG } from "./tenant-emoji-storage.test.js";
 
 describe("plan gate", () => {
   it("allows tenants and webhooks on Scale only and names Scale as the plan to buy", () => {
@@ -68,8 +68,21 @@ describe("tenants", () => {
     const db = new SqliteD1();
     const { accountId, appId } = db.seedApp();
     const bucket = memoryBucket();
-    const storage = createCustomEmojiStorage({ db, bucket, now: () => 5 });
-    return { db, bucket, storage, accountId, appId };
+    let ids = 0;
+    const put = (tenantId: string | null, shortcode: string) =>
+      createCustomEmoji(db, bucket, {
+        appId,
+        accountId,
+        limit: 10,
+        tenantId,
+        shortcode,
+        aliases: [],
+        image: pngImage(),
+        source: "api",
+        now: 5,
+        id: `e${++ids}`,
+      });
+    return { db, bucket, put, accountId, appId };
   }
 
   it("creates once per external id and returns the existing tenant after that", async () => {
@@ -83,22 +96,11 @@ describe("tenants", () => {
   });
 
   it("lists by external id with emoji counts and a cursor", async () => {
-    const { db, storage, accountId, appId } = setup();
+    const { db, put, appId } = setup();
     for (const externalId of ["c", "a", "b"])
       await createTenant(db, { appId, externalId, name: null, now: 1 });
     const a = await findTenantByExternalId(db, appId, "a");
-    for (const shortcode of ["x", "y"]) {
-      await storage.putCustomEmoji({
-        appId,
-        accountId,
-        limit: 10,
-        tenantId: a?.id ?? null,
-        shortcode,
-        aliases: [],
-        image: { bytes: PNG, contentType: "image/png" },
-        source: "api",
-      });
-    }
+    for (const shortcode of ["x", "y"]) await put(a?.id ?? null, shortcode);
     const page1 = await listTenants(db, appId, { limit: 2, cursor: null });
     expect(page1.tenants.map((t) => [t.externalId, t.emojiCount])).toEqual([
       ["a", 2],
@@ -113,20 +115,9 @@ describe("tenants", () => {
   });
 
   it("deletes the tenant with its emoji rows and images, and leaves other tenants alone", async () => {
-    const { db, bucket, storage, accountId, appId } = setup();
+    const { db, bucket, put, appId } = setup();
     const { tenant } = await createTenant(db, { appId, externalId: "acme", name: null, now: 1 });
     const { tenant: other } = await createTenant(db, { appId, externalId: "other", name: null, now: 1 });
-    const put = (tenantId: string, shortcode: string) =>
-      storage.putCustomEmoji({
-        appId,
-        accountId,
-        limit: 10,
-        tenantId,
-        shortcode,
-        aliases: [],
-        image: { bytes: PNG, contentType: "image/png" },
-        source: "api",
-      });
     await put(tenant.id, "a");
     await put(tenant.id, "b");
     await put(other.id, "a");

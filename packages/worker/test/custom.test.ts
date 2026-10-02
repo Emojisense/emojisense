@@ -126,6 +126,15 @@ describe("GET /v1/custom-pack", () => {
     expect(body.emoji.map((row) => row[1])).toEqual(["C-e_parrot", "C-e_acme"]);
   });
 
+  it("points images at API_URL when it is set", async () => {
+    const { h } = await setup();
+    h.env.API_URL = "https://api.emojisense.example";
+    const body = (await (await h.call(pack())).json()) as Pack;
+    expect(body.images?.["C-e_parrot"]).toBe(`https://api.emojisense.example/v1/custom/${APP}/e_parrot`);
+    const found = (await (await h.call(search("party", `&key=${KEYS.pro}`))).json()) as SearchBody;
+    expect(found.results[0]?.imageUrl).toBe(`https://api.emojisense.example/v1/custom/${APP}/e_parrot`);
+  });
+
   it("is cached at the edge per app and tenant", async () => {
     const { h, reader } = await setup();
     const listUsable = vi.spyOn(reader, "listUsable");

@@ -1,7 +1,7 @@
 import { CUSTOM_EMOJI_CACHE_CONTROL } from "@emojisense/platform";
 import { CUSTOM_PACK_CACHE_SECONDS, CUSTOM_PACK_CACHE_VERSION } from "./config.ts";
 import type { CacheLike, Handler } from "./context.ts";
-import { type CustomEmojiIndex, callerApp, parseTenant } from "./custom.ts";
+import { type CustomEmojiIndex, callerApp, imageOrigin, parseTenant } from "./custom.ts";
 import { buildCustomPack } from "./custom-pack.ts";
 import type { Env } from "./env.ts";
 import { corsHeaders, errorResponse, json } from "./http.ts";
@@ -70,7 +70,7 @@ export async function handleCustomImage(
  * tenant's) as a pack (PACK_FORMAT.md §8). Needs a key; not metered. Cached at the edge for 60 s
  * per app, tenant and pack layout version, so edits show up within a minute.
  */
-export const handleCustomPack: Handler = async (request, _env, ctx, { cache, custom }, _metering, caller) => {
+export const handleCustomPack: Handler = async (request, env, ctx, { cache, custom }, _metering, caller) => {
   if (caller.kind === "anonymous") return errorResponse(401, "a key is required for custom emoji");
   const url = new URL(request.url);
   const tenant = parseTenant(url.searchParams.get("tenant"));
@@ -79,7 +79,7 @@ export const handleCustomPack: Handler = async (request, _env, ctx, { cache, cus
 
   const appId = callerApp(caller);
   // Development keys have no app row: an empty pack keeps local pickers working.
-  if (!appId) return json(buildCustomPack([], url.origin), 200, headers);
+  if (!appId) return json(buildCustomPack([], imageOrigin(env, url)), 200, headers);
 
   const cacheKey = new Request(
     `${url.origin}/v1/custom-pack?${new URLSearchParams({
@@ -94,8 +94,8 @@ export const handleCustomPack: Handler = async (request, _env, ctx, { cache, cus
   // An edge miss reads D1 directly and refreshes this isolate's search cache on the way.
   const set = await custom.load(appId, tenant);
   // Without the database, answer empty (never a hard failure) but do not cache that answer.
-  if (!set.complete) return json(set.pack(url.origin), 200, { "Cache-Control": "no-store" });
-  const response = json(set.pack(url.origin), 200, headers);
+  if (!set.complete) return json(set.pack(imageOrigin(env, url)), 200, { "Cache-Control": "no-store" });
+  const response = json(set.pack(imageOrigin(env, url)), 200, headers);
   ctx.waitUntil(cache.put(cacheKey, response.clone()));
   return response;
 };

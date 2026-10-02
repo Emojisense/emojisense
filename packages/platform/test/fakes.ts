@@ -1,60 +1,4 @@
-import { DatabaseSync } from "node:sqlite";
-import type { EmojiBucket, EmojiObject, SqlDatabase, SqlValue, SqlWriteStatement } from "../src/index.js";
-
-/** Every migration, in file-name order (what `wrangler d1 migrations apply` runs). */
-const migrations = Object.entries(
-  import.meta.glob<string>("../migrations/*.sql", { query: "?raw", import: "default", eager: true }),
-)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([, sql]) => sql);
-
-/** D1 on node:sqlite with the real schema. D1 is SQLite too, so constraints behave the same. */
-export function sqliteDatabase(): SqlDatabase & { sqlite: DatabaseSync } {
-  const sqlite = new DatabaseSync(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON");
-  for (const sql of migrations) sqlite.exec(sql);
-  const statement = (sql: string, params: SqlValue[] = []): SqlWriteStatement => ({
-    bind: (...values) => statement(sql, values),
-    first: async <T>() => (sqlite.prepare(sql).get(...params) ?? null) as T | null,
-    all: async <T>() => ({ results: sqlite.prepare(sql).all(...params) as T[] }),
-    run: async () => ({ meta: { changes: Number(sqlite.prepare(sql).run(...params).changes) } }),
-  });
-  return { sqlite, prepare: (sql) => statement(sql) };
-}
-
-export interface StoredObject {
-  bytes: Uint8Array;
-  contentType: string | undefined;
-  cacheControl: string | undefined;
-}
-
-/** R2 in memory. */
-export function memoryBucket(): EmojiBucket & { objects: Map<string, StoredObject> } {
-  const objects = new Map<string, StoredObject>();
-  return {
-    objects,
-    async put(key, value, options) {
-      objects.set(key, {
-        bytes: value,
-        contentType: options?.httpMetadata?.contentType,
-        cacheControl: options?.httpMetadata?.cacheControl,
-      });
-      return {};
-    },
-    async get(key): Promise<EmojiObject | null> {
-      const object = objects.get(key);
-      if (!object) return null;
-      return {
-        body: new Blob([object.bytes.slice()]).stream(),
-        size: object.bytes.byteLength,
-        httpEtag: `"${key}"`,
-      };
-    },
-    async delete(keys) {
-      for (const key of Array.isArray(keys) ? keys : [keys]) objects.delete(key);
-    },
-  };
-}
+import { inspectEmojiImage } from "../src/emoji-image.js";
 
 const encoder = new TextEncoder();
 
@@ -67,3 +11,10 @@ export const IMAGES = {
 
 export const svg = (body: string) =>
   encoder.encode(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8">${body}</svg>`);
+
+/** A checked PNG, ready for createCustomEmoji. */
+export function pngImage() {
+  const checked = inspectEmojiImage(IMAGES.png);
+  if (!checked.ok) throw new Error(checked.message);
+  return checked.image;
+}

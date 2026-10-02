@@ -9,11 +9,8 @@ export {
   dayOf,
   lowestPlanWithAnalytics,
 } from "./analytics.js";
-export type { D1DatabaseLike, D1StatementLike, Parsed, SqlValue } from "./d1-like.js";
 export {
   type CustomEmoji,
-  CustomEmojiInputError,
-  type CustomEmojiInputField,
   customEmojiImageKey,
   customEmojiImageUrl,
   EMOJI_IMPORT_MIN_PLAN,
@@ -29,36 +26,31 @@ export {
 export {
   type CreateCustomEmojiResult,
   CUSTOM_EMOJI_CACHE_CONTROL,
-  countCustomEmoji,
+  countAccountCustomEmoji,
   createCustomEmoji,
   deleteCustomEmoji,
   deleteCustomEmojiByShortcode,
-  deleteTenantCustomEmoji,
   type EmojiBucket,
-  type EmojiObject,
   findCustomEmoji,
   findCustomEmojiByShortcode,
-  findTenantId,
   listCustomEmoji,
   listUsableCustomEmoji,
   type NewCustomEmoji,
-  type SqlDatabase,
+  removeImages,
   type SqlReader,
-  type SqlStatement,
-  type SqlValue,
-  type SqlWriteStatement,
   type UpdateCustomEmojiResult,
   updateCustomEmoji,
 } from "./custom-emoji-store.js";
+export type { D1DatabaseLike, D1StatementLike, Parsed, SqlValue } from "./d1-like.js";
 export {
   CUSTOM_EMOJI_MAX_BYTES,
+  checkSvg,
   type EmojiImage,
-  EmojiImageError,
   type EmojiImageErrorCode,
   type EmojiImageExtension,
+  type ImageCheck,
+  inspectEmojiImage,
   sniffEmojiImage,
-  svgProblem,
-  validateEmojiImage,
 } from "./emoji-image.js";
 export {
   displayPrefix,
@@ -89,25 +81,6 @@ export {
   planRequiredMessage,
   type ScaleFeature,
 } from "./scale-features.js";
-export {
-  type CustomEmoji,
-  type CustomEmojiScope,
-  type CustomEmojiStorage,
-  checkSvg,
-  createCustomEmojiStorage,
-  type EmojiBucket,
-  type EmojiImage,
-  type ImageCheck,
-  imageKey,
-  inspectEmojiImage,
-  MAX_EMOJI_BYTES,
-  type PutCustomEmojiInput,
-  type PutCustomEmojiResult,
-  parseAliases,
-  parseShortcode,
-  removeImages,
-  toCustomEmoji,
-} from "./tenant-emoji-storage.js";
 export {
   countTenantEmoji,
   createTenant,

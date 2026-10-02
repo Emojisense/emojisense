@@ -1,8 +1,10 @@
 /**
- * Custom emoji rules shared by the dashboard and the API Worker (tenants API): shortcodes,
- * aliases, plan gates, R2 keys and the JSON shape. Storage lives in custom-emoji-store.ts.
+ * Custom emoji rules shared by the dashboard (uploads, imports) and the API Worker (tenants API):
+ * shortcodes, aliases, plan gates, R2 keys and the JSON shape. Storage lives in
+ * custom-emoji-store.ts, image checks in emoji-image.ts.
  */
 import { normalize } from "emojisense";
+import type { Parsed } from "./d1-like.js";
 import { isHigherPlan, type Plan, type PlanId } from "./plans.js";
 import type { CustomEmojiRow, CustomEmojiSource } from "./types.js";
 
@@ -17,6 +19,8 @@ export interface CustomEmoji {
   imageUrl: string;
   /** `tenants.id` of the owning tenant; null = app-wide. */
   tenantId: string | null;
+  /** The tenant's id in the owner's system, where the caller knows it (tenants API, webhooks). */
+  tenantExternalId?: string | null;
   source: CustomEmojiSource;
   bytes: number;
   createdAt: number;
@@ -27,63 +31,40 @@ export const MAX_ALIASES = 20;
 
 const SHORTCODE = /^[a-z0-9_+-]{1,64}$/;
 
-export type CustomEmojiInputField = "shortcode" | "aliases";
-
-/** A rejected shortcode or alias list (HTTP 400 in both Workers). */
-export class CustomEmojiInputError extends Error {
-  readonly code = "invalid_request";
-  readonly status = 400;
-  constructor(
-    readonly field: CustomEmojiInputField,
-    message: string,
-  ) {
-    super(message);
-  }
-}
-
 /**
  * `":Party_Parrot:"` → `"party_parrot"`. Surrounding colons and spaces are dropped and letters
- * are lowercased; anything else outside [a-z0-9_+-] is rejected, not rewritten.
+ * are lowercased; anything else outside [a-z0-9_+-] is refused, not rewritten.
  */
-export function parseShortcode(value: unknown): string {
-  if (typeof value !== "string") throw new CustomEmojiInputError("shortcode", "shortcode is required.");
+export function parseShortcode(value: unknown): Parsed<string> {
+  const invalid = (message: string) => ({ ok: false as const, field: "shortcode", message });
+  if (typeof value !== "string" || value.trim() === "") return invalid("shortcode is required.");
   const shortcode = value
     .trim()
     .replace(/^:+|:+$/g, "")
     .toLowerCase();
   if (!SHORTCODE.test(shortcode)) {
-    throw new CustomEmojiInputError(
-      "shortcode",
-      `shortcode can have 1–${SHORTCODE_MAX_LENGTH} characters: a–z, 0–9, "_", "+" and "-".`,
-    );
+    return invalid(`shortcode can have 1–${SHORTCODE_MAX_LENGTH} characters: a–z, 0–9, "_", "+" and "-".`);
   }
-  if (normalize(shortcode) === "") {
-    throw new CustomEmojiInputError("shortcode", "shortcode needs at least one letter or digit.");
-  }
-  return shortcode;
+  if (normalize(shortcode) === "") return invalid("shortcode needs at least one letter or digit.");
+  return { ok: true, value: shortcode };
 }
 
 /**
  * Aliases from a comma-separated string (multipart forms) or a string array (JSON). Each alias
- * is normalized like a query; empty and repeated ones are dropped. Undefined, null and "" mean
- * no aliases.
+ * is normalized like a query (so it is at most 64 characters); empty and repeated ones are
+ * dropped. Undefined, null and "" mean no aliases.
  */
-export function parseAliases(value: unknown): string[] {
-  if (value === undefined || value === null || value === "") return [];
+export function parseAliases(value: unknown): Parsed<string[]> {
+  const invalid = (message: string) => ({ ok: false as const, field: "aliases", message });
+  if (value === undefined || value === null || value === "") return { ok: true, value: [] };
   let raw: unknown[];
   if (typeof value === "string") raw = value.split(",");
   else if (Array.isArray(value)) raw = value;
-  else {
-    throw new CustomEmojiInputError("aliases", "aliases must be a comma-separated string or a string array.");
-  }
-  if (raw.some((alias) => typeof alias !== "string")) {
-    throw new CustomEmojiInputError("aliases", "Every alias must be a string.");
-  }
+  else return invalid("aliases must be a comma-separated string or a string array.");
+  if (raw.some((alias) => typeof alias !== "string")) return invalid("Every alias must be a string.");
   const aliases = [...new Set((raw as string[]).map((alias) => normalize(alias)).filter(Boolean))];
-  if (aliases.length > MAX_ALIASES) {
-    throw new CustomEmojiInputError("aliases", `A custom emoji can have at most ${MAX_ALIASES} aliases.`);
-  }
-  return aliases;
+  if (aliases.length > MAX_ALIASES) return invalid(`A custom emoji can have at most ${MAX_ALIASES} aliases.`);
+  return { ok: true, value: aliases };
 }
 
 /** `custom_emoji.aliases` is JSON; a corrupt value reads as no aliases. */
@@ -111,13 +92,19 @@ export function customEmojiImageUrl(apiUrl: string, appId: string, emojiId: stri
   return `${apiUrl.replace(/\/+$/, "")}/v1/custom/${encodeURIComponent(appId)}/${encodeURIComponent(emojiId)}`;
 }
 
-export function toCustomEmoji(row: CustomEmojiRow, apiUrl: string): CustomEmoji {
+/** `tenantExternalId` is added only when given (undefined leaves the key out). */
+export function toCustomEmoji(
+  row: CustomEmojiRow,
+  apiUrl: string,
+  tenantExternalId?: string | null,
+): CustomEmoji {
   return {
     id: row.id,
     shortcode: row.shortcode,
     aliases: storedAliases(row.aliases),
     imageUrl: customEmojiImageUrl(apiUrl, row.app_id, row.id),
     tenantId: row.tenant_id === "" ? null : row.tenant_id,
+    ...(tenantExternalId === undefined ? {} : { tenantExternalId }),
     source: row.source,
     bytes: row.bytes,
     createdAt: row.created_at,

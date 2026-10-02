@@ -1,17 +1,5 @@
-import { DatabaseSync } from "node:sqlite";
-import type { SqlReader, SqlStatement } from "@emojisense/platform";
 import { createD1CustomEmojiReader } from "../src/custom-store.ts";
-
-/** Every migration of the shared schema, in file-name order. */
-const migrations = Object.entries(
-  import.meta.glob<string>("../../platform/migrations/*.sql", {
-    query: "?raw",
-    import: "default",
-    eager: true,
-  }),
-)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([, sql]) => sql);
+import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
 
 /** The pro test key (fixtures.ts KEYS.pro) belongs to this app. */
 export const APP = "app_pro";
@@ -23,8 +11,7 @@ export const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x
  * :party_parrot: and :shipit:, and tenant "acme"'s own :shipit:.
  */
 export function customEmojiDatabase() {
-  const db = new DatabaseSync(":memory:");
-  for (const sql of migrations) db.exec(sql);
+  const db = migratedDatabase();
   db.exec(`
     INSERT INTO accounts (id, created_at) VALUES ('acc', 0);
     INSERT INTO apps (id, account_id, name, created_at) VALUES ('${APP}', 'acc', 'Chat', 0);
@@ -34,13 +21,7 @@ export function customEmojiDatabase() {
       ('e_parrot', '${APP}', '', 'party_parrot', '["celebrate","dance"]', 'custom/${APP}/_/e_parrot.png', 'image/png', 11, 1),
       ('e_ship', '${APP}', '', 'shipit', '["ship it"]', 'custom/${APP}/_/e_ship.svg', 'image/svg+xml', 20, 2),
       ('e_acme', '${APP}', 't_acme', 'shipit', '["acme ship"]', 'custom/${APP}/t_acme/e_acme.gif', 'image/gif', 30, 3);`);
-  const statement = (sql: string, params: unknown[] = []): SqlStatement => ({
-    bind: (...values) => statement(sql, values),
-    first: async <T>() => (db.prepare(sql).get(...params) ?? null) as T | null,
-    all: async <T>() => ({ results: db.prepare(sql).all(...params) as T[] }),
-  });
-  const reader: SqlReader = { prepare: (sql) => statement(sql) };
-  return { db, reader: createD1CustomEmojiReader(reader) };
+  return { db, reader: createD1CustomEmojiReader(sqliteD1(db)) };
 }
 
 /** R2 in memory, typed as the binding the Worker gets. */

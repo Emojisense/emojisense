@@ -2,7 +2,7 @@ import { normalize } from "emojisense";
 import { record } from "./analytics.ts";
 import { MAX_LIMIT, MAX_REACTION_BODY_BYTES, MAX_REACTION_CHARS, REACTIONS_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
-import { mergeCustom, parseTenant } from "./custom.ts";
+import { imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
 import { errorResponse, json, parseLimit, parseLocale, readBodyCapped } from "./http.ts";
 import { rankReactions } from "./reaction-rank.ts";
 import type { SearchBody } from "./search.ts";
@@ -60,7 +60,11 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
   });
   const body: SearchBody = {
     query: normalize(text),
-    results: mergeCustom(customSet.search(url.origin, text, { limit, prefix: false }), ranked.results, limit),
+    results: mergeCustom(
+      customSet.search(imageOrigin(env, url), text, { limit, prefix: false }),
+      ranked.results,
+      limit,
+    ),
     packVersion: catalog.config.packVersion,
     model: modelTag(catalog),
     cached: false,
