@@ -17,7 +17,7 @@ export function keywordSearch(pack: Pack | undefined, query: string, limit = 24)
   pack.emoji.forEach((row, order) => {
     const label = row[ROW_INDEX.label];
     let score = label.toLowerCase().includes(q) ? 10 : 0;
-    for (const tag of row[ROW_INDEX.keyword].split("|")) if (tag && tag.includes(q)) score += 1;
+    for (const tag of row[ROW_INDEX.keyword].split("|")) if (tag?.includes(q)) score += 1;
     if (score > 0)
       scored.push({ hit: { emoji: row[ROW_INDEX.emoji], id: row[ROW_INDEX.hexcode], label }, score, order });
   });

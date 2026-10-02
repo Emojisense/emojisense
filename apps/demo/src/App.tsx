@@ -1,9 +1,10 @@
 import { type EmojiSearchState, useEmojiSearch, useEmojisense } from "@emojisense/react";
 import { EmojisensePicker } from "@emojisense/react/frimousse";
 import type { SearchResult } from "emojisense";
-import { type KeyboardEvent, useEffect, useId, useMemo, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { type KeywordHit, keywordSearch } from "./keyword-search";
-import { median, useReceipt } from "./receipt";
+import { type Burst, tiltFor, useBurst, useCountUp } from "./motion";
+import { formatMs, type LayerTally, median, type Ticket, useTicket } from "./ticket";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8787";
 const PACK_VERSION = import.meta.env.VITE_PACK_VERSION ?? "0.1.0";
@@ -12,42 +13,65 @@ const COLUMNS = 6;
 
 type Locale = "en" | "tr";
 
-const EXAMPLES: Record<Locale, string[]> = {
+interface Example {
+  q: string;
+  /** Says what kind of language the query is, never the answer. */
+  emoji: string;
+}
+
+const EXAMPLES: Record<Locale, Example[]> = {
   en: [
-    "jurassic park",
-    "lgtm",
-    "ship it",
-    "greatest of all time",
-    "hallowelen",
-    "spill the tea",
-    "congrats on the launch",
-    "break a leg",
+    { q: "jurassic park", emoji: "🎬" },
+    { q: "lgtm", emoji: "💻" },
+    { q: "ship it", emoji: "💻" },
+    { q: "greatest of all time", emoji: "🗣️" },
+    { q: "hallowelen", emoji: "⌨️" },
+    { q: "spill the tea", emoji: "🗣️" },
+    { q: "congrats on the launch", emoji: "💬" },
+    { q: "break a leg", emoji: "💬" },
   ],
-  tr: ["kolay gelsin", "doğum günü", "maşallah", "gülmekten öldüm", "geçmiş olsun", "afiyet olsun"],
+  tr: [
+    { q: "kolay gelsin", emoji: "💬" },
+    { q: "doğum günü", emoji: "📅" },
+    { q: "maşallah", emoji: "💬" },
+    { q: "gülmekten öldüm", emoji: "🗣️" },
+    { q: "geçmiş olsun", emoji: "💬" },
+    { q: "afiyet olsun", emoji: "💬" },
+  ],
 };
 
 const COPY = {
   en: {
     lede: "Emoji search that knows what you mean.",
-    sub: "Most pickers match the emoji's name. Emojisense also matches slang, typos, films, idioms and intent. It answers on your device first and asks the edge only when it is unsure.",
+    sub: "Most pickers match the emoji’s name. Emojisense also matches slang, typos, films, idioms and intent. It answers on your device first and asks the edge only when it is unsure.",
     label: "Search emoji",
+    dice: "Try another example",
     keyword: "Name search",
     keywordNote: "Substring match on names and keywords, like most pickers",
     ours: "Emojisense",
     oursNote: "Aliases on device, meaning at the edge, fused",
-    none: "No match",
+    nothing: "Nothing here 🫥 — name search only matches names.",
+    none: "No match yet 🫥",
     try: "Try",
+    copied: "copied",
+    pickerTitle: "Inside a real picker",
+    pickerNote: "Frimousse keeps its browse view. As soon as you type, Emojisense does the ranking.",
   },
   tr: {
     lede: "Ne demek istediğini anlayan emoji araması.",
     sub: "Çoğu seçici yalnızca emoji adını eşler. Emojisense argo, yazım hatası, film, deyim ve niyeti de anlar. Önce cihazında yanıt verir, emin değilse kenar sunucuya sorar.",
     label: "Emoji ara",
+    dice: "Başka bir örnek dene",
     keyword: "Ad araması",
     keywordNote: "Ad ve anahtar kelimede alt dize eşleşmesi",
     ours: "Emojisense",
     oursNote: "Cihazda takma adlar, kenarda anlam, birleşik sıralama",
-    none: "Sonuç yok",
+    nothing: "Burada bir şey yok 🫥 — ad araması yalnızca adları eşler.",
+    none: "Henüz sonuç yok 🫥",
     try: "Dene",
+    copied: "kopyalandı",
+    pickerTitle: "Gerçek bir seçicide",
+    pickerNote: "Frimousse göz atma görünümünü korur. Yazmaya başladığınızda sıralamayı Emojisense yapar.",
   },
 } as const;
 
@@ -62,6 +86,7 @@ export function App() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [announcement, setAnnouncement] = useState("");
   const [health, setHealth] = useState<Health | undefined>();
+  const inputRef = useRef<HTMLInputElement>(null);
   const listboxId = useId();
   const t = COPY[locale];
 
@@ -75,7 +100,8 @@ export function App() {
   const pack = sense.packs.find((p) => p.locale === locale);
   const keywordHits = useMemo(() => keywordSearch(pack, query), [pack, query]);
   const modelKey = health?.model.split("@")[0];
-  const receipt = useReceipt(query, search, health?.semantic ? modelKey : undefined);
+  const ticket = useTicket(query, search, health?.semantic ? modelKey : undefined);
+  const burst = useBurst(search);
 
   useEffect(() => {
     fetch(`${API_URL}/v1/health`)
@@ -88,9 +114,21 @@ export function App() {
     return labels?.[locale] ?? labels?.en ?? "";
   };
 
+  const changeQuery = (next: string) => {
+    setQuery(next);
+    setActiveIndex(0);
+  };
+
+  const nextExample = () => {
+    const list = EXAMPLES[locale];
+    const current = list.findIndex((example) => example.q === query);
+    changeQuery(list[(current + 1) % list.length]?.q ?? "");
+    inputRef.current?.focus();
+  };
+
   const select = (emoji: string, label: string) => {
     void navigator.clipboard?.writeText(emoji).catch(() => {});
-    setAnnouncement(`${emoji} ${label} — ${locale === "tr" ? "kopyalandı" : "copied"}`);
+    setAnnouncement(`${emoji} ${label} — ${t.copied}`);
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -114,25 +152,30 @@ export function App() {
     }
   };
 
-  // Show the big answer only when it is probably right: a confident alias hit or a fused result.
+  // Show the sticker only when the answer is probably right: a confident alias hit or a fused result.
   const first = search.results[0];
   const top =
     first && ((search.alias?.confidence ?? 0) >= 0.5 || first.source === "semantic") ? first : undefined;
 
   return (
-    <main className="page">
-      <header className="masthead">
-        <span className="wordmark">emojisense</span>
+    <>
+      <header className="masthead wrap">
+        <span className="wordmark">
+          <span className="sticker logo" aria-hidden="true">
+            🦖
+          </span>
+          emojisense
+        </span>
         <nav className="locale" aria-label="Language">
           {(["en", "tr"] as const).map((l) => (
             <button
               key={l}
               type="button"
+              className="pill"
               aria-pressed={locale === l}
               onClick={() => {
                 setLocale(l);
-                setQuery(EXAMPLES[l][0] as string);
-                setActiveIndex(0);
+                changeQuery(EXAMPLES[l][0]?.q ?? "");
               }}
             >
               {l.toUpperCase()}
@@ -141,112 +184,164 @@ export function App() {
         </nav>
       </header>
 
-      <section className="hero" aria-labelledby="lede">
-        <h1 id="lede">{t.lede}</h1>
-        <p className="sub">{t.sub}</p>
+      <main>
+        <section className="hero-band" aria-labelledby="lede">
+          <div className="wrap">
+            <h1 id="lede">{t.lede}</h1>
+            <p className="sub">{t.sub}</p>
 
-        <div className="query">
-          <label htmlFor="q" className="visually-hidden">
-            {t.label}
-          </label>
-          <input
-            id="q"
-            type="search"
-            autoComplete="off"
-            spellCheck={false}
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setActiveIndex(0);
-            }}
-            onKeyDown={onKeyDown}
-            role="combobox"
-            aria-expanded={search.results.length > 0}
-            aria-controls={listboxId}
-            aria-autocomplete="list"
-            aria-activedescendant={search.results.length > 0 ? `${listboxId}-${activeIndex}` : undefined}
-            placeholder={EXAMPLES[locale][0]}
-          />
-          <span className="answer" aria-hidden="true" key={top?.id ?? "none"}>
-            {top?.emoji ?? ""}
-          </span>
-        </div>
+            <div className="card playground">
+              <div className="composer">
+                <button
+                  type="button"
+                  className="keycap dice"
+                  onClick={nextExample}
+                  aria-label={t.dice}
+                  title={t.dice}
+                >
+                  <span aria-hidden="true">🎲</span>
+                </button>
+                <label htmlFor="q" className="visually-hidden">
+                  {t.label}
+                </label>
+                <input
+                  ref={inputRef}
+                  id="q"
+                  type="search"
+                  autoComplete="off"
+                  spellCheck={false}
+                  value={query}
+                  onChange={(e) => changeQuery(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  role="combobox"
+                  aria-expanded={search.results.length > 0}
+                  aria-controls={listboxId}
+                  aria-autocomplete="list"
+                  aria-activedescendant={
+                    search.results.length > 0 ? `${listboxId}-${activeIndex}` : undefined
+                  }
+                  placeholder={EXAMPLES[locale][0]?.q}
+                />
+                <Answer top={top} burst={burst} loading={sense.status === "loading"} />
+              </div>
 
-        <p className="examples">
-          <span>{t.try}</span>
-          {EXAMPLES[locale].map((example) => (
-            <button
-              key={example}
-              type="button"
-              onClick={() => {
-                setQuery(example);
-                setActiveIndex(0);
-              }}
-            >
-              {example}
-            </button>
-          ))}
-        </p>
-      </section>
+              <div className="examples">
+                <span className="examples-label">{t.try}</span>
+                <ul>
+                  {EXAMPLES[locale].map((example) => (
+                    <li key={example.q}>
+                      <button
+                        type="button"
+                        className="pill"
+                        aria-pressed={query === example.q}
+                        onClick={() => changeQuery(example.q)}
+                      >
+                        <span className="emoji" aria-hidden="true">
+                          {example.emoji}
+                        </span>
+                        {example.q}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <section className="compare" aria-label="Comparison">
-        <KeywordPanel title={t.keyword} note={t.keywordNote} hits={keywordHits} empty={t.none} />
-        <EmojisensePanel
-          title={t.ours}
-          note={t.oursNote}
-          search={search}
-          listboxId={listboxId}
-          activeIndex={activeIndex}
-          onActive={setActiveIndex}
-          onSelect={(r) => select(r.emoji, labelOf(r.id))}
-          labelOf={labelOf}
-          empty={t.none}
-        />
-      </section>
+        <div className="wrap">
+          <section className="compare" aria-label="Comparison">
+            <KeywordPanel title={t.keyword} note={t.keywordNote} hits={keywordHits} empty={t.nothing} />
+            <EmojisensePanel
+              title={t.ours}
+              note={t.oursNote}
+              search={search}
+              listboxId={listboxId}
+              activeIndex={activeIndex}
+              onActive={setActiveIndex}
+              onSelect={(r) => select(r.emoji, labelOf(r.id))}
+              labelOf={labelOf}
+              empty={t.none}
+            />
+          </section>
 
-      <ReceiptStrip receipt={receipt} health={health} status={sense.status} />
+          <TicketCard ticket={ticket} health={health} />
 
-      <section className="picker-section" aria-labelledby="picker-title">
-        <div className="picker-copy">
-          <h2 id="picker-title">{locale === "tr" ? "Gerçek bir seçicide" : "Inside a real picker"}</h2>
-          <p>
-            {locale === "tr"
-              ? "Frimousse göz atma görünümünü korur. Yazmaya başladığınızda sıralamayı Emojisense yapar."
-              : "Frimousse keeps its browse view. As soon as you type, Emojisense does the ranking."}
-          </p>
-          <pre className="code">
-            <code>{`const sense = useEmojisense({ packBaseUrl, endpoint });
+          <section className="picker-section" aria-labelledby="picker-title">
+            <div className="picker-copy">
+              <h2 id="picker-title">{t.pickerTitle}</h2>
+              <p>{t.pickerNote}</p>
+              <pre className="code">
+                <code>{`const sense = useEmojisense({ packBaseUrl, endpoint });
 
 <EmojisensePicker
   emojisense={sense}
   onEmojiSelect={({ emoji }) => insert(emoji)}
 />`}</code>
-          </pre>
-        </div>
-        {sense.engine ? (
-          <EmojisensePicker
-            className="picker"
-            emojisense={sense}
-            columns={8}
-            onEmojiSelect={({ emoji, label }) => select(emoji, label)}
-            empty={<p className="picker-empty">{t.none}</p>}
-          />
-        ) : (
-          <div className="picker picker-loading">…</div>
-        )}
-      </section>
+              </pre>
+            </div>
+            {sense.engine ? (
+              <EmojisensePicker
+                className="picker"
+                emojisense={sense}
+                columns={8}
+                onEmojiSelect={({ emoji, label }) => select(emoji, label)}
+                empty={<p className="picker-empty">{t.none}</p>}
+              />
+            ) : (
+              <div className="picker picker-loading">⏳</div>
+            )}
+          </section>
 
-      <footer className="footer">
-        <p>
-          Emoji data: Emojibase (MIT) and Unicode CLDR (Unicode License v3). Glyphs come from your system
-          font.
-        </p>
-      </footer>
+          <footer className="footer">
+            <p>
+              Emoji data: Emojibase (MIT) and Unicode CLDR (Unicode License v3). Glyphs come from your system
+              font.
+            </p>
+          </footer>
+        </div>
+      </main>
 
       <p className="visually-hidden" aria-live="polite">
         {announcement}
       </p>
-    </main>
+    </>
+  );
+}
+
+function Answer(props: { top: SearchResult | undefined; burst: Burst | undefined; loading: boolean }) {
+  const { top, burst, loading } = props;
+  return (
+    <div className="answer" aria-hidden="true">
+      {top ? (
+        <span key={top.id} className="sticker" style={{ "--tilt": `${tiltFor(top.id)}deg` } as CSSProperties}>
+          {top.emoji}
+        </span>
+      ) : (
+        <span className="answer-empty">{loading ? "⏳" : "🫥"}</span>
+      )}
+      {burst && (
+        <span className="burst" key={burst.key}>
+          {burst.pieces.map((piece, index) => (
+            <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: pieces are a fixed, positional set.
+              key={index}
+              style={
+                {
+                  "--dx": `${piece.dx}rem`,
+                  "--dy": `${piece.dy}rem`,
+                  "--r": `${piece.rotate}deg`,
+                  "--s": piece.scale,
+                  animationDelay: `${piece.delayMs}ms`,
+                } as CSSProperties
+              }
+            >
+              {burst.emoji}
+            </span>
+          ))}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -258,24 +353,29 @@ function shortHex(id: string) {
 
 function KeywordPanel(props: { title: string; note: string; hits: KeywordHit[]; empty: string }) {
   return (
-    <article className="panel panel-keyword">
+    <article className="card panel">
       <header>
         <h2>{props.title}</h2>
-        <p>{props.note}</p>
+        <p className="panel-note">{props.note}</p>
+        <span className="count pill">{props.hits.length}</span>
       </header>
       {props.hits.length === 0 ? (
         <p className="none">{props.empty}</p>
       ) : (
-        <ul className="chart">
-          {props.hits.map((hit) => (
-            <li key={hit.id} className="cell" title={hit.label}>
+        <ul className="keys">
+          {props.hits.map((hit, index) => (
+            <li
+              key={hit.id}
+              className="keycap key"
+              title={hit.label}
+              style={{ "--i": index } as CSSProperties}
+            >
               <span className="glyph">{hit.emoji}</span>
               <span className="hex">{shortHex(hit.id)}</span>
             </li>
           ))}
         </ul>
       )}
-      <p className="count">{props.hits.length}</p>
     </article>
   );
 }
@@ -297,26 +397,32 @@ function EmojisensePanel(props: EmojisensePanelProps) {
   const match = (r: SearchResult) =>
     r.source === "alias" ? search.alias?.results.find((a) => a.id === r.id)?.match : undefined;
   return (
-    <article className="panel panel-ours" aria-busy={search.status === "loading"}>
+    <article className="card panel panel-ours" aria-busy={search.status === "loading"}>
       <header>
         <h2>{props.title}</h2>
-        <p>{props.note}</p>
+        <p className="panel-note">{props.note}</p>
+        <span className="count pill">{search.results.length}</span>
       </header>
       {search.results.length === 0 ? (
-        <p className="none">{search.status === "loading" ? "…" : props.empty}</p>
+        <p className="none">{search.status === "loading" ? "⏳" : props.empty}</p>
       ) : (
-        <div className="chart" role="listbox" id={listboxId} aria-label={props.title}>
+        <div className="keys" role="listbox" id={listboxId} aria-label={props.title}>
           {search.results.map((r, index) => {
             const why = match(r);
             return (
+              // Combobox pattern: focus stays in the input, which moves aria-activedescendant and
+              // handles the keys. The options themselves are intentionally not focusable.
+              // biome-ignore lint/a11y/useFocusableInteractive: see above.
+              // biome-ignore lint/a11y/useKeyWithClickEvents: see above.
               <div
                 key={r.id}
                 id={`${listboxId}-${index}`}
                 role="option"
                 aria-selected={index === activeIndex}
                 aria-label={props.labelOf(r.id)}
-                className="cell"
+                className="keycap key"
                 data-source={r.source}
+                style={{ "--i": index } as CSSProperties}
                 onMouseEnter={() => props.onActive(index)}
                 onClick={() => props.onSelect(r)}
                 title={why ? `“${why}”` : props.labelOf(r.id)}
@@ -331,54 +437,95 @@ function EmojisensePanel(props: EmojisensePanelProps) {
           })}
         </div>
       )}
-      <p className="count">{search.results.length}</p>
     </article>
   );
 }
 
-function ReceiptStrip(props: {
-  receipt: ReturnType<typeof useReceipt>;
-  health: Health | undefined;
-  status: string;
-}) {
-  const { receipt, health } = props;
-  const device = median(receipt.onDeviceMs);
-  const edge = median(receipt.edgeMs);
-  const perSearch = receipt.searches > 0 ? receipt.costUsd / receipt.searches : undefined;
-  const rows: [string, string][] = [
-    ["Keystrokes", String(receipt.keystrokes)],
-    [
-      "Answered on device",
-      `${receipt.keystrokes} · median ${device === undefined ? "–" : `${device.toFixed(2)} ms`}`,
-    ],
-    [
-      "Sent to the edge",
-      `${receipt.edgeRequests} · median ${edge === undefined ? "–" : `${Math.round(edge)} ms`} · ${receipt.cacheHits} from cache`,
-    ],
-    [
-      "Model",
-      health ? `${health.model}${health.semantic ? "" : " (offline: alias only)"}` : "API not reachable",
-    ],
+function Count(props: { value: number; digits?: number }) {
+  const shown = useCountUp(props.value);
+  return <>{shown.toFixed(props.digits ?? 0)}</>;
+}
+
+interface LayerRow {
+  emoji: string;
+  name: string;
+  tally: LayerTally;
+  note?: string;
+}
+
+function TicketCard(props: { ticket: Ticket; health: Health | undefined }) {
+  const { ticket, health } = props;
+  const perSearch = ticket.searches > 0 ? ticket.costUsd / ticket.searches : undefined;
+  const rows: LayerRow[] = [
+    { emoji: "📱", name: "On device", tally: ticket.device },
+    { emoji: "🗂️", name: "From shards", tally: ticket.shard },
+    {
+      emoji: "☁️",
+      name: "From the Worker",
+      tally: ticket.worker,
+      note: ticket.worker.cached > 0 ? `${ticket.worker.cached} cached` : undefined,
+    },
   ];
+  const model = health
+    ? `${health.model}${health.semantic ? "" : " (offline: alias only)"}`
+    : "API not reachable";
+
   return (
-    <section className="receipt" aria-label="Session receipt">
-      <dl>
-        {rows.map(([k, v]) => (
-          <div key={k}>
-            <dt>{k}</dt>
-            <dd>{v}</dd>
+    <section className="ticket" aria-labelledby="ticket-title">
+      <div className="ticket-body">
+        <h2 id="ticket-title">
+          <span aria-hidden="true">🎟️</span> Session ticket
+        </h2>
+        <table>
+          <caption className="visually-hidden">Answers per layer, with median latency</caption>
+          <thead>
+            <tr>
+              <th scope="col">Layer</th>
+              <th scope="col">Answers</th>
+              <th scope="col">Median</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.name}>
+                <th scope="row">
+                  <span aria-hidden="true">{row.emoji}</span> {row.name}
+                  {row.note && <span className="ticket-note"> · {row.note}</span>}
+                </th>
+                <td>
+                  <Count value={row.tally.answers} />
+                </td>
+                <td>{formatMs(median(row.tally.ms))}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <dl>
+          <div>
+            <dt>Keystrokes</dt>
+            <dd>
+              <Count value={ticket.keystrokes} />
+            </dd>
           </div>
-        ))}
-      </dl>
-      <div className="total">
-        <span>This session</span>
-        <strong>${receipt.costUsd.toFixed(9)}</strong>
+          <div>
+            <dt>Model</dt>
+            <dd>{model}</dd>
+          </div>
+        </dl>
       </div>
-      <p className="projection">
-        {perSearch === undefined
-          ? "Per 1M searches at this rate: type a few queries"
-          : `Per 1M searches at this rate: $${(perSearch * 1e6).toFixed(2)}`}
-      </p>
+      <div className="ticket-stub">
+        <p className="total">
+          <span>This session</span>
+          <strong>
+            $<Count value={ticket.costUsd} digits={9} />
+          </strong>
+        </p>
+        <p className="projection">
+          {perSearch === undefined
+            ? "Per 1M searches at this rate: type a few queries"
+            : `Per 1M searches at this rate: $${(perSearch * 1e6).toFixed(2)}`}
+        </p>
+      </div>
     </section>
   );
 }
