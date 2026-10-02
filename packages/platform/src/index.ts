@@ -8,6 +8,9 @@ export {
   analyticsKeepDays,
   dayOf,
   lowestPlanWithAnalytics,
+  SHARD_MIN_ACCOUNTS,
+  SHARD_MIN_SEARCHES,
+  SHARD_WINDOW_DAYS,
 } from "./analytics.js";
 export {
   type CustomEmoji,

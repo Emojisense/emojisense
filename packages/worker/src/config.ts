@@ -65,17 +65,9 @@ export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;
  */
 export const SHARD_BUILD_CRON = "23 4 * * *";
 /**
- * k-anonymity for public shard files: a query is published only when apps of at least this many
- * different accounts searched it…
+ * The k-anonymity thresholds and the window of the build are SHARD_MIN_ACCOUNTS,
+ * SHARD_MIN_SEARCHES and SHARD_WINDOW_DAYS in @emojisense/platform: the privacy pages cite them.
  */
-export const SHARD_MIN_ACCOUNTS = 3;
-/** …at least this many times in total… */
-export const SHARD_MIN_SEARCHES = 10;
-/**
- * …over the last this many complete UTC days. The shortest retention (Free, Solo) keeps today
- * and the 6 days before it, so 6 complete days exist for every plan.
- */
-export const SHARD_WINDOW_DAYS = 6;
 /** Queries per build, most searched first. Bounds memory, shard count and R2 writes per run. */
 export const SHARD_MAX_QUERIES = 20_000;
 /**

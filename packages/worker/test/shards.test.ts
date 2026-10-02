@@ -326,6 +326,16 @@ describe("nightly shard build", () => {
     expect(pointer().build).toBe(first.build);
   });
 
+  it("removes a query from the public files once it no longer passes the thresholds", async () => {
+    popular(db, "lava eruption");
+    await run();
+    // A week later the searches are out of the window: an empty build replaces the old one.
+    const later = await run({}, {}, NOW + 7 * DAY);
+    expect(later).toMatchObject({ status: "published", queries: 0, shards: 0 });
+    const index = r2.json<ShardIndex>(`${PREFIX}${pointer().build}/index.json`);
+    expect(index.keys).toEqual([]);
+  });
+
   it("publishes nothing when no query passes the thresholds", async () => {
     searched(db, "lava eruption", [["a", 100]]);
     expect(await run()).toMatchObject({ status: "empty", candidates: 0 });

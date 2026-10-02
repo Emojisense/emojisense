@@ -6,17 +6,14 @@ import {
   type ShardResolver,
   type ShardResult,
 } from "@emojisense/data/shards";
-import { dayOf } from "@emojisense/platform";
+import { dayOf, SHARD_MIN_ACCOUNTS, SHARD_MIN_SEARCHES, SHARD_WINDOW_DAYS } from "@emojisense/platform";
 import { embeddingText, type VectorIndex } from "emojisense";
 import {
   SEARCH_DEFAULT_LIMIT,
   SHARD_MAX_EMBEDDINGS,
   SHARD_MAX_QUERIES,
   SHARD_MAX_RAW_BYTES,
-  SHARD_MIN_ACCOUNTS,
-  SHARD_MIN_SEARCHES,
   SHARD_STALE_DAYS,
-  SHARD_WINDOW_DAYS,
   SHARD_WRITE_CONCURRENCY,
 } from "../config.ts";
 import type { Env } from "../env.ts";
@@ -64,7 +61,7 @@ export const SHARD_LIMITS: ShardLimits = {
 const GATE_LOCALES = ["en", "tr"];
 
 export interface ShardRunReport {
-  /** published: a new build is served. unchanged: the same build again. empty: nothing to publish. */
+  /** published: a new build is served. unchanged: the same build again. empty: no build yet, none made. */
   status: "published" | "unchanged" | "empty" | "skipped";
   reason?: string;
   build?: string;
@@ -237,7 +234,9 @@ export async function runShardBuild(
       // Workers AI is down: keep serving the current build rather than a smaller one.
       throw new Error("every Workers AI call failed");
     }
-    if (built.store.size === 0) {
+    // With a build served, an empty one replaces it: a query leaves the public files once it no
+    // longer passes the thresholds. Without one, the static shards stay.
+    if (built.store.size === 0 && !served) {
       console.log(JSON.stringify({ event: "shards_empty", ...counts, ms: Date.now() - started }));
       return report("empty", counts);
     }
