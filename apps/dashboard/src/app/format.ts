@@ -64,7 +64,7 @@ export const METRIC_COPY: Record<Metric, { label: string; hint: string }> = {
     hint: "Search and reaction calls that reached the API, edge-cached answers included.",
   },
   image_classifications: { label: "Image classifications", hint: "Photo to emoji calls." },
-  custom_emoji: { label: "Custom emoji", hint: "Custom emoji stored for this app." },
+  custom_emoji: { label: "Custom emoji", hint: "Custom emoji stored by every app of the account." },
 };
 
 export const ENVIRONMENT_LABELS: Record<Environment, string> = {

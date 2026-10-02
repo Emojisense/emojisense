@@ -8,12 +8,18 @@ function meterNote(usage: MetricUsage, planName: string): string {
     case "not_included":
       return `Not included in the ${planName} plan.`;
     case "over_limit":
-      return `Limit reached. The API answers with overLimit: true until next month. ${hint}`;
+      return `Limit reached. The API answers with overLimit: true for every app of the account until next month. ${hint}`;
     case "near_limit":
       return `${usage.percent}% used: close to the limit. ${hint}`;
     default:
       return usage.limit === null ? hint : `${usage.percent}% used. ${hint}`;
   }
+}
+
+/** Only when other apps of the account used the metric too; otherwise the figure says it all. */
+function appShare(usage: MetricUsage & { appUsed?: number }): string | null {
+  if (usage.appUsed === undefined || usage.appUsed === usage.used) return null;
+  return `This app: ${formatNumber(usage.appUsed)} of ${formatNumber(usage.used)}.`;
 }
 
 const STATUS_LABEL: Partial<Record<MetricUsage["status"], string>> = {
@@ -26,7 +32,8 @@ export function UsageMeter({
   planName,
   compact = false,
 }: {
-  usage: MetricUsage;
+  /** `appUsed` (one app's part of the account total) adds a "This app" line. */
+  usage: MetricUsage & { appUsed?: number };
   planName: string;
   compact?: boolean;
 }) {
@@ -82,7 +89,7 @@ export function UsageMeter({
       )}
       {!compact && (
         <p id={noteId} className="meter-note">
-          {meterNote(usage, planName)}
+          {[appShare(usage), meterNote(usage, planName)].filter(Boolean).join(" ")}
         </p>
       )}
     </div>

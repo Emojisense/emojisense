@@ -37,7 +37,7 @@ import type {
   WebhookEvent,
 } from "../api";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
-import { analyticsFor, type MockDb, measure, seeded, usageFor } from "./data";
+import { analyticsFor, appCount, type MockDb, measure, seeded, usageFor } from "./data";
 
 function tenantView(db: MockDb, tenant: MockDb["tenants"][number]): TenantSummary {
   const { appId: _, ...rest } = tenant;
@@ -627,12 +627,9 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     (db) => {
       const plan = PLANS[db.plan];
       const apps = ownApps(db);
+      // Account totals; custom_emoji is the number of emoji stored now.
       const used = (metric: Metric) =>
-        apps.reduce(
-          (sum, app) =>
-            sum + (usageFor(db, app.id, periodOf()).find((item) => item.metric === metric)?.used ?? 0),
-          0,
-        );
+        apps.reduce((sum, app) => sum + appCount(db, app.id, metric, periodOf()), 0);
       const response: BillingResponse = {
         plan: planSummary(db.plan),
         period: periodOf(),

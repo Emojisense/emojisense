@@ -4,7 +4,7 @@
  * a real chat product; they never reach a production build.
  */
 import { METRICS, type Metric, PLANS, type PlanId, periodOf } from "@emojisense/platform";
-import type { KeySummary, MetricUsage } from "../../shared/contract";
+import type { AppMetricUsage, KeySummary, MetricUsage } from "../../shared/contract";
 import type {
   AnalyticsDay,
   AnalyticsResponse,
@@ -317,18 +317,29 @@ export function measure(metric: Metric, used: number, limit: number): MetricUsag
   return { metric, used, limit, percent, status };
 }
 
-export function usageFor(db: MockDb, appId: string, period: string): MetricUsage[] {
+/** One app's own count of a metric in a period. Custom emoji are rows: the stored count. */
+export function appCount(db: MockDb, appId: string, metric: Metric, period: string): number {
+  if (metric === "custom_emoji") return db.emoji.filter((emoji) => emoji.appId === appId).length;
   const limits = PLANS[db.apps.find((app) => app.id === appId)?.plan ?? db.plan].limits;
-  const current = period === periodOf();
   // Earlier months are a little lower, so switching months shows a change.
-  const factor = current ? 1 : 0.74 + seeded(`${appId}:${period}`)() * 0.2;
+  const factor = period === periodOf() ? 1 : 0.74 + seeded(`${appId}:${period}`)() * 0.2;
+  const share = db.usageShare[appId]?.[metric] ?? 0;
+  const limit = Number.isFinite(limits[metric]) ? limits[metric] : PLANS.scale.limits[metric];
+  return Math.round(limit * share * factor);
+}
+
+/**
+ * `GET /api/apps/:id/usage`: metering is per account, so `used` sums every app of the owner and
+ * `appUsed` is this app's part. Custom emoji are not counters there: always 0.
+ */
+export function usageFor(db: MockDb, appId: string, period: string): AppMetricUsage[] {
+  const app = db.apps.find((item) => item.id === appId);
+  const limits = PLANS[app?.plan ?? db.plan].limits;
+  const siblings = db.apps.filter((item) => item.ownerId === app?.ownerId).map((item) => item.id);
   return METRICS.map((metric) => {
-    if (metric === "custom_emoji") {
-      return measure(metric, db.emoji.filter((emoji) => emoji.appId === appId).length, limits.custom_emoji);
-    }
-    const share = db.usageShare[appId]?.[metric] ?? 0;
-    const limit = Number.isFinite(limits[metric]) ? limits[metric] : PLANS.scale.limits[metric];
-    return measure(metric, Math.round(limit * share * factor), limits[metric]);
+    if (metric === "custom_emoji") return { ...measure(metric, 0, limits[metric]), appUsed: 0 };
+    const used = siblings.reduce((sum, id) => sum + appCount(db, id, metric, period), 0);
+    return { ...measure(metric, used, limits[metric]), appUsed: appCount(db, appId, metric, period) };
   });
 }
 
