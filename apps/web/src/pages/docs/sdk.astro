@@ -217,7 +217,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
       </tbody>
     </table>
   </div>
-  <p><code>shardKeyFor(keys, query)</code> picks the shard file for a query, for custom shard hosting.</p>
+  <p><code>shardKeyFor(keys, query)</code> picks the shard file for a query, for custom shard hosting. Shards are per locale: a search with <code>locale: "tr"</code> reads <code>shardBaseFor(baseUrl, "tr")</code>, which is <code>&lt;baseUrl&gt;/tr</code>; English stays at <code>baseUrl</code>.</p>
 
   <h2 id="fusion">Fusion</h2>
   <ul>
@@ -247,6 +247,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
     <li>Culture results have <code>source: "culture"</code>, <code>context</code> (the reason, in the file’s language) and <code>cultureId</code>. Search option <code>culture: false</code> keeps the canonical ranking; <code>region</code> (for example <code>"BR"</code>) turns on regional entries.</li>
     <li>A regional sense (<code>kind: "regional"</code>) is the one entry that can go first: only with a <code>region</code> in its scope, for a query equal to its trigger, and over a canonical answer it names. “football” with <code>region: "GB"</code> gives ⚽ then 🏈; without a region 🏈 stays first. <code>matchRegionalLead(culture, query, topId, {"{ region }"})</code> applies that rule to your own list.</li>
     <li><code>deviceRegion()</code> returns the region of the browser’s language (<code>navigator.language</code> <code>"pt-BR"</code> → <code>"BR"</code>), or <code>undefined</code> without a region subtag. <code>regionOf(locale)</code> does the same for any locale tag. <code>useEmojisense</code> and <code>&lt;emojisense-picker&gt;</code> use the browser’s region when the app passes none. The region stays on the device: it only selects regional entries and is never sent.</li>
+    <li><code>region: "auto"</code> (<code>AUTO_REGION</code>; <code>isAutoRegion(value)</code> tests for it) asks the API for the region of the request’s country: the session sends <code>region=auto</code> with its semantic requests and applies regional entries after the first API answer that reports a region.</li>
     <li><code>relevantNow(culture, options)</code> lists featured seasonal and event emoji active today, for an optional shelf.</li>
     <li><code>matchCulture</code>, <code>insertCulture</code> and <code>applyCulture</code> apply a culture file to your own result list; <code>isActiveOn(when, day)</code> and <code>localDay(now)</code> evaluate windows. See <a href="/docs/pack-format/">Pack format §9</a>.</li>
   </ul>
