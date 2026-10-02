@@ -13,7 +13,7 @@ export interface SplitOptions {
   entryBytes(query: string): number;
   /**
    * Entries whose raw size is above `maxBytes × maxRatio` cannot fit after compression, so they
-   * are split without measuring. Default 8 (shard JSON compresses about 4× at gzip level 9).
+   * are split without measuring. Default 8 (shard JSON compresses about 4×).
    */
   maxRatio?: number;
 }

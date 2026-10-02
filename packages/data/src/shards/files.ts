@@ -10,7 +10,11 @@ export function shardJson(key: string, queries: readonly string[], store: Result
   return `{"key":${JSON.stringify(key)},"entries":{${queries.map((q) => store.entryJson(q)).join(",")}}}`;
 }
 
-export const gzipBytes = (text: string, level = 9) => gzipSync(text, { level }).length;
+/**
+ * The budget is defined at gzip level 6, the usual level of on-the-fly HTTP compression. It is
+ * ~4× faster than level 9, which matters for ~13k shards per 1M queries, and ~2.5% larger.
+ */
+export const gzipBytes = (text: string) => gzipSync(text, { level: 6 }).length;
 
 export const shardFileName = (key: string) => `${encodeURIComponent(key)}.json`;
 

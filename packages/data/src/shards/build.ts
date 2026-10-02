@@ -66,8 +66,7 @@ export async function buildShards(options: BuildShardsOptions): Promise<BuiltSha
     maxBytes: options.maxShardBytes,
     // +1 for the comma between entries.
     entryBytes: (q) => Buffer.byteLength(store.entryJson(q)) + 1,
-    // Level 6 is ~4× faster than 9 and ~2.5% larger, so a shard that fits at 6 also fits at 9.
-    measure: (key, queries) => gzipBytes(shardJson(key, queries, store), 6),
+    measure: (key, queries) => gzipBytes(shardJson(key, queries, store)),
   });
   const index: ShardIndex = {
     format: "emojisense-shards",
