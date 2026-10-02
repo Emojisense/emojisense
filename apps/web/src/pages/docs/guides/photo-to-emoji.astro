@@ -49,9 +49,20 @@ const curl = `curl -X POST "${API_HOST}/v1/classify-image?locale=en&limit=5" \\
   <p>Someone shares a photo, and your app suggests the emoji that fit it: 🎂 for a birthday cake, 🐶 for a puppy. Use it for reaction suggestions on images, for alt-text helpers, or to tag uploads.</p>
 
   <h2 id="how-it-works">How it works</h2>
-  <p>You send a small image to <code>POST /v1/classify-image</code>. A vision model on Workers AI writes a short caption and the reaction a person would likely have. Emojisense then searches with that text, like a message, and returns ranked emoji.</p>
+  <p>You send a small image to <code>POST /v1/classify-image</code>. A vision model on Workers AI looks at the image once. It gives a short caption, the reaction a person would likely have, 3–6 keywords and up to 8 emoji of its own choice. Emojisense then ranks emoji from three signals and fuses them into one list:</p>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Signal</th><th scope="col">What it adds</th></tr></thead>
+      <tbody>
+        <tr><td>Proposed emoji</td><td>The emoji the model chose. Each one is checked against the catalog, and unknown ones are dropped. This signal counts the most, because the model sees the image.</td></tr>
+        <tr><td>Keywords</td><td>An alias search for each keyword, whole words only. An exact match counts more than a near match.</td></tr>
+        <tr><td>Caption</td><td>The emoji nearest to the caption embedding. This signal finds the most candidates, but its far neighbours are weak.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>An emoji with too little evidence is dropped, so the list can be shorter than <code>limit</code>. Gender and direction variants (🚵 🚵‍♀️ 🚵‍♂️) appear once.</p>
   <Callout type="privacy" title="The image is never stored">
-    <p>The image is processed in memory and dropped. It is never logged or saved. With an image hash (see below), only the caption is cached.</p>
+    <p>The image is processed in memory and dropped. It is never logged or saved. With an image hash (see below), only the label is cached: the caption, the reaction, the keywords and the proposed emoji.</p>
   </Callout>
 
   <h2 id="call-it">Call it</h2>
@@ -68,9 +79,9 @@ const curl = `curl -X POST "${API_HOST}/v1/classify-image?locale=en&limit=5" \\
       <thead><tr><th scope="col">Part</th><th scope="col">Value</th></tr></thead>
       <tbody>
         <tr><td>Body</td><td>The image bytes, <code>Content-Type: image/jpeg</code> or <code>image/webp</code>, at most 256 KB.</td></tr>
-        <tr><td><code>?locale=</code></td><td><code>en</code> (default) or <code>tr</code>, for the dictionary part.</td></tr>
+        <tr><td><code>?locale=</code></td><td>Checked as in <a href="/docs/api/#locales">search</a>. Default <code>en</code>. The label is in English, so the keywords are always matched with English aliases.</td></tr>
         <tr><td><code>?limit=</code></td><td>Number of results, 1–50. Default 8.</td></tr>
-        <tr><td><code>X-Image-Hash</code></td><td>Optional. A 64-bit perceptual hash of the image as 16 hex characters. It turns on the caption cache.</td></tr>
+        <tr><td><code>X-Image-Hash</code></td><td>Optional. A 64-bit perceptual hash of the image as 16 hex characters. It turns on the label cache.</td></tr>
       </tbody>
     </table>
   </div>
@@ -78,10 +89,10 @@ const curl = `curl -X POST "${API_HOST}/v1/classify-image?locale=en&limit=5" \\
   <h2 id="response">Response</h2>
   <p>The real answer for a photo of a birthday cake with a “3” candle, sent as a {image.photo}:</p>
   <CodeBlock code={prettyResponse(image.response)} lang="json" title="200 OK" />
-  <p>The model’s own <code>reaction</code> text is part of the search, so 🎂 and 🎇 come from the dictionary, and 🧁 🎈 🥳 from meaning search. Vision models are not fully deterministic: the same photo can get a slightly different caption.</p>
+  <p><code>keywords</code> are the model’s search words, most important first. <code>score</code> is the fused evidence, from 0 to 1. 🎂 gets 1 because several signals agree on it. <code>source</code> names the signal that added the most: <code>semantic</code> for a proposed emoji or the caption, <code>alias</code> for a keyword match. Vision models are not fully deterministic: the same photo can get slightly different keywords and emoji.</p>
 
   <h2 id="cache">Cache repeated images</h2>
-  <p>The same meme is often shared many times. Send <code>X-Image-Hash</code> with a perceptual hash (for example a 64-bit difference hash), and the API caches the caption for that hash in the data center. Later calls with the same hash skip the vision model. Every call still counts as one classification, also when it is a cache hit.</p>
+  <p>The same meme is often shared many times. Send <code>X-Image-Hash</code> with a perceptual hash (for example a 64-bit difference hash), and the API caches the label for that hash in the data center. Later calls with the same hash skip the vision model. The cache key also holds the vision model and the prompt version, so a new prompt never reads an old label. Every call still counts as one classification, also when it is a cache hit.</p>
 
   <h2 id="limits">Plans and limits</h2>
   <div class="table-scroll" tabindex="0">
@@ -92,6 +103,6 @@ const curl = `curl -X POST "${API_HOST}/v1/classify-image?locale=en&limit=5" \\
       </tbody>
     </table>
   </div>
-  <p>Over the limit, the API answers <code>200</code> with <code>"overLimit": true</code> and no results until the next month. There is no on-device vision model, so show your normal picker in that case. If Workers AI is unavailable, the answer has <code>"degraded": true</code>, no results, and is not counted.</p>
+  <p>Over the limit, the API answers <code>200</code> with <code>"overLimit": true</code> and no results until the next month. There is no on-device vision model, so show your normal picker in that case. If the vision model is unavailable, the answer has <code>"degraded": true</code>, no results, and is not counted. If only the caption embedding is unavailable, the answer has <code>"degraded": true</code> and fewer results, from the proposed emoji and the keywords.</p>
   <p>Errors: <code>400</code> for a wrong content type, an unreadable image or a bad hash, and <code>413</code> for an image over 256 KB.</p>
 </DocsLayout>

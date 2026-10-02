@@ -1,5 +1,5 @@
 {
-  "$comment": "Unedited responses of the real API, shown in the docs. Made on 2026-10-02 against the local Worker (packages/worker, wrangler dev on port 8788 with Workers AI: bge-m3@1024 embeddings, gemma-4-26b-a4b-it vision), pack 0.1.0, key pk_demo. The photo is public/demo/photos/cake.jpg (CC0, see src/demos/photo/credits.json), downscaled to 384 px with `sips -s format jpeg -s formatOptions 82 -Z 384`. Models are not fully deterministic, so a new run can differ slightly.",
+  "$comment": "Unedited responses of the real API, shown in the docs. Made on 2026-10-02 against the local Worker (packages/worker, wrangler dev on port 8788 with Workers AI: bge-m3@1024 embeddings, gemma-4-26b-a4b-it vision), pack 0.1.0, key pk_demo. The photo is public/demo/photos/cake.jpg (CC0, see src/demos/photo/credits.json), downscaled to 384 px with `sips -s format jpeg -s formatOptions 82 -Z 384`. The photo answer uses the photo ranking of 2026-10-02 (vision prompt v2: model proposals, keyword alias search and caption embedding, fused). Models are not fully deterministic, so a new run can differ slightly.",
   "madeOn": "2026-10-02",
   "search": {
     "request": "GET /v1/search?q=late%20night%20coding&limit=5",
@@ -96,39 +96,40 @@
   "image": {
     "request": "POST /v1/classify-image?locale=en&limit=5",
     "photo": "cake.jpg (384 px JPEG, 20 KB)",
-    "serverTiming": "vision;dur=594, embed;dur=124, total;dur=725",
+    "serverTiming": "vision;dur=1934, embed;dur=161, total;dur=2098",
     "response": {
       "caption": "A birthday cake with a lit number three candle and star decorations",
-      "reaction": "Happy birthday! 🎂",
+      "reaction": "Happy 3rd birthday!",
+      "keywords": ["birthday cake", "number three candle", "star decorations", "celebration", "party"],
       "results": [
         {
           "emoji": "🎂",
           "id": "1F382",
-          "score": 0.364,
-          "source": "alias"
-        },
-        {
-          "emoji": "🎇",
-          "id": "1F387",
-          "score": 0.252,
-          "source": "alias"
-        },
-        {
-          "emoji": "🧁",
-          "id": "1F9C1",
-          "score": 0.616,
-          "source": "semantic"
-        },
-        {
-          "emoji": "🎈",
-          "id": "1F388",
-          "score": 0.592,
+          "score": 1,
           "source": "semantic"
         },
         {
           "emoji": "🥳",
           "id": "1F973",
-          "score": 0.589,
+          "score": 0.721,
+          "source": "semantic"
+        },
+        {
+          "emoji": "🕯️",
+          "id": "1F56F",
+          "score": 0.6,
+          "source": "semantic"
+        },
+        {
+          "emoji": "🎉",
+          "id": "1F389",
+          "score": 0.571,
+          "source": "semantic"
+        },
+        {
+          "emoji": "🎈",
+          "id": "1F388",
+          "score": 0.488,
           "source": "semantic"
         }
       ],
