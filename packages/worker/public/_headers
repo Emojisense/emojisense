@@ -1,3 +1,6 @@
 /v1/pack/*
   Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
+/p/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *

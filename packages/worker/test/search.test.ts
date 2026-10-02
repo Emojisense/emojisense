@@ -1,139 +1,137 @@
 import { getModel } from "@emojisense/data/models";
-import { createEngine, decodeVectors, encodeVectors, l2normalize, type Pack } from "emojisense";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
-import type { AiBinding, Env } from "../src/env.ts";
-import { type CacheLike, type Catalog, handleSearch, type SearchBody } from "../src/search.ts";
-
-const row = (emoji: string, hexcode: string, label: string, alias = ""): Pack["emoji"][number] => [
-  emoji,
-  hexcode,
-  0,
-  1,
-  0,
-  label,
-  "",
-  "",
-  alias,
-  "",
-  "",
-];
-const pack: Pack = {
-  format: "emojisense-pack",
-  formatVersion: 1,
-  packVersion: "test",
-  locale: "en",
-  emojiVersion: "17.0",
-  groups: ["g"],
-  emoji: [
-    row("🦖", "1F996", "T-Rex", "jurassic park"),
-    row("🌋", "1F30B", "volcano"),
-    row("🚀", "1F680", "rocket", "ship it"),
-  ],
-};
-
-const DIMS = 8;
-const unit = (i: number) => l2normalize(Float32Array.from({ length: DIMS }, (_, d) => (d === i ? 1 : 0.01)));
-const catalog: Catalog = {
-  config: {
-    packVersion: "test",
-    modelKey: "embeddinggemma",
-    modelId: "@cf/google/embeddinggemma-300m",
-    dims: DIMS,
-    queryTemplate: "task: search result | query: {q}",
-  },
-  model: getModel("embeddinggemma"),
-  engine: () => createEngine(pack),
-  index: () =>
-    decodeVectors(
-      encodeVectors(
-        "@cf/google/embeddinggemma-300m",
-        ["1F996", "1F30B", "1F680"],
-        [unit(0), unit(1), unit(2)],
-      ),
-    ),
-};
-
-function memoryCache(): CacheLike & { store: Map<string, Response> } {
-  const store = new Map<string, Response>();
-  return {
-    store,
-    match: async (r) => store.get(r.url)?.clone(),
-    put: async (r, res) => void store.set(r.url, res.clone()),
-  };
-}
-
-const ctx = { waitUntil: (p: Promise<unknown>) => void p };
-const get = (q: string, extra = "") =>
-  new Request(`https://api.test/v1/search?q=${encodeURIComponent(q)}${extra}`);
+import { describe, expect, it, vi } from "vitest";
+import type { SearchBody } from "../src/search.ts";
+import type { Catalog } from "../src/semantic.ts";
+import { API, catalog, EMBEDDING_MODEL, harness, search } from "./fixtures.ts";
 
 describe("GET /v1/search", () => {
-  let env: Env;
-  let ai: Mock<AiBinding["run"]>;
-  beforeEach(() => {
-    // Every query embeds near the "volcano" row.
-    ai = vi.fn<AiBinding["run"]>(async () => ({ data: [Array.from(unit(1))] }));
-    env = { AI: { run: ai }, PUBLISHABLE_KEYS: "pk_test", EVENTS: { writeDataPoint: vi.fn() } };
-  });
-
-  it("fuses alias and semantic results and formats the query for the model", async () => {
-    const res = await handleSearch(get("Lava eruption!!"), env, ctx, catalog, memoryCache());
+  it("fuses alias and semantic results and embeds the normalized query", async () => {
+    const h = harness();
+    const res = await h.call(search("Lava eruption!!"));
     const body = (await res.json()) as SearchBody;
     expect(res.status).toBe(200);
-    expect(body.query).toBe("lava eruption");
+    expect(body).toMatchObject({ query: "lava eruption", cached: false, degraded: false, overLimit: false });
     expect(body.results[0]).toMatchObject({ emoji: "🌋", source: "semantic" });
-    expect(ai).toHaveBeenCalledWith("@cf/google/embeddinggemma-300m", {
-      text: ["task: search result | query: lava eruption"],
+    expect(h.ai).toHaveBeenCalledWith(EMBEDDING_MODEL, {
+      text: ["lava eruption"],
     });
     expect(res.headers.get("access-control-allow-origin")).toBe("*");
+    expect(res.headers.get("server-timing")).toMatch(/^embed;dur=\d+, total;dur=\d+$/);
+  });
+
+  it("wraps the query in the model's template when it has one", async () => {
+    const gemma: Catalog = {
+      ...catalog,
+      config: {
+        ...catalog.config,
+        modelKey: "embeddinggemma",
+        modelId: "@cf/google/embeddinggemma-300m",
+        queryTemplate: "task: search result | query: {q}",
+      },
+      model: getModel("embeddinggemma"),
+    };
+    const h = harness({ catalog: gemma });
+    await h.call(search("Lava eruption"));
+    expect(h.ai).toHaveBeenCalledWith("@cf/google/embeddinggemma-300m", {
+      text: ["task: search result | query: lava eruption"],
+    });
   });
 
   it("keeps confident alias hits on top in hybrid mode", async () => {
-    const body = (await (
-      await handleSearch(get("jurassic park"), env, ctx, catalog, memoryCache())
-    ).json()) as SearchBody;
+    const body = (await (await harness().call(search("jurassic park"))).json()) as SearchBody;
     expect(body.results[0]).toMatchObject({ emoji: "🦖", source: "alias" });
   });
 
   it("returns semantic results only in semantic mode", async () => {
     const body = (await (
-      await handleSearch(get("jurassic park", "&mode=semantic"), env, ctx, catalog, memoryCache())
+      await harness().call(search("jurassic park", "&mode=semantic"))
     ).json()) as SearchBody;
+    expect(body.results.length).toBeGreaterThan(0);
     expect(body.results.every((r) => r.source === "semantic")).toBe(true);
   });
 
   it("serves the second identical query from cache, ignoring the key and raw spelling", async () => {
-    const cache = memoryCache();
-    await handleSearch(get("Lava  eruption", "&key=pk_test"), env, ctx, catalog, cache);
-    const second = await handleSearch(get("lava eruption"), env, ctx, catalog, cache);
+    const h = harness({ env: { DEV_KEYS: "pk_test" } });
+    await h.call(search("Lava  eruption", "&key=pk_test"));
+    await h.ctx.settle();
+    const second = await h.call(search("lava eruption"));
     expect(((await second.json()) as SearchBody).cached).toBe(true);
-    expect(ai).toHaveBeenCalledTimes(1);
+    expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
   it("degrades to alias-only results when Workers AI fails, and does not cache them", async () => {
-    const cache = memoryCache();
-    env.AI = { run: async () => Promise.reject(new Error("not logged in")) };
-    const res = await handleSearch(get("rocket"), env, ctx, catalog, cache);
+    const h = harness();
+    h.env.AI = { run: async () => Promise.reject(new Error("not logged in")) };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await h.call(search("rocket"));
+    await h.ctx.settle();
     const body = (await res.json()) as SearchBody;
     expect(body.degraded).toBe(true);
     expect(body.results[0]?.emoji).toBe("🚀");
-    expect(cache.store.size).toBe(0);
+    expect(h.cache.store.size).toBe(0);
     expect(res.headers.get("cache-control")).toBe("no-store");
+    warn.mockRestore();
   });
 
-  it("rejects unknown keys, empty queries and rate-limited callers", async () => {
-    expect((await handleSearch(get("x", "&key=pk_nope"), env, ctx, catalog, memoryCache())).status).toBe(401);
-    expect((await handleSearch(get("🚀"), env, ctx, catalog, memoryCache())).status).toBe(400);
-    env.ANON_LIMITER = { limit: async () => ({ success: false }) };
-    expect((await handleSearch(get("rocket"), env, ctx, catalog, memoryCache())).status).toBe(429);
+  it("rejects empty queries, wrong methods, unknown paths and rate-limited callers", async () => {
+    const h = harness();
+    expect((await h.call(search("🚀"))).status).toBe(400);
+    expect((await h.call(search("rocket", "", { method: "POST" }))).status).toBe(405);
+    expect((await h.call(new Request(`${API}/v2/nope`))).status).toBe(404);
+    h.env.ANON_LIMITER = { limit: async () => ({ success: false }) };
+    const limited = await h.call(search("rocket"));
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("retry-after")).toBe("60");
   });
 
-  it("logs query text only for Tier 0 misses", async () => {
-    const write = vi.fn();
-    env.EVENTS = { writeDataPoint: write };
-    await handleSearch(get("rocket"), env, ctx, catalog, memoryCache());
-    await handleSearch(get("lava eruption"), env, ctx, catalog, memoryCache());
-    expect(write.mock.calls[0]?.[0].blobs[0]).toBe("");
-    expect(write.mock.calls[1]?.[0].blobs[0]).toBe("lava eruption");
-    expect(JSON.stringify(write.mock.calls)).not.toContain("pk_");
+  it("answers CORS preflights for POST bodies but never allows the Authorization header", async () => {
+    const res = await harness().call(new Request(`${API}/v1/suggest-reactions`, { method: "OPTIONS" }));
+    expect(res.status).toBe(204);
+    expect(res.headers.get("access-control-allow-methods")).toContain("POST");
+    expect(res.headers.get("access-control-allow-headers")).toContain("X-Image-Hash");
+    expect(res.headers.get("access-control-allow-headers")).not.toMatch(/authorization/i);
+  });
+
+  it("reports health without touching keys", async () => {
+    const res = await harness().call(new Request(`${API}/v1/health`));
+    expect(await res.json()).toEqual({
+      ok: true,
+      packVersion: "test",
+      model: "bge-m3@8",
+      semantic: true,
+    });
+  });
+});
+
+describe("search analytics", () => {
+  it("logs the normalized text of every search that reaches the Worker, cache hits included", async () => {
+    const h = harness({ env: { DEV_KEYS: "pk_test" } });
+    await h.call(search("Rocket!", "&key=pk_test", { headers: { "cf-connecting-ip": "203.0.113.9" } }));
+    await h.ctx.settle();
+    await h.call(search("rocket"));
+    await h.call(search("lava eruption", "&mode=semantic"));
+    const points = h.events.mock.calls.map(([point]) => point);
+    expect(points.map((p) => p.blobs)).toEqual([
+      ["rocket", "en", "hybrid", "miss", "search"],
+      ["rocket", "en", "hybrid", "hit", "search"],
+      ["lava eruption", "en", "semantic", "miss", "search"],
+    ]);
+    expect(points[0].indexes).toEqual(["test:bge-m3@8"]);
+    const logged = JSON.stringify(points);
+    expect(logged).not.toContain("pk_test");
+    expect(logged).not.toContain("203.0.113.9");
+  });
+
+  it("never lets an analytics failure break a search", async () => {
+    const h = harness({
+      env: {
+        EVENTS: {
+          writeDataPoint: () => {
+            throw new Error("dataset unavailable");
+          },
+        },
+      },
+    });
+    expect((await h.call(search("rocket"))).status).toBe(200);
   });
 });

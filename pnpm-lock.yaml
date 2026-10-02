@@ -136,6 +136,9 @@ importers:
       '@emojisense/data':
         specifier: workspace:*
         version: link:../data
+      '@emojisense/platform':
+        specifier: workspace:*
+        version: link:../platform
       emojisense:
         specifier: workspace:*
         version: link:../core

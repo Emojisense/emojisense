@@ -1,12 +1,14 @@
 /**
  * Copy one pack version + the production vector file from packages/data into the Worker.
  *
- *   tsx scripts/sync-pack.ts --model embeddinggemma --dims 256
+ *   tsx scripts/sync-pack.ts --model bge-m3 --dims 1024
  *
  * src/generated/   bundled into the Worker (config, locale packs, vectors) — committed
  * public/v1/pack/  static assets served at /v1/pack/<version>/… — generated, not committed
+ * public/p/        layer 2 shards served at /p/<version>/…, if the data package built them
+ *                  — generated, not committed
  */
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { formatQuery, getModel } from "@emojisense/data/models";
@@ -17,8 +19,9 @@ const { values: args } = parseArgs({
   // pnpm forwards a literal "--"; drop it so flags after it still parse.
   args: process.argv.slice(2).filter((a) => a !== "--"),
   options: {
-    model: { type: "string", default: "embeddinggemma" },
-    dims: { type: "string", default: "256" },
+    // The production model (owner decision, 2026-10-02): bge-m3, p95 ≈ 65 ms inside Cloudflare.
+    model: { type: "string", default: "bge-m3" },
+    dims: { type: "string", default: "1024" },
     // Local-only: write an empty vector file when embeddings do not exist yet (alias-only Worker).
     placeholder: { type: "boolean", default: false },
   },
@@ -65,13 +68,36 @@ const published = [...PACK_FILES, ...(index.ids.length > 0 ? [vectorFile] : [])]
 manifest.files = Object.fromEntries(published.map((f) => [f, manifest.files[f]]));
 for (const file of published) copyFileSync(join(source, file), join(publicPack, packVersion, file));
 writeFileSync(join(publicPack, packVersion, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+
+// Layer 2 shards (PACK_FORMAT §6). They are valid only for the model they were computed with, so
+// shards of another model are skipped: clients then fall back to the API instead of mixing models.
+const modelTag = `${model.key}@${dims}`;
+const shardSource = join(DATA_ROOT, "dist", "shards", packVersion);
+const publicShards = join(workerRoot, "public", "p");
+rmSync(publicShards, { recursive: true, force: true });
+let shardNote = "no shards";
+if (existsSync(join(shardSource, "index.json"))) {
+  const shardIndex = JSON.parse(readFileSync(join(shardSource, "index.json"), "utf8"));
+  if (shardIndex.packVersion !== packVersion || shardIndex.model !== modelTag) {
+    console.warn(
+      `⚠ shards are for ${shardIndex.packVersion}/${shardIndex.model}, the Worker serves ${packVersion}/${modelTag}: not copied`,
+    );
+  } else {
+    cpSync(shardSource, join(publicShards, packVersion), { recursive: true });
+    shardNote = `${shardIndex.keys?.length ?? 0} shards → public/p/${packVersion}`;
+  }
+}
+
+// Static assets bypass the Worker, so their cache headers live here. `_headers` does not apply
+// to Worker responses (wrangler.jsonc keeps /v1/pack/* and /p/* out of run_worker_first).
+const immutable = [
+  "  Cache-Control: public, max-age=31536000, immutable",
+  "  Access-Control-Allow-Origin: *",
+];
 writeFileSync(
   join(workerRoot, "public", "_headers"),
-  [
-    "/v1/pack/*",
-    "  Cache-Control: public, max-age=31536000, immutable",
-    "  Access-Control-Allow-Origin: *",
-    "",
-  ].join("\n"),
+  ["/v1/pack/*", ...immutable, "/p/*", ...immutable, ""].join("\n"),
 );
-console.log(`sync: pack ${packVersion} + ${model.id}@${dims} → src/generated, public/v1/pack/${packVersion}`);
+console.log(
+  `sync: pack ${packVersion} + ${model.id}@${dims} → src/generated, public/v1/pack/${packVersion}; ${shardNote}`,
+);
