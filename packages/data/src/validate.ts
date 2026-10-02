@@ -77,6 +77,21 @@ function enrichmentFor(hexcode: string, locale: Locale): LocaleEnrichment | unde
   return localeRecords.get(locale)?.get(hexcode);
 }
 
+/** Human overrides on generated aliases (enrichment/curation.json): remove, or demote to `low`. */
+interface Curation {
+  hexcode: string;
+  /** A locale code, or "*" for every locale (film titles are often the same everywhere). */
+  locale: string;
+  alias: string;
+  action: "remove" | "low";
+}
+const curationPath = join(ENRICHMENT_DIR, "curation.json");
+const curations: Curation[] = existsSync(curationPath) ? JSON.parse(readFileSync(curationPath, "utf8")) : [];
+const curationOf = (hexcode: string, locale: string, alias: string) =>
+  curations.find(
+    (c) => c.hexcode === hexcode && (c.locale === locale || c.locale === "*") && normalize(c.alias) === alias,
+  )?.action;
+
 const minedPath = join(ENRICHMENT_DIR, "mined.json");
 const mined: MinedAlias[] = existsSync(minedPath) ? JSON.parse(readFileSync(minedPath, "utf8")) : [];
 
@@ -105,6 +120,12 @@ for (const e of emoji) {
       const alias = normalize(rawAlias);
       if (!alias || taken.has(alias)) return;
       taken.add(alias);
+      const curated = curationOf(e.hexcode, locale, alias);
+      if (curated === "remove") return;
+      if (curated === "low") {
+        out.low.push(alias);
+        return;
+      }
       const verdict = moderate(alias, locale);
       if (verdict === "block") {
         moderated++;

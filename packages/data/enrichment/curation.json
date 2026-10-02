@@ -1,0 +1,37 @@
+[
+  {
+    "hexcode": "1F9B5",
+    "locale": "*",
+    "alias": "break a leg",
+    "action": "remove",
+    "why": "idiom means good luck, not a leg"
+  },
+  {
+    "hexcode": "1F6A2",
+    "locale": "en",
+    "alias": "ship it",
+    "action": "low",
+    "why": "🚀 is the canonical 'ship it'"
+  },
+  {
+    "hexcode": "1F37E",
+    "locale": "en",
+    "alias": "ship it",
+    "action": "low",
+    "why": "🚀 is the canonical 'ship it'"
+  },
+  {
+    "hexcode": "1F4E4",
+    "locale": "en",
+    "alias": "ship it",
+    "action": "low",
+    "why": "🚀 is the canonical 'ship it'"
+  },
+  {
+    "hexcode": "1F995",
+    "locale": "*",
+    "alias": "jurassic park",
+    "action": "low",
+    "why": "🦖 is the poster dinosaur"
+  }
+]

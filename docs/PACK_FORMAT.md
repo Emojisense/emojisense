@@ -172,7 +172,7 @@ ignored. Then:
 
 ```
 score = fieldWeight × coverage × (0.6 + 0.4 × min(1, matchedTokens / phraseTokens))
-        × (exactPhrase ? 1 : 0.9) × (phrase in preferred-locale pack ? 1 : 0.92)
+        × (exactPhrase ? (query tokens ≥ 2 ? 1.1 : 1) : 0.9) × (phrase in preferred-locale pack ? 1 : 0.92)
 ```
 
 `exactPhrase` = every query token matched exactly and the phrase has as many tokens as the query.

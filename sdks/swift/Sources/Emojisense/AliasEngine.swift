@@ -126,7 +126,9 @@ public final class AliasEngine: @unchecked Sendable {
       if coverage < minCoverage { continue }
 
       let length = Int(index.phraseLength[Int(phrase)])
-      let exactFactor = allExact && length == tokenCount ? 1 : Scoring.nonExactFactor
+      let exactFactor =
+        allExact && length == tokenCount
+        ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
       let localeFactor =
         index.phraseLocaleMask[Int(phrase)] & preferredMask != 0 ? 1 : Scoring.foreignLocaleFactor
       let score =
@@ -221,6 +223,8 @@ enum Scoring {
   static let maxQueryTokens = 8
   static let maxPrefixExpansion = 400
   static let nonExactFactor = 0.9
+  /// A multi-word query that equals a whole phrase ("ship it") beats one-word name hits ("ship").
+  static let exactPhraseBonus = 1.1
   static let foreignLocaleFactor = 0.92
   static let evidenceBonus = 0.02
   static let maxEvidenceBonus = 0.06

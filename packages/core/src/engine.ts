@@ -69,6 +69,8 @@ const MAX_QUERY_TOKENS = 8;
 const MAX_PREFIX_EXPANSION = 400;
 const MIN_COVERAGE = 0.34;
 const NON_EXACT_FACTOR = 0.9;
+/** A multi-word query that equals a whole phrase ("ship it") beats one-word name hits ("ship"). */
+const EXACT_PHRASE_BONUS = 1.1;
 const FOREIGN_LOCALE_FACTOR = 0.92;
 const EVIDENCE_BONUS = 0.02;
 const MAX_EVIDENCE_BONUS = 0.06;
@@ -334,7 +336,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         (phraseFieldWeight[phrase] as number) *
         coverage *
         (0.6 + 0.4 * Math.min(1, matched / length)) *
-        (allExact && length === n ? 1 : NON_EXACT_FACTOR) *
+        (allExact && length === n ? (n >= 2 ? EXACT_PHRASE_BONUS : 1) : NON_EXACT_FACTOR) *
         (mask & preferredMask ? 1 : FOREIGN_LOCALE_FACTOR);
 
       const emoji = phraseEmoji[phrase] as number;
