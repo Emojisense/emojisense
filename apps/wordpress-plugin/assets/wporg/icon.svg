@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Emojisense</title>
+  <!-- The keycap of the Chrome extension icon (apps/chrome-extension/scripts/icons.ts): ink outline,
+       a thicker bottom edge, a smiling face. Monochrome: emoji are the only color in the brand. -->
+  <rect width="256" height="256" rx="56" fill="#f6f6f8"/>
+  <rect x="28" y="28" width="200" height="200" rx="48" fill="#0d0d12"/>
+  <rect x="38" y="38" width="180" height="172" rx="38" fill="#ffffff"/>
+  <circle cx="99" cy="108" r="12" fill="#0d0d12"/>
+  <circle cx="157" cy="108" r="12" fill="#0d0d12"/>
+  <path d="M174.5 136.5a49.5 49.5 0 0 1-93 0" fill="none" stroke="#0d0d12" stroke-width="10" stroke-linecap="round"/>
+</svg>

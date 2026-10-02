@@ -3,9 +3,10 @@
   font-size: 0.875rem;
 }
 
-.emojisense-settings__choice {
+// Core styles `.form-table td fieldset label` as inline blocks; one post type per line reads better.
+.form-table td fieldset label.emojisense-settings__choice {
   display: block;
-  margin-bottom: 0.375rem;
+  margin: 0 0 0.5rem !important;
 }
 
 .emojisense-settings__emoji {

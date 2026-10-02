@@ -31,9 +31,10 @@
   overflow: visible;
 }
 
+// The picker sizes itself to its columns (8 here).
 emojisense-picker.emojisense-picker {
   display: block;
-  width: min(22rem, 90vw);
+  max-width: calc(100vw - 2rem);
   --emojisense-accent: #f0f0f1;
   --emojisense-ink: #1e1e1e;
   --emojisense-background: #fff;

@@ -21,6 +21,22 @@ export function readPackFile(file: string): string {
   );
 }
 
+/** A culture file of the plugin (or packages/data/dist when the plugin is not built). */
+export function readCulture(locale: string): unknown {
+  const dirs = [
+    join(__dirname, "..", "..", "packs", "culture", "0.1.0"),
+    join(__dirname, "..", "..", "..", "..", "packages", "data", "dist", "culture", "0.1.0"),
+  ];
+  for (const dir of dirs) {
+    try {
+      return JSON.parse(readFileSync(join(dir, `culture.${locale}.json`), "utf8"));
+    } catch {
+      // Try the next directory.
+    }
+  }
+  throw new Error(`culture.${locale}.json not found: run \`pnpm data:build\``);
+}
+
 export const pack = (locale: string, part: "core" | "ext" = "core"): Pack =>
   JSON.parse(readPackFile(part === "ext" ? `pack.${locale}.ext.json` : `pack.${locale}.json`)) as Pack;
 

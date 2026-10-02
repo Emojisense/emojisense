@@ -261,7 +261,7 @@ class Emojisense_Admin {
 	 * Culture layer checkbox.
 	 */
 	public function field_culture() {
-		$this->checkbox( 'culture', __( 'Add emoji for the season, events and the culture of the language after the best result (for example 🎃 for “pumpkin” in October)', 'emojisense' ) );
+		$this->checkbox( 'culture', __( 'Add cultural and seasonal emoji after the best result (for example ⚽ after 🐐 for “goat”)', 'emojisense' ) );
 	}
 
 	/**

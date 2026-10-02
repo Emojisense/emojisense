@@ -1,0 +1,406 @@
+# Copyright (C) 2026 Emojisense
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Emojisense 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/emojisense\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-02T15:52:17+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: emojisense\n"
+
+#. Plugin Name of the plugin
+#. Author of the plugin
+#: emojisense.php
+#: includes/class-emojisense-admin.php:36
+#: includes/class-emojisense-admin.php:37
+#: includes/class-emojisense-admin.php:170
+msgid "Emojisense"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: emojisense.php
+msgid "https://emojisense.com/docs/integrations/wordpress/"
+msgstr ""
+
+#. Description of the plugin
+#: emojisense.php
+msgid "Find emoji by meaning: type a colon in the block editor, use the emoji button in the classic editor, and add emoji reactions and an emoji picker to comments. Search runs on your server's files, with optional meaning search through the Emojisense API."
+msgstr ""
+
+#. Author URI of the plugin
+#: emojisense.php
+msgid "https://emojisense.com"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:64
+msgid "Settings"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:84
+msgid "Editor"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:85
+msgid "Colon autocomplete"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:86
+msgid "Language"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:87
+msgid "Culture layer"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:89
+#: build/editor.js:1
+msgid "Reactions"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:90
+#: includes/class-emojisense-admin.php:272
+msgid "Show reactions on"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:91
+msgid "Default reactions"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:93
+msgid "Comments"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:94
+#: includes/class-emojisense-comments.php:42
+#: includes/class-emojisense-editor.php:113
+#: build/editor.js:1
+msgid "Emoji picker"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:96
+msgid "Emojisense API"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:97
+msgid "Connection"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:98
+msgid "Publishable key"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:99
+msgid "Search by meaning"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:100
+msgid "Reaction suggestions"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:101
+msgid "Emoji set"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:102
+msgid "API address"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:149
+msgid "Turn on the connection and save the settings first."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:156
+msgid "Connected without a key. Anonymous calls have a lower rate limit; add a publishable key for production."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:157
+msgid "Connected. The key accepts this site."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:172
+msgid "Find emoji by what they mean. Type a colon in the block editor (:pizza, :ship it), use the emoji button in the classic editor, and add reactions to posts and an emoji picker to comments."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:175
+msgid "Search runs in the browser with files from this site. Nothing is sent anywhere until you connect the Emojisense API below."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:178
+msgid "The plugin scripts are missing. Install the plugin from its release zip, or run the build."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:195
+msgid "Works in every text block of the block editor and in the classic editor. The toolbar of each text block also has an emoji button (in the “More” menu)."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:202
+msgid "Visitors can react to posts with emoji, without an account. Only the counts are stored. Authors can choose the reactions of each post in the editor sidebar."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:209
+msgid "Optional. With the connection on, unsure searches also ask the API for emoji with a similar meaning, published posts get reaction suggestions, and emoji can be drawn from a hosted set. The privacy policy guide (Settings → Privacy) has text for each of these."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:212
+msgid "Create a publishable key (pk_live_…) at"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:215
+msgid "(opens in a new tab)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:225
+msgid "Then add this site to the key’s allowed origins:"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:234
+msgid "Type : and a word in the block editor to get emoji suggestions"
+msgstr ""
+
+#. translators: %s: language name, e.g. English.
+#: includes/class-emojisense-admin.php:246
+#, php-format
+msgid "Site language (%s)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:256
+msgid "Search always understands English. This language is searched too, and its emoji names are shown."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:264
+msgid "Add cultural and seasonal emoji after the best result (for example ⚽ after 🐐 for “goat”)"
+msgstr ""
+
+#. translators: %d: maximum number of reactions.
+#: includes/class-emojisense-admin.php:302
+#, php-format
+msgid "Up to %d emoji, separated by spaces. Posts show these unless the author chose others or the API suggested some."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:310
+msgid "Add an emoji button under the comment field"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:317
+msgid "Connect to the Emojisense API"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:333
+msgid "A publishable key is public: it is sent from the browser and only works on its allowed origins. Never use a secret key (sk_live_…) here. Without a key, the API still answers with a lower rate limit."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:337
+msgid "Test the saved settings"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:345
+msgid "When a search is unsure, ask the API for emoji with a similar meaning (sends the search text)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:352
+msgid "Suggest reactions from the post text when a post is published (sends the title and the first 256 characters)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:360
+msgid "Native (the visitor’s system emoji)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:361
+msgid "Twemoji (CC BY 4.0, credit Twemoji on your site)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:362
+msgid "Noto Emoji (Apache 2.0)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:363
+msgid "Fluent Emoji (MIT; no country flags)"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:374
+msgid "Shows the same emoji on every device: posts, excerpts, comments and reactions load the images from the API address. Visitors’ browsers then request images from the API."
+msgstr ""
+
+#. translators: %s: default API address.
+#: includes/class-emojisense-admin.php:392
+#, php-format
+msgid "Change it only for a self-hosted API. Default: %s"
+msgstr ""
+
+#: includes/class-emojisense-api-client.php:32
+msgid "The Emojisense API is turned off in Settings → Emojisense."
+msgstr ""
+
+#: includes/class-emojisense-api-client.php:36
+msgid "The post has no text to suggest reactions from yet."
+msgstr ""
+
+#. translators: %s: error message from the HTTP request.
+#: includes/class-emojisense-api-client.php:129
+#, php-format
+msgid "The Emojisense API could not be reached: %s"
+msgstr ""
+
+#: includes/class-emojisense-api-client.php:138
+msgid "The Emojisense API sent an answer this plugin cannot read."
+msgstr ""
+
+#: includes/class-emojisense-api-client.php:153
+msgid "The key is unknown or revoked. Copy a publishable key from app.emojisense.com."
+msgstr ""
+
+#. translators: %s: the site origin, e.g. https://example.com
+#: includes/class-emojisense-api-client.php:158
+#, php-format
+msgid "The key does not allow this site. Add %s to the allowed origins of the key at app.emojisense.com."
+msgstr ""
+
+#: includes/class-emojisense-api-client.php:163
+msgid "Too many requests. Try again in a minute."
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: includes/class-emojisense-api-client.php:167
+#, php-format
+msgid "The Emojisense API answered with HTTP %d."
+msgstr ""
+
+#: includes/class-emojisense-comments.php:43
+#: build/editor.js:2
+msgid "Search emoji…"
+msgstr ""
+
+#: includes/class-emojisense-comments.php:50
+#: build/editor.js:1
+msgid "Emoji"
+msgstr ""
+
+#: includes/class-emojisense-editor.php:112
+msgid "Insert emoji"
+msgstr ""
+
+#: includes/class-emojisense-editor.php:114
+#: build/editor.js:1
+msgid "Search emoji by meaning…"
+msgstr ""
+
+#: includes/class-emojisense-privacy.php:41
+msgid "Suggested text:"
+msgstr ""
+
+#: includes/class-emojisense-privacy.php:41
+msgid "This site uses the Emojisense plugin to find emoji and to show emoji reactions."
+msgstr ""
+
+#: includes/class-emojisense-privacy.php:42
+msgid "Emoji search in the editor and in the comment form runs in your browser with files from this site. By default, no search text and no other data is sent to anyone."
+msgstr ""
+
+#: includes/class-emojisense-privacy.php:43
+msgid "Reactions: when you react to a post, the site stores only the number of reactions per emoji. It does not store your IP address, your name or an account. To stop abuse, the site keeps a keyed hash of your IP address for at most a few minutes. Your browser remembers which reactions you chose (in local storage) so that you can take them back; this information stays on your device."
+msgstr ""
+
+#. translators: %s: Emojisense API address.
+#: includes/class-emojisense-privacy.php:46
+#, php-format
+msgid "If the site owner turns on the Emojisense API, the following data goes to the Emojisense API (%s), which is hosted on Cloudflare: the text you type in an emoji search box (to find emoji by meaning), the title and first 256 characters of a published post (to suggest reactions), and requests for emoji images when the site shows a hosted emoji set. As with any web request, the API receives your IP address; Emojisense uses it only for rate limiting and does not store it. Search text is kept only as anonymous search statistics (the search words, without an IP address or a user). Post text is not stored or logged."
+msgstr ""
+
+#. translators: %s: link to the Emojisense privacy page.
+#: includes/class-emojisense-privacy.php:51
+#, php-format
+msgid "Emojisense privacy notice: %s"
+msgstr ""
+
+#: includes/class-emojisense-reactions.php:168
+msgid "This post has no reactions."
+msgstr ""
+
+#: includes/class-emojisense-reactions.php:186
+msgid "The page is out of date. Reload it and try again."
+msgstr ""
+
+#: includes/class-emojisense-reactions.php:231
+msgid "This post does not offer that reaction."
+msgstr ""
+
+#: includes/class-emojisense-reactions.php:239
+#: includes/class-emojisense-reactions.php:457
+msgid "Too many reactions. Wait a minute and try again."
+msgstr ""
+
+#: includes/class-emojisense-reactions.php:458
+msgid "Your reaction could not be saved. Try again."
+msgstr ""
+
+#: includes/class-emojisense-reactions.php:490
+msgid "React to this post"
+msgstr ""
+
+#: includes/class-emojisense-settings.php:283
+msgid "That is a secret key. Secret keys must never be put on a website. Create a publishable key (pk_live_…) instead, and revoke the secret key if it was shared."
+msgstr ""
+
+#: includes/class-emojisense-settings.php:284
+msgid "The publishable key must start with pk_live_. The key was not changed."
+msgstr ""
+
+#: includes/class-emojisense-settings.php:295
+msgid "The API address must start with https:// (http:// only for localhost). The address was not changed."
+msgstr ""
+
+#: build/admin.js:1
+msgid "Testing…"
+msgstr ""
+
+#: build/admin.js:1
+msgid "The test failed."
+msgstr ""
+
+#: build/editor.js:1
+msgid "Chosen for this post."
+msgstr ""
+
+#: build/editor.js:1
+msgid "Suggested from the post text."
+msgstr ""
+
+#: build/editor.js:1
+msgid "The site’s default reactions."
+msgstr ""
+
+#. translators: %s: an emoji.
+#: build/editor.js:2
+#, js-format
+msgid "Remove %s"
+msgstr ""
+
+#: build/editor.js:2
+msgid "Add"
+msgstr ""
+
+#: build/editor.js:2
+msgid "The text gave no clear reactions. Keep the current ones or add some."
+msgstr ""
+
+#: build/editor.js:2
+msgid "Suggestions are not available right now."
+msgstr ""
+
+#: build/editor.js:2
+msgid "Suggest from text"
+msgstr ""
+
+#: build/editor.js:2
+msgid "Reset"
+msgstr ""
+
+#: build/editor.js:2
+msgid "Turn on reaction suggestions"
+msgstr ""

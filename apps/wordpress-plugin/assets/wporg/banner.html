@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Emojisense banner</title>
+<!--
+  WordPress.org banner (1544×500; scripts/wporg-assets.mjs also renders it at 772×250).
+  Calm and near-monochrome: the emoji are the only color. Fonts and emoji images are filled in
+  by the script: brand fonts from @fontsource, emoji from the Noto set of the Emojisense API.
+-->
+<style>
+  /*FONTS*/
+  :root {
+    --bg: #f6f6f8;
+    --paper: #ffffff;
+    --sunk: #eeeef2;
+    --ink: #0d0d12;
+    --ink-2: #4b4b57;
+    --ink-3: #85858f;
+    --line: #e7e7ec;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { zoom: var(--zoom, 1); }
+  body {
+    width: 1544px;
+    height: 500px;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hanken Grotesk", system-ui, sans-serif;
+    display: grid;
+    grid-template-columns: 1fr 640px;
+    align-items: center;
+    gap: 72px;
+    padding: 0 104px;
+  }
+  .brand { display: grid; gap: 28px; }
+  .mark { display: flex; align-items: center; gap: 28px; }
+  .mark svg { width: 112px; height: 112px; flex: none; }
+  h1 {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    font-size: 104px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+  .tagline { font-size: 38px; line-height: 1.25; color: var(--ink-2); max-width: 640px; }
+  .tagline strong { color: var(--ink); font-weight: 600; }
+
+  .editor {
+    background: var(--paper);
+    border: 2px solid var(--line);
+    border-radius: 28px;
+    padding: 34px 38px 38px;
+    box-shadow: 0 2px 4px rgb(13 13 18 / 0.04), 0 24px 64px rgb(13 13 18 / 0.08);
+  }
+  .line { font-size: 36px; line-height: 1.3; color: var(--ink); white-space: nowrap; }
+  .query { font-weight: 600; }
+  .caret { display: inline-block; width: 3px; height: 40px; background: var(--ink); vertical-align: -6px; margin-left: 2px; }
+  .list {
+    margin-top: 22px;
+    border: 2px solid var(--line);
+    border-radius: 20px;
+    padding: 10px;
+    display: grid;
+    gap: 4px;
+  }
+  .option { display: flex; align-items: center; gap: 22px; padding: 12px 18px; border-radius: 14px; font-size: 30px; color: var(--ink-2); }
+  .option.active { background: var(--sunk); color: var(--ink); font-weight: 600; }
+  .option img { width: 48px; height: 48px; }
+  .option .hint { margin-left: auto; font-size: 22px; color: var(--ink-3); font-weight: 400; }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <div class="mark">
+      <svg viewBox="0 0 256 256" aria-hidden="true">
+        <rect x="28" y="28" width="200" height="200" rx="48" fill="#0d0d12"/>
+        <rect x="38" y="38" width="180" height="172" rx="38" fill="#ffffff"/>
+        <circle cx="99" cy="108" r="12" fill="#0d0d12"/>
+        <circle cx="157" cy="108" r="12" fill="#0d0d12"/>
+        <path d="M174.5 136.5a49.5 49.5 0 0 1-93 0" fill="none" stroke="#0d0d12" stroke-width="10" stroke-linecap="round"/>
+      </svg>
+      <h1>Emojisense</h1>
+    </div>
+    <p class="tagline">Emoji by <strong>meaning</strong> for WordPress. Type a colon in the editor, react to posts.</p>
+  </div>
+  <div class="editor" aria-hidden="true">
+    <p class="line">Tests pass, let’s <span class="query">:ship it</span><span class="caret"></span></p>
+    <div class="list">
+      <div class="option active"><img src="EMOJI:1F680" alt="">rocket<span class="hint">Enter</span></div>
+      <div class="option"><img src="EMOJI:1F4E6" alt="">package</div>
+      <div class="option"><img src="EMOJI:1F6A2" alt="">ship</div>
+    </div>
+  </div>
+</body>
+</html>

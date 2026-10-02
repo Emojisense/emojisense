@@ -4,7 +4,8 @@
 .emojisense-popover {
   position: absolute;
   z-index: 100110;
-  width: min(22rem, calc(100vw - 1rem));
+  width: max-content;
+  max-width: calc(100vw - 1rem);
   border: 0.0625rem solid rgb(13 13 18 / 0.12);
   border-radius: 0.75rem;
   background: #fff;

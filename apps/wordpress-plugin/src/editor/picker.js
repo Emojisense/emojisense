@@ -21,6 +21,8 @@ export function EmojiPicker({ config, placeholder, onSelect, onEscape, autoFocus
   useEffect(() => {
     const element = ref.current;
     if (!element) return undefined;
+    // Not a className prop: React before 19 sets custom elements' attributes by their prop names.
+    element.classList.add("emojisense-picker");
     for (const [name, value] of Object.entries(pickerAttributes(config, placeholder))) {
       element.setAttribute(name, value);
     }
@@ -41,5 +43,5 @@ export function EmojiPicker({ config, placeholder, onSelect, onEscape, autoFocus
     };
   }, [config, placeholder, autoFocus]);
 
-  return <emojisense-picker ref={ref} className="emojisense-picker" columns="8" />;
+  return <emojisense-picker ref={ref} columns="8" />;
 }

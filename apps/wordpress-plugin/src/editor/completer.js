@@ -30,7 +30,7 @@ function createUseItems(loader, config) {
         locale: config.locale,
         semantic: semanticProvider(config, engine.packVersion),
         limit: MAX_OPTIONS,
-        onItems: (next) => setItems(next),
+        onItems: (next) => setItems((previous) => (sameItems(previous, next) ? previous : next)),
       });
     }, [engine]);
 
@@ -38,11 +38,19 @@ function createUseItems(loader, config) {
 
     useEffect(() => {
       if (search) search.update(filterValue);
-      else setItems([]);
+      else setItems(NO_ITEMS);
     }, [search, filterValue]);
 
-    return [items.map((item) => toKeyedOption(item))];
+    // A stable array: the Autocomplete component re-renders on every new one (an endless loop).
+    const options = useMemo(() => items.map(toKeyedOption), [items]);
+    return [options];
   };
+}
+
+const NO_ITEMS = [];
+
+function sameItems(a, b) {
+  return a.length === b.length && a.every((item, index) => item.emoji === b[index].emoji);
 }
 
 function OptionLabel({ item }) {

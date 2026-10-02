@@ -1,4 +1,4 @@
-import { createEngine, type SemanticProvider } from "emojisense";
+import { type Culture, createEngine, type SemanticProvider } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   allowContext,
@@ -8,7 +8,7 @@ import {
   MAX_OPTIONS,
   toItems,
 } from "../../src/lib/completer.js";
-import { pack } from "./fixtures.js";
+import { pack, readCulture } from "./fixtures.js";
 
 const engine = createEngine([pack("en"), pack("tr")]);
 
@@ -70,6 +70,28 @@ describe("createItemSearch", () => {
         .items()
         .map((item) => item.emoji),
     ).toContain("🚀");
+  });
+
+  it("understands phrases and the second language (the readme examples)", () => {
+    expect(search("ship it").items()[0]?.emoji).toBe("🚀");
+    expect(search("mind blown").items()[0]?.emoji).toBe("🤯");
+    expect(search("kolay gelsin", { locale: "tr" }).items()[0]?.emoji).toBe("💪");
+  });
+
+  it("adds culture emoji after the best result (the readme example)", () => {
+    const culture = readCulture("en") as Culture;
+    let items: CompletionItem[] = [];
+    createItemSearch({
+      engine: createEngine([pack("en")], { culture }),
+      locale: "en",
+      onItems: (next) => {
+        items = next;
+      },
+    }).update("goat");
+    const emoji = items.map((item) => item.emoji.replace("️", ""));
+    expect(emoji[0]).toBe("🐐");
+    expect(emoji).toContain("⚽");
+    expect(items.find((item) => item.source === "culture")?.context).toBeTruthy();
   });
 
   it("names the emoji in the configured locale", () => {

@@ -34,7 +34,8 @@ const escapeHtml = (text: string) =>
     (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[char] ?? char,
   );
 
-tinymce.PluginManager.add("emojisense", (editor) => {
+// A function, not an arrow function: TinyMCE calls the plugin with `new`.
+tinymce.PluginManager.add("emojisense", function emojisensePlugin(editor) {
   const config = readConfig();
   const strings = config.strings ?? {};
   let popover: PickerPopover | undefined;

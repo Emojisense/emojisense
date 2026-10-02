@@ -9,7 +9,9 @@
     "dev": "wp-scripts start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "release": "node scripts/release.mjs"
+    "release": "node scripts/release.mjs",
+    "e2e": "node scripts/e2e.mjs",
+    "wporg-assets": "node scripts/wporg-assets.mjs"
   },
   "dependencies": {
     "@emojisense/web-component": "workspace:*",
@@ -17,6 +19,8 @@
   },
   "devDependencies": {
     "@emojisense/data": "workspace:*",
+    "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@fontsource-variable/hanken-grotesk": "5.3.0",
     "@types/node": "24.13.6",
     "@wordpress/scripts": "36.0.0",
     "happy-dom": "20.14.5",

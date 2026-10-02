@@ -1,0 +1,52 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { shown } from "../../../components/docs/facts";
+
+const build = `pnpm install && pnpm data:build              # once, from the repository root
+pnpm --filter @emojisense/wordpress-plugin build    # scripts (wp-scripts) and data files
+pnpm --filter @emojisense/wordpress-plugin release  # → apps/wordpress-plugin/release/emojisense-<version>.zip`;
+
+const examples = [
+  { query: ":pizza", top: shown("pizza", { limit: 1 }) },
+  { query: ":ship it", top: shown("ship it", { limit: 1 }) },
+  { query: ":mind blown", top: shown("mind blown", { limit: 1 }) },
+];
+---
+
+<DocsLayout path="/docs/integrations/wordpress/">
+  <p>The Emojisense plugin for WordPress. Type a colon and a word in any text block of the block editor and pick from emoji ranked by meaning. The classic editor gets an emoji button. Optionally, visitors can react to posts with emoji and search emoji in the comment form.</p>
+  <ul class="docs-results" aria-label="Examples">
+    {examples.map((e) => <li><span class="docs-results-query">“{e.query}”</span><span class="docs-results-emoji emoji">{e.top}</span></li>)}
+  </ul>
+  <p>Search runs in the browser with packs served from the plugin folder. Out of the box, the plugin sends nothing to the Emojisense API.</p>
+
+  <h2 id="install">Install</h2>
+  <Callout type="note" title="Not in the WordPress.org directory yet">
+    <p>Build the zip from the repository, then upload it in <strong>Plugins → Add New → Upload Plugin</strong>.</p>
+  </Callout>
+  <CodeBlock code={build} lang="bash" />
+
+  <h2 id="features">Features</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Where</th><th scope="col">What</th><th scope="col">Default</th></tr></thead>
+      <tbody>
+        <tr><td>Block editor</td><td><kbd>:</kbd> autocomplete in every rich text field, and an <strong>Emoji</strong> button in the block toolbar’s “More” menu</td><td>On</td></tr>
+        <tr><td>Classic editor</td><td>An emoji button in the TinyMCE toolbar</td><td>On</td></tr>
+        <tr><td>Reactions</td><td>Emoji reactions after single posts of the chosen post types. Authors pick the reactions in the editor sidebar. Only counts are stored.</td><td>Off</td></tr>
+        <tr><td>Comments</td><td>An <strong>Emoji</strong> button under the comment field</td><td>Off</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="api">Connect the API</h2>
+  <p>In <strong>Settings → Emojisense</strong>, turn on <strong>Connect to the Emojisense API</strong> and paste a publishable key (<code>pk_live_…</code>). Add the site origin that the settings page shows (for example <code>https://example.com</code>) to the key’s allowed origins in the dashboard. <strong>Test the saved settings</strong> checks the key and the origin. The connection adds:</p>
+  <ul>
+    <li><strong>Search by meaning:</strong> unsure searches also ask <code>/v1/search</code>.</li>
+    <li><strong>Reaction suggestions:</strong> when a post is published, the server sends its title and first 256 characters to <code>/v1/suggest-reactions</code> (in the background, with WP-Cron).</li>
+    <li><strong>Hosted emoji sets:</strong> posts, comments and reactions show Twemoji, Noto or Fluent images from <code>/v1/sets/</code>.</li>
+  </ul>
+  <p>The plugin refuses secret keys. Its privacy guide text (Settings → Privacy) describes each data flow.</p>
+</DocsLayout>
