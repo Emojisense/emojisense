@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:merge-conflict:</title>
+  <g fill="none" stroke-width="5" stroke-linecap="round">
+    <path d="M15 48c0-14 17-12 17-26" stroke="#4c8dff"/>
+    <path d="M49 48c0-14-17-12-17-26" stroke="#ff8a3d"/>
+  </g>
+  <circle cx="15" cy="50" r="7" fill="#4c8dff"/>
+  <circle cx="15" cy="50" r="2.8" fill="#fff"/>
+  <circle cx="49" cy="50" r="7" fill="#ff8a3d"/>
+  <circle cx="49" cy="50" r="2.8" fill="#fff"/>
+  <path d="m32 1.5 3.6 6.4 7.2-1.5-1.5 7.2 6.4 3.6-6.4 3.6 1.5 7.2-7.2-1.5L32 33.5l-3.6-6.4-7.2 1.5 1.5-7.2-6.4-3.6 6.4-3.6-1.5-7.2 7.2 1.5z" fill="#f25c54"/>
+  <path d="M32 10.5v7" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="32" cy="23" r="2.1" fill="#fff"/>
+</svg>

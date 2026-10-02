@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:rush-hour:</title>
+  <g stroke="#c2c7d0" stroke-width="3" stroke-linecap="round">
+    <path d="M3 30h8M1.5 38h8.5M4 46h8"/>
+  </g>
+  <rect x="32" y="3" width="8" height="6" rx="2" fill="#c95e43"/>
+  <rect x="34.5" y="7" width="3" height="5" fill="#c95e43"/>
+  <path d="m50.5 13 3.5 3.5" stroke="#c95e43" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="36" cy="36" r="24" fill="#e8775a"/>
+  <circle cx="36" cy="36" r="18.5" fill="#fff7ef"/>
+  <g stroke="#d8c3b0" stroke-width="2.2" stroke-linecap="round">
+    <path d="M36 20.5v3M36 48.5v3M20.5 36h3M48.5 36h3"/>
+  </g>
+  <path d="M36 36V25.5" stroke="#5a3420" stroke-width="3" stroke-linecap="round"/>
+  <path d="M36 36l8.5 5" stroke="#f25c54" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="36" cy="36" r="2.8" fill="#5a3420"/>
+</svg>

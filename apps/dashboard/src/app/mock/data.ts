@@ -1,0 +1,397 @@
+/**
+ * Fixture data for mock mode (VITE_MOCK=1, dev server only). One account, three apps, custom
+ * emoji, tenants, webhooks, a team and 90 days of analytics. Numbers are made up but shaped like
+ * a real chat product; they never reach a production build.
+ */
+import { METRICS, type Metric, PLANS, type PlanId, periodOf } from "@emojisense/platform";
+import type { KeySummary, MetricUsage } from "../../shared/contract";
+import type {
+  AnalyticsDay,
+  AnalyticsResponse,
+  App,
+  CustomEmoji,
+  Me,
+  TeamInviteSummary,
+  TeamMemberSummary,
+  Tenant,
+  Webhook,
+  WebhookDelivery,
+} from "../api";
+
+const DAY = 86_400_000;
+const NOW = Date.now();
+const ago = (days: number, hours = 0) => NOW - days * DAY - hours * 3_600_000;
+
+const images = import.meta.glob<string>("./emoji/*/*.svg", { query: "?url", import: "default", eager: true });
+const imageFor = (set: string, file: string) =>
+  images[`./emoji/${set}/${file}.svg`] ??
+  `data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#d3d3db"/></svg>`,
+  )}`;
+
+export interface MockDb {
+  /** The signed-in account's own plan. Team apps keep their owner's plan (`App.plan`). */
+  plan: PlanId;
+  waitlistPlan: PlanId | null;
+  me: Omit<Me, "plan" | "appCount" | "waitlistPlan">;
+  apps: Omit<App, "activeKeyCount">[];
+  keys: KeySummary[];
+  emoji: (CustomEmoji & { appId: string })[];
+  tenants: (Omit<Tenant, "emojiCount"> & { appId: string })[];
+  webhooks: Webhook[];
+  deliveries: WebhookDelivery[];
+  /** The own team; the first member is the owner. */
+  members: TeamMemberSummary[];
+  invites: TeamInviteSummary[];
+  /** Ada Park's team, which the signed-in account joined as a developer. */
+  otherTeam: { ownerId: string; members: TeamMemberSummary[] };
+  /** Share of each limit used this month, per app. */
+  usageShare: Record<string, Partial<Record<Metric, number>>>;
+}
+
+/** A small seeded random generator (mulberry32), so every load shows the same numbers. */
+export function seeded(seed: string): () => number {
+  let state =
+    [...seed].reduce((sum, char) => Math.imul(sum ^ char.charCodeAt(0), 2654435761), 1779033703) >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const RELAY = "app_relay_prod";
+const STAGING = "app_relay_staging";
+const LAB = "app_emoji_lab";
+const OWN = { role: "owner", ownerId: "acc_maya", ownerName: "Maya Chen" } as const;
+
+type Seed = [set: string, file: string, shortcode: string, aliases: string[], source: CustomEmoji["source"]];
+
+const APP_WIDE: Seed[] = [
+  ["acme", "shipit-rocket", "shipit", ["ship it", "launch", "deploy"], "upload"],
+  ["acme", "lgtm", "lgtm", ["looks good to me", "approved"], "slack"],
+  ["acme", "on-call", "on-call", ["pager", "on call", "incident"], "slack"],
+  ["acme", "deploy-friday", "deploy-friday", ["friday deploy", "yolo"], "upload"],
+  ["acme", "merge-conflict", "merge-conflict", ["git conflict", "rebase"], "slack"],
+  ["acme", "cold-brew", "cold-brew", ["coffee", "iced coffee"], "upload"],
+  ["acme", "plus-one", "plus-one", ["+1", "agree", "same"], "slack"],
+  ["acme", "launch-party", "launch-party", ["celebrate", "party", "launch"], "upload"],
+  ["guild", "crit", "crit", ["critical hit", "nat 20"], "discord"],
+  ["guild", "gg", "gg", ["good game", "well played"], "discord"],
+  ["guild", "level-up", "level-up", ["ding", "level up"], "discord"],
+  ["guild", "loot", "loot", ["treasure", "drop"], "discord"],
+  ["guild", "mana-potion", "mana-potion", ["mana", "potion"], "discord"],
+  ["guild", "patch-notes", "patch-notes", ["changelog", "release notes"], "discord"],
+  ["guild", "raid-night", "raid-night", ["raid", "tonight"], "discord"],
+  ["guild", "respawn", "respawn", ["revive", "back again"], "discord"],
+];
+
+const BLOOM: Seed[] = [
+  ["bloom", "cake-day", "cake-day", ["birthday", "anniversary"], "api"],
+  ["bloom", "espresso-shot", "espresso-shot", ["espresso", "coffee"], "api"],
+  ["bloom", "fresh-bake", "fresh-bake", ["bread", "fresh"], "api"],
+  ["bloom", "latte-art", "latte-art", ["latte", "coffee art"], "api"],
+  ["bloom", "oat-milk", "oat-milk", ["oat", "dairy free"], "api"],
+  ["bloom", "order-up", "order-up", ["order ready", "pickup"], "api"],
+  ["bloom", "rush-hour", "rush-hour", ["busy", "rush"], "api"],
+  ["bloom", "tip-jar", "tip-jar", ["tips", "thank you"], "api"],
+];
+
+function emojiFrom(seeds: Seed[], appId: string, tenantId: string | null, offset: number): MockDb["emoji"] {
+  return seeds.map(([set, file, shortcode, aliases, source], index) => ({
+    id: `emo_${set}_${index}`,
+    appId,
+    shortcode,
+    aliases,
+    imageUrl: imageFor(set, file),
+    tenantId,
+    source,
+    bytes: 640 + ((index * 337) % 900),
+    createdAt: ago(offset + index * 2, index),
+  }));
+}
+
+function key(
+  id: string,
+  appId: string,
+  kind: KeySummary["kind"],
+  prefix: string,
+  allowedOrigins: string[],
+  createdDaysAgo: number,
+  revokedDaysAgo?: number,
+): KeySummary {
+  return {
+    id,
+    appId,
+    kind,
+    prefix,
+    allowedOrigins,
+    createdAt: ago(createdDaysAgo),
+    revokedAt: revokedDaysAgo === undefined ? null : ago(revokedDaysAgo),
+  };
+}
+
+export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
+  const deliveries: WebhookDelivery[] = [
+    ["custom_emoji.created", 200, 142, 0.2],
+    ["custom_emoji.created", 200, 118, 3],
+    ["tenant.created", 200, 96, 9],
+    ["usage.threshold", 200, 131, 20],
+    ["custom_emoji.deleted", 500, 2104, 26],
+    ["custom_emoji.deleted", 200, 155, 26.1],
+    ["custom_emoji.created", null, null, 50],
+    ["custom_emoji.created", 200, 109, 50.3],
+  ].map(([event, status, durationMs, hoursAgo], index) => ({
+    id: `dlv_${index}`,
+    webhookId: "whk_relay_main",
+    event: event as string,
+    status: status as number | null,
+    durationMs: durationMs as number | null,
+    createdAt: NOW - (hoursAgo as number) * 3_600_000,
+  }));
+
+  return {
+    plan,
+    waitlistPlan,
+    me: {
+      account: {
+        id: "acc_maya",
+        name: "Maya Chen",
+        email: "maya@relay.chat",
+        githubLinked: true,
+        createdAt: Date.UTC(2026, 2, 2),
+      },
+      teams: [{ ownerId: "acc_ada", ownerName: "Ada Park", role: "developer" }],
+    },
+    apps: [
+      {
+        ...OWN,
+        id: RELAY,
+        name: "Relay",
+        environment: "prod",
+        plan,
+        createdAt: Date.UTC(2026, 2, 14),
+        emojiSet: "native",
+      },
+      {
+        ...OWN,
+        id: STAGING,
+        name: "Relay",
+        environment: "staging",
+        plan,
+        createdAt: Date.UTC(2026, 5, 2),
+        emojiSet: "native",
+      },
+      {
+        id: LAB,
+        name: "Emoji lab",
+        environment: "dev",
+        // A team app runs on its owner's plan, whatever the signed-in account pays for.
+        plan: "pro",
+        createdAt: Date.UTC(2026, 8, 21),
+        emojiSet: "twemoji",
+        role: "developer",
+        ownerId: "acc_ada",
+        ownerName: "Ada Park",
+      },
+    ],
+    keys: [
+      key(
+        "key_relay_pk",
+        RELAY,
+        "publishable",
+        "pk_live_R3lA",
+        ["https://relay.chat", "https://*.relay.chat"],
+        182,
+      ),
+      key("key_relay_sk", RELAY, "secret", "sk_live_9xQe", [], 120),
+      key("key_relay_old", RELAY, "publishable", "pk_live_Ol7d", ["https://beta.relay.chat"], 201, 150),
+      key("key_staging_pk", STAGING, "publishable", "pk_live_St4g", ["https://staging.relay.chat"], 90),
+      key("key_lab_pk", LAB, "publishable", "pk_live_L4bz", [], 11),
+    ],
+    emoji: [...emojiFrom(APP_WIDE, RELAY, null, 4), ...emojiFrom(BLOOM, RELAY, "ten_bloom", 1)],
+    tenants: [
+      { id: "ten_bloom", appId: RELAY, externalId: "bloom-bakery", name: "Bloom Bakery", createdAt: ago(40) },
+      {
+        id: "ten_northwind",
+        appId: RELAY,
+        externalId: "northwind",
+        name: "Northwind Ops",
+        createdAt: ago(18),
+      },
+      { id: "ten_orbit", appId: RELAY, externalId: "org_8f2k1", name: null, createdAt: ago(3) },
+    ],
+    webhooks: [
+      {
+        id: "whk_relay_main",
+        appId: RELAY,
+        url: "https://api.relay.chat/hooks/emojisense",
+        events: [
+          "custom_emoji.created",
+          "custom_emoji.deleted",
+          "tenant.created",
+          "tenant.deleted",
+          "usage.threshold",
+        ],
+        createdAt: ago(60),
+        disabledAt: null,
+      },
+      {
+        id: "whk_relay_ops",
+        appId: RELAY,
+        url: "https://ops.relay.chat/alerts/usage",
+        events: ["usage.threshold"],
+        createdAt: ago(33),
+        disabledAt: ago(2),
+      },
+    ],
+    deliveries,
+    members: [
+      {
+        id: "acc_maya",
+        name: "Maya Chen",
+        email: "maya@relay.chat",
+        role: "owner",
+        createdAt: Date.UTC(2026, 2, 2),
+      },
+      { id: "acc_jonas", name: "Jonas Weber", email: "jonas@relay.chat", role: "admin", createdAt: ago(140) },
+      {
+        id: "acc_priya",
+        name: "Priya Raman",
+        email: "priya@relay.chat",
+        role: "developer",
+        createdAt: ago(64),
+      },
+      { id: "acc_leo", name: "Leo Martins", email: "leo@relay.chat", role: "viewer", createdAt: ago(12) },
+    ],
+    invites: [
+      { id: "inv_sam", role: "developer", email: "sam@relay.chat", createdAt: ago(2), expiresAt: ago(-5) },
+      { id: "inv_link", role: "viewer", email: null, createdAt: ago(5), expiresAt: ago(-2) },
+    ],
+    otherTeam: {
+      ownerId: "acc_ada",
+      members: [
+        {
+          id: "acc_ada",
+          name: "Ada Park",
+          email: "ada@parklabs.dev",
+          role: "owner",
+          createdAt: Date.UTC(2025, 10, 4),
+        },
+        {
+          id: "acc_maya",
+          name: "Maya Chen",
+          email: "maya@relay.chat",
+          role: "developer",
+          createdAt: ago(30),
+        },
+        {
+          id: "acc_tom",
+          name: "Tomás Ruiz",
+          email: "tomas@parklabs.dev",
+          role: "admin",
+          createdAt: ago(210),
+        },
+      ],
+    },
+    usageShare: {
+      [RELAY]: { semantic_calls: 0.83, image_classifications: 0.41 },
+      [STAGING]: { semantic_calls: 0.04, image_classifications: 0.01 },
+      [LAB]: { semantic_calls: 0.002 },
+    },
+  };
+}
+
+export function measure(metric: Metric, used: number, limit: number): MetricUsage {
+  if (!Number.isFinite(limit)) return { metric, used, limit: null, percent: 0, status: "ok" };
+  if (limit <= 0) return { metric, used, limit: 0, percent: 0, status: "not_included" };
+  const percent = Math.min(100, Math.floor((used / limit) * 1000) / 10);
+  const status = used >= limit ? "over_limit" : percent >= 80 ? "near_limit" : "ok";
+  return { metric, used, limit, percent, status };
+}
+
+export function usageFor(db: MockDb, appId: string, period: string): MetricUsage[] {
+  const limits = PLANS[db.apps.find((app) => app.id === appId)?.plan ?? db.plan].limits;
+  const current = period === periodOf();
+  // Earlier months are a little lower, so switching months shows a change.
+  const factor = current ? 1 : 0.74 + seeded(`${appId}:${period}`)() * 0.2;
+  return METRICS.map((metric) => {
+    if (metric === "custom_emoji") {
+      return measure(metric, db.emoji.filter((emoji) => emoji.appId === appId).length, limits.custom_emoji);
+    }
+    const share = db.usageShare[appId]?.[metric] ?? 0;
+    const limit = Number.isFinite(limits[metric]) ? limits[metric] : PLANS.scale.limits[metric];
+    return measure(metric, Math.round(limit * share * factor), limits[metric]);
+  });
+}
+
+const QUERIES = [
+  "lol",
+  "thanks",
+  "ship it",
+  "party",
+  "fire",
+  "love",
+  "yes",
+  "coffee",
+  "sad",
+  "eyes",
+  "ok",
+  "lgtm",
+  "facepalm",
+  "clap",
+  "100",
+  "rocket",
+  "pray",
+  "skull",
+  "wave",
+  "deadline",
+];
+const MISSES = [
+  "rizz",
+  "relay logo",
+  "standup",
+  "delulu",
+  "hotfix",
+  "touch grass",
+  "sprint demo",
+  "brb",
+  "big brain",
+  "slay",
+  "ngl",
+  "mid",
+];
+
+export function analyticsFor(appId: string, requested: number, retention: number): AnalyticsResponse {
+  const window = Math.min(requested, retention);
+  const random = seeded(`analytics:${appId}`);
+  const base = appId === RELAY ? 1_380 : appId === STAGING ? 64 : 9;
+  // 90 days are generated so that a shorter window is the tail of the same series.
+  const all: AnalyticsDay[] = Array.from({ length: 90 }, (_, index) => {
+    const date = new Date(NOW - (89 - index) * DAY);
+    const weekday = date.getUTCDay();
+    const weekly = weekday === 0 || weekday === 6 ? 0.62 : weekday === 1 ? 1.08 : 1;
+    const trend = 0.72 + (index / 89) * 0.42;
+    const spike = index === 61 ? 1.9 : 1;
+    const searches = Math.round(base * weekly * trend * spike * (0.88 + random() * 0.24));
+    const misses = Math.round(searches * (0.05 + random() * 0.035));
+    return { day: date.toISOString().slice(0, 10), searches, misses };
+  });
+  const days = all.slice(-window);
+  const total = days.reduce((sum, day) => sum + day.searches, 0);
+  const totalMisses = days.reduce((sum, day) => sum + day.misses, 0);
+  const share = (index: number, count: number) => 1 / (index + 1.6) ** 1.15 / (count / 4);
+  return {
+    days,
+    topQueries: QUERIES.map((query, index) => ({
+      query,
+      searches: Math.max(5, Math.round(total * 0.42 * share(index, QUERIES.length))),
+    })),
+    topMisses: MISSES.map((query, index) => ({
+      query,
+      misses: Math.max(5, Math.round(totalMisses * 0.6 * share(index, MISSES.length))),
+    })),
+  };
+}

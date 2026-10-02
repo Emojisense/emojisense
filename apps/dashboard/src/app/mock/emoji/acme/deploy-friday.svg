@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>:deploy-friday:</title>
+  <rect x="9" y="12" width="46" height="47" rx="8" fill="#d5dbe6"/>
+  <rect x="9" y="10" width="46" height="46" rx="8" fill="#f4f5f8"/>
+  <path d="M17 10h30a8 8 0 0 1 8 8v7H9v-7a8 8 0 0 1 8-8z" fill="#f25c54"/>
+  <rect x="18" y="5" width="5" height="10" rx="2.5" fill="#6b7280"/>
+  <rect x="41" y="5" width="5" height="10" rx="2.5" fill="#6b7280"/>
+  <g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23.5 22v-6.5h4.5M23.5 18.7h3.6"/>
+    <path d="M31 22v-6.5h3a1.9 1.9 0 0 1 0 3.8h-3M34.2 19.3l2.3 2.7"/>
+    <path d="M40.5 15.5V22"/>
+  </g>
+  <path d="M32 29c6.5 5.2 10.5 10 10.5 16 0 6.2-4.7 10-10.5 10s-10.5-3.8-10.5-10c0-3.7 1.6-6.6 4.2-9.2.3 3.2 1.8 5 3.8 5.4-1-4.6-.1-8.6 2.5-12.2z" fill="#ff8a3d"/>
+  <path d="M32 40c3 2.6 4.8 4.8 4.8 7.6 0 2.8-2.1 4.6-4.8 4.6s-4.8-1.8-4.8-4.6c0-2.6 1.6-4.8 4.8-7.6z" fill="#ffc93c"/>
+</svg>
