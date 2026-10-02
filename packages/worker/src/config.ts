@@ -59,6 +59,53 @@ export const BROWSER_CACHE = "public, max-age=3600, s-maxage=86400";
 export const CULTURE_BROWSER_CACHE = "public, max-age=3600";
 export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;
 
+/**
+ * The nightly layer-2 shard build (src/shards/job.ts), after the 03:17 retention run, so it never
+ * reads a query_daily row that a plan's retention has expired. Also listed in wrangler.jsonc.
+ */
+export const SHARD_BUILD_CRON = "23 4 * * *";
+/**
+ * k-anonymity for public shard files: a query is published only when apps of at least this many
+ * different accounts searched it…
+ */
+export const SHARD_MIN_ACCOUNTS = 3;
+/** …at least this many times in total… */
+export const SHARD_MIN_SEARCHES = 10;
+/**
+ * …over the last this many complete UTC days. The shortest retention (Free, Solo) keeps today
+ * and the 6 days before it, so 6 complete days exist for every plan.
+ */
+export const SHARD_WINDOW_DAYS = 6;
+/** Queries per build, most searched first. Bounds memory, shard count and R2 writes per run. */
+export const SHARD_MAX_QUERIES = 20_000;
+/**
+ * New query embeddings per run (Workers AI cost cap). Entries of the current build are reused,
+ * so the queries left over are embedded on the next nights.
+ */
+export const SHARD_MAX_EMBEDDINGS = 5_000;
+/**
+ * Raw JSON bytes per shard file. Shard JSON compresses about 4×, so this stays under the 30 KB
+ * gzip budget of PACK_FORMAT §6 (the Worker has no synchronous gzip to measure it).
+ */
+export const SHARD_MAX_RAW_BYTES = 96 * 1024;
+/** R2 writes in flight at once (Workers allow 6 open connections per invocation). */
+export const SHARD_WRITE_CONCURRENCY = 6;
+/** Stores of another pack version or content hash are deleted after this many days unused. */
+export const SHARD_STALE_DAYS = 7;
+/** How long an isolate trusts the current-build pointer it read from R2. */
+export const SHARD_POINTER_TTL_MS = 5 * 60_000;
+/**
+ * `/p/<v>/index.json` changes with each nightly build, so it is never `immutable`: clients pick
+ * up a new build within an hour. Shard files of an older build hold valid answers for the same
+ * model and data, so they may live a day.
+ */
+export const SHARD_INDEX_BROWSER_CACHE = "public, max-age=3600";
+export const SHARD_FILE_BROWSER_CACHE = "public, max-age=86400";
+/** Edge copies are keyed by build id, whose content never changes. */
+export const SHARD_EDGE_CACHE_SECONDS = 7 * 24 * 3600;
+/** A missing file: the client asks the API. Short, so a new build shows up soon. */
+export const SHARD_MISSING_CACHE = "public, max-age=300";
+
 /** An app's custom emoji, as one isolate sees them for search, are at most this old. */
 export const CUSTOM_CACHE_TTL_MS = 60_000;
 /** Upper bound on cached custom emoji sets (app × tenant) per isolate. */

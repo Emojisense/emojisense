@@ -26,6 +26,13 @@ export interface Env {
    * (`custom/<appId>/<tenantId|_>/<id>.<ext>`).
    */
   EMOJI?: R2Bucket;
+  /**
+   * R2 bucket `emojisense-shards`: layer-2 shard builds of the nightly job (src/shards/), served
+   * at /p/<packVersion>/…. Without it, /p/* serves the static shards in public/p (if any).
+   */
+  SHARDS?: R2Bucket;
+  /** "true" runs the nightly shard build; any other value skips it (wrangler.jsonc). */
+  SHARDS_CRON_ENABLED?: string;
   /** Public base URL of this API, for custom emoji `imageUrl`. Defaults to the request's origin. */
   API_URL?: string;
   /** "development" allows webhook deliveries to http://localhost. Any other value is production. */

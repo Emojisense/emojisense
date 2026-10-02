@@ -42,18 +42,51 @@ export function indexTag(catalog: Catalog): string {
   return `${catalog.config.packVersion}:${modelTag(catalog)}`;
 }
 
-async function embed(env: Env, catalog: Catalog, text: string): Promise<Float32Array> {
+/**
+ * One Workers AI call for up to `model.maxBatch` texts (already `embeddingText`), in order. The
+ * search route sends one text, the nightly shard build (shards/job.ts) a batch: both embed the
+ * same way. Throws on a failed call or a malformed answer.
+ */
+export async function embedTexts(
+  env: Env,
+  catalog: Catalog,
+  texts: readonly string[],
+): Promise<Float32Array[]> {
   if (!env.AI) throw new Error("AI binding missing");
   const { config, model } = catalog;
-  const input = config.queryTemplate.replace("{q}", text);
-  const output = (await env.AI.run(config.modelId, model.input([input], "query"))) as {
+  // A replacer function, so "$&" or "$1" in a query is not read as a replacement pattern.
+  const inputs = texts.map((text) => config.queryTemplate.replace("{q}", () => text));
+  const output = (await env.AI.run(config.modelId, model.input(inputs, "query"))) as {
     data?: number[][];
     response?: number[][];
   };
-  const vector = (output.data ?? output.response)?.[0];
-  if (!vector || vector.length < config.dims) throw new Error("unexpected embedding response");
-  // Matryoshka truncation, then re-normalize: the treatment the emoji vectors got (PACK_FORMAT §5).
-  return l2normalize(Float32Array.from(vector.slice(0, config.dims)));
+  const vectors = output.data ?? output.response;
+  if (!vectors || vectors.length !== texts.length) throw new Error("unexpected embedding response");
+  return vectors.map((vector) => {
+    if (vector.length < config.dims) throw new Error("unexpected embedding response");
+    // Matryoshka truncation, then re-normalize: the treatment the emoji vectors got (PACK_FORMAT §5).
+    return l2normalize(Float32Array.from(vector.slice(0, config.dims)));
+  });
+}
+
+async function embed(env: Env, catalog: Catalog, text: string): Promise<Float32Array> {
+  const [vector] = await embedTexts(env, catalog, [text]);
+  return vector as Float32Array;
+}
+
+/** The semantic list of the API: each emoji's best row over `indexes`, scores to three decimals. */
+export function semanticResults(
+  engine: AliasEngine,
+  indexes: readonly VectorIndex[],
+  vector: Float32Array,
+  limit: number,
+): SearchResult[] {
+  return searchVectorSets(indexes, vector, limit).map((m) => ({
+    emoji: engine.get(m.id)?.emoji ?? "",
+    id: m.id,
+    score: Math.round(m.score * 1000) / 1000,
+    source: "semantic" as const,
+  }));
 }
 
 export interface Embedded {
@@ -134,12 +167,7 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     ({ degraded, ms: embedMs } = embedded);
     if (embedded.vector) {
       vectorsUnavailable = !vectors.complete;
-      semantic = searchVectorSets(vectors.indexes, embedded.vector, limit).map((m) => ({
-        emoji: engine.get(m.id)?.emoji ?? "",
-        id: m.id,
-        score: Math.round(m.score * 1000) / 1000,
-        source: "semantic" as const,
-      }));
+      semantic = semanticResults(engine, vectors.indexes, embedded.vector, limit);
     }
   }
 

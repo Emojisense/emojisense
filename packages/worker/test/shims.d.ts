@@ -1,5 +1,6 @@
-// The tests are type-checked with the Workers types only. These declare the two Node/Vite
-// features test/d1-store.test.ts uses, so the real migrations can run against SQLite.
+// The tests are type-checked with the Workers types only. These declare the Node/Vite features
+// the tests use: SQLite and raw imports for the real migrations (test/sqlite-d1.ts), and
+// `import.meta.url` to find wrangler.jsonc (test/shards-miniflare.test.ts).
 
 declare module "node:sqlite" {
   export class StatementSync {
@@ -16,5 +17,6 @@ declare module "node:sqlite" {
 }
 
 interface ImportMeta {
+  readonly url: string;
   glob<T>(pattern: string, options: { query: "?raw"; import: "default"; eager: true }): Record<string, T>;
 }

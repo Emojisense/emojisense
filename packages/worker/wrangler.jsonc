@@ -13,10 +13,11 @@
     // src/locale-engines.ts reads pack.<locale>.json of locales outside the bundle through it.
     // `assets` is inherited by the offline env, binding included.
     "binding": "ASSETS",
-    // Packs (/v1/pack/*), culture files (/v1/culture/*) and shards (/p/*) are static assets: free,
-    // and they never run the Worker. Only the API routes run it first; the negative rules keep
-    // packs and culture files on the asset path. Cache headers: public/_headers (sync-pack.ts).
-    "run_worker_first": ["/v1/*", "!/v1/pack/*", "!/v1/culture/*"]
+    // Packs (/v1/pack/*) and culture files (/v1/culture/*) are static assets: free, and they never
+    // run the Worker. Only the API routes run it first; the negative rules keep packs and culture
+    // files on the asset path. Cache headers: public/_headers (sync-pack.ts). Shards (/p/*) run the
+    // Worker: it serves the nightly build from R2 (SHARDS), else the static ones in public/p.
+    "run_worker_first": ["/v1/*", "!/v1/pack/*", "!/v1/culture/*", "/p/*"]
   },
   // Workers AI has no local emulator: even `wrangler dev` calls Cloudflare (needs `wrangler login`).
   // Without it the Worker degrades to alias-only results.
@@ -37,22 +38,29 @@
   // Custom emoji images, written by the dashboard and the tenants API, served at
   // /v1/custom/:appId/:emojiId. Local R2 state is keyed by bucket_name, so both Workers share it
   // under --persist-to (CONTRACT.md "Storage").
-  "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
+  // SHARDS: layer-2 shard builds of the nightly job (src/shards/), served at /p/*. API Worker only.
+  "r2_buckets": [
+    { "binding": "EMOJI", "bucket_name": "emojisense-emoji" },
+    { "binding": "SHARDS", "bucket_name": "emojisense-shards" }
+  ],
   "ratelimits": [
     { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
     { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
   ],
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
   // Daily, 03:17 UTC: delete query_daily rows past their plan's retention and waitlist rows
-  // older than 12 months (src/retention.ts).
+  // older than 12 months (src/retention.ts). Daily, 04:23 UTC: build the layer-2 shards from
+  // query_daily (src/shards/job.ts, SHARD_BUILD_CRON in src/config.ts; SHARDS_CRON_ENABLED).
   // Inherited by the offline env. Locally: `wrangler dev --test-scheduled`, then
-  // curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*".
-  "triggers": { "crons": ["17 3 * * *"] },
+  // curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*" (or cron=23+4+*+*+*).
+  "triggers": { "crons": ["17 3 * * *", "23 4 * * *"] },
   "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": true }],
   "vars": {
     // Keys accepted without a database row (`key` or `key:plan`, comma-separated), metered in
     // memory only. pk_demo is the demo app's key; remove it once the demo has a real key.
-    "DEV_KEYS": "pk_demo"
+    "DEV_KEYS": "pk_demo",
+    // "true" runs the nightly shard build; set it to "false" to stop it (the served build stays).
+    "SHARDS_CRON_ENABLED": "true"
   },
   "env": {
     // `wrangler dev --env offline`: no Workers AI binding, so it runs with no Cloudflare login.
@@ -66,14 +74,22 @@
           "migrations_dir": "../platform/migrations"
         }
       ],
-      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
+      "r2_buckets": [
+        { "binding": "EMOJI", "bucket_name": "emojisense-emoji" },
+        { "binding": "SHARDS", "bucket_name": "emojisense-shards" }
+      ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
       // ENVIRONMENT=development lets webhooks reach http://localhost receivers.
-      "vars": { "DEV_KEYS": "pk_demo,sk_live_local:pro", "ENVIRONMENT": "development" }
+      // No Workers AI here, so the shard build logs "shards_skipped" (no Workers AI).
+      "vars": {
+        "DEV_KEYS": "pk_demo,sk_live_local:pro",
+        "ENVIRONMENT": "development",
+        "SHARDS_CRON_ENABLED": "true"
+      }
     },
     // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
     // that value unlocks localhost-only behaviour. Own D1 and R2, never shared with production.
@@ -90,13 +106,16 @@
           "migrations_dir": "../platform/migrations"
         }
       ],
-      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" }],
+      "r2_buckets": [
+        { "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" },
+        { "binding": "SHARDS", "bucket_name": "emojisense-shards-dev" }
+      ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1101", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1102", "simple": { "limit": 30, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search_dev" }],
-      "vars": { "DEV_KEYS": "pk_demo", "ENVIRONMENT": "staging" }
+      "vars": { "DEV_KEYS": "pk_demo", "ENVIRONMENT": "staging", "SHARDS_CRON_ENABLED": "true" }
     },
     // Production at api.emojisense.com (`pnpm deploy:production`). No dev keys: every key is a
     // database row with its own origins and plan.
@@ -113,13 +132,16 @@
           "migrations_dir": "../platform/migrations"
         }
       ],
-      "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji-prod" }],
+      "r2_buckets": [
+        { "binding": "EMOJI", "bucket_name": "emojisense-emoji-prod" },
+        { "binding": "SHARDS", "bucket_name": "emojisense-shards-prod" }
+      ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1201", "simple": { "limit": 120, "period": 60 } },
         { "name": "ANON_LIMITER", "namespace_id": "1202", "simple": { "limit": 30, "period": 60 } }
       ],
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
-      "vars": { "DEV_KEYS": "", "ENVIRONMENT": "production" }
+      "vars": { "DEV_KEYS": "", "ENVIRONMENT": "production", "SHARDS_CRON_ENABLED": "true" }
     }
   }
 }
