@@ -68,8 +68,9 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
    ▼ culture:review  ── preview per trigger: canonical vs with the entry ──▶ status "approved"  (git = audit trail)
    ▼ culture:check   ── schema, catalog hexcodes, windows, neutral context, exclusions.txt
    ▼ culture:build --date d ──▶ dist/culture/<packVersion>/culture.<locale>.json
-   │                             lasting entries + seasonal/event entries active in [d, d+14], exact windows
-   ▼ Worker sync (runs culture:build for today, UTC) ──▶ /v1/culture/<packVersion>/… static assets, max-age=3600
+   │                             lasting entries + seasonal/event entries active in [d, d+366], exact windows
+   ▼ Worker sync at deploy (culture:build from yesterday, UTC) ──▶ /v1/culture/<packVersion>/… static assets, max-age=3600
+   │                             no daily rebuild: clients check the windows by their own day
    ▼ SDK: loadCulture → engine.withCulture(culture) → session applies it after fusion
    ▼ API: /v1/search?culture=1&region=XX → same file through ASSETS, applied after the shared cache
 ```
@@ -80,7 +81,7 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
 | Applied last, after the semantic results are fused in, so a semantic answer cannot lift a culture emoji over the top result. | `packages/core/src/session.ts` |
 | Results carry `source: "culture"`, `context` (the reason, localized) and `cultureId`. At most 5 per query. | `matchCulture` |
 | A trigger matches the whole normalized query, or a prefix being typed (≥ 3 characters and ≥ half the trigger). | `matchCulture` |
-| Windows are local calendar days. Yearly windows may wrap the year end. Lunar-calendar festivals get one dated entry per year. | `isActiveOn` |
+| Windows are local calendar days, checked at query time against a 12-month file. Yearly windows may wrap the year end. Lunar-calendar festivals get one dated entry per year. | `isActiveOn`, `CultureScope.day` |
 | Without a region, only entries for every region (`"*"`) apply. `useEmojisense` and `<emojisense-picker>` default to the region of the browser's language, read on the device and never sent. | `CultureScope.region`, `deviceRegion` |
 | `culture: false` keeps the canonical ranking (tests, benchmarks). Without a culture file nothing changes. | engine, session, React, web component |
 | A "relevant now" shelf (featured seasonal and event emoji) is off by default. | `relevantNow`, `showRelevantNow` |
@@ -88,7 +89,7 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
 | **Regional senses** (`kind: "regional"`, e.g. "football" → ⚽ outside North America) are the one exception to "never above": the app names a region in scope, the query equals a trigger, and the canonical top is one the entry `outranks`. The canonical answer moves to second place. The gate checks the lead in scope, no change out of scope, and no other in-house query changing its top answer with the region. | `matchRegionalLead`, `culture-gate.ts` |
 | The search API applies culture only with `culture=1` (off by default: SDKs already apply it on the device). It uses the UTC day and never stores culture in the shared cache. | `packages/worker/src/culture.ts` |
 
-The culture file is optional and small (≤ 1.5 KB gz per locale today). A failed load leaves
+The culture file is optional and small (≤ 2.7 KB gz per locale for 12 months today). A failed load leaves
 search unchanged, and the engine index is shared, not rebuilt, when the file arrives.
 
 ## Packages

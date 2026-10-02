@@ -161,10 +161,11 @@ These are static asset requests: free, and they do not run the Worker. All send
 ### Culture files
 
 `GET /v1/culture/0.1.0/culture.es.json` returns the Spanish culture file: every lasting entry
-plus the seasonal and event entries active in the next 14 days, with their exact windows, so the
-SDK switches them on and off offline. The files are rebuilt daily under the same pack version, so
-they are cached for an hour and never `immutable`. A locale without a file answers `404`; clients
-then search without the culture layer.
+plus the seasonal and event entries active in the next 12 months, with their exact windows, so the
+SDK switches them on and off offline by the device's local day. No daily rebuild is needed. The
+files change when a deploy brings new or edited entries under the same pack version, so they are
+cached for an hour and never `immutable`. A locale without a file answers `404`; clients then
+search without the culture layer.
 
 | Field of a culture result (SDK) | Meaning |
 | ------------------------------- | ------- |
@@ -187,7 +188,7 @@ the top canonical result, except a regional sense in the caller's region (below)
     { "emoji": "⚽", "id": "26BD", "score": 0.6, "source": "culture",
       "context": "Football's greatest-of-all-time debate", "cultureId": "goat-football" }
   ],
-  "culture": { "from": "2026-10-02", "region": "AR" }, "…": "…" }
+  "culture": { "from": "2026-10-01", "day": "2026-10-02", "region": "AR" }, "…": "…" }
 ```
 
 - **Off by default.** The SDKs ask for `mode=semantic` and apply the culture file on the device;
@@ -198,8 +199,9 @@ the top canonical result, except a regional sense in the caller's region (below)
   exception: with a `region` in the entry's scope, a query equal to its trigger puts its emoji
   first and the canonical answer second (`football` with `region=GB`: ⚽ then 🏈). Without
   `region`, or with a region outside the scope, the canonical answer stays first.
-- Windows are checked against the server's UTC day, so a seasonal entry can start or end a few
-  hours early or late for a user. The SDK uses the user's local day.
+- Windows are checked against the request's UTC day (`culture.day`; `culture.from` is the culture
+  file's first day), so a seasonal entry can start or end a few hours early or late for a user.
+  The SDK uses the user's local day.
 - Culture is applied to each answer after the shared cache, like custom emoji. The cache holds
   the canonical answer only, so `culture` and `region` do not split it and no answer carries
   another day's or region's culture. Culture answers send `Cache-Control: public, max-age=3600`
