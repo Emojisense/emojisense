@@ -2,7 +2,7 @@
   "name": "@emojisense/dashboard",
   "version": "0.0.0",
   "private": true,
-  "description": "Developer dashboard: GitHub sign-in, apps, API keys, usage and the Pro waitlist.",
+  "description": "Developer dashboard: Clerk sign-in, apps, API keys, usage and the Pro waitlist.",
   "type": "module",
   "scripts": {
     "dev": "vite build && wrangler dev --persist-to ../../.wrangler/state",

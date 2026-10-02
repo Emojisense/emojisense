@@ -9,6 +9,13 @@ WEBSITE_ORIGINS=http://localhost:5173,http://localhost:4321
 # The local API Worker, which serves custom emoji images (pnpm --filter @emojisense/worker dev:offline).
 API_URL=http://localhost:8788
 
-# GitHub OAuth app for local sign-in. Callback URL: http://localhost:8790/api/auth/github/callback
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
+# Clerk (optional locally: without it only the dev sign-in works). Use the development instance.
+# Public values; also put the publishable key in apps/dashboard/.env.local as
+# VITE_CLERK_PUBLISHABLE_KEY so the SPA is built with Clerk. See the README, "Clerk".
+CLERK_PUBLISHABLE_KEY=
+# Clerk Dashboard → API keys → Show JWT public key → PEM (one line is fine).
+CLERK_JWT_KEY=
+# Comma-separated origins whose session tokens count. Empty = the dashboard's own origin.
+CLERK_AUTHORIZED_PARTIES=
+# Optional secret: only lets DELETE /api/me delete the Clerk user on the server.
+# CLERK_SECRET_KEY=

@@ -33,7 +33,8 @@
     { "name": "WAITLIST_LIMITER", "namespace_id": "2001", "simple": { "limit": 5, "period": 60 } }
   ],
   // Production values. `.dev.vars` overrides them locally (see .dev.vars.example).
-  // Secrets: GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET (`wrangler secret put …`).
+  // Clerk sign-in needs CLERK_PUBLISHABLE_KEY and CLERK_JWT_KEY (both public) and, optionally,
+  // CLERK_AUTHORIZED_PARTIES. The only optional secret is CLERK_SECRET_KEY (README, "Clerk").
   "vars": {
     "ENVIRONMENT": "production",
     // Comma-separated website origins that may POST /api/waitlist from the browser.

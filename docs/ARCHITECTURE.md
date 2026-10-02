@@ -117,3 +117,26 @@ search unchanged, and the engine index is shared, not rebuilt, when the file arr
 5. Skin-tone variants map to their base emoji. The picker applies the user's tone.
 6. Community custom emoji sets are used only for local evaluation, never shipped.
 7. No servers to manage: no containers, no load balancers, no vector DB.
+
+## Dashboard sign-in
+
+The dashboard (`apps/dashboard`) signs people in with Clerk. The Worker needs only public values
+and makes no network call to check a request. (Added 2026-10-02; see DECISIONS.md.)
+
+```
+browser ──▶ Clerk Frontend API (clerk.emojisense.com): sign-in, session, token refresh
+   │
+   └─▶ /api/*  Authorization: Bearer <session token, 60 s>
+         │
+         ▼
+   dashboard Worker ── verifyJwt(CLERK_JWT_KEY) + azp + iss + session status
+         │             email, email_verified, name from custom claims
+         ▼
+   D1 accounts (clerk_user_id) ── the first request of a Clerk user creates the account
+```
+
+| Value | Kind | Where |
+| ----- | ---- | ----- |
+| `VITE_CLERK_PUBLISHABLE_KEY` | public, build time | SPA (ClerkProvider) and the `_headers` CSP |
+| `CLERK_PUBLISHABLE_KEY`, `CLERK_JWT_KEY`, `CLERK_AUTHORIZED_PARTIES` | public Worker vars | token checks |
+| `CLERK_SECRET_KEY` | optional secret | only server-side deletion of the Clerk user |
