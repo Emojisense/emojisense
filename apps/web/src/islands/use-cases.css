@@ -62,13 +62,23 @@
 }
 
 .uc-stage {
+  --uc-stage-height: clamp(32rem, 60vh, 38rem);
   position: relative;
-  height: clamp(32rem, 60vh, 38rem);
+  height: var(--uc-stage-height);
   border: 0.0625rem solid var(--line);
   border-radius: var(--radius-xl);
   background: var(--bg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
+}
+
+/* The photo demo fills the stage while its columns sit side by side. When it stacks them (below
+   46rem, see photo.css) it needs more height than that, so here the stage height is a minimum: the
+   demo stretches to it or grows past it. */
+[data-case="photos"] .uc-stage {
+  display: grid;
+  height: auto;
+  min-height: var(--uc-stage-height);
 }
 
 .uc-loading {
