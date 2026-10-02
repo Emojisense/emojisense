@@ -128,6 +128,37 @@ describe("culture validator", () => {
       "id used 2 times",
     );
   });
+
+  it("asks a regional sense for its scope and the canonical answers it may move down", () => {
+    const regional = (overrides: Partial<CultureRecord>) =>
+      errors(
+        record({
+          kind: "regional",
+          regions: ["*"],
+          exceptRegions: ["US", "CA"],
+          emoji: [{ hexcode: "26BD", weight: 0.9 }],
+          outranks: ["1F410"],
+          ...overrides,
+        }),
+      );
+    expect(regional({})).toEqual([]);
+    expect(regional({ regions: ["GB", "IE"], exceptRegions: undefined })).toEqual([]);
+    expect(regional({ exceptRegions: undefined })).toEqual([
+      'a regional entry names its regions, or uses ["*"] with exceptRegions',
+    ]);
+    expect(regional({ regions: ["GB"] })).toEqual(['exceptRegions needs regions: ["*"]']);
+    expect(regional({ exceptRegions: ["XX"] })).toEqual(['unknown region "XX" in exceptRegions']);
+    expect(regional({ outranks: undefined })).toEqual([
+      "a regional entry lists 1–3 canonical answers in outranks",
+    ]);
+    expect(regional({ outranks: ["26BD"] })).toEqual(["outranks 26BD is one of the entry's own emoji"]);
+    expect(regional({ outranks: ["1F984"] })).toEqual(["outranks 1F984 is not a base emoji of the catalog"]);
+    expect(regional({ when: { from: "10-15", to: "10-31", recurs: "yearly" } })).toEqual([
+      "a regional entry has `when: null`",
+    ]);
+    expect(regional({ featured: true })).toEqual(["only seasonal and event entries can be featured"]);
+    expect(errors(record({ outranks: ["1F410"] }))).toEqual(["only regional entries have outranks"]);
+  });
 });
 
 describe("culture compiler", () => {
@@ -182,6 +213,35 @@ describe("culture compiler", () => {
   it("forces every entry active for the eval gate", () => {
     const compiled = compileCulture([halloween], "en", { ...options, from: "2026-05-01", forceActive: true });
     expect(compiled.entries[0]).toMatchObject({ when: null, regions: ["*"] });
+  });
+
+  it("keeps the scope and outranks of a regional sense, and never features it", () => {
+    const regional = record({
+      id: "football-soccer",
+      kind: "regional",
+      regions: ["*"],
+      exceptRegions: ["US"],
+      locales: ["en"],
+      context: { en: "Outside North America, football means soccer" },
+      triggers: { en: ["football"] },
+      emoji: [{ hexcode: "26BD", weight: 0.9 }],
+      outranks: ["1F410"],
+      featured: true,
+    });
+    const [entry] = compileCulture([regional, record()], "en", { ...options, from: "2026-10-02" }).entries;
+    expect(entry).toEqual({
+      id: "football-soccer",
+      kind: "regional",
+      context: "Outside North America, football means soccer",
+      when: null,
+      regions: ["*"],
+      exceptRegions: ["US"],
+      triggers: ["football"],
+      emoji: [["⚽", "26BD", 0.9]],
+      outranks: ["1F410"],
+    });
+    const forced = compileCulture([regional], "en", { ...options, from: "2026-10-02", forceActive: true });
+    expect(forced.entries[0]?.exceptRegions).toBeUndefined();
   });
 
   it("adds days across month and year ends", () => {

@@ -16,11 +16,18 @@ export interface CultureRecord {
   when: CultureWhen;
   /** ISO 3166-1 alpha-2 codes, or ["*"]. */
   regions: string[];
+  /** With `regions: ["*"]`: regions where the entry does not apply when the app names one. */
+  exceptRegions?: string[];
   /** Pack locales, or ["*"]. */
   locales: string[];
   /** Normalized trigger phrases per targeted locale. Each locale file gets only its own list. */
   triggers: Record<string, string[]>;
   emoji: { hexcode: string; weight: number }[];
+  /**
+   * `regional` entries only: hexcodes of the canonical top answers the regional sense may move to
+   * second place (core `matchRegionalLead`).
+   */
+  outranks?: string[];
   featured?: boolean;
   source: RecordSource;
   createdBy: string;

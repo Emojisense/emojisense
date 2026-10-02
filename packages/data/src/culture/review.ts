@@ -20,6 +20,7 @@ import { loadCatalog } from "./catalog.ts";
 import { compileCulture } from "./compile.ts";
 import { loadExclusions } from "./exclusions.ts";
 import { loadRecords, writeRecord } from "./records.ts";
+import { probeRegions } from "./regional.ts";
 import type { CultureRecord, RecordStatus } from "./types.ts";
 import { targetLocales, validateRecord } from "./validate.ts";
 
@@ -99,8 +100,16 @@ for (const record of selected) {
   for (const issue of validateRecord(record, { catalog, exclusions })) {
     console.log(`  ${issue.level === "error" ? "✘" : "⚠"} ${issue.message}`);
   }
+  if (record.exceptRegions?.length) console.log(`  except regions ${record.exceptRegions.join(", ")}`);
   if (!record.regions.includes("*"))
     console.log("  ⚠ regional: applies only when the app passes one of these regions");
+  const probes = record.kind === "regional" ? probeRegions(record) : undefined;
+  if (probes) {
+    console.log(
+      `  ⚠ regional sense: with a region in scope, its strongest emoji goes first when the query ` +
+        `equals a trigger and the canonical top is one of: ${(record.outranks ?? []).map((h) => catalog.get(h) ?? h).join(" ")}`,
+    );
+  }
   const locales = targetLocales(record).filter((l) => !args.locale || l === args.locale);
   for (const locale of locales) {
     const triggers = record.triggers[locale] ?? [];
@@ -128,6 +137,20 @@ for (const record of selected) {
       console.log(
         `    "${trigger}"\n      now:  ${glyphs(canonical)}\n      with: ${glyphs(boosted)}${note}`,
       );
+      if (!probes) continue;
+      const scoped = engine.withCulture(
+        compileCulture([record], locale, {
+          packVersion,
+          from: "2000-01-01",
+          catalog,
+          statuses: [record.status],
+        }),
+      );
+      for (const region of [probes.inside, probes.outside]) {
+        if (!region) continue;
+        const regional = scoped.search(trigger, { locale, limit, prefix: false, region }).results;
+        console.log(`      ${region}:   ${glyphs(regional)}`);
+      }
     }
   }
 }

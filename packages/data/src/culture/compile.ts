@@ -22,12 +22,15 @@ export interface CompileOptions {
   catalog: ReadonlyMap<string, string>;
   /** Default ["approved"]. culture:review previews drafts too. */
   statuses?: RecordStatus[];
-  /** Ignore windows and regions: every entry active everywhere (the eval gate). */
+  /**
+   * Ignore windows and regions: every entry active everywhere (the eval gate). A regional entry
+   * still leads only when a search names a region, so without one it only adds.
+   */
   forceActive?: boolean;
 }
 
 const DAY_MS = 86_400_000;
-const KIND_ORDER = { event: 0, seasonal: 1, lasting: 2 } as const;
+const KIND_ORDER = { event: 0, seasonal: 1, regional: 2, lasting: 3 } as const;
 
 export function addDays(day: string, days: number): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
@@ -60,7 +63,7 @@ export function compileCulture(
     if (!statuses.includes(record.status) || !targetLocales(record).includes(locale)) continue;
     if (!forceActive && !activeBetween(record.when, from, until)) continue;
     const triggers = triggersFor(record, locale);
-    const featured = record.featured === true && record.kind !== "lasting";
+    const featured = record.featured === true && (record.kind === "seasonal" || record.kind === "event");
     if (triggers.length === 0 && !featured) continue;
     const emoji = record.emoji
       .filter((e) => catalog.has(e.hexcode))
@@ -73,15 +76,15 @@ export function compileCulture(
       context: record.context[locale] ?? record.context.en ?? "",
       when: forceActive ? null : record.when,
       regions: forceActive ? ["*"] : record.regions,
+      ...(record.exceptRegions && !forceActive ? { exceptRegions: record.exceptRegions } : {}),
       triggers,
       emoji,
       ...(featured ? { featured } : {}),
+      ...(record.kind === "regional" && record.outranks ? { outranks: record.outranks } : {}),
     });
   }
   entries.sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.id.localeCompare(b.id));
-  const relevantNow = entries
-    .filter((e) => e.featured && e.kind !== "lasting" && isActiveOn(e.when, from))
-    .map((e) => e.id);
+  const relevantNow = entries.filter((e) => e.featured && isActiveOn(e.when, from)).map((e) => e.id);
   return {
     format: CULTURE_FORMAT,
     formatVersion: CULTURE_FORMAT_VERSION,

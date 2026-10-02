@@ -17,10 +17,14 @@ export const LIMITS = {
   /** Days, inclusive. */
   eventMaxDays: 60,
   seasonMaxDays: 92,
+  /** A regional sense names at most this many canonical answers it may move down. */
+  outranksMax: 3,
 };
 
 const STATUSES = ["draft", "approved", "retired"];
-const KINDS = ["lasting", "seasonal", "event"];
+const KINDS = ["lasting", "seasonal", "event", "regional"];
+/** Kinds without a window. */
+const ALWAYS = ["lasting", "regional"];
 const SOURCES = ["editorial", "ai-proposed", "calendar"];
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const HEXCODE = /^[0-9A-F]{2,6}(-[0-9A-F]{2,6})*$/;
@@ -75,8 +79,8 @@ export function windowDays(from: string, to: string, yearly: boolean): number {
 
 function checkWhen(record: CultureRecord, error: (m: string) => void) {
   const { kind, when } = record;
-  if (kind === "lasting") {
-    if (when !== null) error("a lasting entry has `when: null`");
+  if (ALWAYS.includes(kind)) {
+    if (when !== null) error(`a ${kind} entry has \`when: null\``);
     return;
   }
   if (when === null || typeof when !== "object" || Array.isArray(when)) {
@@ -138,7 +142,8 @@ export function validateRecord(value: unknown, context: ValidationContext): Issu
     error("an approved entry names its reviewer (reviewedBy)");
   if (record.featured !== undefined && typeof record.featured !== "boolean")
     error("featured must be a boolean");
-  if (record.featured && record.kind === "lasting") error("only seasonal and event entries can be featured");
+  if (record.featured && ALWAYS.includes(record.kind))
+    error("only seasonal and event entries can be featured");
   if (KINDS.includes(record.kind)) checkWhen(record, error);
 
   // Targeting.
@@ -155,6 +160,7 @@ export function validateRecord(value: unknown, context: ValidationContext): Issu
   if (new Set(locales).size !== locales.length || new Set(regions).size !== regions.length) {
     error("locales and regions must not repeat");
   }
+  checkExceptRegions(record, regions, error);
   const targeted = new Set(
     targetLocales({ locales: locales.filter((l) => l === "*" || LOCALE_CODES.includes(l)) }),
   );
@@ -220,7 +226,53 @@ export function validateRecord(value: unknown, context: ValidationContext): Issu
     if (typeof weight !== "number" || !(weight > 0 && weight <= 1))
       error(`emoji ${hexcode}: weight must be in (0, 1]`);
   }
+  checkOutranks(record, hexcodes, context, error);
   return issues;
+}
+
+function checkExceptRegions(record: CultureRecord, regions: readonly string[], error: (m: string) => void) {
+  const except = record.exceptRegions;
+  if (except === undefined) return;
+  if (!Array.isArray(except) || except.length === 0) {
+    error("exceptRegions must list ISO 3166-1 codes (or be left out)");
+    return;
+  }
+  if (!(regions.length === 1 && regions[0] === "*")) error('exceptRegions needs regions: ["*"]');
+  for (const r of except) if (!isRegion(r)) error(`unknown region "${r}" in exceptRegions`);
+  if (new Set(except).size !== except.length) error("exceptRegions must not repeat");
+}
+
+/**
+ * A regional sense is the one kind that may take rank 1, so it must say which canonical answer it
+ * may move down (`outranks`) and where it applies: named regions, or every region but some.
+ */
+function checkOutranks(
+  record: CultureRecord,
+  ownHexcodes: ReadonlySet<string>,
+  context: ValidationContext,
+  error: (m: string) => void,
+) {
+  const outranks = record.outranks;
+  if (record.kind !== "regional") {
+    if (outranks !== undefined) error("only regional entries have outranks");
+    return;
+  }
+  const regions = Array.isArray(record.regions) ? record.regions : [];
+  if (regions.includes("*") && !record.exceptRegions?.length) {
+    error('a regional entry names its regions, or uses ["*"] with exceptRegions');
+  }
+  if (!Array.isArray(outranks) || outranks.length === 0 || outranks.length > LIMITS.outranksMax) {
+    error(`a regional entry lists 1–${LIMITS.outranksMax} canonical answers in outranks`);
+    return;
+  }
+  for (const hexcode of outranks) {
+    if (typeof hexcode !== "string" || !HEXCODE.test(hexcode) || !context.catalog.has(hexcode)) {
+      error(`outranks ${hexcode} is not a base emoji of the catalog`);
+    } else if (ownHexcodes.has(hexcode)) {
+      error(`outranks ${hexcode} is one of the entry's own emoji`);
+    }
+  }
+  if (new Set(outranks).size !== outranks.length) error("outranks must not repeat");
 }
 
 /** Validate a set of records: each one, plus ids that repeat. */
