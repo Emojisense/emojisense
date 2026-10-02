@@ -12,6 +12,7 @@ export {
   type AliasSearchOutput,
   createEngine,
   type EmojiEntry,
+  type EngineOptions,
   type ResultSource,
   type SearchResult,
 } from "./engine.js";

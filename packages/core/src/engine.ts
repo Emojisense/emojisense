@@ -49,6 +49,14 @@ export interface EmojiEntry {
   labels: Record<string, string>;
 }
 
+export interface EngineOptions {
+  /**
+   * Minimum IDF-weighted share of the query a phrase must cover (0–1). Higher = fewer partial
+   * matches on multi-word queries. Default 0.34.
+   */
+  minCoverage?: number;
+}
+
 export interface AliasEngine {
   search(query: string, options?: AliasSearchOptions): AliasSearchOutput;
   get(id: string): EmojiEntry | undefined;
@@ -80,7 +88,8 @@ interface PhraseState {
 }
 
 /** Build an in-memory Tier 0 index from one or more packs (same emoji set, different locales). */
-export function createEngine(input: Pack | Pack[]): AliasEngine {
+export function createEngine(input: Pack | Pack[], options: EngineOptions = {}): AliasEngine {
+  const minCoverage = options.minCoverage ?? MIN_COVERAGE;
   const packs = Array.isArray(input) ? input : [input];
   if (packs.length === 0) throw new Error("emojisense: createEngine needs at least one pack");
   for (const pack of packs) assertPack(pack);
@@ -281,7 +290,7 @@ export function createEngine(input: Pack | Pack[]): AliasEngine {
         covered += q * (weights[i] as number);
       }
       const coverage = covered / totalWeight;
-      if (coverage < MIN_COVERAGE) continue;
+      if (coverage < minCoverage) continue;
 
       const phraseLength = (phraseTokenIds[phrase] as number[]).length;
       const exactPhrase = allExact && phraseLength === tokens.length;

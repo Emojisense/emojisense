@@ -42,6 +42,7 @@ const { values: args } = parseArgs({
     "write-baseline": { type: "boolean", default: false },
     models: { type: "string" },
     "alias-caps": { type: "string", default: "10,20,30" },
+    "min-coverage": { type: "string", default: "0.5,0.6" },
   },
 });
 
@@ -130,6 +131,17 @@ for (const cap of (args["alias-caps"] ?? "").split(",").filter(Boolean).map(Numb
       ),
     );
   }
+}
+
+for (const minCoverage of (args["min-coverage"] ?? "").split(",").filter(Boolean).map(Number)) {
+  const tuned = createEngine(packs, { minCoverage });
+  results.push(
+    evaluate(`alias (min coverage ${minCoverage})`, "alias", (q) =>
+      aliasSearch(tuned, q)
+        .results.slice(0, LIMIT)
+        .map((r) => r.emoji),
+    ),
+  );
 }
 
 // Keystroke latency: every prefix of every query, as if typed.
