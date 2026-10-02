@@ -36,6 +36,8 @@ export function createDocEditor(options: DocEditorOptions): DocEditor {
   const editor = new Editor({
     element: options.element,
     content: options.content,
+    // The Content-Security-Policy blocks the <style> tag Tiptap injects; doc.css has those rules.
+    injectCSS: false,
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] }, codeBlock: false, link: false }),
       TaskList,
