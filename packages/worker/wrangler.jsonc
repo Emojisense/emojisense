@@ -163,7 +163,7 @@
         "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev",
         "CULTURE_CRON_ENABLED": "true",
         "CULTURE_PROPOSE_BUDGET": "12",
-        "CONCEPTS_ENABLED": "true",
+        "CONCEPTS_ENABLED": "false",
         "CONCEPT_DAILY_CAP": "2000"
       }
     },
