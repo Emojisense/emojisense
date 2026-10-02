@@ -9,6 +9,7 @@ export {
   dayOf,
   lowestPlanWithAnalytics,
 } from "./analytics.js";
+export type { D1DatabaseLike, D1StatementLike, Parsed, SqlValue } from "./d1-like.js";
 export {
   displayPrefix,
   generateKey,
@@ -31,6 +32,47 @@ export {
   periodOf,
 } from "./plans.js";
 export {
+  type AppOwner,
+  loadAppOwner,
+  lowestPlanFor,
+  planAllows,
+  planRequiredMessage,
+  type ScaleFeature,
+} from "./scale-features.js";
+export {
+  type CustomEmoji,
+  type CustomEmojiScope,
+  type CustomEmojiStorage,
+  checkSvg,
+  createCustomEmojiStorage,
+  type EmojiBucket,
+  type EmojiImage,
+  type ImageCheck,
+  imageKey,
+  inspectEmojiImage,
+  MAX_EMOJI_BYTES,
+  type PutCustomEmojiInput,
+  type PutCustomEmojiResult,
+  parseAliases,
+  parseShortcode,
+  removeImages,
+  toCustomEmoji,
+} from "./tenant-emoji-storage.js";
+export {
+  countTenantEmoji,
+  createTenant,
+  deleteTenant,
+  findTenantByExternalId,
+  findTenantById,
+  listTenants,
+  parseExternalId,
+  parsePageLimit,
+  parseTenantName,
+  type Tenant,
+  type TenantPage,
+  toTenant,
+} from "./tenants.js";
+export {
   type AccountRow,
   type ApiKeyRow,
   type AppRow,
@@ -51,3 +93,48 @@ export {
   type WebhookDeliveryRow,
   type WebhookRow,
 } from "./types.js";
+export {
+  type FlushedUsage,
+  findThresholdCrossings,
+  type ThresholdCrossing,
+  thresholdCount,
+  toUsageThresholdData,
+  USAGE_THRESHOLDS,
+  type UsageThreshold,
+  type UsageThresholdData,
+  usageThresholdEventId,
+} from "./usage-thresholds.js";
+export {
+  checkWebhookUrl,
+  MAX_WEBHOOK_URL_LENGTH,
+  type WebhookUrlCheck,
+  type WebhookUrlPolicy,
+} from "./webhook-url.js";
+export {
+  createWebhookEvent,
+  type DeliveryAttempt,
+  deliverOnce,
+  deliverWithRetries,
+  dispatchWebhookEvent,
+  emitWebhookEvent,
+  generateWebhookSecret,
+  isWebhookEventType,
+  MAX_WEBHOOKS_PER_APP,
+  parseStoredEvents,
+  parseWebhookEvents,
+  SIGNATURE_HEADER,
+  SIGNATURE_TOLERANCE_SECONDS,
+  signWebhookBody,
+  verifyWebhookSignature,
+  WEBHOOK_DELIVERIES_KEPT,
+  WEBHOOK_EVENTS,
+  WEBHOOK_RETRY_DELAYS_MS,
+  WEBHOOK_SECRET_PREFIX,
+  WEBHOOK_TEST_EVENT,
+  WEBHOOK_TIMEOUT_MS,
+  type WebhookEnvelopeType,
+  type WebhookEvent,
+  type WebhookEventType,
+  type WebhookRuntime,
+  type WebhookTarget,
+} from "./webhooks.js";

@@ -59,6 +59,50 @@ describe("D1 store on the platform schema", () => {
     expect(await store.readUsage("app_1", "2026-11")).toEqual({});
   });
 
+  it("returns the new app and account totals, read in the same batch as the upserts", async () => {
+    db.exec(`
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_2', 'acc', 'Second', 0);
+      INSERT INTO accounts (id, plan, created_at) VALUES ('acc_other', 'pro', 0);
+      INSERT INTO apps (id, account_id, name, created_at) VALUES ('app_other', 'acc_other', 'Other', 0);`);
+    await store.addUsage([
+      { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 3 },
+      { appId: "app_other", period: "2026-10", metric: "semantic_calls", count: 50 },
+    ]);
+    expect(
+      await store.addUsage([
+        { appId: "app_1", period: "2026-10", metric: "semantic_calls", count: 4 },
+        { appId: "app_2", period: "2026-10", metric: "semantic_calls", count: 10 },
+        { appId: "app_1", period: "2026-10", metric: "image_classifications", count: 2 },
+      ]),
+    ).toEqual([
+      {
+        appId: "app_1",
+        accountId: "acc",
+        period: "2026-10",
+        metric: "semantic_calls",
+        count: 7,
+        accountCount: 17,
+      },
+      {
+        appId: "app_2",
+        accountId: "acc",
+        period: "2026-10",
+        metric: "semantic_calls",
+        count: 10,
+        accountCount: 17,
+      },
+      {
+        appId: "app_1",
+        accountId: "acc",
+        period: "2026-10",
+        metric: "image_classifications",
+        count: 2,
+        accountCount: 2,
+      },
+    ]);
+    expect(await store.addUsage([])).toEqual([]);
+  });
+
   it("rejects the whole batch when one row breaks a constraint", async () => {
     await expect(
       store.addUsage([

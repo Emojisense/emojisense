@@ -21,6 +21,15 @@ export interface UsageDelta {
 
 export type UsageCounts = Partial<Record<Metric, number>>;
 
+/**
+ * A flushed usage_monthly row, read in the same transaction as the flush: the app's new count
+ * and the new total of the account that owns the app (all of its apps, same period and metric).
+ */
+export interface UsageTotal extends UsageDelta {
+  accountId: string;
+  accountCount: number;
+}
+
 /** Searches of one app for one normalized query on one UTC day (query_daily). */
 export interface QueryCount {
   appId: string;
@@ -35,8 +44,12 @@ export interface QueryCount {
 export interface Store {
   findKeyByHash(hash: string): Promise<ApiKey | undefined>;
   readUsage(appId: string, period: string): Promise<UsageCounts>;
-  /** Adds the deltas to usage_monthly in one batch. */
-  addUsage(deltas: readonly UsageDelta[]): Promise<void>;
+  /**
+   * Adds the deltas to usage_monthly and reads the new app and account totals, all in one batch
+   * (one transaction), so an account's total before this flush is its total minus this flush's
+   * calls of that account (usage.threshold webhooks).
+   */
+  addUsage(deltas: readonly UsageDelta[]): Promise<UsageTotal[]>;
   /** Adds the counts to query_daily in one batch. Rows of apps that no longer exist are skipped. */
   addQueryCounts(counts: readonly QueryCount[]): Promise<void>;
 }
@@ -77,6 +90,13 @@ const READ_USAGE = "SELECT metric, count FROM usage_monthly WHERE app_id = ? AND
 const ADD_USAGE = `
   INSERT INTO usage_monthly (app_id, period, metric, count) VALUES (?, ?, ?, ?)
   ON CONFLICT (app_id, period, metric) DO UPDATE SET count = count + excluded.count`;
+/** Runs after every upsert of the batch, so the account total includes all of them. */
+const READ_TOTALS = `
+  SELECT u.app_id, a.account_id, u.period, u.metric, u.count,
+    (SELECT SUM(x.count) FROM apps y JOIN usage_monthly x ON x.app_id = y.id
+     WHERE y.account_id = a.account_id AND x.period = u.period AND x.metric = u.metric) AS account_count
+  FROM usage_monthly u JOIN apps a ON a.id = u.app_id
+  WHERE u.app_id = ? AND u.period = ? AND u.metric = ?`;
 /**
  * Selecting the app id from apps skips the row of a deleted app, instead of failing the whole
  * batch on the foreign key. (SQLite needs this WHERE to parse INSERT … SELECT … ON CONFLICT.)
@@ -102,6 +122,32 @@ function parseOrigins(raw: string): string[] {
   return NO_ORIGIN;
 }
 
+interface TotalsRow {
+  app_id: string;
+  account_id: string;
+  period: string;
+  metric: Metric;
+  count: number;
+  account_count: number;
+}
+
+/** The READ_TOTALS rows of an addUsage batch (D1 answers one result per statement). */
+function readTotals(results: unknown): UsageTotal[] {
+  if (!Array.isArray(results)) return [];
+  return results.flatMap((result) => {
+    const rows = (result as { results?: unknown } | null)?.results;
+    if (!Array.isArray(rows)) return [];
+    return (rows as TotalsRow[]).map((row) => ({
+      appId: row.app_id,
+      accountId: row.account_id,
+      period: row.period,
+      metric: row.metric,
+      count: row.count,
+      accountCount: row.account_count,
+    }));
+  });
+}
+
 export function createD1Store(db: D1Like): Store {
   return {
     async findKeyByHash(hash) {
@@ -124,9 +170,14 @@ export function createD1Store(db: D1Like): Store {
       return Object.fromEntries(results.map((r) => [r.metric, r.count]));
     },
     async addUsage(deltas) {
-      if (deltas.length === 0) return;
-      const statement = db.prepare(ADD_USAGE);
-      await db.batch(deltas.map((d) => statement.bind(d.appId, d.period, d.metric, d.count)));
+      if (deltas.length === 0) return [];
+      const upsert = db.prepare(ADD_USAGE);
+      const read = db.prepare(READ_TOTALS);
+      const results = await db.batch([
+        ...deltas.map((d) => upsert.bind(d.appId, d.period, d.metric, d.count)),
+        ...deltas.map((d) => read.bind(d.appId, d.period, d.metric)),
+      ]);
+      return readTotals(results);
     },
     async addQueryCounts(counts) {
       if (counts.length === 0) return;
@@ -166,11 +217,14 @@ export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
         [...usage].filter(([k]) => k.startsWith(prefix)).map(([k, v]) => [k.slice(prefix.length), v]),
       );
     },
+    // The memory store has no accounts: each app is its own account.
     async addUsage(deltas) {
-      for (const d of deltas) {
+      return deltas.map((d) => {
         const key = usageKey(d.appId, d.period, d.metric);
-        usage.set(key, (usage.get(key) ?? 0) + d.count);
-      }
+        const count = (usage.get(key) ?? 0) + d.count;
+        usage.set(key, count);
+        return { ...d, count, accountId: d.appId, accountCount: count };
+      });
     },
     async addQueryCounts(counts) {
       for (const c of counts) {

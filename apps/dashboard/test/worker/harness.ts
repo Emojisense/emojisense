@@ -26,6 +26,8 @@ export interface Harness {
   call(method: string, path: string, options?: CallOptions): Promise<Response>;
   /** Dev sign-in; returns the Cookie header value ("es_session=…"). */
   signIn(login?: string): Promise<string>;
+  /** Awaits the work handed to `waitUntil` (webhook deliveries), including work it started. */
+  settle(): Promise<void>;
 }
 
 export function createHarness(overrides: Partial<Env> = {}): Harness {
@@ -35,7 +37,17 @@ export function createHarness(overrides: Partial<Env> = {}): Harness {
   const fetchMock = vi.fn<Deps["fetch"]>(async () => {
     throw new Error("unexpected network call");
   });
-  const deps: Deps = { fetch: fetchMock, now: () => clock.now };
+  const background: Promise<unknown>[] = [];
+  const deps: Deps = {
+    fetch: fetchMock,
+    now: () => clock.now,
+    waitUntil: (promise) => void background.push(promise),
+    // Webhook retries run at once in tests.
+    sleep: async () => {},
+  };
+  async function settle(): Promise<void> {
+    while (background.length > 0) await Promise.all(background.splice(0));
+  }
 
   async function call(method: string, path: string, options: CallOptions = {}): Promise<Response> {
     const base = options.base ?? BASE;
@@ -55,7 +67,7 @@ export function createHarness(overrides: Partial<Env> = {}): Harness {
     return sessionCookieFrom(await call("GET", `/api/auth/dev?login=${login}`));
   }
 
-  return { db, env, clock, fetchMock, call, signIn };
+  return { db, env, clock, fetchMock, call, signIn, settle };
 }
 
 export function setCookies(response: Response): string[] {

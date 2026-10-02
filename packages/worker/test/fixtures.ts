@@ -186,6 +186,9 @@ export function harness(
     now?: () => number;
     embedTo?: number;
     catalog?: Catalog;
+    /** Outgoing webhook requests, and the wait between their retries. */
+    fetch?: (url: string, init: RequestInit) => Promise<Response>;
+    sleep?: (ms: number) => Promise<void>;
   } = {},
 ): Harness {
   const ai = fakeAi(options.embedTo === undefined ? {} : { embedTo: options.embedTo });
@@ -198,6 +201,8 @@ export function harness(
     cache: () => cache,
     store: () => options.store,
     ...(options.now ? { now: options.now } : {}),
+    ...(options.fetch ? { fetch: options.fetch } : {}),
+    ...(options.sleep ? { sleep: options.sleep } : {}),
   });
   return { app, env, ai, cache, ctx, events, call: (request) => app.fetch(request, env, ctx) };
 }

@@ -1,4 +1,4 @@
-import type { AccountRow } from "@emojisense/platform";
+import type { AccountRow, EmojiBucket } from "@emojisense/platform";
 import type { D1Database } from "./d1";
 
 export interface RateLimiter {
@@ -19,12 +19,18 @@ export interface Env {
   /** Comma-separated website origins that may POST /api/waitlist from a browser. */
   WEBSITE_ORIGINS?: string;
   WAITLIST_LIMITER?: RateLimiter;
+  /** R2 bucket `emojisense-emoji` (custom emoji images), shared with the API Worker. */
+  EMOJI?: EmojiBucket;
 }
 
 /** Side effects the handlers need. Tests replace them with fakes. */
 export interface Deps {
   fetch: (input: string, init?: RequestInit) => Promise<Response>;
   now: () => number;
+  /** Keeps background work (webhook deliveries) alive after the response: `ctx.waitUntil`. */
+  waitUntil?: (promise: Promise<unknown>) => void;
+  /** The wait between webhook retries. Tests replace it. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export interface RequestContext {

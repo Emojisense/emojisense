@@ -1,6 +1,6 @@
-import { type Metric, periodOf } from "@emojisense/platform";
+import { type FlushedUsage, type Metric, periodOf } from "@emojisense/platform";
 import { FLUSH_INTERVAL_MS, FLUSH_MAX_PENDING, USAGE_SNAPSHOT_TTL_MS } from "./config.ts";
-import type { Store, UsageCounts, UsageDelta } from "./store.ts";
+import type { Store, UsageCounts, UsageDelta, UsageTotal } from "./store.ts";
 
 export interface WaitUntil {
   waitUntil(promise: Promise<unknown>): void;
@@ -12,6 +12,11 @@ export interface MeterOptions {
   snapshotTtlMs?: number;
   flushIntervalMs?: number;
   flushMaxPending?: number;
+  /**
+   * Called after each successful flush with the new totals of the flushed rows and the plan limit
+   * last seen for them (usage.threshold webhooks). Its errors never undo the flush.
+   */
+  onFlushed?: (flushed: FlushedUsage[], ctx: WaitUntil) => void;
 }
 
 /**
@@ -35,6 +40,9 @@ export class Meter {
   readonly #pending = new Map<string, UsageDelta>();
   /** app|period|metric → calls that are never written to the store (development keys). */
   readonly #memoryOnly = new Map<string, UsageDelta>();
+  /** app|metric → the plan limit of the last call counted, for `onFlushed`. */
+  readonly #limits = new Map<string, number>();
+  readonly #onFlushed: MeterOptions["onFlushed"];
   #pendingCalls = 0;
   #lastFlushAt = Number.NEGATIVE_INFINITY;
   #flushing: Promise<void> | undefined;
@@ -45,6 +53,7 @@ export class Meter {
     this.#snapshotTtlMs = options.snapshotTtlMs ?? USAGE_SNAPSHOT_TTL_MS;
     this.#flushIntervalMs = options.flushIntervalMs ?? FLUSH_INTERVAL_MS;
     this.#flushMaxPending = options.flushMaxPending ?? FLUSH_MAX_PENDING;
+    this.#onFlushed = options.onFlushed;
   }
 
   /** This period's count, as far as this isolate knows. */
@@ -55,9 +64,10 @@ export class Meter {
 
   /**
    * Count one call. `persist: false` keeps it in memory only, for development keys that have no
-   * row in the apps table.
+   * row in the apps table. `limit` is the caller's plan limit for the metric.
    */
-  add(appId: string, metric: Metric, persist: boolean): void {
+  add(appId: string, metric: Metric, persist: boolean, limit?: number): void {
+    if (limit !== undefined) this.#limits.set(`${appId}|${metric}`, limit);
     const period = periodOf(this.#now());
     const snapshotKey = `${appId}|${period}`;
     let snapshot = this.#snapshots.get(snapshotKey);
@@ -76,11 +86,14 @@ export class Meter {
     if (this.#pendingCalls === 0 || this.#flushing) return;
     const due =
       this.#pendingCalls >= this.#flushMaxPending || this.#now() - this.#lastFlushAt >= this.#flushIntervalMs;
-    if (due) ctx.waitUntil(this.flush());
+    if (due) ctx.waitUntil(this.flush(ctx));
   }
 
-  /** Write all pending calls in one batch. On failure they stay pending for the next flush. */
-  flush(): Promise<void> {
+  /**
+   * Write all pending calls in one batch. On failure they stay pending for the next flush. With
+   * `ctx`, a successful flush is reported to `onFlushed`.
+   */
+  flush(ctx?: WaitUntil): Promise<void> {
     if (this.#flushing) return this.#flushing;
     const store = this.#store;
     if (!store || this.#pendingCalls === 0) return Promise.resolve();
@@ -90,15 +103,51 @@ export class Meter {
     this.#lastFlushAt = this.#now();
     this.#flushing = store
       .addUsage(deltas)
-      .catch((error: unknown) => {
-        for (const delta of deltas) increment(this.#pending, delta);
-        this.#pendingCalls += deltas.reduce((sum, d) => sum + d.count, 0);
-        console.warn(JSON.stringify({ event: "usage_flush_failed", error: (error as Error).name }));
-      })
+      .then(
+        (totals) => {
+          if (ctx) this.#report(deltas, totals, ctx);
+        },
+        (error: unknown) => {
+          for (const delta of deltas) increment(this.#pending, delta);
+          this.#pendingCalls += deltas.reduce((sum, d) => sum + d.count, 0);
+          console.warn(JSON.stringify({ event: "usage_flush_failed", error: (error as Error).name }));
+        },
+      )
       .finally(() => {
         this.#flushing = undefined;
       });
     return this.#flushing;
+  }
+
+  /** One entry per account, period and metric: this flush's calls of all its apps, and the new total. */
+  #report(deltas: readonly UsageDelta[], totals: readonly UsageTotal[], ctx: WaitUntil): void {
+    if (!this.#onFlushed) return;
+    const added = new Map(deltas.map((d) => [`${d.appId}|${d.period}|${d.metric}`, d.count]));
+    const byAccount = new Map<string, FlushedUsage>();
+    for (const total of totals) {
+      const limit = this.#limits.get(`${total.appId}|${total.metric}`);
+      const delta = added.get(`${total.appId}|${total.period}|${total.metric}`);
+      if (limit === undefined || delta === undefined) continue;
+      const key = `${total.accountId}|${total.period}|${total.metric}`;
+      const entry = byAccount.get(key);
+      if (entry) entry.added += delta;
+      else {
+        byAccount.set(key, {
+          accountId: total.accountId,
+          period: total.period,
+          metric: total.metric,
+          added: delta,
+          total: total.accountCount,
+          limit,
+        });
+      }
+    }
+    const flushed = [...byAccount.values()];
+    try {
+      if (flushed.length > 0) this.#onFlushed(flushed, ctx);
+    } catch (error) {
+      console.warn(JSON.stringify({ event: "usage_report_failed", error: (error as Error).name }));
+    }
   }
 
   async #snapshot(appId: string, period: string) {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Meter } from "../src/meter.ts";
+import { Meter, type MeterOptions } from "../src/meter.ts";
 import { createMemoryStore } from "../src/store.ts";
 import { executionContext } from "./fixtures.ts";
 
@@ -128,5 +128,74 @@ describe("Meter", () => {
     meter.add("app", "semantic_calls", true);
     expect(await meter.count("app", "semantic_calls")).toBe(1);
     warn.mockRestore();
+  });
+});
+
+describe("Meter flush reports (usage.threshold)", () => {
+  function reporting() {
+    const store = createMemoryStore();
+    const onFlushed = vi.fn<NonNullable<MeterOptions["onFlushed"]>>();
+    const meter = new Meter({ store, now: () => OCT, onFlushed });
+    return { store, meter, onFlushed, ctx: executionContext() };
+  }
+
+  it("reports each account's new total, the calls added and the plan limit", async () => {
+    const { store, meter, onFlushed, ctx } = reporting();
+    await store.addUsage([{ appId: "app", period: "2026-10", metric: "semantic_calls", count: 78 }]);
+    meter.add("app", "semantic_calls", true, 100);
+    meter.add("app", "semantic_calls", true, 100);
+    meter.add("app", "image_classifications", true, 10);
+    meter.flushIfDue(ctx);
+    await ctx.settle();
+    expect(onFlushed).toHaveBeenCalledTimes(1);
+    // The memory store treats each app as its own account.
+    expect(onFlushed.mock.calls[0]?.[0]).toEqual([
+      { accountId: "app", period: "2026-10", metric: "semantic_calls", added: 2, total: 80, limit: 100 },
+      { accountId: "app", period: "2026-10", metric: "image_classifications", added: 1, total: 1, limit: 10 },
+    ]);
+    expect(onFlushed.mock.calls[0]?.[1]).toBe(ctx);
+  });
+
+  it("adds up the calls of all apps of one account in a flush", async () => {
+    const store = createMemoryStore();
+    vi.spyOn(store, "addUsage").mockImplementation(async (deltas) =>
+      deltas.map((d) => ({ ...d, accountId: "acc", accountCount: 90 })),
+    );
+    const onFlushed = vi.fn<NonNullable<MeterOptions["onFlushed"]>>();
+    const meter = new Meter({ store, now: () => OCT, onFlushed });
+    meter.add("app_1", "semantic_calls", true, 100);
+    meter.add("app_2", "semantic_calls", true, 100);
+    meter.add("app_2", "semantic_calls", true, 100);
+    await meter.flush(executionContext());
+    expect(onFlushed.mock.calls[0]?.[0]).toEqual([
+      { accountId: "acc", period: "2026-10", metric: "semantic_calls", added: 3, total: 90, limit: 100 },
+    ]);
+  });
+
+  it("reports nothing for a failed flush, and a failing report never re-counts calls", async () => {
+    const { store, meter, onFlushed, ctx } = reporting();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(store, "addUsage").mockRejectedValueOnce(new Error("D1 busy"));
+    meter.add("app", "semantic_calls", true, 100);
+    meter.flushIfDue(ctx);
+    await ctx.settle();
+    expect(onFlushed).not.toHaveBeenCalled();
+
+    onFlushed.mockImplementation(() => {
+      throw new Error("boom");
+    });
+    await meter.flush(ctx);
+    expect(store.usageOf("app", "2026-10", "semantic_calls")).toBe(1);
+    await meter.flush(ctx);
+    expect(store.usageOf("app", "2026-10", "semantic_calls")).toBe(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("usage_report_failed"));
+    warn.mockRestore();
+  });
+
+  it("skips rows without a known limit (development callers)", async () => {
+    const { meter, onFlushed, ctx } = reporting();
+    meter.add("app", "semantic_calls", true);
+    await meter.flush(ctx);
+    expect(onFlushed).not.toHaveBeenCalled();
   });
 });
