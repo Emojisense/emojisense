@@ -6,3 +6,4 @@ export const BUILD_DIR = join(DATA_ROOT, "build");
 export const CACHE_DIR = join(DATA_ROOT, ".cache");
 export const ENRICHMENT_DIR = join(DATA_ROOT, "enrichment");
 export const BASE_FILE = join(BUILD_DIR, "emoji.base.json");
+export const CULTURE_DIR = join(DATA_ROOT, "culture");
