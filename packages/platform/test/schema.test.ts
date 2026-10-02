@@ -122,7 +122,7 @@ describe("row types of migrations 0002 and 0004", () => {
 });
 
 describe("migration 0003 (Clerk sign-in)", () => {
-  it("gives accounts exactly the typed columns (with 0004)", () => {
+  it("gives accounts exactly the typed columns (with 0006)", () => {
     const keys = Object.keys({
       id: "",
       email: null,
@@ -169,9 +169,12 @@ describe("migration 0003 (Clerk sign-in)", () => {
   });
 });
 
-describe("migration 0004 (billing)", () => {
+describe("migration 0006 (billing)", () => {
   it("adds whop_events with exactly the typed columns", () => {
-    const keys = Object.keys({ id: "", type: "", received_at: 0 } satisfies Record<keyof WhopEventRow, unknown>);
+    const keys = Object.keys({ id: "", type: "", received_at: 0 } satisfies Record<
+      keyof WhopEventRow,
+      unknown
+    >);
     expect(columns(migratedDb(), "whop_events")).toEqual(keys.sort());
   });
 
@@ -181,11 +184,13 @@ describe("migration 0004 (billing)", () => {
       db.exec(readFileSync(new URL(file, MIGRATIONS), "utf8"));
     }
     db.exec("INSERT INTO accounts (id, plan, created_at) VALUES ('old', 'pro', 0)");
-    db.exec(readFileSync(new URL("0004_billing.sql", MIGRATIONS), "utf8"));
+    db.exec(readFileSync(new URL("0006_billing.sql", MIGRATIONS), "utf8"));
     expect(db.prepare("SELECT plan, billing_status, whop_membership_id FROM accounts").all()).toEqual([
       { plan: "pro", billing_status: "none", whop_membership_id: null },
     ]);
-    db.exec(`INSERT INTO accounts (id, whop_membership_id, created_at) VALUES ('a', 'mem_1', 0), ('b', NULL, 0)`);
+    db.exec(
+      `INSERT INTO accounts (id, whop_membership_id, created_at) VALUES ('a', 'mem_1', 0), ('b', NULL, 0)`,
+    );
     expect(() =>
       db.exec(`INSERT INTO accounts (id, whop_membership_id, created_at) VALUES ('c', 'mem_1', 0)`),
     ).toThrow(/UNIQUE/);
@@ -195,7 +200,8 @@ describe("migration 0004 (billing)", () => {
     const db = migratedDb();
     db.exec("INSERT INTO accounts (id, created_at) VALUES ('a', 0)");
     for (const status of BILLING_STATUSES) db.prepare("UPDATE accounts SET billing_status = ?").run(status);
-    for (const interval of BILLING_INTERVALS) db.prepare("UPDATE accounts SET billing_interval = ?").run(interval);
+    for (const interval of BILLING_INTERVALS)
+      db.prepare("UPDATE accounts SET billing_interval = ?").run(interval);
     expect(() => db.prepare("UPDATE accounts SET billing_status = ?").run("trialing")).toThrow(/CHECK/);
     expect(() => db.prepare("UPDATE accounts SET billing_interval = ?").run("week")).toThrow(/CHECK/);
   });

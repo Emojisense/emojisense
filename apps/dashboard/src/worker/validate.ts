@@ -1,8 +1,14 @@
 import {
+  type BillingInterval,
+  billingIntervalsOf,
   EMOJI_SETS,
   type EmojiSet,
+  getPlan,
+  isBillingInterval,
+  isPaidPlan,
   type KeyKind,
-  PLAN_IDS,
+  PAID_PLAN_IDS,
+  type PaidPlanId,
   type PlanId,
   periodOf,
   TEAM_ROLES,
@@ -73,19 +79,25 @@ export function parseOptionalEmail(value: unknown): string | null {
   return parseEmail(value);
 }
 
-const WAITLIST_PLANS = PLAN_IDS.filter((id) => id !== "free");
-
-/** Defaults to "pro": the dashboard and the website ask for the Pro waitlist. */
+/** Defaults to "pro": the website's waitlist form asks for Pro. */
 export function parseWaitlistPlan(value: unknown): PlanId {
   if (value === undefined) return "pro";
   return parsePaidPlan(value);
 }
 
-export function parsePaidPlan(value: unknown): PlanId {
-  if (typeof value === "string" && (WAITLIST_PLANS as readonly string[]).includes(value)) {
-    return value as PlanId;
+export function parsePaidPlan(value: unknown): PaidPlanId {
+  if (isPaidPlan(value)) return value;
+  throw invalid("plan", `plan must be one of: ${PAID_PLAN_IDS.join(", ")}.`);
+}
+
+/** Defaults to "month". "year" only where the plan is sold yearly (Solo). */
+export function parseBillingInterval(value: unknown, plan: PlanId): BillingInterval {
+  const interval = value === undefined ? "month" : value;
+  if (!isBillingInterval(interval)) throw invalid("interval", 'interval must be "month" or "year".');
+  if (!billingIntervalsOf(plan).includes(interval)) {
+    throw invalid("interval", `The ${getPlan(plan).name} plan is billed monthly only.`);
   }
-  throw invalid("plan", `plan must be one of: ${WAITLIST_PLANS.join(", ")}.`);
+  return interval;
 }
 
 export function parseTeamRole(value: unknown): TeamRole {

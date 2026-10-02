@@ -102,12 +102,16 @@ function seedAccount(h: Harness, login: string, bucket?: ReturnType<typeof memor
   return accountId;
 }
 
+/** Tables with no account data: Whop webhook ids (id, event type, time) only. */
+const NO_ACCOUNT_DATA = new Set(["whop_events"]);
+
 function tables(h: Harness): string[] {
   return h.db
     .rows<{ name: string }>(
       "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
     )
-    .map((row) => row.name);
+    .map((row) => row.name)
+    .filter((name) => !NO_ACCOUNT_DATA.has(name));
 }
 
 /** Every row of every table, as JSON text, so a test can look for any trace of an account. */

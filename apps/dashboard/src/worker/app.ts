@@ -5,7 +5,7 @@ import { createRouter, type Handler } from "./router";
 import { getAnalytics } from "./routes/analytics";
 import { createApp, getApp, listApps, updateApp } from "./routes/apps";
 import { devSignIn, logout } from "./routes/auth";
-import { getBilling, requestUpgrade } from "./routes/billing";
+import { getBilling, startCheckout } from "./routes/billing";
 import { deleteEmoji, listEmoji, updateEmoji, uploadEmoji } from "./routes/emoji";
 import { importDiscordEmoji, importSlackEmoji } from "./routes/emoji-import";
 import { createKey, revokeKey, updateKey } from "./routes/keys";
@@ -22,6 +22,7 @@ import {
   testWebhook,
   updateWebhook,
 } from "./routes/webhooks";
+import { whopWebhook } from "./routes/whop";
 
 /** Signed-in routes: same-origin writes, then a valid Clerk session (or dev sign-in), then the handler. */
 function authed(handler: (ctx: AuthedContext) => Promise<Response>): Handler {
@@ -70,7 +71,9 @@ const route = createRouter([
   { method: "DELETE", path: "/api/team/members/:id", handler: authed(removeMember) },
   { method: "POST", path: "/api/invites/:token/accept", handler: authed(acceptInvite) },
   { method: "GET", path: "/api/billing", handler: authed(getBilling) },
-  { method: "POST", path: "/api/billing/upgrade", handler: authed(requestUpgrade) },
+  { method: "POST", path: "/api/billing/checkout", handler: authed(startCheckout) },
+  // Whop's server calls it: no session, the signature is checked instead.
+  { method: "POST", path: "/api/whop/webhook", handler: whopWebhook },
   { method: "POST", path: "/api/waitlist", handler: joinWaitlist },
   { method: "OPTIONS", path: "/api/waitlist", handler: waitlistPreflight },
 ]);

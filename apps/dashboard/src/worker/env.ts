@@ -32,6 +32,16 @@ export interface Env {
   EMOJI?: EmojiBucket;
   /** Base URL of the API Worker, which serves custom emoji images (e.g. https://api.emojisense.com). */
   API_URL?: string;
+  /** Whop API base. Default https://api.whop.com/api/v1; the sandbox is https://sandbox-api.whop.com/api/v1. */
+  WHOP_API_BASE?: string;
+  /** Public JSON map of our plans and intervals to Whop variant ids (scripts/whop-setup.mjs writes it). */
+  WHOP_PLAN_IDS?: string;
+  /** Public: the Whop company that sells the plans, `biz_…`. */
+  WHOP_COMPANY_ID?: string;
+  /** Secret: creates checkouts and cancels a membership that a new plan replaced. */
+  WHOP_API_KEY?: string;
+  /** Secret: the Whop webhook's signing secret, `ws_…`, exactly as Whop shows it. */
+  WHOP_WEBHOOK_SECRET?: string;
 }
 
 /** Side effects the handlers need. Tests replace them with fakes. */

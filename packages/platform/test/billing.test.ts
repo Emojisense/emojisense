@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  type BillingState,
   billingIntervalsOf,
+  billingLapsed,
   billingOptions,
   DAY_MS,
   expireLapsedBilling,
@@ -13,7 +15,8 @@ import {
 } from "../src/billing.js";
 import { SqliteD1 } from "./sqlite-d1.js";
 
-const IDS = '{"solo":{"month":"plan_SoloM","year":"plan_SoloY"},"pro":{"month":"plan_ProM"},"scale":{"month":"plan_ScaleM"}}';
+const IDS =
+  '{"solo":{"month":"plan_SoloM","year":"plan_SoloY"},"pro":{"month":"plan_ProM"},"scale":{"month":"plan_ScaleM"}}';
 
 describe("billing options", () => {
   it("sells every paid plan monthly and Solo also yearly, at the PLANS prices", () => {
@@ -103,5 +106,17 @@ describe("expireLapsedBilling", () => {
     seed(db);
     expect(await expireLapsedBilling(db, NOW, "ended")).toBe(1);
     expect(plans(db).find((row) => row.id === "grace_over")?.plan).toBe("pro");
+  });
+
+  it("billingLapsed applies the same rule in code", () => {
+    const db = new SqliteD1();
+    seed(db);
+    const rows = db.rows<{ id: string } & BillingState>(
+      "SELECT id, billing_status, billing_grace_until, current_period_end FROM accounts ORDER BY id",
+    );
+    expect(rows.filter((row) => billingLapsed(row, NOW)).map((row) => row.id)).toEqual([
+      "ended",
+      "grace_over",
+    ]);
   });
 });

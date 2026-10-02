@@ -1,6 +1,5 @@
 import { waitlistReturnUrl } from "@emojisense/platform";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MeResponse } from "../../src/shared/contract";
 import { handleRequest } from "../../src/worker/app";
 import { BASE, body, createHarness, NOW, WEBSITE } from "./harness";
 
@@ -64,13 +63,6 @@ describe("POST /api/waitlist", () => {
     const response = await join(h, { email: "a@example.com" }, BASE);
     expect(response.status).toBe(200);
     expect(response.headers.get("access-control-allow-origin")).toBeNull();
-  });
-
-  it("shows on /api/me for the account's email", async () => {
-    const h = createHarness();
-    const cookie = await h.signIn("ada");
-    await join(h, { email: "ada@dev.localhost" }, BASE);
-    expect((await body<MeResponse>(await h.call("GET", "/api/me", { cookie }))).waitlistPlan).toBe("pro");
   });
 
   it("is rate limited", async () => {

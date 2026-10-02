@@ -32,7 +32,7 @@ export interface AccountRow {
   /** The plan of the paying account. Every app of the account gets it (0002). */
   plan: PlanId;
   created_at: number;
-  /** The Whop membership that pays for the plan (0004). */
+  /** The Whop membership that pays for the plan (0006). */
   whop_membership_id: string | null;
   billing_status: BillingStatus;
   billing_interval: BillingInterval | null;
@@ -46,7 +46,7 @@ export interface AccountRow {
   billing_event_at: number | null;
 }
 
-/** A Whop webhook delivery already applied, by its `webhook-id` (0004). */
+/** A Whop webhook delivery already applied, by its `webhook-id` (0006). */
 export interface WhopEventRow {
   id: string;
   type: string;

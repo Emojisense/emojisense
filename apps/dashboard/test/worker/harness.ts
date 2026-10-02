@@ -19,6 +19,8 @@ interface CallOptions {
   form?: FormData;
   /** Sent as an HTML form (application/x-www-form-urlencoded), like a post without JavaScript. */
   urlencoded?: Record<string, string>;
+  /** Sent byte for byte, with only the headers given (signed webhook deliveries). */
+  rawBody?: string;
   /** A Cookie header value, or a `Bearer <token>` credential from `clerkSignIn`. */
   cookie?: string;
   /** A Clerk session token, sent as `Authorization: Bearer`. */
@@ -92,7 +94,7 @@ export function createHarness(overrides: Partial<Env> = {}, options: HarnessOpti
     if (options.token) headers.set("authorization", `Bearer ${options.token}`);
     const origin = options.origin === undefined ? (method === "GET" ? null : base) : options.origin;
     if (origin) headers.set("origin", origin);
-    let body: string | FormData | undefined = options.form;
+    let body: string | FormData | undefined = options.form ?? options.rawBody;
     if (options.body !== undefined) {
       headers.set("content-type", "application/json");
       body = JSON.stringify(options.body);

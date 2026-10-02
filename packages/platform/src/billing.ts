@@ -9,7 +9,7 @@ import { PLAN_IDS, PLANS, type PlanId } from "./plans.js";
 export const BILLING_INTERVALS = ["month", "year"] as const;
 export type BillingInterval = (typeof BILLING_INTERVALS)[number];
 
-/** `accounts.billing_status` (migration 0004). Keep in sync with its CHECK constraint. */
+/** `accounts.billing_status` (migration 0006). Keep in sync with its CHECK constraint. */
 export const BILLING_STATUSES = ["none", "active", "canceling", "past_due", "canceled"] as const;
 export type BillingStatus = (typeof BILLING_STATUSES)[number];
 
@@ -121,11 +121,7 @@ export function serializeWhopPlanIds(ids: WhopPlanIds): string {
   return JSON.stringify(ordered);
 }
 
-export function whopPlanIdFor(
-  ids: WhopPlanIds,
-  plan: PlanId,
-  interval: BillingInterval,
-): string | undefined {
+export function whopPlanIdFor(ids: WhopPlanIds, plan: PlanId, interval: BillingInterval): string | undefined {
   return plan === "free" ? undefined : ids[plan]?.[interval];
 }
 
@@ -147,6 +143,26 @@ export function purchasableIntervals(ids: WhopPlanIds): Record<PaidPlanId, Billi
   return Object.fromEntries(
     PAID_PLAN_IDS.map((plan) => [plan, billingIntervalsOf(plan).filter((i) => ids[plan]?.[i])]),
   ) as Record<PaidPlanId, BillingInterval[]>;
+}
+
+export interface BillingState {
+  billing_status: BillingStatus;
+  billing_grace_until: number | null;
+  current_period_end: number | null;
+}
+
+/** True when `expireLapsedBilling` would move this account to Free now (the same rule, in code). */
+export function billingLapsed(state: BillingState, now: number): boolean {
+  if (state.billing_status === "past_due") {
+    return state.billing_grace_until !== null && state.billing_grace_until <= now;
+  }
+  if (state.billing_status === "canceling") {
+    return (
+      state.current_period_end !== null &&
+      state.current_period_end <= now - CANCELED_PERIOD_SLACK_DAYS * DAY_MS
+    );
+  }
+  return false;
 }
 
 /**
