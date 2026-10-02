@@ -13,7 +13,8 @@ import {
   ROW,
 } from "./pack.js";
 
-export type ResultSource = "alias" | "semantic" | "custom" | "culture";
+/** `concept`: the server's concept tier (an LLM's reading of an unsure query, checked against the catalog). */
+export type ResultSource = "alias" | "semantic" | "custom" | "culture" | "concept";
 
 export interface SearchResult {
   /** The emoji character, or `:shortcode:` for a custom emoji. */
@@ -57,6 +58,14 @@ export interface AliasSearchOutput {
   results: (AliasResult | CultureResult)[];
   /** Score of the best canonical result, 0 when there is none. */
   confidence: number;
+  /**
+   * 0–1: the largest IDF-weighted share of the query that one phrase matches with whole tokens
+   * (exact, a typo of the token, or a completion of the token being typed into a word of the
+   * preferred locale). A prefix completion into another locale's word is a partial match and
+   * does not count. Below `WHOLE_COVERAGE` (confidence.ts) the dictionary does not explain the
+   * query: "kendrick lamar" matches at most "lamar". PACK_FORMAT.md §4.
+   */
+  coverage: number;
 }
 
 /** The canonical ranking only (`culture: false`). */
@@ -124,6 +133,13 @@ const DOMINANT_FIELDS = 2;
 const MAX_EVIDENCE_BONUS = 0.06;
 /** The most a function word (function-words.ts) weighs, so it never blocks a match. */
 const FUNCTION_WORD_WEIGHT_CAP = 0.3;
+/**
+ * Quality factor of a prefix completion into a word that only other locales' packs have: en
+ * "lamar" → id "lamaran" (💍) is a partial match, not the word the user is typing.
+ */
+const FOREIGN_PREFIX_QUALITY = 0.7;
+/** Tokens up to this length need stronger evidence for a typo match (PACK_FORMAT.md §4). */
+const SHORT_TYPO_LENGTH = 5;
 /** Longest piece (code points) tried when a run of an unspaced script is split. */
 const MAX_PIECE_LENGTH = 16;
 /**
@@ -164,6 +180,8 @@ interface PhraseIndex {
   idf: Float64Array;
   maxIdf: number;
   tokensByLength: Map<number, number[]>;
+  /** Bit i set = a phrase of packs[i] has the token. */
+  tokenLocaleMask: Uint32Array;
 }
 
 /**
@@ -268,17 +286,22 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
 
   // IDF over emoji (not phrases), so a token repeated across one emoji's aliases stays specific.
   const idf = new Float64Array(vocab.length);
+  const tokenLocaleMask = new Uint32Array(vocab.length);
   const lastSeen = new Int32Array(entries.length).fill(-1);
   let maxIdf = 0;
   for (let t = 0; t < vocab.length; t++) {
     let df = 0;
+    let mask = 0;
     for (let k = postingStart[t] as number; k < (postingStart[t + 1] as number); k++) {
-      const e = phraseEmojiList[postings[k] as number] as number;
+      const phrase = postings[k] as number;
+      mask |= phraseLocaleMask[phrase] as number;
+      const e = phraseEmojiList[phrase] as number;
       if (lastSeen[e] !== t) {
         lastSeen[e] = t;
         df++;
       }
     }
+    tokenLocaleMask[t] = mask;
     idf[t] = Math.log(1 + entries.length / df);
     if ((idf[t] as number) > maxIdf) maxIdf = idf[t] as number;
   }
@@ -304,6 +327,7 @@ function indexPhrases(packs: Pack[], entries: EmojiEntry[], indexById: Map<strin
     idf,
     maxIdf,
     tokensByLength,
+    tokenLocaleMask,
   };
 }
 
@@ -357,12 +381,15 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     idf,
     maxIdf,
     tokensByLength,
+    tokenLocaleMask,
   } = indexPhrases(packs, entries, indexById);
 
   // Per-phrase / per-emoji scratch space, reused by every search (no allocation per keystroke:
   // common words touch thousands of phrases and per-phrase objects caused GC pauses).
   const phraseCount = phraseText.length;
   const quality = new Float32Array(phraseCount * MAX_QUERY_TOKENS);
+  /** Bit i set = query token i matches the phrase by a whole-token candidate (not a partial one). */
+  const phraseWhole = new Uint8Array(phraseCount);
   const phraseStamp = new Uint32Array(phraseCount);
   const touchedPhrases = new Int32Array(phraseCount);
   const emojiStamp = new Uint32Array(entries.length);
@@ -374,6 +401,8 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   const emojiExactPreferred = new Uint8Array(entries.length);
   /** 1 = the emoji's best phrase is an exact whole-query match. */
   const emojiBestExact = new Uint8Array(entries.length);
+  /** 1 = the emoji's best phrase needs a partial match (a prefix completion into another locale's word). */
+  const emojiBestPartial = new Uint8Array(entries.length);
   const touchedEmoji = new Int32Array(entries.length);
   let generation = 0;
 
@@ -388,12 +417,22 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     return lo;
   }
 
-  /** Vocabulary tokens a query token may stand for, with a match quality in (0, 1]. */
-  function expand(token: string, asPrefix: boolean): Map<number, number> {
+  /**
+   * Vocabulary tokens a query token may stand for, with a match quality in (0, 1]. `partial`
+   * gets the prefix completions into words that no preferred-locale pack has: they match with
+   * less quality and never count as whole-token coverage.
+   */
+  function expand(
+    token: string,
+    asPrefix: boolean,
+    preferredMask: number,
+    partial: Set<number>,
+  ): Map<number, number> {
     const candidates = new Map<number, number>();
     const add = (id: number, quality: number) => {
       if (quality > (candidates.get(id) ?? 0)) candidates.set(id, quality);
     };
+    const preferredToken = (id: number) => ((tokenLocaleMask[id] as number) & preferredMask) !== 0;
     const exact = tokenId.get(token);
     if (exact !== undefined) add(exact, 1);
 
@@ -404,7 +443,12 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         const candidate = vocab[i] as string;
         if (!candidate.startsWith(token)) break;
         if (candidate.length > token.length) {
-          add(i, 0.6 + (0.35 * token.length) / candidate.length);
+          const quality = 0.6 + (0.35 * token.length) / candidate.length;
+          if (preferredToken(i)) add(i, quality);
+          else {
+            add(i, quality * FOREIGN_PREFIX_QUALITY);
+            partial.add(i);
+          }
           prefixMatches++;
         }
       }
@@ -418,10 +462,15 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       if (squeezedId !== undefined) add(squeezedId, 0.85);
 
       const maxEdits = maxEditsFor(token.length);
+      const short = token.length <= SHORT_TYPO_LENGTH;
       for (let length = token.length - maxEdits; length <= token.length + maxEdits; length++) {
         for (const id of tokensByLength.get(length) ?? []) {
-          if (!plausibleTypo(token, vocab[id] as string)) continue;
-          const distance = boundedEditDistance(token, vocab[id] as string, maxEdits);
+          const candidate = vocab[id] as string;
+          if (!plausibleTypo(token, candidate)) continue;
+          // A short token is a typo only of a preferred-locale word, and never of a word it
+          // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
+          if (short && (token.startsWith(candidate) || !preferredToken(id))) continue;
+          const distance = boundedEditDistance(token, candidate, maxEdits);
           if (distance <= maxEdits) add(id, distance === 1 ? 0.8 : 0.65);
         }
       }
@@ -518,13 +567,35 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     }
   }
 
+  /**
+   * A prefix completion into another locale's word never outranks a preferred-locale match: an
+   * emoji whose best phrase needs one scores at most `CAP_MARGIN` below the lowest emoji whose
+   * best phrase is in a preferred-locale pack and needs none (PACK_FORMAT.md §4).
+   */
+  function capForeignPrefixBelowPreferred(
+    scored: { emoji: number; phrase: number; score: number }[],
+    isPreferred: (phrase: number) => boolean,
+  ): void {
+    let lowestPreferred = Number.POSITIVE_INFINITY;
+    for (const { emoji, phrase, score } of scored) {
+      if (emojiBestPartial[emoji] === 0 && isPreferred(phrase) && score < lowestPreferred) {
+        lowestPreferred = score;
+      }
+    }
+    if (lowestPreferred === Number.POSITIVE_INFINITY) return;
+    const cap = Math.max(0, lowestPreferred - CAP_MARGIN);
+    for (const candidate of scored) {
+      if (emojiBestPartial[candidate.emoji] === 1) candidate.score = Math.min(candidate.score, cap);
+    }
+  }
+
   function search(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
     const lastIsPrefix = prefix && !/\s$/.test(query);
     const functionWords = functionWordsFor(locale ?? primary.locale);
     const tokens = queryTokens(normalized, lastIsPrefix, functionWords);
-    if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0 };
+    if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0, coverage: 0 };
 
     const preferredMask = (preferredMasks.get(locale ?? primary.locale) ?? 1) | customMask;
     const isPreferred = (phrase: number) => ((phraseLocaleMask[phrase] as number) & preferredMask) !== 0;
@@ -534,12 +605,20 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     // nor stands for a typo. A query of function words only ("я тоже") is searched as typed.
     const hasContentWord = isFunctionWord.includes(false);
     const weights: number[] = [];
+    /** Query tokens without any candidate: the dictionary does not know them. */
+    let unknownTokens = 0;
     generation++;
     let touchedPhraseCount = 0;
 
     tokens.forEach((token, i) => {
+      const partial = new Set<number>();
       const candidates =
-        hasContentWord && isFunctionWord[i] ? exactly(token) : expand(token, lastIsPrefix && i === n - 1);
+        hasContentWord && isFunctionWord[i]
+          ? exactly(token)
+          : expand(token, lastIsPrefix && i === n - 1, preferredMask, partial);
+      // A function word the vocabulary lacks is not an unknown word of the query.
+      if (candidates.size === 0 && !isFunctionWord[i]) unknownTokens++;
+      const bit = 1 << i;
       let bestQuality = 0;
       let weight = maxIdf;
       for (const [id, q] of candidates) {
@@ -547,15 +626,18 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
           bestQuality = q;
           weight = idf[id] as number;
         }
+        const whole = !partial.has(id);
         for (let k = postingStart[id] as number; k < (postingStart[id + 1] as number); k++) {
           const phrase = postings[k] as number;
           const base = phrase * MAX_QUERY_TOKENS;
           if (phraseStamp[phrase] !== generation) {
             phraseStamp[phrase] = generation;
             quality.fill(0, base, base + n);
+            phraseWhole[phrase] = 0;
             touchedPhrases[touchedPhraseCount++] = phrase;
           }
           if (q > (quality[base + i] as number)) quality[base + i] = q;
+          if (whole) phraseWhole[phrase] = (phraseWhole[phrase] as number) | bit;
         }
       }
       weights.push(isFunctionWord[i] ? Math.min(weight, FUNCTION_WORD_WEIGHT_CAP) : weight);
@@ -563,20 +645,34 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
 
     let touchedEmojiCount = 0;
+    let bestWholeCoverage = 0;
     for (let t = 0; t < touchedPhraseCount; t++) {
       const phrase = touchedPhrases[t] as number;
       const base = phrase * MAX_QUERY_TOKENS;
+      const wholeBits = phraseWhole[phrase] as number;
       let covered = 0;
+      let wholeCovered = 0;
       let matched = 0;
-      let allExact = true;
+      let exactTokens = 0;
+      let partialMatch = false;
       for (let i = 0; i < n; i++) {
         const q = quality[base + i] as number;
-        if (q > 0) matched++;
-        if (q !== 1) allExact = false;
+        if (q > 0) {
+          matched++;
+          if ((wholeBits >> i) & 1) wholeCovered += weights[i] as number;
+          else partialMatch = true;
+        }
+        if (q === 1) exactTokens++;
         covered += q * (weights[i] as number);
       }
+      const allExact = exactTokens === n;
       const coverage = covered / totalWeight;
       if (coverage < minCoverage) continue;
+      // A prefix or typo match of one token cannot stand for a query whose other words the
+      // dictionary does not know: en "kendrick lamar" is not 💍 (id "lamaran") or 🦙 ("lama").
+      if (unknownTokens > 0 && matched === 1 && exactTokens === 0) continue;
+      const wholeCoverage = wholeCovered / totalWeight;
+      if (wholeCoverage > bestWholeCoverage) bestWholeCoverage = wholeCoverage;
 
       const length = phraseLength[phrase] as number;
       const preferred = isPreferred(phrase);
@@ -596,11 +692,13 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         emojiPreferred[emoji] = 0;
         emojiExactPreferred[emoji] = 0;
         emojiBestExact[emoji] = exact ? 1 : 0;
+        emojiBestPartial[emoji] = partialMatch ? 1 : 0;
         touchedEmoji[touchedEmojiCount++] = emoji;
       } else if (score > (emojiScore[emoji] as number)) {
         emojiScore[emoji] = score;
         emojiPhrase[emoji] = phrase;
         emojiBestExact[emoji] = exact ? 1 : 0;
+        emojiBestPartial[emoji] = partialMatch ? 1 : 0;
       }
       if (preferred) {
         emojiPreferred[emoji] = (emojiPreferred[emoji] as number) + 1;
@@ -642,6 +740,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         }
       }
     }
+    capForeignPrefixBelowPreferred(scored, isPreferred);
     const ranked = scored
       .sort(
         (a, b) =>
@@ -666,7 +765,13 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         ...(shortcode ? { shortcode } : {}),
       };
     });
-    return { query: normalized, tokens, results, confidence: results[0]?.score ?? 0 };
+    return {
+      query: normalized,
+      tokens,
+      results,
+      confidence: results[0]?.score ?? 0,
+      coverage: Math.round(bestWholeCoverage * 1000) / 1000,
+    };
   }
 
   const get = (id: string) => {

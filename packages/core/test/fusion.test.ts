@@ -82,6 +82,7 @@ describe("fuse with rerank: false (confidence-weighted reciprocal rank fusion)",
     query: "q",
     tokens: ["q"],
     confidence,
+    coverage: 1,
     results: emoji.map((e, i) => ({
       ...r(e, confidence - i * 0.01, "alias"),
       source: "alias",
