@@ -838,5 +838,19 @@
     "alias": "香蕉人",
     "action": "remove",
     "why": "safety review: 'banana person': insult for Asians seen as culturally white"
+  },
+  {
+    "hexcode": "1F917",
+    "locale": "ru",
+    "alias": "пока",
+    "action": "low",
+    "why": "👋 is the canonical 'bye' (пока) in Russian; the CLDR keyword ranked 🤗 first"
+  },
+  {
+    "hexcode": "1FAC2",
+    "locale": "ru",
+    "alias": "пока",
+    "action": "low",
+    "why": "👋 is the canonical 'bye' (пока) in Russian; the CLDR keyword ranked 🫂 first"
   }
 ]
