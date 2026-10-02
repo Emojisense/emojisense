@@ -68,18 +68,20 @@ public final class AliasEngine: @unchecked Sendable {
     let functionWords = FunctionWords.active(forLocale: options.locale ?? index.primaryLocale)
     let tokens = queryTokens(normalized, lastIsPrefix: lastIsPrefix, functionWords: functionWords)
     if tokens.isEmpty {
-      return AliasSearchOutput(query: normalized, tokens: tokens, results: [], confidence: 0)
+      return AliasSearchOutput(
+        query: normalized, tokens: tokens, results: [], confidence: 0, coverage: 0)
     }
 
     lock.lock()
     defer { lock.unlock() }
-    let ranked = rank(
+    let (ranked, wholeCoverage) = rank(
       tokens: tokens, lastIsPrefix: lastIsPrefix, functionWords: functionWords, options: options)
     let results = ranked.prefix(max(0, options.limit)).map { candidate in
       makeResult(candidate, locale: options.locale)
     }
     return AliasSearchOutput(
-      query: normalized, tokens: tokens, results: results, confidence: results.first?.score ?? 0)
+      query: normalized, tokens: tokens, results: results, confidence: results.first?.score ?? 0,
+      coverage: (wholeCoverage * 1000).rounded() / 1000)
   }
 
   // MARK: Ranking
@@ -90,12 +92,13 @@ public final class AliasEngine: @unchecked Sendable {
     var score: Double
   }
 
-  /// Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds
-  /// `lock`.
+  /// Scores every phrase the query touches and keeps the best phrase per emoji. Also returns the
+  /// largest share of the query weight that one kept phrase matches with whole tokens. Caller
+  /// holds `lock`.
   private func rank(
     tokens: [String], lastIsPrefix: Bool, functionWords: Set<UTF16Text>,
     options: AliasSearchOptions
-  ) -> [RankedEmoji] {
+  ) -> (ranked: [RankedEmoji], wholeCoverage: Double) {
     let tokenCount = tokens.count
     let preferredMask = index.localeMasks[options.locale ?? index.primaryLocale] ?? 1
     let isPreferred = { (phrase: Int32) in
@@ -108,22 +111,29 @@ public final class AliasEngine: @unchecked Sendable {
     // nor stands for a typo. A query of function words only ("я тоже") is searched as typed.
     let hasContentWord = isFunctionWord.contains(false)
     var weights: [Double] = []
+    /// Query tokens without any candidate: the dictionary does not know them.
+    var unknownTokens = 0
     for (position, token) in tokens.enumerated() {
       let asPrefix = lastIsPrefix && position == tokenCount - 1
       let candidates =
         hasContentWord && isFunctionWord[position]
-        ? exactly(token) : expand(token, asPrefix: asPrefix)
+        ? exactly(token) : expand(token, asPrefix: asPrefix, preferredMask: preferredMask)
+      // A function word the vocabulary lacks is not an unknown word of the query.
+      if candidates.isEmpty && !isFunctionWord[position] { unknownTokens += 1 }
       var bestQuality = 0.0
       var weight = index.maxIdf
-      for (id, quality) in zip(candidates.ids, candidates.qualities) {
+      for candidate in candidates.indices {
+        let id = candidates.ids[candidate]
+        let quality = candidates.qualities[candidate]
         if quality > bestQuality {
           bestQuality = quality
           weight = index.idf[Int(id)]
         }
+        let whole = !candidates.isPartial[candidate]
         for posting in Int(index.postingStart[Int(id)])..<Int(index.postingStart[Int(id) + 1]) {
           scratch.record(
             quality: quality, phrase: Int(index.postings[posting]), token: position,
-            tokenCount: tokenCount)
+            tokenCount: tokenCount, whole: whole)
         }
       }
       weights.append(
@@ -131,22 +141,37 @@ public final class AliasEngine: @unchecked Sendable {
     }
     let totalWeight = weights.reduce(0, +)
 
+    var bestWholeCoverage = 0.0
     for phrase in scratch.touchedPhrases {
       let qualities = scratch.qualities(phrase: Int(phrase), tokenCount: tokenCount)
+      let wholeTokens = scratch.wholeTokens(phrase: Int(phrase))
       var covered = 0.0
+      var wholeCovered = 0.0
       var matched = 0
-      var allExact = true
-      for (quality, weight) in zip(qualities, weights) {
+      var exactTokens = 0
+      var partialMatch = false
+      for (position, (quality, weight)) in zip(qualities, weights).enumerated() {
         let value = Double(quality)
-        if value > 0 { matched += 1 }
-        if value != 1 { allExact = false }
+        if value > 0 {
+          matched += 1
+          if (wholeTokens >> position) & 1 == 1 {
+            wholeCovered += weight
+          } else {
+            partialMatch = true
+          }
+        }
+        if value == 1 { exactTokens += 1 }
         covered += value * weight
       }
       let coverage = covered / totalWeight
       if coverage < minCoverage { continue }
+      // A prefix or typo match of one token cannot stand for a query whose other words the
+      // dictionary does not know: en "kendrick lamar" is not 💍 (id "lamaran") or 🦙 ("lama").
+      if unknownTokens > 0 && matched == 1 && exactTokens == 0 { continue }
+      bestWholeCoverage = max(bestWholeCoverage, wholeCovered / totalWeight)
 
       let length = Int(index.phraseLength[Int(phrase)])
-      let exact = allExact && length == tokenCount
+      let exact = exactTokens == tokenCount && length == tokenCount
       let exactFactor =
         exact ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
       let preferred = isPreferred(phrase)
@@ -156,7 +181,8 @@ public final class AliasEngine: @unchecked Sendable {
         * (0.6 + 0.4 * min(1, Double(matched) / Double(length))) * exactFactor * localeFactor
       scratch.recordEmoji(
         Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score, preferred: preferred,
-        exact: exact, strong: Scoring.strongFields.contains(index.phraseField[Int(phrase)]))
+        exact: exact, partial: partialMatch,
+        strong: Scoring.strongFields.contains(index.phraseField[Int(phrase)]))
     }
 
     // Only phrases of the preferred locale add evidence (PACK_FORMAT.md §4).
@@ -187,6 +213,7 @@ public final class AliasEngine: @unchecked Sendable {
         }
       }
     }
+    capForeignPrefixBelowPreferred(&ranked, isPreferred: isPreferred)
     // Equal scores: the more used emoji first (pack `popularity`), then row order (PACK_FORMAT §4).
     let popularity = index.entryPopularity
     ranked.sort {
@@ -194,7 +221,7 @@ public final class AliasEngine: @unchecked Sendable {
       let (left, right) = (popularity[Int($0.emoji)], popularity[Int($1.emoji)])
       return left != right ? left > right : $0.emoji < $1.emoji
     }
-    return ranked
+    return (ranked, bestWholeCoverage)
   }
 
   /// The evidence bonus breaks near-ties. It never lifts an emoji whose best phrase matches only
@@ -224,6 +251,24 @@ public final class AliasEngine: @unchecked Sendable {
       if above > 0 {
         ranked[position].score = min(ranked[position].score, lowest[above - 1] - Scoring.capMargin)
       }
+    }
+  }
+
+  /// A prefix completion into another locale's word never outranks a preferred-locale match: an
+  /// emoji whose best phrase needs one scores at most `capMargin` below the lowest emoji whose
+  /// best phrase is in a preferred-locale pack and needs none (PACK_FORMAT.md §4).
+  private func capForeignPrefixBelowPreferred(
+    _ ranked: inout [RankedEmoji], isPreferred: (Int32) -> Bool
+  ) {
+    var lowestPreferred = Double.infinity
+    for candidate in ranked
+    where !scratch.emojiBestPartial[Int(candidate.emoji)] && isPreferred(candidate.phrase) {
+      lowestPreferred = min(lowestPreferred, candidate.score)
+    }
+    guard lowestPreferred.isFinite else { return }
+    let cap = max(0, lowestPreferred - Scoring.capMargin)
+    for position in ranked.indices where scratch.emojiBestPartial[Int(ranked[position].emoji)] {
+      ranked[position].score = min(ranked[position].score, cap)
     }
   }
 
@@ -310,9 +355,14 @@ public final class AliasEngine: @unchecked Sendable {
   // MARK: Query expansion
 
   /// Vocabulary tokens a query token may stand for, with a match quality in (0, 1], in the order
-  /// the reference engine finds them (the order breaks ties for the token weight).
-  private func expand(_ token: String, asPrefix: Bool) -> CandidateList {
+  /// the reference engine finds them (the order breaks ties for the token weight). A prefix
+  /// completion into a word that no preferred-locale pack has is a partial match: it matches with
+  /// less quality and never counts as whole-token coverage.
+  private func expand(_ token: String, asPrefix: Bool, preferredMask: Int) -> CandidateList {
     var candidates = CandidateList()
+    let isPreferredToken = { (id: Int32) in
+      self.index.tokenLocaleMask[Int(id)] & preferredMask != 0
+    }
     let units = UTF16Text(token.utf16)
     let exact = index.tokenIds[units]
     if let exact { candidates.add(exact, quality: 1) }
@@ -325,8 +375,13 @@ public final class AliasEngine: @unchecked Sendable {
         let candidate = index.vocabulary[position]
         if !candidate.starts(with: units) { break }
         if candidate.count > units.count {
-          candidates.add(
-            Int32(position), quality: 0.6 + (0.35 * Double(units.count)) / Double(candidate.count))
+          let id = Int32(position)
+          let quality = 0.6 + (0.35 * Double(units.count)) / Double(candidate.count)
+          if isPreferredToken(id) {
+            candidates.add(id, quality: quality)
+          } else {
+            candidates.add(id, quality: quality * Scoring.foreignPrefixQuality, partial: true)
+          }
           prefixMatches += 1
         }
         position += 1
@@ -341,10 +396,14 @@ public final class AliasEngine: @unchecked Sendable {
     let maxEdits = Fuzzy.maxEdits(forLength: units.count)
     // With no edits allowed only an exact match could qualify, and there is none.
     guard maxEdits > 0 else { return candidates }
+    let short = units.count <= Scoring.shortTypoLength
     for length in (units.count - maxEdits)...(units.count + maxEdits) {
       for id in index.tokenIdsByLength[length] ?? [] {
         let candidate = index.vocabulary[Int(id)]
         guard Fuzzy.isPlausibleTypo(units, candidate) else { continue }
+        // A short token is a typo only of a preferred-locale word, and never of a word it
+        // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
+        if short && (units.starts(with: candidate) || !isPreferredToken(id)) { continue }
         let distance = scratch.editDistance.compute(units, candidate, max: maxEdits)
         if distance <= maxEdits { candidates.add(id, quality: distance == 1 ? 0.8 : 0.65) }
       }
@@ -386,6 +445,11 @@ enum Scoring {
   static let maxEvidenceBonus = 0.06
   /// The most a function word (`FunctionWords`) weighs, so it never blocks a match.
   static let functionWordWeightCap = 0.3
+  /// Quality factor of a prefix completion into a word that only other locales' packs have: en
+  /// "lamar" → id "lamaran" (💍) is a partial match, not the word the user is typing.
+  static let foreignPrefixQuality = 0.7
+  /// Tokens up to this UTF-16 length need stronger evidence for a typo match.
+  static let shortTypoLength = 5
   /// Longest piece (code points) tried when a run of an unspaced script is split.
   static let maxPieceLength = 16
 }
@@ -404,21 +468,28 @@ enum UnspacedScript {
 }
 
 /// Vocabulary candidates of one query token in insertion order; a better quality for a known id
-/// updates it in place (JavaScript `Map` semantics).
+/// updates it in place (JavaScript `Map` semantics). A candidate added once as partial stays
+/// partial (the reference engine's `partial` set).
 private struct CandidateList {
   private(set) var ids: [Int32] = []
   private(set) var qualities: [Double] = []
+  private(set) var isPartial: [Bool] = []
   private var positions: [Int32: Int] = [:]
 
-  mutating func add(_ id: Int32, quality: Double) {
+  var indices: Range<Int> { ids.indices }
+  var isEmpty: Bool { ids.isEmpty }
+
+  mutating func add(_ id: Int32, quality: Double, partial: Bool = false) {
     if let position = positions[id] {
       if quality > qualities[position] { qualities[position] = quality }
+      if partial { isPartial[position] = true }
       return
     }
     guard quality > 0 else { return }
     positions[id] = ids.count
     ids.append(id)
     qualities.append(quality)
+    isPartial.append(partial)
   }
 }
 

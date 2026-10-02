@@ -61,7 +61,8 @@ public actor SemanticClient: SemanticProvider {
     guard response.isSuccess else { throw EmojisenseError.httpStatus(response.status, url: url) }
     var body = try JSONDecoder().decode(SemanticResponse.self, from: response.body)
     body.layer = .api
-    cache.insert(body, forKey: url.absoluteString)
+    // A concept answer still pending (or not available now) is not final: ask the API again.
+    if body.concept?.status.isFinal ?? true { cache.insert(body, forKey: url.absoluteString) }
     if body.overLimit {
       pausedUntil = now().addingTimeInterval(configuration.overLimitCooldown)
       return nil

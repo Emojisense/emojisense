@@ -46,6 +46,8 @@ struct Golden: Decodable, Sendable {
     let locale: String
     let query: String
     let confidence: Double
+    /// `AliasSearchOutput.coverage`, rounded to 3 decimals by the reference.
+    let coverage: Double
     let top: [Ranked]
     let match: String?
     let field: String?
@@ -66,6 +68,53 @@ struct Golden: Decodable, Sendable {
 
     let packs: [String]
     let cases: [Case]
+  }
+
+  /// `assess`, `semanticStrength` and `mergeConcept` (core/src/confidence.ts) on generated inputs.
+  struct ConfidenceCase: Decodable, Sendable {
+    struct Alias: Decodable, Sendable {
+      let tokens: [String]
+      let confidence: Double
+      let coverage: Double
+      let results: [Ranked]
+
+      var output: AliasSearchOutput {
+        AliasSearchOutput(
+          query: tokens.joined(separator: " "), tokens: tokens,
+          results: results.map {
+            AliasResult(
+              emoji: $0.id, id: $0.id, score: $0.score, label: $0.id, match: "a", field: .alias)
+          },
+          confidence: confidence, coverage: coverage)
+      }
+    }
+
+    /// Stored as `[id, score, source]`.
+    struct Sourced: Decodable, Sendable {
+      let result: SearchResult
+
+      init(from decoder: any Decoder) throws {
+        var container = try decoder.unkeyedContainer()
+        let id = try container.decode(String.self)
+        let score = try container.decode(Double.self)
+        let source = try container.decode(ResultSource.self)
+        result = SearchResult(emoji: id, id: id, score: score, source: source)
+      }
+    }
+
+    /// `nil`: no alias output given.
+    let alias: Alias?
+    /// `nil`: no semantic list given.
+    let semantic: [Sourced]?
+    let concept: [Ranked]
+    let fused: [Sourced]
+    let limit: Int
+    /// Unrounded. `nil` (or, in files made before 2026-10-02 19:30, a value of a list not in the
+    /// file) when the case gives no semantic list.
+    let strength: Double?
+    let confidence: Double
+    let unsure: Bool
+    let merged: [String]
   }
 
   let node: String
@@ -111,6 +160,9 @@ struct Golden: Decodable, Sendable {
     let reranked: [String]
     let reciprocal: [String]
   }
+  /// Entity queries per locale (en + that locale), then the guard queries with every locale.
+  let entityKeystrokes: [Keystrokes]
+  let confidence: [ConfidenceCase]
 
   static func load() throws -> Golden {
     guard let url = Bundle.module.url(forResource: "golden", withExtension: "json") else {
@@ -171,7 +223,24 @@ struct GoldenPacks: Sendable {
     return GoldenPacks(byFile: byFile)
   }
 
+  /// One engine per pack list, built on first use: several checks share a configuration.
   func engine(files: [String]) throws -> AliasEngine {
-    try AliasEngine(packs: files.map { byFile[$0]! })
+    try engines.engine(files: files) { try AliasEngine(packs: files.map { byFile[$0]! }) }
+  }
+
+  private let engines = EngineCache()
+}
+
+private final class EngineCache: @unchecked Sendable {
+  private let lock = NSLock()
+  private var byFiles: [[String]: AliasEngine] = [:]
+
+  func engine(files: [String], make: () throws -> AliasEngine) rethrows -> AliasEngine {
+    lock.lock()
+    defer { lock.unlock() }
+    if let engine = byFiles[files] { return engine }
+    let engine = try make()
+    byFiles[files] = engine
+    return engine
   }
 }

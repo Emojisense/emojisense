@@ -28,6 +28,8 @@ struct AliasIndex: Sendable {
   let postings: [Int32]
   let idf: [Double]
   let maxIdf: Double
+  /// Bit i set = a phrase of `packs[i]` has the token.
+  let tokenLocaleMask: [Int]
 
   let phraseText: [String]
   let phraseField: [Field]
@@ -111,9 +113,9 @@ struct AliasIndex: Sendable {
 
     (postingStart, postings) = Self.buildPostings(
       phraseTokenIds: phraseTokenIds, vocabularyCount: sorted.vocabulary.count)
-    (idf, maxIdf) = Self.computeIdf(
+    (idf, maxIdf, tokenLocaleMask) = Self.computeIdf(
       postingStart: postingStart, postings: postings, phraseEmoji: phrases.emoji,
-      emojiCount: entries.count)
+      phraseLocaleMask: phrases.localeMask, emojiCount: entries.count)
   }
 
   /// Token → phrases, in phrase order. A token repeated inside a phrase is posted twice.
@@ -137,27 +139,33 @@ struct AliasIndex: Sendable {
   }
 
   /// `idf = ln(1 + E / df)` with `df` counted over emoji, not phrases, so a token repeated across
-  /// one emoji's aliases stays specific.
+  /// one emoji's aliases stays specific. Also the packs whose phrases have each token.
   private static func computeIdf(
-    postingStart: [Int32], postings: [Int32], phraseEmoji: [Int32], emojiCount: Int
-  ) -> (idf: [Double], maxIdf: Double) {
+    postingStart: [Int32], postings: [Int32], phraseEmoji: [Int32], phraseLocaleMask: [Int],
+    emojiCount: Int
+  ) -> (idf: [Double], maxIdf: Double, tokenLocaleMask: [Int]) {
     let tokenCount = postingStart.count - 1
     var idf = [Double](repeating: 0, count: tokenCount)
+    var tokenLocaleMask = [Int](repeating: 0, count: tokenCount)
     var lastSeen = [Int](repeating: -1, count: emojiCount)
     var maxIdf = 0.0
     for token in 0..<tokenCount {
       var documentFrequency = 0
+      var mask = 0
       for posting in Int(postingStart[token])..<Int(postingStart[token + 1]) {
-        let emoji = Int(phraseEmoji[Int(postings[posting])])
+        let phrase = Int(postings[posting])
+        mask |= phraseLocaleMask[phrase]
+        let emoji = Int(phraseEmoji[phrase])
         if lastSeen[emoji] != token {
           lastSeen[emoji] = token
           documentFrequency += 1
         }
       }
+      tokenLocaleMask[token] = mask
       idf[token] = ReferenceMath.log(1 + Double(emojiCount) / Double(documentFrequency))
       if idf[token] > maxIdf { maxIdf = idf[token] }
     }
-    return (idf, maxIdf)
+    return (idf, maxIdf, tokenLocaleMask)
   }
 }
 

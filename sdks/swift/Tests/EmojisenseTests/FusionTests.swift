@@ -86,7 +86,8 @@ final class FusionTests: XCTestCase {
         emoji: value, id: value, score: confidence - Double(index) * 0.01, label: value, match: "q",
         field: .alias)
     }
-    return AliasSearchOutput(query: "q", tokens: ["q"], results: results, confidence: confidence)
+    return AliasSearchOutput(
+      query: "q", tokens: ["q"], results: results, confidence: confidence, coverage: 1)
   }
 
   private func semanticList(_ best: Double) -> [SearchResult] {
@@ -114,7 +115,8 @@ final class FusionTests: XCTestCase {
     let results = [("👍", 0.82), ("🔥", 0.8), ("6️⃣", 0.66)].map { emoji, score in
       AliasResult(emoji: emoji, id: emoji, score: score, label: emoji, match: "666", field: .alias)
     }
-    let alias = AliasSearchOutput(query: "666", tokens: ["666"], results: results, confidence: 0.82)
+    let alias = AliasSearchOutput(
+      query: "666", tokens: ["666"], results: results, confidence: 0.82, coverage: 1)
     let semantic = [
       result("6️⃣", 0.46, .semantic), result("🕕", 0.45, .semantic), result("7️⃣", 0.43, .semantic),
     ]
@@ -146,7 +148,7 @@ final class FusionTests: XCTestCase {
 
   func testAsksTheSemanticTierOnlyWhenTheAliasTierIsUnsure() {
     let output = { (tokens: [String], confidence: Double) in
-      AliasSearchOutput(query: "", tokens: tokens, results: [], confidence: confidence)
+      AliasSearchOutput(query: "", tokens: tokens, results: [], confidence: confidence, coverage: 1)
     }
     XCTAssertFalse(Fusion.shouldUseSemantic(output([], 0)))
     XCTAssertTrue(Fusion.shouldUseSemantic(output(["x"], 0.5)))

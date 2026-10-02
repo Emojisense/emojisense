@@ -11,6 +11,7 @@ same results as the TypeScript engine.
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6). |
 | Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache. Over the limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Pinned reciprocal rank fusion, as in `core/src/fusion.ts`. |
+| Confidence | `Confidence` | The unsure verdict (`assess`) and the concept merge (`mergeConcept`), as in `core/src/confidence.ts`. |
 | Emoji sets | `EmojiSet`, `Hexcode` | The `emojiSet` option of the pickers: `.native` or a hosted set. `imageURL(for:endpoint:key:)` gives `/v1/sets/<set>/<hexcode>.svg?key=…` (a key whose plan includes hosted sets). No UI. |
 
 Requirements: iOS 16+ or macOS 13+, Swift 6. No third-party dependencies.
@@ -67,9 +68,17 @@ let semantic = ProviderChain([
 if Fusion.shouldUseSemantic(alias),
   let response = try await semantic.search("jurassic pa", options: .init(locale: "en"))
 {
-  results = Fusion.fuse(
-    alias: alias, semantic: response.results,
-    ranking: .init(popularity: { [engine] in engine.popularity($0) }))
+  // 5. The API puts its concept results (unsure queries) in the same list. Keep them out of the
+  //    fusion and merge them after it.
+  let semanticList = response.results.filter { $0.source != .concept }
+  let conceptList = response.results.filter { $0.source == .concept }
+  results = Confidence.mergeConcept(
+    Fusion.fuse(
+      alias: alias, semantic: semanticList,
+      ranking: .init(popularity: { [engine] in engine.popularity($0) })),
+    concept: conceptList, alias: alias)
+  // No tier understood the query: show the results as guesses.
+  let isUnsure = Confidence.assess(alias: alias, semantic: semanticList).unsure
 }
 ```
 
@@ -84,6 +93,10 @@ Notes:
   `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. If a
   locale has no shards (404), the provider stops asking for that locale and the API answers.
 - Inject an `HTTPTransport` to add headers, logging or a stub for tests.
+- `AliasSearchOutput.coverage` is the largest share of the query that one phrase matches with
+  whole tokens. Below `Confidence.wholeCoverage` (0.85) the dictionary does not explain the query.
+- When `response.concept?.status` is `.pending`, ask again after about 1.5 s, at most two times.
+  `SemanticClient` does not cache a pending or unavailable concept answer.
 
 ## Tests and conformance
 
@@ -106,7 +119,11 @@ packs differ from the ones in `golden.json` (sha256), the tests fail and tell yo
 | Search, core + ext packs: same query, top-10 ids and scores, confidence, matched phrase | 217 queries | 100% |
 | Search, core packs only: same top-5 ids / same top-10 ids and scores | 217 queries | 100% / 100% |
 | Sentences with function words, en + zh, ru, id, es, fr, pt, ar, hi or bn (core + ext): same top-5 ids / same top-10 ids and scores | 369 queries | 100% / 100% |
-| Keystrokes (every prefix of 44 queries and 81 sentences): same top-5 ids and scores | 1,572 | 100% |
+| Entities (names, titles, brands, memes, holidays), en alone or en + es, fr, ru, zh, hi, ar, bn, pt, id or tr (core + ext): same top-5 ids / same top-10 ids and scores | 258 queries | 100% / 100% |
+| Partial-match guard queries, all 22 packs of 11 locales in one engine: same top-5 ids / same top-10 ids and scores | 28 queries | 100% / 100% |
+| Coverage (`AliasSearchOutput.coverage`) of every search query above: same value (required 100%) | 1,089 queries | 100% |
+| Keystrokes (every prefix of 44 queries, 81 sentences, 55 entities and 3 guard queries): same top-5 ids and scores | 2,168 | 100% |
+| Confidence cases (`Confidence.assess`, `semanticStrength`, `mergeConcept`): same confidence, unsure and merged ids (required 100%); strength within 1e-12 (71 cases with a semantic list; largest difference 0) | 80 cases | 100% |
 | Function-word lists (`FunctionWords.swift`) equal the reference | 11 locales | 100% |
 
 Measured on macOS 26 (arm64), Swift 6.4, Node 24.5.0, pack 0.1.0.
@@ -133,6 +150,8 @@ pnpm exec tsx sdks/swift/scripts/make-unicode-tables.ts    # after a Node (Unico
 | Match quality | `Float32Array` | `Float` | Same float32 rounding. |
 | `Math.log` (IDF) | fdlibm; on arm64 with fused multiply-add | Darwin `log` differs in the last bit for ~3% of inputs | `ReferenceMath.log` ports fdlibm with explicit FMA: bit-identical to Node on arm64. |
 | Length cap | Can cut a surrogate pair and keep half | A `String` cannot hold half a pair | Drops the whole pair. Only a letter outside the BMP at position 64 is affected. |
+| Rounding of scores, `coverage`, `confidence` | `Math.round(x * 1000) / 1000` (ties up) | `(x * 1000).rounded() / 1000` (ties away from zero) | Same result: the values are never negative. |
+| Concept status `"none"` | String union | `.none` would clash with `Optional.none` | The case is `ConceptInfo.Status.noConcept` (raw value `"none"`). An unknown status decodes as `concept == nil`, and the results stay. |
 
 Remaining differences:
 
