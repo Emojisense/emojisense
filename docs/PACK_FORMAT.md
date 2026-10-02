@@ -177,14 +177,25 @@ that have the token in any phrase.
 
 **Query.** Normalize and tokenize the query, keeping at most 8 tokens.
 
+**Function words.** Each pack locale has a list of function words: pronouns, articles,
+prepositions, conjunctions, auxiliaries, particles and intensifiers, plus common romanized forms
+(Hinglish, Banglish, Arabizi, Russian translit). Negations and question words are never in it.
+The entries are normalized (§3) single tokens; the reference lists are `FUNCTION_WORDS` in
+`packages/core/src/function-words.ts`, and a port MUST copy them exactly. A query uses the list
+of its preferred locale (see below) plus the `en` and `tr` lists; for a locale without a list,
+only `en` and `tr`. Lists of other locales do not apply: es `son` ("they are") is en `son`. A
+query token in that set is a function word. Changing a list changes rankings like any change to
+this algorithm; no file of a pack version changes.
+
 **Unspaced scripts.** A query token that holds a code point in U+0E00–0EFF (Thai, Lao),
 U+1000–109F (Myanmar), U+1780–17FF (Khmer), U+3040–30FF (kana), U+3400–4DBF, U+4E00–9FFF,
 U+F900–FAFF or U+20000–3134F (Han) is split when it is not a vocabulary token, unless it is the
 last token while typing and a longer vocabulary token starts with it. Split from the left: at each
-code point take the longest vocabulary token (at most 16 code points) that starts there. Code
-points where no vocabulary token starts form one unknown piece together with the unknown code
-points next to them. The pieces replace the token, in order; keep at most 8 tokens again. The
-pieces are the query's `tokens`. Example, with 生日快乐 indexed: 今天生日快乐 → 今天 · 生日快乐.
+code point take the longest vocabulary token or function word (at most 16 code points) that
+starts there. Code points where neither starts form one unknown piece together with the unknown
+code points next to them. The pieces replace the token, in order; keep at most 8 tokens again.
+The pieces are the query's `tokens`. Example, with 生日快乐 indexed: 今天生日快乐 → 今天 · 生日快乐;
+with 躺平 indexed: 我想躺平 → 我 · 想 · 躺平 (我 and 想 are zh function words).
 
 For each query token, find candidate vocabulary tokens with a match quality:
 
@@ -195,8 +206,14 @@ For each query token, find candidate vocabulary tokens with a match quality:
 | final repeated letter removed (`upp` → `up`), only if there is no exact match | 0.85 |
 | optimal-string-alignment distance 1 (token length 4–7) or ≤ 2 (length ≥ 8), only if there is no exact match | 0.8 (d = 1), 0.65 (d = 2) |
 
+When the query has at least one token that is not a function word, a function word has one
+candidate only: the vocabulary token equal to it (quality 1.0), if there is one. It is never a
+prefix or a typo of another token, so a trailing zh 了 does not stand for 了解. A query made only
+of function words (ru "я тоже", en "me too") is expanded like any other query.
+
 The weight of query token *i* is the idf of its best candidate, or the largest idf in the index
-when there is no candidate. For the stopwords listed in `engine.ts`, the weight is capped at 0.3.
+when there is no candidate. The weight of a function word is capped at 0.3, so function words
+cannot keep a phrase that covers the content words below the coverage threshold.
 
 **Phrase score.** `coverage = Σ quality_i × weight_i / Σ weight_i`, with `quality_i` the best
 quality of a candidate of token *i* inside this phrase. Phrases with coverage < 0.34 are
@@ -311,6 +328,9 @@ precomputed nightly and published as static files:
   pack-level keys is not breaking. Adding a row position is breaking.
 - `packVersion` is semver for the data. A patch has alias changes only. A minor adds emoji or
   locales. A major changes ids.
+- The search algorithm of §4, function-word lists included, belongs to the client library, not to
+  the pack: a pack of any version works with it. A port matches the reference of the same
+  library release; the Swift golden file (`sdks/swift`) checks the lists and the rankings.
 
 ## 8. Custom packs (an app's own emoji)
 
