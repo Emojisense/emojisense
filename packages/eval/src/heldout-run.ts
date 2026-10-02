@@ -151,7 +151,7 @@ export async function runAndReportHeldout(options: {
     date: new Date().toISOString().slice(0, 10),
     packVersion: options.packVersion,
     inHouse: options.inHouse,
-    gate: { baseline: baseline !== undefined, warnings },
+    gate: { baseline: baseline !== undefined, warnings, written: options.writeBaseline },
   });
   writeFileSync(join(EVAL_ROOT, "reports", "heldout.md"), `${report}\n`);
   const json = {

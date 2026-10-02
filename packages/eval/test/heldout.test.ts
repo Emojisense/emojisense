@@ -229,5 +229,15 @@ describe("held-out suite on packs", () => {
     expect(report).toContain("| **All (micro)** | 2 | 100 | 100 | 1 |");
     expect(report).toContain("| Held-out, en + tr | 2 | 100 | 1 | – | – |");
     expect(report).toContain("### tr — Turkish (0 misses of 1)");
+    expect(report).toContain("No `reports/heldout-baseline.json` yet.");
+
+    const warned = renderHeldoutReport(run, {
+      date: "2026-10-02",
+      packVersion: "test",
+      gate: { baseline: true, warnings: ["held-out alias [en]: recall@5 50 < baseline 60 − 5 (n=1)"] },
+    });
+    expect(warned).toContain("the held-out gate does not fail the build");
+    expect(warned).toContain("- held-out alias [en]: recall@5 50 < baseline 60 − 5 (n=1)");
+    expect(warned).not.toContain("Next to the in-house suite");
   });
 });

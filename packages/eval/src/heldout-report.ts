@@ -21,7 +21,8 @@ export function renderHeldoutReport(
     date: string;
     packVersion: string;
     inHouse?: InHouseScores;
-    gate: { baseline: boolean; warnings: string[] };
+    /** `baseline`: a baseline existed before this run. `written`: this run wrote a new one. */
+    gate: { baseline: boolean; warnings: string[]; written?: boolean };
   },
 ): string {
   const lines: string[] = [];
@@ -88,8 +89,11 @@ export function renderHeldoutReport(
   }
 
   lines.push("", "## Soft gate", "");
+  if (context.gate.written) lines.push("This run wrote `reports/heldout-baseline.json`.", "");
   if (!context.gate.baseline) {
-    lines.push("No `reports/heldout-baseline.json` yet. Write one with `--write-baseline`.");
+    if (!context.gate.written) {
+      lines.push("No `reports/heldout-baseline.json` yet. Write one with `--write-baseline`.");
+    }
   } else if (context.gate.warnings.length === 0) {
     lines.push("No recall@5 drop beyond tolerance (2 points overall, 5 per locale) against the baseline.");
   } else {
