@@ -3,7 +3,7 @@ public struct QueryConfidence: Equatable, Sendable {
   /// 0–1, rounded to 3 decimals: how well the best tier understood the query.
   public var confidence: Double
   /// No tier understood the query: the dictionary does not cover its words and the semantic list
-  /// is flat or low. Show the results as guesses; the server asks its concept tier.
+  /// is flat or low. Show the results as guesses.
   public var unsure: Bool
 
   public init(confidence: Double, unsure: Bool) {
@@ -12,8 +12,8 @@ public struct QueryConfidence: Equatable, Sendable {
   }
 }
 
-/// The unsure verdict and the concept merge, like `packages/core/src/confidence.ts`.
-/// Thresholds: DECISIONS.md, "Unsure queries and the concept tier".
+/// The unsure verdict, like `packages/core/src/confidence.ts`.
+/// Thresholds: DECISIONS.md, the entry on unsure queries (2026-10-02).
 public enum Confidence {
   /// At or above this ``AliasSearchOutput/coverage`` the alias dictionary explains the whole
   /// query.
@@ -29,12 +29,11 @@ public enum Confidence {
   private static let spreadFull = 0.06
 
   /// How strong a semantic list is, 0–1, from its final scores: the best cosine on the
-  /// calibrated scale, scaled down when the top does not stand out from results 2–5. Concept
-  /// results (`source == .concept`) are not semantic evidence and are skipped.
+  /// calibrated scale, scaled down when the top does not stand out from results 2–5.
   public static func semanticStrength(
     _ semantic: [SearchResult], calibration: Fusion.SemanticCalibration = .standard
   ) -> Double {
-    let scores = semantic.filter { $0.source != .concept }.map(\.score)
+    let scores = semantic.map(\.score)
     let top = scores.first ?? 0
     let level = min(
       1, max(0, (top - calibration.floor) / (calibration.ceiling - calibration.floor)))
@@ -70,29 +69,6 @@ public enum Confidence {
     let strength = semanticStrength(semantic, calibration: calibration)
     return QueryConfidence(
       confidence: rounded(max(aliasPart, strength)), unsure: !covered && strength < semanticSure)
-  }
-
-  /// Concept results (`source == .concept`) go after the confident alias hits (the dictionary
-  /// covers the query and the hit scores ≥ 0.6) and before every other result. Duplicates keep
-  /// their first place.
-  public static func mergeConcept(
-    _ results: [SearchResult], concept: [SearchResult], alias: AliasSearchOutput?,
-    limit: Int = 24
-  ) -> [SearchResult] {
-    if concept.isEmpty { return Array(results.prefix(max(0, limit))) }
-    let confident: Set<String> =
-      if let alias, aliasCovers(alias) {
-        Set(alias.results.filter { $0.score >= aliasSure }.map(\.id))
-      } else {
-        []
-      }
-    let head = results.filter { confident.contains($0.id) }
-    var seen: Set<String> = []
-    var merged: [SearchResult] = []
-    for result in head + concept + results where seen.insert(result.id).inserted {
-      merged.append(result)
-    }
-    return Array(merged.prefix(max(0, limit)))
   }
 
   private static func rounded(_ value: Double) -> Double {

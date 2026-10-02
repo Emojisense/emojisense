@@ -1,14 +1,8 @@
-import { assessConfidence, mergeConcept } from "./confidence.js";
+import { assessConfidence } from "./confidence.js";
 import { applyCulture, type Culture } from "./culture.js";
 import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
 import { shouldUseSemantic as defaultShouldUseSemantic, fuse } from "./fusion.js";
-import {
-  AUTO_REGION,
-  type ConceptInfo,
-  isAutoRegion,
-  type SemanticLayer,
-  type SemanticProvider,
-} from "./provider.js";
+import { AUTO_REGION, isAutoRegion, type SemanticLayer, type SemanticProvider } from "./provider.js";
 
 export type SessionStatus = "idle" | "alias" | "loading" | "fused" | "error";
 
@@ -30,17 +24,11 @@ export interface SessionState {
   /**
    * No tier understood the query (`assessConfidence`): the dictionary does not cover it and the
    * semantic list is flat or low. While `loading`, the dictionary's verdict alone. Show the
-   * results as guesses unless `concept.status` is "ok".
+   * results as guesses.
    */
   unsure: boolean;
   /** 0–1: how well the best tier understood the query. */
   confidence: number;
-  /**
-   * The server's concept tier for an unsure query (API layer only): with status "ok" the results
-   * lead with its emoji (`source: "concept"`) and `terms` say how it read the query ("rapper",
-   * "hip hop"). "pending": the session asks again shortly.
-   */
-  concept?: ConceptInfo;
 }
 
 export interface SearchSessionOptions {
@@ -64,8 +52,6 @@ export interface SearchSessionOptions {
    * that has one; until then only entries for every region apply.
    */
   region?: string;
-  /** Wait before asking again when the server's concept answer is pending. Default 1500 ms. */
-  conceptRetryMs?: number;
   onChange: (state: SessionState) => void;
 }
 
@@ -75,13 +61,9 @@ export interface SearchSession {
   dispose(): void;
 }
 
-/** Times a pending concept answer is asked for again (the server keeps working on it). */
-const CONCEPT_RETRIES = 2;
-
 /**
  * Framework-agnostic search controller: alias results on every keystroke, then (debounced,
- * cancellable) semantic results fused in, and the server's concept results for unsure queries.
- * Stale responses are dropped.
+ * cancellable) semantic results fused in. Stale responses are dropped.
  */
 export function createSearchSession(options: SearchSessionOptions): SearchSession {
   const {
@@ -92,7 +74,6 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
     debounceMs = 200,
     shouldUseSemantic = defaultShouldUseSemantic,
     region,
-    conceptRetryMs = 1500,
     onChange,
   } = options;
   const culture = options.culture === false ? undefined : (options.culture ?? engine.culture);
@@ -134,7 +115,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
       });
       if (!wantsSemantic) return;
 
-      const ask = async (retriesLeft: number) => {
+      timer = setTimeout(async () => {
         const controller = new AbortController();
         inflight = controller;
         const started = performance.now();
@@ -152,37 +133,24 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
             onChange({ query, results: present(alias.results), ...aliasOnly, status: "alias" });
             return;
           }
-          const semanticList = response.results.filter((r) => r.source !== "concept");
-          const conceptList = response.results.filter((r) => r.source === "concept");
-          const concept = response.concept ?? undefined;
           onChange({
             query,
             results: present(
-              mergeConcept(
-                fuse(alias, semanticList, limit, undefined, { popularity: engine.popularity }),
-                conceptList,
-                alias,
-                limit,
-              ),
+              fuse(alias, response.results, limit, undefined, { popularity: engine.popularity }),
             ),
             alias,
             aliasMs,
-            ...assessConfidence(alias, semanticList),
-            ...(concept ? { concept } : {}),
+            ...assessConfidence(alias, response.results),
             status: "fused",
             semanticMs: performance.now() - started,
             semanticCached: response.cached,
             ...(response.layer ? { layer: response.layer } : {}),
           });
-          if (concept?.status === "pending" && retriesLeft > 0) {
-            timer = setTimeout(() => ask(retriesLeft - 1), conceptRetryMs);
-          }
         } catch (error) {
           if (controller.signal.aborted) return;
           onChange({ query, results: present(alias.results), ...aliasOnly, status: "error", error });
         }
-      };
-      timer = setTimeout(() => ask(CONCEPT_RETRIES), debounceMs);
+      }, debounceMs);
     },
     dispose: cancel,
   };

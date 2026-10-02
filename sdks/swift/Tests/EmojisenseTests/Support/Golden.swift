@@ -70,7 +70,7 @@ struct Golden: Decodable, Sendable {
     let cases: [Case]
   }
 
-  /// `assess`, `semanticStrength` and `mergeConcept` (core/src/confidence.ts) on generated inputs.
+  /// `assess` and `semanticStrength` (core/src/confidence.ts) on generated inputs.
   struct ConfidenceCase: Decodable, Sendable {
     struct Alias: Decodable, Sendable {
       let tokens: [String]
@@ -106,15 +106,11 @@ struct Golden: Decodable, Sendable {
     let alias: Alias?
     /// `nil`: no semantic list given.
     let semantic: [Sourced]?
-    let concept: [Ranked]
-    let fused: [Sourced]
-    let limit: Int
     /// Unrounded. `nil` (or, in files made before 2026-10-02 19:30, a value of a list not in the
     /// file) when the case gives no semantic list.
     let strength: Double?
     let confidence: Double
     let unsure: Bool
-    let merged: [String]
   }
 
   let node: String

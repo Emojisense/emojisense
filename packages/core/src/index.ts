@@ -1,7 +1,6 @@
 export { createSemanticClient, type SemanticClient, type SemanticClientOptions } from "./client.js";
 export {
   assessConfidence,
-  mergeConcept,
   type QueryConfidence,
   SEMANTIC_SURE,
   semanticStrength,
@@ -77,7 +76,6 @@ export {
 } from "./pack.js";
 export {
   AUTO_REGION,
-  type ConceptInfo,
   chainProviders,
   isAutoRegion,
   type SemanticLayer,

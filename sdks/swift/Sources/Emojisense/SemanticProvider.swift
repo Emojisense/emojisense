@@ -19,16 +19,13 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
   /// Server: no tier understood the query (``Confidence/assess(alias:semantic:calibration:)``
   /// with its own dictionary).
   public var unsure: Bool?
-  /// Server: its concept tier's answer for an unsure query, `nil` when it was not asked. With
-  /// status ``ConceptInfo/Status/ok`` the concept emoji are in `results` with `source == .concept`.
-  public var concept: ConceptInfo?
   /// Set by the provider that answered.
   public var layer: SemanticLayer?
 
   public init(
     results: [SearchResult], packVersion: String, model: String? = nil, cached: Bool,
     degraded: Bool = false, overLimit: Bool = false, confidence: Double? = nil,
-    unsure: Bool? = nil, concept: ConceptInfo? = nil, layer: SemanticLayer? = nil
+    unsure: Bool? = nil, layer: SemanticLayer? = nil
   ) {
     self.results = results
     self.packVersion = packVersion
@@ -38,7 +35,6 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
     self.overLimit = overLimit
     self.confidence = confidence
     self.unsure = unsure
-    self.concept = concept
     self.layer = layer
   }
 
@@ -52,38 +48,7 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
     overLimit = try container.decodeIfPresent(Bool.self, forKey: .overLimit) ?? false
     confidence = try container.decodeIfPresent(Double.self, forKey: .confidence)
     unsure = try container.decodeIfPresent(Bool.self, forKey: .unsure)
-    // A concept answer this client does not know (a newer status) does not hide the results.
-    concept = try? container.decodeIfPresent(ConceptInfo.self, forKey: .concept)
     layer = try container.decodeIfPresent(SemanticLayer.self, forKey: .layer)
-  }
-}
-
-/// The server's concept tier (docs/API.md, "Unsure queries and concepts").
-public struct ConceptInfo: Codable, Equatable, Sendable {
-  public enum Status: String, Codable, Sendable {
-    /// Concept results are in the answer.
-    case ok
-    /// The model did not know the query (`"none"` in the API).
-    case noConcept = "none"
-    /// Still working: ask again in a moment.
-    case pending
-    /// No model call now (budget, rate limit, error).
-    case unavailable
-
-    /// A pending or unavailable answer can change: clients ask again instead of caching it.
-    var isFinal: Bool { self != .pending && self != .unavailable }
-  }
-
-  public var status: Status
-  /// What the query names: "person", "music", "film", "brand", "meme", …
-  public var kind: String?
-  /// "Understood as": up to 3 catalog phrases, e.g. ["rapper", "hip hop"]. Never model text.
-  public var terms: [String]?
-
-  public init(status: Status, kind: String? = nil, terms: [String]? = nil) {
-    self.status = status
-    self.kind = kind
-    self.terms = terms
   }
 }
 

@@ -13,8 +13,7 @@ import {
   ROW,
 } from "./pack.js";
 
-/** `concept`: the server's concept tier (an LLM's reading of an unsure query, checked against the catalog). */
-export type ResultSource = "alias" | "semantic" | "custom" | "culture" | "concept";
+export type ResultSource = "alias" | "semantic" | "custom" | "culture";
 
 export interface SearchResult {
   /** The emoji character, or `:shortcode:` for a custom emoji. */

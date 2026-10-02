@@ -25,8 +25,7 @@ const REPO_ROOT = args.root ? resolve(args.root) : THIS_REPO;
 const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
-const { assessConfidence, createEngine, embeddingText, fuse, mergeConcept, normalize, semanticStrength } =
-  core;
+const { assessConfidence, createEngine, embeddingText, fuse, normalize, semanticStrength } = core;
 const { FUNCTION_WORDS }: typeof import("../../../packages/core/src/function-words.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/function-words.ts")).href
 );
@@ -376,8 +375,8 @@ const allEngine = createEngine(allFiles.map(pack));
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
 /**
- * `assessConfidence`, `semanticStrength` and `mergeConcept` on generated inputs: an alias output
- * (tokens, confidence, coverage, results) and a semantic list with concept results in it.
+ * `assessConfidence` and `semanticStrength` on generated inputs: an alias output (tokens,
+ * confidence, coverage, results) and a semantic list.
  */
 function confidenceCases() {
   const next = random(20261002);
@@ -404,19 +403,12 @@ function confidenceCases() {
     };
     const top = round3(0.3 + next() * 0.4);
     const semanticIds = ids.filter(() => next() < 0.6);
-    const semantic = [
-      ...(n % 5 === 0 ? [{ emoji: "1F3A4", id: "1F3A4", score: 0.9, source: "concept" as const }] : []),
-      ...semanticIds.map((id, i) => ({
-        emoji: id,
-        id,
-        score: round3(top - i * next() * 0.03),
-        source: "semantic" as const,
-      })),
-    ];
-    const concept = ids
-      .filter(() => next() < 0.25)
-      .map((id, i) => ({ emoji: id, id, score: round3(0.9 - i * 0.1), source: "concept" as const }));
-    const fused = [...alias.results, ...semantic.filter((r) => r.source === "semantic")];
+    const semantic = semanticIds.map((id, i) => ({
+      emoji: id,
+      id,
+      score: round3(top - i * next() * 0.03),
+      source: "semantic" as const,
+    }));
     const withAlias = n % 7 !== 0;
     const verdict = assessConfidence(withAlias ? alias : undefined, n % 9 === 0 ? undefined : semantic);
     return {
@@ -424,13 +416,9 @@ function confidenceCases() {
         ? { tokens, confidence, coverage, results: alias.results.map((r) => [r.id, r.score]) }
         : null,
       semantic: n % 9 === 0 ? null : semantic.map((r) => [r.id, r.score, r.source]),
-      concept: concept.map((r) => [r.id, r.score]),
-      fused: fused.map((r) => [r.id, r.score, r.source]),
-      limit: 4 + (n % 5),
       strength: n % 9 === 0 ? null : semanticStrength(semantic),
       confidence: verdict.confidence,
       unsure: verdict.unsure,
-      merged: mergeConcept(fused, concept, withAlias ? alias : undefined, 4 + (n % 5)).map((r) => r.id),
     };
   });
 }
@@ -486,10 +474,9 @@ const golden = {
    */
   entityKeystrokes: [{ packs: allFiles, cases: keystrokeCases(allEngine, GUARD_QUERIES, 3) }],
   /**
-   * The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
-   * `alias` / `semantic` null = not given. Results are `[id, score]` (alias, concept) or
-   * `[id, score, source]` (semantic list, fused list). `strength` is unrounded, null without a
-   * semantic list.
+   * The unsure verdict (core/src/confidence.ts) on generated inputs. `alias` / `semantic` null =
+   * not given. Results are `[id, score]` (alias) or `[id, score, source]` (semantic list).
+   * `strength` is unrounded, null without a semantic list.
    */
   confidence: confidenceCases(),
 };

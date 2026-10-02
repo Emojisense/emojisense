@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   aliasCovers,
   assessConfidence,
-  mergeConcept,
   SEMANTIC_SURE,
   semanticStrength,
   WHOLE_COVERAGE,
@@ -46,8 +45,7 @@ describe("semanticStrength", () => {
     expect(flat).toBeCloseTo(clear / 2, 5);
   });
 
-  it("skips concept results and handles a list of one", () => {
-    expect(semanticStrength([result("C", 0.99, "concept"), ...semantic(0.4, 0)])).toBe(0);
+  it("handles a list of one and an empty list", () => {
     expect(semanticStrength([result("S", 0.58, "semantic")])).toBe(1);
     expect(semanticStrength([])).toBe(0);
   });
@@ -95,34 +93,5 @@ describe("assessConfidence", () => {
     expect(SEMANTIC_SURE).toBeGreaterThan(0);
     const justBelow = semantic(0.44 + 0.14 * (SEMANTIC_SURE - 0.01), 0.06);
     expect(assessConfidence(alias(0, 0, []), justBelow).unsure).toBe(true);
-  });
-});
-
-describe("mergeConcept", () => {
-  const fused = [result("A", 0.9, "alias"), result("S", 0.5, "semantic"), result("C2", 0.4, "semantic")];
-  const concept = [result("C1", 0.8, "concept"), result("C2", 0.7, "concept")];
-
-  it("puts concept results first when no alias hit is confident", () => {
-    expect(mergeConcept(fused, concept, alias(0.3, 0.4, ["A"])).map((x) => x.id)).toEqual([
-      "C1",
-      "C2",
-      "A",
-      "S",
-    ]);
-  });
-
-  it("keeps confident alias hits of a covered query above the concept results", () => {
-    expect(mergeConcept(fused, concept, alias(0.9, 1, ["A"])).map((x) => x.id)).toEqual([
-      "A",
-      "C1",
-      "C2",
-      "S",
-    ]);
-  });
-
-  it("keeps the first place of a duplicate, respects the limit and returns the input without concepts", () => {
-    expect(mergeConcept(fused, concept, undefined, 2).map((x) => x.id)).toEqual(["C1", "C2"]);
-    expect(mergeConcept(fused, [], undefined)).toEqual(fused);
-    expect(mergeConcept(fused, concept, undefined).find((x) => x.id === "C2")?.source).toBe("concept");
   });
 });

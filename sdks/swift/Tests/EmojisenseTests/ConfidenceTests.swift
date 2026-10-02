@@ -39,9 +39,7 @@ final class ConfidenceTests: XCTestCase {
     XCTAssertEqual(flat, clear / 2, accuracy: 1e-5)
   }
 
-  func testSkipsConceptResultsAndHandlesAListOfOne() {
-    XCTAssertEqual(
-      Confidence.semanticStrength([result("C", 0.99, .concept)] + semantic(0.4, 0)), 0)
+  func testHandlesAListOfOneAndAnEmptyList() {
     XCTAssertEqual(Confidence.semanticStrength([result("S", 0.58, .semantic)]), 1)
     XCTAssertEqual(Confidence.semanticStrength([]), 0)
   }
@@ -94,34 +92,5 @@ final class ConfidenceTests: XCTestCase {
     XCTAssertGreaterThan(Confidence.semanticSure, 0)
     let justBelow = semantic(0.44 + 0.14 * (Confidence.semanticSure - 0.01), 0.06)
     XCTAssertTrue(Confidence.assess(alias: alias(0, 0, []), semantic: justBelow).unsure)
-  }
-
-  // MARK: mergeConcept
-
-  private var fused: [SearchResult] {
-    [result("A", 0.9, .alias), result("S", 0.5, .semantic), result("C2", 0.4, .semantic)]
-  }
-  private var concept: [SearchResult] {
-    [result("C1", 0.8, .concept), result("C2", 0.7, .concept)]
-  }
-
-  func testPutsConceptResultsFirstWhenNoAliasHitIsConfident() {
-    let merged = Confidence.mergeConcept(fused, concept: concept, alias: alias(0.3, 0.4, ["A"]))
-    XCTAssertEqual(merged.map(\.id), ["C1", "C2", "A", "S"])
-  }
-
-  func testKeepsConfidentAliasHitsOfACoveredQueryAboveTheConceptResults() {
-    let merged = Confidence.mergeConcept(fused, concept: concept, alias: alias(0.9, 1, ["A"]))
-    XCTAssertEqual(merged.map(\.id), ["A", "C1", "C2", "S"])
-  }
-
-  func testKeepsTheFirstPlaceOfADuplicateRespectsTheLimitAndReturnsTheInputWithoutConcepts() {
-    XCTAssertEqual(
-      Confidence.mergeConcept(fused, concept: concept, alias: nil, limit: 2).map(\.id),
-      ["C1", "C2"])
-    XCTAssertEqual(Confidence.mergeConcept(fused, concept: [], alias: nil), fused)
-    XCTAssertEqual(
-      Confidence.mergeConcept(fused, concept: concept, alias: nil).first { $0.id == "C2" }?.source,
-      .concept)
   }
 }

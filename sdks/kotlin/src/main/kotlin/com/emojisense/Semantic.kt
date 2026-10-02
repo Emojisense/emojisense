@@ -36,11 +36,6 @@ public data class SemanticResponse(
     val confidence: Double? = null,
     /** Server: no tier understood the query ([Confidence.assessConfidence] with its own dictionary). */
     val unsure: Boolean? = null,
-    /**
-     * Server: its concept tier's answer for an unsure query, null when it was not asked. With
-     * [ConceptStatus.OK] the concept emoji are in [results] with [ResultSource.CONCEPT].
-     */
-    val concept: ConceptInfo? = null,
 ) {
     public companion object {
         /** Decodes an API answer (`/v1/search`). Unknown keys are ignored. */
@@ -58,17 +53,6 @@ public data class SemanticResponse(
                 region = root.optionalString("region"),
                 confidence = root.optionalDouble("confidence"),
                 unsure = root.optionalBoolean("unsure"),
-                concept = root.optionalObject("concept")?.let(::decodeConcept),
-            )
-        }
-
-        /** Null for a status this version does not know: the answer then counts as final. */
-        private fun decodeConcept(concept: JsonObject): ConceptInfo? {
-            val status = ConceptStatus.fromKey(concept.optionalString("status") ?: "") ?: return null
-            return ConceptInfo(
-                status = status,
-                kind = concept.optionalString("kind"),
-                terms = concept.optionalArray("terms")?.mapNotNull { it.stringOrNull() },
             )
         }
 
@@ -84,39 +68,6 @@ public data class SemanticResponse(
             )
         }
     }
-}
-
-/** The state of the server's concept tier for one query ([ConceptInfo.status]). */
-public enum class ConceptStatus(public val key: String) {
-    /** Concept results are in the answer. */
-    OK("ok"),
-
-    /** The model did not know the query. */
-    NONE("none"),
-
-    /** Still working: ask again in a moment. */
-    PENDING("pending"),
-
-    /** No model call now (budget, rate limit, error). */
-    UNAVAILABLE("unavailable"),
-    ;
-
-    public companion object {
-        @JvmStatic
-        public fun fromKey(key: String): ConceptStatus? = entries.firstOrNull { it.key == key }
-    }
-}
-
-/** The server's concept tier (docs/API.md, "Unsure queries and concepts"). */
-public data class ConceptInfo @JvmOverloads constructor(
-    val status: ConceptStatus,
-    /** What the query names: "person", "music", "film", "brand", "meme", … */
-    val kind: String? = null,
-    /** "Understood as": up to 3 catalog phrases, e.g. ["rapper", "hip hop"]. Never model text. */
-    val terms: List<String>? = null,
-) {
-    /** A pending or unavailable answer is not final: ask the API again (and do not cache it). */
-    val isFinal: Boolean get() = status != ConceptStatus.PENDING && status != ConceptStatus.UNAVAILABLE
 }
 
 /** Options of [SemanticProvider.search]. */

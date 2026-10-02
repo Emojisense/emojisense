@@ -2,8 +2,6 @@ public enum ResultSource: String, Codable, Sendable {
   case alias
   case semantic
   case custom
-  /// The server's concept tier: its reading of an unsure query, checked against the catalog.
-  case concept
 }
 
 /// One ranked emoji from any tier.

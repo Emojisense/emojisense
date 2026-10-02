@@ -6,14 +6,14 @@ public data class QueryConfidence(
     val confidence: Double,
     /**
      * No tier understood the query: the dictionary does not cover its words and the semantic list
-     * is flat or low. Show the results as guesses; the server asks its concept tier.
+     * is flat or low. Show the results as guesses.
      */
     val unsure: Boolean,
 )
 
 /**
- * The unsure verdict and the concept merge, like `packages/core/src/confidence.ts`. Thresholds:
- * DECISIONS.md, "Unsure queries and the concept tier".
+ * The unsure verdict, like `packages/core/src/confidence.ts`. Thresholds: DECISIONS.md, the entry
+ * on unsure queries (2026-10-02).
  */
 public object Confidence {
     /** At or above this [AliasSearchOutput.coverage] the alias dictionary explains the whole query. */
@@ -38,7 +38,6 @@ public object Confidence {
      * How strong a semantic list is, 0–1, from its final scores: the best cosine on the calibrated
      * scale, scaled down when the top does not stand out from results 2–5. This is the one place
      * that reads semantic scores for the unsure verdict, so a reranker can feed its own list here.
-     * Concept results ([ResultSource.CONCEPT]) are not semantic evidence and are skipped.
      */
     @JvmStatic
     @JvmOverloads
@@ -46,7 +45,7 @@ public object Confidence {
         semantic: List<SearchResult>,
         calibration: SemanticCalibration = SemanticCalibration.DEFAULT,
     ): Double {
-        val scores = semantic.filter { it.source != ResultSource.CONCEPT }.map { it.score }
+        val scores = semantic.map { it.score }
         val top = scores.firstOrNull() ?: 0.0
         val level = minOf(1.0, maxOf(0.0, (top - calibration.floor) / (calibration.ceiling - calibration.floor)))
         val next = scores.drop(1).take(SPREAD_RANKS - 1)
@@ -87,30 +86,5 @@ public object Confidence {
         if (semantic == null) return QueryConfidence(roundScore(aliasPart), alias != null && !covered)
         val strength = semanticStrength(semantic, calibration)
         return QueryConfidence(roundScore(maxOf(aliasPart, strength)), !covered && strength < SEMANTIC_SURE)
-    }
-
-    /**
-     * Concept results ([ResultSource.CONCEPT]) go after the confident alias hits (the dictionary
-     * covers the query and the hit scores ≥ 0.6) and before every other result. Duplicates keep
-     * their first place.
-     */
-    @JvmStatic
-    @JvmOverloads
-    public fun mergeConcept(
-        results: List<SearchResult>,
-        concept: List<SearchResult>,
-        alias: AliasSearchOutput<SearchResult>?,
-        limit: Int = 24,
-    ): List<SearchResult> {
-        val count = maxOf(0, limit)
-        if (concept.isEmpty()) return results.take(count)
-        val confident = if (alias != null && aliasCovers(alias)) {
-            alias.results.filter { it.score >= ALIAS_SURE }.mapTo(HashSet()) { it.id }
-        } else {
-            emptySet()
-        }
-        val head = results.filter { it.id in confident }
-        val seen = HashSet<String>()
-        return (head + concept + results).filter { seen.add(it.id) }.take(count)
     }
 }

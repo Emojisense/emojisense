@@ -150,12 +150,11 @@ class ConformanceTest {
         assertEquals(emptyList(), differences)
     }
 
-    /** `assessConfidence`, `semanticStrength` and `mergeConcept` on the generated inputs of the reference. */
+    /** `assessConfidence` and `semanticStrength` on the generated inputs of the reference. */
     @Test
-    fun `the unsure verdict and the concept merge match the reference`() {
+    fun `the unsure verdict matches the reference`() {
         val strength = mutableListOf<String>()
         val verdict = mutableListOf<String>()
-        val merged = mutableListOf<String>()
         golden.confidence.forEachIndexed { n, case ->
             val semantic = case.semantic
             val expected = case.strength
@@ -167,16 +166,12 @@ class ConformanceTest {
             if (actual != QueryConfidence(case.confidence, case.unsure)) {
                 verdict.add("  #$n: kotlin $actual, ts ${case.confidence}/${case.unsure}")
             }
-            val ids = Confidence.mergeConcept(case.fused, case.concept, case.alias, case.limit).map { it.id }
-            if (ids != case.merged) merged.add("  #$n: kotlin $ids, ts ${case.merged}")
         }
         // Without a semantic list the reference records no strength.
         report("semantic strength within 1e-12 (cases with a semantic list)", golden.confidence.count { it.semantic != null }, strength)
         report("unsure verdict: identical confidence and unsure", golden.confidence.size, verdict)
-        report("concept merge: identical ids", golden.confidence.size, merged)
         assertEquals(emptyList(), strength)
         assertEquals(emptyList(), verdict)
-        assertEquals(emptyList(), merged)
     }
 
     /** The Kotlin copy (FunctionWords.kt, generated) holds exactly the reference lists. */

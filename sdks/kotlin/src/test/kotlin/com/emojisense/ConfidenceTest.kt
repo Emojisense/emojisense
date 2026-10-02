@@ -41,8 +41,7 @@ class ConfidenceTest {
     }
 
     @Test
-    fun `strength skips concept results and handles a list of one`() {
-        assertEquals(0.0, Confidence.semanticStrength(listOf(result("C", 0.99, ResultSource.CONCEPT)) + semantic(0.4, 0.0)))
+    fun `strength handles a list of one and an empty list`() {
         assertEquals(1.0, Confidence.semanticStrength(listOf(result("S", 0.58, ResultSource.SEMANTIC))))
         assertEquals(0.0, Confidence.semanticStrength(emptyList()))
     }
@@ -94,31 +93,5 @@ class ConfidenceTest {
         assertTrue(Confidence.SEMANTIC_SURE > 0)
         val justBelow = semantic(0.44 + 0.14 * (Confidence.SEMANTIC_SURE - 0.01), 0.06)
         assertTrue(Confidence.assessConfidence(alias(0.0, 0.0, emptyList()), justBelow).unsure)
-    }
-
-    // ── mergeConcept ──────────────────────────────────────────────────────────────────────────
-
-    private val fused = listOf(
-        result("A", 0.9, ResultSource.ALIAS),
-        result("S", 0.5, ResultSource.SEMANTIC),
-        result("C2", 0.4, ResultSource.SEMANTIC),
-    )
-    private val concept = listOf(result("C1", 0.8, ResultSource.CONCEPT), result("C2", 0.7, ResultSource.CONCEPT))
-
-    @Test
-    fun `puts concept results first when no alias hit is confident`() {
-        assertEquals(listOf("C1", "C2", "A", "S"), Confidence.mergeConcept(fused, concept, alias(0.3, 0.4)).map { it.id })
-    }
-
-    @Test
-    fun `keeps confident alias hits of a covered query above the concept results`() {
-        assertEquals(listOf("A", "C1", "C2", "S"), Confidence.mergeConcept(fused, concept, alias(0.9, 1.0)).map { it.id })
-    }
-
-    @Test
-    fun `keeps the first place of a duplicate, respects the limit and returns the input without concepts`() {
-        assertEquals(listOf("C1", "C2"), Confidence.mergeConcept(fused, concept, null, 2).map { it.id })
-        assertEquals(fused, Confidence.mergeConcept(fused, emptyList(), null))
-        assertEquals(ResultSource.CONCEPT, Confidence.mergeConcept(fused, concept, null).first { it.id == "C2" }.source)
     }
 }

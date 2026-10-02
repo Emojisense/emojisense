@@ -205,7 +205,7 @@ final class ConformanceTests: XCTestCase {
 
   // MARK: Confidence
 
-  /// The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
+  /// The unsure verdict (core/src/confidence.ts) on generated inputs.
   func testConfidenceMatchesTheReference() throws {
     let cases = try Self.golden.get().confidence
     var differences: [String] = []
@@ -216,12 +216,6 @@ final class ConformanceTests: XCTestCase {
       let verdict = Confidence.assess(alias: alias, semantic: semantic)
       // Strength is checked only for a case with a semantic list.
       let strength = semantic.map { Confidence.semanticStrength($0) }
-      let concept = testCase.concept.map {
-        SearchResult(emoji: $0.id, id: $0.id, score: $0.score, source: .concept)
-      }
-      let merged = Confidence.mergeConcept(
-        testCase.fused.map(\.result), concept: concept, alias: alias, limit: testCase.limit
-      ).map(\.id)
       var sameStrength = true
       if let strength {
         let difference = testCase.strength.map { abs(strength - $0) } ?? .infinity
@@ -229,18 +223,18 @@ final class ConformanceTests: XCTestCase {
         sameStrength = difference <= 1e-12
       }
       if !sameStrength || verdict.confidence != testCase.confidence
-        || verdict.unsure != testCase.unsure || merged != testCase.merged
+        || verdict.unsure != testCase.unsure
       {
         let swiftStrength = strength.map { "\($0)" } ?? "-"
         let referenceStrength = testCase.strength.map { "\($0)" } ?? "-"
         differences.append(
-          "  case \(number): swift \(swiftStrength) \(verdict) \(merged), ts \(referenceStrength) "
-            + "\(testCase.confidence) \(testCase.unsure) \(testCase.merged)")
+          "  case \(number): swift \(swiftStrength) \(verdict), ts \(referenceStrength) "
+            + "\(testCase.confidence) \(testCase.unsure)")
       }
     }
     let withSemantic = cases.filter { $0.semantic != nil }.count
     report(
-      "confidence cases: confidence, unsure, concept merge, strength (\(withSemantic) lists, "
+      "confidence cases: confidence, unsure, strength (\(withSemantic) lists, "
         + "largest difference \(largestStrengthDifference))",
       agreed: cases.count - differences.count, of: cases.count, differences)
     XCTAssertEqual(differences, [])

@@ -20,7 +20,7 @@ export interface QueryConfidence {
   confidence: number;
   /**
    * No tier understood the query: the dictionary does not cover its words and the semantic list
-   * is flat or low. Show the results as guesses; the server asks its concept tier.
+   * is flat or low. Show the results as guesses.
    */
   unsure: boolean;
 }
@@ -29,13 +29,12 @@ export interface QueryConfidence {
  * How strong a semantic list is, 0–1, from its final scores: the best cosine on the calibrated
  * scale, scaled down when the top does not stand out from results 2–5. This is the one place
  * that reads semantic scores for the unsure verdict, so a reranker can feed its own list here.
- * Concept results (`source: "concept"`) are not semantic evidence and are skipped.
  */
 export function semanticStrength(
   semantic: readonly SearchResult[],
   calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
 ): number {
-  const scores = semantic.filter((r) => r.source !== "concept").map((r) => r.score);
+  const scores = semantic.map((r) => r.score);
   const [top = 0, ...rest] = scores;
   const { floor, ceiling } = calibration;
   const level = Math.min(1, Math.max(0, (top - floor) / (ceiling - floor)));
@@ -60,7 +59,8 @@ export function aliasCovers(alias: AliasSearchOutput): boolean {
  * Is a query unsure? Yes when the dictionary does not cover it (`aliasCovers`) and the semantic
  * list is flat or low (`semanticStrength` < 0.6). Without a semantic list (not asked, offline,
  * over the limit), when the dictionary does not cover it. An empty query is never unsure.
- * Thresholds: DECISIONS.md, "Unsure queries and the concept tier".
+ * Thresholds: DECISIONS.md, "Unsure queries and the concept tier" (the LLM tier is removed; the
+ * verdict stays).
  */
 export function assessConfidence(
   alias: AliasSearchOutput | undefined,
@@ -74,33 +74,6 @@ export function assessConfidence(
     return { confidence: round(aliasPart), unsure: alias !== undefined && !covered };
   const strength = semanticStrength(semantic, calibration);
   return { confidence: round(Math.max(aliasPart, strength)), unsure: !covered && strength < SEMANTIC_SURE };
-}
-
-/**
- * Concept results (`source: "concept"`) go after the confident alias hits (the dictionary covers
- * the query and the hit scores ≥ 0.6) and before every other result. Duplicates keep their first
- * place.
- */
-export function mergeConcept(
-  results: readonly SearchResult[],
-  concept: readonly SearchResult[],
-  alias: AliasSearchOutput | undefined,
-  limit = 24,
-): SearchResult[] {
-  if (concept.length === 0) return results.slice(0, limit);
-  const confident =
-    alias && aliasCovers(alias)
-      ? new Set(alias.results.filter((r) => r.score >= ALIAS_SURE).map((r) => r.id))
-      : new Set<string>();
-  const head = results.filter((r) => confident.has(r.id));
-  const merged: SearchResult[] = [];
-  const seen = new Set<string>();
-  for (const result of [...head, ...concept, ...results]) {
-    if (seen.has(result.id)) continue;
-    seen.add(result.id);
-    merged.push(result);
-  }
-  return merged.slice(0, limit);
 }
 
 const round = (n: number) => Math.round(n * 1000) / 1000;

@@ -40,20 +40,16 @@ class Golden private constructor(root: JsonObject) {
     data class KeystrokeCase(val q: String, val locale: String, val top: List<Ranked>)
 
     /**
-     * One input of `assessConfidence`, `semanticStrength` and `mergeConcept` (core/src/confidence.ts)
-     * and the reference answers. [alias] / [semantic] null = not given. [strength] is unrounded,
+     * One input of `assessConfidence` and `semanticStrength` (core/src/confidence.ts) and the
+     * reference answers. [alias] / [semantic] null = not given. [strength] is unrounded,
      * null without a semantic list.
      */
     data class ConfidenceCase(
         val alias: AliasSearchOutput<AliasResult>?,
         val semantic: List<SearchResult>?,
-        val concept: List<SearchResult>,
-        val fused: List<SearchResult>,
-        val limit: Int,
         val strength: Double?,
         val confidence: Double,
         val unsure: Boolean,
-        val merged: List<String>,
     )
 
     val node: String = root.text("node")
@@ -105,21 +101,15 @@ class Golden private constructor(root: JsonObject) {
             value.getValue("packs").jsonArray.map { it.jsonPrimitive.content } to keystrokeCases(value)
         }
 
-    /** The unsure verdict and the concept merge on generated inputs. */
+    /** The unsure verdict on generated inputs. */
     val confidence: List<ConfidenceCase> = root.getValue("confidence").jsonArray.map { element ->
         val case = element.jsonObject
         ConfidenceCase(
             alias = (case["alias"] as? JsonObject)?.let(::aliasOutput),
             semantic = (case["semantic"] as? JsonArray)?.let(::sourced),
-            concept = case.getValue("concept").jsonArray.map {
-                EmojiResult(it.jsonArray[0].jsonPrimitive.content, it.jsonArray[0].jsonPrimitive.content, it.jsonArray[1].jsonPrimitive.double, ResultSource.CONCEPT)
-            },
-            fused = sourced(case.getValue("fused").jsonArray),
-            limit = case.getValue("limit").jsonPrimitive.int,
             strength = case["strength"]?.jsonPrimitive?.doubleOrNull,
             confidence = case.getValue("confidence").jsonPrimitive.double,
             unsure = case.getValue("unsure").jsonPrimitive.boolean,
-            merged = case.getValue("merged").jsonArray.map { it.jsonPrimitive.content },
         )
     }
 

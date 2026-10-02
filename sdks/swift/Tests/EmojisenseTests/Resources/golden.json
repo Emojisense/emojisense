@@ -34417,1386 +34417,754 @@
     }
   ],
   "confidence": [
-    {
-      "alias": null,
-      "semantic": null,
-      "concept": [["1F98E", 0.9], ["1F436", 0.8]],
-      "fused": [
-        ["1F525", 0.063, "alias"],
-        ["1F3A4", 0.013, "alias"],
-        ["1F3B5", 0, "alias"],
-        ["1F600", 0.375, "semantic"],
-        ["1F525", 0.357, "semantic"],
-        ["1F680", 0.329, "semantic"],
-        ["1F3A4", 0.327, "semantic"],
-        ["2B50", 0.332, "semantic"],
-        ["1F30B", 0.281, "semantic"],
-        ["1F436", 0.226, "semantic"]
-      ],
-      "limit": 4,
-      "strength": null,
-      "confidence": 0,
-      "unsure": false,
-      "merged": ["1F98E", "1F436", "1F525", "1F3A4"]
-    },
+    { "alias": null, "semantic": null, "strength": null, "confidence": 0, "unsure": false },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.847,
-        "coverage": 0.826,
-        "results": [["1F600", 0.847], ["1F451", 0.797], ["1F98E", 0.747]]
+        "confidence": 0.743,
+        "coverage": 0.392,
+        "results": [["1F3B5", 0.743], ["2B50", 0.693]]
       },
       "semantic": [
-        ["1F600", 0.408, "semantic"],
-        ["1F525", 0.38, "semantic"],
-        ["1F680", 0.358, "semantic"],
-        ["1F3A4", 0.322, "semantic"],
-        ["2B50", 0.319, "semantic"],
-        ["1F30B", 0.308, "semantic"],
-        ["1F436", 0.255, "semantic"]
+        ["1F525", 0.393, "semantic"],
+        ["1F680", 0.382, "semantic"],
+        ["1F3B5", 0.365, "semantic"],
+        ["1F451", 0.351, "semantic"],
+        ["1F98E", 0.309, "semantic"],
+        ["1F436", 0.3, "semantic"]
       ],
-      "concept": [["1F525", 0.9], ["1F98E", 0.8]],
-      "fused": [
-        ["1F600", 0.847, "alias"],
-        ["1F451", 0.797, "alias"],
-        ["1F98E", 0.747, "alias"],
-        ["1F600", 0.408, "semantic"],
-        ["1F525", 0.38, "semantic"],
-        ["1F680", 0.358, "semantic"],
-        ["1F3A4", 0.322, "semantic"],
-        ["2B50", 0.319, "semantic"],
-        ["1F30B", 0.308, "semantic"],
-        ["1F436", 0.255, "semantic"]
-      ],
-      "limit": 5,
       "strength": 0,
-      "confidence": 0.823,
-      "unsure": true,
-      "merged": ["1F525", "1F98E", "1F600", "1F451", "1F680"]
+      "confidence": 0.343,
+      "unsure": true
     },
     {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.323,
-        "coverage": 0.399,
-        "results": [["1F680", 0.323], ["1F3A4", 0.273], ["1F451", 0.223], ["1F98E", 0.173], ["2B50", 0.123]]
-      },
+      "alias": { "tokens": ["a"], "confidence": 0.775, "coverage": 0.281, "results": [["1F525", 0.775]] },
       "semantic": [
-        ["1F525", 0.606, "semantic"],
-        ["1F3A4", 0.6, "semantic"],
-        ["1F3B5", 0.556, "semantic"],
-        ["1F98E", 0.556, "semantic"],
-        ["2B50", 0.514, "semantic"],
-        ["1F30B", 0.563, "semantic"],
-        ["1F436", 0.534, "semantic"]
+        ["1F525", 0.356, "semantic"],
+        ["1F3A4", 0.343, "semantic"],
+        ["1F3B5", 0.355, "semantic"],
+        ["1F451", 0.341, "semantic"],
+        ["1F30B", 0.266, "semantic"],
+        ["1F436", 0.335, "semantic"]
       ],
-      "concept": [["1F600", 0.9], ["1F451", 0.8], ["1F98E", 0.7], ["1F436", 0.6]],
-      "fused": [
-        ["1F680", 0.323, "alias"],
-        ["1F3A4", 0.273, "alias"],
-        ["1F451", 0.223, "alias"],
-        ["1F98E", 0.173, "alias"],
-        ["2B50", 0.123, "alias"],
-        ["1F525", 0.606, "semantic"],
-        ["1F3A4", 0.6, "semantic"],
-        ["1F3B5", 0.556, "semantic"],
-        ["1F98E", 0.556, "semantic"],
-        ["2B50", 0.514, "semantic"],
-        ["1F30B", 0.563, "semantic"],
-        ["1F436", 0.534, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.9124999999999999,
-      "confidence": 0.912,
-      "unsure": false,
-      "merged": ["1F600", "1F451", "1F98E", "1F436", "1F680", "1F3A4"]
+      "strength": 0,
+      "confidence": 0.256,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a", "b"],
-        "confidence": 0.905,
-        "coverage": 0.842,
-        "results": [["1F3A4", 0.905], ["1F98E", 0.855], ["1F30B", 0.805]]
+        "confidence": 0.176,
+        "coverage": 0.259,
+        "results": [["1F3B5", 0.176], ["1F436", 0.126]]
       },
       "semantic": [
-        ["1F600", 0.531, "semantic"],
-        ["1F525", 0.527, "semantic"],
-        ["1F3A4", 0.502, "semantic"],
-        ["1F3B5", 0.481, "semantic"],
-        ["1F451", 0.46, "semantic"],
-        ["1F98E", 0.511, "semantic"],
-        ["2B50", 0.362, "semantic"],
-        ["1F436", 0.392, "semantic"]
+        ["1F600", 0.421, "semantic"],
+        ["1F525", 0.393, "semantic"],
+        ["1F3A4", 0.393, "semantic"],
+        ["1F451", 0.394, "semantic"],
+        ["2B50", 0.397, "semantic"],
+        ["1F30B", 0.387, "semantic"],
+        ["1F436", 0.297, "semantic"]
       ],
-      "concept": [["1F600", 0.9], ["1F680", 0.8]],
-      "fused": [
-        ["1F3A4", 0.905, "alias"],
-        ["1F98E", 0.855, "alias"],
-        ["1F30B", 0.805, "alias"],
-        ["1F600", 0.531, "semantic"],
-        ["1F525", 0.527, "semantic"],
-        ["1F3A4", 0.502, "semantic"],
-        ["1F3B5", 0.481, "semantic"],
-        ["1F451", 0.46, "semantic"],
-        ["1F98E", 0.511, "semantic"],
-        ["2B50", 0.362, "semantic"],
-        ["1F436", 0.392, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0.5335416666666675,
-      "confidence": 0.896,
-      "unsure": true,
-      "merged": ["1F600", "1F680", "1F3A4", "1F98E", "1F30B", "1F525", "1F3B5"]
-    },
-    {
-      "alias": { "tokens": ["a"], "confidence": 0.169, "coverage": 1, "results": [["1F3A4", 0.169]] },
-      "semantic": [
-        ["1F525", 0.443, "semantic"],
-        ["1F98E", 0.437, "semantic"],
-        ["1F30B", 0.408, "semantic"],
-        ["1F436", 0.436, "semantic"]
-      ],
-      "concept": [["1F680", 0.9], ["1F3A4", 0.8], ["1F436", 0.7]],
-      "fused": [
-        ["1F3A4", 0.169, "alias"],
-        ["1F525", 0.443, "semantic"],
-        ["1F98E", 0.437, "semantic"],
-        ["1F30B", 0.408, "semantic"],
-        ["1F436", 0.436, "semantic"]
-      ],
-      "limit": 8,
-      "strength": 0.013571428571428592,
-      "confidence": 0.169,
-      "unsure": true,
-      "merged": ["1F680", "1F3A4", "1F436", "1F525", "1F98E", "1F30B"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.139,
-        "coverage": 0.329,
-        "results": [["1F680", 0.139], ["1F451", 0.089], ["2B50", 0.039]]
-      },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F600", 0.448, "semantic"],
-        ["1F525", 0.442, "semantic"],
-        ["1F680", 0.392, "semantic"],
-        ["1F3A4", 0.441, "semantic"],
-        ["1F3B5", 0.39, "semantic"],
-        ["1F451", 0.415, "semantic"],
-        ["2B50", 0.303, "semantic"],
-        ["1F30B", 0.411, "semantic"]
-      ],
-      "concept": [["1F3B5", 0.9], ["1F451", 0.8], ["1F98E", 0.7]],
-      "fused": [
-        ["1F680", 0.139, "alias"],
-        ["1F451", 0.089, "alias"],
-        ["2B50", 0.039, "alias"],
-        ["1F600", 0.448, "semantic"],
-        ["1F525", 0.442, "semantic"],
-        ["1F680", 0.392, "semantic"],
-        ["1F3A4", 0.441, "semantic"],
-        ["1F3B5", 0.39, "semantic"],
-        ["1F451", 0.415, "semantic"],
-        ["2B50", 0.303, "semantic"],
-        ["1F30B", 0.411, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0.043690476190476245,
+      "strength": 0,
       "confidence": 0.054,
-      "unsure": true,
-      "merged": ["1F3B5", "1F451", "1F98E", "1F680"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.095,
-        "coverage": 0.864,
-        "results": [["1F600", 0.095], ["1F680", 0.045], ["1F451", 0]]
-      },
-      "semantic": [
-        ["1F600", 0.552, "semantic"],
-        ["1F525", 0.547, "semantic"],
-        ["1F680", 0.547, "semantic"],
-        ["1F3A4", 0.494, "semantic"],
-        ["1F3B5", 0.475, "semantic"],
-        ["1F30B", 0.427, "semantic"]
-      ],
-      "concept": [["1F600", 0.9]],
-      "fused": [
-        ["1F600", 0.095, "alias"],
-        ["1F680", 0.045, "alias"],
-        ["1F451", 0, "alias"],
-        ["1F600", 0.552, "semantic"],
-        ["1F525", 0.547, "semantic"],
-        ["1F680", 0.547, "semantic"],
-        ["1F3A4", 0.494, "semantic"],
-        ["1F3B5", 0.475, "semantic"],
-        ["1F30B", 0.427, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0.6416666666666672,
-      "confidence": 0.642,
-      "unsure": false,
-      "merged": ["1F600", "1F680", "1F451", "1F525", "1F3A4"]
-    },
-    {
-      "alias": null,
-      "semantic": [
-        ["1F600", 0.646, "semantic"],
-        ["1F525", 0.62, "semantic"],
-        ["1F680", 0.6, "semantic"],
-        ["1F3A4", 0.632, "semantic"],
-        ["1F451", 0.639, "semantic"],
-        ["2B50", 0.63, "semantic"],
-        ["1F436", 0.485, "semantic"]
-      ],
-      "concept": [["1F3B5", 0.9], ["1F451", 0.8], ["1F98E", 0.7], ["2B50", 0.6], ["1F436", 0.5]],
-      "fused": [
-        ["1F3A4", 0.513, "alias"],
-        ["1F600", 0.646, "semantic"],
-        ["1F525", 0.62, "semantic"],
-        ["1F680", 0.6, "semantic"],
-        ["1F3A4", 0.632, "semantic"],
-        ["1F451", 0.639, "semantic"],
-        ["2B50", 0.63, "semantic"],
-        ["1F436", 0.485, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.6937500000000009,
-      "confidence": 0.694,
-      "unsure": false,
-      "merged": ["1F3B5", "1F451", "1F98E", "2B50", "1F436", "1F3A4"]
-    },
-    {
-      "alias": { "tokens": ["a"], "confidence": 0.148, "coverage": 1, "results": [] },
-      "semantic": [
-        ["1F600", 0.572, "semantic"],
-        ["1F525", 0.558, "semantic"],
-        ["1F680", 0.553, "semantic"],
-        ["1F3B5", 0.519, "semantic"],
-        ["1F98E", 0.491, "semantic"],
-        ["2B50", 0.55, "semantic"],
-        ["1F30B", 0.405, "semantic"]
-      ],
-      "concept": [["1F525", 0.9], ["1F451", 0.8]],
-      "fused": [
-        ["1F600", 0.572, "semantic"],
-        ["1F525", 0.558, "semantic"],
-        ["1F680", 0.553, "semantic"],
-        ["1F3B5", 0.519, "semantic"],
-        ["1F98E", 0.491, "semantic"],
-        ["2B50", 0.55, "semantic"],
-        ["1F30B", 0.405, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0.7994642857142844,
-      "confidence": 0.799,
-      "unsure": false,
-      "merged": ["1F525", "1F451", "1F600", "1F680", "1F3B5", "1F98E", "2B50"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.808,
-        "coverage": 0.568,
-        "results": [["1F3B5", 0.808], ["1F451", 0.758], ["2B50", 0.708]]
-      },
-      "semantic": null,
-      "concept": [["1F525", 0.9], ["1F451", 0.8], ["1F30B", 0.7], ["1F436", 0.6]],
-      "fused": [
-        ["1F3B5", 0.808, "alias"],
-        ["1F451", 0.758, "alias"],
-        ["2B50", 0.708, "alias"],
-        ["1F600", 0.374, "semantic"],
-        ["1F525", 0.353, "semantic"],
-        ["1F680", 0.351, "semantic"],
-        ["1F3A4", 0.338, "semantic"],
-        ["2B50", 0.29, "semantic"]
-      ],
-      "limit": 8,
-      "strength": null,
-      "confidence": 0.54,
-      "unsure": true,
-      "merged": ["1F525", "1F451", "1F30B", "1F436", "1F3B5", "2B50", "1F600", "1F680"]
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.878,
-        "coverage": 0.182,
-        "results": [["1F680", 0.878], ["1F3A4", 0.828], ["1F98E", 0.778], ["2B50", 0.728], ["1F30B", 0.678]]
-      },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F3A4", 0.578, "semantic"],
-        ["1F3B5", 0.567, "semantic"],
-        ["1F451", 0.534, "semantic"],
-        ["1F98E", 0.555, "semantic"],
-        ["1F30B", 0.523, "semantic"]
-      ],
-      "concept": [["1F600", 0.9], ["1F525", 0.8], ["1F3B5", 0.7], ["1F98E", 0.6]],
-      "fused": [
-        ["1F680", 0.878, "alias"],
-        ["1F3A4", 0.828, "alias"],
-        ["1F98E", 0.778, "alias"],
-        ["2B50", 0.728, "alias"],
-        ["1F30B", 0.678, "alias"],
-        ["1F3A4", 0.578, "semantic"],
-        ["1F3B5", 0.567, "semantic"],
-        ["1F451", 0.534, "semantic"],
-        ["1F98E", 0.555, "semantic"],
-        ["1F30B", 0.523, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0.765982142857142,
-      "confidence": 0.766,
-      "unsure": false,
-      "merged": ["1F600", "1F525", "1F3B5", "1F98E"]
-    },
-    {
-      "alias": {
-        "tokens": [],
-        "confidence": 0.343,
-        "coverage": 0.653,
-        "results": [["1F600", 0.343], ["1F525", 0.293], ["2B50", 0.243]]
-      },
-      "semantic": [["1F680", 0.347, "semantic"], ["2B50", 0.319, "semantic"], ["1F436", 0.346, "semantic"]],
-      "concept": [["1F3B5", 0.9], ["1F451", 0.8]],
-      "fused": [
-        ["1F600", 0.343, "alias"],
-        ["1F525", 0.293, "alias"],
-        ["2B50", 0.243, "alias"],
-        ["1F680", 0.347, "semantic"],
-        ["2B50", 0.319, "semantic"],
-        ["1F436", 0.346, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0,
-      "confidence": 0,
-      "unsure": false,
-      "merged": ["1F3B5", "1F451", "1F600", "1F525", "2B50"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.651,
+        "confidence": 0.329,
         "coverage": 1,
-        "results": [["1F600", 0.651], ["1F436", 0.601]]
+        "results": [["1F600", 0.329], ["1F98E", 0.279], ["1F436", 0.229]]
       },
-      "semantic": [
-        ["1F600", 0.646, "semantic"],
-        ["1F680", 0.646, "semantic"],
-        ["1F3B5", 0.599, "semantic"],
-        ["1F451", 0.623, "semantic"],
-        ["2B50", 0.627, "semantic"],
-        ["1F436", 0.64, "semantic"]
-      ],
-      "concept": [["1F3B5", 0.9], ["1F98E", 0.8]],
-      "fused": [
-        ["1F600", 0.651, "alias"],
-        ["1F436", 0.601, "alias"],
-        ["1F600", 0.646, "semantic"],
-        ["1F680", 0.646, "semantic"],
-        ["1F3B5", 0.599, "semantic"],
-        ["1F451", 0.623, "semantic"],
-        ["2B50", 0.627, "semantic"],
-        ["1F436", 0.64, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.6854166666666666,
-      "confidence": 0.685,
-      "unsure": false,
-      "merged": ["1F600", "1F436", "1F3B5", "1F98E", "1F680", "1F451"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.267,
-        "coverage": 0.157,
-        "results": [["1F3A4", 0.267], ["1F3B5", 0.217], ["1F451", 0.167], ["2B50", 0.117]]
-      },
-      "semantic": [
-        ["1F600", 0.518, "semantic"],
-        ["1F525", 0.496, "semantic"],
-        ["1F680", 0.498, "semantic"],
-        ["1F3A4", 0.474, "semantic"],
-        ["1F451", 0.435, "semantic"],
-        ["1F30B", 0.482, "semantic"]
-      ],
-      "concept": [["1F525", 0.9], ["1F680", 0.8], ["1F3B5", 0.7], ["1F30B", 0.6]],
-      "fused": [
-        ["1F3A4", 0.267, "alias"],
-        ["1F3B5", 0.217, "alias"],
-        ["1F451", 0.167, "alias"],
-        ["2B50", 0.117, "alias"],
-        ["1F600", 0.518, "semantic"],
-        ["1F525", 0.496, "semantic"],
-        ["1F680", 0.498, "semantic"],
-        ["1F3A4", 0.474, "semantic"],
-        ["1F451", 0.435, "semantic"],
-        ["1F30B", 0.482, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0.4747321428571431,
-      "confidence": 0.475,
-      "unsure": true,
-      "merged": ["1F525", "1F680", "1F3B5", "1F30B", "1F3A4", "1F451", "2B50"]
-    },
-    {
-      "alias": null,
-      "semantic": [
-        ["1F600", 0.372, "semantic"],
-        ["1F680", 0.357, "semantic"],
-        ["1F3A4", 0.343, "semantic"],
-        ["1F3B5", 0.34, "semantic"],
-        ["1F98E", 0.253, "semantic"],
-        ["1F436", 0.248, "semantic"]
-      ],
-      "concept": [["1F98E", 0.9], ["2B50", 0.8]],
-      "fused": [
-        ["1F525", 0.922, "alias"],
-        ["1F680", 0.872, "alias"],
-        ["1F3A4", 0.822, "alias"],
-        ["1F3B5", 0.772, "alias"],
-        ["1F436", 0.722, "alias"],
-        ["1F600", 0.372, "semantic"],
-        ["1F680", 0.357, "semantic"],
-        ["1F3A4", 0.343, "semantic"],
-        ["1F3B5", 0.34, "semantic"],
-        ["1F98E", 0.253, "semantic"],
-        ["1F436", 0.248, "semantic"]
-      ],
-      "limit": 8,
-      "strength": 0,
-      "confidence": 0,
-      "unsure": true,
-      "merged": ["1F98E", "2B50", "1F525", "1F680", "1F3A4", "1F3B5", "1F436", "1F600"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.147,
-        "coverage": 0.11,
-        "results": [["1F525", 0.147], ["1F680", 0.097]]
-      },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F600", 0.462, "semantic"],
-        ["1F525", 0.453, "semantic"],
-        ["1F680", 0.407, "semantic"],
-        ["1F3A4", 0.408, "semantic"],
-        ["2B50", 0.356, "semantic"],
-        ["1F30B", 0.401, "semantic"],
-        ["1F436", 0.358, "semantic"]
-      ],
-      "concept": [["1F680", 0.9]],
-      "fused": [
-        ["1F525", 0.147, "alias"],
-        ["1F680", 0.097, "alias"],
-        ["1F600", 0.462, "semantic"],
-        ["1F525", 0.453, "semantic"],
-        ["1F680", 0.407, "semantic"],
-        ["1F3A4", 0.408, "semantic"],
-        ["2B50", 0.356, "semantic"],
-        ["1F30B", 0.401, "semantic"],
-        ["1F436", 0.358, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0.15190476190476207,
-      "confidence": 0.152,
-      "unsure": true,
-      "merged": ["1F680", "1F525", "1F600", "1F3A4"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.296,
-        "coverage": 1,
-        "results": [["1F600", 0.296], ["1F30B", 0.246]]
-      },
-      "semantic": [
-        ["1F600", 0.302, "semantic"],
-        ["1F525", 0.279, "semantic"],
-        ["1F680", 0.271, "semantic"],
-        ["1F3B5", 0.269, "semantic"],
-        ["1F98E", 0.234, "semantic"],
-        ["2B50", 0.226, "semantic"]
-      ],
-      "concept": [["1F3B5", 0.9], ["1F451", 0.8]],
-      "fused": [
-        ["1F600", 0.296, "alias"],
-        ["1F30B", 0.246, "alias"],
-        ["1F600", 0.302, "semantic"],
-        ["1F525", 0.279, "semantic"],
-        ["1F680", 0.271, "semantic"],
-        ["1F3B5", 0.269, "semantic"],
-        ["1F98E", 0.234, "semantic"],
-        ["2B50", 0.226, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0,
-      "confidence": 0.296,
-      "unsure": true,
-      "merged": ["1F3B5", "1F451", "1F600", "1F30B", "1F525"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.85,
-        "coverage": 0.924,
-        "results": [["1F3A4", 0.85], ["1F3B5", 0.8], ["1F451", 0.75]]
-      },
-      "semantic": [
-        ["1F525", 0.493, "semantic"],
-        ["1F680", 0.478, "semantic"],
-        ["1F3A4", 0.487, "semantic"],
-        ["1F3B5", 0.45, "semantic"],
-        ["1F451", 0.383, "semantic"],
-        ["1F30B", 0.401, "semantic"],
-        ["1F436", 0.364, "semantic"]
-      ],
-      "concept": [["1F600", 0.9], ["1F3A4", 0.8], ["1F3B5", 0.7], ["1F451", 0.6], ["1F436", 0.5]],
-      "fused": [
-        ["1F3A4", 0.85, "alias"],
-        ["1F3B5", 0.8, "alias"],
-        ["1F451", 0.75, "alias"],
-        ["1F525", 0.493, "semantic"],
-        ["1F680", 0.478, "semantic"],
-        ["1F3A4", 0.487, "semantic"],
-        ["1F3B5", 0.45, "semantic"],
-        ["1F451", 0.383, "semantic"],
-        ["1F30B", 0.401, "semantic"],
-        ["1F436", 0.364, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.32651785714285714,
-      "confidence": 0.85,
-      "unsure": false,
-      "merged": ["1F3A4", "1F3B5", "1F451", "1F600", "1F436", "1F525"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.985,
-        "coverage": 0.705,
-        "results": [["1F525", 0.985], ["1F3B5", 0.935], ["1F451", 0.885], ["2B50", 0.835]]
-      },
-      "semantic": null,
-      "concept": [["1F98E", 0.9]],
-      "fused": [
-        ["1F525", 0.985, "alias"],
-        ["1F3B5", 0.935, "alias"],
-        ["1F451", 0.885, "alias"],
-        ["2B50", 0.835, "alias"],
-        ["1F600", 0.695, "semantic"],
-        ["1F525", 0.669, "semantic"],
-        ["1F3A4", 0.644, "semantic"],
-        ["1F3B5", 0.639, "semantic"],
-        ["1F451", 0.638, "semantic"],
-        ["1F98E", 0.648, "semantic"],
-        ["1F30B", 0.569, "semantic"],
-        ["1F436", 0.491, "semantic"]
-      ],
-      "limit": 7,
-      "strength": null,
-      "confidence": 0.817,
-      "unsure": true,
-      "merged": ["1F98E", "1F525", "1F3B5", "1F451", "2B50", "1F600", "1F3A4"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.651,
-        "coverage": 0.277,
-        "results": [["1F680", 0.651], ["1F3A4", 0.601], ["1F3B5", 0.551]]
-      },
-      "semantic": [
-        ["1F600", 0.397, "semantic"],
-        ["1F525", 0.384, "semantic"],
-        ["1F680", 0.35, "semantic"],
-        ["1F3A4", 0.31, "semantic"],
-        ["1F98E", 0.324, "semantic"],
-        ["1F30B", 0.287, "semantic"]
-      ],
-      "concept": [["1F600", 0.9], ["1F3A4", 0.8], ["1F3B5", 0.7], ["1F30B", 0.6], ["1F436", 0.5]],
-      "fused": [
-        ["1F680", 0.651, "alias"],
-        ["1F3A4", 0.601, "alias"],
-        ["1F3B5", 0.551, "alias"],
-        ["1F600", 0.397, "semantic"],
-        ["1F525", 0.384, "semantic"],
-        ["1F680", 0.35, "semantic"],
-        ["1F3A4", 0.31, "semantic"],
-        ["1F98E", 0.324, "semantic"],
-        ["1F30B", 0.287, "semantic"]
-      ],
-      "limit": 8,
-      "strength": 0,
-      "confidence": 0.212,
-      "unsure": true,
-      "merged": ["1F600", "1F3A4", "1F3B5", "1F30B", "1F436", "1F680", "1F525", "1F98E"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.302,
-        "coverage": 1,
-        "results": [["1F525", 0.302], ["1F680", 0.252], ["1F3B5", 0.202], ["1F30B", 0.152]]
-      },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F600", 0.628, "semantic"],
-        ["1F525", 0.606, "semantic"],
-        ["1F680", 0.592, "semantic"],
-        ["1F3B5", 0.55, "semantic"],
-        ["1F451", 0.619, "semantic"],
-        ["1F98E", 0.487, "semantic"],
-        ["2B50", 0.583, "semantic"],
-        ["1F436", 0.596, "semantic"]
-      ],
-      "concept": [["1F525", 0.9], ["1F451", 0.8], ["2B50", 0.7]],
-      "fused": [
-        ["1F525", 0.302, "alias"],
-        ["1F680", 0.252, "alias"],
-        ["1F3B5", 0.202, "alias"],
-        ["1F30B", 0.152, "alias"],
-        ["1F600", 0.628, "semantic"],
-        ["1F525", 0.606, "semantic"],
-        ["1F680", 0.592, "semantic"],
-        ["1F3B5", 0.55, "semantic"],
-        ["1F451", 0.619, "semantic"],
-        ["1F98E", 0.487, "semantic"],
-        ["2B50", 0.583, "semantic"],
-        ["1F436", 0.596, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0.8020833333333334,
-      "confidence": 0.802,
-      "unsure": false,
-      "merged": ["1F525", "1F451", "2B50", "1F680"]
-    },
-    {
-      "alias": null,
       "semantic": [
         ["1F600", 0.615, "semantic"],
-        ["1F451", 0.611, "semantic"],
-        ["1F98E", 0.615, "semantic"],
-        ["1F30B", 0.611, "semantic"],
-        ["1F436", 0.581, "semantic"]
+        ["1F680", 0.59, "semantic"],
+        ["1F3A4", 0.609, "semantic"],
+        ["1F3B5", 0.604, "semantic"],
+        ["1F98E", 0.599, "semantic"],
+        ["2B50", 0.541, "semantic"],
+        ["1F30B", 0.516, "semantic"],
+        ["1F436", 0.49, "semantic"]
       ],
-      "concept": [["1F600", 0.9], ["1F3A4", 0.8], ["1F98E", 0.7], ["2B50", 0.6]],
-      "fused": [
-        ["1F451", 0.303, "alias"],
-        ["1F436", 0.253, "alias"],
-        ["1F600", 0.615, "semantic"],
-        ["1F451", 0.611, "semantic"],
-        ["1F98E", 0.615, "semantic"],
-        ["1F30B", 0.611, "semantic"],
-        ["1F436", 0.581, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0.5874999999999996,
-      "confidence": 0.587,
-      "unsure": true,
-      "merged": ["1F600", "1F3A4", "1F98E", "2B50", "1F451"]
-    },
-    {
-      "alias": {
-        "tokens": [],
-        "confidence": 0.299,
-        "coverage": 0.26,
-        "results": [["1F3B5", 0.299], ["1F98E", 0.249], ["2B50", 0.199]]
-      },
-      "semantic": [
-        ["1F600", 0.681, "semantic"],
-        ["1F525", 0.658, "semantic"],
-        ["1F680", 0.677, "semantic"],
-        ["1F3B5", 0.592, "semantic"],
-        ["2B50", 0.642, "semantic"],
-        ["1F30B", 0.675, "semantic"],
-        ["1F436", 0.589, "semantic"]
-      ],
-      "concept": [["1F98E", 0.9], ["2B50", 0.8], ["1F436", 0.7]],
-      "fused": [
-        ["1F3B5", 0.299, "alias"],
-        ["1F98E", 0.249, "alias"],
-        ["2B50", 0.199, "alias"],
-        ["1F600", 0.681, "semantic"],
-        ["1F525", 0.658, "semantic"],
-        ["1F680", 0.677, "semantic"],
-        ["1F3B5", 0.592, "semantic"],
-        ["2B50", 0.642, "semantic"],
-        ["1F30B", 0.675, "semantic"],
-        ["1F436", 0.589, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.8229166666666672,
-      "confidence": 0,
-      "unsure": false,
-      "merged": ["1F98E", "2B50", "1F436", "1F3B5", "1F600", "1F525"]
+      "strength": 0.620833333333333,
+      "confidence": 0.621,
+      "unsure": false
     },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.709,
-        "coverage": 0.012,
-        "results": [["1F680", 0.709], ["1F3B5", 0.659], ["1F98E", 0.609], ["1F30B", 0.559]]
+        "confidence": 0.134,
+        "coverage": 0.938,
+        "results": [["1F525", 0.134], ["1F3A4", 0.084], ["1F436", 0.034]]
       },
       "semantic": [
-        ["1F600", 0.302, "semantic"],
-        ["1F525", 0.297, "semantic"],
-        ["1F680", 0.269, "semantic"],
-        ["1F3B5", 0.236, "semantic"],
-        ["1F98E", 0.296, "semantic"],
-        ["1F436", 0.166, "semantic"]
+        ["1F600", 0.51, "semantic"],
+        ["1F680", 0.499, "semantic"],
+        ["1F3B5", 0.472, "semantic"],
+        ["1F98E", 0.458, "semantic"],
+        ["1F436", 0.405, "semantic"]
       ],
-      "concept": [["1F30B", 0.9]],
-      "fused": [
-        ["1F680", 0.709, "alias"],
-        ["1F3B5", 0.659, "alias"],
-        ["1F98E", 0.609, "alias"],
-        ["1F30B", 0.559, "alias"],
-        ["1F600", 0.302, "semantic"],
-        ["1F525", 0.297, "semantic"],
-        ["1F680", 0.269, "semantic"],
-        ["1F3B5", 0.236, "semantic"],
-        ["1F98E", 0.296, "semantic"],
-        ["1F436", 0.166, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0,
-      "confidence": 0.01,
-      "unsure": true,
-      "merged": ["1F30B", "1F680", "1F3B5", "1F98E", "1F600", "1F525", "1F436"]
+      "strength": 0.4645833333333335,
+      "confidence": 0.465,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a", "b"],
-        "confidence": 0.673,
+        "confidence": 0.871,
+        "coverage": 0.891,
+        "results": [["1F3A4", 0.871], ["1F98E", 0.821], ["1F30B", 0.771]]
+      },
+      "semantic": [
+        ["1F600", 0.534, "semantic"],
+        ["1F525", 0.508, "semantic"],
+        ["1F3A4", 0.528, "semantic"],
+        ["1F3B5", 0.501, "semantic"],
+        ["1F451", 0.471, "semantic"],
+        ["2B50", 0.53, "semantic"],
+        ["1F30B", 0.403, "semantic"],
+        ["1F436", 0.497, "semantic"]
+      ],
+      "strength": 0.5147619047619052,
+      "confidence": 0.871,
+      "unsure": false
+    },
+    {
+      "alias": null,
+      "semantic": [
+        ["1F600", 0.54, "semantic"],
+        ["1F525", 0.524, "semantic"],
+        ["1F3A4", 0.526, "semantic"],
+        ["1F3B5", 0.521, "semantic"],
+        ["1F451", 0.516, "semantic"],
+        ["2B50", 0.41, "semantic"],
+        ["1F436", 0.403, "semantic"]
+      ],
+      "strength": 0.46577380952380976,
+      "confidence": 0.466,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.567,
         "coverage": 1,
-        "results": [["1F3A4", 0.673], ["1F3B5", 0.623], ["1F30B", 0.573]]
+        "results": [["1F600", 0.567], ["1F680", 0.517], ["1F3B5", 0.467], ["2B50", 0.417]]
       },
       "semantic": [
-        ["1F600", 0.387, "semantic"],
-        ["1F525", 0.374, "semantic"],
-        ["1F680", 0.386, "semantic"],
-        ["1F3A4", 0.306, "semantic"],
-        ["1F3B5", 0.281, "semantic"],
-        ["1F451", 0.332, "semantic"],
-        ["1F98E", 0.365, "semantic"],
-        ["2B50", 0.252, "semantic"],
-        ["1F30B", 0.174, "semantic"],
-        ["1F436", 0.247, "semantic"]
-      ],
-      "concept": [],
-      "fused": [
-        ["1F3A4", 0.673, "alias"],
-        ["1F3B5", 0.623, "alias"],
-        ["1F30B", 0.573, "alias"],
-        ["1F600", 0.387, "semantic"],
-        ["1F525", 0.374, "semantic"],
-        ["1F680", 0.386, "semantic"],
-        ["1F3A4", 0.306, "semantic"],
-        ["1F3B5", 0.281, "semantic"],
-        ["1F451", 0.332, "semantic"],
-        ["1F98E", 0.365, "semantic"],
-        ["2B50", 0.252, "semantic"],
-        ["1F30B", 0.174, "semantic"],
-        ["1F436", 0.247, "semantic"]
-      ],
-      "limit": 8,
-      "strength": 0,
-      "confidence": 0.673,
-      "unsure": false,
-      "merged": ["1F3A4", "1F3B5", "1F30B", "1F600", "1F525", "1F680", "1F3A4", "1F3B5"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.226,
-        "coverage": 0.76,
-        "results": [["1F525", 0.226], ["1F680", 0.176], ["1F436", 0.126]]
-      },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F600", 0.432, "semantic"],
-        ["1F680", 0.426, "semantic"],
-        ["1F3B5", 0.428, "semantic"],
-        ["1F451", 0.384, "semantic"],
-        ["2B50", 0.333, "semantic"],
-        ["1F30B", 0.335, "semantic"],
-        ["1F436", 0.267, "semantic"]
-      ],
-      "concept": [["1F3A4", 0.9], ["1F3B5", 0.8], ["1F30B", 0.7]],
-      "fused": [
-        ["1F525", 0.226, "alias"],
-        ["1F680", 0.176, "alias"],
-        ["1F436", 0.126, "alias"],
-        ["1F600", 0.432, "semantic"],
-        ["1F680", 0.426, "semantic"],
-        ["1F3B5", 0.428, "semantic"],
-        ["1F451", 0.384, "semantic"],
-        ["2B50", 0.333, "semantic"],
-        ["1F30B", 0.335, "semantic"],
-        ["1F436", 0.267, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0,
-      "confidence": 0.202,
-      "unsure": true,
-      "merged": ["1F3A4", "1F3B5", "1F30B", "1F525"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.496,
-        "coverage": 0.982,
-        "results": [["1F3A4", 0.496], ["1F98E", 0.446], ["1F436", 0.396]]
-      },
-      "semantic": [
-        ["1F600", 0.45, "semantic"],
-        ["1F3A4", 0.42, "semantic"],
-        ["1F3B5", 0.437, "semantic"],
-        ["1F451", 0.412, "semantic"],
-        ["1F98E", 0.388, "semantic"],
-        ["2B50", 0.354, "semantic"],
-        ["1F436", 0.374, "semantic"]
-      ],
-      "concept": [["1F3A4", 0.9], ["1F3B5", 0.8], ["1F436", 0.7]],
-      "fused": [
-        ["1F3A4", 0.496, "alias"],
-        ["1F98E", 0.446, "alias"],
-        ["1F436", 0.396, "alias"],
-        ["1F600", 0.45, "semantic"],
-        ["1F3A4", 0.42, "semantic"],
-        ["1F3B5", 0.437, "semantic"],
-        ["1F451", 0.412, "semantic"],
-        ["1F98E", 0.388, "semantic"],
-        ["2B50", 0.354, "semantic"],
-        ["1F436", 0.374, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0.05699404761904769,
-      "confidence": 0.496,
-      "unsure": true,
-      "merged": ["1F3A4", "1F3B5", "1F436", "1F98E", "1F600"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.492,
-        "coverage": 0.271,
-        "results": [["1F600", 0.492], ["1F680", 0.442]]
-      },
-      "semantic": null,
-      "concept": [["1F680", 0.9], ["1F3A4", 0.8], ["1F3B5", 0.7], ["1F451", 0.6]],
-      "fused": [
-        ["1F600", 0.492, "alias"],
-        ["1F680", 0.442, "alias"],
-        ["1F600", 0.544, "semantic"],
-        ["1F525", 0.526, "semantic"],
-        ["1F3A4", 0.491, "semantic"],
-        ["1F3B5", 0.54, "semantic"],
+        ["1F680", 0.49, "semantic"],
+        ["1F3A4", 0.468, "semantic"],
+        ["1F3B5", 0.481, "semantic"],
         ["1F451", 0.476, "semantic"],
-        ["1F98E", 0.411, "semantic"],
-        ["2B50", 0.452, "semantic"],
-        ["1F30B", 0.482, "semantic"],
-        ["1F436", 0.329, "semantic"]
+        ["1F98E", 0.481, "semantic"]
       ],
-      "limit": 6,
-      "strength": null,
-      "confidence": 0.157,
-      "unsure": true,
-      "merged": ["1F680", "1F3A4", "1F3B5", "1F451", "1F600", "1F525"]
+      "strength": 0.21874999999999986,
+      "confidence": 0.567,
+      "unsure": true
     },
     {
-      "alias": null,
-      "semantic": [
-        ["1F600", 0.445, "semantic"],
-        ["1F525", 0.422, "semantic"],
-        ["1F680", 0.399, "semantic"],
-        ["2B50", 0.404, "semantic"],
-        ["1F30B", 0.329, "semantic"]
-      ],
-      "concept": [],
-      "fused": [
-        ["1F3A4", 0.289, "alias"],
-        ["1F3B5", 0.239, "alias"],
-        ["1F98E", 0.189, "alias"],
-        ["1F600", 0.445, "semantic"],
-        ["1F525", 0.422, "semantic"],
-        ["1F680", 0.399, "semantic"],
-        ["2B50", 0.404, "semantic"],
-        ["1F30B", 0.329, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0.034672619047619084,
-      "confidence": 0.035,
-      "unsure": true,
-      "merged": ["1F3A4", "1F3B5", "1F98E", "1F600", "1F525", "1F680", "2B50"]
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.644,
+        "coverage": 0.645,
+        "results": [["1F525", 0.644]]
+      },
+      "semantic": null,
+      "strength": null,
+      "confidence": 0.489,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.041,
-        "coverage": 0.206,
+        "confidence": 0.247,
+        "coverage": 0.104,
+        "results": [["1F680", 0.247], ["1F98E", 0.197], ["2B50", 0.147]]
+      },
+      "semantic": [
+        ["1F600", 0.363, "semantic"],
+        ["1F525", 0.345, "semantic"],
+        ["1F3A4", 0.349, "semantic"],
+        ["1F98E", 0.35, "semantic"],
+        ["2B50", 0.248, "semantic"],
+        ["1F30B", 0.26, "semantic"],
+        ["1F436", 0.197, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.03,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": [],
+        "confidence": 0.919,
+        "coverage": 0.802,
+        "results": [["1F98E", 0.919], ["2B50", 0.869], ["1F30B", 0.819]]
+      },
+      "semantic": [
+        ["1F525", 0.472, "semantic"],
+        ["1F680", 0.444, "semantic"],
+        ["1F3A4", 0.426, "semantic"],
+        ["1F98E", 0.47, "semantic"],
+        ["2B50", 0.388, "semantic"],
+        ["1F30B", 0.368, "semantic"]
+      ],
+      "strength": 0.19047619047619047,
+      "confidence": 0,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.793,
+        "coverage": 1,
+        "results": [["1F600", 0.793], ["1F525", 0.743]]
+      },
+      "semantic": [
+        ["1F600", 0.594, "semantic"],
+        ["1F525", 0.571, "semantic"],
+        ["1F3A4", 0.544, "semantic"],
+        ["1F451", 0.517, "semantic"],
+        ["1F98E", 0.592, "semantic"],
+        ["2B50", 0.49, "semantic"],
+        ["1F30B", 0.416, "semantic"],
+        ["1F436", 0.476, "semantic"]
+      ],
+      "strength": 0.816666666666666,
+      "confidence": 0.817,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.699,
+        "coverage": 0.385,
+        "results": [["1F3A4", 0.699], ["2B50", 0.649]]
+      },
+      "semantic": [
+        ["1F600", 0.352, "semantic"],
+        ["1F680", 0.349, "semantic"],
+        ["1F451", 0.311, "semantic"],
+        ["1F98E", 0.29, "semantic"],
+        ["2B50", 0.247, "semantic"],
+        ["1F30B", 0.225, "semantic"],
+        ["1F436", 0.207, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.317,
+      "unsure": true
+    },
+    {
+      "alias": null,
+      "semantic": [
+        ["1F600", 0.362, "semantic"],
+        ["1F3A4", 0.357, "semantic"],
+        ["1F451", 0.356, "semantic"],
+        ["1F30B", 0.312, "semantic"],
+        ["1F436", 0.301, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.344,
+        "coverage": 0.424,
+        "results": [["1F525", 0.344], ["1F3B5", 0.294]]
+      },
+      "semantic": [
+        ["1F525", 0.592, "semantic"],
+        ["1F3A4", 0.589, "semantic"],
+        ["1F3B5", 0.583, "semantic"],
+        ["1F98E", 0.563, "semantic"],
+        ["1F30B", 0.526, "semantic"]
+      ],
+      "strength": 0.7229166666666662,
+      "confidence": 0.723,
+      "unsure": false
+    },
+    {
+      "alias": { "tokens": ["a"], "confidence": 0.277, "coverage": 1, "results": [["1F680", 0.277]] },
+      "semantic": [
+        ["1F600", 0.543, "semantic"],
+        ["1F680", 0.536, "semantic"],
+        ["1F3B5", 0.515, "semantic"],
+        ["1F98E", 0.542, "semantic"],
+        ["2B50", 0.45, "semantic"],
+        ["1F436", 0.505, "semantic"]
+      ],
+      "strength": 0.5655803571428576,
+      "confidence": 0.566,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.154,
+        "coverage": 0.04,
+        "results": [["1F3B5", 0.154], ["1F98E", 0.104]]
+      },
+      "semantic": [
+        ["1F600", 0.407, "semantic"],
+        ["1F3B5", 0.391, "semantic"],
+        ["1F451", 0.393, "semantic"],
+        ["1F98E", 0.402, "semantic"],
+        ["1F30B", 0.36, "semantic"],
+        ["1F436", 0.389, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.007,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.946,
+        "coverage": 0.575,
+        "results": [["1F3B5", 0.946], ["1F436", 0.896]]
+      },
+      "semantic": null,
+      "strength": null,
+      "confidence": 0.64,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.493,
+        "coverage": 0.736,
         "results": [
-          ["1F525", 0.041],
-          ["1F3A4", 0],
-          ["1F451", 0],
-          ["1F98E", 0],
-          ["2B50", 0],
-          ["1F30B", 0],
-          ["1F436", 0]
+          ["1F680", 0.493],
+          ["1F3A4", 0.443],
+          ["1F3B5", 0.393],
+          ["1F98E", 0.343],
+          ["2B50", 0.293],
+          ["1F30B", 0.243]
         ]
       },
       "semantic": [
-        ["1F600", 0.379, "semantic"],
-        ["1F680", 0.359, "semantic"],
-        ["1F3A4", 0.375, "semantic"],
-        ["1F3B5", 0.369, "semantic"],
-        ["1F30B", 0.297, "semantic"]
+        ["1F680", 0.38, "semantic"],
+        ["1F3A4", 0.372, "semantic"],
+        ["1F3B5", 0.362, "semantic"],
+        ["1F451", 0.296, "semantic"],
+        ["1F98E", 0.334, "semantic"]
       ],
-      "concept": [["1F3A4", 0.9], ["2B50", 0.8]],
-      "fused": [
-        ["1F525", 0.041, "alias"],
-        ["1F3A4", 0, "alias"],
-        ["1F451", 0, "alias"],
-        ["1F98E", 0, "alias"],
-        ["2B50", 0, "alias"],
-        ["1F30B", 0, "alias"],
-        ["1F436", 0, "alias"],
-        ["1F600", 0.379, "semantic"],
-        ["1F680", 0.359, "semantic"],
-        ["1F3A4", 0.375, "semantic"],
-        ["1F3B5", 0.369, "semantic"],
-        ["1F30B", 0.297, "semantic"]
-      ],
-      "limit": 8,
       "strength": 0,
-      "confidence": 0.01,
-      "unsure": true,
-      "merged": ["1F3A4", "2B50", "1F525", "1F451", "1F98E", "1F30B", "1F436", "1F600"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.262,
-        "coverage": 0.274,
-        "results": [["1F525", 0.262], ["1F451", 0.212]]
-      },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F451", 0.444, "semantic"],
-        ["1F98E", 0.435, "semantic"],
-        ["2B50", 0.386, "semantic"]
-      ],
-      "concept": [["1F3A4", 0.9], ["1F451", 0.8], ["1F436", 0.7]],
-      "fused": [
-        ["1F525", 0.262, "alias"],
-        ["1F451", 0.212, "alias"],
-        ["1F451", 0.444, "semantic"],
-        ["1F98E", 0.435, "semantic"],
-        ["2B50", 0.386, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0.0222619047619048,
-      "confidence": 0.084,
-      "unsure": true,
-      "merged": ["1F3A4", "1F451", "1F436", "1F525"]
+      "confidence": 0.427,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.125,
-        "coverage": 0.68,
-        "results": [["1F600", 0.125], ["1F680", 0.075]]
-      },
-      "semantic": [
-        ["1F525", 0.647, "semantic"],
-        ["1F3B5", 0.626, "semantic"],
-        ["1F451", 0.613, "semantic"],
-        ["2B50", 0.566, "semantic"]
-      ],
-      "concept": [["1F680", 0.9], ["1F98E", 0.8], ["1F30B", 0.7], ["1F436", 0.6]],
-      "fused": [
-        ["1F600", 0.125, "alias"],
-        ["1F680", 0.075, "alias"],
-        ["1F525", 0.647, "semantic"],
-        ["1F3B5", 0.626, "semantic"],
-        ["1F451", 0.613, "semantic"],
-        ["2B50", 0.566, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0.8777777777777788,
-      "confidence": 0.878,
-      "unsure": false,
-      "merged": ["1F680", "1F98E", "1F30B", "1F436", "1F600"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.311,
+        "confidence": 0.204,
         "coverage": 1,
-        "results": [["1F600", 0.311], ["1F680", 0.261]]
+        "results": [
+          ["1F600", 0.204],
+          ["1F680", 0.154],
+          ["1F3A4", 0.104],
+          ["1F3B5", 0.054],
+          ["1F98E", 0.004],
+          ["2B50", 0]
+        ]
       },
       "semantic": [
-        ["1F525", 0.614, "semantic"],
-        ["1F3A4", 0.584, "semantic"],
-        ["1F3B5", 0.573, "semantic"],
-        ["1F98E", 0.571, "semantic"],
-        ["2B50", 0.553, "semantic"],
-        ["1F436", 0.608, "semantic"]
+        ["1F680", 0.507, "semantic"],
+        ["1F3B5", 0.48, "semantic"],
+        ["1F451", 0.489, "semantic"],
+        ["1F98E", 0.474, "semantic"],
+        ["2B50", 0.5, "semantic"],
+        ["1F30B", 0.38, "semantic"]
       ],
-      "concept": [["1F3A4", 0.9]],
-      "fused": [
-        ["1F600", 0.311, "alias"],
-        ["1F680", 0.261, "alias"],
-        ["1F525", 0.614, "semantic"],
-        ["1F3A4", 0.584, "semantic"],
-        ["1F3B5", 0.573, "semantic"],
-        ["1F98E", 0.571, "semantic"],
-        ["2B50", 0.553, "semantic"],
-        ["1F436", 0.608, "semantic"]
+      "strength": 0.3240327380952382,
+      "confidence": 0.324,
+      "unsure": true
+    },
+    {
+      "alias": null,
+      "semantic": [
+        ["1F3A4", 0.471, "semantic"],
+        ["1F3B5", 0.449, "semantic"],
+        ["2B50", 0.456, "semantic"],
+        ["1F436", 0.382, "semantic"]
       ],
-      "limit": 6,
-      "strength": 0.864583333333333,
-      "confidence": 0.865,
-      "unsure": false,
-      "merged": ["1F3A4", "1F600", "1F680", "1F525", "1F3B5", "1F98E"]
+      "strength": 0.18821428571428558,
+      "confidence": 0.188,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": [],
-        "confidence": 0.958,
-        "coverage": 0.595,
-        "results": [["1F30B", 0.958], ["1F436", 0.908]]
+        "confidence": 0.004,
+        "coverage": 0.344,
+        "results": [["1F3A4", 0.004], ["1F451", 0], ["1F98E", 0]]
       },
       "semantic": [
-        ["1F600", 0.345, "semantic"],
-        ["1F680", 0.341, "semantic"],
-        ["1F3A4", 0.307, "semantic"],
-        ["1F451", 0.331, "semantic"]
+        ["1F600", 0.609, "semantic"],
+        ["1F525", 0.599, "semantic"],
+        ["1F680", 0.574, "semantic"],
+        ["1F3A4", 0.531, "semantic"],
+        ["1F3B5", 0.507, "semantic"],
+        ["1F98E", 0.47, "semantic"],
+        ["1F30B", 0.441, "semantic"],
+        ["1F436", 0.448, "semantic"]
       ],
-      "concept": [["1F451", 0.9]],
-      "fused": [
-        ["1F30B", 0.958, "alias"],
-        ["1F436", 0.908, "alias"],
-        ["1F600", 0.345, "semantic"],
-        ["1F680", 0.341, "semantic"],
-        ["1F3A4", 0.307, "semantic"],
-        ["1F451", 0.331, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0,
+      "strength": 0.9687499999999993,
       "confidence": 0,
-      "unsure": false,
-      "merged": ["1F451", "1F30B", "1F436", "1F600", "1F680", "1F3A4"]
+      "unsure": false
     },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.11,
-        "coverage": 0.949,
-        "results": [["1F600", 0.11], ["1F3A4", 0.06], ["1F98E", 0.01]]
+        "confidence": 0.58,
+        "coverage": 0.207,
+        "results": [["1F600", 0.58], ["1F525", 0.53], ["1F436", 0.48]]
       },
       "semantic": [
-        ["1F600", 0.523, "semantic"],
-        ["1F3A4", 0.495, "semantic"],
-        ["1F451", 0.51, "semantic"],
-        ["1F98E", 0.492, "semantic"],
-        ["2B50", 0.454, "semantic"],
-        ["1F30B", 0.432, "semantic"]
+        ["1F600", 0.337, "semantic"],
+        ["1F525", 0.319, "semantic"],
+        ["1F3B5", 0.294, "semantic"],
+        ["1F451", 0.315, "semantic"],
+        ["2B50", 0.279, "semantic"],
+        ["1F30B", 0.212, "semantic"],
+        ["1F436", 0.306, "semantic"]
       ],
-      "concept": [["1F600", 0.9], ["1F525", 0.8]],
-      "fused": [
-        ["1F600", 0.11, "alias"],
-        ["1F3A4", 0.06, "alias"],
-        ["1F98E", 0.01, "alias"],
-        ["1F600", 0.523, "semantic"],
-        ["1F3A4", 0.495, "semantic"],
-        ["1F451", 0.51, "semantic"],
-        ["1F98E", 0.492, "semantic"],
-        ["2B50", 0.454, "semantic"],
-        ["1F30B", 0.432, "semantic"]
-      ],
-      "limit": 8,
-      "strength": 0.47058035714285773,
-      "confidence": 0.471,
-      "unsure": true,
-      "merged": ["1F600", "1F525", "1F3A4", "1F98E", "1F451", "2B50", "1F30B"]
-    },
-    {
-      "alias": null,
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F680", 0.661, "semantic"],
-        ["1F3A4", 0.637, "semantic"],
-        ["1F3B5", 0.656, "semantic"],
-        ["1F436", 0.648, "semantic"]
-      ],
-      "concept": [],
-      "fused": [
-        ["1F525", 0.613, "alias"],
-        ["1F680", 0.563, "alias"],
-        ["1F436", 0.513, "alias"],
-        ["1F680", 0.661, "semantic"],
-        ["1F3A4", 0.637, "semantic"],
-        ["1F3B5", 0.656, "semantic"],
-        ["1F436", 0.648, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0.6166666666666658,
-      "confidence": 0.617,
-      "unsure": false,
-      "merged": ["1F525", "1F680", "1F436", "1F680"]
+      "strength": 0,
+      "confidence": 0.141,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a", "b"],
-        "confidence": 0.529,
+        "confidence": 0.01,
         "coverage": 1,
-        "results": [["1F3A4", 0.529], ["1F3B5", 0.479], ["2B50", 0.429], ["1F436", 0.379]]
+        "results": [["1F600", 0.01], ["1F3B5", 0], ["1F30B", 0]]
+      },
+      "semantic": [
+        ["1F600", 0.505, "semantic"],
+        ["1F525", 0.504, "semantic"],
+        ["1F3A4", 0.479, "semantic"],
+        ["1F3B5", 0.469, "semantic"],
+        ["2B50", 0.423, "semantic"],
+        ["1F30B", 0.467, "semantic"]
+      ],
+      "strength": 0.3723958333333335,
+      "confidence": 0.372,
+      "unsure": true
+    },
+    {
+      "alias": { "tokens": ["a"], "confidence": 0.163, "coverage": 0.763, "results": [] },
+      "semantic": [
+        ["1F680", 0.439, "semantic"],
+        ["1F3B5", 0.437, "semantic"],
+        ["2B50", 0.428, "semantic"],
+        ["1F30B", 0.406, "semantic"],
+        ["1F436", 0.393, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.146,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.994,
+        "coverage": 0.815,
+        "results": [["1F525", 0.994], ["1F680", 0.944], ["1F3B5", 0.894], ["1F30B", 0.844]]
+      },
+      "semantic": [["1F525", 0.455, "semantic"], ["1F680", 0.452, "semantic"], ["2B50", 0.427, "semantic"]],
+      "strength": 0.06741071428571438,
+      "confidence": 0.953,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.426,
+        "coverage": 0.33,
+        "results": [["1F600", 0.426], ["1F525", 0.376], ["1F3B5", 0.326], ["1F451", 0.276], ["2B50", 0.226]]
       },
       "semantic": null,
-      "concept": [["1F680", 0.9], ["1F3B5", 0.8], ["1F436", 0.7]],
-      "fused": [
-        ["1F3A4", 0.529, "alias"],
-        ["1F3B5", 0.479, "alias"],
-        ["2B50", 0.429, "alias"],
-        ["1F436", 0.379, "alias"],
-        ["1F600", 0.355, "semantic"],
-        ["1F525", 0.341, "semantic"],
-        ["1F680", 0.351, "semantic"],
-        ["1F3A4", 0.328, "semantic"],
-        ["1F3B5", 0.267, "semantic"],
-        ["2B50", 0.345, "semantic"],
-        ["1F30B", 0.238, "semantic"],
-        ["1F436", 0.343, "semantic"]
-      ],
-      "limit": 5,
       "strength": null,
-      "confidence": 0.529,
-      "unsure": true,
-      "merged": ["1F680", "1F3B5", "1F436", "1F3A4", "2B50"]
-    },
-    {
-      "alias": { "tokens": ["a"], "confidence": 0.931, "coverage": 0.668, "results": [["1F436", 0.931]] },
-      "semantic": [
-        ["1F600", 0.642, "semantic"],
-        ["1F680", 0.639, "semantic"],
-        ["1F451", 0.626, "semantic"],
-        ["2B50", 0.603, "semantic"],
-        ["1F30B", 0.593, "semantic"],
-        ["1F436", 0.601, "semantic"]
-      ],
-      "concept": [["1F3A4", 0.9], ["1F451", 0.8]],
-      "fused": [
-        ["1F436", 0.931, "alias"],
-        ["1F600", 0.642, "semantic"],
-        ["1F680", 0.639, "semantic"],
-        ["1F451", 0.626, "semantic"],
-        ["2B50", 0.603, "semantic"],
-        ["1F30B", 0.593, "semantic"],
-        ["1F436", 0.601, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.7229166666666662,
-      "confidence": 0.732,
-      "unsure": false,
-      "merged": ["1F3A4", "1F451", "1F436", "1F600", "1F680", "2B50"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.376,
-        "coverage": 0.617,
-        "results": [["1F600", 0.376], ["2B50", 0.326]]
-      },
-      "semantic": [
-        ["1F600", 0.329, "semantic"],
-        ["1F525", 0.307, "semantic"],
-        ["1F680", 0.305, "semantic"],
-        ["1F3A4", 0.318, "semantic"],
-        ["1F3B5", 0.256, "semantic"],
-        ["1F451", 0.309, "semantic"],
-        ["2B50", 0.216, "semantic"]
-      ],
-      "concept": [["1F451", 0.9], ["2B50", 0.8], ["1F30B", 0.7]],
-      "fused": [
-        ["1F600", 0.376, "alias"],
-        ["2B50", 0.326, "alias"],
-        ["1F600", 0.329, "semantic"],
-        ["1F525", 0.307, "semantic"],
-        ["1F680", 0.305, "semantic"],
-        ["1F3A4", 0.318, "semantic"],
-        ["1F3B5", 0.256, "semantic"],
-        ["1F451", 0.309, "semantic"],
-        ["2B50", 0.216, "semantic"]
-      ],
-      "limit": 7,
-      "strength": 0,
-      "confidence": 0.273,
-      "unsure": true,
-      "merged": ["1F451", "2B50", "1F30B", "1F600", "1F525", "1F680", "1F3A4"]
-    },
-    {
-      "alias": {
-        "tokens": ["a", "b"],
-        "confidence": 0.09,
-        "coverage": 0.106,
-        "results": [["1F525", 0.09], ["1F3B5", 0.04]]
-      },
-      "semantic": [
-        ["1F600", 0.521, "semantic"],
-        ["1F525", 0.514, "semantic"],
-        ["1F680", 0.499, "semantic"],
-        ["1F3A4", 0.476, "semantic"],
-        ["1F3B5", 0.501, "semantic"],
-        ["1F451", 0.405, "semantic"],
-        ["2B50", 0.432, "semantic"]
-      ],
-      "concept": [["1F600", 0.9]],
-      "fused": [
-        ["1F525", 0.09, "alias"],
-        ["1F3B5", 0.04, "alias"],
-        ["1F600", 0.521, "semantic"],
-        ["1F525", 0.514, "semantic"],
-        ["1F680", 0.499, "semantic"],
-        ["1F3A4", 0.476, "semantic"],
-        ["1F3B5", 0.501, "semantic"],
-        ["1F451", 0.405, "semantic"],
-        ["2B50", 0.432, "semantic"]
-      ],
-      "limit": 8,
-      "strength": 0.40258928571428626,
-      "confidence": 0.403,
-      "unsure": true,
-      "merged": ["1F600", "1F525", "1F3B5", "1F680", "1F3A4", "1F451", "2B50"]
-    },
-    {
-      "alias": { "tokens": ["a"], "confidence": 0.668, "coverage": 1, "results": [["1F98E", 0.668]] },
-      "semantic": [
-        ["1F3A4", 0.9, "concept"],
-        ["1F525", 0.312, "semantic"],
-        ["1F680", 0.3, "semantic"],
-        ["1F451", 0.303, "semantic"],
-        ["1F30B", 0.283, "semantic"],
-        ["1F436", 0.245, "semantic"]
-      ],
-      "concept": [["1F600", 0.9], ["1F3B5", 0.8], ["1F436", 0.7]],
-      "fused": [
-        ["1F98E", 0.668, "alias"],
-        ["1F525", 0.312, "semantic"],
-        ["1F680", 0.3, "semantic"],
-        ["1F451", 0.303, "semantic"],
-        ["1F30B", 0.283, "semantic"],
-        ["1F436", 0.245, "semantic"]
-      ],
-      "limit": 4,
-      "strength": 0,
-      "confidence": 0.668,
-      "unsure": false,
-      "merged": ["1F98E", "1F600", "1F3B5", "1F436"]
-    },
-    {
-      "alias": {
-        "tokens": ["a"],
-        "confidence": 0.557,
-        "coverage": 0.941,
-        "results": [["1F451", 0.557], ["2B50", 0.507], ["1F30B", 0.457]]
-      },
-      "semantic": [
-        ["1F680", 0.305, "semantic"],
-        ["1F3A4", 0.28, "semantic"],
-        ["1F3B5", 0.268, "semantic"],
-        ["1F30B", 0.233, "semantic"]
-      ],
-      "concept": [["1F680", 0.9], ["1F3B5", 0.8], ["1F98E", 0.7]],
-      "fused": [
-        ["1F451", 0.557, "alias"],
-        ["2B50", 0.507, "alias"],
-        ["1F30B", 0.457, "alias"],
-        ["1F680", 0.305, "semantic"],
-        ["1F3A4", 0.28, "semantic"],
-        ["1F3B5", 0.268, "semantic"],
-        ["1F30B", 0.233, "semantic"]
-      ],
-      "limit": 5,
-      "strength": 0,
-      "confidence": 0.557,
-      "unsure": true,
-      "merged": ["1F680", "1F3B5", "1F98E", "1F451", "2B50"]
+      "confidence": 0.165,
+      "unsure": true
     },
     {
       "alias": null,
       "semantic": [
-        ["1F600", 0.502, "semantic"],
-        ["1F525", 0.493, "semantic"],
-        ["1F680", 0.477, "semantic"],
-        ["1F451", 0.43, "semantic"],
-        ["1F98E", 0.437, "semantic"],
-        ["1F30B", 0.435, "semantic"],
-        ["1F436", 0.341, "semantic"]
+        ["1F600", 0.332, "semantic"],
+        ["1F680", 0.313, "semantic"],
+        ["1F451", 0.278, "semantic"],
+        ["2B50", 0.331, "semantic"],
+        ["1F436", 0.238, "semantic"]
       ],
-      "concept": [["1F525", 0.9], ["1F3A4", 0.8], ["1F98E", 0.7], ["1F436", 0.6]],
-      "fused": [
-        ["1F3A4", 0.974, "alias"],
-        ["1F3B5", 0.924, "alias"],
-        ["1F451", 0.874, "alias"],
-        ["1F98E", 0.824, "alias"],
-        ["2B50", 0.774, "alias"],
-        ["1F600", 0.502, "semantic"],
-        ["1F525", 0.493, "semantic"],
-        ["1F680", 0.477, "semantic"],
-        ["1F451", 0.43, "semantic"],
-        ["1F98E", 0.437, "semantic"],
-        ["1F30B", 0.435, "semantic"],
-        ["1F436", 0.341, "semantic"]
-      ],
-      "limit": 6,
-      "strength": 0.37919642857142877,
-      "confidence": 0.379,
-      "unsure": true,
-      "merged": ["1F525", "1F3A4", "1F98E", "1F436", "1F3B5", "1F451"]
+      "strength": 0,
+      "confidence": 0,
+      "unsure": true
     },
     {
       "alias": {
         "tokens": ["a"],
-        "confidence": 0.671,
-        "coverage": 0.308,
-        "results": [["1F600", 0.671], ["1F525", 0.621], ["1F451", 0.571], ["1F98E", 0.521]]
+        "confidence": 0.138,
+        "coverage": 0.915,
+        "results": [["1F3B5", 0.138], ["1F98E", 0.088], ["1F30B", 0.038], ["1F436", 0]]
       },
       "semantic": [
-        ["1F600", 0.562, "semantic"],
-        ["1F525", 0.561, "semantic"],
-        ["1F680", 0.506, "semantic"],
-        ["1F3A4", 0.504, "semantic"],
-        ["1F3B5", 0.468, "semantic"],
-        ["1F451", 0.51, "semantic"],
-        ["1F436", 0.465, "semantic"]
+        ["1F600", 0.301, "semantic"],
+        ["1F525", 0.274, "semantic"],
+        ["1F680", 0.283, "semantic"],
+        ["1F3A4", 0.278, "semantic"],
+        ["1F451", 0.252, "semantic"],
+        ["1F98E", 0.153, "semantic"],
+        ["2B50", 0.21, "semantic"],
+        ["1F30B", 0.133, "semantic"],
+        ["1F436", 0.301, "semantic"]
       ],
-      "concept": [["1F3A4", 0.9], ["1F3B5", 0.8]],
-      "fused": [
-        ["1F600", 0.671, "alias"],
-        ["1F525", 0.621, "alias"],
-        ["1F451", 0.571, "alias"],
-        ["1F98E", 0.521, "alias"],
-        ["1F600", 0.562, "semantic"],
-        ["1F525", 0.561, "semantic"],
-        ["1F680", 0.506, "semantic"],
-        ["1F3A4", 0.504, "semantic"],
-        ["1F3B5", 0.468, "semantic"],
-        ["1F451", 0.51, "semantic"],
-        ["1F436", 0.465, "semantic"]
+      "strength": 0,
+      "confidence": 0.138,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.638,
+        "coverage": 0.296,
+        "results": [["1F600", 0.638], ["1F3B5", 0.588], ["1F98E", 0.538]]
+      },
+      "semantic": [
+        ["1F600", 0.695, "semantic"],
+        ["1F525", 0.68, "semantic"],
+        ["1F680", 0.675, "semantic"],
+        ["1F3A4", 0.628, "semantic"],
+        ["1F451", 0.59, "semantic"],
+        ["2B50", 0.566, "semantic"],
+        ["1F30B", 0.653, "semantic"],
+        ["1F436", 0.654, "semantic"]
       ],
-      "limit": 7,
-      "strength": 0.8151488095238103,
-      "confidence": 0.815,
-      "unsure": false,
-      "merged": ["1F3A4", "1F3B5", "1F600", "1F525", "1F451", "1F98E", "1F680"]
+      "strength": 0.9312499999999997,
+      "confidence": 0.931,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.665,
+        "coverage": 0.219,
+        "results": [["1F525", 0.665], ["1F3B5", 0.615], ["1F98E", 0.565], ["1F30B", 0.515]]
+      },
+      "semantic": [
+        ["1F525", 0.361, "semantic"],
+        ["1F680", 0.347, "semantic"],
+        ["1F3A4", 0.322, "semantic"],
+        ["1F3B5", 0.345, "semantic"],
+        ["1F98E", 0.295, "semantic"],
+        ["1F30B", 0.251, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.171,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.049,
+        "coverage": 1,
+        "results": [["1F3A4", 0.049], ["1F436", 0]]
+      },
+      "semantic": [
+        ["1F525", 0.441, "semantic"],
+        ["1F680", 0.434, "semantic"],
+        ["1F3A4", 0.415, "semantic"],
+        ["1F3B5", 0.441, "semantic"],
+        ["1F451", 0.406, "semantic"],
+        ["1F436", 0.422, "semantic"]
+      ],
+      "strength": 0.004583333333333337,
+      "confidence": 0.049,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": [],
+        "confidence": 0.215,
+        "coverage": 0.395,
+        "results": [["1F680", 0.215], ["1F3B5", 0.165], ["1F98E", 0.115]]
+      },
+      "semantic": [
+        ["1F680", 0.349, "semantic"],
+        ["1F3A4", 0.321, "semantic"],
+        ["1F98E", 0.292, "semantic"],
+        ["1F436", 0.329, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.76,
+        "coverage": 0.688,
+        "results": [["1F600", 0.76], ["1F525", 0.71], ["1F30B", 0.66]]
+      },
+      "semantic": [
+        ["1F525", 0.392, "semantic"],
+        ["1F3A4", 0.39, "semantic"],
+        ["1F3B5", 0.36, "semantic"],
+        ["1F98E", 0.318, "semantic"],
+        ["2B50", 0.314, "semantic"],
+        ["1F30B", 0.254, "semantic"],
+        ["1F436", 0.335, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.615,
+      "unsure": true
+    },
+    {
+      "alias": null,
+      "semantic": [
+        ["1F525", 0.5, "semantic"],
+        ["1F680", 0.481, "semantic"],
+        ["1F3B5", 0.485, "semantic"],
+        ["1F451", 0.446, "semantic"],
+        ["2B50", 0.472, "semantic"],
+        ["1F30B", 0.443, "semantic"],
+        ["1F436", 0.476, "semantic"]
+      ],
+      "strength": 0.317857142857143,
+      "confidence": 0.318,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.854,
+        "coverage": 1,
+        "results": [["1F600", 0.854], ["1F3A4", 0.804]]
+      },
+      "semantic": null,
+      "strength": null,
+      "confidence": 0.854,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.61,
+        "coverage": 0.026,
+        "results": [["1F600", 0.61], ["1F30B", 0.56], ["1F436", 0.51]]
+      },
+      "semantic": [
+        ["1F525", 0.534, "semantic"],
+        ["1F680", 0.531, "semantic"],
+        ["1F3B5", 0.528, "semantic"],
+        ["1F451", 0.505, "semantic"],
+        ["2B50", 0.462, "semantic"],
+        ["1F436", 0.471, "semantic"]
+      ],
+      "strength": 0.4895833333333334,
+      "confidence": 0.49,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.447,
+        "coverage": 0.289,
+        "results": [["1F3A4", 0.447], ["1F3B5", 0.397], ["1F98E", 0.347]]
+      },
+      "semantic": [
+        ["1F600", 0.445, "semantic"],
+        ["1F525", 0.422, "semantic"],
+        ["1F680", 0.399, "semantic"],
+        ["2B50", 0.404, "semantic"],
+        ["1F30B", 0.329, "semantic"]
+      ],
+      "strength": 0.034672619047619084,
+      "confidence": 0.152,
+      "unsure": true
+    },
+    {
+      "alias": {
+        "tokens": ["a", "b"],
+        "confidence": 0.701,
+        "coverage": 0.72,
+        "results": [["1F30B", 0.701], ["1F436", 0.651]]
+      },
+      "semantic": [
+        ["1F600", 0.697, "semantic"],
+        ["1F680", 0.674, "semantic"],
+        ["1F3A4", 0.681, "semantic"],
+        ["1F3B5", 0.677, "semantic"],
+        ["1F451", 0.637, "semantic"],
+        ["1F98E", 0.565, "semantic"],
+        ["2B50", 0.549, "semantic"],
+        ["1F30B", 0.536, "semantic"],
+        ["1F436", 0.588, "semantic"]
+      ],
+      "strength": 0.7479166666666662,
+      "confidence": 0.748,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.734,
+        "coverage": 1,
+        "results": [["1F680", 0.734], ["1F3A4", 0.684], ["1F30B", 0.634], ["1F436", 0.584]]
+      },
+      "semantic": [
+        ["1F525", 0.472, "semantic"],
+        ["1F3A4", 0.467, "semantic"],
+        ["1F3B5", 0.419, "semantic"],
+        ["1F451", 0.389, "semantic"],
+        ["2B50", 0.429, "semantic"],
+        ["1F30B", 0.344, "semantic"]
+      ],
+      "strength": 0.20190476190476178,
+      "confidence": 0.734,
+      "unsure": false
+    },
+    {
+      "alias": { "tokens": ["a"], "confidence": 0.359, "coverage": 0.638, "results": [["1F3B5", 0.359]] },
+      "semantic": [
+        ["1F680", 0.422, "semantic"],
+        ["1F3A4", 0.418, "semantic"],
+        ["1F3B5", 0.381, "semantic"],
+        ["1F451", 0.419, "semantic"],
+        ["1F98E", 0.361, "semantic"]
+      ],
+      "strength": 0,
+      "confidence": 0.269,
+      "unsure": true
+    },
+    {
+      "alias": null,
+      "semantic": [
+        ["1F600", 0.629, "semantic"],
+        ["1F525", 0.601, "semantic"],
+        ["1F3A4", 0.616, "semantic"],
+        ["1F98E", 0.598, "semantic"],
+        ["1F30B", 0.573, "semantic"]
+      ],
+      "strength": 0.7666666666666669,
+      "confidence": 0.767,
+      "unsure": false
+    },
+    {
+      "alias": {
+        "tokens": ["a"],
+        "confidence": 0.507,
+        "coverage": 0.176,
+        "results": [["1F600", 0.507], ["1F525", 0.457], ["1F680", 0.407], ["1F3B5", 0.357], ["1F98E", 0.307]]
+      },
+      "semantic": [["1F451", 0.637, "semantic"], ["2B50", 0.622, "semantic"], ["1F30B", 0.582, "semantic"]],
+      "strength": 0.791666666666667,
+      "confidence": 0.792,
+      "unsure": false
     }
   ]
 }
