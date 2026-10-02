@@ -109,13 +109,43 @@ These are static asset requests: free, and they do not run the Worker.
 | ------------- | ------- |
 | `GET /api/auth/github` → callback `/api/auth/github/callback` | Sign in with GitHub (local dev: `/api/auth/dev`) |
 | `POST /api/auth/logout` | End session |
-| `GET /api/me` | Account + plan summary |
-| `GET /api/apps`, `POST /api/apps` | List / create apps (`name`, `environment`) |
-| `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. |
-| `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke |
-| `GET /api/apps/:id/usage?period=YYYY-MM` | Usage per metric vs plan limits |
-| `GET /api/apps/:id/analytics?days=7\|30\|90` | Search analytics (Pro and Scale), see below |
+| `GET /api/me` | Account, its own `plan`, `appCount`, `waitlistPlan`, `teams: [{ ownerId, ownerName, role }]` |
+| `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`) / create an app in the own account (`name`, `environment`) |
+| `GET /api/apps/:id` | App + keys (viewer+) |
+| `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
+| `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. (developer+) |
+| `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke (developer+) |
+| `GET /api/apps/:id/usage?period=YYYY-MM` | Usage per metric vs the owner's plan limits (viewer+) |
+| `GET /api/apps/:id/analytics?days=7\|30\|90` | Search analytics (Pro and Scale, viewer+), see below |
+| `GET /api/team` | `{ ownerId, role, members, invites }` (Pro+, any member) |
+| `POST /api/team/invites` | `{ role, email? }` → `{ invite, url }`. The link `/invite/<token>` is shown once and works once, for 7 days (admin+) |
+| `DELETE /api/team/invites/:id` | Withdraw an open invite (admin+) |
+| `PATCH /api/team/members/:id` | `{ role }` (admin+). The owner cannot change. |
+| `DELETE /api/team/members/:id` | Remove a member (admin+), or leave the team (the member) |
+| `POST /api/invites/:token/accept` | Signed in: join the owner's team → `{ team: { ownerId, ownerName, role } }` |
+| `GET /api/billing` | `{ plan, period, usage, limits, appCount, provider: null, waitlistPlan }` (owner, admin) |
+| `POST /api/billing/upgrade` | `{ plan, email? }` → `{ status: "waitlist", plan }`. Never charges (owner only) |
 | `POST /api/waitlist` | Public: `{ email, plan }` for the Pro waitlist |
+
+### Roles, plans and errors
+
+- **Plan.** It lives on the account (`accounts.plan`). Every app of the account gets it, and team
+  members see the owner's plan.
+- **Roles.** owner > admin (everything except changing the plan) > developer (apps, keys, custom
+  emoji, webhooks; no team management) > viewer (read only). A team membership counts only while
+  the owner's plan includes team members (Pro, Scale).
+- **Team scope.** Team and billing routes act on the caller's own account. Add
+  `?owner=<accountId>` to act on another owner's team (needs a membership with a high enough role).
+- **Errors.** Every error is `{ "error": { "code", "message", "field"?, "plan"? } }`.
+
+| Status | `code` | When |
+| ------ | ------ | ---- |
+| 402 | `plan_required` | The plan lacks the feature. `plan` = the cheapest plan that has it (also `POST /api/apps` past `maxApps`). |
+| 403 | `forbidden_role` | The caller can see the app or team, but the role is too low |
+| 404 | `not_found` | No app, key, team or member, or no access to it (the same answer) |
+| 404 | `invite_not_found` | Unknown or withdrawn invite link |
+| 409 | `invite_own_team`, `already_member`, `owner_immutable`, `plan_not_higher` | Invite for the own team, a second membership, a change to the owner, an upgrade to the same or a lower plan |
+| 410 | `invite_used`, `invite_expired` | The invite was accepted already, or is older than 7 days |
 
 ### `GET /api/apps/:id/analytics`
 
@@ -136,7 +166,7 @@ These are static asset requests: free, and they do not run the Worker.
 - `topQueries`, `topMisses`: up to 20 entries over the window. A query is named only when the app
   saw it at least 5 times in the window. Day totals count every search.
 - The plan is the account's (team members see the owner's plan). Free and Solo get `402
-  { "error": "plan_required", "plan": "pro", "message": "…" }`.
+  { "error": { "code": "plan_required", "plan": "pro", "message": "…" } }`.
 - Data comes from keyed `/v1/search` calls only, cache hits and over-limit answers included,
   flushed in batches (≈ 10 s delay).
 

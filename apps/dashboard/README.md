@@ -93,22 +93,24 @@ email. It uses the access token once and never stores it.
 | Sessions | 32 random bytes in `es_session`: HttpOnly, SameSite=Lax, Secure except on localhost, 30 days. D1 stores only the SHA-256. |
 | Writes | POST/PATCH/DELETE with an `Origin` other than the dashboard's own get 403, which also blocks same-site sibling domains. |
 | Sign-in errors | Sign-in routes are navigations, so they redirect to `/?error=<code>` (`github_state`, `github_denied`, `github_failed`, `github_unconfigured`). |
-| API errors | `{ "error": { "code", "message", "field"? } }` with 400, 401, 403, 404, 405, 409, 413, 415, 429 or 500. |
-| Ownership | Another account's app or key answers 404, the same as a missing one. |
-| Apps | `environment` is `prod` (default), `staging` or `dev`. `maxApps` is checked inside the INSERT, so parallel requests cannot exceed it. |
-| Account plan | Migration 0001 stores the plan per app. Until there is an account plan, the account's plan is the best plan among its apps, and new apps inherit it. |
+| API errors | `{ "error": { "code", "message", "field"?, "plan"? } }` with 400, 401, 402, 403, 404, 405, 409, 410, 413, 415, 429 or 500. Plan gates throw `planRequired(plan, message)` (`src/worker/http.ts`) or call `requirePlan` (`src/worker/plans.ts`). |
+| Access | `accessFor(db, accountId, appId)` in `src/worker/access.ts` is the single gate for app and key routes: `{ role, plan, app }` or `undefined`. `requireAppAccess(…, permission)` turns that into 404 (no access, same as missing) or 403 `forbidden_role`. Permissions: `view` (viewer), `edit` (developer), `manage_team` and `view_billing` (admin), `change_plan` (owner). |
+| Account plan | `accounts.plan` (migration 0002). Apps get the owner's plan; the legacy `apps.plan` column is ignored. Only billing will change it; nothing in the dashboard does yet. |
+| Team | Pro and Scale. A membership works only while the owner's plan includes team members; after a downgrade the rows stay and work again after an upgrade. Team and billing routes take `?owner=<accountId>` (default: the caller). Members list the owner first. |
+| Invites | `/invite/<token>` links: 32 random bytes, D1 stores only the SHA-256, single use, 7 days. The optional email is a label and is not checked on accept. |
+| Apps | `environment` is `prod` (default), `staging` or `dev`. Apps are created in the caller's own account. `maxApps` is checked inside the INSERT, so parallel requests cannot exceed it; past it, `402 plan_required` names the next plan with room. `PATCH` sets `name` and `emojiSet` (`native`, or `twemoji`/`noto`/`fluent` on Solo+). |
+| Billing | No provider yet. `GET /api/billing` sums this month's `usage_monthly` over the account's own apps (custom emoji = rows stored now). `POST /api/billing/upgrade` only records the waitlist; it never charges and never changes the plan. |
 | Keys | The create response is the only place the full key appears. D1 stores its SHA-256 and the first 12 characters. |
 | Allowed origins | `https://host[:port]` or `https://*.example.com`; `http://` only for localhost; at most 20. A publishable key with no origins (any origin) is allowed only in `dev` apps. Secret keys have none. |
 | Usage | `GET /api/apps/:id/usage?period=YYYY-MM` (UTC, default current month, no future months). `status` is `ok`, `near_limit` (≥ 80%), `over_limit` (used ≥ limit) or `not_included` (limit 0). `limit: null` means unlimited. |
-| Analytics | `GET /api/apps/:id/analytics?days=7\|30\|90` (default 30) from `query_daily`. The window is cut to the owner account's `analyticsRetentionDays` and zero-filled. Top lists: 20 entries, only queries searched ≥ 5 times in the window. Plans without analytics get `402 { "error": "plan_required", "plan": "pro", "message" }`. |
+| Analytics | `GET /api/apps/:id/analytics?days=7\|30\|90` (default 30) from `query_daily`. The window is cut to the owner account's `analyticsRetentionDays` and zero-filled. Top lists: 20 entries, only queries searched ≥ 5 times in the window. Plans without analytics get `402 { "error": { "code": "plan_required", "plan": "pro", "message" } }`. Every team role may read them. |
 | Waitlist | Public and idempotent. New and known emails get the same answer. A repeat updates the plan and keeps the first date. |
-
-`GET /api/apps/:id` (app + keys) is an addition to docs/API.md: the app page needs it to list keys.
 
 ## Tests
 
 - `test/worker`: route handlers against `FakeD1`, which is real SQLite (`node:sqlite`) with the real
   migrations. Covers auth and sessions, GitHub OAuth (mocked fetch), ownership, the key
-  lifecycle, origin rules, usage math and the waitlist.
+  lifecycle, origin rules, usage math, the waitlist, roles on every app and key route
+  (`access.test.ts`), team invites and members (`team.test.ts`), billing, and plan gates.
 - `test/ui`: the SPA in happy-dom with a fake `fetch`. Covers sign-in errors, the empty state and app
   creation, the plan limit and waitlist, create/reveal/revoke/edit of keys, and usage meters.
