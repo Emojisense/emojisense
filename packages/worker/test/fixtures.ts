@@ -93,19 +93,25 @@ export function executionContext() {
   };
 }
 
-export const DEFAULT_LABEL: ImageLabel = { caption: "a puppy asleep on a sofa", reaction: "aww so cute" };
+export const DEFAULT_LABEL: ImageLabel = {
+  caption: "a puppy asleep on a sofa",
+  reaction: "aww so cute",
+  keywords: ["puppy", "sofa"],
+  emoji: ["🐶"],
+};
 
 /**
  * A fake Workers AI: embeddings always land next to `embedTo` (the volcano row by default), and
- * the vision model answers with `label` in the chat-completions shape.
+ * the vision model answers with `label` in the chat-completions shape (a string is sent as is).
  */
-export function fakeAi(options: { embedTo?: number; label?: ImageLabel } = {}) {
+const visionContent = (label: ImageLabel | string | undefined) =>
+  typeof label === "string" ? label : JSON.stringify(label ?? DEFAULT_LABEL);
+
+export function fakeAi(options: { embedTo?: number; label?: ImageLabel | string } = {}) {
   return vi.fn<AiBinding["run"]>(async (model) => {
     if (model === VISION_MODEL) {
       return {
-        choices: [
-          { message: { role: "assistant", content: JSON.stringify(options.label ?? DEFAULT_LABEL) } },
-        ],
+        choices: [{ message: { role: "assistant", content: visionContent(options.label) } }],
       };
     }
     return { data: [Array.from(unit(options.embedTo ?? 1))] };
@@ -185,13 +191,18 @@ export function harness(
     env?: Partial<Env>;
     now?: () => number;
     embedTo?: number;
+    /** What the vision model answers: a label, or raw text. */
+    label?: ImageLabel | string;
     catalog?: Catalog;
     /** Outgoing webhook requests, and the wait between their retries. */
     fetch?: (url: string, init: RequestInit) => Promise<Response>;
     sleep?: (ms: number) => Promise<void>;
   } = {},
 ): Harness {
-  const ai = fakeAi(options.embedTo === undefined ? {} : { embedTo: options.embedTo });
+  const ai = fakeAi({
+    ...(options.embedTo === undefined ? {} : { embedTo: options.embedTo }),
+    ...(options.label === undefined ? {} : { label: options.label }),
+  });
   const events = vi.fn();
   const cache = memoryCache();
   const ctx = executionContext();

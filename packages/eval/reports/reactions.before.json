@@ -1,0 +1,2693 @@
+{
+ "kind": "reactions",
+ "label": "before",
+ "date": "2026-10-02T03:57:11.477Z",
+ "api": "http://localhost:8818",
+ "summary": {
+  "n": 44,
+  "p1": 45.5,
+  "p4": 31.3,
+  "hit4": 63.6,
+  "ceiling4": 100,
+  "trap4": 6.8
+ },
+ "failed": 0,
+ "items": [
+  {
+   "id": "en-shipped",
+   "input": "shipped the new onboarding 🎉 thanks team",
+   "answers": [
+    "🎉",
+    "🙌",
+    "👏",
+    "🚀",
+    "🙏",
+    "❤️",
+    "🥳"
+   ],
+   "forbid": [
+    "📦",
+    "📬",
+    "🐣",
+    "👋"
+   ],
+   "judged": {
+    "top": [
+     "👋",
+     "📦️",
+     "📬️",
+     "🐣"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": true
+   },
+   "results": [
+    {
+     "emoji": "👋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📦️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📬️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐣",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⏳️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 409
+  },
+  {
+   "id": "en-smoke-tests",
+   "input": "smoke tests are failing again",
+   "answers": [
+    "😩",
+    "😬",
+    "🤦",
+    "😭",
+    "😤",
+    "🫠",
+    "😫"
+   ],
+   "forbid": [
+    "🚬",
+    "💨"
+   ],
+   "judged": {
+    "top": [
+     "🚬",
+     "🧪",
+     "🚭️",
+     "🫁"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": true
+   },
+   "results": [
+    {
+     "emoji": "🚬",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧪",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚭️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫁",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☣️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🦨",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🪰",
+     "source": "semantic"
+    }
+   ],
+   "ms": 166
+  },
+  {
+   "id": "en-10k",
+   "input": "we just hit 10k users!",
+   "answers": [
+    "🎉",
+    "🚀",
+    "🥳",
+    "🙌",
+    "📈",
+    "🔥",
+    "💯",
+    "👏"
+   ],
+   "forbid": [
+    "🏃"
+   ],
+   "judged": {
+    "top": [
+     "👥",
+     "🔟",
+     "🐙",
+     "👍️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "👥",
+     "source": "alias"
+    },
+    {
+     "emoji": "🔟",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐙",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👍️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕙️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📱",
+     "source": "semantic"
+    }
+   ],
+   "ms": 166
+  },
+  {
+   "id": "en-loss",
+   "input": "I'm so sorry for your loss",
+   "answers": [
+    "😢",
+    "❤️",
+    "🫂",
+    "🙏",
+    "💔",
+    "😭",
+    "🤍"
+   ],
+   "forbid": [
+    "😂",
+    "🤣"
+   ],
+   "judged": {
+    "top": [
+     "😢",
+     "😿",
+     "🙇",
+     "🙇‍♂️"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "😢",
+     "source": "alias"
+    },
+    {
+     "emoji": "😿",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙇",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙇‍♂️",
+     "source": "alias"
+    },
+    {
+     "emoji": "💔",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤗",
+     "source": "alias"
+    },
+    {
+     "emoji": "🫂",
+     "source": "alias"
+    },
+    {
+     "emoji": "🪦",
+     "source": "alias"
+    }
+   ],
+   "ms": 133
+  },
+  {
+   "id": "en-shift",
+   "input": "thank you so much for covering my shift",
+   "answers": [
+    "🙏",
+    "❤️",
+    "🙌",
+    "🤗",
+    "🫶",
+    "💕",
+    "🥹"
+   ],
+   "judged": {
+    "top": [
+     "💁",
+     "🧑‍⚕️",
+     "🫡",
+     "💁‍♂️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💁",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧑‍⚕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💁‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⏰️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛟",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📟️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕟️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 158
+  },
+  {
+   "id": "en-meeting",
+   "input": "lol that meeting could have been an email",
+   "answers": [
+    "😂",
+    "🤣",
+    "💀",
+    "😆",
+    "💯",
+    "🙃"
+   ],
+   "forbid": [
+    "📧",
+    "📨",
+    "✉️",
+    "📩"
+   ],
+   "judged": {
+    "top": [
+     "📨",
+     "✉️",
+     "📩",
+     "📧"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": true
+   },
+   "results": [
+    {
+     "emoji": "📨",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✉️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📧",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📫️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤝",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📬️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 130
+  },
+  {
+   "id": "en-agree",
+   "input": "totally agree, let's do it",
+   "answers": [
+    "👍",
+    "💯",
+    "🙌",
+    "✅",
+    "👌",
+    "🤝",
+    "🚀",
+    "💪"
+   ],
+   "judged": {
+    "top": [
+     "🙂‍↕️",
+     "🙆",
+     "🔛",
+     "🙆‍♀️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙂‍↕️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙆",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔛",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙆‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙆‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👍️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✅️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 128
+  },
+  {
+   "id": "en-birthday",
+   "input": "happy birthday Sarah!",
+   "answers": [
+    "🎂",
+    "🎉",
+    "🥳",
+    "🎈",
+    "🎁",
+    "❤️",
+    "🎊"
+   ],
+   "judged": {
+    "top": [
+     "🎂",
+     "🥳",
+     "🎉",
+     "🤶"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎂",
+     "source": "alias"
+    },
+    {
+     "emoji": "🥳",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎉",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👸",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤗",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👩",
+     "source": "semantic"
+    }
+   ],
+   "ms": 145
+  },
+  {
+   "id": "en-flight",
+   "input": "my flight got cancelled again",
+   "answers": [
+    "😩",
+    "😭",
+    "😤",
+    "😡",
+    "🤦",
+    "😫",
+    "😞",
+    "😢"
+   ],
+   "judged": {
+    "top": [
+     "🛄",
+     "✈️",
+     "🛫",
+     "😞"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🛄",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✈️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛫",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😞",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔄",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😶‍🌫️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛬",
+     "source": "semantic"
+    }
+   ],
+   "ms": 131
+  },
+  {
+   "id": "en-engaged",
+   "input": "she said yes!! we're engaged 💍",
+   "answers": [
+    "💍",
+    "🎉",
+    "🥳",
+    "😍",
+    "❤️",
+    "🥂",
+    "🥰",
+    "🎊"
+   ],
+   "judged": {
+    "top": [
+     "💍",
+     "👰",
+     "👰‍♀️",
+     "💒"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💍",
+     "source": "alias"
+    },
+    {
+     "emoji": "👰",
+     "source": "alias"
+    },
+    {
+     "emoji": "👰‍♀️",
+     "source": "alias"
+    },
+    {
+     "emoji": "💒",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙆‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👫",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👩‍❤️‍👨",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    }
+   ],
+   "ms": 149
+  },
+  {
+   "id": "en-exam",
+   "input": "good luck on your exam tomorrow",
+   "answers": [
+    "🍀",
+    "🤞",
+    "💪",
+    "🙏",
+    "✨",
+    "📚"
+   ],
+   "judged": {
+    "top": [
+     "🍀",
+     "🤞",
+     "🕣️",
+     "🕝️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🍀",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤞",
+     "source": "alias"
+    },
+    {
+     "emoji": "🕣️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕝️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📘",
+     "source": "alias"
+    },
+    {
+     "emoji": "😥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐞",
+     "source": "alias"
+    },
+    {
+     "emoji": "🦉",
+     "source": "semantic"
+    }
+   ],
+   "ms": 168
+  },
+  {
+   "id": "en-build-green",
+   "input": "the build is green, ship it",
+   "answers": [
+    "🚀",
+    "✅",
+    "🎉",
+    "🙌",
+    "💚",
+    "🟢"
+   ],
+   "judged": {
+    "top": [
+     "💚",
+     "🚢",
+     "♻️",
+     "🌱"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💚",
+     "source": "alias"
+    },
+    {
+     "emoji": "🚢",
+     "source": "alias"
+    },
+    {
+     "emoji": "♻️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌱",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏗️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🟩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥬",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚦",
+     "source": "semantic"
+    }
+   ],
+   "ms": 153
+  },
+  {
+   "id": "en-job",
+   "input": "I got the job!!!",
+   "answers": [
+    "🎉",
+    "🥳",
+    "🙌",
+    "👏",
+    "🎊",
+    "💪",
+    "🔥",
+    "🍾"
+   ],
+   "judged": {
+    "top": [
+     "💼",
+     "🧑‍💼",
+     "👨‍💼",
+     "👩‍💼"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💼",
+     "source": "alias"
+    },
+    {
+     "emoji": "🧑‍💼",
+     "source": "alias"
+    },
+    {
+     "emoji": "👨‍💼",
+     "source": "alias"
+    },
+    {
+     "emoji": "👩‍💼",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎉",
+     "source": "alias"
+    },
+    {
+     "emoji": "👔",
+     "source": "alias"
+    },
+    {
+     "emoji": "💃",
+     "source": "alias"
+    },
+    {
+     "emoji": "👏",
+     "source": "alias"
+    }
+   ],
+   "ms": 140
+  },
+  {
+   "id": "en-pizza",
+   "input": "anyone want to grab pizza for lunch?",
+   "answers": [
+    "🍕",
+    "🙋",
+    "👍",
+    "😋",
+    "🙌",
+    "🙋‍♂️",
+    "🙋‍♀️"
+   ],
+   "judged": {
+    "top": [
+     "🥪",
+     "🍴",
+     "🍕",
+     "🍄‍🟫"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🥪",
+     "source": "alias"
+    },
+    {
+     "emoji": "🍴",
+     "source": "alias"
+    },
+    {
+     "emoji": "🍕",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍄‍🟫",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍔",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍿",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥩",
+     "source": "semantic"
+    }
+   ],
+   "ms": 149
+  },
+  {
+   "id": "en-mondays",
+   "input": "ugh, mondays",
+   "answers": [
+    "😩",
+    "😫",
+    "🙄",
+    "😴",
+    "😤",
+    "☕",
+    "🥱"
+   ],
+   "judged": {
+    "top": [
+     "🙍",
+     "😓",
+     "🙄",
+     "😒"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙍",
+     "source": "alias"
+    },
+    {
+     "emoji": "😓",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙄",
+     "source": "alias"
+    },
+    {
+     "emoji": "😒",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤌",
+     "source": "alias"
+    },
+    {
+     "emoji": "😩",
+     "source": "alias"
+    },
+    {
+     "emoji": "🪫",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤦‍♀️",
+     "source": "alias"
+    }
+   ],
+   "ms": 182
+  },
+  {
+   "id": "en-review",
+   "input": "can you review my PR when you have a sec?",
+   "answers": [
+    "👀",
+    "👍",
+    "✅",
+    "👌",
+    "🫡"
+   ],
+   "judged": {
+    "top": [
+     "🤦",
+     "💇",
+     "🤦‍♂️",
+     "🤳"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👉️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🪞",
+     "source": "semantic"
+    }
+   ],
+   "ms": 136
+  },
+  {
+   "id": "en-cat-coffee",
+   "input": "my cat knocked my coffee all over the keyboard",
+   "answers": [
+    "😂",
+    "🤦",
+    "😱",
+    "🙀",
+    "😹",
+    "💀",
+    "😭"
+   ],
+   "judged": {
+    "top": [
+     "🎹",
+     "⌨️",
+     "🐈️",
+     "🐸"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⌨️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐈️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐸",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🪰",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐜",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫨",
+     "source": "semantic"
+    }
+   ],
+   "ms": 135
+  },
+  {
+   "id": "en-final",
+   "input": "we lost the final 2-1, gutted",
+   "answers": [
+    "😢",
+    "😭",
+    "💔",
+    "😞",
+    "🫂",
+    "😩"
+   ],
+   "judged": {
+    "top": [
+     "😵",
+     "😞",
+     "🥀",
+     "🏁"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "😵",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😞",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥀",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏁",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😖",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏆️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    }
+   ],
+   "ms": 135
+  },
+  {
+   "id": "en-welcome",
+   "input": "welcome to the team, Alex!",
+   "answers": [
+    "👋",
+    "🎉",
+    "🙌",
+    "🤗",
+    "❤️",
+    "🥳"
+   ],
+   "judged": {
+    "top": [
+     "👐",
+     "🦁",
+     "💙",
+     "🔛"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "👐",
+     "source": "alias"
+    },
+    {
+     "emoji": "🦁",
+     "source": "alias"
+    },
+    {
+     "emoji": "💙",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔛",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤛",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤜",
+     "source": "semantic"
+    }
+   ],
+   "ms": 140
+  },
+  {
+   "id": "en-outage",
+   "input": "server is down, all hands on deck",
+   "answers": [
+    "🚨",
+    "🔥",
+    "😱",
+    "👀",
+    "🫡",
+    "😬",
+    "🆘"
+   ],
+   "judged": {
+    "top": [
+     "🫳",
+     "🤦",
+     "⏬️",
+     "🎮️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🫳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⏬️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎮️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🖥️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "📉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⏳️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 166
+  },
+  {
+   "id": "en-hilarious",
+   "input": "this is hilarious 😂",
+   "answers": [
+    "😂",
+    "🤣",
+    "💀",
+    "😆"
+   ],
+   "judged": {
+    "top": [
+     "💀",
+     "🤣",
+     "😆",
+     "😂"
+    ],
+    "p1": 1,
+    "p4": 1,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💀",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤣",
+     "source": "alias"
+    },
+    {
+     "emoji": "😆",
+     "source": "alias"
+    },
+    {
+     "emoji": "😂",
+     "source": "alias"
+    },
+    {
+     "emoji": "😹",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤭",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😄",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    }
+   ],
+   "ms": 139
+  },
+  {
+   "id": "en-running-late",
+   "input": "running late, be there in 10",
+   "answers": [
+    "👍",
+    "👌",
+    "🏃",
+    "⏰",
+    "🙏",
+    "🆗"
+   ],
+   "judged": {
+    "top": [
+     "🏃",
+     "🏃‍♂️",
+     "🏃‍➡️",
+     "🏃‍♀️"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🏃",
+     "source": "alias"
+    },
+    {
+     "emoji": "🏃‍♂️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🏃‍➡️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🏃‍♀️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🕥️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕟️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕙️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕠️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 127
+  },
+  {
+   "id": "en-snowing",
+   "input": "it's snowing!!",
+   "answers": [
+    "❄️",
+    "☃️",
+    "😍",
+    "🥶",
+    "⛄",
+    "🌨️",
+    "🎉"
+   ],
+   "judged": {
+    "top": [
+     "🌨️",
+     "🛷",
+     "☃️",
+     "🏂️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🌨️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🛷",
+     "source": "semantic"
+    },
+    {
+     "emoji": "☃️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "❄️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⛄️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⛷️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥶",
+     "source": "semantic"
+    }
+   ],
+   "ms": 142
+  },
+  {
+   "id": "en-coffee",
+   "input": "need coffee before this standup",
+   "answers": [
+    "☕",
+    "😴",
+    "🥱",
+    "😩",
+    "😅"
+   ],
+   "judged": {
+    "top": [
+     "☕️",
+     "🕤️",
+     "🇨🇦",
+     "🍵"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "☕️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🕤️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🇨🇦",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍵",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧍",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥤",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🇪🇹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🕝️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 138
+  },
+  {
+   "id": "en-typo",
+   "input": "found the bug, it was a typo the whole time",
+   "answers": [
+    "🤦",
+    "😂",
+    "😅",
+    "🐛",
+    "🙃",
+    "💀"
+   ],
+   "judged": {
+    "top": [
+     "🐛",
+     "🪲",
+     "🤦",
+     "🧩"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐛",
+     "source": "alias"
+    },
+    {
+     "emoji": "🪲",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤦",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧩",
+     "source": "semantic"
+    },
+    {
+     "emoji": "5️⃣",
+     "source": "semantic"
+    },
+    {
+     "emoji": "✅️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔠",
+     "source": "semantic"
+    }
+   ],
+   "ms": 146
+  },
+  {
+   "id": "en-prod-fire",
+   "input": "prod is on fire 🔥",
+   "answers": [
+    "😱",
+    "🚨",
+    "🔥",
+    "😬",
+    "🫠",
+    "💀"
+   ],
+   "judged": {
+    "top": [
+     "🔥",
+     "❤️‍🔥",
+     "🚒",
+     "🧑‍🚒"
+    ],
+    "p1": 1,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🔥",
+     "source": "alias"
+    },
+    {
+     "emoji": "❤️‍🔥",
+     "source": "alias"
+    },
+    {
+     "emoji": "🚒",
+     "source": "alias"
+    },
+    {
+     "emoji": "🧑‍🚒",
+     "source": "alias"
+    },
+    {
+     "emoji": "👨‍🚒",
+     "source": "alias"
+    },
+    {
+     "emoji": "👩‍🚒",
+     "source": "alias"
+    },
+    {
+     "emoji": "🧯",
+     "source": "alias"
+    },
+    {
+     "emoji": "🧨",
+     "source": "alias"
+    }
+   ],
+   "ms": 131
+  },
+  {
+   "id": "tr-congrats",
+   "input": "tebrikler, harika iş çıkardınız!",
+   "answers": [
+    "🎉",
+    "👏",
+    "🙌",
+    "👍",
+    "🥳",
+    "🔥",
+    "💯"
+   ],
+   "judged": {
+    "top": [
+     "🌟",
+     "🙌",
+     "🎉",
+     "👏"
+    ],
+    "p1": 0,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🌟",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💮",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⭐️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧑‍⚕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏆️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 141
+  },
+  {
+   "id": "tr-thanks",
+   "input": "çok teşekkür ederim 🙏",
+   "answers": [
+    "🙏",
+    "❤️",
+    "🤗",
+    "🙌",
+    "🫶",
+    "🥹"
+   ],
+   "judged": {
+    "top": [
+     "🙏",
+     "😊",
+     "🫶",
+     "🙇"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙏",
+     "source": "alias"
+    },
+    {
+     "emoji": "😊",
+     "source": "alias"
+    },
+    {
+     "emoji": "🫶",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙇",
+     "source": "alias"
+    },
+    {
+     "emoji": "🥹",
+     "source": "alias"
+    },
+    {
+     "emoji": "☺️",
+     "source": "alias"
+    },
+    {
+     "emoji": "❤️",
+     "source": "alias"
+    },
+    {
+     "emoji": "💐",
+     "source": "alias"
+    }
+   ],
+   "ms": 216
+  },
+  {
+   "id": "tr-condolence",
+   "input": "başınız sağ olsun",
+   "answers": [
+    "😢",
+    "🙏",
+    "❤️",
+    "🫂",
+    "💔",
+    "🤲",
+    "🤍"
+   ],
+   "judged": {
+    "top": [
+     "🖤",
+     "🙁",
+     "🙇",
+     "🙇‍♂️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🖤",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙁",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙇",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙇‍♂️",
+     "source": "alias"
+    },
+    {
+     "emoji": "😥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇‍♀️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🫡",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤗",
+     "source": "alias"
+    }
+   ],
+   "ms": 134
+  },
+  {
+   "id": "tr-agree",
+   "input": "kesinlikle katılıyorum",
+   "answers": [
+    "👍",
+    "💯",
+    "🙌",
+    "✅",
+    "👌",
+    "🤝"
+   ],
+   "judged": {
+    "top": [
+     "💯",
+     "🙂‍↕️",
+     "👍️",
+     "👆️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💯",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙂‍↕️",
+     "source": "alias"
+    },
+    {
+     "emoji": "👍️",
+     "source": "alias"
+    },
+    {
+     "emoji": "👆️",
+     "source": "alias"
+    },
+    {
+     "emoji": "👊",
+     "source": "alias"
+    },
+    {
+     "emoji": "➕️",
+     "source": "alias"
+    },
+    {
+     "emoji": "🙋",
+     "source": "alias"
+    },
+    {
+     "emoji": "⬆️",
+     "source": "alias"
+    }
+   ],
+   "ms": 126
+  },
+  {
+   "id": "tr-birthday",
+   "input": "doğum günün kutlu olsun!",
+   "answers": [
+    "🎂",
+    "🎉",
+    "🥳",
+    "🎈",
+    "🎁",
+    "❤️"
+   ],
+   "judged": {
+    "top": [
+     "🥳",
+     "🎂",
+     "🎈",
+     "🎉"
+    ],
+    "p1": 1,
+    "p4": 1,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🥳",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎂",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎈",
+     "source": "alias"
+    },
+    {
+     "emoji": "🎉",
+     "source": "alias"
+    },
+    {
+     "emoji": "🪅",
+     "source": "alias"
+    },
+    {
+     "emoji": "💝",
+     "source": "alias"
+    },
+    {
+     "emoji": "💏",
+     "source": "alias"
+    },
+    {
+     "emoji": "💜",
+     "source": "alias"
+    }
+   ],
+   "ms": 119
+  },
+  {
+   "id": "tr-funny",
+   "input": "hahaha çok komik",
+   "answers": [
+    "😂",
+    "🤣",
+    "😆",
+    "💀"
+   ],
+   "judged": {
+    "top": [
+     "😆",
+     "🤣",
+     "😂",
+     "😛"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "😆",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤣",
+     "source": "alias"
+    },
+    {
+     "emoji": "😂",
+     "source": "alias"
+    },
+    {
+     "emoji": "😛",
+     "source": "alias"
+    },
+    {
+     "emoji": "🤭",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤙",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💩",
+     "source": "semantic"
+    }
+   ],
+   "ms": 135
+  },
+  {
+   "id": "es-new-job",
+   "input": "¡felicidades por el nuevo trabajo!",
+   "answers": [
+    "🎉",
+    "🥳",
+    "👏",
+    "🙌",
+    "🎊",
+    "💪"
+   ],
+   "judged": {
+    "top": [
+     "💼",
+     "🎉",
+     "🧑‍⚕️",
+     "👋"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "💼",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧑‍⚕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🐣",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧑‍💼",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫡",
+     "source": "semantic"
+    }
+   ],
+   "ms": 139
+  },
+  {
+   "id": "es-thanks",
+   "input": "muchas gracias por todo",
+   "answers": [
+    "🙏",
+    "❤️",
+    "🤗",
+    "🫶",
+    "🙌",
+    "🥹"
+   ],
+   "judged": {
+    "top": [
+     "😊",
+     "🙏",
+     "🫂",
+     "🫶"
+    ],
+    "p1": 0,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "😊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙆",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💕",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💐",
+     "source": "semantic"
+    }
+   ],
+   "ms": 141
+  },
+  {
+   "id": "es-lol",
+   "input": "jajaja no puedo más",
+   "answers": [
+    "😂",
+    "🤣",
+    "💀",
+    "😆"
+   ],
+   "judged": {
+    "top": [
+     "🤹",
+     "🦈",
+     "🤹‍♀️",
+     "🇳🇬"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🤹",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🦈",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤹‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🇳🇬",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😫",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤹‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😭",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦‍♀️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 133
+  },
+  {
+   "id": "es-sorry",
+   "input": "lo siento mucho, un abrazo",
+   "answers": [
+    "😢",
+    "🫂",
+    "❤️",
+    "🙏",
+    "💔",
+    "🤗"
+   ],
+   "judged": {
+    "top": [
+     "🫂",
+     "🤗",
+     "🙇",
+     "🙇‍♂️"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🫂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤗",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😘",
+     "source": "semantic"
+    }
+   ],
+   "ms": 149
+  },
+  {
+   "id": "fr-congrats",
+   "input": "félicitations à toute l'équipe !",
+   "answers": [
+    "🎉",
+    "👏",
+    "🙌",
+    "🥳",
+    "🍾",
+    "🎊"
+   ],
+   "judged": {
+    "top": [
+     "🙌",
+     "🏅",
+     "👏",
+     "🎉"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏅",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏆️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤸‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💙",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏁",
+     "source": "semantic"
+    }
+   ],
+   "ms": 143
+  },
+  {
+   "id": "fr-thanks",
+   "input": "merci beaucoup pour ton aide",
+   "answers": [
+    "🙏",
+    "❤️",
+    "🤗",
+    "🙌",
+    "🫶"
+   ],
+   "judged": {
+    "top": [
+     "🙏",
+     "🛟",
+     "🤗",
+     "👏"
+    ],
+    "p1": 1,
+    "p4": 0.5,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🛟",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤗",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫶",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙋",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🫂",
+     "source": "semantic"
+    }
+   ],
+   "ms": 137
+  },
+  {
+   "id": "fr-agree",
+   "input": "je suis d'accord, on y va",
+   "answers": [
+    "👍",
+    "💯",
+    "🙌",
+    "✅",
+    "👌",
+    "🚀",
+    "💪"
+   ],
+   "judged": {
+    "top": [
+     "🙆",
+     "🙆‍♀️",
+     "🔛",
+     "🙆‍♂️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙆",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙆‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔛",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙆‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👍️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🚶‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙂‍↕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🉑",
+     "source": "semantic"
+    }
+   ],
+   "ms": 134
+  },
+  {
+   "id": "de-birthday",
+   "input": "herzlichen Glückwunsch zum Geburtstag!",
+   "answers": [
+    "🎂",
+    "🎉",
+    "🥳",
+    "🎈",
+    "🎁",
+    "🎊"
+   ],
+   "judged": {
+    "top": [
+     "🎂",
+     "🎉",
+     "🥳",
+     "🎈"
+    ],
+    "p1": 1,
+    "p4": 1,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥳",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎈",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💐",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥂",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌠",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🍀",
+     "source": "semantic"
+    }
+   ],
+   "ms": 134
+  },
+  {
+   "id": "de-thanks",
+   "input": "danke dir, du bist der Beste",
+   "answers": [
+    "🙏",
+    "❤️",
+    "🤗",
+    "🫶",
+    "🙌",
+    "💪",
+    "🥰"
+   ],
+   "judged": {
+    "top": [
+     "🐐",
+     "🌟",
+     "🥇",
+     "🔝"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🐐",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🌟",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🥇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🔝",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🏆️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "1️⃣",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🧑‍⚕️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "♾️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 132
+  },
+  {
+   "id": "de-sorry",
+   "input": "oh nein, das tut mir leid",
+   "answers": [
+    "😢",
+    "🫂",
+    "❤️",
+    "😞",
+    "🙏",
+    "💔"
+   ],
+   "judged": {
+    "top": [
+     "🙈",
+     "🙇‍♂️",
+     "🙇",
+     "🤦‍♂️"
+    ],
+    "p1": 0,
+    "p4": 0,
+    "hit4": false,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🙈",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦‍♂️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙇‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤦‍♀️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😥",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😔",
+     "source": "semantic"
+    }
+   ],
+   "ms": 127
+  },
+  {
+   "id": "pt-lol",
+   "input": "kkkkk que engraçado",
+   "answers": [
+    "😂",
+    "🤣",
+    "😆",
+    "💀"
+   ],
+   "judged": {
+    "top": [
+     "😜",
+     "😆",
+     "😉",
+     "😛"
+    ],
+    "p1": 0,
+    "p4": 0.25,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "😜",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😆",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😛",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😄",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🤭",
+     "source": "semantic"
+    },
+    {
+     "emoji": "😝",
+     "source": "semantic"
+    },
+    {
+     "emoji": "💩",
+     "source": "semantic"
+    }
+   ],
+   "ms": 127
+  },
+  {
+   "id": "pt-launch",
+   "input": "parabéns pelo lançamento! 🚀",
+   "answers": [
+    "🎉",
+    "🚀",
+    "👏",
+    "🙌",
+    "🥳",
+    "🔥"
+   ],
+   "judged": {
+    "top": [
+     "🎉",
+     "👏",
+     "🙌",
+     "㊗️"
+    ],
+    "p1": 1,
+    "p4": 0.75,
+    "hit4": true,
+    "ceiling4": 1,
+    "trap4": false
+   },
+   "results": [
+    {
+     "emoji": "🎉",
+     "source": "semantic"
+    },
+    {
+     "emoji": "👏",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🙌",
+     "source": "semantic"
+    },
+    {
+     "emoji": "㊗️",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🎊",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🖖",
+     "source": "semantic"
+    },
+    {
+     "emoji": "🆕",
+     "source": "semantic"
+    },
+    {
+     "emoji": "⭐️",
+     "source": "semantic"
+    }
+   ],
+   "ms": 250
+  }
+ ]
+}

@@ -6,16 +6,16 @@ import { API, EMBEDDING_MODEL, harness, reactions } from "./fixtures.ts";
 describe("POST /v1/suggest-reactions", () => {
   it("ranks alias and semantic results for a whole message", async () => {
     const h = harness();
-    const res = await h.call(reactions({ text: "Jurassic Park vibes today!" }));
+    const res = await h.call(reactions({ text: "ship it!" }));
     const body = (await res.json()) as SearchBody;
     expect(res.status).toBe(200);
     expect(body).toMatchObject({ cached: false, degraded: false, overLimit: false, packVersion: "test" });
     const sources = new Set(body.results.map((r) => r.source));
     expect(sources).toEqual(new Set(["alias", "semantic"]));
-    expect(body.results.some((r) => r.emoji === "🦖" && r.source === "alias")).toBe(true);
+    expect(body.results.some((r) => r.emoji === "🚀" && r.source === "alias")).toBe(true);
     expect(body.results.length).toBeLessThanOrEqual(8);
     expect(h.ai).toHaveBeenCalledWith(EMBEDDING_MODEL, {
-      text: ["Jurassic Park vibes today!"],
+      text: ["ship it!"],
     });
   });
 

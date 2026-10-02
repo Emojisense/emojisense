@@ -67,6 +67,15 @@ Request `{ "text": "we just shipped the new onboarding!", "locale": "en", "limit
 is truncated to 256 characters (≈ 64 tokens). The response has the same shape as search. **The
 text is never logged or cached:** it is chat content.
 
+Results are reactions, not topics: "we just shipped the new onboarding!" gives 🎉 🙌 👏, not 📦.
+The ranking fuses the emoji in the text, intent cues (thanks, congratulations, condolences,
+laughter, agreement… in en, tr, es, fr, de, pt, it), a reaction vocabulary ranked by the message
+embedding, alias hits per clause and the nearest emoji of the catalog. A topical emoji needs two
+signals, or a very close embedding match, so "smoke tests are failing" does not give 🚬. One
+embedding call per request, no LLM. `source` is `semantic` for the embedding signals and
+`alias` for the rest; over the limit, all results are `alias`. The list can be shorter than
+`limit` when the text gives little to go on.
+
 ## `POST /v1/classify-image`
 
 Request: `Content-Type: image/jpeg` or `image/webp`, max 256 KB. Clients downscale to ~384 px
@@ -74,11 +83,19 @@ first. Optional header `X-Image-Hash: <16 hex>` (64-bit perceptual hash) enables
 same meme shared many times costs one call.
 
 ```json
-{ "caption": "a puppy asleep on a sofa", "reaction": "aww, so cute", "results": [{ "emoji": "🐶", "id": "1F436", "score": 0.7, "source": "semantic" }], "cached": false, "overLimit": false }
+{ "caption": "a puppy asleep on a sofa", "reaction": "aww, so cute", "keywords": ["puppy", "sofa", "sleeping"], "results": [{ "emoji": "🐶", "id": "1F436", "score": 0.92, "source": "semantic" }], "cached": false, "degraded": false, "overLimit": false }
 ```
 
-The image is never stored. It is processed in memory and dropped. Only the caption is cached,
-keyed by the perceptual hash.
+The vision model returns the caption, a likely reaction, 3–6 `keywords` and up to 8 emoji of its
+own choice. Proposed emoji that are not in the catalog are dropped. The results fuse those emoji,
+an alias search per keyword and the nearest emoji to the caption embedding; an emoji with too
+little evidence is dropped, so the list can be shorter than `limit`. Gender and direction
+variants (🚵 🚵‍♀️ 🚵‍♂️) appear once. `score` is the fused evidence, 0–1. `degraded: true` = no
+caption embedding (fewer results).
+
+The image is never stored or logged. It is processed in memory and dropped. Only the label
+(caption, reaction, keywords, proposed emoji) is cached, and only with `X-Image-Hash`, keyed by
+the perceptual hash, the vision model and the prompt version.
 
 ## Static files
 

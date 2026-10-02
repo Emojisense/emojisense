@@ -1,0 +1,44 @@
+{"id":"en-shipped","text":"shipped the new onboarding 🎉 thanks team","locale":"en","intent":"celebration","answers":["🎉","🙌","👏","🚀","🙏","❤️","🥳"],"forbid":["📦","📬","🐣","👋"]}
+{"id":"en-smoke-tests","text":"smoke tests are failing again","locale":"en","intent":"frustration","answers":["😩","😬","🤦","😭","😤","🫠","😫"],"forbid":["🚬","💨"]}
+{"id":"en-10k","text":"we just hit 10k users!","locale":"en","intent":"celebration","answers":["🎉","🚀","🥳","🙌","📈","🔥","💯","👏"],"forbid":["🏃"]}
+{"id":"en-loss","text":"I'm so sorry for your loss","locale":"en","intent":"sympathy","answers":["😢","❤️","🫂","🙏","💔","😭","🤍"],"forbid":["😂","🤣"]}
+{"id":"en-shift","text":"thank you so much for covering my shift","locale":"en","intent":"thanks","answers":["🙏","❤️","🙌","🤗","🫶","💕","🥹"]}
+{"id":"en-meeting","text":"lol that meeting could have been an email","locale":"en","intent":"humor","answers":["😂","🤣","💀","😆","💯","🙃"],"forbid":["📧","📨","✉️","📩"]}
+{"id":"en-agree","text":"totally agree, let's do it","locale":"en","intent":"agreement","answers":["👍","💯","🙌","✅","👌","🤝","🚀","💪"]}
+{"id":"en-birthday","text":"happy birthday Sarah!","locale":"en","intent":"celebration","answers":["🎂","🎉","🥳","🎈","🎁","❤️","🎊"]}
+{"id":"en-flight","text":"my flight got cancelled again","locale":"en","intent":"frustration","answers":["😩","😭","😤","😡","🤦","😫","😞","😢"]}
+{"id":"en-engaged","text":"she said yes!! we're engaged 💍","locale":"en","intent":"celebration","answers":["💍","🎉","🥳","😍","❤️","🥂","🥰","🎊"]}
+{"id":"en-exam","text":"good luck on your exam tomorrow","locale":"en","intent":"encouragement","answers":["🍀","🤞","💪","🙏","✨","📚"]}
+{"id":"en-build-green","text":"the build is green, ship it","locale":"en","intent":"celebration","answers":["🚀","✅","🎉","🙌","💚","🟢"]}
+{"id":"en-job","text":"I got the job!!!","locale":"en","intent":"celebration","answers":["🎉","🥳","🙌","👏","🎊","💪","🔥","🍾"]}
+{"id":"en-pizza","text":"anyone want to grab pizza for lunch?","locale":"en","intent":"plans","answers":["🍕","🙋","👍","😋","🙌","🙋‍♂️","🙋‍♀️"],"note":"A literal noun is the right reaction here."}
+{"id":"en-mondays","text":"ugh, mondays","locale":"en","intent":"frustration","answers":["😩","😫","🙄","😴","😤","☕","🥱"]}
+{"id":"en-review","text":"can you review my PR when you have a sec?","locale":"en","intent":"agreement","answers":["👀","👍","✅","👌","🫡"]}
+{"id":"en-cat-coffee","text":"my cat knocked my coffee all over the keyboard","locale":"en","intent":"humor","answers":["😂","🤣","🤦","😱","🙀","😹","💀","😭"]}
+{"id":"en-final","text":"we lost the final 2-1, gutted","locale":"en","intent":"sympathy","answers":["😢","😭","💔","😞","🫂","😩"]}
+{"id":"en-welcome","text":"welcome to the team, Alex!","locale":"en","intent":"celebration","answers":["👋","🎉","🙌","🤗","❤️","🥳"]}
+{"id":"en-outage","text":"server is down, all hands on deck","locale":"en","intent":"alert","answers":["🚨","🔥","😱","👀","🫡","😬","🆘"]}
+{"id":"en-hilarious","text":"this is hilarious 😂","locale":"en","intent":"humor","answers":["😂","🤣","💀","😆"]}
+{"id":"en-running-late","text":"running late, be there in 10","locale":"en","intent":"agreement","answers":["👍","👌","🏃","⏰","🙏","🆗"],"note":"Here the runner is fine; in en-10k it is a trap."}
+{"id":"en-snowing","text":"it's snowing!!","locale":"en","intent":"joy","answers":["❄️","☃️","😍","🥶","⛄","🌨️","🎉"]}
+{"id":"en-coffee","text":"need coffee before this standup","locale":"en","intent":"frustration","answers":["☕","😴","🥱","😩","😅"],"note":"A literal noun is the right reaction here."}
+{"id":"en-typo","text":"found the bug, it was a typo the whole time","locale":"en","intent":"humor","answers":["🤦","😂","🤣","😅","🐛","🙃","💀"]}
+{"id":"en-prod-fire","text":"prod is on fire 🔥","locale":"en","intent":"alert","answers":["😱","🚨","🔥","😬","🫠","💀"]}
+{"id":"tr-congrats","text":"tebrikler, harika iş çıkardınız!","locale":"tr","intent":"celebration","answers":["🎉","👏","🙌","👍","🥳","🔥","💯"]}
+{"id":"tr-thanks","text":"çok teşekkür ederim 🙏","locale":"tr","intent":"thanks","answers":["🙏","❤️","🤗","🙌","🫶","🥹"]}
+{"id":"tr-condolence","text":"başınız sağ olsun","locale":"tr","intent":"sympathy","answers":["😢","🙏","❤️","🫂","💔","🤲","🤍"]}
+{"id":"tr-agree","text":"kesinlikle katılıyorum","locale":"tr","intent":"agreement","answers":["👍","💯","🙌","✅","👌","🤝"]}
+{"id":"tr-birthday","text":"doğum günün kutlu olsun!","locale":"tr","intent":"celebration","answers":["🎂","🎉","🥳","🎈","🎁","❤️"]}
+{"id":"tr-funny","text":"hahaha çok komik","locale":"tr","intent":"humor","answers":["😂","🤣","😆","💀"]}
+{"id":"es-new-job","text":"¡felicidades por el nuevo trabajo!","locale":"es","intent":"celebration","answers":["🎉","🥳","👏","🙌","🎊","💪"]}
+{"id":"es-thanks","text":"muchas gracias por todo","locale":"es","intent":"thanks","answers":["🙏","❤️","🤗","🫶","🙌","🥹"]}
+{"id":"es-lol","text":"jajaja no puedo más","locale":"es","intent":"humor","answers":["😂","🤣","💀","😆"]}
+{"id":"es-sorry","text":"lo siento mucho, un abrazo","locale":"es","intent":"sympathy","answers":["😢","🫂","❤️","🙏","💔","🤗"]}
+{"id":"fr-congrats","text":"félicitations à toute l'équipe !","locale":"fr","intent":"celebration","answers":["🎉","👏","🙌","🥳","🍾","🎊"]}
+{"id":"fr-thanks","text":"merci beaucoup pour ton aide","locale":"fr","intent":"thanks","answers":["🙏","❤️","🤗","🙌","🫶"]}
+{"id":"fr-agree","text":"je suis d'accord, on y va","locale":"fr","intent":"agreement","answers":["👍","💯","🙌","✅","👌","🚀","💪"]}
+{"id":"de-birthday","text":"herzlichen Glückwunsch zum Geburtstag!","locale":"de","intent":"celebration","answers":["🎂","🎉","🥳","🎈","🎁","🎊"]}
+{"id":"de-thanks","text":"danke dir, du bist der Beste","locale":"de","intent":"thanks","answers":["🙏","❤️","🤗","🫶","🙌","💪","🥰"]}
+{"id":"de-sorry","text":"oh nein, das tut mir leid","locale":"de","intent":"sympathy","answers":["😢","🫂","❤️","😞","🙏","💔"]}
+{"id":"pt-lol","text":"kkkkk que engraçado","locale":"pt","intent":"humor","answers":["😂","🤣","😆","💀"]}
+{"id":"pt-launch","text":"parabéns pelo lançamento! 🚀","locale":"pt","intent":"celebration","answers":["🎉","🚀","👏","🙌","🥳","🔥"]}
