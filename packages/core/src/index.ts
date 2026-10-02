@@ -73,6 +73,7 @@ export {
   type SemanticResponse,
   type SemanticSearchOptions,
 } from "./provider.js";
+export { COMMON_REACTIONS } from "./reactions.js";
 export {
   createSearchSession,
   type SearchSession,

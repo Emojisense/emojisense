@@ -1,62 +1,9 @@
-import type { AliasEngine } from "emojisense";
+import { type AliasEngine, COMMON_REACTIONS, hexcodeOf } from "emojisense";
 import { type EmojiSuggestion, labelFor, toSuggestion } from "./suggestion.js";
 import { matchText, type TextMatch } from "./text.js";
 
-/**
- * Emoji that people commonly use as reactions (hand-picked from the default and most frequent
- * reactions of Slack, GitHub and Discord). They are preferred over topical emoji: a reader
- * reacts to "we shipped it" with 🎉, not with 🚢.
- */
-export const REACTION_IDS: ReadonlySet<string> = new Set([
-  "1F44D", // 👍
-  "2764", // ❤️
-  "1F602", // 😂
-  "1F389", // 🎉
-  "1F64C", // 🙌
-  "1F525", // 🔥
-  "1F440", // 👀
-  "1F64F", // 🙏
-  "1F4AF", // 💯
-  "2705", // ✅
-  "1F44F", // 👏
-  "1F680", // 🚀
-  "1F622", // 😢
-  "1F62D", // 😭
-  "1F914", // 🤔
-  "1F62E", // 😮
-  "1F60D", // 😍
-  "1F973", // 🥳
-  "1FAF6", // 🫶
-  "1F4AA", // 💪
-  "1FAE1", // 🫡
-  "1F91D", // 🤝
-  "2728", // ✨
-  "1F923", // 🤣
-  "1F605", // 😅
-  "1F60A", // 😊
-  "1F62C", // 😬
-  "1F631", // 😱
-  "1F92F", // 🤯
-  "1F972", // 🥲
-  "1FAE0", // 🫠
-  "1F917", // 🤗
-  "2B50", // ⭐
-  "1F480", // 💀
-  "1F606", // 😆
-  "1FAC2", // 🫂
-  "1F54A", // 🕊️
-  "1F494", // 💔
-  "1F614", // 😔
-  "1F37E", // 🍾
-  "1F942", // 🥂
-  "1F3C6", // 🏆
-  "1F44C", // 👌
-  "1F648", // 🙈
-  "1F60E", // 😎
-  "1F929", // 🤩
-  "1F97A", // 🥺
-  "1F926", // 🤦
-]);
+/** Catalog ids of the common reactions (`COMMON_REACTIONS` in emojisense), preferred over topical emoji. */
+export const REACTION_IDS: ReadonlySet<string> = new Set(COMMON_REACTIONS.map(hexcodeOf));
 
 const REACTION_FACTOR = 1.15;
 const FACE_FACTOR = 0.95;

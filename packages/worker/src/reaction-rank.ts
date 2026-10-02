@@ -1,17 +1,29 @@
-import { type AliasEngine, normalize, type SearchResult, searchVectors, type VectorIndex } from "emojisense";
+import {
+  type AliasEngine,
+  COMMON_REACTIONS,
+  normalize,
+  type SearchResult,
+  searchVectors,
+  type VectorIndex,
+} from "emojisense";
 import { resolveEmoji } from "./emoji-lookup.ts";
 import { fuseLists, type WeightedList } from "./fusion.ts";
 import { detectIntents, INTENTS } from "./reaction-intents.ts";
 
+/** Reactions for the intents and moods of chat messages (reaction-intents.ts), after the common ones. */
+const INTENT_VOCABULARY = "😩 😫 😤 🙄 😴 🥱 ☕ 🎂 🎈 🎁 🤞 🍀 👋 🥰 🚨 🥹 💕 🤍 😞 🎊 😡 🙃 🆘 😋 🙋";
+/** Common reactions the ranking leaves out: the weights and thresholds below were tuned without them. */
+const LEFT_OUT = new Set(["🕊️"]);
+
 /**
- * Emoji people react with: the default and most used reactions of Slack, GitHub and Discord (the
- * set in packages/mcp/src/reactions.ts) plus the reactions of every intent. The message
- * embedding ranks these, so "smoke tests are failing" leans to 😩, not to 🚬.
+ * Emoji people react with: the common reactions shared with the MCP server (`COMMON_REACTIONS`
+ * in emojisense) plus the reactions of the intents. The message embedding ranks these, so
+ * "smoke tests are failing" leans to 😩, not to 🚬.
  */
-export const REACTION_VOCABULARY =
-  "👍 ❤️ 😂 🎉 🙌 🔥 👀 🙏 💯 ✅ 👏 🚀 😢 😭 🤔 😮 😍 🥳 🫶 💪 🫡 🤝 ✨ 🤣 😅 😊 😬 😱 🤯 🥲 🫠 🤗 ⭐ " +
-  "💀 😆 🫂 💔 😔 🍾 🥂 🏆 👌 🙈 😎 🤩 🥺 🤦 😩 😫 😤 🙄 😴 🥱 ☕ 🎂 🎈 🎁 🤞 🍀 👋 🥰 🚨 🥹 " +
-  "💕 🤍 😞 🎊 😡 🙃 🆘 😋 🙋";
+export const REACTION_VOCABULARY = [
+  ...COMMON_REACTIONS.filter((emoji) => !LEFT_OUT.has(emoji)),
+  INTENT_VOCABULARY,
+].join(" ");
 
 /** How much each kind of evidence counts (DECISIONS.md, "Reaction ranking"). */
 export const REACTION_WEIGHTS = {
