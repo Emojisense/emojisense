@@ -110,9 +110,8 @@ per-isolate cache, the call is served as anonymous rather than failed.
 | `aliasLocale` | The locale whose aliases were fused into the results. `null` in `semantic` mode, or when that locale's pack could not be loaded (the results are then semantic-only and not cached) |
 | `culture` | With `culture=1`: `{ "from": "2026-10-01", "day": "2026-10-02", "region": "GB" }`, the culture file's first day, the UTC day its windows were checked against, and the region (`null` without one). `null` when culture is off or the locale has no culture file |
 
-Headers: `Server-Timing: embed;dur=…, total;dur=…` (only `total` on a cache hit or over the limit)
-and
-`Cache-Control`:
+Headers: `Server-Timing: embed;dur=…, total;dur=…` (only `total` on a cache hit or over the
+limit) and `Cache-Control`:
 
 | Answer | `Cache-Control` |
 | ------ | --------------- |
