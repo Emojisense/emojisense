@@ -122,6 +122,51 @@ describe("<emojisense-picker>", () => {
     expect(selected[0]).toEqual({ emoji: "👍🏿", label: "thumbs up", id: "1F44D" });
   });
 
+  it("draws a hosted emoji set as lazy images that follow the skin tone", async () => {
+    const picker = await mount({
+      "emoji-set": "twemoji",
+      endpoint: "https://api.test/",
+      "skin-tone": "medium",
+    });
+    const selected = selections();
+    const image = (id: string) => $(picker, `#${id} img`) as HTMLImageElement;
+    expect(image("b0").getAttribute("src")).toBe("https://api.test/v1/sets/twemoji/1F600.svg");
+    expect(image("b0").alt).toBe("😀");
+    expect(image("b0").getAttribute("loading")).toBe("lazy");
+    expect(image("b0").getAttribute("part")).toBe("image");
+    expect(image("b2").getAttribute("src")).toBe("https://api.test/v1/sets/twemoji/1F44D-1F3FD.svg");
+    picker.skinTone = "dark";
+    expect(image("b2").getAttribute("src")).toBe("https://api.test/v1/sets/twemoji/1F44D-1F3FF.svg");
+    expect($(picker, "#b2").getAttribute("aria-label")).toBe("thumbs up");
+
+    type(picker, "jurassic");
+    expect(results(picker)[0]?.querySelector("img")?.alt).toBe("🦖");
+    press(picker, "Enter");
+    expect(selected).toEqual([{ emoji: "🦖", label: "T-Rex", id: "1F996" }]);
+  });
+
+  it("switches sets at runtime and falls back to text when an image fails", async () => {
+    const picker = await mount({ "emoji-set": "fluent", endpoint: "https://api.test" });
+    const first = $(picker, "#b0 img");
+    first.dispatchEvent(new Event("error"));
+    expect($(picker, "#b0").textContent).toBe("😀");
+    expect($(picker, "#b0 img")).toBeNull();
+
+    picker.emojiSet = "noto";
+    expect($(picker, "#b4 img").getAttribute("src")).toBe("https://api.test/v1/sets/noto/1F996.svg");
+    picker.setAttribute("emoji-set", "native");
+    expect($(picker, "#b4").textContent).toBe("🦖");
+    picker.setAttribute("emoji-set", "openmoji");
+    expect(picker.emojiSet).toBe("native");
+    expect($$(picker, "img")).toEqual([]);
+  });
+
+  it("draws text for a hosted set without an endpoint", async () => {
+    const picker = await mount({ "emoji-set": "twemoji" });
+    expect($$(picker, "img")).toEqual([]);
+    expect($(picker, "#b0").textContent).toBe("😀");
+  });
+
   it("selects with the pointer", async () => {
     const picker = await mount();
     const selected = selections();
