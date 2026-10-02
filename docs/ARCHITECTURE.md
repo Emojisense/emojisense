@@ -52,9 +52,11 @@ emojibase (en) + CLDR (tr) ─▶ ingest ─▶ enrichment (aliases, description
         ─▶ packs: pack.<locale>.json (core ≤ 200 KB gz) + pack.<locale>.ext.json (idle-loaded)
         ─▶ embed (chosen model × dims) ─▶ vectors.<model>.<dims>[.<locale>].bin ─▶ manifest.json
 
-Worker query log (Analytics Engine: normalized text only, no IP/key/user)
-        ─▶ nightly: queries seen ≥ 5 times
-              ├─▶ top ~1M → precompute results → prefix shards (L2)          [open]
+query_daily (keyed calls: per app, day, normalized text; no IP/key/user)
+        ─▶ nightly in the API Worker: apps of ≥ 3 accounts, ≥ 10 searches in 6 days, no PII
+              └─▶ precompute results → prefix shards (L2)                    [built]
+Worker query log (Analytics Engine: normalized text only, no IP/key/user/app)
+        ─▶ queries seen ≥ 5 times
               └─▶ weak ones → LLM proposes aliases → eval gate → new pack   [closed, hosted only]
 ```
 
@@ -120,7 +122,8 @@ search unchanged, and the engine index is shared, not rebuilt, when the file arr
    experience, including offline.
 3. Over a plan limit, search degrades to L0 + L2. It never fails.
 4. No PII: no user IDs, IPs or keys in logs; the IP is only an in-memory rate-limit key. Query
-   text is normalized, capped at 64 characters and used only when seen ≥ 5 times. Message text
+   text is normalized, capped at 64 characters and used only when seen ≥ 5 times; public shards
+   also need apps of ≥ 3 accounts and ≥ 10 searches, and no personal-looking text. Message text
    for reaction suggestions and images for classification are never stored.
 5. Skin-tone variants map to their base emoji. The picker applies the user's tone.
 6. Community custom emoji sets are used only for local evaluation, never shipped.

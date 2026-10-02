@@ -4,6 +4,9 @@ import {
   analyticsKeepDays,
   PLAN_IDS,
   PLANS,
+  SHARD_MIN_ACCOUNTS,
+  SHARD_MIN_SEARCHES,
+  SHARD_WINDOW_DAYS,
   WAITLIST_KEEP_MONTHS,
 } from "@emojisense/platform";
 import Callout from "../../components/docs/Callout.astro";
@@ -19,7 +22,7 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
     <li>Most searches never leave the device.</li>
     <li>Emojisense never logs or stores IP addresses or the identifiers of your users. API keys are stored only as a SHA-256 hash and their first 12 characters, and never logged.</li>
     <li>Message text for reaction suggestions and images for photo to emoji are never stored.</li>
-    <li>Query text is cut to 64 characters and stored only in its normalized form. A query is named in analytics, or used by Emojisense’s own jobs, only after it was seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times.</li>
+    <li>Query text is cut to 64 characters and stored only in its normalized form. A query is named in analytics, or used by Emojisense’s own jobs, only after it was seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times. It is published in the precomputed results only when apps of at least {SHARD_MIN_ACCOUNTS} different accounts searched it.</li>
     <li>You can delete your dashboard account, and everything it owns, with one request.</li>
   </ul>
 
@@ -35,7 +38,7 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
       </thead>
       <tbody>
         <tr><td>On-device dictionary</td><td>Nothing</td><td>Nothing</td></tr>
-        <tr><td>Precomputed results (shards)</td><td>A request for one static file, named by the first letters of the query</td><td>Nothing. Static files are not logged or metered.</td></tr>
+        <tr><td>Precomputed results (shards)</td><td>A request for one public file, named by the first letters of the query</td><td>Nothing. These requests are not logged or metered.</td></tr>
         <tr><td>Worker search</td><td>The query, lowercased and cut to 64 characters. Accents and punctuation stay, because the meaning model reads them.</td><td>The normalized query with cache status, latency and scores, without app, key or IP. For keyed calls, also daily counts per app (see below).</td></tr>
         <tr><td>Reaction suggestions</td><td>The message text. The API reads only its first 256 characters.</td><td>Nothing. The text is never logged or cached.</td></tr>
         <tr><td>Photo to emoji</td><td>A small, downscaled image</td><td>With an image hash, the model’s label (caption, reaction, keywords and proposed emoji) cached by that hash for up to 7 days. The image itself is dropped after use.</td></tr>
@@ -50,6 +53,7 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
       <tbody>
         <tr><td>Per app, UTC day and normalized query: the number of searches and of misses. Keyed <code>/v1/search</code> calls only.</td><td>D1 <code>query_daily</code></td><td>By the plan of the account that owns the app: {keep}. A daily job deletes older rows.</td></tr>
         <tr><td>Normalized query text of every search that reached the Worker, with cache status, latency and scores. No app.</td><td>Cloudflare Analytics Engine</td><td>3 months (the Analytics Engine retention)</td></tr>
+        <tr><td>Precomputed results: normalized query text and its emoji, for queries that pass the rules below. No app, account, day or count.</td><td>Cloudflare R2 and edge cache, public</td><td>Rebuilt every night. A query leaves with the first build after it no longer passes.</td></tr>
         <tr><td>Monthly call counts per app and metric</td><td>D1 <code>usage_monthly</code></td><td>Until the account is deleted</td></tr>
         <tr><td>Custom emoji: shortcode, aliases, size, source and the image</td><td>D1 and R2</td><td>Until the emoji, its tenant or the account is deleted. Edge caches can hold a copy of the image until it is evicted.</td></tr>
         <tr><td>Tenants: your external id and optional name for each of your customers</td><td>D1 <code>tenants</code></td><td>Until you delete the tenant or the account</td></tr>
@@ -66,7 +70,8 @@ const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepD
   <p>In the dashboard, Settings → “Delete account” (or <code>DELETE /api/me</code>, signed in, with the account email as <code>confirm</code>) deletes the account and everything it owns: apps, API keys, usage, search analytics, tenants, custom emoji (rows and images), webhooks, team members and invites, memberships in other teams and the waitlist entry of its email. Then the dashboard deletes the sign-in profile at Clerk, the sign-in provider. The <a href="/docs/api/">HTTP API reference</a> has the details. Analytics Engine records are not linked to an account, so they expire on their own after 3 months.</p>
 
   <h2 id="how-queries-are-used">How Emojisense uses queries</h2>
-  <p>A nightly job reads only the queries that were seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times. Rare strings can be personal, so they are never used. The frequent queries become precomputed results and new aliases, which make search better for every app.</p>
+  <p>Precomputed results: every night a job reads the per-app daily counts in aggregate. It publishes a query only when apps of at least {SHARD_MIN_ACCOUNTS} different accounts searched it at least {SHARD_MIN_SEARCHES} times in total over the last {SHARD_WINDOW_DAYS} full days, and only when it does not look like personal data: an email or web address, a phone, account or postal number, a user id or a long token. The public files hold the query text and its emoji, and nothing about apps, accounts, days or counts. Anonymous calls and development keys are never counted, so they cannot put a text there.</p>
+  <p>New aliases: a job reads only the queries that were seen at least {ANALYTICS_MIN_QUERY_SEARCHES} times. Rare strings can be personal, so they are never used. Both make search better for every app.</p>
 
   <h2 id="rate-limits">Rate limits without tracking</h2>
   <p>Rate limits need to tell callers apart. The Worker and the waitlist use the IP address only as an in-memory key for the limiter. It is never written to logs or storage.</p>

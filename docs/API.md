@@ -762,6 +762,7 @@ What the hosted service collects, and for how long:
 | ---- | ----- | ---- |
 | Per app, UTC day and normalized search query (≤ 64 chars): number of searches and of misses. Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
+| Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below). No app, account, day or count. | R2 `emojisense-shards`, edge cache | Rebuilt nightly. The previous build is deleted after one more night; browser and edge copies expire within 1 day. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |
 | Webhook deliveries: event type, HTTP status, duration, time. No body, no response. | D1 `webhook_deliveries` | the last 50 per webhook |
@@ -776,8 +777,13 @@ What the hosted service collects, and for how long:
 - Logs never hold query or message text, keys, IP addresses or emails. Workers AI failures log
   the error type only, because a message could quote the input.
 - Anonymous calls and development keys never reach `query_daily`.
-- The dashboard names a query only when the app saw it ≥ 5 times in the window. Emojisense's own
-  downstream jobs (shards, alias mining) read Analytics Engine, never `query_daily`, and use a
-  query only when it was seen ≥ 5 times.
+- The dashboard names a query only when the app saw it ≥ 5 times in the window.
+- The nightly shard job reads `query_daily` in aggregate. It publishes a query in the public
+  shard files (`/p/*`) only when apps of ≥ 3 different accounts searched it ≥ 10 times in total
+  over the last 6 complete UTC days, and only when it does not look like personal data (an email
+  or web address, a phone, account or postal number, a user id, a long token, blocklisted words).
+  The files hold the query text and its emoji results: no app, account, day or count. A query
+  leaves them with the first nightly build after it no longer passes. Alias mining reads Analytics
+  Engine and uses a query only when it was seen ≥ 5 times.
 - `DELETE /api/me` deletes an account and everything it owns (see the Dashboard API). D1 Time
   Travel can still restore the database to a point in the last 30 days (Paid plan).
