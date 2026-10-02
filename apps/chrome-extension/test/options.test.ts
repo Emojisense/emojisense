@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import html from "../src/options/options.html?raw";
-import { describeResponse, initOptions, type OptionsDeps, testConnection } from "../src/options/page";
+import {
+  describeResponse,
+  initOptions,
+  type OptionsDeps,
+  SAVED_NOTICE_MS,
+  shortcutKeys,
+  testConnection,
+} from "../src/options/page";
 import { DEFAULT_SETTINGS, type Settings } from "../src/shared/settings";
 import { flush } from "./fixture";
 
@@ -45,10 +52,46 @@ describe("options page", () => {
     expect(ctx.deps.openShortcutSettings).toHaveBeenCalled();
   });
 
-  it("starts with search by meaning off and its fields hidden", () => {
-    expect(byId<HTMLInputElement>("semantic-enabled").checked).toBe(false);
-    expect(byId("semantic-fields").hidden).toBe(true);
+  it("starts with search by meaning off, the address and key ready to fill in", () => {
+    const semantic = byId<HTMLInputElement>("semantic-enabled");
+    expect(semantic.checked).toBe(false);
+    expect(semantic.getAttribute("role")).toBe("switch");
+    expect(byId("semantic-fields").hidden).toBe(false);
+    expect(byId<HTMLInputElement>("key").value).toBe("");
+    expect(document.querySelector('label[for="key"]')?.textContent).toBe("Publishable key");
     expect(byId<HTMLInputElement>("docs-direct").checked).toBe(false);
+  });
+
+  it("labels every control", () => {
+    for (const control of document.querySelectorAll("input:not([type=radio]), select")) {
+      expect(document.querySelector(`label[for="${control.id}"]`), control.id).not.toBeNull();
+    }
+    for (const radio of document.querySelectorAll<HTMLInputElement>("input[type=radio]")) {
+      expect(radio.closest("label")?.textContent?.trim()).not.toBe("");
+    }
+  });
+
+  it("saves a key while search by meaning is still off, without turning it on", async () => {
+    change(byId<HTMLInputElement>("key"), "pk_live_12345678");
+    await flush();
+    expect(ctx.saveSettings).toHaveBeenLastCalledWith({
+      ...DEFAULT_SETTINGS,
+      semantic: { enabled: false, endpoint: "", key: "pk_live_12345678" },
+    });
+    expect(byId("saved").textContent).toBe("Saved ✓");
+  });
+
+  it("hides the saved notice after a moment", async () => {
+    vi.useFakeTimers();
+    try {
+      change(byId<HTMLSelectElement>("locale"), "en");
+      await vi.advanceTimersByTimeAsync(0);
+      expect(byId("saved").textContent).not.toBe("");
+      await vi.advanceTimersByTimeAsync(SAVED_NOTICE_MS);
+      expect(byId("saved").textContent).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("saves the language and the skin tone", async () => {
@@ -99,6 +142,28 @@ describe("options page", () => {
     expect(url.pathname).toBe("/v1/search");
     expect(url.searchParams.get("key")).toBe("pk_live_12345678");
     expect(byId("test-result").textContent).toBe("Connected ✓");
+  });
+});
+
+describe("shortcut keys", () => {
+  it("splits Chrome's shortcut text into keycaps on every platform", async () => {
+    expect(shortcutKeys("Ctrl+Shift+Space")).toEqual(["Ctrl", "Shift", "Space"]);
+    expect(shortcutKeys("⇧⌘Space")).toEqual(["⇧", "⌘", "Space"]);
+    expect(shortcutKeys("")).toEqual([]);
+
+    const { deps } = load();
+    await initOptions(document, { ...deps, shortcut: async () => "Ctrl+Shift+Space" });
+    expect([...byId("shortcut").querySelectorAll("kbd")].map((key) => key.textContent)).toEqual([
+      "Ctrl",
+      "Shift",
+      "Space",
+    ]);
+  });
+
+  it("says when no shortcut is set", async () => {
+    const { deps } = load();
+    await initOptions(document, { ...deps, shortcut: async () => "" });
+    expect(byId("shortcut").textContent).toBe("Not set");
   });
 });
 

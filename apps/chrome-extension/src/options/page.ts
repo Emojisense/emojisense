@@ -37,34 +37,39 @@ const SKIN_SWATCH: Record<SkinTone, string> = {
   dark: "👍🏿",
 };
 
+/** How long the "Saved" notice stays on screen. */
+export const SAVED_NOTICE_MS = 2500;
+
 export async function initOptions(doc: Document, deps: OptionsDeps): Promise<void> {
   const $ = <T extends HTMLElement>(id: string) => doc.getElementById(id) as T;
   const locale = $<HTMLSelectElement>("locale");
   const tones = $<HTMLDivElement>("skin-tones");
   const semanticEnabled = $<HTMLInputElement>("semantic-enabled");
-  const semanticFields = $<HTMLDivElement>("semantic-fields");
   const endpoint = $<HTMLInputElement>("endpoint");
   const key = $<HTMLInputElement>("key");
   const docsDirect = $<HTMLInputElement>("docs-direct");
   const saved = $<HTMLParagraphElement>("saved");
   const testButton = $<HTMLButtonElement>("test-connection");
   const testResult = $<HTMLSpanElement>("test-result");
+  const view: Window = doc.defaultView ?? window;
 
   let current = await deps.loadSettings();
 
   $("origin").textContent = deps.origin;
   for (const node of doc.querySelectorAll(".paste-key")) node.textContent = pasteShortcut(deps.platform);
-  $("shortcut").textContent = (await deps.shortcut().catch(() => "")) || "not set";
+  showShortcut($("shortcut"), await deps.shortcut().catch(() => ""));
   $("change-shortcut").addEventListener("click", () => deps.openShortcutSettings());
 
+  // The address and key stay visible while search by meaning is off: they can be filled in and
+  // tested first, and nothing is sent until the switch is on.
   locale.value = current.locale;
   for (const tone of SKIN_TONES) tones.append(skinOption(doc, tone, tone === current.skinTone));
   semanticEnabled.checked = current.semantic.enabled;
-  semanticFields.hidden = !current.semantic.enabled;
   endpoint.value = current.semantic.endpoint;
   key.value = current.semantic.key;
   docsDirect.checked = current.docsDirectInsert;
 
+  let savedTimer: number | undefined;
   async function save(next: Settings): Promise<void> {
     current = next;
     await deps.saveSettings(next);
@@ -72,6 +77,10 @@ export async function initOptions(doc: Document, deps: OptionsDeps): Promise<voi
     saved.textContent = offline
       ? "Saved. Search by meaning starts when the address and key are valid."
       : "Saved ✓";
+    view.clearTimeout(savedTimer);
+    savedTimer = view.setTimeout(() => {
+      saved.textContent = "";
+    }, SAVED_NOTICE_MS);
   }
 
   function showError(input: HTMLInputElement, message: string | undefined): void {
@@ -91,7 +100,6 @@ export async function initOptions(doc: Document, deps: OptionsDeps): Promise<voi
     if (SKIN_TONES.includes(value)) void save({ ...current, skinTone: value });
   });
   semanticEnabled.addEventListener("change", () => {
-    semanticFields.hidden = !semanticEnabled.checked;
     if (semanticEnabled.checked && endpoint.value.trim() === "") endpoint.focus();
     void save({ ...current, semantic: { ...current.semantic, enabled: semanticEnabled.checked } });
   });
@@ -132,9 +140,30 @@ export async function initOptions(doc: Document, deps: OptionsDeps): Promise<voi
   });
 }
 
+/** "Ctrl+Shift+Space" → Ctrl, Shift, Space; "⇧⌘Space" (macOS) → ⇧, ⌘, Space. */
+export function shortcutKeys(shortcut: string): string[] {
+  if (shortcut.includes("+")) return shortcut.split("+").filter((key) => key !== "");
+  return shortcut.match(/[⌃⌥⇧⌘]|[^⌃⌥⇧⌘]+/g) ?? [];
+}
+
+function showShortcut(container: HTMLElement, shortcut: string): void {
+  const keys = shortcutKeys(shortcut);
+  if (keys.length === 0) {
+    container.textContent = "Not set";
+    return;
+  }
+  container.replaceChildren(
+    ...keys.map((name) => {
+      const key = container.ownerDocument.createElement("kbd");
+      key.textContent = name;
+      return key;
+    }),
+  );
+}
+
 function skinOption(doc: Document, tone: SkinTone, checked: boolean): HTMLLabelElement {
   const label = doc.createElement("label");
-  label.className = "pill";
+  label.className = "tone";
   const input = doc.createElement("input");
   input.type = "radio";
   input.name = "skin-tone";
