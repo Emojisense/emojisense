@@ -328,16 +328,21 @@ export function appCount(db: MockDb, appId: string, metric: Metric, period: stri
   return Math.round(limit * share * factor);
 }
 
+/** Ids of every app of the account that owns `appId`: plan limits count all of them. */
+export function accountAppIds(db: MockDb, appId: string): string[] {
+  const ownerId = db.apps.find((item) => item.id === appId)?.ownerId;
+  return db.apps.filter((item) => item.ownerId === ownerId).map((item) => item.id);
+}
+
 /**
  * `GET /api/apps/:id/usage`: metering is per account, so `used` sums every app of the owner and
- * `appUsed` is this app's part. Custom emoji are not counters there: always 0.
+ * `appUsed` is this app's part. Custom emoji are the rows stored now, in every period.
  */
 export function usageFor(db: MockDb, appId: string, period: string): AppMetricUsage[] {
   const app = db.apps.find((item) => item.id === appId);
   const limits = PLANS[app?.plan ?? db.plan].limits;
-  const siblings = db.apps.filter((item) => item.ownerId === app?.ownerId).map((item) => item.id);
+  const siblings = accountAppIds(db, appId);
   return METRICS.map((metric) => {
-    if (metric === "custom_emoji") return { ...measure(metric, 0, limits[metric]), appUsed: 0 };
     const used = siblings.reduce((sum, id) => sum + appCount(db, id, metric, period), 0);
     return { ...measure(metric, used, limits[metric]), appUsed: appCount(db, appId, metric, period) };
   });

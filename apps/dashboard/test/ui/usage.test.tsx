@@ -69,6 +69,24 @@ describe("usage", () => {
     expect(screen.getByText(/Plan limits count the calls of every app of the account\./)).toBeTruthy();
   });
 
+  it("meters custom emoji from the usage route: rows stored by the account, this app's part", async () => {
+    const proApp = { ...APP, plan: "pro" as const };
+    stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps/app_1": { body: { app: proApp, keys: [] } },
+      "GET /api/apps/app_1/usage": {
+        body: usage("2026-10", { custom_emoji: 120 }, { custom_emoji: 45 }, "pro"),
+      },
+    });
+    render(<App />);
+
+    const meter = await screen.findByRole("meter", { name: "Custom emoji" });
+    expect(meter.getAttribute("aria-valuetext")).toBe("120 of 2,000 (6%)");
+    expect(screen.getByText(/^This app: 45 of 120\./)).toBeTruthy();
+    // Stored emoji are not calls: the month still reads as one without calls.
+    expect(screen.getByRole("heading", { name: "No calls in October 2026" })).toBeTruthy();
+  });
+
   it("tells the user what to do when nothing was counted yet", async () => {
     stubApi({
       "GET /api/me": { body: me() },
