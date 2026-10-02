@@ -8,6 +8,15 @@
   letter-spacing: normal;
 }
 
+/*
+ * The mono labels (kickers, captions, chips) hold words in these scripts too. A monospaced
+ * fallback breaks Arabic joining and spaces Devanagari marks apart, so after DM Mono (which
+ * draws the Latin code) the words fall through to the body font.
+ */
+:root:is(:lang(ar), :lang(hi), :lang(bn), :lang(zh)) {
+  --font-mono: "DM Mono", var(--font-body);
+}
+
 :root:is(:lang(ar), :lang(hi), :lang(bn)) :is(h1, h2, h3, h4) {
   line-height: 1.3;
 }

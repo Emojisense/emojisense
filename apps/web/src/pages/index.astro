@@ -81,10 +81,10 @@ const kindLabel = (kind: string) => {
 
 <Base description={t("meta.home.description")} path="/">
   <section class="hero">
-    {/* The hero's first answers need the English pack and the page's own: fetch them while the page's scripts load. */}
+    {/* The hero's first answers need the English pack: fetch it while the page's scripts load. The page
+        language's pack is fetched by the island, so two packs never compete with the first paint. */}
     <link rel="preconnect" href={API_URL} crossorigin />
     <link rel="preload" href={packUrl("en")} as="fetch" crossorigin fetchpriority="low" />
-    {locale !== "en" && <link rel="preload" href={packUrl(locale)} as="fetch" crossorigin fetchpriority="low" />}
     <div class="container hero-inner">
       <p class="kicker hero-kicker"><span class="live" aria-hidden="true"></span> {t("home.hero.kicker")}</p>
       <h1>{t("home.hero.title")}</h1>
