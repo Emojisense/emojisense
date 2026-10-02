@@ -143,7 +143,7 @@
 .photo-frame {
   position: relative;
   isolation: isolate;
-  width: min(100%, 21rem);
+  width: min(100%, 20rem);
   aspect-ratio: 3 / 2;
   margin: 0.5rem 0 0;
   overflow: hidden;
@@ -230,9 +230,9 @@
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  max-width: 34rem;
+  max-width: 40rem;
   min-height: 1.5rem;
-  margin-top: 0.625rem;
+  margin-top: 0.5rem;
   color: var(--ink-2);
   font-size: 0.875rem;
   line-height: 1.45;
@@ -251,6 +251,17 @@
 
 .photo-caption-text {
   animation: photo-rise 300ms var(--ease-out) both;
+}
+
+.photo-keywords {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--ink-3);
+  font: 500 0.6875rem / 1.4 var(--font-mono);
+}
+
+.photo-keyword {
+  white-space: nowrap;
 }
 
 .photo-skeleton {

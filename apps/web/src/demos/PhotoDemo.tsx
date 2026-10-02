@@ -1,6 +1,7 @@
 import {
   type ChangeEvent,
   type DragEvent,
+  Fragment,
   type SubmitEvent,
   useCallback,
   useEffect,
@@ -380,6 +381,17 @@ export default function PhotoDemo() {
                     {reading ? (
                       <span className="photo-caption-text" key={reading.caption}>
                         {reading.caption}
+                        {reading.keywords && reading.keywords.length > 0 && (
+                          <span className="photo-keywords">
+                            <span className="visually-hidden">Keywords: </span>
+                            {reading.keywords.map((keyword, i) => (
+                              <Fragment key={keyword}>
+                                {i > 0 && <span aria-hidden="true"> · </span>}
+                                <span className="photo-keyword">{keyword}</span>
+                              </Fragment>
+                            ))}
+                          </span>
+                        )}
                       </span>
                     ) : (
                       <span className="photo-skeleton" aria-label="Describing the photo" role="img" />
@@ -569,8 +581,8 @@ export default function PhotoDemo() {
             </span>
           </p>
           <ol className="photo-how">
-            <li>A vision model writes a caption and a likely reply.</li>
-            <li>Emojisense searches them like a chat message.</li>
+            <li>A vision model writes a caption, keywords and a reply.</li>
+            <li>Emojisense ranks the model's emoji with its own search.</li>
           </ol>
         </div>
       </div>

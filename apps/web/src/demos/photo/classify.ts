@@ -13,6 +13,8 @@ export interface PhotoReading {
   caption: string;
   /** What a person would likely say in chat. Empty when there is none. */
   reaction: string;
+  /** What the vision model saw, 3–6 words or short phrases. Absent or empty when there are none. */
+  keywords?: string[];
   results: Reaction[];
 }
 
@@ -62,6 +64,9 @@ function readReading(body: unknown): PhotoReading | undefined {
   return {
     caption: value.caption,
     reaction: typeof value.reaction === "string" ? value.reaction : "",
+    keywords: Array.isArray(value.keywords)
+      ? [...new Set(value.keywords.filter((k): k is string => typeof k === "string" && k.trim() !== ""))]
+      : [],
     results: value.results.filter(
       (r): r is Reaction => typeof r?.emoji === "string" && typeof r?.id === "string",
     ),

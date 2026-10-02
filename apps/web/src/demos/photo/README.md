@@ -20,5 +20,6 @@ curl -X POST "http://localhost:8788/v1/classify-image?key=pk_demo&limit=8&locale
 3. Save each response body under `photos[].response`, and the `Server-Timing` header under
    `photos[].serverTiming`.
 
-The vision model is not deterministic, so a new run can give a slightly different caption. The
-demo shows the first 6 of the 8 results.
+The vision model is not deterministic, so a new run can give a slightly different caption,
+keywords and emoji. The API can return fewer than 8 results. The demo shows the caption, the
+keywords and the first 6 results.
