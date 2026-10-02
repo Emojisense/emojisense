@@ -1,4 +1,4 @@
-import type { CustomEmojiRow } from "@emojisense/platform";
+import { type CustomEmojiRow, dayOf } from "@emojisense/platform";
 import { createEngine, type Pack } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import { buildCustomPack, customPackRow } from "../src/custom-pack.ts";
@@ -11,13 +11,14 @@ async function setup(options: { reader?: CustomEmojiReader; now?: () => number }
   const { db, reader } = customEmojiDatabase();
   const bucket = memoryBucket({ [`custom/${APP}/_/e_parrot.png`]: PNG });
   const custom = options.reader ?? reader;
+  const store = await seededStore();
   const h = harness({
-    store: await seededStore(),
+    store,
     customEmoji: custom,
     env: { EMOJI: bucket },
     ...(options.now ? { now: options.now } : {}),
   });
-  return { h, db, bucket, reader: custom };
+  return { h, db, bucket, store, reader: custom };
 }
 
 const imageRequest = (path: string, init?: RequestInit) => new Request(`${API}${path}`, init);
@@ -227,6 +228,19 @@ describe("custom emoji in /v1/search", () => {
     now += 61_000;
     await h.call(keyed("party"));
     expect(listUsable).toHaveBeenCalledTimes(2);
+  });
+
+  it("counts a search that only custom emoji answer as found, not as a miss", async () => {
+    const now = Date.UTC(2026, 9, 15, 12);
+    const { h, store } = await setup({ now: () => now });
+    h.env.AI = { run: async () => Promise.reject(new Error("offline")) };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const body = (await (await h.call(keyed("celebrate"))).json()) as SearchBody;
+    expect(body.results.map((r) => r.source)).toEqual(["custom"]);
+    await h.ctx.settle();
+    await h.app.queryStats?.flush();
+    expect(store.queryCountOf(APP, dayOf(now), "celebrate")).toMatchObject({ searches: 1, misses: 0 });
+    warn.mockRestore();
   });
 
   it("searches on without custom emoji when the database fails", async () => {
