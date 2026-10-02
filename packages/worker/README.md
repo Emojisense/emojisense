@@ -8,11 +8,16 @@ The Emojisense Search API: a Cloudflare Worker. The HTTP contract is [docs/API.m
 | `POST /v1/suggest-reactions` | first 256 characters of a message, alias + semantic, no cache | `semantic_calls` |
 | `POST /v1/classify-image` | vision caption + reaction → text search; caption cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API, no key | — |
+| `/v1/tenants[/:externalId[/emoji[/:shortcode]]]` | tenants and their custom emoji (Scale, secret key); D1 + R2 `EMOJI`; sends webhooks | — |
 | `GET /v1/health` | status | — |
 | `/v1/pack/<v>/…`, `/p/<v>/…` | static assets (packs, layer 2 shards); the Worker does not run | — |
 
 `classify-image` takes the image as the body (`image/jpeg` or `image/webp`, ≤ 256 KB) and
 `?locale=&limit=` in the URL. Answers that degrade (Workers AI unavailable) are not metered.
+
+The metering flush also sends `usage.threshold` webhooks (80% and 100% of an account's limit,
+src/usage-alerts.ts). Webhooks to `http://localhost` work only with `ENVIRONMENT=development`
+(set in the `offline` env).
 
 ## Run locally
 
