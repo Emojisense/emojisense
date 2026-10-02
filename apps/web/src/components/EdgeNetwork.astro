@@ -34,6 +34,14 @@ const stats = [
     </div>
 
     <figure class="map">
+      {/* WCAG 2.2.2: the bubbles move on their own, so they get a pause. It works once the script runs. */}
+      <button type="button" class="map-pause" data-map-pause>
+        <svg class="map-pause-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path class="map-pause-bars" d="M4.5 3h2.25v10H4.5zM9.25 3h2.25v10H9.25z"></path>
+          <path class="map-pause-play" d="M5 2.75v10.5L13 8z"></path>
+        </svg>
+        <span class="map-pause-label">Pause animation</span>
+      </button>
       <div class="map-canvas" style={`--n: ${bubbles.length}; aspect-ratio: ${MAP.width} / ${MAP_HEIGHT}`}>
         <svg viewBox={`0 0 ${MAP.width} ${MAP_HEIGHT}`} aria-hidden="true" focusable="false">
           <path class="land" d={dots}></path>
@@ -74,6 +82,20 @@ const stats = [
   </div>
 </section>
 
+<script>
+  // Paused, the map shows the same still bubbles as under reduced motion.
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-map-pause]")) {
+    const map = button.closest(".map");
+    const label = button.querySelector(".map-pause-label");
+    if (!map || !label) continue;
+    map.setAttribute("data-ready", "");
+    button.addEventListener("click", () => {
+      const paused = map.toggleAttribute("data-paused");
+      label.textContent = paused ? "Play animation" : "Pause animation";
+    });
+  }
+</script>
+
 <style>
   .edge {
     --edge-bg: #0d0d12;
@@ -110,15 +132,62 @@ const stats = [
   }
 
   .map {
+    position: relative;
     margin: 0 auto;
     max-width: 68rem;
+  }
+
+  .map-pause {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+    min-height: 2rem;
+    padding: 0.375rem 0.75rem 0.375rem 0.625rem;
+    border: 0.0625rem solid #34343e;
+    border-radius: var(--pill);
+    background: rgb(13 13 18 / 0.8);
+    color: var(--edge-ink-2);
+    font: 500 0.75rem / 1 var(--font-mono);
+    cursor: pointer;
+    transition:
+      color 160ms,
+      border-color 160ms;
+  }
+
+  /* Its place is kept until it works, so nothing moves when it appears. */
+  .map:not([data-ready]) .map-pause {
+    visibility: hidden;
+  }
+
+  .map-pause:hover {
+    border-color: #55555f;
+    color: var(--edge-ink);
+  }
+
+  .map-pause-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    fill: currentColor;
+  }
+
+  .map-pause-play,
+  .map[data-paused] .map-pause-bars {
+    display: none;
+  }
+
+  .map[data-paused] .map-pause-play {
+    display: inline;
   }
 
   .map-canvas {
     position: relative;
   }
 
-  .map svg {
+  .map-canvas > svg {
     width: 100%;
     height: 100%;
   }
@@ -280,6 +349,23 @@ const stats = [
   }
 
   @media (max-width: 40rem) {
+    /* The map is short on a phone: the control goes under it, not over the bubbles. */
+    .map {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .map-pause {
+      position: static;
+      order: 1;
+      align-self: center;
+      margin-top: 0.75rem;
+    }
+
+    figcaption {
+      order: 2;
+    }
+
     .card .query {
       display: none;
     }
@@ -287,6 +373,20 @@ const stats = [
     .card {
       padding: 0.25rem;
     }
+  }
+
+  /* Paused, or under reduced motion: five bubbles stand still and nothing pings. */
+  .map[data-paused] .bubble {
+    animation: none;
+    opacity: 0;
+  }
+
+  .map[data-paused] .bubble.still {
+    opacity: 1;
+  }
+
+  .map[data-paused] .ping {
+    display: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -299,7 +399,8 @@ const stats = [
       opacity: 1;
     }
 
-    .ping {
+    .ping,
+    .map-pause {
       display: none;
     }
   }
