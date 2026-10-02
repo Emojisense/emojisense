@@ -1,0 +1,37 @@
+{
+  "name": "@emojisense/web-component",
+  "version": "0.0.0",
+  "description": "<emojisense-picker>: a framework-free emoji picker custom element with Emojisense search.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/emojisense-picker.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./element": {
+      "types": "./dist/element.d.ts",
+      "default": "./dist/element.js"
+    },
+    "./bundle": "./dist/emojisense-picker.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --minify --format=esm --outfile=dist/emojisense-picker.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.5"
+  }
+}
