@@ -2,25 +2,50 @@
   "name": "@emojisense/emoji-mart",
   "version": "0.0.0",
   "description": "Emojisense ranking for emoji-mart 5: map results to emoji-mart ids and drive its picker from an external search input.",
+  "keywords": [
+    "emoji",
+    "emoji-mart",
+    "emoji-picker",
+    "emoji-search"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/emoji-mart"
+  },
   "license": "MIT",
+  "author": "Emojisense",
   "type": "module",
   "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "emojisense": "workspace:*"
+    "emojisense": "workspace:^"
   },
   "peerDependencies": {
     "emoji-mart": "^5.6.0"

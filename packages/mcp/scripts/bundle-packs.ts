@@ -42,4 +42,9 @@ rmSync(target, { recursive: true, force: true });
 mkdirSync(target, { recursive: true });
 for (const file of files) copyFileSync(join(source, file), join(target, file));
 writeFileSync(join(target, "index.json"), `${JSON.stringify({ packVersion, files }, null, 2)}\n`);
-console.log(`bundle-packs: ${files.length} files of pack ${packVersion} → dist/packs`);
+
+// The Unicode license asks for its notice in every copy of the data, and npm publishes dist/.
+const licenses = join(DATA_ROOT, "licenses");
+mkdirSync(join(target, "licenses"), { recursive: true });
+for (const file of readdirSync(licenses)) copyFileSync(join(licenses, file), join(target, "licenses", file));
+console.log(`bundle-packs: ${files.length} files of pack ${packVersion} + data licenses → dist/packs`);
