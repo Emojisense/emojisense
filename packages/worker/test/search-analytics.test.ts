@@ -1,7 +1,7 @@
 import { dayOf, PLANS, periodOf } from "@emojisense/platform";
 import { describe, expect, it, vi } from "vitest";
 import type { SearchBody } from "../src/search.ts";
-import { harness, KEYS, reactions, search, seededStore } from "./fixtures.ts";
+import { fromCountry, harness, KEYS, reactions, search, seededStore } from "./fixtures.ts";
 
 const NOW = Date.UTC(2026, 9, 15, 12);
 const DAY = dayOf(NOW);
@@ -28,7 +28,31 @@ describe("search analytics", () => {
     expect(hit.cached).toBe(true);
     await flush();
     expect([...store.queries.values()]).toEqual([
-      { appId: "app_free", day: DAY, query: "lava eruption", searches: 2, misses: 0 },
+      {
+        appId: "app_free",
+        day: DAY,
+        query: "lava eruption",
+        locale: "en",
+        country: "XX",
+        searches: 2,
+        misses: 0,
+      },
+    ]);
+  });
+
+  it("counts each search under its locale and the request's country, unknown ones as XX", async () => {
+    const { store, h, flush } = await setup();
+    await h.call(fromCountry(keyed("rocket"), "DE"));
+    await h.call(fromCountry(keyed("rocket"), "de"));
+    await h.call(fromCountry(keyed("rocket", "&locale=tr"), "TR"));
+    await h.call(fromCountry(keyed("rocket"), "T1"));
+    await h.call(keyed("rocket"));
+    await flush();
+    const rows = [...store.queries.values()].map((r) => [r.locale, r.country, r.searches]).sort();
+    expect(rows).toEqual([
+      ["en", "DE", 2],
+      ["en", "XX", 2],
+      ["tr", "TR", 1],
     ]);
   });
 

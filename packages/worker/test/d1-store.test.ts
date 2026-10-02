@@ -144,28 +144,32 @@ describe("D1 store on the platform schema", () => {
     ]);
   });
 
-  it("upserts query counts per app, day and query", async () => {
+  it("upserts query counts per app, day, query, locale and country", async () => {
     const day = "2026-10-15";
+    const en = { locale: "en", country: "GB" };
     await store.addQueryCounts([
-      { appId: "app_1", day, query: "ship it", searches: 3, misses: 0 },
-      { appId: "app_1", day, query: "zzz", searches: 2, misses: 2 },
+      { appId: "app_1", day, query: "ship it", ...en, searches: 3, misses: 0 },
+      { appId: "app_1", day, query: "zzz", ...en, searches: 2, misses: 2 },
     ]);
     await store.addQueryCounts([
-      { appId: "app_1", day, query: "ship it", searches: 1, misses: 1 },
-      { appId: "app_1", day: "2026-10-16", query: "ship it", searches: 1, misses: 0 },
+      { appId: "app_1", day, query: "ship it", ...en, searches: 1, misses: 1 },
+      { appId: "app_1", day, query: "ship it", locale: "en", country: "US", searches: 2, misses: 0 },
+      { appId: "app_1", day: "2026-10-16", query: "ship it", ...en, searches: 1, misses: 0 },
     ]);
     await store.addQueryCounts([]);
-    expect(db.prepare("SELECT * FROM query_daily ORDER BY day, query").all()).toEqual([
-      { app_id: "app_1", day, query: "ship it", searches: 4, misses: 1 },
-      { app_id: "app_1", day, query: "zzz", searches: 2, misses: 2 },
-      { app_id: "app_1", day: "2026-10-16", query: "ship it", searches: 1, misses: 0 },
+    expect(db.prepare("SELECT * FROM query_daily ORDER BY day, query, country").all()).toEqual([
+      { app_id: "app_1", day, query: "ship it", ...en, searches: 4, misses: 1 },
+      { app_id: "app_1", day, query: "ship it", locale: "en", country: "US", searches: 2, misses: 0 },
+      { app_id: "app_1", day, query: "zzz", ...en, searches: 2, misses: 2 },
+      { app_id: "app_1", day: "2026-10-16", query: "ship it", ...en, searches: 1, misses: 0 },
     ]);
   });
 
   it("skips query counts of a deleted app instead of failing the batch", async () => {
+    const where = { locale: "en", country: "XX" };
     await store.addQueryCounts([
-      { appId: "deleted_app", day: "2026-10-15", query: "ship it", searches: 1, misses: 0 },
-      { appId: "app_1", day: "2026-10-15", query: "ship it", searches: 1, misses: 0 },
+      { appId: "deleted_app", day: "2026-10-15", query: "ship it", ...where, searches: 1, misses: 0 },
+      { appId: "app_1", day: "2026-10-15", query: "ship it", ...where, searches: 1, misses: 0 },
     ]);
     expect(db.prepare("SELECT app_id, searches FROM query_daily").all()).toEqual([
       { app_id: "app_1", searches: 1 },

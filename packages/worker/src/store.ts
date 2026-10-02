@@ -32,12 +32,16 @@ export interface UsageTotal extends UsageDelta {
   accountCount: number;
 }
 
-/** Searches of one app for one normalized query on one UTC day (query_daily). */
+/** Searches of one app for one normalized query, locale and country on one UTC day (query_daily). */
 export interface QueryCount {
   appId: string;
   /** "YYYY-MM-DD", UTC (dayOf). */
   day: string;
   query: string;
+  /** Pack locale of the searches. */
+  locale: string;
+  /** ISO 3166-1 alpha-2 country of the requests, or UNKNOWN_COUNTRY ("XX"). */
+  country: string;
   searches: number;
   misses: number;
 }
@@ -115,9 +119,9 @@ const READ_TOTALS = `
  * batch on the foreign key. (SQLite needs this WHERE to parse INSERT … SELECT … ON CONFLICT.)
  */
 const ADD_QUERY_COUNT = `
-  INSERT INTO query_daily (app_id, day, query, searches, misses)
-  SELECT a.id, ?, ?, ?, ? FROM apps a WHERE a.id = ?
-  ON CONFLICT (app_id, day, query) DO UPDATE SET
+  INSERT INTO query_daily (app_id, day, query, locale, country, searches, misses)
+  SELECT a.id, ?, ?, ?, ?, ?, ? FROM apps a WHERE a.id = ?
+  ON CONFLICT (app_id, day, query, locale, country) DO UPDATE SET
     searches = searches + excluded.searches,
     misses = misses + excluded.misses`;
 
@@ -196,7 +200,9 @@ export function createD1Store(db: D1Like): Store {
     async addQueryCounts(counts) {
       if (counts.length === 0) return;
       const statement = db.prepare(ADD_QUERY_COUNT);
-      await db.batch(counts.map((c) => statement.bind(c.day, c.query, c.searches, c.misses, c.appId)));
+      await db.batch(
+        counts.map((c) => statement.bind(c.day, c.query, c.locale, c.country, c.searches, c.misses, c.appId)),
+      );
     },
   };
 }
@@ -221,20 +227,33 @@ export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
     }
     return counts;
   };
+  /** One row per app, day, locale, country and query, like query_daily. */
   const queries = new Map<string, QueryCount>();
-  const queryKey = (appId: string, day: string, query: string) => `${appId}|${day}|${query}`;
+  const queryKey = (c: QueryCount) => `${c.appId}|${c.day}|${c.locale}|${c.country}|${c.query}`;
   const store: Store & {
     keys: Map<string, ApiKey>;
     usage: Map<string, number>;
     usageOf(appId: string, period: string, metric: Metric): number;
     queries: Map<string, QueryCount>;
-    queryCountOf(appId: string, day: string, query: string): QueryCount | undefined;
+    /** The app's counts of the query on the day, summed over locales and countries. */
+    queryCountOf(
+      appId: string,
+      day: string,
+      query: string,
+    ): Pick<QueryCount, "appId" | "day" | "query" | "searches" | "misses"> | undefined;
   } = {
     keys: keysByHash,
     usage,
     usageOf: (appId, period, metric) => usage.get(usageKey(appId, period, metric)) ?? 0,
     queries,
-    queryCountOf: (appId, day, query) => queries.get(queryKey(appId, day, query)),
+    queryCountOf: (appId, day, query) => {
+      const rows = [...queries.values()].filter(
+        (c) => c.appId === appId && c.day === day && c.query === query,
+      );
+      if (rows.length === 0) return undefined;
+      const sum = (field: "searches" | "misses") => rows.reduce((total, c) => total + c[field], 0);
+      return { appId, day, query, searches: sum("searches"), misses: sum("misses") };
+    },
     async findKeyByHash(hash) {
       // A copy, like a fresh D1 row: callers may cache it while the "table" changes.
       const key = keysByHash.get(hash);
@@ -261,7 +280,7 @@ export function createMemoryStore(keys: Record<string, ApiKey> = {}) {
     },
     async addQueryCounts(counts) {
       for (const c of counts) {
-        const key = queryKey(c.appId, c.day, c.query);
+        const key = queryKey(c);
         const current = queries.get(key);
         if (current) {
           current.searches += c.searches;

@@ -140,14 +140,35 @@ export interface WebhookDeliveryRow {
   created_at: number;
 }
 
-/** Daily search counts per app and normalized query. */
+/** Daily search counts per app, normalized query, locale and country (migration 0004). */
 export interface QueryDailyRow {
   app_id: string;
   /** "YYYY-MM-DD", UTC (dayOf). */
   day: string;
   /** Normalized query text, ≤ 64 characters. */
   query: string;
+  /** Pack locale of the search; LEGACY_LOCALE ("und") for rows from before migration 0004. */
+  locale: string;
+  /** ISO 3166-1 alpha-2 country of the request (`request.cf.country`); UNKNOWN_COUNTRY ("XX") when unknown. */
+  country: string;
   searches: number;
   /** Searches that returned no result. */
   misses: number;
+}
+
+/**
+ * One k-anonymous query of a locale and country over the 7 days before `day` (migration 0004),
+ * for the culture proposals. No app, account or user id.
+ */
+export interface TrendsDailyRow {
+  /** "YYYY-MM-DD", UTC: the day of the run. */
+  day: string;
+  locale: string;
+  /** ISO 3166-1 alpha-2, or ALL_COUNTRIES ("*") for the whole locale. */
+  country: string;
+  query: string;
+  /** (searches per day in the window + 1) / (searches per day in the 28 days before + 1). */
+  score: number;
+  searches: number;
+  accounts: number;
 }

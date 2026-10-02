@@ -3,7 +3,7 @@ import type { Principal } from "./auth.ts";
 import type { CustomEmojiIndex } from "./custom.ts";
 import type { Env } from "./env.ts";
 import type { Meter, WaitUntil } from "./meter.ts";
-import type { QueryStats } from "./query-stats.ts";
+import type { QueryStats, SearchRegion } from "./query-stats.ts";
 import type { Catalog } from "./semantic.ts";
 
 export interface CacheLike {
@@ -26,10 +26,10 @@ export interface Metering {
   /** Count one billable call for the key's app and start a batched flush when one is due. */
   count(metric: Metric): void;
   /**
-   * Add one search to the app's analytics (query_daily): the normalized query and how many
-   * results the caller got (0 = a miss). Only for keys with an apps row.
+   * Add one search to the app's analytics (query_daily): the normalized query, how many results
+   * the caller got (0 = a miss), its locale and the request's country. Only for keys with an apps row.
    */
-  recordSearch(query: string, resultCount: number): void;
+  recordSearch(query: string, resultCount: number, region: SearchRegion): void;
 }
 
 export interface Deps {
@@ -67,10 +67,10 @@ export function createMetering(
       meter.add(key, metric, persistUsage, plan.limits[metric]);
       meter.flushIfDue(ctx);
     },
-    recordSearch(query, resultCount) {
+    recordSearch(query, resultCount, region) {
       // Development keys have no apps row to attach analytics to, and no dashboard to show them.
       if (!persistUsage) return;
-      queryStats.add(key.appId, query, resultCount);
+      queryStats.add(key.appId, query, resultCount, region);
       queryStats.flushIfDue(ctx);
     },
   };

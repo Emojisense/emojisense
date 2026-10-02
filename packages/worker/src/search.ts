@@ -1,3 +1,4 @@
+import { UNKNOWN_COUNTRY } from "@emojisense/platform";
 import { embeddingText, normalize, type SearchResult } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
 import {
@@ -5,12 +6,14 @@ import {
   CULTURE_BROWSER_CACHE,
   EDGE_CACHE_SECONDS,
   MAX_LIMIT,
+  REGION_AUTO_BROWSER_CACHE,
   SEARCH_DEFAULT_LIMIT,
 } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { type ApiCultureResult, applyServerCulture, parseCultureParams, utcDay } from "./culture.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
 import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
+import { edgeCountry } from "./region.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
 
 /** Response of /v1/search and /v1/suggest-reactions (docs/API.md). */
@@ -36,6 +39,12 @@ export interface SearchBody {
    * could be loaded for the locale.
    */
   culture?: { from: string; day: string; region: string | null } | null;
+  /**
+   * Search only, and only when the request has `region`: the region used for regional culture
+   * entries. With `region=auto` it is the request's country (null when unknown), so an SDK can
+   * apply regional entries on the device.
+   */
+  region?: string | null;
 }
 
 function parseParams(url: URL) {
@@ -74,7 +83,10 @@ export const handleSearch: Handler = async (
   if (!locale) return unknownLocale(url.searchParams.get("locale"));
   const tenant = parseTenant(url.searchParams.get("tenant"));
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
-  const cultureParams = parseCultureParams(url);
+  // The edge country selects regional entries only with region=auto, and is an aggregate count
+  // dimension of the app's analytics. It is never stored with a user and never keys the cache.
+  const country = edgeCountry(request);
+  const cultureParams = parseCultureParams(url, country === UNKNOWN_COUNTRY ? undefined : country);
   if (cultureParams instanceof Response) return cultureParams;
   // Culture is applied per request after the shared cache (never stored in it), like custom emoji.
   const cultureFile = cultureParams.enabled ? await catalog.culture?.(locale, env) : undefined;
@@ -91,6 +103,8 @@ export const handleSearch: Handler = async (
   const culture = cultureFile
     ? { from: cultureFile.from, day: utcDay(started), region: cultureParams.region ?? null }
     : null;
+  const regionEcho = cultureParams.regionRequested ? { region: cultureParams.region ?? null } : {};
+  const searchRegion = { locale, country };
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
   const customSet = await custom.forCaller(caller, tenant);
   const customResults = customSet.search(imageOrigin(env, url), params.query, {
@@ -101,7 +115,13 @@ export const handleSearch: Handler = async (
   /** What the caller sees: culture on the canonical ranking, then their custom emoji first. */
   const present = (results: SearchResult[]) => withCustom(withCulture(results));
   const browserCache =
-    customSet.rows.length > 0 ? CUSTOM_BROWSER_CACHE : cultureFile ? CULTURE_BROWSER_CACHE : BROWSER_CACHE;
+    customSet.rows.length > 0
+      ? CUSTOM_BROWSER_CACHE
+      : cultureParams.auto
+        ? REGION_AUTO_BROWSER_CACHE
+        : cultureFile
+          ? CULTURE_BROWSER_CACHE
+          : BROWSER_CACHE;
   const log = (outcome: Outcome, scores: { aliasConfidence?: number; semanticTop?: number } = {}) =>
     record(env, indexTag(catalog), {
       endpoint: "search",
@@ -142,8 +162,9 @@ export const handleSearch: Handler = async (
       degraded: false,
       overLimit: false,
       culture,
+      ...regionEcho,
     };
-    metering.recordSearch(params.query, body.results.length);
+    metering.recordSearch(params.query, body.results.length, searchRegion);
     return json(body, 200, {
       "Cache-Control": browserCache,
       "Server-Timing": `total;dur=${Date.now() - started}`,
@@ -165,8 +186,9 @@ export const handleSearch: Handler = async (
       overLimit: true,
       aliasLocale: ranked?.aliasLocale ?? null,
       culture,
+      ...regionEcho,
     };
-    metering.recordSearch(params.query, body.results.length);
+    metering.recordSearch(params.query, body.results.length, searchRegion);
     return json(body, 200, {
       "Cache-Control": "no-store",
       "Server-Timing": `total;dur=${Date.now() - started}`,
@@ -194,8 +216,8 @@ export const handleSearch: Handler = async (
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }
-  const answer: SearchBody = { ...body, results: present(body.results), culture };
-  metering.recordSearch(params.query, answer.results.length);
+  const answer: SearchBody = { ...body, results: present(body.results), culture, ...regionEcho };
+  metering.recordSearch(params.query, answer.results.length, searchRegion);
   log(ranked.degraded ? "degraded" : "miss", {
     aliasConfidence: ranked.aliasConfidence,
     semanticTop: ranked.semanticTop,

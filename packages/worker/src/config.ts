@@ -57,6 +57,11 @@ export const BROWSER_CACHE = "public, max-age=3600, s-maxage=86400";
  * cache keeps a seasonal emoji a day past its window.
  */
 export const CULTURE_BROWSER_CACHE = "public, max-age=3600";
+/**
+ * Answers with `region=auto` depend on the caller's country, which the URL does not show: only the
+ * caller's own browser may keep them, never a shared cache.
+ */
+export const REGION_AUTO_BROWSER_CACHE = "private, max-age=3600";
 export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;
 
 /**
@@ -82,6 +87,15 @@ export const SHARD_MAX_EMBEDDINGS = 5_000;
 export const SHARD_MAX_RAW_BYTES = 96 * 1024;
 /** R2 writes in flight at once (Workers allow 6 open connections per invocation). */
 export const SHARD_WRITE_CONCURRENCY = 6;
+/**
+ * Regional trends (src/trends.ts), written by the 03:17 cron: at most this many k-anonymous
+ * (locale, country, query) groups are read from D1 per run…
+ */
+export const TRENDS_MAX_CANDIDATES = 20_000;
+/** …and at most this many rows are written, the most searched first… */
+export const TRENDS_MAX_ROWS = 10_000;
+/** …with at most this many per locale and country, so a big region cannot crowd out the others. */
+export const TRENDS_MAX_ROWS_PER_REGION = 500;
 /** Stores of another pack version or content hash are deleted after this many days unused. */
 export const SHARD_STALE_DAYS = 7;
 /** How long an isolate trusts the current-build pointer it read from R2. */

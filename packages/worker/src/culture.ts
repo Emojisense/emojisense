@@ -105,6 +105,10 @@ export interface CultureParams {
   enabled: boolean;
   /** ISO 3166-1 alpha-2, uppercase. Only used when `enabled`. */
   region: string | undefined;
+  /** The request named a region (a code, or `auto`), so the answer echoes the one it used. */
+  regionRequested: boolean;
+  /** `region=auto`: the region is the request's country, so the answer varies by caller. */
+  auto: boolean;
 }
 
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
@@ -117,25 +121,29 @@ export function isRegionCode(code: string): boolean {
 }
 
 /**
- * `culture=1|true|0|false` (default off) and `region=XX`. Answers a 400 for anything else, so a
- * typo never silently changes the ranking.
+ * `culture=1|true|0|false` (default off) and `region=XX|auto`. Answers a 400 for anything else, so
+ * a typo never silently changes the ranking. `auto` takes `edgeRegion`, the request's country
+ * (region.ts `edgeCountry`; undefined when unknown: no regional entries).
  */
-export function parseCultureParams(url: URL): CultureParams | Response {
+export function parseCultureParams(url: URL, edgeRegion?: string): CultureParams | Response {
   const raw = url.searchParams.get("culture");
   let enabled: boolean;
   if (raw === null || raw === "" || raw === "0" || raw === "false") enabled = false;
   else if (raw === "1" || raw === "true") enabled = true;
   else return errorResponse(400, "culture must be 1 or 0");
   const rawRegion = url.searchParams.get("region");
-  if (rawRegion === null || rawRegion === "") return { enabled, region: undefined };
+  if (rawRegion === null || rawRegion === "") {
+    return { enabled, region: undefined, regionRequested: false, auto: false };
+  }
   const region = rawRegion.trim().toUpperCase();
+  if (region === "AUTO") return { enabled, region: edgeRegion, regionRequested: true, auto: true };
   if (!isRegionCode(region)) {
     return errorResponse(
       400,
-      `region must be an ISO 3166-1 alpha-2 code, e.g. GB (got "${rawRegion.slice(0, 8)}")`,
+      `region must be an ISO 3166-1 alpha-2 code, e.g. GB, or auto (got "${rawRegion.slice(0, 8)}")`,
     );
   }
-  return { enabled, region };
+  return { enabled, region, regionRequested: true, auto: false };
 }
 
 export interface ServerCultureOptions {
