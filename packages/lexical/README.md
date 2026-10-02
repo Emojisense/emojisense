@@ -28,7 +28,10 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 
 function Editor() {
-  const sense = useEmojisense({ packBaseUrl: "https://<api>/v1/pack/0.1.0", endpoint: "https://<api>" });
+  const sense = useEmojisense({
+    packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
+    endpoint: "https://api.emojisense.com",
+  });
   return (
     <LexicalComposer initialConfig={{ namespace: "chat", onError: console.error }}>
       <RichTextPlugin contentEditable={<ContentEditable />} ErrorBoundary={LexicalErrorBoundary} />

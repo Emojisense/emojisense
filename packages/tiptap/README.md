@@ -25,7 +25,7 @@ import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import { createEngine, createSemanticClient, loadPacks } from "emojisense";
 
-const engine = createEngine(await loadPacks({ baseUrl: "https://<api>/v1/pack/0.1.0" }));
+const engine = createEngine(await loadPacks({ baseUrl: "https://api.emojisense.com/v1/pack/0.1.0" }));
 
 new Editor({
   element: document.querySelector("#editor")!,
@@ -33,7 +33,7 @@ new Editor({
     StarterKit,
     EmojiAutocomplete.configure({
       engine,
-      semantic: createSemanticClient({ endpoint: "https://<api>" }), // optional
+      semantic: createSemanticClient({ endpoint: "https://api.emojisense.com" }), // optional
       skinTone: "medium", // optional
     }),
   ],
@@ -46,7 +46,10 @@ The packs load after the editor is created, so pass getters. The extension reads
 keystroke and also picks up the idle-loaded extension packs.
 
 ```tsx
-const sense = useEmojisense({ packBaseUrl: "https://<api>/v1/pack/0.1.0", endpoint: "https://<api>" });
+const sense = useEmojisense({
+  packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
+  endpoint: "https://api.emojisense.com",
+});
 const senseRef = useRef(sense);
 senseRef.current = sense;
 

@@ -17,7 +17,7 @@ extension's `assets/` folder. It needs no network and no account.
 
 | Preference | Default | Meaning |
 | ---------- | ------- | ------- |
-| Language | English | Labels and ranking. English and Turkish are always both searched. |
+| Language | English | Labels and ranking. Every bundled language is always searched. |
 | Primary Action | Paste | What `↵` does. |
 | API URL | empty | Optional. With a URL, unsure queries also get semantic results from the Emojisense API. Must be `https://` (or `http://localhost`). |
 | API Key | empty | Optional. A secret key (`sk_live_…`) is sent as `Authorization: Bearer`. A publishable key (`pk_live_…`) is sent as `?key=`. |

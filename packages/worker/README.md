@@ -1,10 +1,12 @@
 # @emojisense/worker
 
-The Emojisense Search API: a Cloudflare Worker. The HTTP contract is [docs/API.md](../../docs/API.md).
+The Emojisense Search API: a Cloudflare Worker, deployed at `https://api.emojisense.com`
+(production) and `https://api.emojisense.dev` (internal dev). The HTTP contract is
+[docs/API.md](../../docs/API.md).
 
 | Route | Runs | Metered as |
 | ----- | ---- | ---------- |
-| `GET /v1/search` | alias + semantic search, Cache API | `semantic_calls` (cache hits too) |
+| `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API; `culture=1` (+ `region`) applies the culture layer after the cache (`src/culture.ts`) | `semantic_calls` (cache hits too) |
 | `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), no cache | `semantic_calls` |
 | `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached by `X-Image-Hash` | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API, no key | — |
@@ -12,7 +14,7 @@ The Emojisense Search API: a Cloudflare Worker. The HTTP contract is [docs/API.m
 | `GET /v1/custom/:appId/:emojiId` | custom emoji image from R2 (`EMOJI`), immutable, Cache API, no key | — |
 | `GET /v1/custom-pack` | the key's custom emoji (+ `tenant=`) as a pack, edge-cached 60 s | — |
 | `GET /v1/health` | status | — |
-| `/v1/pack/<v>/…`, `/p/<v>/…` | static assets (packs, layer 2 shards); the Worker does not run | — |
+| `/v1/pack/<v>/…`, `/v1/culture/<v>/…`, `/p/<v>/…` | static assets (packs and vector files, culture files, layer 2 shards); the Worker does not run | — |
 
 `/v1/search` and `/v1/suggest-reactions` put the caller's custom emoji first (`tenant=` adds a
 tenant's). They come from a per-isolate copy of the app's rows, at most 60 s old, and never enter
@@ -101,9 +103,12 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 
 | Rule | Where |
 | ---- | ----- |
+| Plain `http://` to a public host with `ENVIRONMENT` `staging` or `production` → 403 (local `wrangler dev` and localhost keep http) | `src/app.ts`, `src/http.ts` |
+| Every JSON answer has `X-Content-Type-Options: nosniff` and CORS `*`; errors are `no-store` | `src/http.ts` |
 | `?key=pk_live_…` must match the key's allowed origins (empty list = any) → else 403 | `src/auth.ts` |
 | `Authorization: Bearer sk_live_…` only; with an `Origin` header or in the URL → 403 | `src/auth.ts` |
-| Unknown or revoked key → 401. No key → anonymous, stricter rate limit per IP | `src/auth.ts` |
+| Unknown or revoked key → 401. No key → anonymous: not metered, never over a limit, no custom emoji or analytics | `src/auth.ts`, `src/context.ts` |
+| Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Sets, custom images, health and static files are not limited. | `src/auth.ts`, `wrangler.jsonc` |
 | Key lookups are cached per isolate for 60 s (unknown keys too). A revocation takes ≤ 60 s. | `src/config.ts` |
 | D1 down: a cached key is still used; an uncached key is served as anonymous | `src/auth.ts` |
 | Limits come from the account's plan (`accounts.plan`, `getPlan` in `@emojisense/platform`). Monthly, UTC. | `src/context.ts` |

@@ -19,6 +19,46 @@ layer-2 shards. Formats: [docs/PACK_FORMAT.md](../../docs/PACK_FORMAT.md).
 records the result in the manifest as `coreAliases`) and the production model
 (`model.key`, `model.dims`). The shard builder and `pnpm --filter @emojisense/eval cost` use it.
 
+## Aliases: enrichment, overlay and curation (`enrichment/`)
+
+| Path | Content |
+| ---- | ------- |
+| `enrichment/<group>.json` | English and Turkish aliases: one record per base emoji with an `en` and a `tr` block (`desc`, the lists `synonym`, `slang`, `pop_culture`, `dev`, `typo`, `intent`, `low`, and an optional `top`). Writing rules: `enrichment/STYLE.md`. |
+| `enrichment/i18n/<locale>/<group>.json` | The other locales (zh, hi, es, ar, fr, bn, pt, ru, id): one record per emoji and language with the same lists. Rules: `enrichment/STYLE_I18N.md`. |
+| `enrichment/i18n/tr/<group>.json` | The **Turkish overlay**: extra Turkish phrases, kept out of the combined files so two writers do not edit the same records. A record has `hexcode`, `emoji` and only the lists it adds (no `desc`). |
+| `enrichment/curation.json` | Human overrides on the generated aliases (below). |
+
+**Alias order.** `validate` places a block's aliases as `top` (at most 3, the strongest real-world
+phrases), then `synonym`, `slang`, `pop_culture`, `dev`, `intent` (`src/alias-order.ts`); `typo`
+and `low` are separate pack fields. The core pack keeps the first aliases per emoji (manifest
+`coreAliases`) and the collision cap keeps a shared alias on the owners that rank it highest, so
+`top` is the way to put a slang or intent phrase ahead of the synonyms.
+
+**Turkish overlay** (`src/overlay.ts`). Before curation, moderation and the collision cap, each
+overlay record joins its emoji's `tr` block: its phrases go first in each list (`top` included), a
+base phrase that the overlay lists again is dropped from the base lists, and an overlay `low`
+entry demotes a base alias. An unknown hexcode, or one listed twice, fails the build.
+
+**Curation** (`src/curation.ts`). `curation.json` is an array; `validate` applies every entry:
+
+```json
+[
+  { "hexcode": "1F6A2", "locale": "en", "alias": "ship it", "action": "low", "why": "🚀 is the canonical 'ship it'" },
+  { "hexcode": "1F9B5", "locale": "*", "alias": "break a leg", "action": "remove", "why": "idiom means good luck, not a leg" },
+  { "hexcode": "1F602", "locale": "pt", "phrase": "kkkk", "action": "add", "why": "the usual Brazilian laugh; the batch had only longer runs" }
+]
+```
+
+| `action` | Needs | Effect |
+| -------- | ----- | ------ |
+| `remove` | `alias` | Drops that alias of that emoji |
+| `low` | `alias` | Moves it to the `low` field (weight 0.55) |
+| `add` | `phrase`, optional `field` (`alias` by default, or `typo`) | Adds a phrase the batch missed |
+
+`locale` is a pack locale or `"*"` for every locale. `alias` is compared in its normalized form
+(docs/PACK_FORMAT.md §3). `why` is optional but expected: it is the review trail. A malformed entry
+fails the build with its index. Append new entries at the end of the file.
+
 ## Culture layer (`culture/`)
 
 Editorial associations by culture, region and moment (docs/ARCHITECTURE.md, "Culture layer";
