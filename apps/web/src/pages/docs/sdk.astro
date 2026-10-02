@@ -26,7 +26,7 @@ const engine = createEngine(packs);
 engine.search("greatest of all time").results;
 // ${resultLiteral("greatest of all time", { limit: 1 })}`;
 
-const types = `type ResultSource = "alias" | "semantic" | "custom";
+const types = `type ResultSource = "alias" | "semantic" | "custom" | "culture";
 
 interface SearchResult {
   emoji: string; // "🦖"
@@ -124,6 +124,16 @@ baseId("1F44D-1F3FD"); // "${baseId("1F44D-1F3FD")}"
 groupLabel("food-drink", "tr"); // "${groupLabel("food-drink", "tr")}"
 hexcodeOf("❤️‍🔥"); // "${hexcodeOf("❤️‍🔥")}"`;
 
+const culture = `const culture = await loadCulture({ baseUrl: "${API_HOST}/v1/culture/0.1.0", locale: "es" });
+const cultured = engine.withCulture(culture); // shares the index
+
+cultured.search("goat", { locale: "es" }).results;
+// [🐐 (alias), ⚽ 🇦🇷 🇵🇹 (source "culture", context, cultureId), …]
+cultured.search("goat", { culture: false }); // the canonical ranking only
+
+relevantNow(culture, { region: "MX", limit: 8 });
+// [{ emoji: "💀", hexcode: "1F480", context: "Día de Muertos, 1 y 2 de noviembre", cultureId: "dia-de-muertos" }, …]`;
+
 const sets = `EMOJI_SETS; // ["native", "twemoji", "noto", "fluent"]
 isEmojiSet("noto"); // true
 
@@ -195,6 +205,16 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
     <li><code>groupLabel(group, locale)</code> names a pack group for the UI.</li>
     <li><code>hexcodeOf(emoji)</code> gives the Emojibase hexcode of an emoji, skin tone included.</li>
     <li><code>boundedEditDistance(a, b, max)</code> is the typo distance the engine uses.</li>
+  </ul>
+
+  <h2 id="culture">Culture layer</h2>
+  <p>Editorial emoji for a culture, a region and a moment (football’s greatest-of-all-time debate, Día de Muertos, Diwali), from one small file per locale at <code>/v1/culture/&lt;packVersion&gt;/culture.&lt;locale&gt;.json</code>. Editors, helped by AI, write and approve them. They join the results right after the top answer and never replace it.</p>
+  <CodeBlock code={culture} lang="ts" />
+  <ul>
+    <li><code>loadCulture({"{ baseUrl, locale }"})</code> fetches and checks a culture file (<code>assertCulture</code>, <code>CULTURE_FORMAT</code>, <code>CULTURE_FORMAT_VERSION</code>). Pass it to <code>createEngine(packs, {"{ culture }"})</code> or <code>engine.withCulture(culture)</code>; a search session applies it after fusion.</li>
+    <li>Culture results have <code>source: "culture"</code>, <code>context</code> (the reason, in the file’s language) and <code>cultureId</code>. Search option <code>culture: false</code> keeps the canonical ranking; <code>region</code> (for example <code>"BR"</code>) turns on regional entries.</li>
+    <li><code>relevantNow(culture, options)</code> lists featured seasonal and event emoji active today, for an optional shelf.</li>
+    <li><code>matchCulture</code>, <code>insertCulture</code> and <code>applyCulture</code> apply a culture file to your own result list; <code>isActiveOn(when, day)</code> and <code>localDay(now)</code> evaluate windows. See <a href="/docs/pack-format/">Pack format §9</a>.</li>
   </ul>
 
   <h2 id="emoji-sets">Emoji sets</h2>
