@@ -4,6 +4,7 @@
  *
  *   tsx scripts/make-heldout.ts                        top every locale up to 60 queries
  *   tsx scripts/make-heldout.ts --target 80 --locales ar,hi
+ *   tsx scripts/make-heldout.ts --target 80 --locales hi,bn --script native
  *   tsx scripts/make-heldout.ts --dry-run --locales ar  print one call per locale, write nothing
  *
  * Adds to queries/heldout.jsonl. Existing lines and ids are kept as they are; the file is
@@ -11,9 +12,10 @@
  *
  * Personas, apps, topics and (for hi, bn, ar) the script drive what people would type. The
  * model never sees our aliases. It sees only the held-out queries it already wrote for that
- * locale, so it does not repeat them. Answers are the generator's own labels (labelled_by),
- * validated against the catalog only. Do not relabel with Claude: disputed labels go to
- * queries/heldout-review.md for a human to decide.
+ * locale and script, so it does not repeat them (queries in the other script made it switch
+ * scripts). Answers are the generator's own labels (labelled_by), validated against the catalog
+ * only. Do not relabel with Claude: disputed labels go to queries/heldout-review.md for a human
+ * to decide.
  *
  * The first 133 queries were made with thinking on and 3 roles per locale; later ones with
  * thinking off, 12 roles and 14 topics (topic is recorded per query).
@@ -40,12 +42,16 @@ const { values: args } = parseArgs({
     target: { type: "string", default: "60" },
     locales: { type: "string" },
     concurrency: { type: "string", default: "4" },
+    /** For hi, bn and ar: "both" alternates; "native" or "romanized" fixes the script. */
+    script: { type: "string", default: "both" },
     "dry-run": { type: "boolean", default: false },
   },
 });
 const target = Number(args.target);
 const locales = args.locales ? args.locales.split(",") : LOCALE_CODES;
 for (const l of locales) if (!LOCALE_CODES.includes(l)) throw new Error(`unknown locale ${l}`);
+if (!["both", "native", "romanized"].includes(args.script))
+  throw new Error(`unknown --script ${args.script}`);
 
 type Script = "latin" | "han" | "cyrillic" | "arabic" | "devanagari" | "bengali";
 interface LocaleSetup {
@@ -121,7 +127,8 @@ function briefFor(locale: string, n: number): Brief {
   const offset = LOCALE_CODES.indexOf(locale);
   const role = ROLES[(n + offset) % ROLES.length] as string;
   const topic = TOPICS[(n * 5 + offset) % TOPICS.length] as string;
-  const romanized = setup.romanized !== undefined && n % 2 === 1;
+  const romanized =
+    setup.romanized !== undefined && (args.script === "romanized" || (args.script === "both" && n % 2 === 1));
   const writing = romanized
     ? `${setup.romanized} (${setup.language} in Latin letters, as they normally type it)`
     : setup.native === "latin"
@@ -171,13 +178,18 @@ const drop = (reason: string) => {
   dropped[reason] = (dropped[reason] ?? 0) + 1;
 };
 
+/** Text in `script` only: Latin text may not hold letters of another script. */
+const inScript = (q: string, script: Script) =>
+  SCRIPT_TEST[script].test(q) && (script !== "latin" || !/[^\p{Script=Latin}\P{L}]/u.test(q));
+
 /** Why an item is rejected, or undefined when it is kept. */
 function rejection(locale: string, brief: Brief, q: string, answers: string[]): string | undefined {
   const key = normalize(q);
   if (!key) return "empty";
   if (key.split(" ").length > MAX_WORDS || q.length > 40) return "too long";
-  if (!SCRIPT_TEST[brief.script].test(q)) return "wrong script";
-  if (brief.script === "latin" && /[^\p{Script=Latin}\P{L}]/u.test(q)) return "wrong script";
+  if (!inScript(q, brief.script)) return "wrong script";
+  // "ya lahwy 😱" types the answer into the search box; nobody searches like that.
+  if (/\p{Extended_Pictographic}/u.test(q)) return "emoji in the query";
   if (inHouse.has(key)) return "in the in-house set";
   if (heldout.some((h) => h.locale === locale && normalize(h.q) === key)) return "duplicate";
   if (answers.length === 0) return "no valid emoji";
@@ -231,7 +243,7 @@ async function topUp(locale: string) {
   const maxCalls = Math.ceil(Math.max(0, target - count()) / PER_CALL) * 3 + 2;
   for (let call = 0; count() < target && call < maxCalls; call++) {
     const brief = briefFor(locale, start + call);
-    const avoid = heldout.filter((h) => h.locale === locale).map((h) => h.q);
+    const avoid = heldout.filter((h) => h.locale === locale && inScript(h.q, brief.script)).map((h) => h.q);
     const items = await ask(brief, avoid);
     if (!items) {
       drop("no JSON");
