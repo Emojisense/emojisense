@@ -66,6 +66,19 @@ export function createEmojisenseResolver(packs: Pack[]): EmojiDataResolver {
   };
 }
 
+const PENDING: EmojiDataResolver = () => new Promise<never>(() => {});
+
+/**
+ * Frimousse props for Emojisense packs that are still loading. Frimousse resolves its data once
+ * per mount and ignores a new resolver, so the returned `key` remounts the picker when the packs
+ * arrive. Until then Frimousse shows its loading state.
+ */
+export function useEmojisenseResolver(packs: Pack[]): { key: string; resolveEmojiData: EmojiDataResolver } {
+  const ready = packs.length > 0;
+  const resolveEmojiData = useMemo(() => (ready ? createEmojisenseResolver(packs) : PENDING), [ready, packs]);
+  return { key: ready ? "ready" : "loading", resolveEmojiData };
+}
+
 export interface EmojisenseResultsProps
   extends Omit<ComponentProps<"div">, "children" | "onSelect" | "results"> {
   results: SearchResult[];
@@ -157,7 +170,7 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const listboxId = useId();
   const { results } = useEmojiSearch(query, emojisense, { limit });
-  const resolver = useMemo(() => createEmojisenseResolver(emojisense.packs), [emojisense.packs]);
+  const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
   const searching = query.trim() !== "";
 
   const labelOf = useCallback(
@@ -170,10 +183,11 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
 
   return (
     <EmojiPicker.Root
+      key={key}
       {...rest}
       columns={columns}
       locale={emojisense.locale}
-      resolveEmojiData={resolver}
+      resolveEmojiData={resolveEmojiData}
       onEmojiSelect={onEmojiSelect}
     >
       <SearchInput
