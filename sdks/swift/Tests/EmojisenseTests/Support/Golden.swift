@@ -93,8 +93,9 @@ enum GoldenError: Error, CustomStringConvertible {
       "no packs in \(directory.path). Run `pnpm data:build` at the repository root, or set "
         + "EMOJISENSE_PACK_DIR."
     case .stalePack(let file):
-      "\(file) differs from the pack golden.json was made from. Regenerate it: "
-        + "`pnpm exec tsx sdks/swift/scripts/make-golden.ts`."
+      "\(file) is not the pack golden.json was made from. Rebuild the packs (`pnpm data:build`) "
+        + "or, if the data or packages/core changed on purpose, regenerate golden.json "
+        + "(`pnpm exec tsx sdks/swift/scripts/make-golden.ts`)."
     }
   }
 }
