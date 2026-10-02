@@ -2063,5 +2063,19 @@
     "phrase": "shukriya",
     "action": "add",
     "why": "the common Hinglish/Urdu 'thank you'; 🙏 is full at 50 aliases and did not have it"
+  },
+  {
+    "hexcode": "1F525",
+    "locale": "ar",
+    "phrase": "nar",
+    "action": "add",
+    "why": "Arabizi 'fire' (= awesome); 🔥 is full at 50 aliases, so the wave 3 lane could not add it"
+  },
+  {
+    "hexcode": "26BD",
+    "locale": "ar",
+    "phrase": "kora",
+    "action": "add",
+    "why": "Arabizi (Egyptian) 'ball, football'; ⚽ is full at 50 aliases and did not have it"
   }
 ]
