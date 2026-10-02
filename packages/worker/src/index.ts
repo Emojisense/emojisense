@@ -8,6 +8,7 @@ import { getModel } from "@emojisense/data/models";
 import { vectorFileName } from "@emojisense/data/vector-files";
 import type { CultureAdminRpc } from "@emojisense/platform";
 import { type AliasEngine, createEngine, type Pack, type PackRow } from "emojisense";
+import { readEngineIndex } from "emojisense/engine-index";
 import { decodeVectors, type VectorIndex } from "emojisense/vectors";
 // The in-house eval suite (never the held-out one): the canonical answers the culture gate keeps.
 import gateQueriesText from "../../eval/queries/queries.jsonl";
@@ -19,12 +20,13 @@ import { createCultureOverride, overrideCultureReader } from "./culture-admin/ro
 import { createCultureAdmin } from "./culture-admin/service.ts";
 import { createD1CustomEmojiReader } from "./custom-store.ts";
 import type { Env, GeneratedConfig } from "./env.ts";
+import aliasIndexEn from "./generated/alias-index.en.bin";
 import config from "./generated/config.json";
 import packEnExt from "./generated/pack.en.ext.json";
 import packEn from "./generated/pack.en.json";
 import vectors from "./generated/vectors.bin";
 import glyphVectors from "./generated/vectors.glyph.bin";
-import { assetPackReader, createLocaleEngines } from "./locale-engines.ts";
+import { assetIndexReader, assetPackReader, createLocaleEngines } from "./locale-engines.ts";
 import { assetVectorReader, createLocaleVectors } from "./locale-vectors.ts";
 import { runScheduled } from "./scheduled.ts";
 import type { Catalog } from "./semantic.ts";
@@ -35,10 +37,15 @@ let engine: AliasEngine | undefined;
 let index: VectorIndex | undefined;
 
 // English only: every other locale, Turkish included, is read from the static assets on first use.
-// The first miss of an isolate builds this engine (CPU, Node on an M-series laptop: en + tr
-// ≈ 125 ms, en alone ≈ 70 ms; a tr query then builds its own engine, ≈ 80 ms).
+// The first miss of an isolate loads this engine from its prebuilt alias index (sync-pack.ts, same
+// pack order): ≈ 13 ms of CPU in Node instead of ≈ 75 ms to index the packs.
 const bundledEngine = () => {
-  engine ??= createEngine([packEn, packEnExt] as unknown as Pack[]);
+  if (!engine) {
+    const packs = [packEn, packEnExt] as unknown as Pack[];
+    const prebuilt = readEngineIndex(aliasIndexEn, packs);
+    if (!prebuilt) console.warn(JSON.stringify({ event: "alias_index_stale", locale: "en" }));
+    engine = createEngine(packs, prebuilt ? { prebuilt } : {});
+  }
   return engine;
 };
 // The other pack locales are static assets; their engines are built on first use (core packs).
@@ -46,6 +53,7 @@ const localeEngines = createLocaleEngines({
   bundled: bundledEngine,
   base: () => [packEn as unknown as Pack],
   read: assetPackReader(config.packVersion),
+  readIndex: assetIndexReader(config.packVersion),
   maxEngines: LOCALE_ENGINE_CACHE_SIZE,
 });
 

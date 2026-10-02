@@ -33,6 +33,8 @@ import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
 import { glyphVectorFileName, vectorFileName } from "@emojisense/data/vector-files";
+import type { Pack } from "emojisense";
+import { buildEngineIndex } from "emojisense/engine-index";
 import { decodeVectors, encodeVectors } from "emojisense/vectors";
 import { assetHeaders } from "./asset-headers.ts";
 import { contentHash } from "./content-hash.ts";
@@ -112,6 +114,17 @@ if (unpublished.length > 0) throw new Error(`no core pack for ${unpublished.join
 // The Worker bundles English for server-side hybrid search; all locales are static assets.
 const BUNDLED = ["pack.en.json", "pack.en.ext.json"];
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
+// Prebuilt alias indexes (PACK_FORMAT §11): a new isolate loads them instead of indexing the
+// packs. English is bundled (the packs in BUNDLED order, as src/index.ts builds its engine); every
+// other locale's index is an asset, for en core + its core and ext packs (src/locale-engines.ts).
+const readPack = (file: string) => JSON.parse(readFileSync(join(source, file), "utf8")) as Pack;
+writeFileSync(join(generated, "alias-index.en.bin"), buildEngineIndex(BUNDLED.map(readPack)));
+const aliasIndexes = new Map(
+  LOCALE_CODES.filter((code) => code !== "en").map((code) => [
+    `alias-index.${code}.bin`,
+    buildEngineIndex(["pack.en.json", `pack.${code}.json`, `pack.${code}.ext.json`].map(readPack)),
+  ]),
+);
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
 writeFileSync(join(generated, "vectors.glyph.bin"), glyphBytes);
 const queryTemplate = formatQuery(model, "{q}");
@@ -163,6 +176,7 @@ const published = [
 ];
 manifest.files = Object.fromEntries(published.map((f) => [f, manifest.files[f]]));
 for (const file of published) copyFileSync(join(source, file), join(publicPack, packVersion, file));
+for (const [file, bytes] of aliasIndexes) writeFileSync(join(publicPack, packVersion, file), bytes);
 writeFileSync(join(publicPack, packVersion, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 
 // Layer 2 shards (PACK_FORMAT §6). They are valid only for the model they were computed with, so
@@ -210,7 +224,7 @@ if (args.culture) {
 // published above, never for a missing one (asset-headers.ts).
 writeFileSync(
   join(workerRoot, "public", "_headers"),
-  assetHeaders(packVersion, [...published, "manifest.json"]),
+  assetHeaders(packVersion, [...published, ...aliasIndexes.keys(), "manifest.json"]),
 );
 console.log(
   `sync: pack ${packVersion} + ${model.id}@${dims} (locale vectors: ${vectorLocales.join(", ") || "none"}; ` +

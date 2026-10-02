@@ -5,5 +5,5 @@
   "dims": 768,
   "queryTemplate": "task: search result | query: {q}",
   "vectorLocales": ["zh", "hi", "es", "ar", "fr", "bn", "pt", "ru", "id", "tr"],
-  "contentHash": "32aa5ea4f5687fa4"
+  "contentHash": "4be6fa0d95c8162a"
 }

@@ -103,6 +103,36 @@
 /v1/pack/0.1.0/vectors.embeddinggemma.768.tr.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.zh.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.hi.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.es.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.ar.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.fr.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.bn.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.pt.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.ru.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.id.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+/v1/pack/0.1.0/alias-index.tr.bin
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
 /v1/pack/0.1.0/manifest.json
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable

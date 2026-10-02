@@ -1,5 +1,5 @@
 // The tests are type-checked with the Workers types only. These declare the Node/Vite features
-// the tests use: SQLite and raw imports for the real migrations (test/sqlite-d1.ts), and
+// the tests use: SQLite and raw imports for the real migrations (test/sqlite-d1.ts), file reads, and
 // `import.meta.url` to find wrangler.jsonc (test/shards-miniflare.test.ts).
 
 declare module "node:sqlite" {
@@ -14,6 +14,11 @@ declare module "node:sqlite" {
     prepare(sql: string): StatementSync;
     close(): void;
   }
+}
+
+// The bundled prebuilt alias index, read as bytes (test/alias-index.test.ts).
+declare module "node:fs" {
+  export function readFileSync(path: URL): Uint8Array;
 }
 
 interface ImportMeta {

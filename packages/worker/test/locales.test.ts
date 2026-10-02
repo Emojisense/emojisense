@@ -1,9 +1,17 @@
 import { LOCALE_CODES } from "@emojisense/data/locales";
 import { createEngine, type Pack, ROW_INDEX } from "emojisense";
+import { buildEngineIndex } from "emojisense/engine-index";
 import { describe, expect, it, vi } from "vitest";
 import type { Env } from "../src/env.ts";
 import { parseLocale } from "../src/http.ts";
-import { assetPackReader, createLocaleEngines, type PackReader } from "../src/locale-engines.ts";
+import {
+  aliasIndexFile,
+  assetIndexReader,
+  assetPackReader,
+  createLocaleEngines,
+  type IndexReader,
+  type PackReader,
+} from "../src/locale-engines.ts";
 import type { SearchBody } from "../src/search.ts";
 // Rows of 17 emoji copied verbatim from the core packs of pack version 0.1.0 (`pnpm data:build`):
 // the answers below, the fixture vectors' emoji, and what English-only aliases rank first.
@@ -247,6 +255,81 @@ describe("aliases of every pack locale", () => {
     warn.mockRestore();
     expect(fallback.aliasLocale).toBeNull();
     expect(fallback.results.filter((r) => r.source === "alias")).toEqual([]);
+  });
+});
+
+describe("prebuilt alias indexes of the locale engines", () => {
+  const QUERIES = [
+    "gato",
+    "gatuno",
+    "feliz cumpleaños",
+    "fuego",
+    "cat",
+    "fire",
+    "fueg",
+    "gaot",
+    "perro caliente",
+  ];
+  /** The index sync-pack.ts publishes: en core, then the locale's core and ext packs. */
+  const published: IndexReader = async (file) => {
+    const [, locale = ""] = /^alias-index\.(\w+)\.bin$/.exec(file) ?? [];
+    const files = ["pack.en.json", `pack.${locale}.json`, `pack.${locale}.ext.json`];
+    const packsOfLocale = await Promise.all(files.map((f) => readFixturePack(f, {})));
+    return buildEngineIndex(packsOfLocale).slice().buffer;
+  };
+  const enginesWith = (readIndex?: IndexReader) =>
+    createLocaleEngines({
+      bundled: () => createEngine(packs.en as Pack),
+      base: () => [packs.en as Pack],
+      read: readFixturePack,
+      ...(readIndex ? { readIndex } : {}),
+      maxEngines: 2,
+    });
+  const answers = async (engines: ReturnType<typeof enginesWith>) => {
+    const engine = await engines.get("es", {});
+    return QUERIES.map((q) => engine?.search(q, { locale: "es", culture: false }));
+  };
+
+  it("loads the published index instead of building, with the same answers", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const readIndex = vi.fn<IndexReader>(published);
+    const loaded = await answers(enginesWith(readIndex));
+    expect(readIndex).toHaveBeenCalledWith(aliasIndexFile("es"), {});
+    expect(JSON.parse(log.mock.calls[0]?.[0] as string)).toMatchObject({
+      event: "locale_engine_loaded",
+      prebuilt: true,
+    });
+    log.mockRestore();
+    expect(loaded).toEqual(await answers(enginesWith()));
+  });
+
+  it("builds the engine when the index is missing, unreadable or of other packs", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const built = await answers(enginesWith());
+    const other = buildEngineIndex([packs.en as Pack]).slice().buffer;
+    const readers: IndexReader[] = [
+      async () => undefined,
+      async () => Promise.reject(new Error("HTTP 500")),
+      async () => other,
+    ];
+    for (const readIndex of readers) expect(await answers(enginesWith(readIndex))).toEqual(built);
+    const prebuilt = log.mock.calls.map(([line]) => JSON.parse(line as string).prebuilt);
+    log.mockRestore();
+    expect(prebuilt).toEqual([false, false, false, false]);
+  });
+
+  it("reads an index through ASSETS, and none without the binding or the file", async () => {
+    const fetch = vi.fn(async (url: string) =>
+      url.endsWith(aliasIndexFile("es"))
+        ? new Response(new Uint8Array([1, 2]))
+        : new Response("", { status: 404 }),
+    );
+    const read = assetIndexReader("0.1.0");
+    const bytes = await read(aliasIndexFile("es"), { ASSETS: { fetch } });
+    expect(new Uint8Array(bytes as ArrayBuffer)).toEqual(new Uint8Array([1, 2]));
+    expect(new URL(fetch.mock.calls[0]?.[0] as string).pathname).toBe("/v1/pack/0.1.0/alias-index.es.bin");
+    expect(await read(aliasIndexFile("fr"), { ASSETS: { fetch } })).toBeUndefined();
+    expect(await read(aliasIndexFile("es"), {})).toBeUndefined();
   });
 });
 

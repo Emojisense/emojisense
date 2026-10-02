@@ -1,8 +1,14 @@
 import { type AliasEngine, assertPack, createEngine, type Pack } from "emojisense";
+import { readEngineIndex } from "emojisense/engine-index";
 import type { Env } from "./env.ts";
 
 /** Reads one published pack file (e.g. `pack.es.json`, `pack.es.ext.json`) of the Worker's pack version. */
 export type PackReader = (file: string, env: Env) => Promise<Pack>;
+/** Reads a published prebuilt alias index; undefined when there is none. */
+export type IndexReader = (file: string, env: Env) => Promise<ArrayBuffer | undefined>;
+
+/** The prebuilt alias index of a locale's engine (PACK_FORMAT.md §11), written by scripts/sync-pack.ts. */
+export const aliasIndexFile = (locale: string) => `alias-index.${locale}.bin`;
 
 export interface LocaleEnginesOptions {
   /** The bundled engine (en, core + ext). It serves the locales it was built with. */
@@ -10,6 +16,11 @@ export interface LocaleEnginesOptions {
   /** Packs every other locale's engine starts with: the English core pack (shortcodes). */
   base: () => Pack[];
   read: PackReader;
+  /**
+   * The prebuilt alias index of a locale: the engine loads it instead of indexing the packs
+   * (5–6 times less CPU). Without one, or with one of other packs, the engine is built.
+   */
+  readIndex?: IndexReader;
   /** Engines of non-bundled locales kept per isolate; the least recently used one is dropped. */
   maxEngines: number;
 }
@@ -34,19 +45,26 @@ export function createLocaleEngines(options: LocaleEnginesOptions): LocaleEngine
   async function build(locale: string, env: Env): Promise<AliasEngine> {
     const started = Date.now();
     const files = [`pack.${locale}.json`, `pack.${locale}.ext.json`];
-    const packs = await Promise.all(files.map((file) => options.read(file, env)));
+    const [packs, index] = await Promise.all([
+      Promise.all(files.map((file) => options.read(file, env))),
+      // A missing or unreadable index only costs the build.
+      options.readIndex?.(aliasIndexFile(locale), env).catch(() => undefined),
+    ]);
     packs.forEach((pack, i) => {
       if (pack.locale !== locale) throw new Error(`${files[i]} holds locale "${pack.locale}"`);
     });
     const readMs = Date.now() - started;
     // Index order of PACK_FORMAT.md §2: core parts first (English first), then the ext part.
-    const engine = createEngine([...options.base(), ...packs]);
+    const all = [...options.base(), ...packs];
+    const prebuilt = index ? readEngineIndex(index, all) : undefined;
+    const engine = createEngine(all, prebuilt ? { prebuilt } : {});
     console.log(
       JSON.stringify({
         event: "locale_engine_loaded",
         locale,
         readMs,
         buildMs: Date.now() - started - readMs,
+        prebuilt: prebuilt !== undefined,
         resident: engines.size,
       }),
     );
@@ -93,6 +111,14 @@ export function createLocaleEngines(options: LocaleEnginesOptions): LocaleEngine
  * Reads packs from the Worker's static assets (`/v1/pack/<version>/…`) through the ASSETS
  * binding: the same immutable files clients load, without a network hop or a Worker invocation.
  */
+export function assetIndexReader(packVersion: string): IndexReader {
+  return async (file, env) => {
+    if (!env.ASSETS) return undefined;
+    const response = await env.ASSETS.fetch(`https://assets.local/v1/pack/${packVersion}/${file}`);
+    return response.ok ? response.arrayBuffer() : undefined;
+  };
+}
+
 export function assetPackReader(packVersion: string): PackReader {
   return async (file, env) => {
     if (!env.ASSETS) throw new Error("ASSETS binding missing");
