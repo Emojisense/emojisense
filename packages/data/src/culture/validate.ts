@@ -28,7 +28,8 @@ const MONTH_DAY = /^(\d{2})-(\d{2})$/;
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const CREATED_AT = /^\d{4}-\d{2}-\d{2}(T[\d:.]+Z?)?$/;
 const PICTOGRAPH = /\p{Extended_Pictographic}/u;
-const SHOUTING = /\b\p{Lu}{5,}\b/u;
+/** Six or more capitals in a row: shouting ("AMAZING"), while acronyms like "LGBTQ" pass. */
+const SHOUTING = /\p{Lu}{6,}/u;
 const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
 
 /** A real ISO 3166-1 alpha-2 region: CLDR has a name for it ("ZZ" is CLDR's "Unknown Region"). */
