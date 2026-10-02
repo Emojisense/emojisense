@@ -106,7 +106,8 @@ export function renderHeldoutReport(
     `## Worst misses per locale (${primary.name})`,
     "",
     "A miss has no label in the top 5. Worst first: not in the top 10, then lowest rank; ties go " +
-      "to queries that the other mode also misses. – = not in the top 10.",
+      "to queries that the other mode also misses, then to the lower id. – = not in the top 10. " +
+      "The full list is in heldout.json.",
   );
   const other = run.modes.find((m) => m !== primary);
   for (const locale of run.locales) {
