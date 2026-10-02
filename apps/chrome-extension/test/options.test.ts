@@ -5,7 +5,8 @@ import { DEFAULT_SETTINGS, type Settings } from "../src/shared/settings";
 import { flush } from "./fixture";
 
 function load(settings: Partial<Settings> = {}) {
-  const page = new DOMParser().parseFromString(html, "text/html");
+  // Body only: the head's stylesheet and script would make happy-dom try to fetch them.
+  const page = new DOMParser().parseFromString(html.slice(html.indexOf("<body")), "text/html");
   document.body.replaceChildren(...page.body.childNodes);
   const saveSettings = vi.fn(async (_settings: Settings) => undefined);
   const deps: OptionsDeps = {
