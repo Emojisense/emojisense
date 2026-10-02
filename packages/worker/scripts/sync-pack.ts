@@ -7,8 +7,10 @@
  * public/v1/pack/  static assets served at /v1/pack/<version>/… — generated, not committed
  * public/p/        layer 2 shards served at /p/<version>/…, if the data package built them
  *                  — generated, not committed
- * public/v1/culture/  culture files served at /v1/culture/<version>/…, if `culture:build` ran
- *                  — generated, not committed; cached for an hour, not immutable
+ * public/v1/culture/  culture files served at /v1/culture/<version>/…, built here from the approved
+ *                  entries (the `culture:build` step) for today (UTC) + 14 days — generated, not
+ *                  committed; cached for an hour, not immutable. `--culture-date YYYY-MM-DD` picks
+ *                  another first day, `--no-culture` publishes none (the API then answers without).
  */
 import {
   copyFileSync,
@@ -22,6 +24,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { buildCultureFiles } from "@emojisense/data/culture";
 import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
@@ -36,7 +39,10 @@ const { values: args } = parseArgs({
     dims: { type: "string", default: "1024" },
     // Local-only: write an empty vector file when embeddings do not exist yet (alias-only Worker).
     placeholder: { type: "boolean", default: false },
+    culture: { type: "boolean", default: true },
+    "culture-date": { type: "string" },
   },
+  allowNegative: true,
 });
 const model = getModel(args.model as string);
 const dims = Number(args.dims);
@@ -107,18 +113,23 @@ if (existsSync(join(shardSource, "index.json"))) {
   }
 }
 
-// Culture files (PACK_FORMAT §9). They are rebuilt daily under the same pack version, so they are
-// cached for an hour, never `immutable`. Files of another pack version are not copied.
-const cultureSource = join(DATA_ROOT, "dist", "culture", packVersion);
+// Culture files (PACK_FORMAT §9). The approved entries are built for today (UTC, the day the API
+// checks windows against) and copied; the SDKs load the same files. They are rebuilt daily under
+// the same pack version, so they are cached for an hour, never `immutable`. The API reads them
+// through ASSETS (src/culture.ts). A validation error stops the sync: culture:check names it.
 const publicCulture = join(workerRoot, "public", "v1", "culture");
 rmSync(publicCulture, { recursive: true, force: true });
-let cultureNote = "no culture files";
-if (existsSync(join(cultureSource, "index.json"))) {
-  const cultureIndex = JSON.parse(readFileSync(join(cultureSource, "index.json"), "utf8"));
-  const files = readdirSync(cultureSource).filter((f) => /^culture\.[a-z]{2,3}\.json$|^index\.json$/.test(f));
+let cultureNote = "no culture files (--no-culture)";
+if (args.culture) {
+  const build = buildCultureFiles({ from: args["culture-date"] ?? new Date().toISOString().slice(0, 10) });
+  if (build.packVersion !== packVersion) {
+    throw new Error(`culture files are for pack ${build.packVersion}, the Worker serves ${packVersion}`);
+  }
+  const files = readdirSync(build.outDir).filter((f) => /^culture\.[a-z]{2,3}\.json$|^index\.json$/.test(f));
   mkdirSync(join(publicCulture, packVersion), { recursive: true });
-  for (const file of files) copyFileSync(join(cultureSource, file), join(publicCulture, packVersion, file));
-  cultureNote = `culture ${cultureIndex.from} → ${cultureIndex.until} → public/v1/culture/${packVersion}`;
+  for (const file of files) copyFileSync(join(build.outDir, file), join(publicCulture, packVersion, file));
+  const entries = Object.values(build.locales).reduce((n, l) => n + l.entries, 0);
+  cultureNote = `culture ${build.from} → ${build.until} (${build.approved} approved, ${entries} locale entries) → public/v1/culture/${packVersion}`;
 }
 
 // Static assets bypass the Worker, so their cache headers live here. `_headers` does not apply
