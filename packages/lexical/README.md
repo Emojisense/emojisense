@@ -95,6 +95,13 @@ typeahead as `parent`. Keep the element in state with a callback ref, so the plu
 after the first render. While it is `null`, the menu mounts on `<body>`.
 
 ```tsx
+import { EmojiAutocompletePlugin } from "@emojisense/lexical";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { useState } from "react";
+
 function Editor() {
   const [frame, setFrame] = useState<HTMLDivElement | null>(null);
   return (
@@ -122,6 +129,9 @@ focus from the editor.
 ## Custom menu
 
 ```tsx
+import { EmojiAutocompletePlugin } from "@emojisense/lexical";
+import { createPortal } from "react-dom";
+
 <EmojiAutocompletePlugin
   engine={engine}
   menuRenderFn={(anchor, { options, selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }) =>
@@ -139,3 +149,7 @@ which can also scroll the page. The default menu does not set it and scrolls its
 
 `registerShortcodeTransform(editor, resolve)` is exported too, for `:name:` completion without
 the menu.
+
+## License
+
+MIT. Docs: [emojisense.com/docs](https://emojisense.com/docs/).

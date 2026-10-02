@@ -46,6 +46,12 @@ The packs load after the editor is created, so pass getters. The extension reads
 keystroke and also picks up the idle-loaded extension packs.
 
 ```tsx
+import { useEmojisense } from "@emojisense/react";
+import { EmojiAutocomplete } from "@emojisense/tiptap";
+import { useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useRef } from "react";
+
 const sense = useEmojisense({
   packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
   endpoint: "https://api.emojisense.com",
@@ -103,6 +109,8 @@ priority (100). While the menu is closed, these keys go to the editor. To use a 
 extend the extension:
 
 ```ts
+import { EmojiAutocomplete } from "@emojisense/tiptap";
+
 EmojiAutocomplete.extend({ priority: 1000 }).configure({ engine });
 ```
 
@@ -112,6 +120,8 @@ By default the menu mounts on `<body>`. To keep it inside a frame of your page (
 a dialog, a scroll panel), pass that element as `menuContainer`:
 
 ```ts
+import { EmojiAutocomplete } from "@emojisense/tiptap";
+
 EmojiAutocomplete.configure({
   engine,
   menuContainer: document.querySelector<HTMLElement>("#demo-frame")!,
@@ -126,6 +136,11 @@ getter. The extension reads it when the menu opens. While the getter returns `nu
 `undefined`, the menu mounts on `<body>`.
 
 ```tsx
+import { EmojiAutocomplete } from "@emojisense/tiptap";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { useRef } from "react";
+
 const frameRef = useRef<HTMLDivElement>(null);
 
 const editor = useEditor({
@@ -155,6 +170,8 @@ the editor.
 Late semantic results arrive as another `onUpdate` with the same `query`.
 
 ```ts
+import { EmojiAutocomplete } from "@emojisense/tiptap";
+
 EmojiAutocomplete.configure({
   engine,
   render: () => ({
@@ -168,3 +185,7 @@ EmojiAutocomplete.configure({
 
 To restyle the default menu, pass `createEmojiMenu({ className, ariaLabel })` or override the CSS
 custom properties in `styles.css`.
+
+## License
+
+MIT. Docs: [emojisense.com/docs](https://emojisense.com/docs/).

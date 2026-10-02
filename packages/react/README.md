@@ -2,6 +2,15 @@
 
 React hooks for Emojisense, a Frimousse adapter, and a shadcn registry item.
 
+## Install
+
+```bash
+npm install @emojisense/react
+npm install frimousse   # only for the Frimousse adapter
+```
+
+React 18 or 19. The search engine (`emojisense`) comes as a dependency.
+
 ## Hooks
 
 ```tsx
@@ -116,3 +125,7 @@ The build reads `registry/registry.json`, inlines each file, and writes `dist/r/
 and `dist/r/emoji-picker.json` in the format of `shadcn build`. Serve `dist/r` at `/r/` on any
 static host. The source lives in `registry/emoji-picker.tsx`. `registry/lib/utils.ts` is a
 stand-in for the app's `cn` and is not shipped.
+
+## License
+
+MIT. Docs: [emojisense.com/docs](https://emojisense.com/docs/).

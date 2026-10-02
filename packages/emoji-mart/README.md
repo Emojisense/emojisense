@@ -15,12 +15,21 @@ substring match over names and keywords. This package offers two integrations:
 Both return the `onEmojiSelect` payload of emoji-mart (`id`, `name`, `native`, `unified`,
 `keywords`, `shortcodes`, `skin`, …).
 
+## Install
+
+```bash
+npm install @emojisense/emoji-mart emojisense emoji-mart @emoji-mart/data
+```
+
 ## Setup
 
 ```ts
-import data from "@emoji-mart/data";
-import { Picker, Store } from "emoji-mart";
+import emojiMartData from "@emoji-mart/data";
+import type { EmojiMartData } from "@emojisense/emoji-mart";
 import { createEngine, createLayeredSemantic, loadPacks } from "emojisense";
+
+// @emoji-mart/data has no type for its default export.
+const data = emojiMartData as unknown as EmojiMartData;
 
 const base = "https://api.emojisense.com";
 const packs = await loadPacks({ baseUrl: `${base}/v1/pack/0.1.0` });
@@ -31,16 +40,18 @@ const semantic = createLayeredSemantic({ shardsUrl: `${base}/p/0.1.0`, endpoint:
 ## `attachEmojisense`
 
 ```ts
-import { attachEmojisense } from "@emojisense/emoji-mart";
+import { Picker, Store } from "emoji-mart";
+import { attachEmojisense, type EmojiMartSelection } from "@emojisense/emoji-mart";
 
-const onEmojiSelect = (emoji) => insert(emoji.native);
-const picker = new Picker({ data, onEmojiSelect, searchPosition: "none" });
-document.querySelector("#picker").append(picker);
+const onEmojiSelect = (emoji: EmojiMartSelection) => insert(emoji.native);
+// emoji-mart 5 does not type its picker as an HTMLElement.
+const picker = new Picker({ data, onEmojiSelect, searchPosition: "none" }) as unknown as HTMLElement;
+document.querySelector("#picker")?.append(picker);
 
 attachEmojisense({
   picker,
-  input: document.querySelector("#emoji-search"), // your <input>
-  results: document.querySelector("#emoji-results"), // an empty element next to the picker
+  input: document.querySelector<HTMLInputElement>("#emoji-search")!, // your <input>
+  results: document.querySelector<HTMLElement>("#emoji-results")!, // an empty element next to the picker
   data,
   engine,
   semantic,
@@ -90,3 +101,7 @@ keystroke, so semantic results, which arrive later, cannot be fused in.
   override applies to every emoji-mart picker on the page.
 - **Data must be passed.** Always give emoji-mart its `data`. Without it, emoji-mart fetches the
   data from a public CDN.
+
+## License
+
+MIT. Docs: [emojisense.com/docs](https://emojisense.com/docs/).
