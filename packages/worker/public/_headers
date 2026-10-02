@@ -67,40 +67,40 @@
 /v1/pack/0.1.0/pack.zh.json
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.glyph.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.glyph.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.zh.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.zh.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.hi.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.hi.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.es.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.es.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.ar.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.ar.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.fr.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.fr.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.bn.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.bn.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.pt.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.pt.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.ru.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.ru.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.id.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.id.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
-/v1/pack/0.1.0/vectors.bge-m3.1024.tr.bin
+/v1/pack/0.1.0/vectors.embeddinggemma.768.tr.bin
   ! Cache-Control
   Cache-Control: public, max-age=31536000, immutable
 /v1/pack/0.1.0/manifest.json

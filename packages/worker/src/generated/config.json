@@ -1,9 +1,9 @@
 {
   "packVersion": "0.1.0",
-  "modelKey": "bge-m3",
-  "modelId": "@cf/baai/bge-m3",
-  "dims": 1024,
-  "queryTemplate": "{q}",
+  "modelKey": "embeddinggemma",
+  "modelId": "@cf/google/embeddinggemma-300m",
+  "dims": 768,
+  "queryTemplate": "task: search result | query: {q}",
   "vectorLocales": ["zh", "hi", "es", "ar", "fr", "bn", "pt", "ru", "id", "tr"],
-  "contentHash": "1a0312a552f3147e"
+  "contentHash": "32aa5ea4f5687fa4"
 }
