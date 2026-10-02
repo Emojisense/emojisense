@@ -5,17 +5,13 @@ import { readPackConfig } from "../config.ts";
 import { LOCALE_CODES } from "../locales.ts";
 import { DATA_ROOT } from "../paths.ts";
 import { loadCatalog } from "./catalog.ts";
-import { addDays, CULTURE_DAYS, compileCulture, featuredOn } from "./compile.ts";
+import { addDays, CULTURE_DAYS, CULTURE_GZIP_BUDGET, compileCulture, featuredOn } from "./compile.ts";
 import { loadExclusions } from "./exclusions.ts";
 import { loadRecords } from "./records.ts";
 import type { Issue } from "./types.ts";
 import { validateRecords } from "./validate.ts";
 
-/**
- * Most gzip bytes per locale file (a unit test checks the committed entries). A 12-month file was
- * at most 2.7 KB gz on 2026-10-02; the room is for new entries, not for a bigger format.
- */
-export const CULTURE_GZIP_BUDGET = 6 * 1024;
+export { CULTURE_GZIP_BUDGET };
 
 export interface BuildCultureOptions {
   /** First day the files cover, "YYYY-MM-DD". */

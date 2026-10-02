@@ -225,8 +225,9 @@ the SHA-256 of the image bytes, the vision model and the prompt version. A wrong
 | `/p/:packVersion/:locale/index.json`, `/p/:packVersion/:locale/<key>.json` | the shards of another pack locale: the API's answers for that `locale` ([PACK_FORMAT.md §6](PACK_FORMAT.md)). `en/` serves the English files. A locale without shards answers `404` | as above |
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
-These are free and need no key. Packs and culture files are static assets and do not run the
-Worker; shards run it, which serves the nightly build from R2 through the edge cache. All send
+These are free and need no key. Packs are static assets and do not run the Worker; shards and
+culture files run it, which serves the nightly (shards) or last published (culture,
+[CULTURE.md](CULTURE.md)) build from R2 through the edge cache, else the deployed files. All send
 `Access-Control-Allow-Origin: *`. A `/v1/pack/` path that is not a published file answers `404`
 with `Cache-Control: no-store`, so a browser does not keep the miss. Until the first nightly
 shard build exists, `/p/<v>/index.json` answers `404` (no static shards are deployed); the SDK's

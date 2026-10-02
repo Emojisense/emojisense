@@ -27,3 +27,6 @@ CLERK_AUTHORIZED_PARTIES=
 # WHOP_PLAN_IDS={"solo":{"month":"plan_…","year":"plan_…"},"pro":{"month":"plan_…"},"scale":{"month":"plan_…"}}
 # WHOP_API_KEY=
 # WHOP_WEBHOOK_SECRET=
+# Who sees the internal Culture page (comma-separated verified emails). The dev sign-in's email
+# is <login>@dev.localhost. The page also needs the local API Worker (CULTURE_ADMIN binding).
+ADMIN_EMAILS=ada@dev.localhost

@@ -20,6 +20,7 @@ import { forgetPendingInvite, pendingInvite, rememberPendingInvite } from "./lib
 import { AnalyticsPage } from "./pages/AnalyticsPage";
 import { AppsPage } from "./pages/AppsPage";
 import { BillingPage } from "./pages/BillingPage";
+import { CulturePage } from "./pages/CulturePage";
 import { EmojiPage } from "./pages/EmojiPage";
 import { EmojiSetsPage } from "./pages/EmojiSetsPage";
 import { InvitePage } from "./pages/InvitePage";
@@ -87,6 +88,8 @@ function Page({ route }: { route: Route }) {
       return <BillingPage />;
     case "settings":
       return <SettingsPage />;
+    case "culture":
+      return <CulturePage />;
     default:
       return <NotFoundPage />;
   }

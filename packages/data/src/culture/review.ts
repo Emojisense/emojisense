@@ -17,12 +17,11 @@ import { type AliasEngine, createEngine, type Pack } from "emojisense";
 import { readPackConfig } from "../config.ts";
 import { DATA_ROOT } from "../paths.ts";
 import { loadCatalog } from "./catalog.ts";
-import { compileCulture } from "./compile.ts";
 import { loadExclusions } from "./exclusions.ts";
+import { previewRecord } from "./preview.ts";
 import { loadRecords, writeRecord } from "./records.ts";
-import { probeRegions } from "./regional.ts";
 import type { CultureRecord, RecordStatus } from "./types.ts";
-import { targetLocales, validateRecord } from "./validate.ts";
+import { validateRecord } from "./validate.ts";
 
 const { values: args } = parseArgs({
   args: process.argv.slice(2).filter((a) => a !== "--"),
@@ -97,59 +96,40 @@ for (const record of selected) {
     `\n■ ${record.id}  [${record.status}, ${record.kind}, ${when}, ${where}${record.featured ? ", featured" : ""}]`,
   );
   console.log(`  by ${record.createdBy}${record.reviewedBy ? `, reviewed by ${record.reviewedBy}` : ""}`);
-  for (const issue of validateRecord(record, { catalog, exclusions })) {
+  const preview = previewRecord(record, {
+    catalog,
+    exclusions,
+    packVersion,
+    limit,
+    engineFor,
+    ...(args.locale ? { locales: [args.locale] } : {}),
+  });
+  for (const issue of preview.issues) {
     console.log(`  ${issue.level === "error" ? "✘" : "⚠"} ${issue.message}`);
   }
   if (record.exceptRegions?.length) console.log(`  except regions ${record.exceptRegions.join(", ")}`);
   if (!record.regions.includes("*"))
     console.log("  ⚠ regional: applies only when the app passes one of these regions");
-  const probes = record.kind === "regional" ? probeRegions(record) : undefined;
-  if (probes) {
+  if (record.kind === "regional") {
     console.log(
       `  ⚠ regional sense: with a region in scope, its strongest emoji goes first when the query ` +
         `equals a trigger and the canonical top is one of: ${(record.outranks ?? []).map((h) => catalog.get(h) ?? h).join(" ")}`,
     );
   }
-  const locales = targetLocales(record).filter((l) => !args.locale || l === args.locale);
-  for (const locale of locales) {
-    const triggers = record.triggers[locale] ?? [];
-    console.log(`  ${locale}: ${record.context[locale] ?? "(no context)"}`);
-    if (triggers.length === 0) continue;
-    const culture = compileCulture([record], locale, {
-      packVersion,
-      from: "2000-01-01",
-      catalog,
-      statuses: [record.status],
-      forceActive: true,
-    });
-    const engine = engineFor(locale);
-    const withEntry = engine.withCulture(culture);
-    for (const trigger of triggers) {
-      const canonical = engine.search(trigger, { locale, limit, prefix: false, culture: false }).results;
-      const boosted = withEntry.search(trigger, { locale, limit, prefix: false }).results;
-      const added = boosted.filter((r) => r.source === "culture").length;
+  for (const locale of preview.locales) {
+    console.log(`  ${locale.locale}: ${locale.context ?? "(no context)"}`);
+    for (const row of locale.triggers) {
       const note =
-        canonical.length === 0
+        row.note === "no-canonical"
           ? "  ⚠ no canonical answer: the culture emoji become the top answer"
-          : added === 0
+          : row.note === "adds-nothing"
             ? "  (adds nothing new)"
             : "";
       console.log(
-        `    "${trigger}"\n      now:  ${glyphs(canonical)}\n      with: ${glyphs(boosted)}${note}`,
+        `    "${row.trigger}"\n      now:  ${glyphs(row.canonical)}\n      with: ${glyphs(row.boosted)}${note}`,
       );
-      if (!probes) continue;
-      const scoped = engine.withCulture(
-        compileCulture([record], locale, {
-          packVersion,
-          from: "2000-01-01",
-          catalog,
-          statuses: [record.status],
-        }),
-      );
-      for (const region of [probes.inside, probes.outside]) {
-        if (!region) continue;
-        const regional = scoped.search(trigger, { locale, limit, prefix: false, region }).results;
-        console.log(`      ${region}:   ${glyphs(regional)}`);
+      for (const region of row.regions ?? []) {
+        console.log(`      ${region.region}:   ${glyphs(region.results)}`);
       }
     }
   }

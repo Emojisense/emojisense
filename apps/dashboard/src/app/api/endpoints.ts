@@ -1,6 +1,21 @@
-import type { AnalyticsWindow, BillingInterval, EmojiSet, KeyKind, PaidPlanId } from "@emojisense/platform";
+import type {
+  AnalyticsWindow,
+  BillingInterval,
+  CultureAdminOverview,
+  CultureEntryRecord,
+  CultureLiveEntry,
+  CultureLiveExport,
+  CulturePreview,
+  CultureProposal,
+  CultureProposalStatus,
+  CulturePublishReport,
+  EmojiSet,
+  KeyKind,
+  PaidPlanId,
+} from "@emojisense/platform";
 import type {
   AcceptInviteResponse,
+  AdminStatusResponse,
   AnalyticsFilters,
   AnalyticsResponse,
   AppDetailResponse,
@@ -35,6 +50,8 @@ import { request } from "./client";
 import type { CreatedWebhook, EmojiUpload, TeamRole, WebhookEvent } from "./types";
 
 const segment = encodeURIComponent;
+const culturePath = (id: string) => `/api/admin/culture/proposals/${segment(id)}`;
+type ProposalWithPreview = { proposal: CultureProposal; preview: CulturePreview };
 const appPath = (appId: string) => `/api/apps/${segment(appId)}`;
 /** Team routes act on the caller's own team unless `owner` names another one. */
 const ownerQuery = (owner?: string) => (owner ? `?owner=${segment(owner)}` : "");
@@ -133,4 +150,28 @@ export const api = {
   /** Whop's hosted checkout for the plan (owner only). The SPA sends the browser there. */
   checkout: (plan: PaidPlanId, interval: BillingInterval) =>
     request<CheckoutResponse>("POST", "/api/billing/checkout", { plan, interval } satisfies CheckoutRequest),
+
+  /** Whether the internal pages show for this account (ADMIN_EMAILS). */
+  adminStatus: () => request<AdminStatusResponse>("GET", "/api/admin"),
+  cultureOverview: (status?: CultureProposalStatus) =>
+    request<CultureAdminOverview>("GET", `/api/admin/culture${status ? `?status=${status}` : ""}`),
+  cultureProposal: (id: string) => request<ProposalWithPreview>("GET", culturePath(id)),
+  /** Validation, gate and search preview of an edited entry, without saving it. */
+  culturePreview: (record: CultureEntryRecord) =>
+    request<CulturePreview>("POST", "/api/admin/culture/preview", { record }),
+  updateCultureProposal: (id: string, record: CultureEntryRecord) =>
+    request<ProposalWithPreview>("PATCH", culturePath(id), { record }),
+  approveCultureProposal: (id: string, input: { reason?: string; record?: CultureEntryRecord }) =>
+    request<{ proposal: CultureProposal; live: CultureLiveEntry }>(
+      "POST",
+      `${culturePath(id)}/approve`,
+      input,
+    ),
+  rejectCultureProposal: (id: string, reason: string) =>
+    request<{ proposal: CultureProposal }>("POST", `${culturePath(id)}/reject`, { reason }),
+  retireCultureEntry: (id: string, reason: string) =>
+    request<{ live: CultureLiveEntry }>("POST", `/api/admin/culture/live/${segment(id)}/retire`, { reason }),
+  publishCulture: () => request<CulturePublishReport>("POST", "/api/admin/culture/publish", {}),
+  exportCulture: (markExported: boolean) =>
+    request<CultureLiveExport>("POST", "/api/admin/culture/export", { markExported }),
 };

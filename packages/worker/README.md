@@ -14,7 +14,8 @@ The Emojisense Search API: a Cloudflare Worker, deployed at `https://api.emojise
 | `GET /v1/custom/:appId/:emojiId` | custom emoji image from R2 (`EMOJI`), immutable, Cache API, no key | — |
 | `GET /v1/custom-pack` | the key's custom emoji (+ `tenant=`) as a pack, edge-cached 60 s | — |
 | `GET /v1/health` | status | — |
-| `/v1/pack/<v>/…`, `/v1/culture/<v>/…` | static assets (packs and vector files, culture files); the Worker does not run | — |
+| `/v1/pack/<v>/…` | static assets (packs and vector files); the Worker does not run | — |
+| `GET /v1/culture/<v>/…` | culture files: the last published build from R2 (`SHARDS`, `culture/` prefix; live entries editors approved) for this deployment, edge-cached, else the deployed files; no key | — |
 | `GET /p/<v>/…`, `GET /p/<v>/<locale>/…` | layer 2 shards (English, and per pack locale): the nightly build from R2 (`SHARDS`), edge-cached, else `public/p`; no key | — |
 
 `/v1/search` and `/v1/suggest-reactions` put the caller's custom emoji first (`tenant=` adds a
@@ -156,6 +157,18 @@ Logs hold counts only (`shards_built`, `shards_empty`, `shards_skipped`, `shards
 Locally the `offline` env has no Workers AI, so the run is skipped; `test/shards-miniflare.test.ts`
 runs the whole flow on Miniflare's local R2, D1 and Cache API with a fake model.
 
+## Culture Phase 2 (`src/culture-admin/`, docs/CULTURE.md)
+
+| Rule | Where |
+| ---- | ----- |
+| Cron `41 4 * * *`: drafts from `trends_daily` (rising queries) and `culture/sources`, ≤ `CULTURE_PROPOSE_BUDGET` Workers AI calls; validation, dedupe and the culture gate; stored as drafts in D1 `culture_proposals`. Runs with `CULTURE_CRON_ENABLED=true`; then a publish either way. | `propose.ts`, `job.ts` |
+| Named RPC entrypoint `CultureAdmin` (no URL): list, preview, edit, approve, reject, retire, publish, export. Only the dashboard's `CULTURE_ADMIN` service binding calls it. | `service.ts`, `src/index.ts` |
+| Publish: deployed culture files + approved `culture_entries_live` → R2 `culture/<v>/<build>/…` and `current.json`; the pointer names the deployed `index.json` it was built from. Cron `*/10 * * * *` publishes again after a deploy or an approval. | `publish.ts`, `storage.ts` |
+| `GET /v1/culture/<v>/<file>` and `culture=1` read the build named by the pointer (5 min per isolate), else the deployed files. | `route.ts`, `src/culture.ts` |
+
+Logs hold counts and entry ids only (`culture_proposals`, `culture_published`,
+`culture_publish_skipped`, `culture_publish_failed`), never query text.
+
 ## Analytics Engine (`EVENTS`)
 
 One data point per request that reaches a handler. No IP, key, app or user id.
@@ -171,7 +184,7 @@ One data point per request that reaches a handler. No IP, key, app or user id.
 
 | Path | Purpose |
 | ---- | ------- |
-| `src/index.ts`, `src/scheduled.ts` | Worker entry: bundled packs and vectors, D1 store; the two crons |
+| `src/index.ts`, `src/scheduled.ts` | Worker entry: bundled packs and vectors, D1 store, the `CultureAdmin` RPC entrypoint; the crons |
 | `src/app.ts` | Routing, CORS, per-isolate key cache, meter and search analytics |
 | `src/query-stats.ts`, `src/retention.ts` | Search analytics: batched `query_daily` writes, retention cron |
 | `src/search.ts`, `src/reactions.ts`, `src/image.ts` | Route handlers |

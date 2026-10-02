@@ -1,4 +1,4 @@
-import type { AccountRow, CachePurger, EmojiBucket } from "@emojisense/platform";
+import type { AccountRow, CachePurger, CultureAdminRpc, EmojiBucket } from "@emojisense/platform";
 import type { ClerkFactory } from "./clerk";
 import type { D1Database } from "./d1";
 
@@ -42,6 +42,16 @@ export interface Env {
   WHOP_API_KEY?: string;
   /** Secret: the Whop webhook's signing secret, `ws_…`, exactly as Whop shows it. */
   WHOP_WEBHOOK_SECRET?: string;
+  /**
+   * Comma-separated emails of the accounts that see the internal Culture page. Compared with the
+   * verified email claim of the Clerk session (or the dev sign-in email locally).
+   */
+  ADMIN_EMAILS?: string;
+  /**
+   * Service binding to the API Worker's `CultureAdmin` RPC entrypoint (culture Phase 2). Not
+   * reachable from the internet; the Culture page answers 503 without it.
+   */
+  CULTURE_ADMIN?: CultureAdminRpc;
 }
 
 /** Side effects the handlers need. Tests replace them with fakes. */

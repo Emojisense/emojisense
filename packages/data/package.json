@@ -16,6 +16,7 @@
     "culture:propose": "tsx src/culture/propose.ts",
     "culture:review": "tsx src/culture/review.ts",
     "culture:build": "tsx src/culture/build.ts",
+    "culture:import-live": "tsx src/culture/import-live.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },
@@ -28,6 +29,8 @@
   "exports": {
     "./config": "./src/config.ts",
     "./culture": "./src/culture/index.ts",
+    "./culture-core": "./src/culture/core.ts",
+    "./culture/*": "./culture/*",
     "./embeddings": "./src/embeddings.ts",
     "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",

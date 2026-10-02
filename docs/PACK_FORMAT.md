@@ -410,6 +410,10 @@ the next 12 months; clients decide by their own day what is active, so it needs 
 /v1/culture/<packVersion>/index.json                build date, window and per-locale sizes (informational)
 ```
 
+Entries editors approve in the dashboard are merged into the deployed files and published to R2
+without a deploy (docs/CULTURE.md); the format and URLs stay the same, and the `index.json` of
+such a build adds `build` (its id) and `live` (the merged entry ids).
+
 ```json
 {
   "format": "emojisense-culture",

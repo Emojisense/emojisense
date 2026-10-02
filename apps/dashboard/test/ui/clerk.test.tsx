@@ -162,7 +162,12 @@ describe("Clerk sign-in", () => {
     act(() => clerk.setUser("user_ada"));
     expect(await screen.findByRole("heading", { name: "Apps" })).toBeTruthy();
     const authed = calls.filter((call) => call.authorization);
-    expect(authed.map((call) => `${call.method} ${call.path}`)).toEqual(["GET /api/me", "GET /api/apps"]);
+    // /api/admin: the sidebar asks whether the internal pages show.
+    expect(authed.map((call) => `${call.method} ${call.path}`).sort()).toEqual([
+      "GET /api/admin",
+      "GET /api/apps",
+      "GET /api/me",
+    ]);
     expect(new Set(authed.map((call) => call.authorization))).toEqual(new Set(["Bearer token-for-user_ada"]));
   });
 

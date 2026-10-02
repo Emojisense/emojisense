@@ -20,3 +20,9 @@ interface ImportMeta {
   readonly url: string;
   glob<T>(pattern: string, options: { query: "?raw"; import: "default"; eager: true }): Record<string, T>;
 }
+
+// Raw text imports (Vite): the culture policy files in test/culture-admin-fixtures.ts.
+declare module "*?raw" {
+  const text: string;
+  export default text;
+}
