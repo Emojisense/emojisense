@@ -325,6 +325,44 @@ describe("EmojiAutocompletePlugin (Lexical)", () => {
     expect(shown()[0]).toBe("🔥");
   });
 
+  describe("menuContainer", () => {
+    const listbox = () => document.querySelector<HTMLElement>("[role=listbox]");
+    function createFrame() {
+      const frame = document.createElement("section");
+      document.body.append(frame);
+      return frame;
+    }
+
+    it("mounts the menu on <body> by default", async () => {
+      const { editor } = setup();
+      await type(editor, ":jurassic");
+      expect(listbox()?.parentElement).toBe(document.body);
+      expect(listbox()?.contains(options()[0] as Node)).toBe(true);
+    });
+
+    it("mounts the menu inside the given element and removes it on close", async () => {
+      const frame = createFrame();
+      const { editor, root } = setup({ menuContainer: frame });
+      await type(editor, ":jurassic");
+      expect(listbox()?.parentElement).toBe(frame);
+      expect(shown()[0]).toBe("🦖");
+      await press(root, "Enter");
+      expect(text(editor)).toBe("🦖");
+      expect(frame.children).toHaveLength(0);
+    });
+
+    it("moves to an element that appears after the editor (null until then)", async () => {
+      const editorRef = createRef<LexicalEditor>();
+      const view = render(<Editor editorRef={editorRef} menuContainer={null} />);
+      const editor = editorRef.current as LexicalEditor;
+      act(() => editor.update(() => $getRoot().selectEnd(), { discrete: true }));
+      const frame = createFrame();
+      view.rerender(<Editor editorRef={editorRef} menuContainer={frame} />);
+      await type(editor, ":jurassic");
+      expect(listbox()?.parentElement).toBe(frame);
+    });
+  });
+
   it("the open menu takes Enter in a list item, and leaves it to the list when closed", async () => {
     const { editor, root } = setup({
       richContent: () => {

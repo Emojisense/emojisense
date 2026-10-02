@@ -52,6 +52,11 @@ export interface EmojiAutocompletePluginProps {
   /** Class name for the element Lexical positions at the caret. */
   anchorClassName?: string;
   /**
+   * Element the menu mounts into, e.g. the host's own frame or a dialog. Default (and while it
+   * is `null`): `document.body`. Lexical positions the menu at the caret inside it.
+   */
+  menuContainer?: HTMLElement | null;
+  /**
    * Priority of the open menu's key handlers (Enter, Tab, arrows, Escape). Default
    * `COMMAND_PRIORITY_CRITICAL`, so the menu gets these keys before tables (HIGH), code blocks and
    * other plugins. The menu returns every key while it is closed.
@@ -82,6 +87,7 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
     ariaLabel,
     menuRenderFn,
     anchorClassName,
+    menuContainer,
     commandPriority = COMMAND_PRIORITY_CRITICAL,
   } = props;
   const [editor] = useLexicalComposerContext();
@@ -211,6 +217,7 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
       menuRenderFn={visible ? (menuRenderFn ?? renderDefaultMenu) : undefined}
       commandPriority={commandPriority}
       {...(anchorClassName ? { anchorClassName } : {})}
+      {...(menuContainer ? { parent: menuContainer } : {})}
     />
   );
 }
