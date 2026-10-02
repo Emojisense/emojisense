@@ -1,5 +1,5 @@
 /**
- * The real gateway (@clerk/backend's verifyToken) with a key pair made here: proves networkless
+ * The real gateway (@clerk/backend's verifyJwt) with a key pair made here: proves networkless
  * verification with only public values (publishable key + JWT public key, no secret key).
  */
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -94,16 +94,38 @@ describe("clerkFrontendApi", () => {
   });
 });
 
-describe("createClerkGateway (networkless, no secret key)", () => {
-  it("is off without the publishable key, or without both the JWT key and the secret key", () => {
+describe("createClerkGateway (networkless, public values only)", () => {
+  it("needs the publishable key and the JWT key; the secret key only adds deleteUser", () => {
     expect(createClerkGateway({ CLERK_JWT_KEY: instance.pem } as Env)).toBeNull();
     expect(createClerkGateway({ CLERK_PUBLISHABLE_KEY: PUBLISHABLE_KEY } as Env)).toBeNull();
+    expect(
+      createClerkGateway({ CLERK_PUBLISHABLE_KEY: PUBLISHABLE_KEY, CLERK_SECRET_KEY: "sk_live_x" } as Env),
+    ).toBeNull();
     const gateway = createClerkGateway(publicEnv() as Env);
     expect(gateway).not.toBeNull();
     expect(gateway?.deleteUser).toBeUndefined();
     expect(
       createClerkGateway({ ...publicEnv(), CLERK_SECRET_KEY: "sk_live_x" } as Env)?.deleteUser,
     ).toBeTypeOf("function");
+  });
+
+  it("deletes a user through the Backend API only with the secret key", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response("{}", { status: 200 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 404 }))
+      .mockResolvedValueOnce(new Response("{}", { status: 500 }));
+    const deleteUser = createClerkGateway({
+      ...publicEnv(),
+      CLERK_SECRET_KEY: "sk_live_x",
+    } as Env)?.deleteUser;
+    await deleteUser?.("user_ada");
+    const [url, init] = fetchSpy.mock.calls[0] ?? [];
+    expect(url).toBe("https://api.clerk.com/v1/users/user_ada");
+    expect(init).toMatchObject({ method: "DELETE", headers: { authorization: "Bearer sk_live_x" } });
+    // Already gone counts as deleted; a server error does not.
+    await expect(deleteUser?.("user_gone")).resolves.toBeUndefined();
+    await expect(deleteUser?.("user_ada")).rejects.toMatchObject({ status: 500 });
   });
 
   it("verifies a session token and reads the claims without any network call", async () => {

@@ -21,7 +21,7 @@ export interface Env {
   CLERK_JWT_KEY?: string;
   /** Comma-separated origins whose session tokens are accepted (`azp`). Default: the dashboard's own origin. */
   CLERK_AUTHORIZED_PARTIES?: string;
-  /** Optional secret. Without CLERK_JWT_KEY it fetches the JWKS; `DELETE /api/me` also deletes the Clerk user. */
+  /** Optional secret. When set, `DELETE /api/me` also deletes the Clerk user. Nothing else needs it. */
   CLERK_SECRET_KEY?: string;
   /** Comma-separated website origins that may POST /api/waitlist from a browser. */
   WEBSITE_ORIGINS?: string;

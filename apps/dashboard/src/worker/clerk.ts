@@ -3,12 +3,14 @@
  * `Authorization: Bearer <token>`; the `__session` cookie is never read, so a browser cannot
  * attach a session to a cross-site request.
  *
- * Verification is networkless: the instance's JWT public key (CLERK_JWT_KEY) checks the
- * signature, and the Worker checks `azp`, `iss`, `exp`/`nbf` and the session status. The email and
- * name come from custom session token claims (see the dashboard README), so the request path
- * never calls Clerk's Backend API and needs no secret key.
+ * Verification is networkless and needs only public values: @clerk/backend's `verifyJwt` checks
+ * the signature with the instance's JWT public key (CLERK_JWT_KEY) and `azp`, `exp`, `nbf`, `iat`;
+ * `identityFromClaims` checks the issuer (from CLERK_PUBLISHABLE_KEY) and the session. The email
+ * and name come from custom session token claims (see the dashboard README), so the request path
+ * never calls Clerk's Backend API and needs no secret key. Only the `/jwt` entry point is
+ * imported: the full SDK would add about 350 KB to the Worker for one DELETE request.
  */
-import { createClerkClient, verifyToken } from "@clerk/backend";
+import { verifyJwt } from "@clerk/backend/jwt";
 import { clerkFrontendApi } from "../shared/clerk";
 import type { Env } from "./env";
 
@@ -29,6 +31,8 @@ export interface ClerkGateway {
 
 /** `null` when Clerk is not configured (dev sign-in and mock mode still work). */
 export type ClerkFactory = (env: Env) => ClerkGateway | null;
+
+const CLERK_BACKEND_API = "https://api.clerk.com/v1";
 
 const MAX_EMAIL_LENGTH = 254;
 const MAX_NAME_LENGTH = 200;
@@ -79,28 +83,34 @@ export function bearerToken(request: Request): string | null {
   return match?.[1] ?? null;
 }
 
+/** Clerk Backend API `DELETE /users/{id}`. A 404 means the user is already gone. */
+async function deleteClerkUser(secretKey: string, userId: string): Promise<void> {
+  const response = await fetch(`${CLERK_BACKEND_API}/users/${encodeURIComponent(userId)}`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${secretKey}` },
+  });
+  if (!response.ok && response.status !== 404) {
+    throw Object.assign(new Error(`Clerk answered HTTP ${response.status}`), { status: response.status });
+  }
+}
+
 export const createClerkGateway: ClerkFactory = (env) => {
   const frontendApi = clerkFrontendApi(env.CLERK_PUBLISHABLE_KEY);
-  const jwtKey = env.CLERK_JWT_KEY?.trim() || undefined;
-  const secretKey = env.CLERK_SECRET_KEY?.trim() || undefined;
-  if (!frontendApi || (!jwtKey && !secretKey)) return null;
+  const jwtKey = env.CLERK_JWT_KEY?.trim();
+  if (!frontendApi || !jwtKey) return null;
   const issuer = `https://${frontendApi}`;
+  const secretKey = env.CLERK_SECRET_KEY?.trim();
 
   return {
     async verifySession(token, parties) {
       let claims: Record<string, unknown>;
       try {
-        // With jwtKey this makes no network call; with only secretKey it fetches the JWKS once.
-        claims = await verifyToken(token, { jwtKey, secretKey, authorizedParties: [...parties] });
+        claims = await verifyJwt(token, { key: jwtKey, authorizedParties: [...parties] });
       } catch (error) {
         return { ok: false, reason: reasonOf(error) };
       }
       return identityFromClaims(claims, issuer);
     },
-    deleteUser: secretKey
-      ? async (userId) => {
-          await createClerkClient({ secretKey }).users.deleteUser(userId);
-        }
-      : undefined,
+    deleteUser: secretKey ? (userId) => deleteClerkUser(secretKey, userId) : undefined,
   };
 };
