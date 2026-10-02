@@ -1,54 +1,34 @@
 /*
- * Picker and toast styles, adopted into a closed shadow root ("compact" level of docs/DESIGN.md:
- * keycap results in a rounded popover, a pill for the query state, a sticker card for hints).
+ * Picker and toast styles, adopted into a closed shadow root after src/shared/tokens.css.
+ * Calm and near-monochrome: the emoji are the only strong color, and they sit on --bg,
+ * --bg-soft or --bg-sunk only.
  *
  * Sizes use em, not rem: the host sets font-size: medium (the user's default size), so the UI
  * ignores the page's root font size (`html { font-size: 62.5% }` would shrink rem-based UI).
- * The theme is a set of custom properties on .surface, inside the shadow root, so page styles
- * cannot override it by accident.
  */
 .surface {
-  --sun: #ffd23f;
-  --on-sun: #1e1631;
-  --ink: #1e1631;
-  --paper: #ffffff;
-  --cloud: #f4f6ff;
-  --tomato: #ff5b3a;
-  --mint: #12c79c;
-  --sky: #3d7bff;
-  --muted: #6b6380;
-  --radius-key: 0.875em;
-  --radius-pill: 999px;
-  --radius-card: 1.25em;
-  --outline: 0.125em solid var(--ink);
-  --depth: 0 0.25em 0 var(--ink);
-  --depth-pressed: 0 0.0625em 0 var(--ink);
-  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --font-body: "Figtree", system-ui, sans-serif;
-  --font-mono: "DM Mono", ui-monospace, monospace;
-  --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  color-scheme: light;
+  /* The token radii in em, for the reason above. */
+  --radius-sm: 0.625em;
+  --radius: 0.875em;
+  --radius-lg: 1.25em;
+  /* The bundled fonts, registered under the extension's own names (src/shared/fonts.ts). */
+  --font-body: "Emojisense Hanken Grotesk", "Hanken Grotesk Variable", system-ui, sans-serif;
+  --font-mono: "Emojisense DM Mono", "DM Mono", ui-monospace, monospace;
   color: var(--ink);
   font: 400 1em / 1.4 var(--font-body);
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-color-scheme: dark) {
-  .surface {
-    --paper: #17121f;
-    --cloud: #221a2e;
-    --ink: #f5f1ff;
-    --muted: #a79fba;
-    --depth: 0 0.25em 0 #0b0811;
-    --depth-pressed: 0 0.0625em 0 #0b0811;
-    color-scheme: dark;
-  }
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+.skeleton[hidden],
+.empty[hidden],
+.preview-tag[hidden] {
+  display: none;
 }
 
 .visually-hidden {
@@ -60,97 +40,118 @@
   white-space: nowrap;
 }
 
-/* ── Popover ────────────────────────────────────────────── */
+/* ── Panel ──────────────────────────────────────────────── */
 .panel {
-  --tile: 2.5em;
   display: grid;
   /* One column that cannot grow past the panel: long labels in the footer truncate instead. */
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.625em;
   width: 23.5em;
   max-width: calc(100vw - 1em);
-  padding: 0.75em 0.75em 0.625em;
-  background: var(--paper);
-  border: var(--outline);
-  border-radius: var(--radius-card);
-  box-shadow: var(--depth);
+  overflow: hidden;
+  background: var(--bg);
+  border: 0.0625em solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.625em;
+  padding: 0 1em;
+  border-bottom: 0.0625em solid var(--line);
+}
+
+.search-icon {
+  flex: none;
+  width: 1.125em;
+  height: 1.125em;
+  fill: none;
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+  stroke-linecap: round;
 }
 
 .query {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  padding: 0.5em 0.875em;
-  border: var(--outline);
-  border-radius: var(--radius-key);
-  background: var(--cloud);
+  padding: 0.875em 0;
+  border: 0;
+  background: transparent;
   color: var(--ink);
-  font: 600 1.125em / 1.3 var(--font-body);
+  caret-color: var(--ink);
+  font: 500 1.0625em / 1.3 var(--font-body);
+  letter-spacing: -0.01em;
   outline: none;
 }
 
 .query::placeholder {
-  color: var(--muted);
+  color: var(--ink-3);
   font-weight: 400;
   opacity: 1;
 }
 
-.query:focus-visible {
-  box-shadow: 0 0 0 0.1875em var(--sky);
+/* What the grid shows right now: "Recently used", "21 results", "searching by meaning…". */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  min-width: 0;
+  margin: 0;
+  padding: 0.875em 1.3333em 0.25em;
+  color: var(--ink-3);
+  font: 600 0.75em / 1.3 var(--font-body);
+  letter-spacing: 0.01em;
 }
 
-/* Reaction pill: what the list shows right now. */
-.pill {
-  justify-self: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375em;
-  max-width: 100%;
-  margin: 0;
-  padding: 0.1875em 0.625em 0.1875em 0.4375em;
-  border: var(--outline);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
-  font: 600 0.8125em / 1.3 var(--font-body);
+.status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pill-emoji {
-  font: 1.125em / 1 var(--font-emoji);
+.status-dot {
+  display: none;
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: currentColor;
 }
 
-.pill-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.status[data-state="loading"] .status-dot,
+.status[data-state="searching"] .status-dot {
+  display: block;
 }
 
-.pill[data-state="found"] {
-  border-color: var(--mint);
-  background: color-mix(in srgb, var(--mint) 15%, var(--paper));
+.status[data-state="offline"] {
+  color: var(--ink-2);
 }
 
-.pill[data-state="searching"] {
-  border-color: var(--sky);
-  background: color-mix(in srgb, var(--sky) 15%, var(--paper));
+.status[data-state="offline"] .status-dot {
+  display: block;
+  background: var(--bad);
 }
 
-.pill[data-state="empty"],
-.pill[data-state="offline"] {
-  border-color: var(--tomato);
-  background: color-mix(in srgb, var(--tomato) 12%, var(--paper));
-}
-
-/* Keycap tiles. Bottom padding leaves room for the depth of the last row. */
-.grid {
+/* ── Results ───────────────────────────────────────────── */
+.grid,
+.skeleton {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 0.375em;
+  gap: 0.125em;
   margin: 0;
-  padding: 0.125em 0.125em 0.375em;
-  list-style: none;
-  max-height: calc(4 * (var(--tile) + 0.375em) + 0.5em);
+  padding: 0.25em 0.5em 0.5em;
+}
+
+.grid {
+  /* Five rows hold the 40 results; the scrollbar is a safety net, not part of the design. */
+  max-height: 16em;
   overflow-y: auto;
   overscroll-behavior: contain;
+  list-style: none;
   scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
 
 .grid:empty {
@@ -162,93 +163,90 @@
   display: grid;
   place-items: center;
   aspect-ratio: 1;
-  border: var(--outline);
-  border-radius: var(--radius-key);
-  background: var(--paper);
-  box-shadow: var(--depth);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   user-select: none;
 }
 
 .option:hover {
-  background: var(--cloud);
+  background: var(--bg-soft);
 }
 
+/* The active option is where the keyboard is: a monochrome ring that keeps 3:1 contrast. */
 .option[aria-selected="true"] {
-  background: var(--sun);
-  color: var(--on-sun);
-}
-
-.option:active {
-  transform: translateY(0.1875em);
-  box-shadow: var(--depth-pressed);
+  background: var(--bg-sunk);
+  box-shadow: inset 0 0 0 0.09375em var(--ink-3);
 }
 
 .glyph {
-  font: 1.375em / 1 var(--font-emoji);
+  font: 1.5em / 1 var(--font-emoji);
 }
 
-/* Semantic match: a small sky dot, like an unread badge. */
+/* Found by meaning: a quiet dot; the footer names it. */
 .option[data-source="semantic"]::after {
   content: "";
   position: absolute;
-  top: 0.25em;
-  right: 0.25em;
-  width: 0.375em;
-  height: 0.375em;
+  top: 0.3125em;
+  right: 0.3125em;
+  width: 0.3125em;
+  height: 0.3125em;
   border-radius: 50%;
-  background: var(--sky);
+  background: var(--ink-3);
 }
 
-/* Empty state: the emoji as a sticker. */
+/* Emoji-sized placeholders while the index loads, so the panel does not jump. */
+.skeleton span {
+  aspect-ratio: 1;
+  margin: 0.4375em;
+  border-radius: 50%;
+  background: var(--bg-sunk);
+}
+
 .empty {
   display: grid;
   justify-items: center;
   gap: 0.5em;
-  margin: 0;
-  padding: 0.75em 0.5em 0.5em;
+  padding: 1em 1.5em 1.5em;
   text-align: center;
-  color: var(--muted);
-  font-size: 0.875em;
 }
 
-.empty[hidden] {
-  display: none;
+.empty-emoji {
+  font: 2.25em / 1 var(--font-emoji);
 }
 
 .empty-text {
+  max-width: 18em;
   margin: 0;
+  color: var(--ink-2);
+  font-size: 0.875em;
+  text-wrap: balance;
 }
 
-.sticker {
-  display: inline-block;
-  font: 2.5em / 1 var(--font-emoji);
-  rotate: -6deg;
-  filter: drop-shadow(0 0 0.06em #fff) drop-shadow(0 0 0.06em #fff)
-    drop-shadow(0 0.08em 0.12em rgb(30 22 49 / 0.35));
-}
-
+/* ── Footer ─────────────────────────────────────────────── */
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75em;
-  min-height: 1.75em;
+  min-height: 2.75em;
+  padding: 0.5em 0.875em 0.5em 1em;
+  border-top: 0.0625em solid var(--line);
+  background: var(--bg-soft);
+  color: var(--ink-3);
   font-size: 0.8125em;
-  color: var(--muted);
 }
 
 .preview {
   display: flex;
   align-items: center;
-  gap: 0.375em;
+  gap: 0.5em;
   min-width: 0;
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .preview-glyph {
-  font: 1.375em / 1 var(--font-emoji);
+  font: 1.5em / 1 var(--font-emoji);
 }
 
 .preview-label {
@@ -257,8 +255,19 @@
   white-space: nowrap;
 }
 
+.preview-tag {
+  flex: none;
+  padding: 0.125em 0.5em;
+  border-radius: var(--pill);
+  background: var(--bg-sunk);
+  color: var(--ink-2);
+  font-size: 0.875em;
+  font-weight: 600;
+}
+
 .hex {
-  color: var(--muted);
+  flex: none;
+  color: var(--ink-3);
   font: 400 0.875em / 1 var(--font-mono);
 }
 
@@ -266,108 +275,122 @@
   flex: none;
   display: flex;
   align-items: center;
+  gap: 0.75em;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
   gap: 0.3125em;
+  white-space: nowrap;
 }
 
 kbd {
-  display: inline-block;
+  display: inline-grid;
+  place-items: center;
   min-width: 1.75em;
-  padding: 0.0625em 0.375em;
-  border: 0.0625em solid var(--ink);
+  height: 1.75em;
+  padding: 0 0.375em;
+  border: 0.0625em solid var(--line-strong);
+  border-bottom-width: 0.125em;
   border-radius: 0.375em;
-  background: var(--paper);
-  box-shadow: 0 0.125em 0 var(--ink);
-  color: var(--ink);
-  font: 400 0.875em / 1.3 var(--font-mono);
-  text-align: center;
+  background: var(--bg);
+  color: var(--ink-2);
+  font: 400 0.875em / 1 var(--font-mono);
 }
 
-/* ── Sticker card (toast) ───────────────────────────────── */
+/* ── Toast ──────────────────────────────────────────────── */
 .toast {
   display: flex;
   align-items: center;
-  gap: 0.75em;
+  gap: 0.625em;
   max-width: 22em;
-  padding: 0.5em 1em 0.5em 0.625em;
-  background: var(--paper);
-  border: var(--outline);
-  border-radius: var(--radius-card);
-  box-shadow: var(--depth);
-  font: 600 0.9375em / 1.35 var(--font-body);
+  padding: 0.625em 1em 0.625em 0.75em;
+  background: var(--bg);
+  border: 0.0625em solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+  font: 500 0.875em / 1.4 var(--font-body);
   cursor: default;
 }
 
-.toast .sticker {
-  font-size: 2em;
+.toast-emoji {
+  font: 1.75em / 1 var(--font-emoji);
+  /* A failed copy can still be done by hand. */
   user-select: all;
 }
 
-/* ── Motion: springy and short; none at all with reduced motion ── */
+/* ── Motion: short and quiet; none at all with reduced motion ── */
 @media (prefers-reduced-motion: no-preference) {
-  .panel {
-    animation: pop-in 220ms var(--spring);
+  .panel,
+  .toast {
+    animation: rise 180ms var(--ease-out);
+  }
+
+  .panel[data-side="above"] {
+    animation-name: sink;
   }
 
   .option {
-    animation: tile-in 180ms var(--spring) backwards;
-    animation-delay: calc(min(var(--i, 0), 12) * 15ms);
-    transition:
-      transform 90ms ease-out,
-      box-shadow 90ms ease-out;
+    transition: background-color 120ms var(--ease-out);
   }
 
-  .option:hover .glyph {
-    animation: wobble 320ms ease-in-out;
+  .glyph {
+    transition: transform 240ms var(--spring);
   }
 
-  .sticker {
-    animation: sticker-pop 320ms var(--spring);
+  .option[aria-selected="true"] .glyph {
+    transform: scale(1.12);
   }
 
-  .toast {
-    animation: pop-in 220ms var(--spring);
+  .status-dot,
+  .skeleton span {
+    animation: breathe 900ms ease-in-out infinite alternate;
+  }
+
+  .empty-emoji,
+  .toast-emoji {
+    animation: pop 360ms var(--spring);
   }
 }
 
-@keyframes pop-in {
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(0.375em) scale(0.96);
+    transform: translateY(-0.375em) scale(0.98);
   }
 }
 
-@keyframes tile-in {
+@keyframes sink {
   from {
     opacity: 0;
-    transform: scale(0.7);
+    transform: translateY(0.375em) scale(0.98);
   }
 }
 
-@keyframes wobble {
-  25% {
-    rotate: -3deg;
-  }
-  75% {
-    rotate: 3deg;
+@keyframes breathe {
+  from {
+    opacity: 0.4;
   }
 }
 
-@keyframes sticker-pop {
-  0% {
-    scale: 0.4;
-  }
-  60% {
-    scale: 1.08;
-  }
-  100% {
-    scale: 1;
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
   }
 }
 
-/* Windows high-contrast themes drop backgrounds and shadows; keep the active tile visible. */
+/* Windows high-contrast themes drop backgrounds and shadows; keep the edges and the active tile. */
 @media (forced-colors: active) {
+  .panel,
+  .toast {
+    border-color: CanvasText;
+  }
+
   .option[aria-selected="true"] {
     outline: 0.1875em solid Highlight;
-    outline-offset: 0.0625em;
+    outline-offset: -0.1875em;
   }
 }

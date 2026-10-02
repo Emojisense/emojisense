@@ -6,6 +6,7 @@ import { focusDocsEditor, pasteIntoDocs } from "./docs";
 import { insertText, restoreTarget } from "./insert";
 import { createPicker, type Picker } from "./overlay";
 import { captureTarget, type EditableTarget, type Rect, targetRect } from "./target";
+import { pageTheme } from "./theme";
 import { showToast } from "./toast";
 
 /** A connection to the service worker's search. Reopened on demand: the worker may sleep. */
@@ -61,6 +62,7 @@ export function createController(deps: ControllerDeps): Controller {
     const pasteKey = pasteShortcut(deps.platform);
     const mode = target.kind === "text-control" || target.kind === "contenteditable" ? "insert" : "copy";
     const mount = mountFor(target, doc);
+    const theme = pageTheme(target.kind === "google-docs" ? target.frame : target.element, view);
     let channel: SearchChannel | undefined;
     let closed = false;
 
@@ -91,6 +93,7 @@ export function createController(deps: ControllerDeps): Controller {
       strings,
       mode,
       pasteKey,
+      theme,
       onQuery: (query) => send({ type: "query", query }),
       onPick: (item, how) => void pick(item, how.copy || mode === "copy"),
       onDismiss: (reason) => finish(reason === "escape"),
@@ -145,7 +148,15 @@ export function createController(deps: ControllerDeps): Controller {
     }
 
     function notify(anchor: Rect | null, emoji: string, message: string): void {
-      showToast({ document: doc, mount: mountFor(target, doc), anchor, emoji, message, durationMs: 4000 });
+      showToast({
+        document: doc,
+        mount: mountFor(target, doc),
+        anchor,
+        emoji,
+        message,
+        theme,
+        durationMs: 4000,
+      });
     }
 
     picker.position(targetRect(target));

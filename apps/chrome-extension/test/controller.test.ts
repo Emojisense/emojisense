@@ -170,6 +170,22 @@ describe("controller: insert into the focused field", () => {
     expect(hosts()[0]?.parentElement).toBe(dialog);
   });
 
+  it("matches a dark page with the picker and the toast", async () => {
+    document.body.style.backgroundColor = "rgb(18, 18, 22)";
+    const field = focusedTextarea("", 0);
+    field.style.backgroundColor = "transparent";
+    stubCopy();
+    const { controller, reply } = harness();
+    await controller.toggle();
+    expect(pickerRoot().querySelector(".panel")?.getAttribute("data-theme")).toBe("dark");
+
+    reply({ type: "results", query: "", status: "recent", items: ITEMS });
+    key(searchBox(), "Enter", { shiftKey: true });
+    await flush();
+    expect(hosts()[0]?.shadowRoot?.querySelector(".toast")?.getAttribute("data-theme")).toBe("dark");
+    document.body.removeAttribute("style");
+  });
+
   it("follows the language setting, or Chrome's language on auto", async () => {
     focusedTextarea("", 0);
     const turkish = harness({ locale: "auto" }, "tr-TR");
@@ -204,12 +220,12 @@ describe("controller: search connection", () => {
       throw new Error("Extension context invalidated.");
     });
     await controller.toggle();
-    expect(pickerRoot().querySelector(".pill")?.getAttribute("data-state")).toBe("offline");
+    expect(pickerRoot().querySelector(".status")?.getAttribute("data-state")).toBe("offline");
   });
 });
 
 describe("controller: copy mode", () => {
-  it("copies and shows a sticker card when nothing editable has focus", async () => {
+  it("copies and shows a toast when nothing editable has focus", async () => {
     const button = document.createElement("button");
     document.body.append(button);
     button.focus();
@@ -226,7 +242,7 @@ describe("controller: copy mode", () => {
     expect(clipboard.text()).toBe("🦖");
     expect(document.activeElement).toBe(button);
     const card = hosts()[0]?.shadowRoot;
-    expect(card?.querySelector(".sticker")?.textContent).toBe("🦖");
+    expect(card?.querySelector(".toast-emoji")?.textContent).toBe("🦖");
     expect(card?.querySelector('[role="status"]')?.textContent).toContain("press ⌘V");
   });
 

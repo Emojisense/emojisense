@@ -50,7 +50,6 @@ describe("picker overlay: structure and isolation", () => {
     open();
     const combobox = input();
     expect(combobox.getAttribute("role")).toBe("combobox");
-    expect(combobox.getAttribute("aria-expanded")).toBe("true");
     const list = picker.root.getElementById(combobox.getAttribute("aria-controls") ?? "");
     expect(list?.getAttribute("role")).toBe("listbox");
     expect(combobox.getAttribute("aria-label")).toBe("Search emoji");
@@ -58,14 +57,42 @@ describe("picker overlay: structure and isolation", () => {
     expect(picker.root.activeElement).toBe(combobox);
   });
 
+  it("is expanded only while the listbox has options to show", () => {
+    open();
+    expect(input().getAttribute("aria-expanded")).toBe("false");
+    picker.setResults("", "recent", ITEMS);
+    expect(input().getAttribute("aria-expanded")).toBe("true");
+    input().value = "zzzz";
+    picker.setResults("zzzz", "alias", []);
+    expect(input().getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("describes the keyboard use to screen readers", () => {
+    open();
+    const help = picker.root.getElementById(input().getAttribute("aria-describedby") ?? "");
+    expect(help?.textContent).toBe(STRINGS.en.keyboardHelp);
+  });
+
   it("uses the Turkish strings when asked", () => {
     open({ strings: STRINGS.tr });
     expect(input().getAttribute("aria-label")).toBe("Emoji ara");
   });
 
-  it("shows a loading pill until the first answer", () => {
+  it("shows a loading status and placeholder tiles until the first answer", () => {
     open();
-    expect($(".pill").getAttribute("data-state")).toBe("loading");
+    expect($(".status").getAttribute("data-state")).toBe("loading");
+    expect($<HTMLElement>(".skeleton").hidden).toBe(false);
+    expect($(".skeleton").getAttribute("aria-hidden")).toBe("true");
+    picker.setResults("", "recent", ITEMS);
+    expect($<HTMLElement>(".skeleton").hidden).toBe(true);
+  });
+
+  it("takes the page's scheme when given one, and the system's otherwise", () => {
+    open({ theme: "dark" });
+    expect($(".panel").getAttribute("data-theme")).toBe("dark");
+    picker.destroy();
+    open();
+    expect($(".panel").hasAttribute("data-theme")).toBe(false);
   });
 });
 
@@ -76,8 +103,8 @@ describe("picker overlay: results", () => {
     expect(options()).toHaveLength(ITEMS.length);
     expect(activeLabel()).toBe("rocket");
     expect(input().getAttribute("aria-activedescendant")).toBe(options()[0]?.id);
-    expect($(".pill").getAttribute("data-state")).toBe("recent");
-    expect($(".pill").textContent).toContain("Recently used");
+    expect($(".status").getAttribute("data-state")).toBe("recent");
+    expect($(".status").textContent).toContain("Recently used");
     expect($(".preview").textContent).toContain("1F680");
   });
 
@@ -87,6 +114,10 @@ describe("picker overlay: results", () => {
     const semantic = options()[3];
     expect(semantic?.getAttribute("data-source")).toBe("semantic");
     expect(semantic?.getAttribute("aria-label")).toBe("red heart, semantic match");
+    expect($<HTMLElement>(".preview-tag").hidden).toBe(true);
+    for (let i = 0; i < 3; i++) key(input(), "ArrowRight");
+    expect($<HTMLElement>(".preview-tag").hidden).toBe(false);
+    expect($(".preview-tag").textContent).toBe("by meaning");
   });
 
   it("drops answers for a query the user has already changed", () => {
@@ -104,19 +135,19 @@ describe("picker overlay: results", () => {
     input().value = "ship";
     picker.setResults("ship", "loading", ITEMS.slice(0, 2));
     expect(live.textContent).toBe("2 results");
-    expect($(".pill").getAttribute("data-state")).toBe("searching");
+    expect($(".status").getAttribute("data-state")).toBe("searching");
 
     input().value = "zzzz";
     picker.setResults("zzzz", "alias", []);
     expect(live.textContent).toBe("No match");
-    expect($(".pill").getAttribute("data-state")).toBe("empty");
+    expect($(".status").getAttribute("data-state")).toBe("empty");
     expect($<HTMLElement>(".empty").hidden).toBe(false);
   });
 
   it("shows a reconnect hint when the search connection is gone", () => {
     open();
     picker.setUnavailable();
-    expect($(".pill").getAttribute("data-state")).toBe("offline");
+    expect($(".status").getAttribute("data-state")).toBe("offline");
     expect($('[role="status"]').textContent).toContain("Press the shortcut again");
   });
 
