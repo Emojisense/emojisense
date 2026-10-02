@@ -37,11 +37,19 @@ java {
     withSourcesJar()
 }
 
+val repositoryRoot: File = rootDir.resolve("../..").canonicalFile
+
 tasks.test {
     useJUnitPlatform()
-    // The conformance tests read the shared golden file and the built packs of the monorepo.
-    systemProperty("emojisense.repositoryRoot", rootDir.resolve("../..").canonicalPath)
+    // The conformance tests read the shared golden file and the built packs of the monorepo. They are
+    // inputs, so the tests run again when either changes.
+    systemProperty("emojisense.repositoryRoot", repositoryRoot.path)
     environment("EMOJISENSE_PACK_DIR", System.getenv("EMOJISENSE_PACK_DIR") ?: "")
+    environment("EMOJISENSE_GOLDEN", System.getenv("EMOJISENSE_GOLDEN") ?: "")
+    inputs.files(repositoryRoot.resolve("sdks/swift/Tests/EmojisenseTests/Resources/golden.json"))
+        .withPropertyName("golden").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(fileTree(repositoryRoot.resolve("packages/data/dist/packs")) { include("*/pack.*.json") })
+        .withPropertyName("packs").withPathSensitivity(PathSensitivity.RELATIVE)
     maxHeapSize = "1g"
     testLogging {
         events("failed", "skipped")
