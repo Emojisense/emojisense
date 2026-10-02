@@ -47,8 +47,8 @@ export function SuggestedReactions({ data, isMine, nameOf, onPick }: SuggestedRe
           className="chat-suggest-via"
           title={
             data.via === "edge"
-              ? "POST /v1/suggest-reactions, fused with on-device phrase matches"
-              : "The on-device engine searched the message"
+              ? "POST /v1/suggest-reactions"
+              : "The API did not answer, so the on-device engine searched the message"
           }
         >
           {data.via === "edge" ? `edge · ${Math.round(data.ms ?? 0)} ms` : "on-device"}

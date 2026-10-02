@@ -21,8 +21,8 @@ const VS16 = String.fromCodePoint(0xfe0f);
 const sameEmoji = (a: string, b: string) => a.replaceAll(VS16, "") === b.replaceAll(VS16, "");
 
 /**
- * Chat phrases like "thanks team" live in the English extension pack, so reactions wait a moment
- * for the full engine, then settle for English core.
+ * For the on-device fallback. Chat phrases like "thanks team" live in the English extension pack,
+ * so it waits a moment for the full engine, then settles for English core.
  */
 function reactionEngine(): Promise<AliasEngine | undefined> {
   const english = englishEngine().catch(() => undefined);
@@ -234,7 +234,7 @@ export default function ChatDemo() {
     if (cached) return;
     const controller = new AbortController();
     (async () => {
-      const data = await suggestReactions(newestText, reactionEngine(), controller.signal);
+      const data = await suggestReactions(newestText, reactionEngine, controller.signal);
       if (controller.signal.aborted) return;
       suggestionCache.set(newestText, data);
       setSuggestions({ messageId: newestId, data });
