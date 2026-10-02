@@ -189,9 +189,10 @@ function createSourceCache(
 
 function insertEmoji(editor: Editor, range: Range, emoji: string) {
   // insertText, not insertContent: the emoji is text (never parsed as HTML) and keeps the marks.
+  // The caret stays where the user typed, so focusing must not scroll the page to the editor.
   editor
     .chain()
-    .focus()
+    .focus(null, { scrollIntoView: false })
     .command(({ tr }) => {
       tr.insertText(emoji, range.from, range.to);
       return true;

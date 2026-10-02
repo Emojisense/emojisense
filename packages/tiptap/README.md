@@ -90,6 +90,9 @@ const editor = useEditor({
 Semantic results (when `semantic` is set and the alias engine is unsure) arrive after
 `debounceMs` and are fused in. Confident alias hits keep their place, so the list does not jump.
 
+The menu never scrolls the page. The default menu scrolls only its own list to keep the active
+option visible. An insert focuses the editor without scrolling it into view.
+
 The extension has `priority: 101`, like Tiptap's Mention. So while the menu is open, it gets
 Enter, Tab and the arrow keys before list items, task items and other keymaps with the default
 priority (100). While the menu is closed, these keys go to the editor. To use a different value,

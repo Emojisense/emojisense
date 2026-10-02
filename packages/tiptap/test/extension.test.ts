@@ -15,6 +15,7 @@ afterEach(() => {
   editor?.destroy();
   editor = undefined;
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 function createEditor(options: Partial<EmojiAutocompleteOptions> = {}): Editor {
@@ -56,6 +57,38 @@ function listItemTexts(target: Editor): string[] {
     texts.push(item.textContent);
   });
   return texts;
+}
+
+const ROW = 40;
+
+/**
+ * happy-dom has no layout. Give the listbox room for `rows` options of 40 px, 100 px below the
+ * viewport top, drawn at `scale` (a CSS transform on a host frame scales the rects only).
+ */
+function stubMenuLayout(rows: number, scale = 1) {
+  const isListbox = (element: Element) => element.getAttribute("role") === "listbox";
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return isListbox(this) ? rows * ROW : 0;
+  });
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return isListbox(this) ? rows * ROW : 0;
+  });
+  vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    if (isListbox(this)) return new DOMRect(0, 100, 200, rows * ROW * scale);
+    const list = this.parentElement;
+    if (this.getAttribute("role") !== "option" || !list) return new DOMRect();
+    const top = Number(this.getAttribute("data-index")) * ROW - list.scrollTop;
+    return new DOMRect(0, 100 + top * scale, 200, ROW * scale);
+  });
+}
+
+/** Everything that would move the page or the host's containers instead of the menu. */
+function spyOnPageScroll() {
+  return [
+    vi.spyOn(Element.prototype, "scrollIntoView"),
+    vi.spyOn(window, "scrollTo"),
+    vi.spyOn(window, "scrollBy"),
+  ];
 }
 
 const menu = () => document.querySelector<HTMLElement>("[role=listbox]");
@@ -105,6 +138,42 @@ describe("EmojiAutocomplete (Tiptap)", () => {
     const second = shown()[1];
     press(ed, "Tab");
     expect(ed.getText()).toBe(second);
+  });
+
+  it.each([1, 0.5])("scrolls only the menu to the active option (scale %s)", async (scale) => {
+    stubMenuLayout(1, scale);
+    const pageScroll = spyOnPageScroll();
+    const ed = createEditor();
+    await type(ed, ":jurassic");
+    const list = menu() as HTMLElement;
+    const last = options().length - 1;
+    expect(last).toBeGreaterThan(0);
+    expect(list.scrollTop).toBe(0);
+
+    press(ed, "ArrowDown");
+    expect(list.scrollTop).toBe(ROW);
+    press(ed, "ArrowUp");
+    expect(list.scrollTop).toBe(0);
+    press(ed, "ArrowUp");
+    expect(list.scrollTop).toBe(last * ROW);
+    for (const spy of pageScroll) expect(spy).not.toHaveBeenCalled();
+  });
+
+  it("inserts without asking the editor to scroll the page, and keeps focus there", async () => {
+    const ed = createEditor();
+    await type(ed, ":jurassic");
+    const scrolls = vi.fn();
+    ed.on("transaction", ({ transaction }) => {
+      if (transaction.scrolledIntoView) scrolls();
+    });
+
+    press(ed, "Enter");
+    // Tiptap focuses the editor in the next animation frame.
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    expect(ed.getText()).toBe("🦖");
+    expect(ed.view.hasFocus()).toBe(true);
+    expect(scrolls).not.toHaveBeenCalled();
   });
 
   it("Escape closes the menu, keeps the typed text and stays closed for that word", async () => {
