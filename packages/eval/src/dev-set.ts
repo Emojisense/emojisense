@@ -8,17 +8,10 @@ import { join } from "node:path";
 import { disposeEmbeddings, embedTexts } from "@emojisense/data/embeddings";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import {
-  type AliasEngine,
-  createEngine,
-  embeddingText,
-  fuse,
-  l2normalize,
-  type Pack,
-  type SearchResult,
-  shouldUseSemantic,
-} from "emojisense";
+import { type AliasEngine, embeddingText, type Pack, shouldUseSemantic } from "emojisense";
+import { l2normalize } from "emojisense/vectors";
 import type { EvalQuery } from "./queries.ts";
+import { fuseRanked, rankingEngine, semanticSearch } from "./ranking.ts";
 import { loadVectorLayout } from "./vector-layout.ts";
 
 export type DevMode = "alias" | "semantic" | "fused" | "gated";
@@ -52,7 +45,7 @@ export async function rankDevSet(
   const engineFor = (locale: string): AliasEngine => {
     let engine = engines.get(locale);
     if (!engine) {
-      engine = createEngine(locale === "en" ? en : [...en, readPack(locale), readPack(`${locale}.ext`)]);
+      engine = rankingEngine(locale === "en" ? en : [...en, readPack(locale), readPack(`${locale}.ext`)]);
       engines.set(locale, engine);
     }
     return engine;
@@ -77,10 +70,9 @@ export async function rankDevSet(
   const rows = queries.map((q, i): DevRow => {
     const engine = engineFor(q.locale);
     const alias = engine.search(q.q, { locale: q.locale, limit: 24 });
-    const semantic: SearchResult[] = layout
-      .search(q.locale, l2normalize((vectors[i] as Float32Array).slice(0, dims)), 24)
-      .map((m) => ({ emoji: engine.get(m.id)?.emoji ?? "", id: m.id, score: m.score, source: "semantic" }));
-    const fused = fuse(alias, semantic, LIMIT);
+    const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
+    const semantic = semanticSearch(engine, layout, q.locale, query, 24);
+    const fused = fuseRanked(engine, alias, semantic, LIMIT);
     return {
       q,
       lists: {

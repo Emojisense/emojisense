@@ -1,8 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { EmbeddingModel } from "@emojisense/data/models";
-import { parseVectorFileName } from "@emojisense/data/vector-files";
-import { decodeVectors, searchVectorSets, type VectorIndex, type VectorMatch } from "emojisense";
+import { parseGlyphVectorFileName, parseVectorFileName } from "@emojisense/data/vector-files";
+import { decodeVectors, searchVectorSets, type VectorIndex, type VectorMatch } from "emojisense/vectors";
 
 /** The vector files of one model and dims in a pack directory: shared and per locale. */
 export interface VectorLayout {
@@ -12,6 +12,8 @@ export interface VectorLayout {
   locales: string[];
   /** The indexes a query of `locale` searches: the shared one and the locale's own, when present. */
   indexesFor(locale: string): VectorIndex[];
+  /** The glyph file (`vectors.<model>.<dims>.glyph.bin`), when the directory has one. */
+  glyph?: VectorIndex;
   search(locale: string, query: Float32Array, k: number): VectorMatch[];
 }
 
@@ -23,8 +25,14 @@ export function loadVectorLayout(
 ): VectorLayout | undefined {
   if (!existsSync(packDir)) return undefined;
   let shared: VectorIndex | undefined;
+  let glyph: VectorIndex | undefined;
   const byLocale = new Map<string, VectorIndex>();
   for (const name of readdirSync(packDir)) {
+    const glyphFile = parseGlyphVectorFileName(name);
+    if (glyphFile?.modelKey === model.key && glyphFile.dims === dims) {
+      glyph = decodeVectors(readFileSync(join(packDir, name)));
+      continue;
+    }
     const file = parseVectorFileName(name);
     if (!file || file.modelKey !== model.key || file.dims !== dims) continue;
     const index = decodeVectors(readFileSync(join(packDir, name)));
@@ -42,6 +50,7 @@ export function loadVectorLayout(
     label: `${model.key}@${dims} (${shared ? "shared" : "no shared file"}${locales.length ? ` + ${locales.length} locales` : ""})`,
     locales,
     indexesFor,
+    ...(glyph ? { glyph } : {}),
     search: (locale, query, k) => {
       const indexes = indexesFor(locale);
       return indexes.length ? searchVectorSets(indexes, query, k) : [];

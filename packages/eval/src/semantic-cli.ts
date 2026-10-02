@@ -17,18 +17,11 @@ import { disposeEmbeddings, embedTexts } from "@emojisense/data/embeddings";
 import { LOCALE_CODES } from "@emojisense/data/locales";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import {
-  type AliasEngine,
-  createEngine,
-  embeddingText,
-  fuse,
-  l2normalize,
-  type Pack,
-  type SearchResult,
-  shouldUseSemantic,
-} from "emojisense";
+import { type AliasEngine, embeddingText, type Pack, type SearchResult, shouldUseSemantic } from "emojisense";
+import { l2normalize } from "emojisense/vectors";
 import { judge, type QueryOutcome, summarize } from "./metrics.ts";
 import { type EvalQuery, loadQueries } from "./queries.ts";
+import { fuseRanked, rankingEngine, semanticSearch } from "./ranking.ts";
 import { loadVectorLayout } from "./vector-layout.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
@@ -62,7 +55,7 @@ const locales = LOCALE_CODES.filter((l) => queries.some((q) => q.locale === l));
 const readPack = (name: string): Pack => JSON.parse(readFileSync(join(packDir, `pack.${name}.json`), "utf8"));
 const en = [readPack("en"), readPack("en.ext")];
 const engines = new Map<string, AliasEngine>(
-  locales.map((l) => [l, createEngine(l === "en" ? en : [...en, readPack(l), readPack(`${l}.ext`)])]),
+  locales.map((l) => [l, rankingEngine(l === "en" ? en : [...en, readPack(l), readPack(`${l}.ext`)])]),
 );
 
 let vectors: Float32Array[];
@@ -87,16 +80,9 @@ const top = (list: readonly SearchResult[]) => list.slice(0, LIMIT).map((r) => r
 queries.forEach((q: EvalQuery, i) => {
   const engine = engines.get(q.locale) as AliasEngine;
   const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
-  const semantic = layout.search(q.locale, query, 24).map(
-    (m): SearchResult => ({
-      emoji: engine.get(m.id)?.emoji ?? "",
-      id: m.id,
-      score: m.score,
-      source: "semantic",
-    }),
-  );
+  const semantic = semanticSearch(engine, layout, q.locale, query, 24);
   const alias = engine.search(q.q, { locale: q.locale, limit: 24 });
-  const fused = top(fuse(alias, semantic, LIMIT));
+  const fused = top(fuseRanked(engine, alias, semantic, LIMIT));
   outcomes.semantic.push(judge(q, top(semantic)));
   outcomes.fused.push(judge(q, fused));
   outcomes.gated.push(judge(q, shouldUseSemantic(alias) ? fused : top(alias.results)));

@@ -15,6 +15,7 @@
     "photos": "tsx src/photos.ts",
     "reactions": "tsx src/reactions.ts",
     "romanized": "tsx src/romanized.ts",
+    "rerank:train": "tsx src/rerank-train.ts",
     "sentences": "tsx src/sentences.ts",
     "cost": "tsx src/cost-cli.ts",
     "typecheck": "tsc --noEmit",

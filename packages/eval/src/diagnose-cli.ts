@@ -12,7 +12,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import { type AliasSearchOutput, fuse, ROW_INDEX, type SearchResult, shouldUseSemantic } from "emojisense";
+import { type AliasSearchOutput, ROW_INDEX, type SearchResult, shouldUseSemantic } from "emojisense";
 import {
   classifyMiss,
   countFailures,
@@ -29,6 +29,7 @@ import {
 import { loadHeldout } from "./heldout.ts";
 import { HELDOUT_PATH, runHeldoutSuite } from "./heldout-run.ts";
 import { stripVariation } from "./queries.ts";
+import { fuseRanked } from "./ranking.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 const LIMIT = 10;
@@ -69,7 +70,7 @@ const evidence: QueryEvidence[] = queries.map((q) => {
   const semantic = run.details.semantic?.get(q.id);
   const vocabulary = vocabularies.get(q.locale) as Set<string>;
   const gateCalled = shouldUseSemantic(alias);
-  const fused = semantic && top(fuse(alias, semantic, LIMIT));
+  const fused = semantic && top(fuseRanked(run.engineFor(q.locale), alias, semantic, LIMIT));
   const labels = new Set(q.answers.map((a) => hexcodeOf.get(stripVariation(a))));
   const cappedForLabel = [q.locale, "en"].some((locale) =>
     [alias.query, ...alias.tokens].some((phrase) =>
@@ -109,25 +110,33 @@ const lines: string[] = [
   "- Counts only. Each miss (no label in the top 5) gets the first type that applies, in the order of the legend.",
   "- gated = what a client shows: fused only when `shouldUseSemantic` calls the semantic tier.",
   "",
-  "## Recall@5 per mode",
-  "",
+];
+const tableHeader = [
   `| Mode | ${run.locales.join(" | ")} | all |`,
   `| --- | ${run.locales.map(() => "--:").join(" | ")} | --: |`,
 ];
-const r5 = (subset: QueryEvidence[], mode: DiagnosisMode | "semantic") => {
+const recallAt = (k: number) => (subset: QueryEvidence[], mode: DiagnosisMode | "semantic") => {
   const scored = subset.filter((e) => e.lists[mode]);
   if (scored.length === 0) return "–";
-  const hits = scored.filter((e) => hitAt5(rankOf(e.lists[mode] as string[], e.answers))).length;
+  const hits = scored.filter((e) => {
+    const rank = rankOf(e.lists[mode] as string[], e.answers);
+    return rank > 0 && rank <= k;
+  }).length;
   return (Math.round((hits / scored.length) * 1000) / 10).toFixed(1);
 };
-for (const mode of [...modes, ...(run.details.semantic ? (["semantic"] as const) : [])]) {
-  const cells = run.locales.map((l) =>
-    r5(
-      evidence.filter((e) => e.locale === l),
-      mode,
-    ),
-  );
-  lines.push(`| ${mode} | ${cells.join(" | ")} | ${r5(evidence, mode)} |`);
+const tableModes = [...modes, ...(run.details.semantic ? (["semantic"] as const) : [])];
+for (const k of [5, 1]) {
+  lines.push(...(k === 5 ? [] : [""]), `## Recall@${k} per mode`, "", ...tableHeader);
+  const recall = recallAt(k);
+  for (const mode of tableModes) {
+    const cells = run.locales.map((l) =>
+      recall(
+        evidence.filter((e) => e.locale === l),
+        mode,
+      ),
+    );
+    lines.push(`| ${mode} | ${cells.join(" | ")} | ${recall(evidence, mode)} |`);
+  }
 }
 const gateRate = evidence.filter((e) => e.gateCalled).length / evidence.length;
 lines.push("", `The gate calls the semantic tier for ${Math.round(gateRate * 1000) / 10}% of the queries.`);
