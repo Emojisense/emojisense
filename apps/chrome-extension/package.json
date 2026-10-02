@@ -1,0 +1,23 @@
+{
+  "name": "@emojisense/chrome-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension (Manifest V3): an emoji picker for any text field, powered by Emojisense.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "tsx scripts/build.ts",
+    "dev": "tsx scripts/build.ts --watch",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
+  },
+  "devDependencies": {
+    "@emojisense/data": "workspace:*",
+    "@types/chrome": "0.3.0",
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.5"
+  }
+}
