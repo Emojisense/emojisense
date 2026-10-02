@@ -11,7 +11,8 @@ A **pack version** (e.g. `0.1.0`) is a directory of immutable files:
   manifest.json                       versions, hashes, sizes
   pack.en.json                        Tier 0 core, English (always load first; ≤ 200 KB gz)
   pack.en.ext.json                    Tier 0 extension, English (load when idle)
-  pack.tr.json / pack.tr.ext.json     Turkish core / extension (load when the UI locale is tr)
+  pack.<locale>.json / .ext.json      core / extension of every other locale (zh, hi, es, ar, fr,
+                                      bn, pt, ru, id, tr; load next to English for that UI locale)
   vectors.<model>.<dims>.bin          Tier 1 emoji vectors, one file per model × dims (English documents)
   vectors.<model>.<dims>.<locale>.bin Tier 1 emoji vectors of one locale's documents (optional, §5)
 ```
@@ -32,10 +33,15 @@ Files never change after publication. A change produces a new pack version. Serv
   "coreAliases": { "en": 16, "hi": 14 },
   "files": {
     "pack.en.json": { "sha256": "…", "bytes": 1234, "gzipBytes": 456, "locale": "en" },
-    "vectors.embeddinggemma.256.bin": {
-      "sha256": "…", "bytes": 0, "gzipBytes": 0,
-      "model": "@cf/google/embeddinggemma-300m", "dims": 256,
-      "queryTemplate": "task: search result | query: {q}"
+    "vectors.bge-m3.1024.bin": {
+      "sha256": "…", "bytes": 2229760, "gzipBytes": 1751207,
+      "model": "@cf/baai/bge-m3", "dims": 1024,
+      "queryTemplate": "{q}"
+    },
+    "vectors.bge-m3.1024.es.bin": {
+      "sha256": "…", "bytes": 2229760, "gzipBytes": 1762125, "locale": "es",
+      "model": "@cf/baai/bge-m3", "dims": 1024,
+      "queryTemplate": "{q}"
     }
   }
 }
@@ -239,7 +245,7 @@ Little-endian. All offsets are in bytes from the file start.
 | 16 | 4 | u32 `modelLength` (bytes) |
 | 20 | 4 | u32 `idsLength` (bytes) |
 | 24 | 8 | reserved, zero |
-| 32 | modelLength | model id, UTF-8 (e.g. `@cf/google/embeddinggemma-300m`) |
+| 32 | modelLength | model id, UTF-8 (e.g. `@cf/baai/bge-m3`) |
 | A = align4(32 + modelLength) | idsLength | hexcodes joined with `\n`, UTF-8; row order |
 | S = align4(A + idsLength) | 4 × count | f32 `scale` per row |
 | V = S + 4 × count | count × dims | i8 quantized components, row-major |
@@ -275,7 +281,7 @@ precomputed nightly and published as static files:
 
 ```
 /p/<packVersion>/index.json      {"format":"emojisense-shards","formatVersion":1,"packVersion":"0.1.0",
-                                  "model":"embeddinggemma@256","keys":["a","ab","b", … ,"th","the ", …]}
+                                  "model":"bge-m3@1024","keys":["a","ab","b", … ,"th","the ", …]}
 /p/<packVersion>/<key>.json      {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
 ```
 

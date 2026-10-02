@@ -9,19 +9,23 @@ integration only if **all three** are true:
 
 ## Roadmap and status
 
+Every integration below reads the hosted API at `https://api.emojisense.com` by default. "Built"
+means the code, tests and docs page are on `main`; npm, store and registry listings come with the
+first release (none is published yet on 2026-10-02).
+
 | Priority | Integration | Package / app | Status (2026-10-02) | Notes |
 |---|---|---|---|---|
-| 1 | React hooks + Frimousse adapter | `@emojisense/react` | built | hybrid adapter: Frimousse browse view, Emojisense ranking while typing |
-| 1 | shadcn registry item | `packages/react/registry` | in progress | `registry.json` + `shadcn build` → `npx shadcn add <url>/r/emoji-picker.json`; listing in the public index needs an open-source, flat registry |
-| 2 | Tiptap `:` autocomplete | `@emojisense/tiptap` | in progress | on `@tiptap/suggestion` with `char: ':'`; the official `@tiptap/extension-emoji` has no skin tones |
-| 2 | Lexical `:` autocomplete | `@emojisense/lexical` | in progress | `LexicalTypeaheadMenuPlugin` + `useBasicTypeaheadTriggerMatch(':')` |
-| 3 | Chrome extension (MV3) | `apps/chrome-extension` | in progress | packs bundled once for every site; see Google Docs below |
-| 4 | Raycast | `apps/raycast` | in progress | store rules: MIT license, public PR to `raycast/extensions`, review, no external analytics |
-| 5 | MCP server | `@emojisense/mcp` | in progress | tools `search_emoji`, `emoji_for_text`, `suggest_reactions`; SDK v2 `@modelcontextprotocol/server` |
-| next | Web component | `@emojisense/web-component` | in progress | `<emojisense-picker>` for Vue, Svelte, Angular, vanilla |
-| next | emoji-mart adapter | `@emojisense/emoji-mart` | in progress | emoji-mart has no search hook; the adapter drives an external result list |
+| 1 | React hooks + Frimousse adapter | `@emojisense/react` | built | hybrid adapter: Frimousse browse view, Emojisense ranking while typing; custom emoji, culture layer, relevant-now shelf |
+| 1 | shadcn registry item | `packages/react/registry` | built, not hosted | `registry.json` + `shadcn build` → `npx shadcn add <url>/r/emoji-picker.json`; listing in the public index needs an open-source, flat registry |
+| 2 | Tiptap `:` autocomplete | `@emojisense/tiptap` | built | on `@tiptap/suggestion` with `char: ':'`; the official `@tiptap/extension-emoji` has no skin tones |
+| 2 | Lexical `:` autocomplete | `@emojisense/lexical` | built | `LexicalTypeaheadMenuPlugin` + `useBasicTypeaheadTriggerMatch(':')` |
+| 3 | Chrome extension (MV3) | `apps/chrome-extension` | built, not in the Chrome Web Store | packs bundled once for every site; see Google Docs below |
+| 4 | Raycast | `apps/raycast` | built, not in the Raycast Store | store rules: MIT license, public PR to `raycast/extensions`, review, no external analytics |
+| 5 | MCP server | `@emojisense/mcp` | built | tools `search_emoji`, `emoji_for_text`, `suggest_reactions`; packs of all 11 locales bundled; SDK v2 `@modelcontextprotocol/server` |
+| next | Web component | `@emojisense/web-component` | built | `<emojisense-picker>` for Vue, Svelte, Angular, vanilla; custom emoji and culture attributes |
+| next | emoji-mart adapter | `@emojisense/emoji-mart` | built | emoji-mart has no search hook; the adapter drives an external result list |
 | next | React Native / Expo, Slack app, Discourse plugin, Discord bot, VS Code/Cursor, Figma, Obsidian | — | open | |
-| later | Swift SDK | `sdks/swift` | in progress | conformance-tested against the TS engine |
+| later | Swift SDK | `sdks/swift` | built | conformance-tested against the TS engine (golden file) |
 | later | Kotlin SDK, Mac menubar app (Tadamoji), chat UI kits, Mattermost/Rocket.Chat/Matrix, WordPress block | — | open | Kotlin needs a JDK 17 toolchain on the build machine |
 
 **Skip unless asked:** Shopify, iOS/Android keyboards, Flutter, Teams, Windows-native, Ghost,

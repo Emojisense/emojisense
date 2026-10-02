@@ -4,6 +4,10 @@ Emojisense is the search brain that any emoji picker plugs into. The design rule
 requests never cause a billed server call.** Each layer answers what it can, and passes only the
 rest to the next layer. (Revised 2026-10-02 by Update #2; see DECISIONS.md.)
 
+The hosted service is live: the Search API at `https://api.emojisense.com` (HTTPS only), the
+dashboard at `https://app.emojisense.com` and the website and docs at `https://emojisense.com`.
+The internal dev environment is the same three hosts on `emojisense.dev`.
+
 ## Layers
 
 ```
@@ -19,7 +23,7 @@ L1  on-device semantic model ─── DEFERRED (SemanticProvider slot + Cross-O
 L2  precomputed results, static prefix shard /p/<v>/<prefix>.json ─── free asset ── exact hit? ──▶ fuse ▶ results
    │ miss (debounced 150–250 ms)
    ▼
-L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with the chosen Workers AI model
+L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (bge-m3, 1024 dims)
                                          ─▶ dot product over ≈1.9k emoji vectors, English + the query locale (3–6 ms) ─▶ fuse ▶ results
    │ key over its monthly limit
    └──▶ { overLimit: true } ─▶ client stays on L0 + L2 silently (never a hard failure)
@@ -29,8 +33,8 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with the chosen Wo
 | ----- | ----- | ---- | ------- | ----- |
 | L0 alias dictionary (prefix index, IDF, fuzzy) | device | $0 | p95 0.4 ms per keystroke | built |
 | L1 on-device semantic | device | — | — | deferred: no small multilingual off-the-shelf model fits unchanged |
-| L2 precomputed prefix shards | static assets | $0 (asset requests are free) | 10–30 ms first fetch, then local | Phase 1 |
-| L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | built (plans, metering: Phase 1) |
+| L2 precomputed prefix shards | static assets | $0 (asset requests are free) | 10–30 ms first fetch, then local | built; not published on the hosted API yet (no query log for the nightly build) |
+| L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | live, with keys, plans and metering |
 
 **Fusion.** The client merges L0 with L2 or L3 results by reciprocal rank fusion. Confident L0
 hits stay pinned, so the list does not jump when semantic results arrive. When L0 is sure, its
@@ -96,12 +100,16 @@ search unchanged, and the engine index is shared, not rebuilt, when the file arr
 
 | Package | Role | License |
 | ------- | ---- | ------- |
-| `packages/core` (`emojisense`) | Zero-dependency engine: normalizer, L0 index, fusion, `SemanticProvider`s, layer-aware client | MIT |
-| `packages/data` | Pipeline: ingest → enrichment → validation → embeddings → packs → shards | MIT |
-| `packages/eval` | Labelled queries, benchmark, `pnpm cost`, CI gate | MIT |
-| `packages/worker` | Cloudflare Worker: `/v1/search`, packs and shards as assets, plans, metering | MIT |
+| `packages/core` (`emojisense`) | Zero-dependency engine: normalizer, L0 index, fusion, culture layer, `SemanticProvider`s, layer-aware client | MIT |
+| `packages/data` | Pipeline: ingest → enrichment → curation → validation → embeddings → packs → shards; culture entries and files | MIT |
+| `packages/eval` | Labelled queries, benchmark, `pnpm cost`, CI gate, culture gate | MIT |
+| `packages/platform` | Shared contracts of both Workers: D1 schema and migrations, plans, keys, webhooks | MIT |
+| `packages/worker` | Search API Worker: search, reactions, photo to emoji, custom emoji, tenants, hosted sets, packs, vectors and culture files as assets, plans, metering | MIT |
+| `apps/dashboard` | Dashboard Worker + SPA: accounts, apps, keys, usage, analytics, custom emoji, teams, webhooks, waitlist | MIT |
 | `packages/react` (`@emojisense/react`) | Hooks, Frimousse adapter, shadcn registry item | MIT |
-| `apps/web` `/playground/` | Playground: per-layer timings, cache state, copy-as-code, reactions and photo labs | MIT |
+| `packages/web-component`, `tiptap`, `lexical`, `emoji-mart`, `mcp` | Picker element, editor autocompletes, emoji-mart adapter, MCP server | MIT |
+| `apps/chrome-extension`, `apps/raycast`, `sdks/swift` | Chrome extension, Raycast extension, Swift port of the engine | MIT |
+| `apps/web` | Website, docs and `/playground/`: per-layer timings, cache state, copy-as-code, reactions and photo labs | MIT |
 | private repo `emojisense-cloud` | Miss mining, daily alias updates, billing | closed |
 
 ## Invariants
@@ -140,3 +148,30 @@ browser ──▶ Clerk Frontend API (clerk.emojisense.com): sign-in, session, t
 | `VITE_CLERK_PUBLISHABLE_KEY` | public, build time | SPA (ClerkProvider) and the `_headers` CSP |
 | `CLERK_PUBLISHABLE_KEY`, `CLERK_JWT_KEY`, `CLERK_AUTHORIZED_PARTIES` | public Worker vars | token checks |
 | `CLERK_SECRET_KEY` | optional secret | only server-side deletion of the Clerk user |
+
+## Search API request path
+
+How one `GET /v1/search` moves through the Worker (`packages/worker/src`; contract: docs/API.md):
+
+```
+request ─▶ plain http on a public host? ──yes──▶ 403 (app.ts, http.ts)
+   │ https
+   ▼
+authenticate: key → app + plan, or anonymous ─▶ rate limit (120/min key+IP, 30/min anonymous IP) ─▶ 429
+   │                                            (auth.ts; D1 down + key not cached → anonymous)
+   ▼
+parse q (embeddingText), locale (11 + BCP 47 → else 400), limit, mode, culture, region
+   ▼
+over the account's limit? ─▶ the shared cache may still answer; else alias-only, overLimit: true
+   ▼
+Cache API (key: text, locale, limit, mode, index tag, content hash; no key/app/origin)
+   │ miss
+   ▼
+alias engine of the locale (en, tr bundled; others: core+ext packs via ASSETS, LRU 2)
+   + embed (Workers AI) ─▶ searchVectorSets(shared index, locale index via ASSETS, LRU 2)
+   ▼ fuse ─▶ store in the shared cache (only when nothing degraded or failed to load)
+   ▼
+per request, never cached: culture (culture=1, UTC day) ─▶ custom emoji first (key's app, tenant)
+   ▼
+metering (semantic_calls, batched to D1) + query_daily (keyed calls) + Analytics Engine point
+```
