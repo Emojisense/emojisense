@@ -1,0 +1,121 @@
+---
+import { PLANS } from "@emojisense/platform";
+import PageIntro from "../components/PageIntro.astro";
+import { WAITLIST_ENDPOINT } from "../config";
+import { WaitlistForm } from "../islands/WaitlistForm";
+import Base from "../layouts/Base.astro";
+import { formatUsd } from "../lib/format";
+import { featuresOf } from "../lib/pricing";
+import { WAITLIST_PLANS, type WaitlistPlan } from "../lib/waitlist";
+
+const plans = Object.fromEntries(
+  WAITLIST_PLANS.map((id) => [
+    id,
+    { name: PLANS[id].name, price: `${formatUsd(PLANS[id].priceUsdMonthly)} a month` },
+  ]),
+) as Record<WaitlistPlan, { name: string; price: string }>;
+
+const pro = featuresOf(PLANS.pro).filter((feature) => feature.value !== false && feature.key !== "search");
+---
+
+<Base
+  title="Pro waitlist"
+  description="Join the Emojisense Pro waitlist. We email you once, when paid plans open."
+  path="/waitlist/"
+>
+  <PageIntro emoji="⏳" label="Waitlist" title="Join the Pro waitlist." sticker="🚀">
+    <p>
+      Paid plans are not on sale yet. Leave your email and we will write once, when your plan opens. The
+      free plan works today.
+    </p>
+  </PageIntro>
+
+  <div class="wrap layout">
+    <section class="form-panel" aria-label="Waitlist form">
+      <WaitlistForm client:load endpoint={WAITLIST_ENDPOINT} plans={plans} initialPlan="pro" />
+      <noscript>
+        <p class="noscript">
+          Without JavaScript the form still sends your address, but you will see the server’s plain reply
+          instead of a confirmation here.
+        </p>
+      </noscript>
+    </section>
+
+    <aside class="card summary" aria-labelledby="pro-title">
+      <h2 id="pro-title">Pro, {formatUsd(PLANS.pro.priceUsdMonthly)} a month</h2>
+      <ul>
+        {
+          pro.map((feature) => (
+            <li>
+              <span>{feature.label}</span>
+              <strong>{typeof feature.value === "string" ? feature.value : "Included"}</strong>
+            </li>
+          ))
+        }
+      </ul>
+      <p><a href="/pricing/">Compare all plans</a></p>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .form-panel {
+    max-width: 30rem;
+  }
+
+  .noscript {
+    margin: 1rem 0 0;
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .summary {
+    align-self: start;
+    padding: 1.25rem 1.5rem;
+    background: var(--sun-soft);
+  }
+
+  .summary h2 {
+    margin: 0 0 0.75rem;
+    font-size: var(--step-1);
+  }
+
+  .summary ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--step--1);
+  }
+
+  .summary li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.4375rem;
+    border-bottom: 0.125rem dashed color-mix(in srgb, var(--ink) 15%, transparent);
+  }
+
+  .summary strong {
+    font: 400 var(--step--1) / 1.4 var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .summary p {
+    margin: 1rem 0 0;
+    font-size: var(--step--1);
+  }
+
+  @media (min-width: 52rem) {
+    .layout {
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 4rem;
+    }
+  }
+</style>

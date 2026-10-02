@@ -1,0 +1,46 @@
+---
+interface Props {
+  id: string;
+  emoji: string;
+  label: string;
+  title: string;
+  /** "cloud" gives the section a tinted band, to alternate with plain ones. */
+  tone?: "paper" | "cloud";
+}
+
+const { id, emoji, label, title, tone = "paper" } = Astro.props;
+---
+
+<section class="section" data-tone={tone} id={id} aria-labelledby={`${id}-title`}>
+  <div class="wrap">
+    <p class="pill eyebrow"><span class="emoji" aria-hidden="true">{emoji}</span> {label}</p>
+    <h2 id={`${id}-title`}>{title}</h2>
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 5.5rem);
+  }
+
+  .section[data-tone="cloud"] {
+    background: var(--cloud);
+    border-block: 0.125rem solid var(--ink);
+  }
+
+  .eyebrow {
+    margin: 0 0 1rem;
+  }
+
+  h2 {
+    max-width: 22ch;
+    margin: 0 0 1rem;
+    font-size: var(--step-2);
+    line-height: 1.1;
+  }
+
+  .wrap > :global(p) {
+    max-width: 62ch;
+  }
+</style>

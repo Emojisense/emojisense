@@ -1,0 +1,8 @@
+---
+import { API_DOC } from "../../content/docs";
+import Docs from "../../layouts/Docs.astro";
+---
+
+<Docs path="/docs/api/" headings={API_DOC.headings} source="docs/API.md">
+  <Fragment set:html={API_DOC.html} />
+</Docs>

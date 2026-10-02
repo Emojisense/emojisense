@@ -1,0 +1,79 @@
+---
+interface Props {
+  emoji: string;
+  label: string;
+  title: string;
+  /** A sticker next to the title. */
+  sticker?: string;
+}
+
+const { emoji, label, title, sticker } = Astro.props;
+---
+
+<header class="page-intro">
+  <div class="wrap inner">
+    <div>
+      <p class="pill eyebrow"><span class="emoji" aria-hidden="true">{emoji}</span> {label}</p>
+      <h1>{title}</h1>
+      <div class="lede"><slot /></div>
+    </div>
+    {sticker && <span class="sticker intro-sticker" aria-hidden="true">{sticker}</span>}
+  </div>
+</header>
+
+<style>
+  .page-intro {
+    background: var(--sun);
+    color: var(--on-sun);
+    border-bottom: 0.125rem solid var(--on-sun);
+  }
+
+  .inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-block: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .eyebrow {
+    margin: 0 0 1rem;
+    border-color: var(--on-sun);
+    background: #fff;
+    color: var(--on-sun);
+  }
+
+  h1 {
+    max-width: 20ch;
+    margin: 0;
+    font-size: var(--step-3);
+    line-height: 1.04;
+  }
+
+  .lede {
+    max-width: 60ch;
+    margin-top: 1rem;
+    font-size: var(--step-1);
+    line-height: 1.5;
+  }
+
+  .lede :global(p) {
+    margin: 0 0 0.5rem;
+  }
+
+  .lede :global(a) {
+    color: var(--on-sun);
+  }
+
+  .intro-sticker {
+    --tilt: 8deg;
+    flex: none;
+    font-size: clamp(4rem, 12vw, 8rem);
+  }
+
+  @media (max-width: 40rem) {
+    .intro-sticker {
+      display: none;
+    }
+  }
+</style>

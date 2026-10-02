@@ -1,0 +1,566 @@
+---
+import { PLANS } from "@emojisense/platform";
+import KeyTile from "../components/KeyTile.astro";
+import Section from "../components/Section.astro";
+import { API_URL, PACK_BASE_URL, PUBLISHABLE_KEY, REPO_URL, SITE_URL } from "../config";
+import {
+  FAQS,
+  HERO_EXAMPLES,
+  HERO_QUERY,
+  INTEGRATION_STATUS_LABEL,
+  INTEGRATIONS,
+  LAYERS,
+  SEARCH_CLAIMS,
+  STATUS_LABEL,
+} from "../content/landing";
+import { HeroSearch } from "../islands/HeroSearch";
+import Base from "../layouts/Base.astro";
+
+const description =
+  "Emojisense is semantic emoji search for any picker. It matches slang, films, typos, idioms and Turkish, answers on the device first, and is MIT licensed.";
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      name: "Emojisense",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Any",
+      url: `${SITE_URL}/`,
+      description,
+      license: "https://opensource.org/licenses/MIT",
+      offers: { "@type": "Offer", price: PLANS.free.priceUsdMonthly, priceCurrency: "USD" },
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: { "@type": "Answer", text: faq.answer },
+      })),
+    },
+  ],
+};
+
+/** Decoration for the hero band: answers from the claims table, as loose stickers. */
+const DECOR = [
+  { emoji: "🐐", tilt: -8, place: "a" },
+  { emoji: "🎃", tilt: 10, place: "b" },
+  { emoji: "🤯", tilt: -4, place: "c" },
+];
+---
+
+<Base description={description} path="/" jsonLd={jsonLd}>
+  <section class="hero-band" aria-labelledby="hero-title">
+    {
+      DECOR.map((sticker) => (
+        <span class={`sticker decor decor-${sticker.place}`} style={`--tilt: ${sticker.tilt}deg`} aria-hidden="true">
+          {sticker.emoji}
+        </span>
+      ))
+    }
+    <div class="wrap hero">
+      <h1 id="hero-title">Search emoji the way you talk.</h1>
+      <p class="lede">
+        Name search finds “dinosaur”. Emojisense also finds “jurassic park”, “greatest of all time” and
+        “hallowelen”. It answers on your device first and asks the edge only when it is unsure.
+      </p>
+      <HeroSearch
+        client:load
+        apiUrl={API_URL}
+        packBaseUrl={PACK_BASE_URL}
+        publishableKey={PUBLISHABLE_KEY}
+        initialQuery={HERO_QUERY}
+        examples={HERO_EXAMPLES}
+      />
+      <div class="hero-actions">
+        <a class="button" href="/docs/">Read the quickstart</a>
+        <a class="button" href="/pricing/">See pricing</a>
+        <p>MIT licensed · 5 KB engine · works offline</p>
+      </div>
+    </div>
+  </section>
+
+  <Section id="why" emoji="🤔" label="Why" title="Pickers match names. Emojisense matches meaning." tone="cloud">
+    <p>People search for what they want to say, not for the official name of a glyph.</p>
+    <div class="table-scroll card claims-card" tabindex="0">
+      <table class="claims">
+        <caption class="visually-hidden">Name search compared with Emojisense, on the same emoji data</caption>
+        <thead>
+          <tr>
+            <th scope="col">You type</th>
+            <th scope="col">Kind</th>
+            <th scope="col">Name search</th>
+            <th scope="col">Emojisense, on device</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            SEARCH_CLAIMS.map((claim) => (
+              <tr>
+                <th scope="row" lang={claim.locale}>
+                  “{claim.query}”
+                </th>
+                <td>{claim.kind}</td>
+                <td class="no-match">
+                  Nothing here <span aria-hidden="true">🫥</span>
+                </td>
+                <td>
+                  <span class="tiles">
+                    {claim.top.map((hit) => (
+                      <KeyTile emoji={hit.emoji} id={hit.id} />
+                    ))}
+                  </span>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      Name search is the label and keyword filter most pickers ship, run on the same Unicode CLDR data. The
+      Emojisense column uses only the on-device dictionary, before any network call.
+    </p>
+  </Section>
+
+  <Section id="how" emoji="⚙️" label="How it works" title="On your device first. The edge only when unsure.">
+    <p>
+      Each layer answers what it can and passes the rest on. Most searches never reach a billed server, and
+      none of them fail when a server is slow or a plan is used up.
+    </p>
+    <ol class="layers">
+      {
+        LAYERS.map((layer) => (
+          <li class="card layer" data-status={layer.status}>
+            <div class="layer-head">
+              <span class="sticker layer-icon" style={`--tilt: ${layer.id === "L1" ? 0 : -6}deg`} aria-hidden="true">
+                {layer.emoji}
+              </span>
+              <span class="mono layer-id">{layer.id}</span>
+              <span class="status" data-status={layer.status}>
+                {STATUS_LABEL[layer.status]}
+              </span>
+            </div>
+            <h3>{layer.name}</h3>
+            <p>{layer.note}</p>
+            <dl>
+              <div>
+                <dt>Where</dt>
+                <dd>{layer.where}</dd>
+              </div>
+              <div>
+                <dt>Cost</dt>
+                <dd>{layer.cost}</dd>
+              </div>
+              <div>
+                <dt>Speed</dt>
+                <dd>{layer.speed}</dd>
+              </div>
+            </dl>
+          </li>
+        ))
+      }
+    </ol>
+    <p class="callout">
+      <span aria-hidden="true">🛟</span>
+      <span>
+        Over a plan limit, the API answers <code>overLimit: true</code> and the SDK stays on L0 and L2 until the
+        next month. Your users keep getting results. <a href="/pricing/#limits">How limits work</a>.
+      </span>
+    </p>
+  </Section>
+
+  <Section id="integrations" emoji="🔌" label="Integrations" title="Plugs into the picker you already have." tone="cloud">
+    <p>
+      Every integration is a thin layer over the same engine, data and API, so the results are the same
+      everywhere.
+    </p>
+    <ul class="integrations">
+      {
+        INTEGRATIONS.map((item) => (
+          <li class="card">
+            <div class="integration-head">
+              <span class="integration-emoji" aria-hidden="true">
+                {item.emoji}
+              </span>
+              <span class="status" data-status={item.status}>
+                {INTEGRATION_STATUS_LABEL[item.status]}
+              </span>
+            </div>
+            <h3>{item.name}</h3>
+            <p class="mono package">{item.package}</p>
+            <p>{item.summary}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <Section id="open-source" emoji="🔓" label="Open source" title="Open core, MIT licensed.">
+    <p>
+      Everything you need to search emoji, on the device or on your own Cloudflare account, is open source.
+      The hosted service adds fresh data and runs the operations for you.
+    </p>
+    <div class="split">
+      <div class="card">
+        <h3><span aria-hidden="true">🔓</span> Open, MIT</h3>
+        <ul>
+          <li>The engine, SDKs, adapters and editor extensions</li>
+          <li>The search API Worker and the dashboard</li>
+          <li>The data pack: aliases, descriptions and vectors, refreshed every quarter</li>
+          <li>The eval harness and its labelled queries</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span aria-hidden="true">☁️</span> Hosted extras</h3>
+        <ul>
+          <li>Daily alias updates, learned from searches that missed</li>
+          <li>Photo to emoji and custom emoji hosting</li>
+          <li>Analytics, team members and hosted emoji sets</li>
+          <li>No servers or model calls to run yourself</li>
+        </ul>
+      </div>
+    </div>
+    <p class="links">
+      <a class="button" href="/docs/self-host/">Self-host guide</a>
+      <a class="button" href={REPO_URL}>Source on GitHub</a>
+    </p>
+  </Section>
+
+  <Section id="faq" emoji="🙋" label="FAQ" title="Questions people ask first." tone="cloud">
+    <div class="faq">
+      {
+        FAQS.map((faq) => (
+          <details class="card">
+            <summary>{faq.question}</summary>
+            <p>{faq.answer}</p>
+          </details>
+        ))
+      }
+    </div>
+  </Section>
+</Base>
+
+<style>
+  .hero-band {
+    position: relative;
+    overflow: hidden;
+    background: var(--sun);
+    color: var(--on-sun);
+    border-bottom: 0.125rem solid var(--on-sun);
+  }
+
+  .hero {
+    position: relative;
+    padding-block: clamp(2.5rem, 7vw, 4.5rem) clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .hero h1 {
+    max-width: 16ch;
+    margin: 0;
+    font-size: var(--step-3);
+    line-height: 1.02;
+  }
+
+  .lede {
+    max-width: 56ch;
+    margin: 1rem 0 2rem;
+    font-size: var(--step-1);
+    line-height: 1.5;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-top: 1.75rem;
+  }
+
+  .hero-actions p {
+    margin: 0;
+    font: 400 var(--step--1) / 1.4 var(--font-mono);
+  }
+
+  .hero-band .button {
+    border-color: var(--on-sun);
+    box-shadow: 0 0.25rem 0 var(--on-sun);
+    background: #fff;
+    color: var(--on-sun);
+  }
+
+  .decor {
+    position: absolute;
+    animation: none;
+  }
+
+  .decor-a {
+    top: 3rem;
+    right: max(4%, calc((100% - var(--measure)) / 2 + 3rem));
+    font-size: 6.5rem;
+  }
+
+  .decor-b {
+    top: 12rem;
+    right: max(18%, calc((100% - var(--measure)) / 2 + 13rem));
+    font-size: 4.5rem;
+  }
+
+  .decor-c {
+    top: 15rem;
+    right: max(3%, calc((100% - var(--measure)) / 2 + 1rem));
+    font-size: 3.5rem;
+  }
+
+  @media (max-width: 64rem) {
+    .decor {
+      display: none;
+    }
+  }
+
+  .note {
+    color: var(--muted);
+    font-size: var(--step--1);
+  }
+
+  .claims-card {
+    border: var(--outline);
+    border-radius: var(--radius-card);
+    background: var(--key);
+  }
+
+  .claims th[scope="row"] {
+    font: 800 var(--step-0) / 1.3 var(--font-body);
+    color: var(--ink);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .claims td {
+    vertical-align: middle;
+  }
+
+  .no-match {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .tiles {
+    display: inline-flex;
+    gap: 0.5rem;
+  }
+
+  .layers {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1.25rem;
+    margin: 2rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .layer {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+  }
+
+  .layer[data-status="later"] {
+    border-style: dashed;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .layer-head {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .layer-icon {
+    font-size: 2.25rem;
+    animation: none;
+  }
+
+  .layer-id {
+    font-size: var(--step--1);
+    color: var(--muted);
+  }
+
+  .layer-head .status {
+    margin-left: auto;
+  }
+
+  .layer h3 {
+    margin: 0.875rem 0 0.375rem;
+    font-size: var(--step-1);
+  }
+
+  .layer p {
+    margin: 0;
+    font-size: var(--step--1);
+  }
+
+  .layer dl {
+    display: grid;
+    gap: 0.375rem;
+    margin: auto 0 0;
+    padding-top: 1rem;
+    font-size: var(--step--1);
+  }
+
+  .layer dl div {
+    display: grid;
+    grid-template-columns: 3.75rem minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .layer dt {
+    color: var(--muted);
+  }
+
+  .layer dd {
+    margin: 0;
+    font-family: var(--font-mono);
+  }
+
+  .callout {
+    display: flex;
+    gap: 0.75rem;
+    max-width: 62ch;
+    padding: 1rem 1.25rem;
+    border: var(--outline);
+    border-radius: var(--radius-card);
+    background: var(--mint-soft);
+  }
+
+  .callout > span:first-child {
+    font: 1.5rem / 1.2 var(--font-emoji);
+  }
+
+  .integrations {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: 1.25rem;
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .integrations li {
+    padding: 1.125rem 1.25rem 1.25rem;
+  }
+
+  .integration-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .integration-emoji {
+    font: 2rem / 1 var(--font-emoji);
+  }
+
+  .integrations h3 {
+    margin: 0.75rem 0 0;
+    font-size: var(--step-1);
+  }
+
+  .package {
+    margin: 0.125rem 0 0.5rem;
+    font-size: var(--step--2);
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  .integrations p:last-child {
+    margin: 0;
+    font-size: var(--step--1);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .split .card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .split h3 {
+    margin: 0 0 0.75rem;
+    font-size: var(--step-1);
+  }
+
+  .split ul {
+    margin: 0;
+    padding-left: 1.125rem;
+  }
+
+  .split li + li {
+    margin-top: 0.375rem;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .faq {
+    display: grid;
+    gap: 0.875rem;
+    max-width: 48rem;
+    margin-top: 2rem;
+  }
+
+  details {
+    padding: 0 1.25rem;
+  }
+
+  summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    font: 800 var(--step-0) / 1.4 var(--font-body);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    content: "+";
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: var(--outline);
+    border-radius: 0.5rem;
+    font: 400 1rem / 1 var(--font-mono);
+    transition: transform 200ms var(--spring);
+  }
+
+  details[open] summary::after {
+    transform: rotate(45deg);
+    background: var(--sun);
+    color: var(--on-sun);
+  }
+
+  details p {
+    max-width: 62ch;
+    margin: 0 0 1.25rem;
+    color: var(--muted);
+  }
+</style>

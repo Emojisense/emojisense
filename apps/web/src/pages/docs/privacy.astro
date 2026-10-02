@@ -1,0 +1,76 @@
+---
+import Docs from "../../layouts/Docs.astro";
+---
+
+<Docs path="/docs/privacy/" source="docs/API.md">
+  <h2 id="short-version">The short version</h2>
+  <ul>
+    <li>Most searches never leave the device.</li>
+    <li>We never log IP addresses, keys or user identifiers.</li>
+    <li>We never store reaction text or images.</li>
+    <li>We use a search query only after at least 5 searches for the same text.</li>
+  </ul>
+
+  <h2 id="where-searches-go">Where each search goes</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Layer</th>
+          <th scope="col">What leaves the device</th>
+          <th scope="col">What we keep</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>On-device dictionary</td>
+          <td>Nothing</td>
+          <td>Nothing</td>
+        </tr>
+        <tr>
+          <td>Precomputed results</td>
+          <td>A request for one static file, named by the first letters of the query</td>
+          <td>Nothing: static files are not logged or metered</td>
+        </tr>
+        <tr>
+          <td>Worker search</td>
+          <td>The query, normalized and cut to 64 characters</td>
+          <td>The normalized query text, with counts, cache status and latency. No IP, key or user id.</td>
+        </tr>
+        <tr>
+          <td>Reaction suggestions</td>
+          <td>The message text, cut to 256 characters</td>
+          <td>Nothing: the text is never logged or cached</td>
+        </tr>
+        <tr>
+          <td>Photo to emoji</td>
+          <td>A small, downscaled image</td>
+          <td>A short caption, cached by a hash of the image. The image itself is dropped after use.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="how-queries-are-used">How we use queries</h2>
+  <p>
+    The Worker writes the normalized text of each query that reaches it to Cloudflare Analytics Engine. A nightly
+    job reads only the queries that appear at least 5 times. Rare strings can be personal, so they are never used.
+  </p>
+  <p>The frequent queries become precomputed results and new aliases, which make search better for everyone.</p>
+
+  <h2 id="rate-limits">Rate limits without tracking</h2>
+  <p>
+    Rate limits need to tell callers apart. The Worker uses the IP address only as an in-memory key for the
+    limiter. It is never written to logs or storage.
+  </p>
+
+  <h2 id="this-website">This website</h2>
+  <ul>
+    <li>No cookies, no analytics and no third-party scripts. Fonts are served from this site.</li>
+    <li>The live search on the home page loads the data packs from the Emojisense API and sends unsure queries to it, like any app that uses Emojisense.</li>
+    <li>
+      The waitlist form sends your email and the plan you chose to the dashboard. We use the address only to tell
+      you when the plan opens.
+    </li>
+  </ul>
+</Docs>

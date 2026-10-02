@@ -1,0 +1,60 @@
+---
+// Self-hosted (no third-party requests). Latin + Latin Extended covers English and Turkish.
+import "@fontsource/dm-mono/latin-400.css";
+import "@fontsource/dm-mono/latin-ext-400.css";
+import "@fontsource/dynapuff/latin-700.css";
+import "@fontsource/dynapuff/latin-ext-700.css";
+import "@fontsource/figtree/latin-400.css";
+import "@fontsource/figtree/latin-600.css";
+import "@fontsource/figtree/latin-800.css";
+import "@fontsource/figtree/latin-ext-400.css";
+import "@fontsource/figtree/latin-ext-600.css";
+import "@fontsource/figtree/latin-ext-800.css";
+import "../styles/global.css";
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import { SITE_URL } from "../config";
+
+interface Props {
+  /** Page title without the site name. Omit on the home page. */
+  title?: string;
+  description: string;
+  /** Path of this page, e.g. "/pricing/". Used for the canonical URL and the active nav item. */
+  path: string;
+  /** Structured data (schema.org) for search engines. */
+  jsonLd?: Record<string, unknown>;
+}
+
+const { title, description, path, jsonLd } = Astro.props;
+const fullTitle = title ? `${title} · Emojisense` : "Emojisense: emoji search that understands meaning";
+const canonical = `${SITE_URL}${path}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap.xml" />
+    <meta name="theme-color" content="#ffd23f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Emojisense" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <SiteHeader path={path} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <SiteFooter />
+  </body>
+</html>
