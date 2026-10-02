@@ -16,3 +16,4 @@ packages/data/build/
 packages/eval/private/
 packages/data/enrichment/_batches/
 packages/worker/public/v1/
+.claude/worktrees/
