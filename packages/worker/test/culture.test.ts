@@ -170,7 +170,7 @@ describe("GET /v1/search with culture", () => {
           "2026-10-08T00:30:00Z",
         ]) {
           vi.setSystemTime(new Date(moment));
-          const b = await body(await h.call(search("puppy", "&culture=1")));
+          const b = await body(await h.call(keyedSearch("puppy", "&culture=1")));
           seen.push([moment, b.culture?.day, b.results.some((r) => r.source === "culture")]);
         }
         expect([tz, seen]).toEqual([
