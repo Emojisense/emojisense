@@ -39,7 +39,7 @@ pnpm test && pnpm eval   # unit tests, then the search benchmark (packages/eval/
 | `pnpm --filter @emojisense/data embed` | Embed the emoji documents with Workers AI (needs `wrangler login`) |
 | `pnpm --filter @emojisense/worker sync -- --model embeddinggemma --dims 256` | Copy the pack and production vectors into the Worker |
 | `pnpm --filter @emojisense/worker dev` | API on http://localhost:8787 (alias-only if Workers AI is unreachable) |
-| `pnpm --filter @emojisense/demo dev` | Demo on http://localhost:5173 |
+| `pnpm --filter @emojisense/web dev` | Website, docs and playground on http://localhost:4321 (playground: `/playground/`) |
 
 ## Layout
 
@@ -50,7 +50,7 @@ pnpm test && pnpm eval   # unit tests, then the search benchmark (packages/eval/
 | `packages/eval` | 217 labelled queries, benchmark runner, CI regression gate |
 | `packages/worker` | Cloudflare Worker API |
 | `packages/react` | `@emojisense/react`: hooks + Frimousse adapter |
-| `apps/demo` | Side-by-side demo with latency and cost counters |
+| `apps/web` | Website, docs and the playground (`/playground/`): search inspector, reactions and photo labs |
 | `docs/` | [Architecture](docs/ARCHITECTURE.md), [pack format](docs/PACK_FORMAT.md), [API](docs/API.md), [research](docs/RESEARCH.md) |
 
 ## Licenses

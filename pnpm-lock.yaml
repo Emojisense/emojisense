@@ -86,40 +86,6 @@ importers:
         specifier: 4.139.0
         version: 4.139.0(@cloudflare/workers-types@5.20260924.1)(@types/node@24.13.6)
 
-  apps/demo:
-    dependencies:
-      '@emojisense/react':
-        specifier: workspace:*
-        version: link:../../packages/react
-      emojisense:
-        specifier: workspace:*
-        version: link:../../packages/core
-      frimousse:
-        specifier: 0.4.0
-        version: 0.4.0(react@19.3.0)(typescript@5.9.3)
-      react:
-        specifier: 19.3.0
-        version: 19.3.0
-      react-dom:
-        specifier: 19.3.0
-        version: 19.3.0(react@19.3.0)
-    devDependencies:
-      '@types/react':
-        specifier: 19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: 19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@vitejs/plugin-react':
-        specifier: 6.1.1
-        version: 6.1.1(vite@8.3.1(@types/node@24.13.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
-      vite:
-        specifier: 8.3.1
-        version: 8.3.1(@types/node@24.13.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
-      wrangler:
-        specifier: 4.139.0
-        version: 4.139.0(@cloudflare/workers-types@5.20260924.1)(@types/node@24.13.6)
-
   apps/raycast:
     dependencies:
       '@raycast/api':

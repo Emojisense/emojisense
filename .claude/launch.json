@@ -32,18 +32,6 @@
       "port": 8788
     },
     {
-      "name": "demo",
-      "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
-      "runtimeArgs": [
-        "node_modules/vite/bin/vite.js",
-        "--port",
-        "5173",
-        "--strictPort"
-      ],
-      "cwd": "apps/demo",
-      "port": 5173
-    },
-    {
       "name": "web",
       "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
       "runtimeArgs": [

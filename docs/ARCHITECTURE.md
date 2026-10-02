@@ -61,7 +61,7 @@ Worker query log (Analytics Engine: normalized text only, no IP/key/user)
 | `packages/eval` | Labelled queries, benchmark, `pnpm cost`, CI gate | MIT |
 | `packages/worker` | Cloudflare Worker: `/v1/search`, packs and shards as assets, plans, metering | MIT |
 | `packages/react` (`@emojisense/react`) | Hooks, Frimousse adapter, shadcn registry item | MIT |
-| `apps/demo` | Side-by-side demo with per-layer latency and cost counters | MIT |
+| `apps/web` `/playground/` | Playground: per-layer timings, cache state, copy-as-code, reactions and photo labs | MIT |
 | private repo `emojisense-cloud` | Miss mining, daily alias updates, billing | closed |
 
 ## Invariants
