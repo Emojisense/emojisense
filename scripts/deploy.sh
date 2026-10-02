@@ -63,7 +63,18 @@ echo "→ Dashboard ($DASHBOARD_URL)"
 cd "$ROOT/apps/dashboard"
 VITE_API_URL="$API_URL" VITE_CLERK_PUBLISHABLE_KEY="$CLERK_PUBLISHABLE_KEY" pnpm exec vite build
 [ "$INDEXABLE" = "false" ] && no_index dist/client
-pnpm exec wrangler deploy --env "$ENVIRONMENT"
+# Whop billing: public settings as vars and secrets as Worker secrets, both from .deploy/<env>.env
+# (scripts/whop-setup.mjs writes them). Values are never echoed.
+whop_vars=()
+for name in WHOP_API_BASE WHOP_COMPANY_ID WHOP_PLAN_IDS; do
+  if [ -n "${!name:-}" ]; then whop_vars+=(--var "$name:${!name}"); fi
+done
+for name in WHOP_API_KEY WHOP_WEBHOOK_SECRET; do
+  if [ -n "${!name:-}" ]; then
+    printf '%s' "${!name}" | pnpm exec wrangler secret put "$name" --env "$ENVIRONMENT" >/dev/null
+  fi
+done
+pnpm exec wrangler deploy --env "$ENVIRONMENT" ${whop_vars[@]+"${whop_vars[@]}"}
 
 echo "→ Website ($SITE_URL)"
 cd "$ROOT/apps/web"
