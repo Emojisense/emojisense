@@ -51,7 +51,7 @@ const UNAVAILABLE_TITLE =
 
 /** Tab-specific badge and title; they survive navigation, so success clears them again. */
 async function markTab(tabId: number, available: boolean): Promise<void> {
-  await chrome.action.setBadgeBackgroundColor({ tabId, color: "#FF5B3A" });
+  await chrome.action.setBadgeBackgroundColor({ tabId, color: "#C2410C" });
   await chrome.action.setBadgeText({ tabId, text: available ? "" : "!" });
   await chrome.action.setTitle({ tabId, title: available ? ACTION_TITLE : UNAVAILABLE_TITLE });
 }
