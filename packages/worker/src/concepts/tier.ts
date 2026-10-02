@@ -105,7 +105,8 @@ async function rank(env: Env, catalog: Catalog, answer: ConceptAnswer): Promise<
   if (text) {
     try {
       const [vector] = await embedTexts(env, catalog, [embeddingText(text, 128)]);
-      if (vector) neighbours = semanticResults(catalog.engine(), [catalog.index()], vector, MAX_CONCEPT_RESULTS);
+      if (vector)
+        neighbours = semanticResults(catalog.engine(), [catalog.index()], vector, MAX_CONCEPT_RESULTS);
     } catch (error) {
       console.warn(JSON.stringify({ event: "concept_embed_failed", error: (error as Error).name }));
     }
@@ -148,7 +149,11 @@ function writeEdge(cache: CacheLike, key: Request, stored: StoredConcept): Promi
  * the budget (per-isolate concurrency, the caller's rate limiter, the global daily cap). Never
  * throws. The query must already be unsure: the caller decides (assessConfidence).
  */
-export async function resolveConcept(ctx: ConceptContext, query: string, locale: string): Promise<ConceptOutcome> {
+export async function resolveConcept(
+  ctx: ConceptContext,
+  query: string,
+  locale: string,
+): Promise<ConceptOutcome> {
   const started = Date.now();
   const { env, catalog, cache, store } = ctx;
   const { contentHash } = catalog.config;
@@ -162,11 +167,13 @@ export async function resolveConcept(ctx: ConceptContext, query: string, locale:
     ms: Date.now() - started,
   });
   // Personal-looking or blocked text never goes to the model.
-  if (privacyReason(query) || isBlocked(query, locale)) return outcome({ info: { status: "none" }, results: [] });
+  if (privacyReason(query) || isBlocked(query, locale))
+    return outcome({ info: { status: "none" }, results: [] });
 
   const edgeKey = conceptEdgeKey(ctx.origin, query, locale, contentHash);
   const edge = await readEdge(cache, edgeKey);
-  if (edge) return outcome({ info: info(edge.answer, edge.ranked?.display), results: results(catalog, edge.ranked) });
+  if (edge)
+    return outcome({ info: info(edge.answer, edge.ranked?.display), results: results(catalog, edge.ranked) });
 
   const key = await conceptKey(query, locale);
   let stored: StoredConcept | undefined;
@@ -179,7 +186,11 @@ export async function resolveConcept(ctx: ConceptContext, query: string, locale:
     let ranked = stored.ranked;
     if (stored.answer && ranked?.contentHash !== contentHash) {
       // New data since the answer was ranked: rank again, no model call.
-      const fresh = toStored({ answer: stored.answer, ranked: await rank(env, catalog, stored.answer) }, contentHash, stored.createdAt);
+      const fresh = toStored(
+        { answer: stored.answer, ranked: await rank(env, catalog, stored.answer) },
+        contentHash,
+        stored.createdAt,
+      );
       ranked = fresh.ranked;
       if (store) ctx.waitUntil(store.put(key, CONCEPT_TAG, fresh).catch(() => {}));
     }

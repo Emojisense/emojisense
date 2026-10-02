@@ -41,7 +41,12 @@ export interface ConceptItem {
 
 export interface ConceptVerdict extends QueryConfidence {
   /** Unsure queries only. `missing`: offline without a cached answer, or the call failed. */
-  concept?: { status: "ok" | "none" | "missing"; answer?: ConceptAnswer; results: SearchResult[]; display: string[] };
+  concept?: {
+    status: "ok" | "none" | "missing";
+    answer?: ConceptAnswer;
+    results: SearchResult[];
+    display: string[];
+  };
 }
 
 interface CachedCall {
@@ -79,13 +84,20 @@ export async function runConceptTier(
 ): Promise<{ verdicts: ConceptVerdict[]; stats: ConceptTierStats }> {
   const readPack = (name: string): Pack =>
     JSON.parse(readFileSync(join(options.packDir, `pack.${name}.json`), "utf8"));
-  const engine: AliasEngine = createEngine([readPack("en"), readPack("tr"), readPack("en.ext"), readPack("tr.ext")]);
+  const engine: AliasEngine = createEngine([
+    readPack("en"),
+    readPack("tr"),
+    readPack("en.ext"),
+    readPack("tr.ext"),
+  ]);
   const model = getModel(options.model.key);
   const { dims } = options.model;
   const layout = loadVectorLayout(options.packDir, model, dims);
   if (!layout) throw new Error(`no vectors in ${options.packDir}`);
 
-  const cache: Record<string, CachedCall> = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, "utf8")) : {};
+  const cache: Record<string, CachedCall> = existsSync(cachePath)
+    ? JSON.parse(readFileSync(cachePath, "utf8"))
+    : {};
   const stats: ConceptTierStats = { calls: [], freshCalls: 0, failures: [], embedMs: [] };
   const verdicts: ConceptVerdict[] = items.map((item) => assessConfidence(item.alias, item.semantic));
   const unsure = items.map((_, i) => i).filter((i) => verdicts[i]?.unsure);
@@ -122,7 +134,10 @@ export async function runConceptTier(
   const answers = new Map<number, ConceptAnswer | undefined>();
   for (const [i, content] of contents) {
     try {
-      answers.set(i, parseConcept({ choices: [{ message: { content } }] }, engine, (items[i] as ConceptItem).locale));
+      answers.set(
+        i,
+        parseConcept({ choices: [{ message: { content } }] }, engine, (items[i] as ConceptItem).locale),
+      );
     } catch {
       answers.set(i, undefined);
     }

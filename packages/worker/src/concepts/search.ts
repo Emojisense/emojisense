@@ -73,7 +73,14 @@ export async function withConcepts(
   let alias = ranked.alias;
   if (!alias && semantic && semanticStrength(semantic) < SEMANTIC_SURE) alias = await aliasFor();
   const verdict = assessConfidence(alias, semantic);
-  const base = { ...verdict, results: ranked.results, concept: null, cacheable: true, modelCall: false, ms: 0 };
+  const base = {
+    ...verdict,
+    results: ranked.results,
+    concept: null,
+    cacheable: true,
+    modelCall: false,
+    ms: 0,
+  };
   // Only a real semantic list can make a query unsure enough to ask a model, and anonymous
   // callers never cause a model call.
   const asks =

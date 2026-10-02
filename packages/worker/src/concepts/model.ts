@@ -97,11 +97,17 @@ export function isBlocked(textToCheck: string, locale: string): boolean {
  * checked against the catalog (skin tones and variation selectors removed); unknown ones and
  * NEVER_PROPOSED are dropped. Throws when the output is not JSON.
  */
-export function parseConcept(output: unknown, engine: AliasEngine, locale: string): ConceptAnswer | undefined {
+export function parseConcept(
+  output: unknown,
+  engine: AliasEngine,
+  locale: string,
+): ConceptAnswer | undefined {
   const result = output as { choices?: { message?: { content?: unknown } }[]; response?: unknown };
   const content = result?.choices?.[0]?.message?.content ?? result?.response;
   const value: unknown =
-    typeof content === "string" ? JSON.parse(content.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")) : content;
+    typeof content === "string"
+      ? JSON.parse(content.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, ""))
+      : content;
   const answer = (value ?? {}) as Record<string, unknown>;
   const rawKind = text(answer.kind, 20).toLowerCase();
   if (rawKind === "unknown") return undefined;

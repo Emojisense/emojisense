@@ -70,7 +70,8 @@ export function assessConfidence(
   if (alias && alias.tokens.length === 0) return { confidence: 0, unsure: false };
   const aliasPart = alias ? alias.confidence * Math.min(1, alias.coverage / WHOLE_COVERAGE) : 0;
   const covered = alias ? aliasCovers(alias) : false;
-  if (semantic === undefined) return { confidence: round(aliasPart), unsure: alias !== undefined && !covered };
+  if (semantic === undefined)
+    return { confidence: round(aliasPart), unsure: alias !== undefined && !covered };
   const strength = semanticStrength(semantic, calibration);
   return { confidence: round(Math.max(aliasPart, strength)), unsure: !covered && strength < SEMANTIC_SURE };
 }

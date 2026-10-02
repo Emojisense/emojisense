@@ -65,7 +65,9 @@ export function createNightlyConcepts(
     const results = [...list];
     if (!enabled) return results;
     stats.checked++;
-    const semantic = results.map(([emoji, id, score]): SearchResult => ({ emoji, id, score, source: "semantic" }));
+    const semantic = results.map(
+      ([emoji, id, score]): SearchResult => ({ emoji, id, score, source: "semantic" }),
+    );
     const alias = engine.search(query, { locale, limit: options.limit });
     if (!assessConfidence(alias, semantic).unsure) return results;
     stats.unsure++;
@@ -94,11 +96,9 @@ export function createNightlyConcepts(
     if (outcome.info.status !== "ok" && outcome.info.status !== "none") stats.skipped++;
     if (outcome.results.length === 0) return results;
     stats.merged++;
-    return mergeConcept(semantic, outcome.results, undefined, options.limit).map((r): ShardResult => [
-      r.emoji,
-      r.id,
-      r.score,
-    ]);
+    return mergeConcept(semantic, outcome.results, undefined, options.limit).map(
+      (r): ShardResult => [r.emoji, r.id, r.score],
+    );
   }
 
   return {

@@ -85,7 +85,10 @@ describe("assessConfidence", () => {
   });
 
   it("never calls an empty query unsure", () => {
-    expect(assessConfidence({ ...alias(0, 0, []), tokens: [] }, [])).toEqual({ confidence: 0, unsure: false });
+    expect(assessConfidence({ ...alias(0, 0, []), tokens: [] }, [])).toEqual({
+      confidence: 0,
+      unsure: false,
+    });
   });
 
   it("uses one threshold for the semantic list", () => {
@@ -100,11 +103,21 @@ describe("mergeConcept", () => {
   const concept = [result("C1", 0.8, "concept"), result("C2", 0.7, "concept")];
 
   it("puts concept results first when no alias hit is confident", () => {
-    expect(mergeConcept(fused, concept, alias(0.3, 0.4, ["A"])).map((x) => x.id)).toEqual(["C1", "C2", "A", "S"]);
+    expect(mergeConcept(fused, concept, alias(0.3, 0.4, ["A"])).map((x) => x.id)).toEqual([
+      "C1",
+      "C2",
+      "A",
+      "S",
+    ]);
   });
 
   it("keeps confident alias hits of a covered query above the concept results", () => {
-    expect(mergeConcept(fused, concept, alias(0.9, 1, ["A"])).map((x) => x.id)).toEqual(["A", "C1", "C2", "S"]);
+    expect(mergeConcept(fused, concept, alias(0.9, 1, ["A"])).map((x) => x.id)).toEqual([
+      "A",
+      "C1",
+      "C2",
+      "S",
+    ]);
   });
 
   it("keeps the first place of a duplicate, respects the limit and returns the input without concepts", () => {

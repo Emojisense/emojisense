@@ -41,7 +41,8 @@ function parseRanked(raw: string | null, contentHash: string | null): StoredConc
   const value = JSON.parse(raw) as { results?: unknown; display?: unknown };
   const results = Array.isArray(value.results)
     ? value.results.filter(
-        (r): r is [string, number] => Array.isArray(r) && typeof r[0] === "string" && typeof r[1] === "number",
+        (r): r is [string, number] =>
+          Array.isArray(r) && typeof r[0] === "string" && typeof r[1] === "number",
       )
     : [];
   return { contentHash, results, display: strings(value.display) };

@@ -64,7 +64,9 @@ const { verdicts, stats } = await runConceptTier(
 const rows: Row[] = devRows.map((row, i) => {
   const verdict = verdicts[i] as ConceptVerdict;
   const fused = fuse(row.alias, row.semantic, LIMIT);
-  const withConcept = mergeConcept(fused, verdict.concept?.results ?? [], row.alias, LIMIT).map((r) => r.emoji);
+  const withConcept = mergeConcept(fused, verdict.concept?.results ?? [], row.alias, LIMIT).map(
+    (r) => r.emoji,
+  );
   return {
     ...row,
     ...verdict,
@@ -121,7 +123,13 @@ const breakdown = (title: string, keyOf: (r: Row) => string) => {
       const s = summarize(outcomes(subset, m));
       return `${s.r1} / ${s.r5}`;
     };
-    row([key, subset.length, `${pct(subset.filter((r) => r.unsure).length, subset.length)}%`, score("fused"), score("fused+concept")]);
+    row([
+      key,
+      subset.length,
+      `${pct(subset.filter((r) => r.unsure).length, subset.length)}%`,
+      score("fused"),
+      score("fused+concept"),
+    ]);
   }
 };
 breakdown("locale", (r) => r.q.locale);
@@ -162,7 +170,15 @@ for (const r of entities) {
   const concept = r.concept
     ? `${r.concept.status}${r.concept.display.length ? ` (${r.concept.display.join(", ")})` : ""}`
     : "–";
-  row([r.q.q, r.q.locale, r.q.cat, r.unsure ? "yes" : "no", concept, r.q.answers.slice(0, 4).join(""), o.top.join(" ") || "–"]);
+  row([
+    r.q.q,
+    r.q.locale,
+    r.q.cat,
+    r.unsure ? "yes" : "no",
+    concept,
+    r.q.answers.slice(0, 4).join(""),
+    o.top.join(" ") || "–",
+  ]);
 }
 
 const report = lines.join("\n");

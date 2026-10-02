@@ -91,7 +91,10 @@ if (args.concepts && semantic) {
     const item = items[i] as (typeof items)[number];
     const fused = fuse(item.alias, item.semantic as SearchResult[], 10);
     const concept = verdicts[i]?.concept?.results ?? [];
-    return judge(q, mergeConcept(fused, concept, item.alias, 10).map((r) => r.emoji));
+    return judge(
+      q,
+      mergeConcept(fused, concept, item.alias, 10).map((r) => r.emoji),
+    );
   });
   const { overall, macro } = scoreByLocale(run.queries, outcomes);
   const unsure = verdicts.filter((v) => v.unsure).length;

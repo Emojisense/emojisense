@@ -479,7 +479,7 @@ describe("nightly shard build", () => {
   describe("concepts of popular unsure queries", () => {
     /** "kendrick lamar" embeds next to no fixture row (unsure); the model reads it as a person. */
     const withConcepts = () =>
-      vi.fn<AiBinding["run"]>(async (model, input) => {
+      vi.fn<AiBinding["run"]>(async (_model, input) => {
         if ("messages" in input) {
           const content = JSON.stringify({ kind: "person", concepts: ["puppy"], emoji: ["🚀", "🐶"] });
           return { choices: [{ message: { content } }] };

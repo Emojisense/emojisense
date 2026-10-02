@@ -180,7 +180,11 @@ describe("unsure queries and the concept tier", () => {
     expect(states.at(-1)).toMatchObject({ status: "loading", unsure: true });
     await vi.advanceTimersByTimeAsync(50);
     const last = states.at(-1) as SessionState;
-    expect(last).toMatchObject({ status: "fused", unsure: true, concept: { status: "ok", terms: ["rapper"] } });
+    expect(last).toMatchObject({
+      status: "fused",
+      unsure: true,
+      concept: { status: "ok", terms: ["rapper"] },
+    });
     expect(last.results[0]).toMatchObject({ emoji: "🎤", source: "concept" });
   });
 

@@ -152,9 +152,11 @@ class ConformanceTest {
         val verdict = mutableListOf<String>()
         val merged = mutableListOf<String>()
         golden.confidence.forEachIndexed { n, case ->
-            case.semantic?.let { semantic ->
+            val semantic = case.semantic
+            val expected = case.strength
+            if (semantic != null && expected != null) {
                 val actual = Confidence.semanticStrength(semantic)
-                if (abs(actual - case.strength) > 1e-12) strength.add("  #$n: kotlin $actual, ts ${case.strength}")
+                if (abs(actual - expected) > 1e-12) strength.add("  #$n: kotlin $actual, ts $expected")
             }
             val actual = Confidence.assessConfidence(case.alias, case.semantic)
             if (actual != QueryConfidence(case.confidence, case.unsure)) {
@@ -163,7 +165,7 @@ class ConformanceTest {
             val ids = Confidence.mergeConcept(case.fused, case.concept, case.alias, case.limit).map { it.id }
             if (ids != case.merged) merged.add("  #$n: kotlin $ids, ts ${case.merged}")
         }
-        // The file records no semantic list where `semantic` is null, so their strength is not checked.
+        // Without a semantic list the reference records no strength.
         report("semantic strength within 1e-12 (cases with a semantic list)", golden.confidence.count { it.semantic != null }, strength)
         report("unsure verdict: identical confidence and unsure", golden.confidence.size, verdict)
         report("concept merge: identical ids", golden.confidence.size, merged)

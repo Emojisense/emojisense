@@ -101,7 +101,9 @@ const GUARD_QUERIES: Query[] = [
   ["drake", "en"],
 ].map(([q, locale], i) => ({ id: `guard-${i + 1}`, q: q as string, locale: locale as string }));
 
-const packFiles = [...new Set(["tr", ...sentenceLocales, ...entityLocales].flatMap(filesFor).concat(allFiles))];
+const packFiles = [
+  ...new Set(["tr", ...sentenceLocales, ...entityLocales].flatMap(filesFor).concat(allFiles)),
+];
 const packBytes = new Map(packFiles.map((file) => [file, readFileSync(join(packDir, file))]));
 const pack = (file: string): Pack => JSON.parse((packBytes.get(file) as Buffer).toString("utf8"));
 
@@ -350,7 +352,12 @@ const localeEngines = sentenceLocales.map((locale) => {
 
 const entityEngines = entityLocales.map((locale) => {
   const files = filesFor(locale);
-  return { locale, files, engine: createEngine(files.map(pack)), list: entities.filter((q) => q.locale === locale) };
+  return {
+    locale,
+    files,
+    engine: createEngine(files.map(pack)),
+    list: entities.filter((q) => q.locale === locale),
+  };
 });
 const allEngine = createEngine(allFiles.map(pack));
 
@@ -402,12 +409,14 @@ function confidenceCases() {
     const withAlias = n % 7 !== 0;
     const verdict = assessConfidence(withAlias ? alias : undefined, n % 9 === 0 ? undefined : semantic);
     return {
-      alias: withAlias ? { tokens, confidence, coverage, results: alias.results.map((r) => [r.id, r.score]) } : null,
+      alias: withAlias
+        ? { tokens, confidence, coverage, results: alias.results.map((r) => [r.id, r.score]) }
+        : null,
       semantic: n % 9 === 0 ? null : semantic.map((r) => [r.id, r.score, r.source]),
       concept: concept.map((r) => [r.id, r.score]),
       fused: fused.map((r) => [r.id, r.score, r.source]),
       limit: 4 + (n % 5),
-      strength: semanticStrength(semantic),
+      strength: n % 9 === 0 ? null : semanticStrength(semantic),
       confidence: verdict.confidence,
       unsure: verdict.unsure,
       merged: mergeConcept(fused, concept, withAlias ? alias : undefined, 4 + (n % 5)).map((r) => r.id),
@@ -457,13 +466,23 @@ const golden = {
   })),
   /** Per entity locale, and the guard queries with every locale: keystroke by keystroke. */
   entityKeystrokes: [
-    ...entityEngines.map(({ files, engine, list }) => ({ packs: files, cases: keystrokeCases(engine, list) })),
-    { packs: allFiles, cases: keystrokeCases(allEngine, GUARD_QUERIES.filter((_, i) => i % 2 === 0)) },
+    ...entityEngines.map(({ files, engine, list }) => ({
+      packs: files,
+      cases: keystrokeCases(engine, list),
+    })),
+    {
+      packs: allFiles,
+      cases: keystrokeCases(
+        allEngine,
+        GUARD_QUERIES.filter((_, i) => i % 2 === 0),
+      ),
+    },
   ],
   /**
    * The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
    * `alias` / `semantic` null = not given. Results are `[id, score]` (alias, concept) or
-   * `[id, score, source]` (semantic list, fused list). `strength` is unrounded.
+   * `[id, score, source]` (semantic list, fused list). `strength` is unrounded, null without a
+   * semantic list.
    */
   confidence: confidenceCases(),
 };

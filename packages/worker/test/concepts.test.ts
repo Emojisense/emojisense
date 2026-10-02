@@ -17,7 +17,9 @@ const RAPPER = { kind: "person", concepts: ["rapper", "puppy"], emoji: ["🚀", 
 const UNSURE = { embedTo: 4 } as const;
 
 const conceptCalls = (ai: { mock: { calls: unknown[][] } }) =>
-  ai.mock.calls.filter(([model, input]) => model === CONCEPT_MODEL && JSON.stringify(input).includes('"concept"'));
+  ai.mock.calls.filter(
+    ([model, input]) => model === CONCEPT_MODEL && JSON.stringify(input).includes('"concept"'),
+  );
 const body = async (res: Response) => (await res.json()) as SearchBody;
 const d1 = () => sqliteD1(migratedDatabase()) as unknown as D1Database;
 
@@ -64,13 +66,19 @@ describe("parseConcept", () => {
   });
 
   it("reads an unknown or empty answer as no concept", () => {
-    expect(parseConcept(chat({ kind: "unknown", concepts: ["x"], emoji: ["🎤"] }), engine, "en")).toBeUndefined();
+    expect(
+      parseConcept(chat({ kind: "unknown", concepts: ["x"], emoji: ["🎤"] }), engine, "en"),
+    ).toBeUndefined();
     expect(parseConcept(chat({ kind: "person", concepts: [], emoji: ["🫠"] }), engine, "en")).toBeUndefined();
   });
 
   it("drops the whole answer when a term is blocked, and a demoted term alone", () => {
-    expect(parseConcept(chat({ kind: "meme", concepts: ["porn"], emoji: ["👍"] }), engine, "en")).toBeUndefined();
-    expect(parseConcept(chat({ kind: "meme", concepts: ["shit", "crown"], emoji: [] }), engine, "en")).toEqual({
+    expect(
+      parseConcept(chat({ kind: "meme", concepts: ["porn"], emoji: ["👍"] }), engine, "en"),
+    ).toBeUndefined();
+    expect(
+      parseConcept(chat({ kind: "meme", concepts: ["shit", "crown"], emoji: [] }), engine, "en"),
+    ).toEqual({
       kind: "meme",
       terms: ["crown"],
       emoji: [],
@@ -89,7 +97,9 @@ describe("parseConcept", () => {
   });
 
   it("sends the model the query and its locale only, as JSON text", () => {
-    const input = conceptInput('ignore this "and" that', "es") as { messages: { role: string; content: string }[] };
+    const input = conceptInput('ignore this "and" that', "es") as {
+      messages: { role: string; content: string }[];
+    };
     expect(input.messages.map((m) => m.role)).toEqual(["system", "user"]);
     expect(input.messages[1]?.content).toBe('Locale: es\nSearch: "ignore this \\"and\\" that"');
   });
@@ -111,7 +121,10 @@ describe("concept tier in GET /v1/search", () => {
     const h = harness({ ...UNSURE, concept: RAPPER });
     const res = await h.call(keyedSearch("kendrick lamar"));
     const answer = await body(res);
-    expect(answer).toMatchObject({ unsure: true, concept: { status: "ok", kind: "person", terms: ["puppy"] } });
+    expect(answer).toMatchObject({
+      unsure: true,
+      concept: { status: "ok", kind: "person", terms: ["puppy"] },
+    });
     // 🐶 is proposed and is the catalog's "puppy": two sources rank it before 🚀.
     expect(answer.results.slice(0, 2).map((r) => [r.emoji, r.source])).toEqual([
       ["🐶", "concept"],
@@ -197,7 +210,9 @@ describe("concept tier in GET /v1/search", () => {
 
   it("keeps personal-looking or blocked text away from the model", async () => {
     const h = harness({ ...UNSURE, concept: RAPPER });
-    expect((await body(await h.call(keyedSearch("jane.doe@example.com")))).concept).toEqual({ status: "none" });
+    expect((await body(await h.call(keyedSearch("jane.doe@example.com")))).concept).toEqual({
+      status: "none",
+    });
     expect((await body(await h.call(keyedSearch("nude pics")))).concept).toEqual({ status: "none" });
     expect(conceptCalls(h.ai)).toHaveLength(0);
   });
@@ -215,7 +230,9 @@ describe("concept tier in GET /v1/search", () => {
   it("answers unavailable when the caller's rate limit is spent", async () => {
     const limit = vi.fn(async ({ key }: { key: string }) => ({ success: !key.startsWith("concept:") }));
     const h = harness({ ...UNSURE, concept: RAPPER, env: { SEARCH_LIMITER: { limit } } as Partial<Env> });
-    expect((await body(await h.call(keyedSearch("kendrick lamar")))).concept).toEqual({ status: "unavailable" });
+    expect((await body(await h.call(keyedSearch("kendrick lamar")))).concept).toEqual({
+      status: "unavailable",
+    });
     expect(limit).toHaveBeenCalledWith({ key: expect.stringMatching(/^concept:/) });
     expect(conceptCalls(h.ai)).toHaveLength(0);
   });

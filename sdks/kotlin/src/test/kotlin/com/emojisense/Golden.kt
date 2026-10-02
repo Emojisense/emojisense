@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -40,8 +41,8 @@ class Golden private constructor(root: JsonObject) {
 
     /**
      * One input of `assessConfidence`, `semanticStrength` and `mergeConcept` (core/src/confidence.ts)
-     * and the reference answers. [alias] / [semantic] null = not given. [strength] is unrounded and
-     * comes from the semantic list also when the case does not record it ([semantic] null).
+     * and the reference answers. [alias] / [semantic] null = not given. [strength] is unrounded,
+     * null without a semantic list.
      */
     data class ConfidenceCase(
         val alias: AliasSearchOutput<AliasResult>?,
@@ -49,7 +50,7 @@ class Golden private constructor(root: JsonObject) {
         val concept: List<SearchResult>,
         val fused: List<SearchResult>,
         val limit: Int,
-        val strength: Double,
+        val strength: Double?,
         val confidence: Double,
         val unsure: Boolean,
         val merged: List<String>,
@@ -115,7 +116,7 @@ class Golden private constructor(root: JsonObject) {
             },
             fused = sourced(case.getValue("fused").jsonArray),
             limit = case.getValue("limit").jsonPrimitive.int,
-            strength = case.getValue("strength").jsonPrimitive.double,
+            strength = case["strength"]?.jsonPrimitive?.doubleOrNull,
             confidence = case.getValue("confidence").jsonPrimitive.double,
             unsure = case.getValue("unsure").jsonPrimitive.boolean,
             merged = case.getValue("merged").jsonArray.map { it.jsonPrimitive.content },

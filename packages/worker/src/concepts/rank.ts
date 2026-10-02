@@ -44,11 +44,21 @@ export function rankConcept(
   limit = MAX_CONCEPT_RESULTS,
 ): RankedConcept {
   const proposed = answer.emoji.map(
-    (id, i): SearchResult => ({ emoji: engine.get(id)?.emoji ?? "", id, score: 1 / (i + 1), source: "concept" }),
+    (id, i): SearchResult => ({
+      emoji: engine.get(id)?.emoji ?? "",
+      id,
+      score: 1 / (i + 1),
+      source: "concept",
+    }),
   );
   const display: string[] = [];
   const termLists = answer.terms.map((term): WeightedList => {
-    const output = engine.search(term, { locale: "en", limit: TERM_CANDIDATES, prefix: false, culture: false });
+    const output = engine.search(term, {
+      locale: "en",
+      limit: TERM_CANDIDATES,
+      prefix: false,
+      culture: false,
+    });
     const phrase = normalize(term);
     // Shown only when the whole term is a catalog phrase: the text is ours, not the model's.
     if (display.length < MAX_DISPLAY_TERMS && output.results.some((r) => r.match === phrase)) {
@@ -72,7 +82,11 @@ export function rankConcept(
     scale: CONCEPT_WEIGHTS.proposed + CONCEPT_WEIGHTS.term + CONCEPT_WEIGHTS.neighbours,
   });
   return {
-    results: fused.map((r) => ({ ...r, emoji: engine.get(r.id)?.emoji ?? r.emoji, source: "concept" as const })),
+    results: fused.map((r) => ({
+      ...r,
+      emoji: engine.get(r.id)?.emoji ?? r.emoji,
+      source: "concept" as const,
+    })),
     display,
   };
 }

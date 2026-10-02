@@ -1,6 +1,9 @@
 import { UNKNOWN_COUNTRY } from "@emojisense/platform";
 import { assessConfidence, embeddingText, normalize, type SearchResult } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
+import { CONCEPT_METERED_CALLS } from "./concepts/config.ts";
+import { type ConceptFields, wantsConcepts, withConcepts } from "./concepts/search.ts";
+import { conceptCacheTag } from "./concepts/tier.ts";
 import {
   BROWSER_CACHE,
   CULTURE_BROWSER_CACHE,
@@ -12,9 +15,6 @@ import {
 import type { Handler } from "./context.ts";
 import { type ApiCultureResult, applyServerCulture, parseCultureParams, utcDay } from "./culture.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
-import { CONCEPT_METERED_CALLS } from "./concepts/config.ts";
-import { type ConceptFields, wantsConcepts, withConcepts } from "./concepts/search.ts";
-import { conceptCacheTag } from "./concepts/tier.ts";
 import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
 import { edgeCountry } from "./region.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
