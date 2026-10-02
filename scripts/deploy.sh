@@ -78,6 +78,11 @@ pnpm exec wrangler deploy --env "$ENVIRONMENT" ${whop_vars[@]+"${whop_vars[@]}"}
 
 echo "→ Website ($SITE_URL)"
 cd "$ROOT/apps/web"
+# Local preview pages (gitignored) must never ship.
+if [ -d src/pages/dev ]; then
+  echo "apps/web/src/pages/dev exists (local preview pages). Move it out before deploying." >&2
+  exit 1
+fi
 PUBLIC_SITE_URL="$SITE_URL" \
   PUBLIC_API_URL="$API_URL" \
   PUBLIC_DASHBOARD_URL="$DASHBOARD_URL" \
