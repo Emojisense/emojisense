@@ -25,7 +25,7 @@ headers. Every key also has per-second rate limits.
 
 - Metered: each Worker call to `/v1/search` and `/v1/suggest-reactions` (`semantic_calls`, also
   when the response comes from the Cache API) and each `/v1/classify-image` (`image_classifications`).
-- Not metered: static packs and shards, on-device search.
+- Not metered: static packs and shards, hosted emoji set images, on-device search.
 - Monthly UTC periods, no daily caps. Limits come from `PLANS` in `@emojisense/platform`.
 - **One shared cache.** The cache key is the normalized query, locale, limit, mode and index
   version. It has no key, app or origin in it, so every app warms the same edge cache.
@@ -89,6 +89,38 @@ keyed by the perceptual hash.
 
 These are static asset requests: free, and they do not run the Worker.
 
+## `GET /v1/sets/:set/:hexcode.svg`
+
+One emoji image from a hosted set. Pickers use it when their `emojiSet` option is not `native`.
+No key, not metered, not rate limited.
+
+| Part | Values |
+| ---- | ------ |
+| `set` | `twemoji`, `noto`, `fluent` |
+| `hexcode` | Emojibase hexcode of a pack emoji or of one of its single-tone variants, e.g. `1F44D`, `1F44D-1F3FD`, `2764-FE0F-200D-1F525`. Case and U+FE0F spelling do not matter. `hexcodeOf(emoji)` in `emojisense` makes it. |
+
+- `200`: `image/svg+xml` with `Cache-Control: public, max-age=31536000, immutable`, CORS `*`, a
+  `Link: <license>; rel="license"` header and a CSP that blocks scripts when the file is opened
+  directly.
+- Each file comes from a pinned upstream commit through jsDelivr, once per edge location, and
+  then from the Cache API. The Worker fetches only paths of its own mapping (never a URL from the
+  request).
+- Errors (JSON `{ error, message }`): `400 invalid_hexcode`, `404 unknown_set`, `404 unknown_emoji`
+  (not in the pack), `404 not_in_set` (the set does not draw it, e.g. country flags in Fluent),
+  `502 upstream_unavailable`. The 404s are cacheable for a day.
+- Coverage per set: [packages/worker/reports/sets-coverage.md](../packages/worker/reports/sets-coverage.md).
+
+| Set | Upstream | License |
+| --- | -------- | ------- |
+| Twemoji | `jdecked/twemoji` v17.0.3 | graphics CC BY 4.0 |
+| Noto | `googlefonts/noto-emoji` v2026-09-24-unicode18_0 | images Apache 2.0, flags public domain |
+| Fluent | `microsoft/fluentui-emoji` (2026-08-24) | MIT |
+
+**Attribution:** Twemoji graphics © Twitter, Inc. and the jdecked/twemoji contributors, CC BY 4.0.
+Noto Emoji © Google LLC, Apache 2.0. Fluent Emoji © Microsoft Corporation, MIT. The images are
+served unmodified. License texts: [NOTICE](../NOTICE). Apps that show these images should credit
+the set, for example on an "About" screen.
+
 ## `GET /v1/health`
 
 `{ "ok": true, "packVersion": "0.1.0", "model": "embeddinggemma@256", "semantic": true }`
@@ -97,7 +129,7 @@ These are static asset requests: free, and they do not run the Worker.
 
 | Status | Meaning |
 | ------ | ------- |
-| 400 | Missing or empty `q` / `text`, or an unreadable image |
+| 400 | Missing or empty `q` / `text`, an unreadable image, or an invalid emoji set hexcode |
 | 401 | Unknown or revoked key |
 | 403 | Origin not allowed for this publishable key, or a secret key sent from a browser |
 | 413 | Image larger than 256 KB |
