@@ -296,7 +296,8 @@ kbd {
   border-radius: 0.375em;
   background: var(--bg);
   color: var(--ink-2);
-  font: 400 0.875em / 1 var(--font-mono);
+  /* Body font: the system font behind it draws ↵ and ⌘ at a readable size. */
+  font: 500 0.875em / 1 var(--font-body);
 }
 
 /* ── Toast ──────────────────────────────────────────────── */
