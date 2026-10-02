@@ -107,7 +107,7 @@ if (existsSync(join(shardSource, "index.json"))) {
   }
 }
 
-// Culture files (PACK_FORMAT §8). They are rebuilt daily under the same pack version, so they are
+// Culture files (PACK_FORMAT §9). They are rebuilt daily under the same pack version, so they are
 // cached for an hour, never `immutable`. Files of another pack version are not copied.
 const cultureSource = join(DATA_ROOT, "dist", "culture", packVersion);
 const publicCulture = join(workerRoot, "public", "v1", "culture");

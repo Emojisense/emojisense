@@ -1,5 +1,5 @@
 /**
- * Approved records → one locale's culture file (core `Culture`, docs/PACK_FORMAT.md §8).
+ * Approved records → one locale's culture file (core `Culture`, docs/PACK_FORMAT.md §9).
  */
 import {
   CULTURE_FORMAT,

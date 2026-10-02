@@ -1,5 +1,5 @@
 /**
- * Approved culture entries → dist/culture/<packVersion>/culture.<locale>.json (docs/PACK_FORMAT.md §8).
+ * Approved culture entries → dist/culture/<packVersion>/culture.<locale>.json (docs/PACK_FORMAT.md §9).
  *
  *   tsx src/culture/build.ts [--date YYYY-MM-DD] [--days 14] [--out DIR]
  *

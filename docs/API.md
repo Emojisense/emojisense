@@ -147,8 +147,27 @@ the perceptual hash, the vision model and the prompt version.
 | ---- | ------- | ----- |
 | `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>.bin` | data packs | `public, max-age=31536000, immutable` |
 | `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards) | immutable |
+| `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
-These are static asset requests: free, and they do not run the Worker.
+These are static asset requests: free, and they do not run the Worker. All send
+`Access-Control-Allow-Origin: *`.
+
+### Culture files
+
+`GET /v1/culture/0.1.0/culture.es.json` returns the Spanish culture file: every lasting entry
+plus the seasonal and event entries active in the next 14 days, with their exact windows, so the
+SDK switches them on and off offline. The files are rebuilt daily under the same pack version, so
+they are cached for an hour and never `immutable`. A locale without a file answers `404`; clients
+then search without the culture layer.
+
+| Field of a culture result (SDK) | Meaning |
+| ------------------------------- | ------- |
+| `source` | `"culture"` |
+| `context` | Why the emoji fits, in the file's locale |
+| `cultureId` | The entry id, e.g. `goat-football` |
+
+The search API (`/v1/search`) does not apply the culture layer in Phase 1; the SDK applies it on
+the device after fusion. Culture results never rank above the top canonical result.
 
 ## `GET /v1/sets/:set/:hexcode.svg`
 
@@ -199,7 +218,7 @@ not metered, not rate limited.
 
 ## `GET /v1/custom-pack`
 
-The app's custom emoji as a pack ([PACK_FORMAT.md §8](PACK_FORMAT.md)), so the SDK searches them
+The app's custom emoji as a pack ([PACK_FORMAT.md §9](PACK_FORMAT.md)), so the SDK searches them
 on the device (`loadCustomPack` in `emojisense`). Not metered.
 
 | Param | Notes |

@@ -297,3 +297,82 @@ The API merges the same custom matches into `/v1/search` and `/v1/suggest-reacti
 client that fuses its own results with the API's sees each custom emoji once (fusion is by `id`).
 Clients without custom-pack support can ignore packs with `part: "custom"`: their layout is valid
 and their rows never match catalog hexcodes.
+
+## 9. Culture files (the culture layer)
+
+Editorial associations that add emoji next to the canonical answer, by culture, region and
+moment (docs/ARCHITECTURE.md, "Culture layer"). One small file per locale, rebuilt daily:
+
+```
+/v1/culture/<packVersion>/culture.<locale>.json     Cache-Control: public, max-age=3600 (not immutable)
+/v1/culture/<packVersion>/index.json                build date, window and per-locale sizes (informational)
+```
+
+```json
+{
+  "format": "emojisense-culture",
+  "formatVersion": 1,
+  "packVersion": "0.1.0",
+  "locale": "es",
+  "from": "2026-10-02",
+  "until": "2026-10-16",
+  "entries": [
+    {
+      "id": "goat-football",
+      "kind": "lasting",
+      "context": "El debate sobre el mejor futbolista de la historia",
+      "when": null,
+      "regions": ["*"],
+      "triggers": ["goat", "el goat", "el mejor de la historia"],
+      "emoji": [["🐐", "1F410", 0.7], ["⚽", "26BD", 0.6], ["🇦🇷", "1F1E6-1F1F7", 0.45]]
+    },
+    {
+      "id": "halloween",
+      "kind": "seasonal",
+      "context": "Halloween, 31 de octubre",
+      "when": { "from": "10-15", "to": "10-31", "recurs": "yearly" },
+      "regions": ["*"],
+      "triggers": ["halloween", "noche de brujas"],
+      "emoji": [["🎃", "1F383", 0.9], ["👻", "1F47B", 0.75]],
+      "featured": true
+    }
+  ],
+  "relevantNow": []
+}
+```
+
+A client MUST reject a file whose `format` differs or whose `formatVersion` it does not support.
+
+| Key | Meaning |
+| --- | ------- |
+| `from`, `until` | Days the build covered: the file holds every lasting entry, plus the seasonal and event entries active on any day of [`from`, `until`]. |
+| `entries[].kind` | `lasting`, `seasonal` (a yearly window) or `event` (one dated window, ≤ 60 days). A festival on a lunar calendar is one event entry per year (`diwali-2026`). |
+| `entries[].context` | The reason, in this file's locale. Neutral, ≤ 90 characters. |
+| `entries[].when` | `null` (always), `{ from: "MM-DD", to: "MM-DD", recurs: "yearly" }` (may wrap the year end, e.g. `12-26` → `01-02`) or `{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`. Days are inclusive and compared with the user's **local** calendar day. |
+| `entries[].regions` | ISO 3166-1 alpha-2 codes, or `["*"]`. Without a region from the app, only `"*"` entries apply. |
+| `entries[].triggers` | Normalized phrases (§3) that people of this locale type. |
+| `entries[].emoji` | `[emoji, hexcode, weight]`, strongest first; weight in (0, 1]. Base hexcodes only. |
+| `entries[].featured` | May appear on an optional "relevant now" shelf (seasonal and event entries only). |
+| `relevantNow` | Ids of the featured entries active on `from`, in shelf order, for clients that do not evaluate windows. |
+
+**Applying it (reference: `packages/core/src/culture.ts`).**
+
+1. Normalize the query (§3). An entry applies when its window is active today and its regions
+   match. A trigger matches when it equals the query (quality 1), or, while the user is typing
+   (no trailing space), when the query is a prefix of the trigger with ≥ 3 characters and at least
+   half its length (quality `0.6 + 0.4 × len(query) / len(trigger)`).
+2. Score each emoji `weight × quality`; keep the best score per hexcode; take the best 5.
+   Drop emoji the loaded packs do not have.
+3. Insert them right after the **canonical top result** (after fusion with semantic results),
+   skipping the top result's own emoji; an emoji that is already lower in the list moves up.
+   Never put a culture emoji above the canonical top result, except when the canonical list is
+   empty. Cut the list to the requested limit.
+4. Mark them `source: "culture"` with `context` and `cultureId`. An option to turn the layer off
+   (`culture: false`) MUST exist for reproducible ranking.
+
+The **relevant now** shelf lists the featured seasonal and event entries active today (in file
+order, which puts events first), taking one emoji from each entry in turn.
+
+The source format (`packages/data/culture/entries/<id>.json`, one file per association with a
+status, context and triggers per locale, and provenance) is described by
+`packages/data/culture/schema.json`.

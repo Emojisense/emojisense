@@ -9,11 +9,39 @@ layer-2 shards. Formats: [docs/PACK_FORMAT.md](../../docs/PACK_FORMAT.md).
 | `embed -- --models bge-m3 --dims 1024` | `dist/packs/<packVersion>/vectors.<model>.<dims>.bin` (needs `wrangler login`) |
 | `build:shards -- --log queries.jsonl` | `dist/shards/<packVersion>/` from the analytics export |
 | `build:shards -- --bootstrap` | the same from synthetic day-one queries (see the caveat below) |
+| `culture:propose` | draft culture entries with Workers AI (needs `wrangler login`; see below) |
+| `culture:review` | preview drafts per trigger; `--approve <id> --reviewer <name>` |
+| `culture:check` | validate every culture entry (`--fix` normalizes triggers) |
+| `culture:build -- --date YYYY-MM-DD` | `dist/culture/<packVersion>/culture.<locale>.json` |
 
 `pack.config.json` holds the pack version, the most aliases per emoji a core pack keeps
 (`initialAliases`; `build:pack` lowers it per locale until the core pack is ≤ 200 KB gz and
 records the result in the manifest as `coreAliases`) and the production model
 (`model.key`, `model.dims`). The shard builder and `pnpm --filter @emojisense/eval cost` use it.
+
+## Culture layer (`culture/`)
+
+Editorial associations by culture, region and moment (docs/ARCHITECTURE.md, "Culture layer";
+file format: docs/PACK_FORMAT.md §9).
+
+| Path | Content |
+| ---- | ------- |
+| `culture/entries/<id>.json` | One association: status, kind, context per locale, window, regions, locales, triggers, emoji with weights, provenance. Schema: `culture/schema.json`. |
+| `culture/sources/calendar.json` | Holidays for the main regions of the 11 locales; lunar dates listed for 2026 and 2027 |
+| `culture/sources/events.json` | Big sports events of 2026–2027, neutral titles |
+| `culture/sources/slang.json` | Meaning shifts (💀 = laughing, 🧢 = lie, 加油 = keep going) |
+| `culture/prompts/propose.v1.md` | The prompt of `culture:propose`. Change it in a new version file. |
+| `culture/exclusions.txt` | No political candidates or parties, tragedies, hate, sexual content involving minors (plus the alias blocklist) |
+
+Workflow: `culture:propose` writes `status: "draft"` files (Workers AI, `@cf/meta/llama-3.3-70b-instruct-fp8-fast`
+by default; `--provider none` drafts from the sources alone; `--misses misses.jsonl` adds
+queries seen ≥ 5 times) → an editor runs `culture:review`, edits the file and approves it →
+`culture:check` (also a unit test) → `culture:build` daily → the Worker sync publishes it. The CI
+culture gate (`packages/eval`, `culture:gate`) checks that no eval top-1 answer changes.
+
+Writing rules: context is neutral, ≤ 90 characters, no emoji or exclamation marks, in English and
+every targeted locale. Triggers are what people of that locale type, normalized. A lunar-calendar
+festival gets one dated entry per year. Regional entries apply only when the app passes a region.
 
 ## Layer-2 shards (`build:shards`)
 

@@ -1,7 +1,7 @@
 /**
  * Culture layer: editorial associations that add emoji next to the canonical answer
  * ("greatest of all time" keeps 🐐 first and also shows ⚽ 🇦🇷 🇵🇹). File format:
- * docs/PACK_FORMAT.md §8.
+ * docs/PACK_FORMAT.md §9.
  */
 import type { AliasEngine, SearchResult } from "./engine.js";
 import { normalize } from "./normalize.js";
