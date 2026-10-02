@@ -308,7 +308,11 @@ importers:
         specifier: workspace:*
         version: link:../data
 
-  packages/platform: {}
+  packages/platform:
+    dependencies:
+      emojisense:
+        specifier: workspace:*
+        version: link:../core
 
   packages/react:
     dependencies:
