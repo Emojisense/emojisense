@@ -284,6 +284,7 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | `GET /api/auth/github` → callback `/api/auth/github/callback` | Sign in with GitHub (local dev: `/api/auth/dev`) |
 | `POST /api/auth/logout` | End session |
 | `GET /api/me` | Account, its own `plan`, `appCount`, `waitlistPlan`, `teams: [{ ownerId, ownerName, role }]` |
+| `DELETE /api/me` | `{ confirm }` → `{ ok: true }` and a cleared session cookie. Deletes the account and everything it owns, see below (the account itself) |
 | `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`) / create an app in the own account (`name`, `environment`) |
 | `GET /api/apps/:id` | App + keys (viewer+) |
 | `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
@@ -337,6 +338,30 @@ curl -X POST https://api.emojisense.dev/v1/tenants/acme/emoji \
 | 409 | `invite_own_team`, `already_member`, `owner_immutable`, `plan_not_higher` | Invite for the own team, a second membership, a change to the owner, an upgrade to the same or a lower plan |
 | 409 | `tenant_exists`, `webhook_limit` | A tenant with this `externalId` exists; the app has 10 webhooks |
 | 410 | `invite_used`, `invite_expired` | The invite was accepted already, or is older than 7 days |
+| 400 | `confirmation_required` | `DELETE /api/me` without the right `confirm` value |
+| 503 | `storage_unavailable` | `DELETE /api/me` could not delete the custom emoji images. Nothing was deleted; try again. |
+
+### `DELETE /api/me` (account deletion)
+
+```json
+{ "confirm": "ada@example.com" }
+```
+
+- `confirm` is the account's email (any case, spaces trimmed). An account without an email sends
+  `"delete my account"`. Only the signed-in account can delete itself. Team roles do not apply.
+- One request deletes the account and everything it owns: its apps with their API keys, monthly
+  usage, search analytics (`query_daily`), tenants, custom emoji (rows and R2 images) and
+  webhooks with their deliveries; its own team members and invites; its memberships in other
+  teams; all its sessions; and the waitlist entry of its email.
+- The R2 images go first. When R2 fails, the answer is `503 storage_unavailable` and no row is
+  deleted. Then one D1 batch (one transaction) deletes the rows.
+- The API Worker caches key lookups for 60 s per isolate, so a deleted key can work for up to a
+  minute, as after a revocation. Usage that an isolate has not flushed yet for a deleted app is
+  dropped.
+- Not deleted: invites that other owners sent to this email (their data), anonymous Analytics
+  Engine points (they have no app, key or account), and D1 Time Travel history (see
+  [Privacy](#privacy)).
+- The dashboard has no settings page yet, so the SPA has no button for this route.
 
 Custom emoji routes add these codes:
 

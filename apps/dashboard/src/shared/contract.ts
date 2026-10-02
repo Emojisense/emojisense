@@ -69,6 +69,17 @@ export interface MeResponse {
   teams: TeamSummary[];
 }
 
+/** What an account without an email types to confirm `DELETE /api/me`. */
+export const DELETE_ACCOUNT_PHRASE = "delete my account";
+
+/**
+ * `DELETE /api/me` body. `confirm` is the account's email (any case), or DELETE_ACCOUNT_PHRASE
+ * when the account has no email. The answer is `OkResponse`.
+ */
+export interface DeleteAccountRequest {
+  confirm: string;
+}
+
 export interface AppSummary {
   id: string;
   name: string;
