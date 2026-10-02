@@ -61,6 +61,15 @@
 | fused qwen3@128 | 79 | 96.3 | 97.2 | 0.862 | 1.9 | 100% |  |
 | fused-gated qwen3@128 | 77.6 | 95.8 | 97.2 | 0.856 | 1.4 | 20% |  |
 
+## Held-out suite
+
+734 queries in 11 locales, written and labelled by another model (not the alias author). Per locale and worst misses: [heldout.md](heldout.md).
+
+| Mode | R@1 | R@5 | MRR | Macro R@5 |
+| --- | --: | --: | --: | --: |
+| alias (core + ext) | 11.7 | 22.2 | 0.163 | 23 |
+| fused bge-m3@1024 | 22.5 | 39.2 | 0.301 | 39.9 |
+
 ## Recall@5 by category
 
 | Engine | exact (26) | typo (24) | slang (33) | pop (35) | idiom (21) | intent (32) | tr (33) | negative (10) |
@@ -106,8 +115,8 @@
 
 | Measure | p50 | p95 | max | n |
 | --- | --: | --: | --: | --: |
-| Tier 0 per keystroke (Node, this machine) | 0.07 ms | 0.61 ms | 12 ms | 6237 |
-| Tier 0 index build (en + tr) | 182 ms |  |  | 1 |
+| Tier 0 per keystroke (Node, this machine) | 0.16 ms | 3.02 ms | 196 ms | 6237 |
+| Tier 0 index build (en + tr) | 1187 ms |  |  | 1 |
 
 Noise queries with a confident (≥ 0.6) alias result: 0/3.
 
@@ -115,8 +124,8 @@ Noise queries with a confident (≥ 0.6) alias result: 0/3.
 
 | Client pack | en gz | tr gz |
 | --- | --: | --: |
-| core (shipped) | 179.1 KB | 168.3 KB |
-| ext (loaded when idle) | 247.3 KB | 89.9 KB |
+| core (shipped) | 180.3 KB | 169.5 KB |
+| ext (loaded when idle) | 249.3 KB | 90.6 KB |
 
 | Server file | raw | gz |
 | --- | --: | --: |
