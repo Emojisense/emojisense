@@ -90,7 +90,7 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | Limits are per account: `overLimit` compares the account's total over all of its apps with the limit. `usage_monthly` rows stay per app. | `src/context.ts`, `src/meter.ts` |
 | The account total is cached per isolate: read at most once a minute, replaced by the totals each flush reads in its own batch. No limit check costs a D1 query of its own. | `src/meter.ts`, `src/store.ts` |
 | Over the limit: `200` with `overLimit: true`; semantic mode returns no results, hybrid returns alias results only | handlers |
-| Usage is counted in memory and flushed as one UPSERT batch into `usage_monthly` after 10 s or 100 calls | `src/meter.ts` |
+| Usage is counted in memory and flushed as one UPSERT batch into `usage_monthly` after 10 s or 100 calls. The UPSERT skips rows of deleted apps (account deletion). | `src/meter.ts`, `src/store.ts` |
 
 Unflushed counts are lost when an isolate is evicted. The error favors the customer and is
 accepted for soft limits (DECISIONS.md, Update #2).

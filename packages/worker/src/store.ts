@@ -95,8 +95,13 @@ const READ_ACCOUNT_USAGE = `
   FROM usage_monthly u JOIN apps a ON a.id = u.app_id
   WHERE a.account_id = ? AND u.period = ?
   GROUP BY u.metric`;
+/**
+ * Skips the counts of an app that was deleted (alone or with its account) after the calls, like
+ * ADD_QUERY_COUNT. Otherwise the foreign key would fail every later flush of this isolate.
+ */
 const ADD_USAGE = `
-  INSERT INTO usage_monthly (app_id, period, metric, count) VALUES (?, ?, ?, ?)
+  INSERT INTO usage_monthly (app_id, period, metric, count)
+  SELECT a.id, ?, ?, ? FROM apps a WHERE a.id = ?
   ON CONFLICT (app_id, period, metric) DO UPDATE SET count = count + excluded.count`;
 /** Runs after every upsert of the batch, so the account total includes all of them. */
 const READ_TOTALS = `
@@ -183,7 +188,7 @@ export function createD1Store(db: D1Like): Store {
       const upsert = db.prepare(ADD_USAGE);
       const read = db.prepare(READ_TOTALS);
       const results = await db.batch([
-        ...deltas.map((d) => upsert.bind(d.appId, d.period, d.metric, d.count)),
+        ...deltas.map((d) => upsert.bind(d.period, d.metric, d.count, d.appId)),
         ...deltas.map((d) => read.bind(d.appId, d.period, d.metric)),
       ]);
       return readTotals(results);
