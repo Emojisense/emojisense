@@ -236,7 +236,10 @@ export function BillingPage() {
   const { me, refresh } = useSession();
   const params = useSearchParams();
   const intent = parseCheckoutIntent(params);
-  const returning = params.get("checkout") === "success";
+  // Whop may add `status` to the return URL; a failed or cancelled payment changes nothing.
+  const whopStatus = params.get("status");
+  const stopped = whopStatus === "failed" || whopStatus === "canceled";
+  const returning = params.get("checkout") === "success" && !stopped;
   const [billing, { reload }] = useResource<BillingResponse>("billing", () => api.billing());
   const data = billing.status === "ready" ? billing.data : null;
   const current = PLANS[data?.plan.id ?? me.plan.id];
@@ -273,6 +276,11 @@ export function BillingPage() {
             provider={data.provider}
             confirmation={confirmation}
           />
+        )}
+        {params.get("checkout") === "success" && stopped && (
+          <Banner emoji="↩️">
+            <strong>The payment did not go through,</strong> so nothing changed. You can try again below.
+          </Banner>
         )}
         {intent && intent.plan !== current.id && confirmation === null && (
           <Banner emoji="🛒">

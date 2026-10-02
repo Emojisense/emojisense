@@ -22,6 +22,8 @@ ALTER TABLE accounts ADD COLUMN whop_manage_url TEXT;
 -- Time of the newest Whop event applied to this account. Whop does not keep events in order, so
 -- an older event never overwrites the state of a newer one.
 ALTER TABLE accounts ADD COLUMN billing_event_at INTEGER;
+-- The sweep of lapsed subscriptions (expireLapsedBilling) reads only these few rows.
+CREATE INDEX accounts_lapsing ON accounts(billing_status) WHERE billing_status IN ('past_due', 'canceling');
 
 -- Whop webhook deliveries already applied, by webhook-id: Whop delivers each event at least once
 -- and retries for about 3 days. Rows older than 30 days are deleted.

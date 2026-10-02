@@ -174,6 +174,15 @@ describe("Billing page: back from Whop", () => {
     expect(sessionStorage.getItem("emojisense:checkout-started")).toBeNull();
   });
 
+  it("says so when Whop reports a failed or cancelled payment, and does not wait", async () => {
+    const { calls } = openBilling("/billing?checkout=success&status=canceled", {
+      "GET /api/billing": { body: billing("free") },
+    });
+    expect(await screen.findByText(/The payment did not go through/)).toBeTruthy();
+    expect(screen.queryByText(/Whop is confirming the payment/)).toBeNull();
+    expect(calls.filter((call) => call.path === "/api/billing")).toHaveLength(1);
+  });
+
   it("waits for Whop while the plan has not changed yet", async () => {
     sessionStorage.setItem("emojisense:checkout-started", '{"plan":"pro","interval":"month"}');
     openBilling("/billing?checkout=success", { "GET /api/billing": { body: billing("free") } });
