@@ -1,0 +1,32 @@
+{
+  "name": "@emojisense/data",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "ingest": "tsx src/ingest.ts",
+    "merge": "tsx src/merge.ts",
+    "validate": "tsx src/validate.ts",
+    "build:pack": "tsx src/build-pack.ts",
+    "embed": "tsx src/embed.ts",
+    "build": "tsx src/ingest.ts && tsx src/validate.ts && tsx src/build-pack.ts",
+    "check:enrichment": "tsx scripts/check-enrichment.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "cldr-annotations-derived-full": "48.2.0",
+    "cldr-annotations-full": "48.2.0",
+    "emojibase-data": "17.0.0",
+    "emojisense": "workspace:*"
+  },
+  "exports": {
+    "./embeddings": "./src/embeddings.ts",
+    "./models": "./src/models.ts",
+    "./paths": "./src/paths.ts"
+  },
+  "devDependencies": {
+    "wrangler": "4.139.0",
+    "@cloudflare/workers-types": "5.20260924.1"
+  }
+}

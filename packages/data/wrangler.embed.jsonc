@@ -1,0 +1,6 @@
+// Only used by src/embeddings.ts (getPlatformProxy) to reach Workers AI from Node. Not deployed.
+{
+  "name": "emojisense-embed-batch",
+  "compatibility_date": "2026-09-24",
+  "ai": { "binding": "AI", "remote": true }
+}
