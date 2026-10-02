@@ -144,6 +144,12 @@ are matched against the query and put first, in both modes, within `limit`:
 - When the app has custom emoji, the answer has `Cache-Control: private, max-age=60`.
 - A tenant emoji replaces an app-wide emoji with the same shortcode. An unknown `tenant` searches
   the app-wide emoji only.
+- **Tenant emoji are not secret.** Anyone with the app's publishable key (it is in your page) and
+  a tenant's `externalId` can read that tenant's custom emoji (shortcodes, aliases, images) through
+  search, reactions and `/v1/custom-pack`, like the custom emoji of a chat workspace, which every
+  member sees. Image URLs need no key at all. So do not store private content in custom emoji,
+  and use ids that other tenants cannot guess (not sequential numbers or public names) if tenants
+  must not see each other's emoji. There is no signed tenant token yet.
 
 ### Locales
 
@@ -358,7 +364,9 @@ metered, not rate limited. `semantic: false` = the Worker has no Workers AI bind
 Tenants are your own customers. Each tenant has its own custom emoji, next to the app-wide ones.
 Call these routes from your server with a secret key: `Authorization: Bearer sk_live_…`.
 Browsers cannot call them (a request with an `Origin` header is refused, and CORS does not allow
-`Authorization`). The account that owns the app must be on Scale.
+`Authorization`). The account that owns the app must be on Scale. Writes need the secret key;
+reads of a tenant's emoji in search and custom packs need only the publishable key and the
+`externalId` (see "Tenant emoji are not secret" under [search](#get-v1search)).
 
 | Method + path | Body | Answer |
 | ------------- | ---- | ------ |
