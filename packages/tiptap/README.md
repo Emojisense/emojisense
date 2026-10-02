@@ -90,6 +90,15 @@ const editor = useEditor({
 Semantic results (when `semantic` is set and the alias engine is unsure) arrive after
 `debounceMs` and are fused in. Confident alias hits keep their place, so the list does not jump.
 
+The extension has `priority: 101`, like Tiptap's Mention. So while the menu is open, it gets
+Enter, Tab and the arrow keys before list items, task items and other keymaps with the default
+priority (100). While the menu is closed, these keys go to the editor. To use a different value,
+extend the extension:
+
+```ts
+EmojiAutocomplete.extend({ priority: 1000 }).configure({ engine });
+```
+
 ## Accessibility
 
 The default menu is a `role="listbox"` named "Emoji suggestions", with `role="option"` rows. Focus

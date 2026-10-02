@@ -1,7 +1,9 @@
-import { Editor } from "@tiptap/core";
+import { type AnyExtension, Editor } from "@tiptap/core";
 import Document from "@tiptap/extension-document";
+import { BulletList, ListItem, TaskItem, TaskList } from "@tiptap/extension-list";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
+import { TextSelection } from "@tiptap/pm/state";
 import type { AliasEngine } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojiAutocomplete, type EmojiAutocompleteOptions } from "../src/index.js";
@@ -46,6 +48,14 @@ function press(target: Editor, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true, ...init });
   target.view.dom.dispatchEvent(event);
   return event;
+}
+
+function listItemTexts(target: Editor): string[] {
+  const texts: string[] = [];
+  target.state.doc.firstChild?.forEach((item) => {
+    texts.push(item.textContent);
+  });
+  return texts;
 }
 
 const menu = () => document.querySelector<HTMLElement>("[role=listbox]");
@@ -200,6 +210,36 @@ describe("EmojiAutocomplete (Tiptap)", () => {
     await type(ed, " ");
     expect(onExit).toHaveBeenCalled();
     expect(menu()).toBeNull();
+  });
+
+  describe.each([
+    ["bullet", [BulletList, ListItem], "<ul><li><p>first</p></li><li><p></p></li></ul>"],
+    ["task", [TaskList, TaskItem], '<ul data-type="taskList"><li><p>first</p></li><li><p></p></li></ul>'],
+  ])("in a %s list", (_kind, lists, content) => {
+    // At equal priority the order in `extensions` decides who gets Enter first, so try both.
+    it.each(["before", "after"])("the open menu takes Enter and Tab when listed %s", async (order) => {
+      const element = document.createElement("div");
+      document.body.append(element);
+      const emoji = EmojiAutocomplete.configure({ engine });
+      const extensions: AnyExtension[] = [Document, Paragraph, Text, ...(lists as AnyExtension[])];
+      editor = new Editor({
+        element,
+        content,
+        extensions: order === "before" ? [emoji, ...extensions] : [...extensions, emoji],
+      });
+      const ed = editor;
+      ed.view.dispatch(ed.state.tr.setSelection(TextSelection.atEnd(ed.state.doc)));
+
+      await type(ed, ":jurassic");
+      expect(press(ed, "Enter").defaultPrevented).toBe(true);
+      await type(ed, " :fir");
+      expect(press(ed, "Tab").defaultPrevented).toBe(true);
+      expect(listItemTexts(ed)).toEqual(["first", "🦖 🔥"]);
+
+      // With the menu closed, Enter belongs to the list again.
+      press(ed, "Enter");
+      expect(listItemTexts(ed)).toEqual(["first", "🦖 🔥", ""]);
+    });
   });
 
   it("stops semantic requests when the editor is destroyed", async () => {

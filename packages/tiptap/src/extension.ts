@@ -58,6 +58,9 @@ export const EmojiAutocompletePluginKey = new PluginKey("emojiAutocomplete");
  */
 export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, EmojiAutocompleteStorage>({
   name: "emojiAutocomplete",
+  // Above the default 100 (like Tiptap's Mention), so the open menu gets Enter, Tab and the arrows
+  // before list items and other keymaps. The menu returns every key while it is closed.
+  priority: 101,
 
   addOptions() {
     return {
