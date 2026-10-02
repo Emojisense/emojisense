@@ -93,14 +93,23 @@ export interface EmbedStats {
 /**
  * Embed already-formatted texts (apply the model's query/document template first).
  * Returns full native-dimension vectors in input order.
+ *
+ * `persist: false` skips the disk cache. The shard builder embeds up to ~1M queries a night;
+ * the single-file JSON cache would grow to gigabytes and be rewritten after every batch.
  */
 export async function embedTexts(
   model: EmbeddingModel,
   texts: string[],
   kind: "query" | "document",
-  options: { batchSize?: number; offline?: boolean; onProgress?: (done: number) => void } = {},
+  options: {
+    batchSize?: number;
+    offline?: boolean;
+    persist?: boolean;
+    onProgress?: (done: number) => void;
+  } = {},
 ): Promise<{ vectors: Float32Array[]; stats: EmbedStats }> {
-  const cache = loadCache(model);
+  const persist = options.persist ?? true;
+  const cache = persist ? loadCache(model) : {};
   const keys = texts.map((t) => hash(model, kind, t));
   const missing = [...new Set(keys.map((k, i) => (cache[k] ? -1 : i)).filter((i) => i >= 0))];
   const stats: EmbedStats = { cached: texts.length - missing.length, fetched: 0, callMs: [] };
@@ -131,11 +140,24 @@ export async function embedTexts(
         cache[keys[i] as string] = toBase64(Float32Array.from(vectors[j] as number[]));
       });
       stats.fetched += batch.length;
-      saveCache(model, cache);
+      if (persist) saveCache(model, cache);
       options.onProgress?.(stats.cached + stats.fetched);
     }
   }
   return { vectors: keys.map((k) => fromBase64(cache[k] as string)), stats };
+}
+
+/** Vectors already in the disk cache, in input order; `undefined` where a text was never embedded. */
+export function readCachedEmbeddings(
+  model: EmbeddingModel,
+  texts: readonly string[],
+  kind: "query" | "document",
+): (Float32Array | undefined)[] {
+  const cache = loadCache(model);
+  return texts.map((text) => {
+    const hit = cache[hash(model, kind, text)];
+    return hit ? fromBase64(hit) : undefined;
+  });
 }
 
 /** Time single-text calls that bypass the cache (round trip from this machine to Workers AI). */
