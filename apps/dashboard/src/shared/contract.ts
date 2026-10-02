@@ -2,7 +2,15 @@
  * JSON shapes of the dashboard API (docs/API.md, "Dashboard API"). The Worker produces them and
  * the SPA consumes them, so both import from here. Times are Unix epoch milliseconds.
  */
-import type { EmojiSet, KeyKind, Metric, PlanId, TeamRole } from "@emojisense/platform";
+import type {
+  EmojiSet,
+  KeyKind,
+  Metric,
+  PlanId,
+  TeamRole,
+  WebhookEnvelopeType,
+  WebhookEventType,
+} from "@emojisense/platform";
 
 export type Environment = "dev" | "staging" | "prod";
 export const ENVIRONMENTS: readonly Environment[] = ["prod", "staging", "dev"];
@@ -217,4 +225,51 @@ export interface UpgradeResponse {
 
 export interface OkResponse {
   ok: true;
+}
+
+export interface WebhookDeliverySummary {
+  id: string;
+  event: WebhookEnvelopeType;
+  /** HTTP status; null = network error, timeout or a refused target. */
+  status: number | null;
+  /** A 2xx answer. */
+  ok: boolean;
+  durationMs: number | null;
+  createdAt: number;
+}
+
+/** The secret is never listed: it appears once, in CreatedWebhookResponse. */
+export interface WebhookSummary {
+  id: string;
+  appId: string;
+  url: string;
+  events: WebhookEventType[];
+  enabled: boolean;
+  createdAt: number;
+  disabledAt: number | null;
+  lastDelivery: WebhookDeliverySummary | null;
+}
+
+export interface WebhooksResponse {
+  webhooks: WebhookSummary[];
+}
+
+export interface WebhookResponse {
+  webhook: WebhookSummary;
+}
+
+/** `secret` (`whsec_…`) signs every delivery. This is the only response that carries it. */
+export interface CreatedWebhookResponse {
+  webhook: WebhookSummary;
+  secret: string;
+}
+
+/** The last 50 deliveries, newest first. */
+export interface WebhookDeliveriesResponse {
+  deliveries: WebhookDeliverySummary[];
+}
+
+/** `POST /api/webhooks/:id/test`: one `webhook.test` event, sent at once, no retries. */
+export interface WebhookTestResponse {
+  delivery: WebhookDeliverySummary;
 }
