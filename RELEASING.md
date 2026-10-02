@@ -31,7 +31,8 @@ packages and the bump, write one or two sentences for the changelog. The first c
    `emojisense@0.1.0` as publishable. npm never allows a version twice, so **0.4.0 and 0.10.0 of
    `emojisense` can never be published**: skip them (for example 0.3.x → 0.5.0). If npm refuses the
    name at the first publish, use the fallback `@emojisense/core`: rename `packages/core` and replace
-   the `emojisense` imports and dependencies in the repository, then publish again.
+   the `emojisense` imports and dependencies in the repository, then publish again. Publish soon:
+   until then anyone can take the free name.
 
 ### First release (from this machine)
 
@@ -205,6 +206,7 @@ pass; only the placeholder author fails `ray lint` (`author` must be a Raycast u
 | Categories, title, command title | Title Case, `<verb> <noun>` | "Emojisense", "Search Emoji", Productivity + Communication |
 | `@raycast/api` | The latest version at submission | 2.5.1 pinned; bump it in `apps/raycast/package.json` before export if the review asks |
 | Localization | US English UI only | The UI is English. The Language preference changes emoji labels (data), not the UI; mention it in the pull request |
+| Size | No fixed limit; the Store repository reviews large assets | `assets/packs` holds all 11 languages (14 MB raw), because the extension searches every bundled language. **Owner decision:** to ship only English and Turkish (2 MB, the two label languages), filter the files in `apps/raycast/scripts/bundle-packs.mts` |
 
 **Store text:** title "Emojisense", description "Search emoji by meaning, slang and intent: "ship
 it" → 🚀, "lgtm" → 👍. Works offline." (from `apps/raycast/package.json`). The export's README is the
