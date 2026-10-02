@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../../src/app/App";
 import { APP, me, stubApi, unauthorized, usage } from "./fake-api";
@@ -66,28 +66,48 @@ describe("apps page", () => {
     expect(screen.getByLabelText("App name").getAttribute("aria-invalid")).toBe("true");
   });
 
-  it("explains the plan limit and joins the Pro waitlist", async () => {
+  it("explains the plan limit and joins the waitlist of the plan with more apps", async () => {
     window.history.replaceState(null, "", "/apps");
     const { calls } = stubApi({
       "GET /api/me": { body: me({ appCount: 1 }) },
       "GET /api/apps": { body: { apps: [APP] } },
-      "POST /api/waitlist": ({ body }) => ({ body: { ok: true, plan: (body as { plan: string }).plan } }),
+      "POST /api/billing/upgrade": ({ body }) => ({
+        body: { status: "waitlist", plan: (body as { plan: string }).plan },
+      }),
     });
     render(<App />);
 
     expect(await screen.findByRole("link", { name: "Chat app" })).toBeTruthy();
-    expect(screen.getByText(/you use all of them/).textContent).toContain("join its waitlist");
-    expect(screen.queryByRole("button", { name: "Create app" })).toBeNull();
+    const gate = screen.getByRole("region", { name: "More apps with Pro" });
+    expect(gate.textContent).toContain("apps are all in use");
+    expect((screen.getByRole("button", { name: "New app" }) as HTMLButtonElement).disabled).toBe(true);
 
-    const email = screen.getByLabelText("Email for the waitlist") as HTMLInputElement;
-    expect(email.value).toBe("ada@example.com");
-    fireEvent.click(screen.getByRole("button", { name: "Join the Pro waitlist" }));
-    expect(await screen.findByText(/You are on the Pro waitlist/)).toBeTruthy();
-    expect(screen.queryByLabelText("Email for the waitlist")).toBeNull();
-    expect(calls).toContainEqual({
-      method: "POST",
-      path: "/api/waitlist",
-      body: { email: "ada@example.com", plan: "pro" },
+    fireEvent.click(within(gate).getByRole("button", { name: "Upgrade to Pro" }));
+    expect(await within(gate).findByText(/You are on the Pro waitlist/)).toBeTruthy();
+    expect(
+      (within(gate).getByRole("button", { name: "On the waitlist" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(calls).toContainEqual({ method: "POST", path: "/api/billing/upgrade", body: { plan: "pro" } });
+  });
+
+  it("offers the plan with more apps when the API answers 402", async () => {
+    window.history.replaceState(null, "", "/apps");
+    stubApi({
+      "GET /api/me": { body: me({ appCount: 0 }) },
+      "GET /api/apps": { body: { apps: [] } },
+      "POST /api/apps": {
+        status: 402,
+        body: { error: { code: "plan_required", message: "Your Free plan allows 1 app.", plan: "pro" } },
+      },
     });
+    render(<App />);
+
+    fireEvent.change(await screen.findByLabelText("App name"), { target: { value: "Second" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create app" }));
+
+    const gate = await screen.findByRole("region", { name: "More apps with Pro" });
+    expect(within(gate).getByRole("button", { name: "Upgrade to Pro" })).toBeTruthy();
+    // A plan gate is an invitation, never an error.
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 });
