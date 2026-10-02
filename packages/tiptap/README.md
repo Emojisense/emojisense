@@ -75,6 +75,7 @@ const editor = useEditor({
 | `minQueryLength` | `1` | Characters after the trigger before the menu opens |
 | `shortcodes` | `true` | Replace a typed `:name:` when `name` is an exact shortcode or emoji name |
 | `render` | `createEmojiMenu()` | Menu renderer, same contract as the suggestion utility's `render` |
+| `menuContainer` | `document.body` | `HTMLElement`, or a getter, that the menu mounts into. See [Mount the menu in your own frame](#mount-the-menu-in-your-own-frame). |
 
 ## Behaviour
 
@@ -89,6 +90,53 @@ const editor = useEditor({
 
 Semantic results (when `semantic` is set and the alias engine is unsure) arrive after
 `debounceMs` and are fused in. Confident alias hits keep their place, so the list does not jump.
+
+The menu never scrolls the page. The default menu scrolls only its own list to keep the active
+option visible. An insert focuses the editor without scrolling it into view.
+
+The extension has `priority: 101`, like Tiptap's Mention. So while the menu is open, it gets
+Enter, Tab and the arrow keys before list items, task items and other keymaps with the default
+priority (100). While the menu is closed, these keys go to the editor. To use a different value,
+extend the extension:
+
+```ts
+EmojiAutocomplete.extend({ priority: 1000 }).configure({ engine });
+```
+
+## Mount the menu in your own frame
+
+By default the menu mounts on `<body>`. To keep it inside a frame of your page (a demo window,
+a dialog, a scroll panel), pass that element as `menuContainer`:
+
+```ts
+EmojiAutocomplete.configure({
+  engine,
+  menuContainer: document.querySelector<HTMLElement>("#demo-frame")!,
+});
+```
+
+The menu is still positioned at the caret. Give the frame a non-static `position` (for example
+`position: relative`) if the frame must clip the menu or set its stacking order.
+
+If the element does not exist yet when you create the editor (for example a React ref), pass a
+getter. The extension reads it when the menu opens. While the getter returns `null` or
+`undefined`, the menu mounts on `<body>`.
+
+```tsx
+const frameRef = useRef<HTMLDivElement>(null);
+
+const editor = useEditor({
+  extensions: [StarterKit, EmojiAutocomplete.configure({ engine, menuContainer: () => frameRef.current })],
+});
+
+return (
+  <div ref={frameRef} style={{ position: "relative" }}>
+    <EditorContent editor={editor} />
+  </div>
+);
+```
+
+`menuContainer` also applies to a custom `render` that calls `props.mount`.
 
 ## Accessibility
 

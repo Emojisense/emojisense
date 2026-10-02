@@ -1,4 +1,5 @@
 import type { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion";
+import { scrollOptionIntoView } from "./scroll.js";
 import type { EmojiSuggestion } from "./source.js";
 
 export type EmojiSuggestionProps = SuggestionProps<EmojiSuggestion, EmojiSuggestion>;
@@ -96,7 +97,8 @@ export function createEmojiMenu(options: EmojiMenuOptions = {}): () => EmojiSugg
       for (const option of listbox.children) {
         option.setAttribute("aria-selected", String(option.id === optionId(index)));
       }
-      listbox.children[index]?.scrollIntoView?.({ block: "nearest" });
+      const option = listbox.children[index];
+      if (option instanceof HTMLElement) scrollOptionIntoView(listbox, option);
       editorElement()?.setAttribute("aria-activedescendant", optionId(index));
     }
 

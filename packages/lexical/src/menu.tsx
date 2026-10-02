@@ -1,4 +1,6 @@
 import { MenuOption } from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { useLayoutEffect, useRef } from "react";
+import { scrollOptionIntoView } from "./scroll.js";
 import type { EmojiSuggestion } from "./source.js";
 
 /** A menu row for Lexical's typeahead. `key` is the emoji's hexcode. */
@@ -25,16 +27,30 @@ export interface EmojiMenuProps {
  * The default menu. Lexical's anchor element is the `role="listbox"`: the editor's
  * `aria-controls` points at it and its `aria-activedescendant` uses the `typeahead-item-<n>` ids,
  * so the rows keep those ids. A labelled group names the list without nesting a second listbox.
+ *
+ * The rows do not register `option.setRefElement`: with it, Lexical calls `scrollIntoView` on
+ * the active row, which also scrolls the page. The menu scrolls only its own list instead.
  */
 export function EmojiMenu(props: EmojiMenuProps) {
   const { options, selectedIndex, selectOptionAndCleanUp, setHighlightedIndex } = props;
+  const listRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const option = selectedIndex === null ? undefined : list?.children[selectedIndex];
+    if (list && option instanceof HTMLElement) scrollOptionIntoView(list, option);
+  }, [selectedIndex]);
+
   return (
     // biome-ignore lint/a11y/useSemanticElements: a listbox may only hold options or groups; a <fieldset> would add form semantics and UA styling to a popup.
-    <div className="emojisense-menu" role="group" aria-label={props.ariaLabel ?? "Emoji suggestions"}>
+    <div
+      ref={listRef}
+      className="emojisense-menu"
+      role="group"
+      aria-label={props.ariaLabel ?? "Emoji suggestions"}
+    >
       {options.map((option, index) => (
         <button
           key={option.key}
-          ref={option.setRefElement}
           type="button"
           role="option"
           id={`typeahead-item-${index}`}

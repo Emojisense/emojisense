@@ -283,9 +283,18 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@lexical/list':
+        specifier: 0.51.0
+        version: 0.51.0(typescript@5.9.3)
       '@lexical/react':
         specifier: 0.51.0
         version: 0.51.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@5.9.3)(yjs@13.6.33)
+      '@lexical/rich-text':
+        specifier: 0.51.0
+        version: 0.51.0(typescript@5.9.3)
+      '@lexical/table':
+        specifier: 0.51.0
+        version: 0.51.0(typescript@5.9.3)
       '@testing-library/react':
         specifier: 16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -369,6 +378,9 @@ importers:
       '@tiptap/extension-document':
         specifier: 3.31.3
         version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
+      '@tiptap/extension-list':
+        specifier: 3.31.3
+        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
       '@tiptap/extension-paragraph':
         specifier: 3.31.3
         version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))
