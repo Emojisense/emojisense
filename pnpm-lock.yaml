@@ -101,6 +101,8 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/platform: {}
+
   packages/react:
     dependencies:
       emojisense:

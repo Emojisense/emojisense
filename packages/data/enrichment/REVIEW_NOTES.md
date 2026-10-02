@@ -38,6 +38,8 @@ and moderated aliases.
 | ⛑️ (tr) | Earthquake terms ("6 şubat", "deprem", AFAD/AKUT). Broad ones are in `low`. |
 | 🥛 (tr) | "aslan sütü" and "rakı" (regional use) are in `low`. |
 | 🏟️ (tr) | Club names are in `low`. Stadium names that contain a person's name are left out. |
+| 🇵🇸 🇺🇦 🇸🇾 | Solidarity intents ("free palestine", "pray for gaza", "slava ukraini"): political but common. |
+| 🇹🇩 | "gigachad" / "chad energy" meme slang is in `low`. |
 | 🫏 🐘 | US party symbols ("democratic party", "republican party") are in `low`. |
 
 ## Accuracy unsure
