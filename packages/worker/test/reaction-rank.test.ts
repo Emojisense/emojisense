@@ -1,4 +1,5 @@
-import { createEngine, decodeVectors, encodeVectors, l2normalize, normalize, type Pack } from "emojisense";
+import { createEngine, normalize, type Pack } from "emojisense";
+import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { describe, expect, it } from "vitest";
 import { resolveEmoji } from "../src/emoji-lookup.ts";
 import productionPack from "../src/generated/pack.en.json";

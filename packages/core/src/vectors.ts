@@ -126,9 +126,28 @@ function scoreRows(index: VectorIndex, query: Float32Array): Float32Array {
   return scores;
 }
 
+export interface VectorSearchOptions {
+  /**
+   * Added to an emoji's best cosine before ranking; the match's `score` includes it. The Search
+   * API adds the popularity prior and the glyph term (PACK_FORMAT.md §5, "Semantic score").
+   */
+  bonus?: (id: string) => number;
+}
+
 /** Exact top-k by dot product (cosine for normalized rows). ~2k rows: well under 1 ms. */
-export function searchVectors(index: VectorIndex, query: Float32Array, k = 24): VectorMatch[] {
+export function searchVectors(
+  index: VectorIndex,
+  query: Float32Array,
+  k = 24,
+  options: VectorSearchOptions = {},
+): VectorMatch[] {
   const scores = scoreRows(index, query);
+  if (options.bonus) {
+    const { bonus } = options;
+    index.ids.forEach((id, i) => {
+      scores[i] = (scores[i] as number) + bonus(id);
+    });
+  }
   const order = Array.from({ length: scores.length }, (_, i) => i);
   order.sort((a, b) => (scores[b] as number) - (scores[a] as number));
   return order.slice(0, k).map((i) => ({ index: i, id: index.ids[i] as string, score: scores[i] as number }));
@@ -143,8 +162,9 @@ export function searchVectorSets(
   indexes: readonly VectorIndex[],
   query: Float32Array,
   k = 24,
+  options: VectorSearchOptions = {},
 ): VectorMatch[] {
-  if (indexes.length === 1) return searchVectors(indexes[0] as VectorIndex, query, k);
+  if (indexes.length === 1) return searchVectors(indexes[0] as VectorIndex, query, k, options);
   const best = new Map<string, VectorMatch>();
   for (const index of indexes) {
     const scores = scoreRows(index, query);
@@ -154,5 +174,7 @@ export function searchVectorSets(
       if (!current || score > current.score) best.set(id, { index: row, id, score });
     });
   }
-  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, k);
+  const matches = [...best.values()];
+  if (options.bonus) for (const m of matches) m.score += options.bonus(m.id);
+  return matches.sort((a, b) => b.score - a.score).slice(0, k);
 }

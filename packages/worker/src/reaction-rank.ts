@@ -1,11 +1,5 @@
-import {
-  type AliasEngine,
-  COMMON_REACTIONS,
-  normalize,
-  type SearchResult,
-  searchVectors,
-  type VectorIndex,
-} from "emojisense";
+import { type AliasEngine, COMMON_REACTIONS, normalize, type SearchResult } from "emojisense";
+import { searchVectors, type VectorIndex } from "emojisense/vectors";
 import { resolveEmoji } from "./emoji-lookup.ts";
 import { fuseLists, type WeightedList } from "./fusion.ts";
 import { detectIntents, INTENTS } from "./reaction-intents.ts";
