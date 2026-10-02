@@ -48,6 +48,8 @@ per-isolate cache, the call is served as anonymous rather than failed.
 
 - Metered: each Worker call to `/v1/search` and `/v1/suggest-reactions` (`semantic_calls`, also
   when the response comes from the Cache API) and each `/v1/classify-image` (`image_classifications`).
+  Calls with a key only: anonymous calls are never metered. An answer without a model call
+  (Workers AI down, or over the limit and not in the cache) is not counted.
 - Not metered: static packs and shards, hosted emoji set images, custom emoji images and custom
   packs, on-device search.
 - Monthly UTC periods, no daily caps. Limits come from `PLANS` in `@emojisense/platform`.
