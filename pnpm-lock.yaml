@@ -245,7 +245,7 @@ importers:
   packages/emoji-mart:
     dependencies:
       emojisense:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       '@emoji-mart/data':
@@ -270,7 +270,7 @@ importers:
   packages/lexical:
     dependencies:
       emojisense:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       '@lexical/list':
@@ -313,7 +313,7 @@ importers:
         specifier: 2.1.0
         version: 2.1.0
       emojisense:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       zod:
         specifier: 4.6.5
@@ -332,7 +332,7 @@ importers:
   packages/react:
     dependencies:
       emojisense:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       '@testing-library/react':
@@ -360,7 +360,7 @@ importers:
   packages/tiptap:
     dependencies:
       emojisense:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       '@floating-ui/dom':
@@ -394,7 +394,7 @@ importers:
   packages/web-component:
     dependencies:
       emojisense:
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
     devDependencies:
       esbuild:

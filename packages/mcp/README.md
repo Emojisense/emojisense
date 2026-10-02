@@ -30,6 +30,9 @@ ranking uses too.
 
 ## Client configuration
 
+Requirements: Node.js 20 or later. `npx` downloads the package on the first start (about 4 MB: the
+data packs for 11 languages are inside).
+
 Most MCP clients read a JSON file with an `mcpServers` object. Some clients call the object
 `servers` and want `"type": "stdio"` on each entry.
 
@@ -120,3 +123,9 @@ four words and searches each window as a complete query. Then it merges the matc
 
 `suggest_reactions` re-ranks the same matches towards emoji that people commonly react with (🎉 🙏
 😂 👀 …), and fills a short list with 👍 and ❤️ (👀 and 🤔 for questions).
+
+## License
+
+MIT. The bundled data packs contain data from [Emojibase](https://emojibase.dev) (MIT) and
+[Unicode CLDR](https://cldr.unicode.org) (Unicode License v3). Their license notices ship in
+`dist/packs/licenses/`. Docs: [emojisense.com/docs/integrations/mcp](https://emojisense.com/docs/integrations/mcp/).

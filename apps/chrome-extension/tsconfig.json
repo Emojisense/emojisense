@@ -9,5 +9,6 @@
     "declarationMap": false,
     "types": ["chrome"]
   },
-  "include": ["src", "test", "vitest.config.ts"]
+  "include": ["src", "test", "vitest.config.ts"],
+  "exclude": ["test/zip.test.ts"]
 }

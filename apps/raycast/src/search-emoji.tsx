@@ -5,6 +5,7 @@ import {
   environment,
   getPreferenceValues,
   Icon,
+  Keyboard,
   List,
   showToast,
   Toast,
@@ -89,7 +90,7 @@ function EmojiActions({ item, primaryAction }: { item: EmojiItem; primaryAction:
       <Action.CopyToClipboard
         title="Copy Hexcode"
         content={item.hexcode}
-        shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+        shortcut={Keyboard.Shortcut.Common.Copy}
       />
     </ActionPanel>
   );

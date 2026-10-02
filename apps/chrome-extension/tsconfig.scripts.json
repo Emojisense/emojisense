@@ -8,5 +8,5 @@
     "declarationMap": false,
     "allowImportingTsExtensions": true
   },
-  "include": ["scripts"]
+  "include": ["scripts", "test/zip.test.ts"]
 }

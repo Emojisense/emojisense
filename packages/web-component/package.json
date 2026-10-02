@@ -2,12 +2,34 @@
   "name": "@emojisense/web-component",
   "version": "0.0.0",
   "description": "<emojisense-picker>: a framework-free emoji picker custom element with Emojisense search.",
+  "keywords": [
+    "emoji",
+    "emoji-picker",
+    "emoji-search",
+    "web-component",
+    "custom-element",
+    "vue",
+    "svelte",
+    "angular"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/web-component"
+  },
   "license": "MIT",
+  "author": "Emojisense",
   "type": "module",
   "sideEffects": [
     "./dist/index.js",
     "./dist/emojisense-picker.js"
   ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,18 +39,25 @@
       "types": "./dist/element.d.ts",
       "default": "./dist/element.js"
     },
-    "./bundle": "./dist/emojisense-picker.js"
+    "./bundle": "./dist/emojisense-picker.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && esbuild src/index.ts --bundle --minify --format=esm --outfile=dist/emojisense-picker.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "emojisense": "workspace:*"
+    "emojisense": "workspace:^"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

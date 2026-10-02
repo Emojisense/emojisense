@@ -2,29 +2,57 @@
   "name": "@emojisense/tiptap",
   "version": "0.0.0",
   "description": "Tiptap extension: `:` emoji autocomplete ranked by Emojisense.",
+  "keywords": [
+    "emoji",
+    "emoji-search",
+    "tiptap",
+    "tiptap-extension",
+    "prosemirror",
+    "autocomplete",
+    "editor"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/tiptap"
+  },
   "license": "MIT",
+  "author": "Emojisense",
   "type": "module",
   "sideEffects": [
     "*.css"
   ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./styles.css": "./styles.css"
+    "./styles.css": "./styles.css",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "styles.css"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "emojisense": "workspace:*"
+    "emojisense": "workspace:^"
   },
   "peerDependencies": {
     "@tiptap/core": "^3.28.0",

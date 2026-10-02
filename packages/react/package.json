@@ -2,9 +2,30 @@
   "name": "@emojisense/react",
   "version": "0.0.0",
   "description": "React hooks for Emojisense and an adapter for the Frimousse emoji picker.",
+  "keywords": [
+    "emoji",
+    "emoji-picker",
+    "emoji-search",
+    "react",
+    "react-hooks",
+    "frimousse",
+    "shadcn"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/react"
+  },
   "license": "MIT",
+  "author": "Emojisense",
   "type": "module",
   "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,12 +34,19 @@
     "./frimousse": {
       "types": "./dist/frimousse.d.ts",
       "default": "./dist/frimousse.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
     "!dist/r"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tsx scripts/build-registry.ts",
     "registry:build": "tsx scripts/build-registry.ts",
@@ -26,7 +54,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "emojisense": "workspace:*"
+    "emojisense": "workspace:^"
   },
   "peerDependencies": {
     "frimousse": ">=0.4.0",

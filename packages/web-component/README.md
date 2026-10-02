@@ -20,12 +20,14 @@ npm install @emojisense/web-component
 import "@emojisense/web-component"; // registers <emojisense-picker>
 ```
 
-Without a bundler, load the self-contained build (`dist/emojisense-picker.js`, ≈ 10 KB gz with
-the search engine):
+Without a bundler, load the self-contained build (`dist/emojisense-picker.js`, ≈ 15 KB gz with
+the search engine) from your own server or from a CDN that mirrors npm:
 
 ```html
-<script type="module" src="/vendor/emojisense-picker.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@emojisense/web-component@0.1.0/dist/emojisense-picker.js"></script>
 ```
+
+Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integrity) in production.
 
 ## Use
 
@@ -116,6 +118,7 @@ in `title` and `aria-description`.
 
 ### Vue 3
 
+<!-- readme-check: skip -->
 ```ts
 // vite.config.ts
 vue({ template: { compilerOptions: { isCustomElement: (tag) => tag.startsWith("emojisense-") } } });
@@ -185,3 +188,7 @@ defineEmojisensePicker("my-emoji-picker");
 - The browse view shows every emoji in the pack. It does not hide emoji that the operating system
   cannot draw yet (Emoji 16 and 17 on older systems).
 - UI strings are English. `placeholder` sets the input text and its accessible name.
+
+## License
+
+MIT. Docs: [emojisense.com/docs](https://emojisense.com/docs/).

@@ -63,6 +63,9 @@ pnpm test && pnpm eval   # unit tests, then the search benchmark (packages/eval/
 | ------- | ------------ |
 | `pnpm deploy:dev` / `pnpm deploy:production` | Deploy the API Worker, dashboard and website (`scripts/deploy.sh`), then run the smoke test |
 | `pnpm smoke:dev` / `pnpm smoke:production` | Read-only checks of a deployed environment. Exit code 1 on a failed check |
+| `pnpm changeset` | Add a release note for a change to a public npm package |
+| `pnpm release:check` / `pnpm check:readmes` | Check the npm tarballs / compile the README samples. Publishing: [RELEASING.md](RELEASING.md) |
+| `pnpm package:chrome` / `pnpm package:raycast` | Build the Chrome Web Store zip / the Raycast Store project into `release/` |
 
 The smoke test (`scripts/smoke.mjs`) checks the site pages, robots and noindex rules, search
 answers with the site key (expected answers: `scripts/smoke.expected.json`), origin and key

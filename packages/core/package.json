@@ -2,20 +2,49 @@
   "name": "emojisense",
   "version": "0.0.0",
   "description": "The search brain any emoji picker plugs into: offline alias search + optional semantic fallback.",
+  "keywords": [
+    "emoji",
+    "emoji-search",
+    "emoji-picker",
+    "search",
+    "semantic-search",
+    "aliases",
+    "offline",
+    "i18n",
+    "unicode",
+    "emojibase"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/core"
+  },
   "license": "MIT",
+  "author": "Emojisense",
   "type": "module",
   "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",

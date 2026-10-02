@@ -31,6 +31,11 @@ targets: [
 
 For local development, use a path dependency: `.package(path: "../emojisense/sdks/swift")`.
 
+To release, the owner runs `scripts/release-swift.sh <version>` at the repository root. It copies the
+history of `sdks/swift` into the mirror repository and tags it (`0.1.0`, no `v`). SwiftPM resolves
+`from:` against these tags. `.spi.yml` tells the Swift Package Index to build the DocC
+documentation. See [RELEASING.md](../../RELEASING.md).
+
 ## Usage
 
 ```swift

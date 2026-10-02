@@ -2,22 +2,49 @@
   "name": "@emojisense/mcp",
   "version": "0.0.0",
   "description": "MCP server for emoji search, emoji for a sentence and reaction suggestions. Offline by default.",
-  "license": "MIT",
-  "type": "module",
-  "bin": {
-    "emojisense-mcp": "./dist/cli.js"
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "emoji",
+    "emoji-search",
+    "reactions",
+    "ai",
+    "llm"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/mcp"
+  },
+  "license": "MIT",
+  "author": "Emojisense",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "emojisense-mcp": "./dist/cli.js"
   },
   "files": [
     "dist"
   ],
   "engines": {
     "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tsx scripts/bundle-packs.ts",
@@ -27,7 +54,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.1.0",
-    "emojisense": "workspace:*",
+    "emojisense": "workspace:^",
     "zod": "4.6.5"
   },
   "devDependencies": {
