@@ -23,8 +23,30 @@ export interface SemanticResponse {
    * caller's country as the API's edge saw it, or null when unknown.
    */
   region?: string | null;
+  /** Server: 0–1, how well its tiers understood the query. */
+  confidence?: number;
+  /** Server: no tier understood the query (`assessConfidence` with its own dictionary). */
+  unsure?: boolean;
+  /**
+   * Server: its concept tier's answer for an unsure query, null when it was not asked. With
+   * status "ok" the concept emoji are in `results` with `source: "concept"`.
+   */
+  concept?: ConceptInfo | null;
   /** Set by the provider that answered. */
   layer?: SemanticLayer;
+}
+
+/**
+ * The server's concept tier (docs/API.md, "Unsure queries and concepts"). `ok`: concept results
+ * are in the answer. `none`: the model did not know the query. `pending`: still working, ask again
+ * in a moment. `unavailable`: no model call now (budget, rate limit, error).
+ */
+export interface ConceptInfo {
+  status: "ok" | "none" | "pending" | "unavailable";
+  /** What the query names: "person", "music", "film", "brand", "meme", … */
+  kind?: string;
+  /** "Understood as": up to 3 catalog phrases, e.g. ["rapper", "hip hop"]. Never model text. */
+  terms?: string[];
 }
 
 export interface SemanticSearchOptions {

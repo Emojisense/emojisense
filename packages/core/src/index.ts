@@ -1,5 +1,14 @@
 export { createSemanticClient, type SemanticClient, type SemanticClientOptions } from "./client.js";
 export {
+  aliasCovers,
+  assessConfidence,
+  mergeConcept,
+  type QueryConfidence,
+  SEMANTIC_SURE,
+  semanticStrength,
+  WHOLE_COVERAGE,
+} from "./confidence.js";
+export {
   type ApplyCultureOptions,
   applyCulture,
   assertCulture,
@@ -70,6 +79,7 @@ export {
 } from "./pack.js";
 export {
   AUTO_REGION,
+  type ConceptInfo,
   chainProviders,
   isAutoRegion,
   type SemanticLayer,

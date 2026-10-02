@@ -141,6 +141,100 @@ describe("search session", () => {
     await vi.advanceTimersByTimeAsync(500);
     expect(fetch).not.toHaveBeenCalled();
     expect(states.at(-1)?.status).toBe("alias");
+    expect(states.at(-1)).toMatchObject({ unsure: false });
+  });
+});
+
+describe("unsure queries and the concept tier", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  /** The API's answer for an unsure query: concept results first, then a flat semantic list. */
+  const unsureBody = (concept: Record<string, unknown>) => ({
+    packVersion: "test",
+    cached: false,
+    unsure: true,
+    confidence: 0,
+    concept,
+    results: [
+      ...(concept.status === "ok" ? [{ emoji: "🎤", id: "1F3A4", score: 0.9, source: "concept" }] : []),
+      { emoji: "🌋", id: "1F30B", score: 0.4, source: "semantic" },
+      { emoji: "🐐", id: "1F410", score: 0.39, source: "semantic" },
+    ],
+  });
+  const answer = (concept: () => Record<string, unknown>) =>
+    vi.fn(async (_url: string | URL | Request) => new Response(JSON.stringify(unsureBody(concept()))));
+  const start = (fetch: ReturnType<typeof answer>, states: SessionState[]) =>
+    createSearchSession({
+      engine: createEngine(en),
+      semantic: createSemanticClient({ endpoint: "https://api.test", fetch }),
+      debounceMs: 10,
+      conceptRetryMs: 100,
+      onChange: (s) => states.push(s),
+    });
+
+  it("calls a query unsure while it waits, and merges concept results first", async () => {
+    const fetch = answer(() => ({ status: "ok", kind: "person", terms: ["rapper"] }));
+    const states: SessionState[] = [];
+    start(fetch, states).update("kendrick lamar");
+    expect(states.at(-1)).toMatchObject({ status: "loading", unsure: true });
+    await vi.advanceTimersByTimeAsync(50);
+    const last = states.at(-1) as SessionState;
+    expect(last).toMatchObject({ status: "fused", unsure: true, concept: { status: "ok", terms: ["rapper"] } });
+    expect(last.results[0]).toMatchObject({ emoji: "🎤", source: "concept" });
+  });
+
+  it("asks again while the concept answer is pending, and stops when it is final", async () => {
+    let calls = 0;
+    const fetch = answer(() => ({ status: ++calls === 1 ? "pending" : "ok" }));
+    const states: SessionState[] = [];
+    start(fetch, states).update("kendrick lamar");
+    await vi.advanceTimersByTimeAsync(50);
+    expect(states.at(-1)?.concept).toEqual({ status: "pending" });
+    await vi.advanceTimersByTimeAsync(150);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(states.at(-1)?.results[0]?.source).toBe("concept");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("gives up after two retries and keeps the unsure guesses", async () => {
+    const fetch = answer(() => ({ status: "pending" }));
+    const states: SessionState[] = [];
+    start(fetch, states).update("kendrick lamar");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(states.at(-1)).toMatchObject({ status: "fused", unsure: true, concept: { status: "pending" } });
+  });
+
+  it("drops the retry when the query changes", async () => {
+    const fetch = answer(() => ({ status: "pending" }));
+    const states: SessionState[] = [];
+    const session = start(fetch, states);
+    session.update("kendrick lamar");
+    await vi.advanceTimersByTimeAsync(50);
+    session.update("rocket");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(states.at(-1)?.query).toBe("rocket");
+  });
+});
+
+describe("semantic client and the concept tier", () => {
+  it("does not cache an answer whose concept is pending or unavailable", async () => {
+    let status = "pending";
+    const fetch = vi.fn(
+      async (_url: string | URL | Request) =>
+        new Response(JSON.stringify({ ...semanticBody, unsure: true, concept: { status } })),
+    );
+    const client = createSemanticClient({ endpoint: "https://api.test", fetch });
+    await client.search("kendrick lamar");
+    status = "unavailable";
+    await client.search("kendrick lamar");
+    status = "ok";
+    await client.search("kendrick lamar");
+    await client.search("kendrick lamar");
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 });
 

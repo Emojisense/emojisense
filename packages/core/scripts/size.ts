@@ -5,7 +5,9 @@
 import { gzipSync } from "node:zlib";
 import { build } from "esbuild";
 
-const BUDGET_BYTES = 15 * 1024;
+// 15 → 16 KB for the unsure verdict and the concept merge (DECISIONS.md, "Unsure queries and the
+// concept tier"); the function-word lists take 4.2 KB of it and are the next thing to split.
+const BUDGET_BYTES = 16 * 1024;
 const entries = {
   "full API": `export * from "./src/index.ts";`,
   "alias search only": `export { createEngine, normalize } from "./src/index.ts";`,
