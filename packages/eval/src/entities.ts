@@ -16,7 +16,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import { fuse, mergeConcept, shouldUseSemantic } from "emojisense";
+import { mergeConcept, shouldUseSemantic } from "emojisense";
 import { CONCEPT_MODEL, CONCEPT_TAG } from "../../worker/src/concepts/config.ts";
 import { type ConceptVerdict, runConceptTier, USD_PER_1K_NEURONS } from "./concept-tier.ts";
 import { EVAL_ROOT } from "./cost-inputs.ts";
@@ -63,8 +63,7 @@ const { verdicts, stats } = await runConceptTier(
 );
 const rows: Row[] = devRows.map((row, i) => {
   const verdict = verdicts[i] as ConceptVerdict;
-  const fused = fuse(row.alias, row.semantic, LIMIT);
-  const withConcept = mergeConcept(fused, verdict.concept?.results ?? [], row.alias, LIMIT).map(
+  const withConcept = mergeConcept(row.fused, verdict.concept?.results ?? [], row.alias, LIMIT).map(
     (r) => r.emoji,
   );
   return {

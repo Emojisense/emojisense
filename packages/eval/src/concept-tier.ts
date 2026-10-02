@@ -12,20 +12,21 @@ import { join } from "node:path";
 import { disposeEmbeddings, embedTexts, runWorkersAI } from "@emojisense/data/embeddings";
 import { formatQuery, getModel } from "@emojisense/data/models";
 import { CACHE_DIR } from "@emojisense/data/paths";
+import { semanticBonus } from "@emojisense/data/semantic-score";
 import {
   type AliasEngine,
   type AliasSearchOutput,
   assessConfidence,
-  createEngine,
   embeddingText,
-  l2normalize,
   type Pack,
   type QueryConfidence,
   type SearchResult,
 } from "emojisense";
+import { l2normalize, searchVectorSets } from "emojisense/vectors";
 import { CONCEPT_MODEL, CONCEPT_TAG } from "../../worker/src/concepts/config.ts";
 import { type ConceptAnswer, conceptInput, parseConcept } from "../../worker/src/concepts/model.ts";
 import { neighbourText, rankConcept } from "../../worker/src/concepts/rank.ts";
+import { rankingEngine } from "./ranking.ts";
 import { loadVectorLayout } from "./vector-layout.ts";
 
 /** Workers AI: USD per 1,000 neurons (developers.cloudflare.com/workers-ai/platform/pricing, 2026-10-02). */
@@ -84,7 +85,7 @@ export async function runConceptTier(
 ): Promise<{ verdicts: ConceptVerdict[]; stats: ConceptTierStats }> {
   const readPack = (name: string): Pack =>
     JSON.parse(readFileSync(join(options.packDir, `pack.${name}.json`), "utf8"));
-  const engine: AliasEngine = createEngine([
+  const engine: AliasEngine = rankingEngine([
     readPack("en"),
     readPack("tr"),
     readPack("en.ext"),
@@ -157,10 +158,13 @@ export async function runConceptTier(
     );
     stats.embedMs = embedStats.callMs;
     withTerms.forEach(([i], j) => {
-      const vector = vectors[j] as Float32Array;
+      // The Worker's semanticResults over the shared vectors: cosine plus the popularity prior,
+      // no glyph term.
+      const query = l2normalize((vectors[j] as Float32Array).slice(0, dims));
+      const bonus = semanticBonus(engine.popularity, undefined, query);
       neighbours.set(
         i,
-        layout.search("en", l2normalize(vector.slice(0, dims)), 8).map((m) => ({
+        searchVectorSets(layout.indexesFor("en"), query, 8, { bonus }).map((m) => ({
           emoji: engine.get(m.id)?.emoji ?? "",
           id: m.id,
           score: Math.round(m.score * 1000) / 1000,

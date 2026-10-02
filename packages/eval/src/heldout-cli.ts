@@ -14,12 +14,13 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { DATA_ROOT } from "@emojisense/data/paths";
-import { fuse, mergeConcept, type SearchResult } from "emojisense";
+import { mergeConcept, type SearchResult } from "emojisense";
 import { runConceptTier } from "./concept-tier.ts";
 import { scoreByLocale } from "./heldout.ts";
 import type { InHouseScores } from "./heldout-report.ts";
 import { ALIAS_MODE, runAndReportHeldout } from "./heldout-run.ts";
 import { judge, type Summary } from "./metrics.ts";
+import { fuseRanked } from "./ranking.ts";
 
 const EVAL_ROOT = new URL("..", import.meta.url).pathname;
 const { values: args } = parseArgs({
@@ -89,7 +90,7 @@ if (args.concepts && semantic) {
   });
   const outcomes = run.queries.map((q, i) => {
     const item = items[i] as (typeof items)[number];
-    const fused = fuse(item.alias, item.semantic as SearchResult[], 10);
+    const fused = fuseRanked(run.engineFor(q.locale), item.alias, item.semantic as SearchResult[], 10);
     const concept = verdicts[i]?.concept?.results ?? [];
     return judge(
       q,

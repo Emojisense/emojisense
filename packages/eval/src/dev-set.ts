@@ -28,9 +28,10 @@ const LIMIT = 10;
 export interface DevRow {
   q: EvalQuery;
   lists: Record<DevMode, string[]>;
-  /** The alias output and the semantic list (24 each) the lists were built from. */
+  /** The alias output and the semantic list (24 each) the lists were built from, and the fused list. */
   alias: AliasSearchOutput;
   semantic: SearchResult[];
+  fused: SearchResult[];
 }
 
 export interface DevRun {
@@ -87,6 +88,7 @@ export async function rankDevSet(
       q,
       alias,
       semantic,
+      fused,
       lists: {
         alias: alias.results.slice(0, LIMIT).map((r) => r.emoji),
         semantic: semantic.slice(0, LIMIT).map((r) => r.emoji),
