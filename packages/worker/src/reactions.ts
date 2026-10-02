@@ -3,7 +3,7 @@ import { record } from "./analytics.ts";
 import { MAX_LIMIT, MAX_REACTION_BODY_BYTES, MAX_REACTION_CHARS, REACTIONS_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
-import { errorResponse, json, parseLimit, parseLocale, readBodyCapped } from "./http.ts";
+import { errorResponse, json, parseLimit, parseLocale, readBodyCapped, unknownLocale } from "./http.ts";
 import { rankReactions } from "./reaction-rank.ts";
 import type { SearchBody } from "./search.ts";
 import { embedQuery, indexTag, modelTag } from "./semantic.ts";
@@ -34,6 +34,7 @@ export const handleReactions: Handler = async (request, env, _ctx, { catalog, cu
   const text = typeof input.text === "string" ? truncateText(input.text, MAX_REACTION_CHARS) : "";
   if (!text) return errorResponse(400, "missing or empty text");
   const locale = parseLocale(input.locale);
+  if (!locale) return unknownLocale(input.locale);
   const limit = parseLimit(input.limit, REACTIONS_DEFAULT_LIMIT, MAX_LIMIT);
   const url = new URL(request.url);
   const tenant = parseTenant(input.tenant ?? url.searchParams.get("tenant"));

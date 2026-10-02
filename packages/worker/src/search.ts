@@ -3,7 +3,7 @@ import { type Outcome, record } from "./analytics.ts";
 import { BROWSER_CACHE, EDGE_CACHE_SECONDS, MAX_LIMIT, SEARCH_DEFAULT_LIMIT } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
-import { errorResponse, json, parseLimit, parseLocale } from "./http.ts";
+import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
 import { indexTag, modelTag, rank } from "./semantic.ts";
 
 /** Response of /v1/search and /v1/suggest-reactions (docs/API.md). */
@@ -46,6 +46,8 @@ export const handleSearch: Handler = async (
   const url = new URL(request.url);
   const params = parseParams(url);
   if (!params.query) return errorResponse(400, "missing or empty q");
+  const { locale } = params;
+  if (!locale) return unknownLocale(url.searchParams.get("locale"));
   const tenant = parseTenant(url.searchParams.get("tenant"));
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
   const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
@@ -60,7 +62,7 @@ export const handleSearch: Handler = async (
     record(env, indexTag(catalog), {
       endpoint: "search",
       query: params.query,
-      locale: params.locale,
+      locale,
       mode: params.mode,
       outcome,
       ms: Date.now() - started,
@@ -70,7 +72,7 @@ export const handleSearch: Handler = async (
   const cacheKey = new Request(
     `${url.origin}/v1/search?${new URLSearchParams({
       q: params.query,
-      locale: params.locale,
+      locale,
       limit: String(params.limit),
       mode: params.mode,
       v: indexTag(catalog),
@@ -103,7 +105,7 @@ export const handleSearch: Handler = async (
     // Never a hard failure: hybrid callers still get the alias dictionary's answer.
     const ranked =
       params.mode === "hybrid"
-        ? await rank(env, catalog, { aliasQuery: params.query, locale: params.locale, limit: params.limit })
+        ? await rank(env, catalog, { aliasQuery: params.query, locale, limit: params.limit })
         : undefined;
     log("over_limit", { aliasConfidence: ranked?.aliasConfidence });
     const body: SearchBody = {
@@ -123,7 +125,7 @@ export const handleSearch: Handler = async (
   const ranked = await rank(env, catalog, {
     aliasQuery: params.mode === "hybrid" ? params.query : undefined,
     embedText: params.query,
-    locale: params.locale,
+    locale,
     limit: params.limit,
   });
   const body: SearchBody = {
