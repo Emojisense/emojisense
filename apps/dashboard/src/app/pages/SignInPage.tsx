@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useId } from "react";
 import { ClerkSignIn } from "../auth/ClerkAuth";
 import { useAuthAdapter } from "../auth/context";
+import { MOCK_MODE } from "../lib/config";
 
 /**
  * Real answers from `GET /v1/search` (pack 0.1.0, local API, October 2026), so the showcase never
@@ -108,6 +109,13 @@ function AuthLayout({ children }: { children: ReactNode }) {
   );
 }
 
+function localLede(showDevSignIn: boolean): string {
+  if (MOCK_MODE) return "Mock mode answers from fixtures. Use the dev sign-in below.";
+  return showDevSignIn
+    ? "Clerk is not set up in this build, so only the dev sign-in below works. Set VITE_CLERK_PUBLISHABLE_KEY (see the dashboard README)."
+    : "Sign-in is not set up on this server yet. Try again later.";
+}
+
 export function SignInPage({ invite = false }: { invite?: boolean }) {
   const { provider } = useAuthAdapter();
   const showDevSignIn = isLocalhost(window.location.hostname);
@@ -131,11 +139,7 @@ export function SignInPage({ invite = false }: { invite?: boolean }) {
       ) : (
         <div className="auth-head">
           <h1 className="auth-title">Sign in to Emojisense</h1>
-          <p className="page-lede">
-            {showDevSignIn
-              ? "Clerk is not set up in this build, so only the dev sign-in below works. Set VITE_CLERK_PUBLISHABLE_KEY (see the dashboard README)."
-              : "Sign-in is not set up on this server yet. Try again later."}
-          </p>
+          <p className="page-lede">{localLede(showDevSignIn)}</p>
         </div>
       )}
       {showDevSignIn && <DevSignIn />}
