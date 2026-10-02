@@ -107,6 +107,36 @@ describe("alias engine", () => {
     expect(first("es")).toBe("🧛");
   });
 
+  it("ranks an exact match of the preferred locale above an exact match only another pack has", () => {
+    // The English name (1.0) and shortcode (0.95) outweigh a French alias (0.8) or keyword
+    // (0.85) even after the foreign factor (0.92).
+    const english = {
+      ...en,
+      emoji: [
+        row("🦶", "1F9B6", "foot", {}),
+        row("🏈", "1F3C8", "american football", { shortcode: "football" }),
+        row("⚽", "26BD", "soccer ball", { keyword: "soccer" }),
+      ],
+    };
+    const french = {
+      ...en,
+      locale: "fr",
+      emoji: [
+        row("🦶", "1F9B6", "pied", {}),
+        row("🏈", "1F3C8", "football américain", { keyword: "ballon ovale" }),
+        row("⚽", "26BD", "ballon de football", { keyword: "football", alias: "foot" }),
+      ],
+    };
+    const multi = createEngine([english, french]);
+    const top = (q: string, locale: string) =>
+      multi.search(q, { locale, prefix: false }).results.map((r) => `${r.emoji} ${r.score}`);
+    expect(top("foot", "fr").slice(0, 2)).toEqual(["⚽ 0.8", "🦶 0.79"]);
+    expect(top("football", "fr").slice(0, 2)).toEqual(["⚽ 0.87", "🏈 0.86"]);
+    // Without an exact French match, the English one keeps its score; English searches are unchanged.
+    expect(top("soccer", "fr")[0]).toBe("⚽ 0.782");
+    expect(top("foot", "en")[0]).toBe("🦶 1");
+  });
+
   it("looks up entries by id", () => {
     expect(engine.get("1F680")?.emoji).toBe("🚀");
     expect(engine.get("1F680")?.labels).toEqual({ en: "rocket" });

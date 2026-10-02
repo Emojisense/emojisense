@@ -111,6 +111,34 @@ final class AliasEngineTests: XCTestCase {
     XCTAssertEqual(first("es"), "🧛")
   }
 
+  func testRanksAnExactPreferredMatchAboveAnExactMatchOnlyAnotherPackHas() throws {
+    var english = Fixtures.english
+    english.emoji = [
+      PackRow(emoji: "🦶", hexcode: "1F9B6", label: "foot"),
+      PackRow(emoji: "🏈", hexcode: "1F3C8", label: "american football", shortcode: "football"),
+      PackRow(emoji: "⚽", hexcode: "26BD", label: "soccer ball", keyword: "soccer"),
+    ]
+    var french = Fixtures.english
+    french.locale = "fr"
+    french.emoji = [
+      PackRow(emoji: "🦶", hexcode: "1F9B6", label: "pied"),
+      PackRow(
+        emoji: "🏈", hexcode: "1F3C8", label: "football américain", keyword: "ballon ovale"),
+      PackRow(
+        emoji: "⚽", hexcode: "26BD", label: "ballon de football", keyword: "football",
+        alias: "foot"),
+    ]
+    let multi = try AliasEngine(packs: [english, french])
+    let top = { (query: String, locale: String) in
+      multi.search(query, options: AliasSearchOptions(locale: locale, prefix: false)).results
+        .map { "\($0.emoji) \($0.score)" }
+    }
+    XCTAssertEqual(Array(top("foot", "fr").prefix(2)), ["⚽ 0.8", "🦶 0.79"])
+    XCTAssertEqual(Array(top("football", "fr").prefix(2)), ["⚽ 0.87", "🏈 0.86"])
+    XCTAssertEqual(top("soccer", "fr").first, "⚽ 0.782")
+    XCTAssertEqual(top("foot", "en").first, "🦶 1.0")
+  }
+
   func testLooksUpEntriesById() {
     XCTAssertEqual(engine.entry(id: "1F680")?.emoji, "🚀")
     XCTAssertEqual(engine.entry(id: "1F680")?.labels, ["en": "rocket"])

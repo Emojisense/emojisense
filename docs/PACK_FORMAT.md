@@ -209,7 +209,16 @@ contains it for this emoji.
 **Emoji score.** The best phrase score, plus 0.02 for every other matching phrase that is in a
 preferred-locale pack (at most +0.06), capped at 1. Phrases of other locales never add this
 bonus, so many loaded languages that share a loanword ("halloween") cannot lift every emoji to
-the cap. Sort by score (descending), then by row order. `confidence` = the top score.
+the cap.
+
+**Preferred exact match first.** Let `P` be the highest emoji score among the emoji that have
+an `exactPhrase` match in the `name`, `shortcode`, `keyword` or `alias` field of a
+preferred-locale pack. When there is one, every emoji without such a match whose best phrase is
+an `exactPhrase` match in the `name` or `shortcode` field of another pack scores at most
+`P − 0.01`. These two fields outweigh a preferred keyword or alias even after the foreign
+factor, so without this fr "foot" gave 🦶 (English name `foot`) before ⚽ (French alias `foot`).
+
+Sort by score (descending), then by row order. `confidence` = the top score.
 
 ## 5. Vectors (`vectors.<model>.<dims>.bin`, "ESVEC1")
 

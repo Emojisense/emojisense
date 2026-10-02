@@ -77,7 +77,7 @@ public final class AliasEngine: @unchecked Sendable {
   private struct RankedEmoji {
     let emoji: Int32
     let phrase: Int32
-    let score: Double
+    var score: Double
   }
 
   /// Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds
@@ -129,16 +129,17 @@ public final class AliasEngine: @unchecked Sendable {
       if coverage < minCoverage { continue }
 
       let length = Int(index.phraseLength[Int(phrase)])
+      let exact = allExact && length == tokenCount
       let exactFactor =
-        allExact && length == tokenCount
-        ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
+        exact ? (tokenCount >= 2 ? Scoring.exactPhraseBonus : 1) : Scoring.nonExactFactor
       let preferred = isPreferred(phrase)
       let localeFactor = preferred ? 1 : Scoring.foreignLocaleFactor
       let score =
         index.phraseFieldWeight[Int(phrase)] * coverage
         * (0.6 + 0.4 * min(1, Double(matched) / Double(length))) * exactFactor * localeFactor
       scratch.recordEmoji(
-        Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score, preferred: preferred)
+        Int(index.phraseEmoji[Int(phrase)]), phrase: phrase, score: score, preferred: preferred,
+        exact: exact, strong: Scoring.strongFields.contains(index.phraseField[Int(phrase)]))
     }
 
     // Only phrases of the preferred locale add evidence (PACK_FORMAT.md §4).
@@ -148,6 +149,25 @@ public final class AliasEngine: @unchecked Sendable {
       let bonus = min(Scoring.maxEvidenceBonus, Double(support) * Scoring.evidenceBonus)
       return RankedEmoji(
         emoji: emoji, phrase: best, score: min(1, scratch.emojiScore[Int(emoji)] + bonus))
+    }
+    // An exact name, shortcode, keyword or alias match in a preferred-locale pack beats an exact
+    // name or shortcode match that only another pack has (PACK_FORMAT.md §4): such a
+    // foreign-only match is capped just below the best preferred one.
+    let topExactPreferred = ranked.reduce(0.0) { top, candidate in
+      scratch.emojiExactPreferred[Int(candidate.emoji)] ? max(top, candidate.score) : top
+    }
+    if topExactPreferred > 0 {
+      for position in ranked.indices {
+        let emoji = Int(ranked[position].emoji)
+        let phrase = ranked[position].phrase
+        if !scratch.emojiExactPreferred[emoji] && scratch.emojiBestExact[emoji]
+          && Scoring.dominantFields.contains(index.phraseField[Int(phrase)])
+          && !isPreferred(phrase)
+        {
+          ranked[position].score = min(
+            ranked[position].score, topExactPreferred - Scoring.foreignExactMargin)
+        }
+      }
     }
     ranked.sort { $0.score != $1.score ? $0.score > $1.score : $0.emoji < $1.emoji }
     return ranked
@@ -288,6 +308,12 @@ enum Scoring {
   /// A multi-word query that equals a whole phrase ("ship it") beats one-word name hits ("ship").
   static let exactPhraseBonus = 1.1
   static let foreignLocaleFactor = 0.92
+  /// How far below the best preferred-locale exact match a foreign-only exact match is capped.
+  static let foreignExactMargin = 0.01
+  /// Fields whose exact preferred-locale match outranks a foreign name or shortcode.
+  static let strongFields: Set<Field> = [.name, .shortcode, .keyword, .alias]
+  /// Fields whose weight beats a preferred alias even after the foreign factor.
+  static let dominantFields: Set<Field> = [.name, .shortcode]
   static let evidenceBonus = 0.02
   static let maxEvidenceBonus = 0.06
   static let stopwordWeightCap = 0.3
