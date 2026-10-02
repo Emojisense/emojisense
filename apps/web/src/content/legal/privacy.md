@@ -78,9 +78,10 @@ The dashboard sets two cookies. Both are strictly necessary, so they need no con
 
 ### Deleting your account
 
-You can delete your account at any time. Send `DELETE /api/me` to the dashboard while you are
-signed in, with your account's email address as confirmation (see the [HTTP API](/docs/api/)
-reference). The dashboard has no button for this yet. You can also write to [Privacy email].
+You can delete your account at any time. In the dashboard, open Settings, choose "Delete
+account" and type your account's email address to confirm. The dashboard API does the same:
+`DELETE /api/me` (see the [HTTP API](/docs/api/) reference). You can also write to
+[Privacy email].
 
 One request deletes, at once, from the live database: your account and its sessions, your apps
 with their API keys, usage counts, search analytics, tenants, custom emoji (records and images)
@@ -90,15 +91,17 @@ minute, so a deleted key can work for up to one more minute.
 
 Not deleted, because they are not linked to your account: the search records in Analytics Engine
 (they have no app, key or account and expire after three months), and the invites that other
-owners sent to your email address (they belong to those owners). For backups, see "Deletion and
-backups" below.
+owners sent to your email address (they belong to those owners). Copies of custom emoji images
+that Cloudflare's edge cache or a browser already holds stay there until they are evicted or
+expire. For backups, see "Deletion and backups" below.
 
 ### Custom emoji and tenants
 
 Custom emoji images are kept in object storage on Cloudflare (R2), with their names, search
 phrases, file type, size and source (upload, Slack import, Discord import or API). Tenant records
 hold the id and the name that you give each of your customers. We keep this data until you delete
-it or your account. For this data, our customer is the controller.
+it or your account. For this data, our customer is the controller. A Slack or Discord token that
+you give us for an import is used once and never stored or logged.
 
 ### Searches that reach the API
 
