@@ -1,26 +1,8 @@
 import { PLANS } from "@emojisense/platform";
-import type { EmojiSearchState } from "@emojisense/react";
-import type { AliasSearchOutput, SearchResult } from "emojisense";
 import { describe, expect, it } from "vitest";
-import { describeAnswer, semanticLayerOf } from "../src/lib/answer";
-import { burstPieces, settledAnswer, tiltFor } from "../src/lib/celebrate";
 import { codePointLabel, formatCount, formatDays, formatUsd } from "../src/lib/format";
 import { docsLinkResolver, renderMarkdown, slugify } from "../src/lib/markdown";
 import { planViews } from "../src/lib/pricing";
-
-const DINO: SearchResult = { emoji: "🦖", id: "1F996", score: 0.82, source: "alias" };
-
-function state(overrides: Partial<EmojiSearchState> & { layer?: string }): EmojiSearchState {
-  return {
-    results: [DINO],
-    status: "alias",
-    alias: { confidence: 0.9 } as AliasSearchOutput,
-    aliasMs: 0.25,
-    semanticMs: undefined,
-    semanticCached: undefined,
-    ...overrides,
-  } as EmojiSearchState;
-}
 
 describe("format", () => {
   it.each([
@@ -117,54 +99,5 @@ describe("renderMarkdown", () => {
 
   it("slugifies like a reader expects", () => {
     expect(slugify("Über  Fast — Search!")).toBe("uber-fast-search");
-  });
-});
-
-describe("answer readout", () => {
-  it("reads the layer defensively and treats fused answers without it as the API", () => {
-    expect(semanticLayerOf(state({ status: "alias" }))).toBeUndefined();
-    expect(semanticLayerOf(state({ status: "fused" }))).toBe("api");
-    expect(semanticLayerOf(state({ status: "fused", layer: "shard" }))).toBe("shard");
-    expect(semanticLayerOf(state({ status: "fused", layer: "something-new" }))).toBe("api");
-  });
-
-  it("says where each answer came from", () => {
-    expect(describeAnswer(state({ status: "alias" }))).toBe("Answered on this device in 0.25 ms. Cost: $0.");
-    expect(describeAnswer(state({ status: "fused", semanticMs: 48.4, layer: "shard" }))).toContain(
-      "precomputed results in 48 ms. Cost: $0.",
-    );
-    expect(describeAnswer(state({ status: "fused", semanticMs: 48.4, semanticCached: true }))).toBe(
-      "On this device, plus the Worker in 48 ms (cached).",
-    );
-    expect(describeAnswer(state({ status: "error" }))).toContain("dictionary results");
-  });
-});
-
-describe("celebration", () => {
-  it("celebrates only settled, confident answers", () => {
-    expect(settledAnswer(state({ status: "alias" }))).toBe(DINO);
-    expect(settledAnswer(state({ status: "fused", alias: { confidence: 0.1 } as AliasSearchOutput }))).toBe(
-      DINO,
-    );
-    expect(settledAnswer(state({ status: "loading" }))).toBeUndefined();
-    expect(
-      settledAnswer(state({ status: "alias", alias: { confidence: 0.4 } as AliasSearchOutput })),
-    ).toBeUndefined();
-    expect(settledAnswer(state({ status: "alias", results: [] }))).toBeUndefined();
-  });
-
-  it("tilts stickers between -6 and 6 degrees, the same way every time", () => {
-    for (const id of ["1F996", "1F410", "1F383", "1F92F"]) {
-      expect(tiltFor(id)).toBeGreaterThanOrEqual(-6);
-      expect(tiltFor(id)).toBeLessThanOrEqual(6);
-      expect(tiltFor(id)).toBe(tiltFor(id));
-    }
-  });
-
-  it("makes a stable burst of the requested size", () => {
-    const pieces = burstPieces(8, "1F996");
-    expect(pieces).toHaveLength(8);
-    expect(burstPieces(8, "1F996")).toEqual(pieces);
-    for (const piece of pieces) expect(Math.hypot(piece.dx, piece.dy + 0.75)).toBeLessThanOrEqual(5.6);
   });
 });

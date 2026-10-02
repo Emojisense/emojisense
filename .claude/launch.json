@@ -2,6 +2,20 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "api",
+      "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
+      "runtimeArgs": [
+        "node_modules/wrangler/bin/wrangler.js",
+        "dev",
+        "--port",
+        "8788",
+        "--persist-to",
+        "../../.wrangler/state"
+      ],
+      "cwd": "packages/worker",
+      "port": 8788
+    },
+    {
       "name": "api-offline",
       "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
       "runtimeArgs": [
@@ -10,7 +24,9 @@
         "--env",
         "offline",
         "--port",
-        "8788"
+        "8788",
+        "--persist-to",
+        "../../.wrangler/state"
       ],
       "cwd": "packages/worker",
       "port": 8788
@@ -26,6 +42,32 @@
       ],
       "cwd": "apps/demo",
       "port": 5173
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
+      "runtimeArgs": [
+        "node_modules/astro/bin/astro.mjs",
+        "dev",
+        "--port",
+        "4321"
+      ],
+      "cwd": "apps/web",
+      "port": 4321
+    },
+    {
+      "name": "dashboard",
+      "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
+      "runtimeArgs": [
+        "node_modules/wrangler/bin/wrangler.js",
+        "dev",
+        "--port",
+        "8792",
+        "--persist-to",
+        "../../.wrangler/state"
+      ],
+      "cwd": "apps/dashboard",
+      "port": 8792
     }
   ]
 }

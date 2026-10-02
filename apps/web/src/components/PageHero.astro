@@ -1,0 +1,37 @@
+---
+interface Props {
+  eyebrow: string;
+  emoji: string;
+  title: string;
+}
+
+const { eyebrow, emoji, title } = Astro.props;
+---
+
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow"><span class="emoji" aria-hidden="true">{emoji}</span> {eyebrow}</p>
+    <h1>{title}</h1>
+    <div class="lead"><slot /></div>
+  </div>
+</section>
+
+<style>
+  .page-hero {
+    padding: clamp(3rem, 7vw, 5rem) 0 clamp(2rem, 4vw, 3rem);
+    text-align: center;
+    background: radial-gradient(50rem 22rem at 50% -20%, var(--lemon), transparent 70%);
+  }
+
+  h1 {
+    max-width: 44rem;
+    margin-inline: auto;
+    font-size: clamp(2.5rem, 1.6rem + 3.4vw, 4rem);
+    font-weight: 800;
+  }
+
+  .lead {
+    max-width: 38rem;
+    margin-inline: auto;
+  }
+</style>

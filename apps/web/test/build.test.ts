@@ -105,34 +105,30 @@ describe.each(PAGES)("page %s", (path) => {
 });
 
 describe("landing page", () => {
-  it("renders the live search with the hero query and the packs from the configured API", () => {
-    const doc = page("/");
-    const island = doc.querySelector('astro-island[component-url*="HeroSearch"]');
+  it("renders the live demo with the packs and API from the configuration", () => {
+    const island = page("/").querySelector('astro-island[component-url*="HeroDemo"]');
     expect(island).not.toBeNull();
     expect(island?.getAttribute("props")).toContain(`${API}/v1/pack/0.1.0`);
-    expect(doc.querySelector<HTMLInputElement>('input[type="search"]')?.getAttribute("value")).toBe(
-      "jurassic park",
-    );
   });
 
-  it("has the why, how, integrations, open source and FAQ sections", () => {
+  it("has the edge, network effect, features, languages, developers, pricing and FAQ sections", () => {
     const doc = page("/");
-    for (const id of ["why", "how", "integrations", "open-source", "faq"]) {
+    for (const id of ["edge", "network", "features", "languages", "developers", "pricing", "faq"]) {
       expect(doc.getElementById(id), id).not.toBeNull();
     }
     const text = doc.body.textContent ?? "";
-    for (const name of [
-      "React",
-      "Frimousse",
-      "Web component",
-      "Tiptap and Lexical",
-      "Chrome",
-      "Raycast",
-      "MCP",
-    ]) {
+    for (const name of ["React", "Frimousse", "Tiptap", "Lexical", "Swift", "Chrome", "Raycast", "MCP"]) {
       expect(text).toContain(name);
     }
     expect(doc.querySelectorAll("#faq details").length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("states the edge facts and the over-limit switch", () => {
+    const doc = page("/");
+    expect(doc.getElementById("edge")?.textContent).toContain("300+");
+    expect(doc.querySelectorAll("#edge .bubble").length).toBeGreaterThanOrEqual(8);
+    expect(doc.querySelector('#network input[role="switch"]')).not.toBeNull();
+    expect(doc.querySelectorAll("#network .rung")).toHaveLength(4);
   });
 });
 
@@ -143,7 +139,7 @@ describe("pricing page", () => {
     const card = doc().querySelector(`[data-plan="${id}"]`);
     expect(card).not.toBeNull();
     expect(Number(card?.getAttribute("data-price-monthly"))).toBe(PLANS[id].priceUsdMonthly);
-    expect(card?.querySelector(".price strong")?.textContent).toBe(`$${PLANS[id].priceUsdMonthly}`);
+    expect(card?.querySelector(".price .amount")?.textContent).toBe(`$${PLANS[id].priceUsdMonthly}`);
   });
 
   it("shows the Solo yearly price", () => {
@@ -161,19 +157,19 @@ describe("pricing page", () => {
       if (feature.raw !== undefined)
         expect(Number(row?.getAttribute("data-raw")), feature.key).toBe(feature.raw);
     }
-    const calls = card?.querySelector('[data-feature="semantic_calls"] strong')?.textContent;
+    const calls = card?.querySelector('[data-feature="semantic_calls"] strong')?.textContent?.trim();
     expect(calls).toBe(formatCount(PLANS[id].limits.semantic_calls));
   });
 
   it("sends Pro to the waitlist", () => {
-    const link = doc().querySelector('[data-plan="pro"] a.button');
+    const link = doc().querySelector('[data-plan="pro"] a.btn');
     expect(link?.getAttribute("href")).toBe("/waitlist/?plan=pro");
   });
 
   it("explains the over-limit fallback", () => {
     const text = doc().getElementById("limits")?.textContent ?? "";
-    expect(text).toContain("never a hard failure");
-    expect(text).toContain("overLimit: true");
+    expect(text).toContain("never breaks");
+    expect(text).toContain("cached");
   });
 });
 

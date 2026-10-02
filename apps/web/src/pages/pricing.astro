@@ -1,371 +1,96 @@
 ---
-import type { PlanId } from "@emojisense/platform";
-import PageIntro from "../components/PageIntro.astro";
-import Section from "../components/Section.astro";
+import PageHero from "../components/PageHero.astro";
+import Pricing from "../components/Pricing.astro";
 import { DASHBOARD_URL, SITE_URL } from "../config";
 import Base from "../layouts/Base.astro";
 import { planViews } from "../lib/pricing";
 
-const plans = planViews(DASHBOARD_URL);
-const PLAN_COPY: Record<PlanId, { emoji: string; blurb: string }> = {
-  free: { emoji: "🐣", blurb: "For side projects and for trying it in your app." },
-  solo: { emoji: "🧑‍💻", blurb: "For one product with real traffic." },
-  pro: { emoji: "🚀", blurb: "For a team that ships to several environments." },
-  scale: { emoji: "🏟️", blurb: "For platforms that serve many tenants." },
-};
+const offers = planViews(DASHBOARD_URL).map((plan) => ({
+  "@type": "Offer",
+  name: plan.name,
+  price: plan.monthlyUsd,
+  priceCurrency: "USD",
+}));
 
-const description =
-  "Emojisense pricing: semantic emoji search is free on every plan. Paid plans add volume, photo to emoji, custom emoji, analytics and team features.";
-
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Product",
-  name: "Emojisense",
-  url: `${SITE_URL}/pricing/`,
-  description,
-  offers: plans.map((plan) => ({
-    "@type": "Offer",
-    name: plan.name,
-    price: plan.monthlyUsd,
-    priceCurrency: "USD",
-  })),
-};
+const faqs = [
+  {
+    q: "What counts as a Worker call?",
+    a: "A search or reaction suggestion that reaches our API. Searches answered on the device or from precomputed files are free and unlimited.",
+  },
+  {
+    q: "What happens over the limit?",
+    a: "Nothing breaks for your users. Answers that are cached at the edge or prepared in advance keep coming and are not counted. Brand-new searches use the on-device dictionary until the next month.",
+  },
+  {
+    q: "Can I self-host instead?",
+    a: "Yes. The engine, data and API server are MIT. You pay your own Cloudflare costs and get quarterly dictionary updates.",
+  },
+  {
+    q: "When do paid plans open?",
+    a: "Soon. Join the waitlist and we write once, when your plan opens. The free plan works today.",
+  },
+];
 ---
 
-<Base title="Pricing" description={description} path="/pricing/" jsonLd={jsonLd}>
-  <PageIntro emoji="🏷️" label="Pricing" title="Search is free. Pay for volume and extras." sticker="🆓">
-    <p>
-      Every plan includes semantic search, reaction suggestions and all SDKs, with no “powered by” badge.
-      Paid plans are not on sale yet: join the waitlist and we email you once when they open.
-    </p>
-  </PageIntro>
-
-  <div class="wrap">
-    <ul class="plans">
-      {
-        plans.map((plan) => (
-          <li class="card plan" data-plan={plan.id} data-price-monthly={plan.monthlyUsd}>
-            {plan.id === "pro" && <p class="badge">Waitlist open</p>}
-            <div class="plan-head">
-              <span class="plan-emoji" aria-hidden="true">
-                {PLAN_COPY[plan.id].emoji}
-              </span>
-              <h2>{plan.name}</h2>
-            </div>
-            <p class="price">
-              <strong>{plan.monthly}</strong>
-              <span>a month</span>
-            </p>
-            <p class="price-alt" data-price-yearly={plan.yearly?.raw}>
-              {plan.yearly
-                ? `or ${plan.yearly.price} a year, ${plan.yearly.savings} less`
-                : plan.monthlyUsd === 0
-                  ? "No card needed"
-                  : "Billed monthly"}
-            </p>
-            <p class="blurb">{PLAN_COPY[plan.id].blurb}</p>
-            <a class:list={["button", { "button-primary": plan.id === "pro" }]} href={plan.cta.href}>
-              {plan.cta.label}
-            </a>
-            <ul class="features">
-              {plan.features.map((feature) => (
-                <li data-feature={feature.key} data-raw={feature.raw}>
-                  <span>{feature.label}</span>
-                  {typeof feature.value === "string" ? (
-                    <strong>{feature.value}</strong>
-                  ) : feature.value ? (
-                    <strong class="yes">
-                      <span aria-hidden="true">✓</span>
-                      <span class="visually-hidden">Included</span>
-                    </strong>
-                  ) : (
-                    <strong class="no">
-                      <span aria-hidden="true">–</span>
-                      <span class="visually-hidden">Not included</span>
-                    </strong>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))
-      }
-    </ul>
-    <p class="fine">Prices in US dollars. Limits reset on the first day of each month (UTC).</p>
-  </div>
-
-  <Section id="limits" emoji="🛟" label="At the limit" title="Graceful fallback, never a hard failure." tone="cloud">
-    <p>
-      A plan limit never breaks search for your users. Over the limit, the Worker pauses and the layers that
-      cost nothing keep answering.
-    </p>
-    <div class="card flow">
-      <p class="flow-label">Under the limit</p>
-      <ol class="flow-row" aria-label="Under the limit">
-        <li><span aria-hidden="true">📱</span> Device <span class="mono">L0</span></li>
-        <li><span aria-hidden="true">🗂️</span> Shards <span class="mono">L2</span></li>
-        <li><span aria-hidden="true">☁️</span> Worker <span class="mono">L3</span></li>
-      </ol>
-      <p class="flow-label">Over the limit</p>
-      <ol class="flow-row" aria-label="Over the limit">
-        <li><span aria-hidden="true">📱</span> Device <span class="mono">L0</span></li>
-        <li><span aria-hidden="true">🗂️</span> Shards <span class="mono">L2</span></li>
-        <li class="paused"><span aria-hidden="true">💤</span> Worker paused until the 1st <span class="mono">L3</span></li>
-      </ol>
+<Base
+  title="Pricing"
+  description="Emojisense pricing: free for most apps. Pay for volume, photo classifications and custom emoji."
+  path="/pricing/"
+  jsonLd={{ "@context": "https://schema.org", "@type": "Product", name: "Emojisense", url: `${SITE_URL}/pricing/`, offers }}
+>
+  <PageHero eyebrow="Pricing" emoji="💸" title="Free to start. Fair when you grow.">
+    <p>Search and reaction suggestions are free on every plan. Pay only for volume, photos and custom emoji.</p>
+  </PageHero>
+  <section class="section" style="padding-top: 1rem">
+    <div class="container">
+      <Pricing />
     </div>
-    <ul class="rules">
-      <li>
-        The API answers <code>200</code> with <code>overLimit: true</code> and no semantic results. It does not
-        return an error.
-      </li>
-      <li>The SDK then stays on the on-device dictionary and the shards for an hour before it asks again.</li>
-      <li>Only Worker calls and photo classifications pause. Search, browsing and selection keep working.</li>
-      <li>On-device searches, shards and data packs are never metered.</li>
-    </ul>
-  </Section>
-
-  <Section id="pricing-details" emoji="🔍" label="Details" title="What the numbers mean.">
-    <dl class="defs">
-      <div class="card">
-        <dt>Worker call</dt>
-        <dd>
-          One request to <code>/v1/search</code> or <code>/v1/suggest-reactions</code> that reaches the Worker, also
-          when the Worker answers from its cache.
-        </dd>
+  </section>
+  <section class="section section-soft">
+    <div class="container narrow">
+      <h2>Pricing questions</h2>
+      <div class="faq">
+        {faqs.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <p>{f.a}</p>
+          </details>
+        ))}
       </div>
-      <div class="card">
-        <dt>Photo to emoji</dt>
-        <dd>One image sent to <code>/v1/classify-image</code>. The image is never stored.</dd>
-      </div>
-      <div class="card">
-        <dt>Hosted emoji sets</dt>
-        <dd>
-          Open-source emoji image sets served from our CDN, in step with the data pack, with the license
-          attribution done for you.
-        </dd>
-      </div>
-      <div class="card">
-        <dt>Custom emoji</dt>
-        <dd>Your own images, described and made searchable automatically. One set per app.</dd>
-      </div>
-    </dl>
-  </Section>
+    </div>
+  </section>
 </Base>
 
 <style>
-  .plans {
+  .narrow {
+    max-width: 50rem;
+  }
+
+  h2 {
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .faq {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-    gap: 1.25rem;
-    margin: clamp(2rem, 5vw, 3rem) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .plan {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    padding: 1.375rem 1.25rem 1.25rem;
-  }
-
-  .plan[data-plan="pro"] {
-    background: var(--sun-soft);
-  }
-
-  .badge {
-    position: absolute;
-    top: -0.875rem;
-    right: 1rem;
-    margin: 0;
-    padding: 0.125rem 0.625rem;
-    border: var(--outline);
-    border-radius: var(--radius-pill);
-    background: var(--bubblegum);
-    color: var(--on-sun);
-    font: 800 var(--step--2) / 1.5 var(--font-body);
-    transform: rotate(3deg);
-  }
-
-  .plan-head {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .plan-emoji {
-    font: 1.75rem / 1 var(--font-emoji);
-  }
-
-  .plan h2 {
-    margin: 0;
-    font-size: var(--step-1);
-  }
-
-  .price {
-    display: flex;
-    align-items: baseline;
-    gap: 0.375rem;
-    margin: 0.875rem 0 0;
-  }
-
-  .price {
-    flex-wrap: wrap;
-  }
-
-  .price strong {
-    font: 700 clamp(2.25rem, 1.6rem + 1.6vw, 3rem) / 1 var(--font-display);
-  }
-
-  .price span,
-  .price-alt {
-    font: 400 var(--step--1) / 1.4 var(--font-mono);
-    color: var(--muted);
-  }
-
-  .price-alt {
-    min-height: 1.4em;
-    margin: 0.375rem 0 0;
-  }
-
-  .blurb {
-    min-height: 3.2em;
-    margin: 1rem 0;
-  }
-
-  .features {
-    margin: 1.25rem 0 0;
-    padding: 0;
-    list-style: none;
-    font-size: var(--step--1);
-  }
-
-  .features li {
-    display: flex;
-    justify-content: space-between;
     gap: 0.75rem;
-    padding-block: 0.5rem;
-    border-top: 0.125rem dashed color-mix(in srgb, var(--ink) 15%, transparent);
   }
 
-  .features strong {
-    font: 400 var(--step--1) / 1.4 var(--font-mono);
-    text-align: right;
-    white-space: nowrap;
+  details {
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg);
   }
 
-  .features .yes {
-    color: var(--ink);
-    font-weight: 800;
-  }
-
-  .features .no {
-    color: var(--muted);
-  }
-
-  .fine {
-    margin: 1.25rem 0 0;
-    font-size: var(--step--1);
-    color: var(--muted);
-  }
-
-  .flow {
-    display: grid;
-    gap: 0.5rem;
-    margin: 2rem 0;
-    padding: 1.25rem;
-  }
-
-  .flow-label {
-    margin: 0.25rem 0 0;
-    font-weight: 800;
-    font-size: var(--step--1);
-  }
-
-  .flow-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1.75rem;
-    margin: 0 0 0.5rem;
-    padding: 0;
-    list-style: none;
-  }
-
-  .flow-row li {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.625rem 0.75rem;
-    border: var(--outline);
-    border-radius: var(--radius-key);
-    background: var(--key);
-    box-shadow: var(--depth);
-    font: 800 var(--step--1) / 1.3 var(--font-body);
-  }
-
-  .flow-row li .mono {
-    margin-left: auto;
-    font-weight: 400;
-    color: var(--muted);
-  }
-
-  .flow-row li + li::before {
-    content: "→";
-    position: absolute;
-    left: -1.375rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: var(--font-mono);
-  }
-
-  .flow-row li.paused {
-    border-style: dashed;
-    box-shadow: none;
-    background: transparent;
-    color: var(--muted);
-  }
-
-  .rules {
-    max-width: 62ch;
-    padding-left: 1.125rem;
-  }
-
-  .rules li + li {
-    margin-top: 0.5rem;
-  }
-
-  .defs {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-    gap: 1.25rem;
-    margin: 2rem 0 0;
-  }
-
-  .defs div {
+  summary {
     padding: 1.125rem 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
   }
 
-  .defs dt {
-    font: 800 var(--step-0) / 1.3 var(--font-body);
-  }
-
-  .defs dd {
-    margin: 0.375rem 0 0;
-    color: var(--muted);
-  }
-
-  @media (max-width: 40rem) {
-    .flow-row {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 1.5rem;
-    }
-
-    .flow-row li + li::before {
-      content: "↓";
-      left: 50%;
-      top: -1.25rem;
-      transform: translateX(-50%);
-    }
+  details p {
+    padding: 0 1.25rem 1.25rem;
+    color: var(--ink-2);
   }
 </style>

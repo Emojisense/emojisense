@@ -1,0 +1,176 @@
+---
+import { DASHBOARD_URL } from "../config";
+import { planViews } from "../lib/pricing";
+
+const plans = planViews(DASHBOARD_URL);
+const EMOJI: Record<string, string> = { free: "🐣", solo: "🚲", pro: "🚀", scale: "🛸" };
+const BLURB: Record<string, string> = {
+  free: "For side projects and trying it out.",
+  solo: "For one app with real users.",
+  pro: "For teams shipping several apps.",
+  scale: "For platforms with many customers.",
+};
+---
+
+<div class="plans">
+  {
+    plans.map((plan) => (
+      <article class:list={["plan", { featured: plan.id === "pro" }]} data-plan={plan.id} data-price-monthly={plan.monthlyUsd}>
+        {plan.id === "pro" && <p class="badge">Most popular</p>}
+        <header>
+          <span class="plan-emoji emoji" aria-hidden="true">
+            {EMOJI[plan.id]}
+          </span>
+          <h3>{plan.name}</h3>
+          <p class="blurb">{BLURB[plan.id]}</p>
+        </header>
+        <p class="price">
+          <span class="amount">{plan.monthly}</span>
+          <span class="per">/ month</span>
+        </p>
+        <p class="price-alt" data-price-yearly={plan.yearly?.raw}>{plan.yearly ? `or ${plan.yearly.price} a year` : " "}</p>
+        <a class:list={["btn", plan.id === "pro" ? "btn-primary" : "btn-secondary"]} href={plan.cta.href}>
+          {plan.cta.label}
+        </a>
+        <ul>
+          {plan.features.map((f) => (
+            <li class:list={{ off: f.value === false }} data-feature={f.key} data-raw={f.raw}>
+              <span class="mark" aria-hidden="true">
+                {f.value === false ? "–" : "✓"}
+              </span>
+              <span>
+                {typeof f.value === "string" ? <strong>{f.value} </strong> : null}
+                {f.label}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </article>
+    ))
+  }
+</div>
+<p class="fine" id="limits">
+  <span class="emoji" aria-hidden="true">🛟</span> Search never breaks at a limit. Over your monthly calls, cached and
+  ready-made answers keep coming for free, and the on-device dictionary covers the rest until next month. Paid plans
+  open soon — join the waitlist to get early access.
+</p>
+
+<style>
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .plan {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.5rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .plan.featured {
+    border: 0.125rem solid var(--ink);
+    box-shadow: var(--shadow);
+  }
+
+  .badge {
+    position: absolute;
+    top: -0.75rem;
+    right: 1.25rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--pill);
+    background: var(--brand);
+    color: var(--on-brand);
+    font-weight: 800;
+    font-size: 0.75rem;
+  }
+
+  .plan-emoji {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 0.75rem;
+    border-radius: 0.875rem;
+    background: var(--bg-soft);
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.375rem;
+  }
+
+  .blurb {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    min-height: 2.75rem;
+  }
+
+  .price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    margin-top: 0.75rem;
+  }
+
+  .amount {
+    font: 800 2.5rem / 1 var(--font-display);
+    letter-spacing: -0.03em;
+  }
+
+  .per,
+  .price-alt {
+    color: var(--ink-3);
+    font-size: 0.875rem;
+  }
+
+  .btn {
+    margin: 1rem 0 1.25rem;
+    width: 100%;
+  }
+
+  ul {
+    display: grid;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 1.25rem 0 0;
+    border-top: 0.0625rem solid var(--line);
+    list-style: none;
+    font-size: 0.9375rem;
+  }
+
+  li {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .mark {
+    flex: none;
+    width: 1.25rem;
+    color: var(--good);
+    font-weight: 800;
+  }
+
+  li.off {
+    color: var(--ink-3);
+  }
+
+  li.off .mark {
+    color: var(--ink-3);
+  }
+
+  .fine {
+    max-width: 44rem;
+    margin: 2rem auto 0;
+    color: var(--ink-2);
+    text-align: center;
+    font-size: 0.9375rem;
+  }
+</style>

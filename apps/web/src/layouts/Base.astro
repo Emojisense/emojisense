@@ -2,8 +2,10 @@
 // Self-hosted (no third-party requests). Latin + Latin Extended covers English and Turkish.
 import "@fontsource/dm-mono/latin-400.css";
 import "@fontsource/dm-mono/latin-ext-400.css";
-import "@fontsource/dynapuff/latin-700.css";
-import "@fontsource/dynapuff/latin-ext-700.css";
+import "@fontsource/gabarito/latin-700.css";
+import "@fontsource/gabarito/latin-800.css";
+import "@fontsource/gabarito/latin-ext-700.css";
+import "@fontsource/gabarito/latin-ext-800.css";
 import "@fontsource/figtree/latin-400.css";
 import "@fontsource/figtree/latin-600.css";
 import "@fontsource/figtree/latin-800.css";
@@ -11,8 +13,8 @@ import "@fontsource/figtree/latin-ext-400.css";
 import "@fontsource/figtree/latin-ext-600.css";
 import "@fontsource/figtree/latin-ext-800.css";
 import "../styles/global.css";
-import SiteFooter from "../components/SiteFooter.astro";
-import SiteHeader from "../components/SiteHeader.astro";
+import Footer from "../components/Footer.astro";
+import Nav from "../components/Nav.astro";
 import { SITE_URL } from "../config";
 
 interface Props {
@@ -26,7 +28,7 @@ interface Props {
 }
 
 const { title, description, path, jsonLd } = Astro.props;
-const fullTitle = title ? `${title} · Emojisense` : "Emojisense: emoji search that understands meaning";
+const fullTitle = title ? `${title} · Emojisense` : "Emojisense: emoji search that gets what people mean";
 const canonical = `${SITE_URL}${path}`;
 ---
 
@@ -51,10 +53,32 @@ const canonical = `${SITE_URL}${path}`;
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <SiteHeader path={path} />
+    <Nav path={path} />
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    <SiteFooter />
+    <Footer />
   </body>
 </html>
+
+<style is:global>
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    border-radius: var(--pill);
+    background: var(--brand);
+    color: var(--on-brand);
+    font-weight: 700;
+  }
+
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  main:focus {
+    outline: none;
+  }
+</style>

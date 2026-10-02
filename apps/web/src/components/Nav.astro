@@ -1,0 +1,139 @@
+---
+import { DASHBOARD_URL, REPO_URL } from "../config";
+
+interface Props {
+  path: string;
+}
+
+const { path } = Astro.props;
+const links = [
+  { href: "/#features", label: "Features" },
+  { href: "/#edge", label: "Global edge" },
+  { href: "/#languages", label: "Languages" },
+  { href: "/pricing/", label: "Pricing" },
+  { href: "/docs/", label: "Docs" },
+];
+---
+
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="logo" href="/" aria-label="Emojisense home">
+      <span class="logo-mark emoji" aria-hidden="true">🦖</span>
+      <span class="logo-word">emojisense</span>
+    </a>
+    <nav aria-label="Main">
+      <ul class="links">
+        {
+          links.map((link) => (
+            <li>
+              <a href={link.href} aria-current={path.startsWith(link.href) && link.href !== "/" ? "page" : undefined}>
+                {link.label}
+              </a>
+            </li>
+          ))
+        }
+        <li><a href={REPO_URL}>GitHub</a></li>
+      </ul>
+    </nav>
+    <div class="actions">
+      <a class="signin" href={`${DASHBOARD_URL}/`}>Sign in</a>
+      <a class="btn btn-primary cta" href={`${DASHBOARD_URL}/`}>Get API key</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(1.6) blur(0.75rem);
+    border-bottom: 0.0625rem solid var(--line);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 4.25rem;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+  }
+
+  .logo-mark {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+    background: var(--brand);
+    font-size: 1.25rem;
+    transition: transform 240ms var(--spring);
+  }
+
+  .logo:hover .logo-mark {
+    transform: rotate(-10deg) scale(1.08);
+  }
+
+  .logo-word {
+    font: 800 1.25rem / 1 var(--font-display);
+    letter-spacing: -0.03em;
+  }
+
+  .links {
+    display: flex;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .links a,
+  .signin {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--pill);
+    color: var(--ink-2);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+
+  .links a:hover,
+  .signin:hover,
+  .links a[aria-current="page"] {
+    color: var(--ink);
+    background: var(--bg-soft);
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .cta {
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 52rem) {
+    nav {
+      display: none;
+    }
+  }
+
+  @media (max-width: 26rem) {
+    .signin {
+      display: none;
+    }
+  }
+</style>

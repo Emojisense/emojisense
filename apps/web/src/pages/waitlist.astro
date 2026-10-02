@@ -1,6 +1,6 @@
 ---
 import { PLANS } from "@emojisense/platform";
-import PageIntro from "../components/PageIntro.astro";
+import PageHero from "../components/PageHero.astro";
 import { WAITLIST_ENDPOINT } from "../config";
 import { WaitlistForm } from "../islands/WaitlistForm";
 import Base from "../layouts/Base.astro";
@@ -23,12 +23,12 @@ const pro = featuresOf(PLANS.pro).filter((feature) => feature.value !== false &&
   description="Join the Emojisense Pro waitlist. We email you once, when paid plans open."
   path="/waitlist/"
 >
-  <PageIntro emoji="⏳" label="Waitlist" title="Join the Pro waitlist." sticker="🚀">
+  <PageHero eyebrow="Waitlist" emoji="⏳" title="Join the Pro waitlist.">
     <p>
       Paid plans are not on sale yet. Leave your email and we will write once, when your plan opens. The
       free plan works today.
     </p>
-  </PageIntro>
+  </PageHero>
 
   <div class="wrap layout">
     <section class="form-panel" aria-label="Waitlist form">
