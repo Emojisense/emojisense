@@ -8,7 +8,7 @@
  * public/p/        layer 2 shards served at /p/<version>/…, if the data package built them
  *                  — generated, not committed
  */
-import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { formatQuery, getModel } from "@emojisense/data/models";
@@ -48,8 +48,11 @@ if (index.model !== model.id || (index.ids.length > 0 && index.dims !== dims)) {
 const workerRoot = new URL("..", import.meta.url).pathname;
 const generated = join(workerRoot, "src", "generated");
 mkdirSync(generated, { recursive: true });
-const PACK_FILES = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
-for (const file of PACK_FILES) copyFileSync(join(source, file), join(generated, file));
+// Every locale pack the data step produced (core + ext); the Worker bundles only BUNDLED_LOCALES.
+const PACK_FILES = readdirSync(source).filter((f) => /^pack\.[a-z]{2}(\.ext)?\.json$/.test(f));
+// The Worker bundles English and Turkish for server-side hybrid search; all locales are static assets.
+const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
+for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
 writeFileSync(
   join(generated, "config.json"),
