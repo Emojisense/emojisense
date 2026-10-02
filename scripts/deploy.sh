@@ -69,3 +69,11 @@ PUBLIC_SITE_URL="$SITE_URL" \
 pnpm exec wrangler deploy --env "$ENVIRONMENT"
 
 echo "✓ Deployed $ENVIRONMENT: $SITE_URL · $API_URL · $DASHBOARD_URL"
+
+# Read-only checks of what is now live (scripts/smoke.mjs). The deploy is done either way; a
+# failed check only makes this command exit non-zero.
+echo "→ Smoke test ($ENVIRONMENT)"
+if ! node "$ROOT/scripts/smoke.mjs" "$ENVIRONMENT"; then
+  echo "✘ $ENVIRONMENT is deployed, but the smoke test failed. See the FAIL lines above." >&2
+  exit 1
+fi
