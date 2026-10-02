@@ -4,7 +4,7 @@
  */
 import { normalize } from "emojisense";
 import { LOCALE_CODES } from "../locales.ts";
-import { type Exclusion, findExcluded } from "./exclusions.ts";
+import { type Exclusion, findExcluded } from "./policy.ts";
 import type { CultureRecord, Issue } from "./types.ts";
 
 export const LIMITS = {

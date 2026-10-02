@@ -22,12 +22,20 @@ import { disposeEmbeddings, runWorkersAI } from "../embeddings.ts";
 import { LOCALE_CODES } from "../locales.ts";
 import { CULTURE_DIR, DATA_ROOT } from "../paths.ts";
 import { loadCatalog } from "./catalog.ts";
-import { addDays } from "./compile.ts";
+import {
+  type DraftAnswer,
+  fillPrompt,
+  candidateEmoji as findCandidateEmoji,
+  formatEmojiOptions,
+  parseModelAnswer,
+  splitPrompt,
+  toDraftRecord,
+} from "./draft.ts";
 import { loadExclusions } from "./exclusions.ts";
 import { loadRecords, writeRecord } from "./records.ts";
-import { type DatedSource, loadSources, occurrencesBetween, type SlangSource } from "./sources.ts";
+import { type DatedSource, datedCandidates, loadSources, type SlangSource } from "./sources.ts";
 import type { CultureRecord, RecordSource } from "./types.ts";
-import { LIMITS, validateRecord } from "./validate.ts";
+import { validateRecord } from "./validate.ts";
 
 const { values: args } = parseArgs({
   args: process.argv.slice(2).filter((a) => a !== "--"),
@@ -73,7 +81,6 @@ const existing = new Set(loadRecords().map((l) => l.record.id));
 const catalog = loadCatalog();
 const exclusions = loadExclusions();
 
-const monthDay = (day: string) => day.slice(5);
 const slug = (text: string) =>
   normalize(text)
     .replace(/[^a-z0-9]+/g, "-")
@@ -81,36 +88,7 @@ const slug = (text: string) =>
     .slice(0, 40) || "query";
 
 function fromDated(source: DatedSource): Candidate[] {
-  return occurrencesBetween(source, from, days).map((occurrence) => {
-    // People start talking about a moment some days before it; event windows stay ≤ 60 days.
-    const span = (Date.parse(occurrence.to) - Date.parse(occurrence.from)) / 86_400_000 + 1;
-    const leadDays = Math.max(0, Math.min(lead, LIMITS.eventMaxDays - span));
-    const start = addDays(occurrence.from, -leadDays);
-    const when: CultureWhen = occurrence.yearly
-      ? { from: monthDay(start), to: monthDay(occurrence.to), recurs: "yearly" }
-      : { from: start, to: occurrence.to };
-    const locales = source.locales.includes("*") ? [...LOCALE_CODES] : source.locales;
-    return {
-      id: occurrence.yearly ? source.id : `${source.id}-${occurrence.year}`,
-      kind: occurrence.yearly ? "seasonal" : "event",
-      when,
-      regions: source.regions,
-      locales,
-      featured: true,
-      source: "calendar",
-      sourceKind: source.category === "sport" ? "sports event" : `${source.category} calendar day`,
-      description: {
-        title: source.title,
-        days: `${occurrence.from} to ${occurrence.to}`,
-        hint: source.hint,
-        regions: source.regions,
-      },
-      titles: source.title,
-      phrases: {},
-      hintEmoji: source.emoji ?? [],
-      searchTexts: [source.title.en ?? "", source.hint],
-    };
-  });
+  return datedCandidates(source, from, days, lead).map((c) => ({ ...c, phrases: {} }));
 }
 
 function fromSlang(source: SlangSource): Candidate {
@@ -178,30 +156,13 @@ const readPack = (name: string): Pack => JSON.parse(readFileSync(join(packDir, `
 const engine: AliasEngine = createEngine([readPack("en"), readPack("en.ext")]);
 
 /** Emoji the model may choose from: the source's hints, then what the alias engine finds. */
-function candidateEmoji(candidate: Candidate): { hexcode: string; emoji: string; label: string }[] {
-  const ids = [...candidate.hintEmoji];
-  for (const text of candidate.searchTexts) {
-    for (const r of engine.search(text, { limit: 12, prefix: false, culture: false }).results) ids.push(r.id);
-  }
-  return [...new Set(ids)]
-    .filter((id) => catalog.has(id))
-    .slice(0, 40)
-    .map((id) => ({ hexcode: id, emoji: catalog.get(id) as string, label: engine.get(id)?.labels.en ?? "" }));
-}
+const candidateEmoji = (candidate: Candidate) =>
+  findCandidateEmoji(engine, catalog, candidate.hintEmoji, candidate.searchTexts);
 
 const promptFile = join(CULTURE_DIR, "prompts", `propose.${args.prompt}.md`);
-const promptText = readFileSync(promptFile, "utf8");
-const system = promptText.split("## SYSTEM")[1]?.split("## USER")[0]?.trim() ?? "";
-const user = promptText.split("## USER")[1]?.trim() ?? "";
-if (!system || !user) throw new Error(`${promptFile} needs "## SYSTEM" and "## USER" parts`);
+const { system, user } = splitPrompt(readFileSync(promptFile, "utf8"));
 
-interface Answer {
-  skip?: boolean;
-  reason?: string;
-  context?: Record<string, string>;
-  triggers?: Record<string, string[]>;
-  emoji?: { hexcode: string; weight: number }[];
-}
+type Answer = DraftAnswer;
 
 async function ask(candidate: Candidate, options: ReturnType<typeof candidateEmoji>): Promise<Answer> {
   if (args.provider === "none") {
@@ -218,62 +179,30 @@ async function ask(candidate: Candidate, options: ReturnType<typeof candidateEmo
       emoji: candidate.hintEmoji.slice(0, 5).map((hexcode, i) => ({ hexcode, weight: weights[i] ?? 0.3 })),
     };
   }
-  const filled = user
-    .replace("{{TODAY}}", today)
-    .replace("{{SOURCE_KIND}}", candidate.sourceKind)
-    .replace("{{SOURCE}}", JSON.stringify(candidate.description, null, 1))
-    .replace("{{LOCALES}}", candidate.locales.join(", "))
-    .replace("{{CANDIDATES}}", options.map((o) => `${o.hexcode} ${o.emoji} ${o.label}`).join("\n"));
-  const output = (await runWorkersAI(args.model as string, {
+  const filled = fillPrompt(user, {
+    TODAY: today,
+    SOURCE_KIND: candidate.sourceKind,
+    SOURCE: JSON.stringify(candidate.description, null, 1),
+    LOCALES: candidate.locales.join(", "),
+    CANDIDATES: formatEmojiOptions(options),
+  });
+  const output = await runWorkersAI(args.model as string, {
     messages: [
       { role: "system", content: system },
       { role: "user", content: filled },
     ],
     max_tokens: 1500,
     temperature: 0.2,
-  })) as { response?: string | Answer };
-  const raw = output.response;
-  if (typeof raw !== "string") return raw ?? { skip: true, reason: "empty answer" };
-  return JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)) as Answer;
+  });
+  return parseModelAnswer(output);
 }
 
 function toRecord(candidate: Candidate, answer: Answer, allowed: Set<string>): CultureRecord {
-  const locales = candidate.locales;
-  const triggers = Object.fromEntries(
-    locales
-      .map((l) => [
-        l,
-        [...new Set((answer.triggers?.[l] ?? []).map((t) => normalize(t)).filter(Boolean))].slice(0, 8),
-      ])
-      .filter(([, list]) => (list as string[]).length > 0),
-  );
-  const context = Object.fromEntries(
-    ["en", ...locales].flatMap((l) => {
-      const text = answer.context?.[l];
-      return text ? [[l, text.trim()]] : [];
-    }),
-  );
-  const emoji = (answer.emoji ?? [])
-    .filter((e) => allowed.has(e.hexcode))
-    .map((e) => ({ hexcode: e.hexcode, weight: Math.min(1, Math.max(0.05, Number(e.weight) || 0.5)) }))
-    .filter((e, i, all) => all.findIndex((x) => x.hexcode === e.hexcode) === i)
-    .slice(0, LIMITS.emojiMax);
   const modelTag = args.provider === "none" ? "source-only" : `workers-ai:${args.model}`;
-  return {
-    id: candidate.id,
-    status: "draft",
-    kind: candidate.kind,
-    context,
-    when: candidate.when,
-    regions: candidate.regions,
-    locales,
-    triggers,
-    emoji,
-    ...(candidate.featured && candidate.kind !== "lasting" ? { featured: true } : {}),
-    source: candidate.source,
+  return toDraftRecord(candidate, answer, allowed, {
     createdBy: `${modelTag} prompt:propose.${args.prompt}`,
     createdAt: today,
-  };
+  });
 }
 
 console.log(`culture:propose: ${candidates.length} candidates from ${from} (+${days} days)`);

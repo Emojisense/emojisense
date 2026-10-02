@@ -37,8 +37,16 @@ export interface CompileOptions {
  */
 export const CULTURE_DAYS = 366;
 
+/**
+ * Most gzip bytes per locale file (a unit test checks the committed entries; the API Worker checks
+ * the files it publishes with live entries). A 12-month file was at most 2.7 KB gz on 2026-10-02;
+ * the room is for new entries, not for a bigger format.
+ */
+export const CULTURE_GZIP_BUDGET = 6 * 1024;
+
 const DAY_MS = 86_400_000;
-const KIND_ORDER = { event: 0, seasonal: 1, regional: 2, lasting: 3 } as const;
+/** File order of entries: events first, lasting last (then by id). */
+export const KIND_ORDER = { event: 0, seasonal: 1, regional: 2, lasting: 3 } as const;
 
 export function addDays(day: string, days: number): string {
   return new Date(Date.parse(`${day}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);

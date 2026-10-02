@@ -28,6 +28,8 @@
   "exports": {
     "./config": "./src/config.ts",
     "./culture": "./src/culture/index.ts",
+    "./culture-core": "./src/culture/core.ts",
+    "./culture/*": "./culture/*",
     "./embeddings": "./src/embeddings.ts",
     "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",
