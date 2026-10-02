@@ -87,7 +87,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
         description:
           "Upload your own emoji, import them from Slack or Discord, and search them next to Unicode.",
         plan: "solo",
-        status: "planned",
+        status: "next",
         routes: ["/v1/custom-pack", "/emoji/import/slack"],
       },
       {

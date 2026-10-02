@@ -64,7 +64,16 @@ const loader = `function loadPacks(options: {
   part?: "core" | "ext"; // default "core"
   fetch?: typeof fetch;
   signal?: AbortSignal;
-}): Promise<Pack[]>;`;
+}): Promise<Pack[]>;
+
+// Your app's custom emoji as a pack, searched on the device next to the standard set.
+function loadCustomPack(options: {
+  endpoint: string; // the API base URL
+  key: string; // publishable key
+  tenant?: string; // your customer's external id (tenants, Scale plan)
+  fetch?: typeof fetch;
+  signal?: AbortSignal;
+}): Promise<Pack>;`;
 
 const session = `function createSearchSession(options: {
   engine: AliasEngine;
@@ -144,6 +153,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
   <h3 id="load-packs">loadPacks</h3>
   <p>Fetches and validates the packs of one pack version. The files are immutable, so the browser’s HTTP cache does the rest.</p>
   <CodeBlock code={loader} lang="ts" />
+  <p><code>loadCustomPack</code> fetches your custom emoji as a pack (<code>part: "custom"</code>, checked with <code>isCustomPack</code>); pass it to <code>createEngine</code> with the other packs. Custom rows use ids that start with <code>CUSTOM_ID_PREFIX</code>, and their results carry <code>imageUrl</code> and <code>shortcode</code>.</p>
   <p><code>assertPack(value)</code> validates a pack you load yourself, for example from your app bundle. <code>PACK_FORMAT</code>, <code>PACK_FORMAT_VERSION</code>, <code>FIELDS</code>, <code>DEFAULT_WEIGHTS</code> and <code>ROW_INDEX</code> describe the format. See <a href="/docs/pack-format/">Pack format</a>.</p>
 
   <h2 id="sessions">Search sessions</h2>
