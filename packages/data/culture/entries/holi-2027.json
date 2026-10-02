@@ -3,9 +3,9 @@
   "status": "approved",
   "kind": "event",
   "context": {
-    "en": "Holi, the festival of colours, 22 and 23 March 2027",
-    "hi": "होली, रंगों का त्योहार, 22–23 मार्च 2027",
-    "bn": "দোলযাত্রা, রঙের উৎসব, ২২–২৩ মার্চ ২০২৭"
+    "en": "Holi, the festival of colours, 22 March 2027",
+    "hi": "होली, रंगों का त्योहार, 22 मार्च 2027",
+    "bn": "দোলযাত্রা, রঙের উৎসব, ২২ মার্চ ২০২৭"
   },
   "when": {
     "from": "2027-03-12",

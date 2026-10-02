@@ -3,9 +3,9 @@
   "status": "approved",
   "kind": "lasting",
   "context": {
-    "en": "Cricket: a century (100 runs) or a six",
-    "hi": "क्रिकेट: शतक या छक्का",
-    "bn": "ক্রিকেট: সেঞ্চুরি বা ছক্কা"
+    "en": "Cricket: a century means 100 runs",
+    "hi": "क्रिकेट: शतक का मतलब 100 रन",
+    "bn": "ক্রিকেট: সেঞ্চুরি মানে ১০০ রান"
   },
   "when": null,
   "regions": [
@@ -19,14 +19,11 @@
     "hi": [
       "शतक",
       "सेंचुरी",
-      "century",
-      "छक्का",
-      "sixer"
+      "century"
     ],
     "bn": [
       "সেঞ্চুরি",
       "শতরান",
-      "ছক্কা",
       "century"
     ]
   },
