@@ -1,5 +1,5 @@
 .photo {
-  container-type: inline-size;
+  container: photo / inline-size;
   height: 100%;
   color: var(--ink);
   font-family: var(--font-body);
@@ -641,8 +641,10 @@
   font: 500 0.6875rem / 1 var(--font-mono);
 }
 
-@container (min-width: 46rem) {
+@container photo (min-width: 46rem) {
+  /* The two columns fill a panel of fixed height, so the panel can be queried for its height. */
   .photo-shell {
+    container: photo-panel / size;
     grid-template-columns: minmax(0, 1fr) 19rem;
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas: "thread picker" "thread upload";
@@ -674,7 +676,40 @@
   }
 }
 
-@container (max-width: 30rem) {
+/* A short panel (the landing page at about 800 px tall): a smaller photo and tighter spacing keep
+   the reactions and the side column in view without scrolling. */
+@container photo-panel (max-height: 35rem) {
+  .photo-feed {
+    padding-block: 0.875rem;
+  }
+
+  .photo-frame {
+    width: min(100%, 16rem);
+  }
+
+  .photo-compose {
+    padding-block: 0.625rem 0.875rem;
+  }
+
+  .photo-picker {
+    padding-top: 1rem;
+  }
+
+  .photo-upload {
+    gap: 0.75rem;
+    padding-block: 1rem;
+  }
+
+  .photo-drop {
+    padding-block: 0.625rem;
+  }
+
+  .photo-how {
+    padding-top: 0.75rem;
+  }
+}
+
+@container photo (max-width: 30rem) {
   .photo-head,
   .photo-feed,
   .photo-compose {
