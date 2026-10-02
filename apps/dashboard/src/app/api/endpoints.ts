@@ -1,4 +1,4 @@
-import type { AnalyticsWindow, EmojiSet, KeyKind, PlanId } from "@emojisense/platform";
+import type { AnalyticsWindow, BillingInterval, EmojiSet, KeyKind, PaidPlanId } from "@emojisense/platform";
 import type {
   AcceptInviteResponse,
   AnalyticsFilters,
@@ -7,6 +7,8 @@ import type {
   AppResponse,
   AppsResponse,
   BillingResponse,
+  CheckoutRequest,
+  CheckoutResponse,
   CreatedInviteResponse,
   CreatedKeyResponse,
   CustomEmoji,
@@ -23,9 +25,7 @@ import type {
   TeamResponse,
   TenantResponse,
   TenantsResponse,
-  UpgradeResponse,
   UsageResponse,
-  WaitlistResponse,
   WebhookDeliveriesResponse,
   WebhookResponse,
   WebhooksResponse,
@@ -130,7 +130,7 @@ export const api = {
     request<AcceptInviteResponse>("POST", `/api/invites/${segment(token)}/accept`),
 
   billing: () => request<BillingResponse>("GET", "/api/billing"),
-  upgrade: (plan: PlanId) => request<UpgradeResponse>("POST", "/api/billing/upgrade", { plan }),
-  joinWaitlist: (email: string, plan: string) =>
-    request<WaitlistResponse>("POST", "/api/waitlist", { email, plan }),
+  /** Whop's hosted checkout for the plan (owner only). The SPA sends the browser there. */
+  checkout: (plan: PaidPlanId, interval: BillingInterval) =>
+    request<CheckoutResponse>("POST", "/api/billing/checkout", { plan, interval } satisfies CheckoutRequest),
 };

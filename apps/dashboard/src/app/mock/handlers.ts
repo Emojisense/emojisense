@@ -1,8 +1,9 @@
 import {
+  billingIntervalsOf,
   CUSTOM_EMOJI_CONTENT_TYPES,
   CUSTOM_EMOJI_MAX_BYTES,
-  getPlan,
-  isHigherPlan,
+  isBillingInterval,
+  isPaidPlan,
   lowestPlanWith,
   METRICS,
   type Metric,
@@ -41,7 +42,6 @@ import type {
   TeamInviteSummary,
   TeamResponse,
   TeamRole,
-  UpgradeResponse,
   WebhookEvent,
 } from "../api";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
@@ -53,6 +53,7 @@ import {
   importListing,
   type MockDb,
   measure,
+  mockBilling,
   usageFor,
 } from "./data";
 
@@ -132,7 +133,7 @@ function me(db: MockDb): Me {
     ...db.me,
     plan: planSummary(db.plan),
     appCount: ownApps(db).length,
-    waitlistPlan: db.waitlistPlan,
+    billingStatus: db.billing.status,
   };
 }
 
@@ -780,31 +781,30 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
           apps: finite(plan.maxApps),
         },
         appCount: apps.length,
-        provider: null,
-        waitlistPlan: db.waitlistPlan,
+        provider: "whop",
+        subscription: { ...db.billing, manageUrl: null },
+        purchasable: { solo: billingIntervalsOf("solo"), pro: ["month"], scale: ["month"] },
       };
       return ok(response);
     },
   ],
   [
     "POST",
-    /^\/api\/billing\/upgrade$/,
+    /^\/api\/billing\/checkout$/,
     (db, { json }) => {
-      const plan = getPlan(String(json.plan)).id;
-      if (!isHigherPlan(plan, db.plan)) {
-        return fail(409, "plan_not_higher", "Choose a plan above your current one.");
+      const { plan, interval = "month" } = json;
+      if (!isPaidPlan(plan)) {
+        return fail(400, "invalid_request", "plan must be one of: solo, pro, scale.", { field: "plan" });
       }
-      db.waitlistPlan = plan;
-      const response: UpgradeResponse = { status: "waitlist", plan };
-      return ok(response);
-    },
-  ],
-  [
-    "POST",
-    /^\/api\/waitlist$/,
-    (db, { json }) => {
-      db.waitlistPlan = getPlan(String(json.plan)).id;
-      return ok({ ok: true, plan: db.waitlistPlan });
+      if (!isBillingInterval(interval) || !billingIntervalsOf(plan).includes(interval)) {
+        return fail(400, "invalid_request", `The ${PLANS[plan].name} plan is billed monthly only.`, {
+          field: "interval",
+        });
+      }
+      // No Whop in mock mode: the payment "succeeds" at once and Billing shows the return page.
+      db.plan = plan;
+      db.billing = { ...mockBilling(plan, "active"), interval };
+      return ok({ url: "/billing?checkout=success" });
     },
   ],
 ];

@@ -1,6 +1,13 @@
 import { METRICS, type Metric, PLANS, type PlanId } from "@emojisense/platform";
 import { vi } from "vitest";
-import type { AppSummary, KeySummary, MeResponse, UsageResponse } from "../../src/shared/contract";
+import type {
+  AppSummary,
+  BillingResponse,
+  BillingSubscription,
+  KeySummary,
+  MeResponse,
+  UsageResponse,
+} from "../../src/shared/contract";
 import { measureUsage, toPlanSummary } from "../../src/worker/plans";
 
 export const NOW = Date.UTC(2026, 9, 15, 12);
@@ -34,8 +41,35 @@ export function me(overrides: Partial<MeResponse> = {}): MeResponse {
     account: { id: "acc_1", name: "Ada", email: "ada@example.com", signIn: "clerk", createdAt: NOW },
     plan: toPlanSummary(PLANS.free),
     appCount: 1,
-    waitlistPlan: null,
+    billingStatus: "none",
     teams: [],
+    ...overrides,
+  };
+}
+
+/** `GET /api/billing` for an account on `planId` with Whop set up and nothing used yet. */
+export function billing(
+  planId: PlanId = "free",
+  subscription: Partial<BillingSubscription> = {},
+  overrides: Partial<BillingResponse> = {},
+): BillingResponse {
+  const plan = PLANS[planId];
+  return {
+    plan: toPlanSummary(plan),
+    period: "2026-10",
+    usage: METRICS.map((metric) => measureUsage(metric, 0, plan.limits[metric])),
+    limits: { semantic_calls: 1, image_classifications: 1, custom_emoji: 0, apps: 1 },
+    appCount: 1,
+    provider: "whop",
+    subscription: {
+      status: planId === "free" ? "none" : "active",
+      interval: planId === "free" ? null : "month",
+      currentPeriodEnd: planId === "free" ? null : Date.UTC(2026, 10, 15, 12),
+      graceUntil: null,
+      manageUrl: planId === "free" ? null : "https://whop.com/billing/manage/mber_test/",
+      ...subscription,
+    },
+    purchasable: { solo: ["month", "year"], pro: ["month"], scale: ["month"] },
     ...overrides,
   };
 }

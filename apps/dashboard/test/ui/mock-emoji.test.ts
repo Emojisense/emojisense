@@ -26,7 +26,7 @@ function upload(shortcode: string, bytes: number) {
 
 describe("mock mode custom emoji", () => {
   it("lists used and limit for the whole account, like the Worker", async () => {
-    const db = createDb("pro", null);
+    const db = createDb("pro");
     await call(db, "POST", `/api/apps/${STAGING}/emoji`, upload("staging-only", 500));
     const { body } = await call(db, "GET", `/api/apps/${RELAY}/emoji`);
     const list = body as CustomEmojiListResponse;
@@ -41,7 +41,7 @@ describe("mock mode custom emoji", () => {
   });
 
   it("answers uploads with the Worker's codes", async () => {
-    const db = createDb("pro", null);
+    const db = createDb("pro");
     const tooLarge = await call(db, "POST", `/api/apps/${RELAY}/emoji`, upload("huge", 256 * 1024 + 1));
     expect(tooLarge).toMatchObject({
       status: 413,
@@ -54,7 +54,7 @@ describe("mock mode custom emoji", () => {
   });
 
   it("imports in batches of 50 until nothing remains", async () => {
-    const db = createDb("pro", null);
+    const db = createDb("pro");
     const token = "xoxp-mock-token";
     const listing = importListing("slack", token);
     const batches: EmojiImportResponse[] = [];

@@ -3,8 +3,8 @@
  * emoji, tenants, webhooks, a team and 90 days of analytics. Numbers are made up but shaped like
  * a real chat product; they never reach a production build.
  */
-import { METRICS, type Metric, PLANS, type PlanId, periodOf } from "@emojisense/platform";
-import type { AppMetricUsage, KeySummary, MetricUsage } from "../../shared/contract";
+import { type BillingStatus, METRICS, type Metric, PLANS, type PlanId, periodOf } from "@emojisense/platform";
+import type { AppMetricUsage, BillingSubscription, KeySummary, MetricUsage } from "../../shared/contract";
 import type {
   AnalyticsDay,
   AnalyticsFilters,
@@ -33,8 +33,9 @@ const imageFor = (set: string, file: string) =>
 export interface MockDb {
   /** The signed-in account's own plan. Team apps keep their owner's plan (`App.plan`). */
   plan: PlanId;
-  waitlistPlan: PlanId | null;
-  me: Omit<Me, "plan" | "appCount" | "waitlistPlan">;
+  /** The Whop subscription of the own plan (no manage link: mock mode never leaves the page). */
+  billing: Omit<BillingSubscription, "manageUrl">;
+  me: Omit<Me, "plan" | "appCount" | "billingStatus">;
   apps: Omit<App, "activeKeyCount">[];
   keys: KeySummary[];
   emoji: (CustomEmoji & { appId: string })[];
@@ -136,7 +137,18 @@ function key(
   };
 }
 
-export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
+/** A subscription in `status`: paid plans renew in 18 days, Free has none. */
+export function mockBilling(plan: PlanId, status?: BillingStatus): MockDb["billing"] {
+  const resolved: BillingStatus = status ?? (plan === "free" ? "none" : "active");
+  return {
+    status: resolved,
+    interval: resolved === "none" ? null : "month",
+    currentPeriodEnd: resolved === "none" ? null : resolved === "canceled" ? ago(12) : NOW + 18 * DAY,
+    graceUntil: resolved === "past_due" ? NOW + 5 * DAY : null,
+  };
+}
+
+export function createDb(plan: PlanId, billingStatus?: BillingStatus): MockDb {
   const rows: [WebhookDelivery["event"], number | null, number | null, number][] = [
     ["custom_emoji.created", 200, 142, 0.2],
     ["custom_emoji.created", 200, 118, 3],
@@ -158,7 +170,7 @@ export function createDb(plan: PlanId, waitlistPlan: PlanId | null): MockDb {
 
   return {
     plan,
-    waitlistPlan,
+    billing: mockBilling(plan, billingStatus),
     me: {
       account: {
         id: "acc_maya",

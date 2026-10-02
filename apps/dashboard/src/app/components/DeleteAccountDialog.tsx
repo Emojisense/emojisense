@@ -2,6 +2,7 @@ import { type FormEvent, useId, useState } from "react";
 import { deleteAccountConfirmation, isDeleteAccountConfirmed } from "../../shared/contract";
 import { api, errorMessage } from "../api";
 import { useAuthAdapter } from "../auth/context";
+import { useSession } from "../session";
 import { Dialog } from "../ui/Dialog";
 
 interface DeleteAccountDialogProps {
@@ -31,6 +32,7 @@ function DeleteAccountConfirm({
   onDeleted: () => void;
 }) {
   const { deleteUser } = useAuthAdapter();
+  const { me } = useSession();
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +88,11 @@ function DeleteAccountConfirm({
         webhooks, your team and its invites, your place in other teams, and your sign-in. Apps that use your
         keys stop working within a minute. You cannot undo this.
       </p>
+      {(me.billingStatus === "active" || me.billingStatus === "past_due") && (
+        <p className="notice notice-warning">
+          Your {me.plan.name} subscription stops renewing. The current period is not refunded.
+        </p>
+      )}
       <div className="field">
         <label htmlFor={inputId} className="label">
           Type <span className="mono">{deleteAccountConfirmation(email)}</span> to confirm

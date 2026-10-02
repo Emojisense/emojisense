@@ -1,8 +1,8 @@
-import { PLANS, type PlanId } from "@emojisense/platform";
+import { isPaidPlan, PLANS, type PlanId } from "@emojisense/platform";
 import { useId } from "react";
 import { formatPrice } from "../format";
-import { FEATURE_COPY, FEATURE_PLAN, type Feature, planRank } from "../lib/plans";
-import { useUpgrade } from "../lib/useUpgrade";
+import { checkoutIntentQuery } from "../lib/checkoutIntent";
+import { FEATURE_COPY, FEATURE_PLAN, type Feature } from "../lib/plans";
 import { Link } from "../router";
 import { useAppScope } from "../shell/context";
 import { Icon } from "./Icon";
@@ -18,30 +18,29 @@ interface PlanGateProps {
 export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
   const required = PLANS[plan ?? FEATURE_PLAN[feature]];
   const copy = FEATURE_COPY[feature];
-  const { upgrade, pending, error, waitlistPlan } = useUpgrade();
   const { detail } = useAppScope();
   const titleId = useId();
-  const joined = waitlistPlan !== null && planRank(waitlistPlan) >= planRank(required.id);
-  const waitlistName = waitlistPlan ? PLANS[waitlistPlan].name : required.name;
   // A team app runs on its owner's plan: only the owner can upgrade it.
   const owner =
     detail.status === "ready" && detail.data.app.role !== "owner"
       ? (detail.data.app.ownerName ?? "the owner")
       : null;
+  // Billing shows the price and the interval and starts Whop's checkout.
+  const upgradeHref = isPaidPlan(required.id)
+    ? `/billing?${checkoutIntentQuery({ plan: required.id, interval: "month" })}`
+    : "/billing";
 
   const upgradeButton = owner ? (
     <p className="hint">
       This app runs on {owner}’s plan. Ask {owner} to upgrade to {required.name}.
     </p>
   ) : (
-    <button
-      type="button"
+    <Link
+      to={upgradeHref}
       className={compact ? "btn btn-primary btn-sm" : "btn btn-primary btn-lg btn-block"}
-      disabled={pending !== null || joined}
-      onClick={() => upgrade(required.id)}
     >
-      {joined ? "On the waitlist" : pending ? "Joining…" : `Upgrade to ${required.name}`}
-    </button>
+      Upgrade to {required.name}
+    </Link>
   );
 
   if (compact) {
@@ -54,9 +53,7 @@ export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
           <strong id={titleId}>
             {copy.title} with {required.name}
           </strong>
-          <span className="gate-compact-sub">
-            {joined ? `You are on the ${waitlistName} waitlist. We will email you when it opens.` : copy.text}
-          </span>
+          <span className="gate-compact-sub">{copy.text}</span>
         </div>
         {upgradeButton}
       </section>
@@ -91,25 +88,11 @@ export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
           </p>
         </div>
         <div className="gate-actions">
-          {joined && !owner && (
-            <p className="notice notice-success" role="status">
-              You are on the {waitlistName} waitlist. We will email you when billing opens.
-            </p>
-          )}
-          {error && (
-            <p className="notice notice-error" role="alert">
-              {error}
-            </p>
-          )}
           {upgradeButton}
           <Link to="/billing" className="btn btn-ghost btn-block">
             Compare plans
           </Link>
-          {!owner && (
-            <p className="hint">
-              Billing opens soon. Upgrading adds you to the waitlist; nothing is charged.
-            </p>
-          )}
+          {!owner && <p className="hint">Paid through Whop. Cancel at any time.</p>}
         </div>
       </div>
     </section>

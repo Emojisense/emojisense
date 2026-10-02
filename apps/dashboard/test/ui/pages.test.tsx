@@ -72,14 +72,11 @@ describe("apps page", () => {
     expect(screen.getByLabelText("App name").getAttribute("aria-invalid")).toBe("true");
   });
 
-  it("explains the plan limit and joins the waitlist of the plan with more apps", async () => {
+  it("explains the plan limit and sends Upgrade to Billing with the plan picked", async () => {
     window.history.replaceState(null, "", "/apps");
-    const { calls } = stubApi({
+    stubApi({
       "GET /api/me": { body: me({ appCount: 1 }) },
       "GET /api/apps": { body: { apps: [APP] } },
-      "POST /api/billing/upgrade": ({ body }) => ({
-        body: { status: "waitlist", plan: (body as { plan: string }).plan },
-      }),
     });
     render(<App />);
 
@@ -88,12 +85,9 @@ describe("apps page", () => {
     expect(gate.textContent).toContain("apps are all in use");
     expect((screen.getByRole("button", { name: "New app" }) as HTMLButtonElement).disabled).toBe(true);
 
-    fireEvent.click(within(gate).getByRole("button", { name: "Upgrade to Pro" }));
-    expect(await within(gate).findByText(/You are on the Pro waitlist/)).toBeTruthy();
-    expect(
-      (within(gate).getByRole("button", { name: "On the waitlist" }) as HTMLButtonElement).disabled,
-    ).toBe(true);
-    expect(calls).toContainEqual({ method: "POST", path: "/api/billing/upgrade", body: { plan: "pro" } });
+    const upgrade = within(gate).getByRole("link", { name: "Upgrade to Pro" });
+    expect(upgrade.getAttribute("href")).toBe("/billing?plan=pro&interval=month");
+    expect(gate.textContent).not.toMatch(/waitlist/i);
   });
 
   it("offers the plan with more apps when the API answers 402", async () => {
@@ -112,7 +106,7 @@ describe("apps page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create app" }));
 
     const gate = await screen.findByRole("region", { name: "More apps with Pro" });
-    expect(within(gate).getByRole("button", { name: "Upgrade to Pro" })).toBeTruthy();
+    expect(within(gate).getByRole("link", { name: "Upgrade to Pro" })).toBeTruthy();
     // A plan gate is an invitation, never an error.
     expect(screen.queryByRole("alert")).toBeNull();
   });

@@ -28,6 +28,8 @@ export type {
   AnalyticsLocale,
   AnalyticsResponse,
   BillingResponse,
+  BillingSubscription,
+  CheckoutResponse,
   CreatedInviteResponse,
   CustomEmoji,
   CustomEmojiListResponse,
@@ -41,7 +43,6 @@ export type {
   TeamResponse,
   TeamSummary,
   TenantsResponse,
-  UpgradeResponse,
 } from "../../shared/contract";
 
 /** An app as listed by `/api/apps`, with the caller's role and the owner's plan. */

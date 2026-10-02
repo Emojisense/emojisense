@@ -7,8 +7,9 @@
  *   ?mock-plan=free|solo|pro|scale   the account's plan (default scale)
  *   ?mock-signed-out=1|0             start signed out (sign in from the page) or signed in
  *   ?mock-ui=0                       hide the mock toolbar (for screenshots)
+ *   ?mock-billing=active|canceling|past_due|canceled|none   the subscription state (Billing banners)
  */
-import { PLAN_IDS, PLANS, type PlanId } from "@emojisense/platform";
+import { BILLING_STATUSES, type BillingStatus, PLAN_IDS, PLANS, type PlanId } from "@emojisense/platform";
 import { createDb, type MockDb } from "./data";
 import { handle } from "./handlers";
 
@@ -18,11 +19,12 @@ interface MockSettings {
   plan: PlanId;
   signedIn: boolean;
   toolbar: boolean;
-  waitlistPlan: PlanId | null;
+  /** Unset: active on a paid plan, none on Free. */
+  billing?: BillingStatus;
 }
 
 function readSettings(): MockSettings {
-  const fallback: MockSettings = { plan: "scale", signedIn: true, toolbar: true, waitlistPlan: null };
+  const fallback: MockSettings = { plan: "scale", signedIn: true, toolbar: true };
   try {
     return { ...fallback, ...(JSON.parse(localStorage.getItem(STORE_KEY) ?? "{}") as Partial<MockSettings>) };
   } catch {
@@ -47,7 +49,11 @@ function applyUrlSwitches(settings: MockSettings): MockSettings {
   if (url.searchParams.has("mock-signed-out"))
     next.signedIn = url.searchParams.get("mock-signed-out") !== "1";
   if (url.searchParams.has("mock-ui")) next.toolbar = url.searchParams.get("mock-ui") !== "0";
-  for (const name of ["mock-plan", "mock-signed-out", "mock-ui"]) url.searchParams.delete(name);
+  const billing = url.searchParams.get("mock-billing");
+  if (billing && (BILLING_STATUSES as readonly string[]).includes(billing))
+    next.billing = billing as BillingStatus;
+  for (const name of ["mock-plan", "mock-signed-out", "mock-ui", "mock-billing"])
+    url.searchParams.delete(name);
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   return next;
 }
@@ -65,7 +71,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export function installMockApi(): void {
   let settings = handleAuthNavigation(applyUrlSwitches(readSettings()));
   saveSettings(settings);
-  const db: MockDb = createDb(settings.plan, settings.waitlistPlan);
+  const db: MockDb = createDb(settings.plan, settings.billing);
   const realFetch = window.fetch.bind(window);
 
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -86,8 +92,8 @@ export function installMockApi(): void {
     } else {
       result = await handle(db, { method: request.method, url, json, form });
       if (url.pathname === "/api/auth/logout") settings = { ...settings, signedIn: false };
-      if (url.pathname === "/api/billing/upgrade" || url.pathname === "/api/waitlist") {
-        settings = { ...settings, waitlistPlan: db.waitlistPlan };
+      if (url.pathname === "/api/billing/checkout" && result.status === 200) {
+        settings = { ...settings, plan: db.plan, billing: db.billing.status };
       }
       saveSettings(settings);
     }
@@ -98,7 +104,12 @@ export function installMockApi(): void {
     });
   };
 
-  if (settings.toolbar) mountToolbar(settings, (plan) => saveSettings({ ...settings, plan }));
+  if (settings.toolbar) {
+    mountToolbar(settings, (plan) => {
+      const { billing: _, ...rest } = settings;
+      saveSettings({ ...rest, plan });
+    });
+  }
 }
 
 /** A small control in the corner: which plan the fixtures use. Changing it reloads the page. */

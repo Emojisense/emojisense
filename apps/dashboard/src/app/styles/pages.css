@@ -1720,6 +1720,33 @@
   text-align: center;
 }
 
+.plan-card[data-picked] {
+  border-color: var(--line-strong);
+  box-shadow:
+    0 0 0 0.0625rem var(--line-strong),
+    var(--shadow);
+}
+
+.plan-card-action .notice {
+  margin-bottom: 0.625rem;
+}
+
+.bill-banners {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.bill-manage {
+  margin-top: 0.5rem;
+}
+
+.bill-interval {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
 /* Settings */
 .profile {
   display: flex;

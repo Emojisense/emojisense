@@ -1,4 +1,4 @@
-import { getPlan, PLANS, type PlanId } from "@emojisense/platform";
+import { PLANS, type PlanId } from "@emojisense/platform";
 import { useId, useState } from "react";
 import type { App } from "../api";
 import { DOCS_URL } from "../lib/config";
@@ -92,7 +92,7 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
       </div>
 
       <div className="side-foot">
-        {me.plan.id !== "scale" && <PlanNudge />}
+        {(me.plan.id !== "scale" || me.billingStatus === "past_due") && <PlanNudge />}
         <AccountMenu />
       </div>
     </aside>
@@ -123,12 +123,12 @@ function PlanNudge() {
       <div className="side-plan-head">
         <span>{me.plan.name} plan</span>
         <Link to="/billing" className="btn btn-sm">
-          Upgrade
+          {me.billingStatus === "past_due" ? "Billing" : "Upgrade"}
         </Link>
       </div>
       <p>
-        {me.waitlistPlan
-          ? `You are on the ${getPlan(me.waitlistPlan).name} waitlist.`
+        {me.billingStatus === "past_due"
+          ? "The last payment failed. Update the card in Billing."
           : NEXT_PLAN_PITCH[me.plan.id]}
       </p>
     </div>
