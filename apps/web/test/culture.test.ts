@@ -1,7 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { normalize } from "emojisense";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   appliesInRegion,
@@ -11,10 +10,10 @@ import {
   isActiveOn,
   loadCultureEntries,
   matchesQuery,
-  PREVIEW_ENTRIES,
   toGlyph,
   windowsOf,
 } from "../src/lib/culture";
+import { SAMPLE_ENTRIES } from "./fixtures/culture-entries";
 
 function entry(overrides: Partial<CultureEntry>): CultureEntry {
   return {
@@ -33,8 +32,8 @@ function entry(overrides: Partial<CultureEntry>): CultureEntry {
 }
 
 const byId = (id: string) => {
-  const found = PREVIEW_ENTRIES.find((e) => e.id === id);
-  if (!found) throw new Error(`missing preview entry ${id}`);
+  const found = SAMPLE_ENTRIES.find((e) => e.id === id);
+  if (!found) throw new Error(`missing sample entry ${id}`);
   return found;
 };
 
@@ -124,21 +123,13 @@ describe("toGlyph", () => {
   });
 });
 
-describe("PREVIEW_ENTRIES", () => {
-  it.each(PREVIEW_ENTRIES.map((e) => [e.id, e] as const))("%s follows the entry rules", (_id, e) => {
-    expect(e.status).toBe("approved");
-    expect(e.context.en?.length).toBeGreaterThan(0);
-    for (const { hexcode, weight } of e.emoji) {
-      expect(() => toGlyph(hexcode)).not.toThrow();
-      expect(weight).toBeGreaterThanOrEqual(0);
-      expect(weight).toBeLessThanOrEqual(1);
-    }
-    for (const trigger of e.triggers.en ?? []) expect(normalize(trigger)).toBe(trigger);
-    if (e.kind === "lasting") expect(e.when).toBeNull();
-    if (e.kind === "event" && e.when) {
-      const days = (Date.parse(e.when.to) - Date.parse(e.when.from)) / 86_400_000;
-      expect(days).toBeGreaterThanOrEqual(0);
-      expect(days).toBeLessThanOrEqual(60);
+describe("packages/data/culture", () => {
+  it("feeds the landing page with approved entries whose emoji all render", () => {
+    const loaded = loadCultureEntries();
+    expect(loaded.source).toBe("data");
+    expect(loaded.entries.length).toBeGreaterThan(0);
+    for (const e of loaded.entries) {
+      for (const { hexcode } of e.emoji) expect(() => toGlyph(hexcode), e.id).not.toThrow();
     }
   });
 });
@@ -154,10 +145,11 @@ describe("loadCultureEntries", () => {
     writeFileSync(join(dir, name), JSON.stringify(value));
   };
 
-  it("falls back to the preview entries when the data folder does not exist", () => {
-    const loaded = loadCultureEntries(join(tmpdir(), "emojisense-no-culture-here"));
-    expect(loaded.source).toBe("preview");
-    expect(loaded.entries).toBe(PREVIEW_ENTRIES);
+  it("is empty when the data folder does not exist", () => {
+    expect(loadCultureEntries(join(tmpdir(), "emojisense-no-culture-here"))).toEqual({
+      entries: [],
+      source: "empty",
+    });
   });
 
   it("reads only approved entries from the data folder", () => {
@@ -169,10 +161,10 @@ describe("loadCultureEntries", () => {
     expect(loaded.entries.map((e) => e.id)).toEqual(["approved"]);
   });
 
-  it("keeps the preview while nothing is approved yet", () => {
+  it("is empty while nothing is approved", () => {
     dir = mkdtempSync(join(tmpdir(), "emojisense-culture-"));
     write("a.json", entry({ status: "draft" }));
-    expect(loadCultureEntries(dir).source).toBe("preview");
+    expect(loadCultureEntries(dir)).toEqual({ entries: [], source: "empty" });
   });
 
   it("names the file that does not match the format", () => {
@@ -191,7 +183,7 @@ describe("buildCultureShowcase", () => {
   };
   const search = (query: string) => canonical[query] ?? [];
   const showcase = (today: string) =>
-    buildCultureShowcase({ entries: PREVIEW_ENTRIES, source: "preview" }, search, today);
+    buildCultureShowcase({ entries: SAMPLE_ENTRIES, source: "data" }, search, today);
 
   it("reads the same search differently by region", () => {
     const goat = showcase("2026-10-02").queries.find((q) => q.query === "greatest of all time");
@@ -247,11 +239,7 @@ describe("buildCultureShowcase", () => {
   });
 
   it("leaves out searches the engine cannot answer", () => {
-    const empty = buildCultureShowcase(
-      { entries: PREVIEW_ENTRIES, source: "preview" },
-      () => [],
-      "2026-10-02",
-    );
+    const empty = buildCultureShowcase({ entries: SAMPLE_ENTRIES, source: "data" }, () => [], "2026-10-02");
     expect(empty.queries).toEqual([]);
     expect(empty.highlights).toEqual([]);
   });
