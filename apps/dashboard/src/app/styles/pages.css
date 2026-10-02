@@ -944,6 +944,37 @@
   font-size: 1.5rem;
 }
 
+.import-result-text {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.import-progress {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.import-progress .meter-fill {
+  width: 0;
+  animation: none;
+  transition: width 300ms var(--ease-out);
+}
+
+/* Before the first batch answers, the total is unknown. */
+.import-progress .meter-track[data-indeterminate] .meter-fill {
+  width: 30%;
+  animation: import-scan 1.2s ease-in-out infinite;
+}
+
+@keyframes import-scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
 /* Analytics */
 .stat-row {
   display: grid;

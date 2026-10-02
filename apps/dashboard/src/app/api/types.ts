@@ -1,9 +1,8 @@
 /**
- * Dashboard API shapes. Everything the Worker already serves comes from src/shared/contract.ts;
- * custom emoji, whose routes have not landed yet, mirror the product contract (v1) here until
- * they move there too.
+ * Dashboard API shapes. The JSON the Worker serves is typed in src/shared/contract.ts; this file
+ * re-exports it under the names the pages use, plus the inputs the SPA builds itself.
  */
-import type { CustomEmojiSource, WebhookEventType } from "@emojisense/platform";
+import type { WebhookEventType } from "@emojisense/platform";
 import type {
   AppSummary,
   CreatedWebhookResponse,
@@ -13,14 +12,25 @@ import type {
   WebhookSummary,
 } from "../../shared/contract";
 
-export { EMOJI_SETS, type EmojiSet, type PlanId, TEAM_ROLES, type TeamRole } from "@emojisense/platform";
+export {
+  type CustomEmojiSource,
+  EMOJI_SETS,
+  type EmojiSet,
+  type PlanId,
+  TEAM_ROLES,
+  type TeamRole,
+} from "@emojisense/platform";
 export type {
   AcceptInviteResponse,
   AnalyticsDay,
   AnalyticsResponse,
   BillingResponse,
   CreatedInviteResponse,
+  CustomEmoji,
+  CustomEmojiListResponse,
   DeletedTenantResponse,
+  EmojiImportResponse,
+  EmojiImportSkipReason,
   Role,
   TeamInviteSummary,
   TeamMemberResponse,
@@ -35,36 +45,12 @@ export type {
 export type App = AppSummary;
 export type Me = MeResponse;
 
-export type EmojiSource = CustomEmojiSource;
-
-export interface CustomEmoji {
-  id: string;
-  shortcode: string;
-  aliases: string[];
-  imageUrl: string;
-  tenantId: string | null;
-  source: EmojiSource;
-  bytes: number;
-  createdAt: number;
-}
-
-export interface EmojiList {
-  emoji: CustomEmoji[];
-  used: number;
-  /** `null` = unlimited, `0` = not in the plan. */
-  limit: number | null;
-}
-
+/** The multipart form of `POST /api/apps/:id/emoji`. Omit `tenantId` (a `tenants.id`) for app-wide. */
 export interface EmojiUpload {
   file: File;
   shortcode: string;
   aliases: string[];
   tenantId?: string;
-}
-
-export interface ImportResult {
-  imported: number;
-  skipped: number;
 }
 
 export { WEBHOOK_EVENTS } from "@emojisense/platform";

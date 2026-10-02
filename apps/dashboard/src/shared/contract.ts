@@ -339,8 +339,8 @@ export interface WebhookTestResponse {
 export type { CustomEmoji };
 
 /**
- * `GET /api/apps/:id/emoji[?tenantId=]`, newest first. `used` counts every emoji of the app
- * (tenants included) against the plan's `limit`; `null` = unlimited.
+ * `GET /api/apps/:id/emoji[?tenantId=]`, newest first. `used` counts what the plan's `limit`
+ * counts: every emoji of every app of the owning account, tenants included; `null` = unlimited.
  */
 export interface CustomEmojiListResponse {
   emoji: CustomEmoji[];

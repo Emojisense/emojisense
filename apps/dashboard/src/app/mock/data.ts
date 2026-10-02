@@ -328,16 +328,81 @@ export function appCount(db: MockDb, appId: string, metric: Metric, period: stri
   return Math.round(limit * share * factor);
 }
 
+/** Ids of every app of the account that owns `appId`: plan limits count all of them. */
+export function accountAppIds(db: MockDb, appId: string): string[] {
+  const ownerId = db.apps.find((item) => item.id === appId)?.ownerId;
+  return db.apps.filter((item) => item.ownerId === ownerId).map((item) => item.id);
+}
+
+/** What the custom emoji limit counts: every emoji of every app of the owning account. */
+export function accountEmojiCount(db: MockDb, appId: string): number {
+  const appIds = new Set(accountAppIds(db, appId));
+  return db.emoji.filter((emoji) => appIds.has(emoji.appId)).length;
+}
+
+/** `lgtm` and `plus-one` exist in Relay already, so an import there skips them as `exists`. */
+const IMPORT_NAMES = [
+  "lgtm",
+  "plus-one",
+  "blob-wave",
+  "party-parrot",
+  "this-is-fine",
+  "catjam",
+  "kekw",
+  "pog",
+  "sadge",
+  "nyan",
+  "yay",
+  "nod",
+  "salute",
+  "coffee-time",
+  "eyes-wide",
+  "big-brain",
+  "hype",
+  "facepalm-hd",
+];
+
+export interface ImportListing {
+  candidates: { shortcode: string; imageUrl: string; bytes: number }[];
+  /** Slack aliases of other emoji, never imported. */
+  aliases: number;
+  /** Entries whose name breaks the shortcode rules. */
+  invalid: number;
+}
+
+/**
+ * A made-up Slack workspace or Discord server. The same token lists the same emoji every time,
+ * and there are more than one import batch (50) of them, so the dialog shows its progress.
+ */
+export function importListing(source: "slack" | "discord", token: string): ImportListing {
+  const random = seeded(`${source}:${token}`);
+  const urls = Object.values(images);
+  const count = 60 + Math.floor(random() * 80);
+  const candidates = Array.from({ length: count }, (_, index) => {
+    const name = IMPORT_NAMES[index % IMPORT_NAMES.length] ?? "emoji";
+    const round = Math.floor(index / IMPORT_NAMES.length);
+    return {
+      shortcode: round === 0 ? name : `${name}-${round + 1}`,
+      imageUrl: urls[index % urls.length] ?? imageFor("acme", "lgtm"),
+      bytes: 900 + Math.floor(random() * 4_000),
+    };
+  });
+  return {
+    candidates,
+    aliases: source === "slack" ? 2 + Math.floor(random() * 5) : 0,
+    invalid: Math.floor(random() * 3),
+  };
+}
+
 /**
  * `GET /api/apps/:id/usage`: metering is per account, so `used` sums every app of the owner and
- * `appUsed` is this app's part. Custom emoji are not counters there: always 0.
+ * `appUsed` is this app's part. Custom emoji are the rows stored now, in every period.
  */
 export function usageFor(db: MockDb, appId: string, period: string): AppMetricUsage[] {
   const app = db.apps.find((item) => item.id === appId);
   const limits = PLANS[app?.plan ?? db.plan].limits;
-  const siblings = db.apps.filter((item) => item.ownerId === app?.ownerId).map((item) => item.id);
+  const siblings = accountAppIds(db, appId);
   return METRICS.map((metric) => {
-    if (metric === "custom_emoji") return { ...measure(metric, 0, limits[metric]), appUsed: 0 };
     const used = siblings.reduce((sum, id) => sum + appCount(db, id, metric, period), 0);
     return { ...measure(metric, used, limits[metric]), appUsed: appCount(db, appId, metric, period) };
   });

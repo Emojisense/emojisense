@@ -1,4 +1,4 @@
-import { METRICS, type Metric, PLANS } from "@emojisense/platform";
+import { METRICS, type Metric, PLANS, type PlanId } from "@emojisense/platform";
 import { vi } from "vitest";
 import type { AppSummary, KeySummary, MeResponse, UsageResponse } from "../../src/shared/contract";
 import { measureUsage, toPlanSummary } from "../../src/worker/plans";
@@ -45,13 +45,15 @@ export function usage(
   period: string,
   counts: Partial<Record<Metric, number>> = {},
   appCounts: Partial<Record<Metric, number>> = counts,
+  planId: PlanId = "free",
 ): UsageResponse {
+  const plan = PLANS[planId];
   return {
     appId: APP.id,
     period,
-    plan: { id: "free", name: "Free" },
+    plan: { id: plan.id, name: plan.name },
     metrics: METRICS.map((metric) => ({
-      ...measureUsage(metric, counts[metric] ?? 0, PLANS.free.limits[metric]),
+      ...measureUsage(metric, counts[metric] ?? 0, plan.limits[metric]),
       appUsed: appCounts[metric] ?? 0,
     })),
   };
@@ -76,7 +78,12 @@ export function stubApi(routes: Record<string, Route>): { calls: Call[] } {
   vi.stubGlobal("fetch", async (input: string, init: RequestInit = {}) => {
     const url = new URL(input, window.location.origin);
     const method = init.method ?? "GET";
-    const body = init.body ? (JSON.parse(String(init.body)) as unknown) : undefined;
+    const body =
+      init.body instanceof FormData
+        ? init.body
+        : init.body
+          ? (JSON.parse(String(init.body)) as unknown)
+          : undefined;
     calls.push({ method, path: url.pathname + url.search, ...(body === undefined ? {} : { body }) });
     const route = routes[`${method} ${url.pathname}`];
     const result: FakeResult = !route

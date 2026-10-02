@@ -1,17 +1,25 @@
 import {
+  CUSTOM_EMOJI_CONTENT_TYPES,
+  CUSTOM_EMOJI_MAX_BYTES,
   getPlan,
   isHigherPlan,
+  lowestPlanWith,
   METRICS,
   type Metric,
   PLAN_IDS,
   PLANS,
   type PlanId,
+  parseAliases,
+  parseShortcode,
   periodOf,
   WEBHOOK_EVENTS,
 } from "@emojisense/platform";
 import {
   type CreatedWebhookResponse,
+  type CustomEmoji,
+  type CustomEmojiListResponse,
   type DeletedTenantResponse,
+  type EmojiImportResponse,
   isDeleteAccountConfirmed,
   type KeySummary,
   type PlanSummary,
@@ -29,7 +37,6 @@ import type {
   AcceptInviteResponse,
   App,
   BillingResponse,
-  CustomEmoji,
   Me,
   TeamInviteSummary,
   TeamResponse,
@@ -38,7 +45,16 @@ import type {
   WebhookEvent,
 } from "../api";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
-import { analyticsFor, appCount, type MockDb, measure, seeded, usageFor } from "./data";
+import {
+  accountEmojiCount,
+  analyticsFor,
+  appCount,
+  type ImportListing,
+  importListing,
+  type MockDb,
+  measure,
+  usageFor,
+} from "./data";
 
 function tenantView(db: MockDb, tenant: MockDb["tenants"][number]): TenantSummary {
   const { appId: _, ...rest } = tenant;
@@ -147,7 +163,83 @@ const randomText = (length: number) => {
   ).join("");
 };
 
-const SHORTCODE = /^[a-z0-9_+-]{1,64}$/;
+function emojiView({ appId: _, ...emoji }: MockDb["emoji"][number]): CustomEmoji {
+  return emoji;
+}
+
+/** A failed platform parse, answered like the Worker: `400 invalid_request` with its field. */
+const invalid = (parsed: { message: string; field: string }) =>
+  fail(400, "invalid_request", parsed.message, { field: parsed.field });
+
+/** Shortcodes are unique per scope: app-wide, or one tenant. */
+const shortcodeInUse = (db: MockDb, appId: string, tenantId: string | null, shortcode: string) =>
+  db.emoji.some((item) => item.appId === appId && item.tenantId === tenantId && item.shortcode === shortcode);
+
+const shortcodeTaken = (shortcode: string) =>
+  fail(409, "shortcode_taken", `:${shortcode}: already exists in this app.`, { field: "shortcode" });
+
+/** The account is at its plan's custom emoji limit: 402 with the next plan, or 403 on the top plan. */
+function limitReached(planId: PlanId, used: number): MockResponse | null {
+  const plan = PLANS[planId];
+  const limit = plan.limits.custom_emoji;
+  if (used < limit) return null;
+  const next = lowestPlanWith((candidate) => candidate.limits.custom_emoji > limit);
+  const base = `Your ${plan.name} plan allows ${limit.toLocaleString("en-US")} custom emoji across all apps of the account, and all are used.`;
+  if (!next) return fail(403, "plan_limit", `${base} Delete some to add new ones.`);
+  return fail(
+    402,
+    "plan_required",
+    `${base} ${PLANS[next].name} allows ${PLANS[next].limits.custom_emoji.toLocaleString("en-US")}.`,
+    { plan: next },
+  );
+}
+
+/** New emoji stored per import call, as in the Worker. */
+const IMPORT_BATCH = 50;
+
+/** One import call: like the Worker's runImport, it stores the next batch and says how many wait. */
+function importBatch(
+  db: MockDb,
+  appId: string,
+  source: "slack" | "discord",
+  listing: ImportListing,
+): EmojiImportResponse {
+  const skippedBy: EmojiImportResponse["skippedBy"] = {
+    alias: listing.aliases,
+    exists: 0,
+    invalid: listing.invalid,
+    limit: 0,
+    failed: 0,
+  };
+  const queue = listing.candidates.filter((candidate) => {
+    const exists = shortcodeInUse(db, appId, null, candidate.shortcode);
+    if (exists) skippedBy.exists++;
+    return !exists;
+  });
+  const room = Math.max(0, PLANS[appPlan(db, appId)].limits.custom_emoji - accountEmojiCount(db, appId));
+  const fits = queue.slice(0, room);
+  skippedBy.limit = queue.length - fits.length;
+  const batch = fits.slice(0, IMPORT_BATCH);
+  for (const candidate of batch) {
+    db.emoji.push({
+      id: newId("emo"),
+      appId,
+      shortcode: candidate.shortcode,
+      aliases: [],
+      imageUrl: candidate.imageUrl,
+      tenantId: null,
+      source,
+      bytes: candidate.bytes,
+      createdAt: Date.now(),
+    });
+  }
+  return {
+    imported: batch.length,
+    skipped: Object.values(skippedBy).reduce((sum, count) => sum + count, 0),
+    remaining: fits.length - batch.length,
+    skippedBy,
+  };
+}
 
 const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
   ["GET", /^\/api\/me$/, (db) => ok(me(db))],
@@ -291,52 +383,61 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     "GET",
     /^\/api\/apps\/([^/]+)\/emoji$/,
     (db, { params }) => {
-      const blocked = gate(appPlan(db, params[0]), "custom_emoji");
-      if (blocked) return blocked;
-      const emoji = db.emoji
-        .filter((item) => item.appId === params[0])
-        .sort((a, b) => b.createdAt - a.createdAt);
-      return ok({
-        emoji: emoji.map(({ appId: _, ...item }) => item),
-        used: emoji.length,
-        limit: finite(PLANS[appPlan(db, params[0])].limits.custom_emoji),
-      });
+      const appId = params[0] ?? "";
+      if (!findApp(db, appId)) return notFound();
+      const emoji = db.emoji.filter((item) => item.appId === appId).sort((a, b) => b.createdAt - a.createdAt);
+      const response: CustomEmojiListResponse = {
+        emoji: emoji.map(emojiView),
+        used: accountEmojiCount(db, appId),
+        limit: finite(PLANS[appPlan(db, appId)].limits.custom_emoji),
+      };
+      return ok(response);
     },
   ],
   [
     "POST",
     /^\/api\/apps\/([^/]+)\/emoji$/,
     (db, { params, form }) => {
-      const blocked = gate(appPlan(db, params[0]), "custom_emoji");
+      const appId = params[0] ?? "";
+      const plan = appPlan(db, appId);
+      const blocked = gate(plan, "custom_emoji");
       if (blocked) return blocked;
       const file = form?.get("file");
-      const shortcode = String(form?.get("shortcode") ?? "");
-      if (!(file instanceof File)) return fail(400, "invalid_request", "Choose an image.", { field: "file" });
-      if (!SHORTCODE.test(shortcode)) {
-        return fail(400, "invalid_request", "Use 1–64 lowercase letters, digits, _ + or -.", {
-          field: "shortcode",
+      if (!(file instanceof File) || file.size === 0) {
+        return fail(400, "invalid_request", "Choose an image file to upload.", { field: "file" });
+      }
+      if (file.size > CUSTOM_EMOJI_MAX_BYTES) {
+        return fail(413, "image_too_large", `The image is larger than ${CUSTOM_EMOJI_MAX_BYTES / 1024} KB.`, {
+          field: "file",
         });
       }
-      if (db.emoji.some((item) => item.appId === params[0] && item.shortcode === shortcode)) {
-        return fail(409, "conflict", `:${shortcode}: already exists in this app.`, { field: "shortcode" });
+      if (!(CUSTOM_EMOJI_CONTENT_TYPES as readonly string[]).includes(file.type)) {
+        return fail(415, "unsupported_image", "Upload a PNG, GIF, WebP or SVG image.", { field: "file" });
       }
+      const shortcode = parseShortcode(form?.get("shortcode"));
+      if (!shortcode.ok) return invalid(shortcode);
+      const aliases = parseAliases(form?.get("aliases") ?? "");
+      if (!aliases.ok) return invalid(aliases);
+      const tenantId = String(form?.get("tenantId") ?? "").trim() || null;
+      if (tenantId && !db.tenants.some((tenant) => tenant.appId === appId && tenant.id === tenantId)) {
+        return fail(400, "invalid_request", "No tenant with this id in this app.", { field: "tenantId" });
+      }
+      if (shortcodeInUse(db, appId, tenantId, shortcode.value)) return shortcodeTaken(shortcode.value);
+      const full = limitReached(plan, accountEmojiCount(db, appId));
+      if (full) return full;
       const emoji: MockDb["emoji"][number] = {
         id: newId("emo"),
-        appId: params[0] ?? "",
-        shortcode,
-        aliases: String(form?.get("aliases") ?? "")
-          .split(",")
-          .map((alias) => alias.trim())
-          .filter(Boolean),
+        appId,
+        shortcode: shortcode.value,
+        aliases: aliases.value,
         imageUrl: URL.createObjectURL(file),
-        tenantId: (form?.get("tenantId") as string | null) || null,
+        tenantId,
         source: "upload",
         bytes: file.size,
         createdAt: Date.now(),
       };
       db.emoji.push(emoji);
-      const { appId: _, ...body } = emoji;
-      return ok(body satisfies CustomEmoji, 201);
+      return ok(emojiView(emoji), 201);
     },
   ],
   [
@@ -345,10 +446,23 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     (db, { params, json }) => {
       const emoji = db.emoji.find((item) => item.appId === params[0] && item.id === params[1]);
       if (!emoji) return notFound();
-      if (typeof json.shortcode === "string") emoji.shortcode = json.shortcode;
-      if (Array.isArray(json.aliases)) emoji.aliases = json.aliases as string[];
-      const { appId: _, ...body } = emoji;
-      return ok(body);
+      if ("shortcode" in json) {
+        const shortcode = parseShortcode(json.shortcode);
+        if (!shortcode.ok) return invalid(shortcode);
+        if (
+          shortcode.value !== emoji.shortcode &&
+          shortcodeInUse(db, emoji.appId, emoji.tenantId, shortcode.value)
+        ) {
+          return shortcodeTaken(shortcode.value);
+        }
+        emoji.shortcode = shortcode.value;
+      }
+      if ("aliases" in json) {
+        const aliases = parseAliases(json.aliases);
+        if (!aliases.ok) return invalid(aliases);
+        emoji.aliases = aliases.value;
+      }
+      return ok(emojiView(emoji));
     },
   ],
   [
@@ -365,13 +479,19 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
     "POST",
     /^\/api\/apps\/([^/]+)\/emoji\/import\/(slack|discord)$/,
     (db, { json, params }) => {
-      const blocked = gate(appPlan(db, params[0]), "emoji_import");
+      const appId = params[0] ?? "";
+      const source = params[1] === "discord" ? "discord" : "slack";
+      const blocked = gate(appPlan(db, appId), "emoji_import");
       if (blocked) return blocked;
-      const token = String(json.token ?? json.botToken ?? "");
-      if (token.length < 8)
-        return fail(400, "invalid_token", "That token was not accepted. Check it and try again.");
-      const random = seeded(`${params[1]}:${token}`);
-      return ok({ imported: 12 + Math.floor(random() * 40), skipped: Math.floor(random() * 4) });
+      const field = source === "slack" ? "token" : "botToken";
+      const token = String(json[field] ?? "");
+      if (token.length < 8) {
+        const provider = source === "slack" ? "Slack" : "Discord";
+        return fail(400, "import_auth_failed", `${provider} did not accept the token (invalid_auth).`, {
+          field,
+        });
+      }
+      return ok(importBatch(db, appId, source, importListing(source, token)));
     },
   ],
 

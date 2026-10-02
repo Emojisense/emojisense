@@ -96,15 +96,6 @@ export async function request<T>(method: string, path: string, body?: unknown): 
   return data as T;
 }
 
-/**
- * The contract names some single-item responses without saying whether they are wrapped
- * (`{ emoji: {…} }`) or bare (`{…}`). This accepts both.
- */
-export function unwrap<T>(data: unknown, key: string): T {
-  if (isRecord(data) && isRecord(data[key])) return data[key] as T;
-  return data as T;
-}
-
 export function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Something went wrong. Try again.";
 }
