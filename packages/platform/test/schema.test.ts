@@ -19,7 +19,9 @@ import {
   type TrendsDailyRow,
   type WebhookDeliveryRow,
   type WebhookRow,
+  WHOP_MEMBERSHIP_STATES,
   type WhopEventRow,
+  type WhopMembershipRow,
 } from "../src/types.js";
 
 const MIGRATIONS = new URL("../migrations/", import.meta.url);
@@ -176,6 +178,25 @@ describe("migration 0006 (billing)", () => {
       unknown
     >);
     expect(columns(migratedDb(), "whop_events")).toEqual(keys.sort());
+  });
+
+  it("adds whop_memberships with exactly the typed columns and its states", () => {
+    const keys = Object.keys({
+      id: "",
+      account_id: null,
+      state: "active",
+      period_end: null,
+      event_at: 0,
+      retired_at: null,
+      cancel_confirmed_at: null,
+    } satisfies Record<keyof WhopMembershipRow, unknown>);
+    const db = migratedDb();
+    expect(columns(db, "whop_memberships")).toEqual(keys.sort());
+    const insert = db.prepare(
+      "INSERT OR REPLACE INTO whop_memberships (id, state, event_at) VALUES ('m', ?, 0)",
+    );
+    for (const state of WHOP_MEMBERSHIP_STATES) insert.run(state);
+    expect(() => insert.run("trialing")).toThrow(/CHECK/);
   });
 
   it("starts existing accounts without billing and allows one account per membership", () => {

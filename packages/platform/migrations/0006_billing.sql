@@ -33,3 +33,24 @@ CREATE TABLE whop_events (
   received_at  INTEGER NOT NULL
 );
 CREATE INDEX whop_events_by_time ON whop_events(received_at);
+
+-- Every Whop membership the webhook has seen, with its newest state and that event's time. Whop
+-- does not keep events in order: a deactivation that arrives before the activation stays here, so
+-- the activation cannot grant the plan afterwards. A retired membership (replaced by a newer plan,
+-- or of a deleted account) never gives an account a plan again, and the Worker asks Whop to cancel
+-- it until Whop confirms. account_id has no foreign key: a deleted account's retired membership
+-- stays here without it. Rows of no account are deleted after 30 days.
+CREATE TABLE whop_memberships (
+  id                   TEXT PRIMARY KEY,
+  account_id           TEXT,
+  state                TEXT NOT NULL CHECK (state IN ('active', 'canceling', 'past_due', 'ended')),
+  period_end           INTEGER,
+  event_at             INTEGER NOT NULL,
+  retired_at           INTEGER,
+  -- Retired: when Whop confirmed that it stops renewing. NULL = still to cancel.
+  cancel_confirmed_at  INTEGER
+);
+CREATE INDEX whop_memberships_by_account ON whop_memberships(account_id);
+CREATE INDEX whop_memberships_to_cancel ON whop_memberships(retired_at)
+  WHERE retired_at IS NOT NULL AND cancel_confirmed_at IS NULL;
+

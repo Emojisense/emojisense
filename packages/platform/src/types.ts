@@ -46,6 +46,25 @@ export interface AccountRow {
   billing_event_at: number | null;
 }
 
+export const WHOP_MEMBERSHIP_STATES = ["active", "canceling", "past_due", "ended"] as const;
+export type WhopMembershipState = (typeof WHOP_MEMBERSHIP_STATES)[number];
+
+/** A Whop membership the webhook has seen, with its newest state (0006). */
+export interface WhopMembershipRow {
+  /** `mem_…` */
+  id: string;
+  /** The account it pays or paid for; `null` when unknown or the account was deleted. */
+  account_id: string | null;
+  state: WhopMembershipState;
+  period_end: number | null;
+  /** Time of the newest Whop event applied to this row, epoch ms. */
+  event_at: number;
+  /** Set when a newer plan replaced it or its account was deleted: it never grants a plan again. */
+  retired_at: number | null;
+  /** Retired: when Whop confirmed that it stops renewing; `null` = the Worker still cancels it. */
+  cancel_confirmed_at: number | null;
+}
+
 /** A Whop webhook delivery already applied, by its `webhook-id` (0006). */
 export interface WhopEventRow {
   id: string;

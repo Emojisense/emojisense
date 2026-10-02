@@ -89,22 +89,27 @@ export async function createCheckout(
 }
 
 /**
- * Stops a membership from renewing; it ends with its paid period (`cancel_at_period_end`). Used
- * when a new plan replaced it, and when the account is deleted. Retries are safe: the same
- * idempotency key cancels once.
+ * Stops a membership from renewing; it ends with its paid period. Used for a membership that a
+ * new plan replaced, and for the membership of a deleted account. `idempotencyKey` makes a retry
+ * cancel once.
+ *
+ * Whop documents this call twice: `cancellation_mode: "at_period_end"` (default at_period_end) in
+ * the API reference, and `cancel_at_period_end: true` in the newer reference, where leaving it out
+ * revokes access at once. Both are sent, so neither reading ends a paid period early.
  */
 export async function cancelMembership(
   fetch: Deps["fetch"],
   api: WhopApi,
   membershipId: string,
   reason: string,
+  idempotencyKey: string,
 ): Promise<void> {
   await call(
     fetch,
     api,
     "cancel",
     `/memberships/${encodeURIComponent(membershipId)}/cancel`,
-    { cancel_at_period_end: true, reason },
-    { "idempotency-key": `emojisense-cancel-${membershipId}` },
+    { cancellation_mode: "at_period_end", cancel_at_period_end: true, reason },
+    { "idempotency-key": `emojisense-cancel-${idempotencyKey}` },
   );
 }

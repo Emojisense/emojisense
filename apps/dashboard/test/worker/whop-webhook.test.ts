@@ -1,7 +1,8 @@
-import { DAY_MS, PAST_DUE_GRACE_DAYS } from "@emojisense/platform";
+import { DAY_MS, PAST_DUE_GRACE_DAYS, type WhopMembershipRow } from "@emojisense/platform";
 import { afterEach, assert, describe, expect, it, vi } from "vitest";
 import type { Env } from "../../src/worker/env";
 import { parseWhopEvent, planWhopEvent, type WhopEvent } from "../../src/worker/whop/events";
+import { cancelRetiredMemberships } from "../../src/worker/whop/memberships";
 import { accountIdOf, body, createHarness, type Harness, NOW } from "./harness";
 import {
   checkoutMetadata,
@@ -46,6 +47,18 @@ function parsed(h: Harness, payload: unknown): WhopEvent {
   if (!event) throw new Error("not a handled event");
   return event;
 }
+
+function membershipOf(h: Harness, id: string): WhopMembershipRow {
+  const [row] = h.db.rows<WhopMembershipRow>("SELECT * FROM whop_memberships WHERE id = ?", id);
+  if (!row) throw new Error(`no membership ${id}`);
+  return row;
+}
+
+/** The memberships Whop was asked to cancel, in order. */
+const cancelCalls = (h: Harness) =>
+  h.fetchMock.mock.calls
+    .map(([url]) => /\/memberships\/([^/]+)\/cancel$/.exec(String(url))?.[1])
+    .filter((id): id is string => id !== undefined);
 
 const eventIds = (h: Harness) => h.db.rows<{ id: string }>("SELECT id FROM whop_events").map((r) => r.id);
 
@@ -441,12 +454,18 @@ describe("POST /api/whop/webhook: activation", () => {
     );
     expect(response.status).toBe(200);
     expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", whop_membership_id: "mem_pro" });
+    expect(membershipOf(h, "mem_solo")).toMatchObject({ account_id: adaId, cancel_confirmed_at: null });
+    expect(membershipOf(h, "mem_solo").retired_at).not.toBeNull();
     answerWhop();
     await h.settle();
-    const [url, init] = h.fetchMock.mock.calls[0] ?? [];
-    expect(url).toBe("https://sandbox-api.whop.com/api/v1/memberships/mem_solo/cancel");
-    expect(JSON.parse(String(init?.body))).toMatchObject({ cancel_at_period_end: true });
-    expect(new Headers(init?.headers).get("idempotency-key")).toBe("emojisense-cancel-mem_solo");
+    expect(cancelCalls(h)).toEqual(["mem_solo"]);
+    const [, init] = h.fetchMock.mock.calls[0] ?? [];
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      cancellation_mode: "at_period_end",
+      cancel_at_period_end: true,
+    });
+    expect(new Headers(init?.headers).get("idempotency-key")).toMatch(/^emojisense-cancel-mem_solo-\d+$/);
+    expect(membershipOf(h, "mem_solo").cancel_confirmed_at).not.toBeNull();
 
     // When the old membership ends, the account keeps the new plan.
     h.clock.now = NOW + 20 * DAY_MS;
@@ -459,9 +478,10 @@ describe("POST /api/whop/webhook: activation", () => {
       }),
     );
     expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", billing_status: "active" });
+    expect(membershipOf(h, "mem_solo").state).toBe("ended");
   });
 
-  it("logs a failed cancel of the replaced membership without failing the delivery", async () => {
+  it("retries a failed cancel of the replaced membership until Whop confirms it", async () => {
     const { h, adaId } = await setup();
     await subscribed(h, adaId, "solo", "mem_solo");
     h.fetchMock.mockImplementation(async () => new Response("{}", { status: 500 }));
@@ -478,8 +498,205 @@ describe("POST /api/whop/webhook: activation", () => {
     expect(response.status).toBe(200);
     await h.settle();
     const logged = error.mock.calls.map(([line]) => JSON.parse(String(line)));
-    expect(logged).toContainEqual(expect.objectContaining({ event: "whop_background_failed" }));
+    expect(logged).toContainEqual(expect.objectContaining({ event: "whop_cancel_failed", status: 500 }));
     expect(JSON.stringify(logged)).not.toContain("mem_solo");
+    expect(membershipOf(h, "mem_solo").cancel_confirmed_at).toBeNull();
+
+    // The daily cron (or the next Whop event) tries again; Whop answers this time.
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    expect(await cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now })).toBe(1);
+    expect(cancelCalls(h)).toEqual(["mem_solo", "mem_solo"]);
+    expect(membershipOf(h, "mem_solo").cancel_confirmed_at).toBe(h.clock.now);
+    // Confirmed: nothing more to send.
+    expect(await cancelRetiredMemberships(h.env, { fetch: h.fetchMock, now: () => h.clock.now })).toBe(0);
+    expect(cancelCalls(h)).toHaveLength(2);
+  });
+
+  it("treats a membership that Whop no longer knows as cancelled", async () => {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId, "solo", "mem_solo");
+    h.fetchMock.mockImplementation(
+      async () => new Response('{"error":{"message":"Not found"}}', { status: 404 }),
+    );
+    h.clock.now = NOW + DAY_MS;
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", {
+        membershipId: "mem_pro",
+        whopPlanId: WHOP_PLANS.pro.month,
+        metadata: checkoutMetadata(adaId, "pro"),
+      }),
+    );
+    await h.settle();
+    expect(membershipOf(h, "mem_solo").cancel_confirmed_at).not.toBeNull();
+  });
+});
+
+describe("POST /api/whop/webhook: retired memberships", () => {
+  /** ada moved from Solo (mem_solo) to Pro (mem_pro); Whop confirmed the Solo cancel. */
+  async function switched() {
+    const { h, adaId } = await setup();
+    await subscribed(h, adaId, "solo", "mem_solo");
+    h.fetchMock.mockImplementation(async () => new Response("{}", { status: 200 }));
+    h.clock.now = NOW + DAY_MS;
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", {
+        membershipId: "mem_pro",
+        whopPlanId: WHOP_PLANS.pro.month,
+        metadata: checkoutMetadata(adaId, "pro"),
+      }),
+    );
+    await h.settle();
+    h.fetchMock.mockClear();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    return { h, adaId };
+  }
+
+  it("ignores a later payment of the replaced membership and cancels it again", async () => {
+    const { h, adaId } = await switched();
+    // The Solo cancel did not hold (or the buyer resumed it in Whop): Solo renews, with the
+    // metadata of its own checkout.
+    h.clock.now = NOW + 30 * DAY_MS;
+    const response = await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", {
+        membershipId: "mem_solo",
+        whopPlanId: WHOP_PLANS.solo.month,
+        metadata: checkoutMetadata(adaId, "solo"),
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", whop_membership_id: "mem_pro" });
+    await h.settle();
+    // Solo is cancelled again; Pro, the plan the account pays with, is never touched.
+    expect(cancelCalls(h)).toEqual(["mem_solo"]);
+  });
+
+  it("ignores membership.activated of the replaced membership too", async () => {
+    const { h, adaId } = await switched();
+    h.clock.now = NOW + 2 * DAY_MS;
+    await deliver(
+      h,
+      membershipEvent(h, "membership.activated", {
+        membershipId: "mem_solo",
+        whopPlanId: WHOP_PLANS.solo.month,
+        metadata: checkoutMetadata(adaId, "solo"),
+      }),
+    );
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", whop_membership_id: "mem_pro" });
+  });
+
+  it("cancels the replaced membership again when the buyer resumes it in Whop", async () => {
+    const { h, adaId } = await switched();
+    h.clock.now = NOW + 3 * DAY_MS;
+    await deliver(
+      h,
+      membershipEvent(h, "membership.cancel_at_period_end_changed", {
+        membershipId: "mem_solo",
+        whopPlanId: WHOP_PLANS.solo.month,
+        cancelAtPeriodEnd: false,
+      }),
+    );
+    await h.settle();
+    expect(cancelCalls(h)).toEqual(["mem_solo"]);
+    expect(billingOf(h, adaId).whop_membership_id).toBe("mem_pro");
+  });
+});
+
+describe("POST /api/whop/webhook: events of a membership before its activation", () => {
+  it("a deactivation that arrives first stops the older activation from granting the plan", async () => {
+    const { h, adaId } = await setup();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    // Whop sends both; the deactivation (newer) is delivered first.
+    await deliver(
+      h,
+      membershipEvent(h, "membership.deactivated", {
+        membershipId: "mem_1",
+        whopPlanId: WHOP_PLANS.pro.month,
+        at: NOW + DAY_MS,
+      }),
+    );
+    expect(membershipOf(h, "mem_1")).toMatchObject({ account_id: null, state: "ended" });
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", {
+        membershipId: "mem_1",
+        whopPlanId: WHOP_PLANS.pro.month,
+        metadata: checkoutMetadata(adaId, "pro"),
+        at: NOW,
+      }),
+    );
+    expect(billingOf(h, adaId)).toMatchObject({
+      plan: "free",
+      billing_status: "none",
+      whop_membership_id: null,
+    });
+  });
+
+  it("a cancellation that arrives first makes the activation a cancelled plan", async () => {
+    const { h, adaId } = await setup();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const periodEnd = NOW + 30 * DAY_MS;
+    await deliver(
+      h,
+      membershipEvent(h, "membership.cancel_at_period_end_changed", {
+        membershipId: "mem_1",
+        whopPlanId: WHOP_PLANS.pro.month,
+        cancelAtPeriodEnd: true,
+        periodEnd,
+        at: NOW + DAY_MS,
+      }),
+    );
+    await deliver(
+      h,
+      paymentEvent(h, "payment.succeeded", {
+        membershipId: "mem_1",
+        whopPlanId: WHOP_PLANS.pro.month,
+        metadata: checkoutMetadata(adaId, "pro"),
+        at: NOW,
+      }),
+    );
+    expect(billingOf(h, adaId)).toMatchObject({
+      plan: "pro",
+      billing_status: "canceling",
+      whop_membership_id: "mem_1",
+      current_period_end: periodEnd,
+      billing_event_at: NOW + DAY_MS,
+    });
+    expect(membershipOf(h, "mem_1").account_id).toBe(adaId);
+  });
+
+  it("an activation newer than the stored deactivation grants the plan (reactivated)", async () => {
+    const { h, adaId } = await setup();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await deliver(
+      h,
+      membershipEvent(h, "membership.deactivated", {
+        membershipId: "mem_1",
+        whopPlanId: WHOP_PLANS.pro.month,
+      }),
+    );
+    h.clock.now = NOW + DAY_MS;
+    await deliver(
+      h,
+      membershipEvent(h, "membership.activated", {
+        membershipId: "mem_1",
+        whopPlanId: WHOP_PLANS.pro.month,
+        metadata: checkoutMetadata(adaId, "pro"),
+      }),
+    );
+    expect(billingOf(h, adaId)).toMatchObject({ plan: "pro", billing_status: "active" });
+  });
+
+  it("stores no state for memberships of products that are not ours", async () => {
+    const { h } = await setup();
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await deliver(
+      h,
+      membershipEvent(h, "membership.deactivated", { membershipId: "mem_other", whopPlanId: "plan_NotOurs" }),
+    );
+    expect(h.db.rows("SELECT id FROM whop_memberships")).toEqual([]);
   });
 });
 

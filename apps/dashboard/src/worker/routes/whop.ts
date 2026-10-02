@@ -1,15 +1,16 @@
 /**
  * `POST /api/whop/webhook`: Whop's signed billing events. No session: the signature is the
  * authentication. Answers within Whop's 5 seconds: the D1 change is one batch before the answer,
- * so a failure answers 500 and Whop retries; calls to Whop and cleanup run in `waitUntil`.
+ * so a failure answers 500 and Whop retries; calls to Whop (cancelling retired memberships) and
+ * cleanup run in `waitUntil`.
  */
 import { DAY_MS, expireLapsedBilling, parseWhopPlanIds } from "@emojisense/platform";
 import type { D1Database } from "../d1";
 import type { Deps, Env, RequestContext } from "../env";
 import { HttpError, json, readCapped } from "../http";
-import { cancelMembership } from "../whop/api";
-import { billingEnvironment, whopApi } from "../whop/config";
-import { parseWhopEvent, planWhopEvent, type WhopEventPlan } from "../whop/events";
+import { billingEnvironment } from "../whop/config";
+import { parseWhopEvent, planWhopEvent } from "../whop/events";
+import { cancelRetiredMemberships, pruneMemberships } from "../whop/memberships";
 import { checkWhopSignature } from "../whop/signature";
 
 /** Whop's payloads are a few KB; this only bounds memory. */
@@ -31,30 +32,23 @@ async function alreadyApplied(db: D1Database, webhookId: string): Promise<boolea
   return (await db.prepare("SELECT 1 AS hit FROM whop_events WHERE id = ?").bind(webhookId).first()) !== null;
 }
 
-/** Cancels a replaced membership, prunes old event ids and moves lapsed accounts to Free. */
-function afterResponse(env: Env, deps: Deps, webhookId: string, plan: WhopEventPlan): Promise<unknown> {
+/**
+ * After the answer: cancels retired memberships until Whop confirms, prunes old event ids and
+ * unattached memberships, and moves lapsed accounts to Free.
+ */
+function afterResponse(env: Env, deps: Deps, webhookId: string): Promise<unknown> {
   const now = deps.now();
   const work: Promise<unknown>[] = [
-    env.DB.prepare("DELETE FROM whop_events WHERE received_at < ?")
-      .bind(now - EVENT_KEEP_DAYS * DAY_MS)
-      .run(),
+    env.DB.batch([
+      env.DB.prepare("DELETE FROM whop_events WHERE received_at < ?").bind(now - EVENT_KEEP_DAYS * DAY_MS),
+      pruneMemberships(env.DB, now),
+    ]),
     expireLapsedBilling(env.DB, now),
+    cancelRetiredMemberships(env, deps),
   ];
-  const replaced = plan.result === "applied" ? plan.replacedMembershipId : null;
-  if (replaced) {
-    const api = whopApi(env);
-    work.push(
-      api
-        ? cancelMembership(deps.fetch, api, replaced, "Replaced by another Emojisense plan").then(() =>
-            log("info", { event: "whop_membership_replaced", webhookId }),
-          )
-        : Promise.reject(new Error("WHOP_API_KEY is not set")),
-    );
-  }
   return Promise.allSettled(work).then((results) => {
     for (const result of results) {
       if (result.status === "rejected") {
-        // The webhook id finds the payload in Whop's delivery log, and with it the membership.
         log("error", {
           event: "whop_background_failed",
           webhookId,
@@ -122,7 +116,7 @@ export async function whopWebhook({ request, env, deps }: RequestContext): Promi
     .bind(webhookId, event.type, deps.now());
   try {
     // One transaction: the event id and its change land together, or neither does.
-    await db.batch([remember, ...(plan.result === "applied" ? plan.statements : [])]);
+    await db.batch([remember, ...plan.statements]);
   } catch (error) {
     // A parallel delivery of the same event won the race.
     if (await alreadyApplied(db, webhookId)) return json({ ok: true, duplicate: true });
@@ -136,7 +130,7 @@ export async function whopWebhook({ request, env, deps }: RequestContext): Promi
     ...(plan.result === "applied" ? { status: plan.status } : { reason: plan.reason }),
   });
 
-  const background = afterResponse(env, deps, webhookId, plan);
+  const background = afterResponse(env, deps, webhookId);
   if (deps.waitUntil) deps.waitUntil(background);
   else await background;
   return json({ ok: true });

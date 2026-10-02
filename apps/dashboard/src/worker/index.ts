@@ -2,6 +2,7 @@ import { type CachePurger, expireLapsedBilling } from "@emojisense/platform";
 import { handleRequest } from "./app";
 import { createClerkGateway } from "./clerk";
 import type { Env } from "./env";
+import { cancelRetiredMemberships } from "./whop/memberships";
 
 /** Cloudflare's per-zone Cache API; the WebWorker lib types have no `caches.default`. */
 const zoneCache = () => (caches as unknown as { default: CachePurger }).default;
@@ -24,14 +25,17 @@ export default {
 
   /**
    * Optional daily cron (a `triggers.crons` entry in wrangler.jsonc): moves subscriptions whose
-   * past-due grace or cancelled period ran out to Free, in case Whop's final event never came.
-   * Without it the same check runs on every Whop event and when the owner opens the dashboard.
+   * past-due grace or cancelled period ran out to Free, in case Whop's final event never came, and
+   * retries cancelling retired memberships. Without it both also run after every Whop event.
    */
   scheduled(_controller: unknown, env: Env, ctx: ExecutionContext): void {
+    const deps = { fetch: (input: string, init?: RequestInit) => fetch(input, init), now: Date.now };
     ctx.waitUntil(
-      expireLapsedBilling(env.DB, Date.now()).then((changed) => {
-        console.log(JSON.stringify({ event: "billing_lapsed_sweep", changed }));
-      }),
+      Promise.all([expireLapsedBilling(env.DB, Date.now()), cancelRetiredMemberships(env, deps)]).then(
+        ([changed, cancelled]) => {
+          console.log(JSON.stringify({ event: "billing_sweep", changed, cancelled }));
+        },
+      ),
     );
   },
 };

@@ -347,7 +347,16 @@ describe("account deletion with a subscription", () => {
     await h.settle();
     const [url, init] = h.fetchMock.mock.calls[0] ?? [];
     expect(url).toBe("https://sandbox-api.whop.com/api/v1/memberships/mem_paid/cancel");
-    expect(JSON.parse(String(init?.body))).toMatchObject({ cancel_at_period_end: true });
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      cancellation_mode: "at_period_end",
+      cancel_at_period_end: true,
+    });
+    // The membership stays as an anonymous retired row: it never gives a plan again.
+    expect(
+      h.db.rows(
+        "SELECT id, account_id, retired_at IS NOT NULL AS retired, cancel_confirmed_at IS NOT NULL AS confirmed FROM whop_memberships",
+      ),
+    ).toEqual([{ id: "mem_paid", account_id: null, retired: 1, confirmed: 1 }]);
   });
 
   it("calls Whop only for a subscription that still renews", async () => {

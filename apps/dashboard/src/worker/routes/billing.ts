@@ -20,8 +20,9 @@ import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { finiteOrNull, measureUsage, toPlanSummary } from "../plans";
 import { parseBillingInterval, parsePaidPlan } from "../validate";
-import { cancelMembership, createCheckout, WhopApiError } from "../whop/api";
+import { createCheckout, WhopApiError } from "../whop/api";
 import { billingEnvironment, whopApi, whopOrdersUrl, whopPlanIds } from "../whop/config";
+import { cancelRetiredMemberships, retireMembership } from "../whop/memberships";
 
 /**
  * The account as billing sees it now. A subscription whose grace or cancelled period ran out moves
@@ -156,24 +157,29 @@ export async function startCheckout(ctx: AuthedContext): Promise<Response> {
 }
 
 /**
- * Account deletion stops the subscription from renewing (best effort, after the account is gone):
- * the paid period ends as it would after a cancel in Whop.
+ * Account deletion: the account's membership rows go, and a membership that still renews becomes
+ * an anonymous retired row, so it is cancelled at period end until Whop confirms and never gives
+ * a plan again. Runs right after the account rows are deleted; the cancel runs after the answer.
  */
-export async function cancelSubscriptionOf(ctx: AuthedContext, account: AccountRow): Promise<void> {
-  const api = whopApi(ctx.env);
+export async function retireDeletedAccountBilling(ctx: AuthedContext, account: AccountRow): Promise<void> {
+  const db = ctx.env.DB;
+  const now = ctx.deps.now();
+  const statements = [db.prepare("DELETE FROM whop_memberships WHERE account_id = ?").bind(account.id)];
   const membershipId = account.whop_membership_id;
-  if (!membershipId || !["active", "past_due"].includes(account.billing_status)) return;
-  if (!api) {
-    console.error(JSON.stringify({ level: "error", event: "whop_cancel_skipped", reason: "no_api_key" }));
-    return;
+  const status = account.billing_status;
+  if (membershipId && (status === "active" || status === "past_due" || status === "canceling")) {
+    statements.push(retireMembership(db, { id: membershipId, accountId: null, state: status, at: now }));
+    // Already cancelled in Whop: nothing to send unless Whop reports that it renews again.
+    if (status === "canceling") {
+      statements.push(
+        db
+          .prepare("UPDATE whop_memberships SET cancel_confirmed_at = ? WHERE id = ?")
+          .bind(now, membershipId),
+      );
+    }
   }
-  try {
-    await cancelMembership(ctx.deps.fetch, api, membershipId, "Emojisense account deleted");
-    console.log(JSON.stringify({ event: "whop_membership_cancelled", reason: "account_deleted" }));
-  } catch (error) {
-    const status = error instanceof WhopApiError ? error.status : 0;
-    console.error(
-      JSON.stringify({ level: "error", event: "whop_cancel_failed", reason: "account_deleted", status }),
-    );
-  }
+  await db.batch(statements);
+  const cancel = cancelRetiredMemberships(ctx.env, ctx.deps);
+  if (ctx.deps.waitUntil) ctx.deps.waitUntil(cancel);
+  else await cancel;
 }

@@ -159,7 +159,10 @@ export {
   type UsageRow,
   type WebhookDeliveryRow,
   type WebhookRow,
+  WHOP_MEMBERSHIP_STATES,
   type WhopEventRow,
+  type WhopMembershipRow,
+  type WhopMembershipState,
 } from "./types.js";
 export {
   type FlushedUsage,

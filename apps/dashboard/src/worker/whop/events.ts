@@ -4,8 +4,12 @@
  * - A membership the account already pays with finds its account directly. A new one is matched
  *   by the checkout metadata `{ accountId, plan, interval, env }`, which must name an existing
  *   account of this environment and the same plan as the variant.
- * - Whop does not keep events in order: an event older than the last one applied to the account
- *   changes nothing.
+ * - Whop does not keep events in order. Per membership, whop_memberships keeps the newest state
+ *   and its time: an activation older than a stored deactivation grants nothing, and one older
+ *   than a stored cancellation grants a cancelled plan. Per account, an event of the membership it
+ *   pays with that is older than the last one applied changes nothing.
+ * - A retired membership (replaced by a newer plan, or of a deleted account) never activates an
+ *   account again; memberships.ts cancels it until Whop confirms.
  * - Anything else is ignored with a reason: the webhook still answers 200, so Whop stops retrying.
  *
  * Payload fields are read in both of Whop's shapes: the current one (`plan_id`, `membership_id`,
@@ -18,10 +22,19 @@ import {
   DAY_MS,
   findWhopPlan,
   PAST_DUE_GRACE_DAYS,
+  type WhopMembershipRow,
+  type WhopMembershipState,
   type WhopPlanIds,
 } from "@emojisense/platform";
 import type { D1Database, D1PreparedStatement } from "../d1";
 import { isValidId } from "../validate";
+import {
+  attachMembership,
+  type CancelEffect,
+  membershipRow,
+  recordMembership,
+  retireMembership,
+} from "./memberships";
 
 export const WHOP_EVENT_TYPES = [
   "payment.succeeded",
@@ -56,19 +69,18 @@ export type IgnoreReason =
   | "plan_mismatch"
   | "account_mismatch"
   | "unknown_membership"
+  | "retired_membership"
+  | "membership_ended"
   | "not_paying"
   | "stale";
 
+/**
+ * What a verified event changes, as statements for one D1 batch. An ignored event can still
+ * record its membership's state (whop_memberships), so a later, older event is judged against it.
+ */
 export type WhopEventPlan =
-  | {
-      result: "applied";
-      accountId: string;
-      status: BillingStatus;
-      statements: D1PreparedStatement[];
-      /** The membership the account paid with before, now replaced: cancel it at period end. */
-      replacedMembershipId: string | null;
-    }
-  | { result: "ignored"; reason: IgnoreReason };
+  | { result: "applied"; accountId: string; status: BillingStatus; statements: D1PreparedStatement[] }
+  | { result: "ignored"; reason: IgnoreReason; statements: D1PreparedStatement[] };
 
 export interface WhopEventContext {
   db: D1Database;
@@ -79,6 +91,14 @@ export interface WhopEventContext {
 
 /** Statuses in which the account pays, so a newer membership replaces the stored one. */
 const PAYING: ReadonlySet<BillingStatus> = new Set(["active", "canceling", "past_due"]);
+
+const MEMBERSHIP_STATE_OF: Record<BillingStatus, WhopMembershipState> = {
+  none: "active",
+  active: "active",
+  canceling: "canceling",
+  past_due: "past_due",
+  canceled: "ended",
+};
 
 function record(value: unknown): Record<string, unknown> | null {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -142,7 +162,11 @@ export function parseWhopEvent(body: unknown, fallbackAt: number): WhopEvent | n
   };
 }
 
-const ignored = (reason: IgnoreReason): WhopEventPlan => ({ result: "ignored", reason });
+const ignored = (reason: IgnoreReason, statements: D1PreparedStatement[] = []): WhopEventPlan => ({
+  result: "ignored",
+  reason,
+  statements,
+});
 
 async function accountByMembership(db: D1Database, membershipId: string): Promise<AccountRow | null> {
   return db
@@ -171,86 +195,189 @@ const isStale = (account: AccountRow, event: WhopEvent) =>
   account.billing_event_at !== null && event.at < account.billing_event_at;
 
 /**
- * The same rule inside each UPDATE, so two events of one account handled at the same time cannot
- * let the older one win. Binds: the event time.
+ * The order check inside each UPDATE of the paying membership, so two events of one account
+ * handled at the same time cannot let the older one win. Binds: the event time.
  */
 const NOT_OLDER = "(billing_event_at IS NULL OR billing_event_at <= ?)";
+
+/** The membership state an event reports. */
+function reportedState(event: WhopEvent): WhopMembershipState {
+  switch (event.type) {
+    case "payment.failed":
+      return "past_due";
+    case "membership.deactivated":
+      return event.status === "past_due" ? "past_due" : "ended";
+    default:
+      return event.cancelAtPeriodEnd ? "canceling" : "active";
+  }
+}
+
+/** For a retired membership: renewing means cancel it again; a reported cancel confirms ours. */
+function cancelEffect(event: WhopEvent): CancelEffect {
+  if (event.type === "membership.cancel_at_period_end_changed") {
+    if (event.cancelAtPeriodEnd === null) return "keep";
+    return event.cancelAtPeriodEnd ? "confirm" : "reset";
+  }
+  if (event.type === "payment.succeeded" || event.type === "membership.activated") {
+    return event.cancelAtPeriodEnd ? "confirm" : "reset";
+  }
+  return "keep";
+}
+
+interface Known {
+  membershipId: string;
+  stored: WhopMembershipRow | null;
+  /** The account that pays with this membership now, if any. */
+  account: AccountRow | null;
+  /** Ours: its variant is in WHOP_PLAN_IDS, or it is stored or paid with already. */
+  ours: boolean;
+}
+
+async function lookUp(ctx: WhopEventContext, event: WhopEvent, membershipId: string): Promise<Known> {
+  const [stored, account] = await Promise.all([
+    membershipRow(ctx.db, membershipId),
+    accountByMembership(ctx.db, membershipId),
+  ]);
+  const ours =
+    stored !== null ||
+    account !== null ||
+    (event.whopPlanId !== null && findWhopPlan(ctx.planIds, event.whopPlanId) !== undefined);
+  return { membershipId, stored, account, ours };
+}
+
+/** Records this event's state of the membership; other companies' products are not stored. */
+function recordFor(
+  ctx: WhopEventContext,
+  event: WhopEvent,
+  known: Known,
+  accountId: string | null,
+): D1PreparedStatement[] {
+  if (!known.ours) return [];
+  const recorded = recordMembership(ctx.db, {
+    id: known.membershipId,
+    accountId,
+    state: reportedState(event),
+    periodEnd: event.periodEnd,
+    at: event.at,
+    cancel: cancelEffect(event),
+  });
+  // An older event does not change the stored state, but it can still name the account.
+  return accountId ? [recorded, attachMembership(ctx.db, known.membershipId, accountId)] : [recorded];
+}
 
 /** payment.succeeded and membership.activated: the account gets the paid plan. */
 async function activate(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
   if (!event.membershipId || !event.whopPlanId) return ignored("missing_fields");
+  const membershipId = event.membershipId;
+  const known = await lookUp(ctx, event, membershipId);
+  const recorded = (accountId: string | null) => recordFor(ctx, event, known, accountId);
+  if (known.stored?.retired_at != null) {
+    return ignored("retired_membership", recorded(known.stored.account_id));
+  }
   const bought = findWhopPlan(ctx.planIds, event.whopPlanId);
-  if (!bought) return ignored("unknown_plan");
+  if (!bought) return ignored("unknown_plan", recorded(known.account?.id ?? null));
 
-  let account = await accountByMembership(ctx.db, event.membershipId);
+  let account = known.account;
+  const isNew = account === null;
   if (account) {
     const claimed = text(event.metadata.accountId);
-    if (claimed && claimed !== account.id) return ignored("account_mismatch");
+    if (claimed && claimed !== account.id) return ignored("account_mismatch", recorded(account.id));
+    if (isStale(account, event)) return ignored("stale", recorded(account.id));
   } else {
     const found = await accountFromMetadata(ctx, event);
-    if ("reason" in found) return ignored(found.reason);
+    if ("reason" in found) return ignored(found.reason, recorded(null));
     const { plan, interval } = event.metadata;
     if (plan !== bought.plan || (interval !== undefined && interval !== bought.interval)) {
-      return ignored("plan_mismatch");
+      return ignored("plan_mismatch", recorded(null));
     }
     account = found.account;
   }
-  if (isStale(account, event)) return ignored("stale");
 
-  const sameMembership = account.whop_membership_id === event.membershipId;
-  const replacedMembershipId =
-    !sameMembership && account.whop_membership_id && PAYING.has(account.billing_status)
-      ? account.whop_membership_id
-      : null;
+  // A newer event about this membership came first: it limits what the activation grants.
+  const newer = known.stored && known.stored.event_at > event.at ? known.stored : null;
+  if (newer?.state === "ended") return ignored("membership_ended", recorded(account.id));
+  let status: BillingStatus = event.cancelAtPeriodEnd ? "canceling" : "active";
+  let graceUntil: number | null = null;
+  if (newer?.state === "canceling") status = "canceling";
+  if (newer?.state === "past_due") {
+    status = "past_due";
+    graceUntil = newer.event_at + PAST_DUE_GRACE_DAYS * DAY_MS;
+  }
+  const eventAt = Math.max(event.at, newer?.event_at ?? 0);
+
   // Payments carry no period: estimate it from the payment until a membership event says.
   const estimate = (event.paidAt ?? event.at) + BILLING_PERIOD_DAYS[bought.interval] * DAY_MS;
   const periodEnd =
+    newer?.period_end ??
     event.periodEnd ??
-    (sameMembership && account.current_period_end !== null
+    (!isNew && account.current_period_end !== null
       ? Math.max(account.current_period_end, estimate)
       : estimate);
-  const status: BillingStatus = event.cancelAtPeriodEnd ? "canceling" : "active";
-  const manageUrl = event.manageUrl ?? (sameMembership ? account.whop_manage_url : null);
+  const manageUrl = event.manageUrl ?? (isNew ? null : account.whop_manage_url);
+  // The paying membership: the order check. A new one: the account must still pay with the
+  // membership read above, so two new memberships handled at once cannot both win.
+  const guard = isNew ? "whop_membership_id IS ?" : `whop_membership_id = ? AND ${NOT_OLDER}`;
+  const guardValues = isNew ? [account.whop_membership_id] : [membershipId, event.at];
   const update = ctx.db
     .prepare(
       `UPDATE accounts SET plan = ?, billing_status = ?, billing_interval = ?, whop_membership_id = ?,
-         current_period_end = ?, billing_grace_until = NULL, whop_manage_url = ?, billing_event_at = ?
-       WHERE id = ? AND ${NOT_OLDER}`,
+         current_period_end = ?, billing_grace_until = ?, whop_manage_url = ?, billing_event_at = ?
+       WHERE id = ? AND ${guard}`,
     )
     .bind(
       bought.plan,
       status,
       bought.interval,
-      event.membershipId,
+      membershipId,
       periodEnd,
+      graceUntil,
       manageUrl,
-      event.at,
+      eventAt,
       account.id,
-      event.at,
+      ...guardValues,
     );
-  return { result: "applied", accountId: account.id, status, statements: [update], replacedMembershipId };
+
+  const statements = [...recorded(account.id), update];
+  const previous = account.whop_membership_id;
+  if (isNew && previous && PAYING.has(account.billing_status)) {
+    // The replaced membership must stop renewing; memberships.ts cancels it after the answer.
+    statements.push(
+      retireMembership(ctx.db, {
+        id: previous,
+        accountId: account.id,
+        state: MEMBERSHIP_STATE_OF[account.billing_status],
+        at: eventAt,
+      }),
+    );
+  }
+  return { result: "applied", accountId: account.id, status, statements };
 }
 
-/** The stored membership of an account, for events that may only change that one. */
+/** The account that pays with the event's membership, for events that may only change that one. */
 async function currentAccount(
   ctx: WhopEventContext,
   event: WhopEvent,
-): Promise<{ account: AccountRow } | { reason: IgnoreReason }> {
-  if (!event.membershipId) return { reason: "missing_fields" };
-  // A membership no account pays with: a replaced one, a failed first checkout, or another
-  // environment's (one Whop company can sell for dev and production).
-  const account = await accountByMembership(ctx.db, event.membershipId);
-  if (!account) return { reason: "unknown_membership" };
-  if (isStale(account, event)) return { reason: "stale" };
-  return { account };
+): Promise<{ account: AccountRow; recorded: D1PreparedStatement[] } | { ignore: WhopEventPlan }> {
+  if (!event.membershipId) return { ignore: ignored("missing_fields") };
+  const known = await lookUp(ctx, event, event.membershipId);
+  const { account, stored } = known;
+  if (!account) {
+    // No account pays with it: retired, not activated yet (its state waits in whop_memberships
+    // for the activation), a failed first checkout, or another environment's.
+    const reason = stored?.retired_at != null ? "retired_membership" : "unknown_membership";
+    return { ignore: ignored(reason, recordFor(ctx, event, known, stored?.account_id ?? null)) };
+  }
+  const recorded = recordFor(ctx, event, known, account.id);
+  if (isStale(account, event)) return { ignore: ignored("stale", recorded) };
+  return { account, recorded };
 }
 
 /** payment.failed: the plan stays for the grace period while Whop retries the charge. */
 async function pastDue(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
   const found = await currentAccount(ctx, event);
-  if ("reason" in found) return ignored(found.reason);
-  const { account } = found;
-  if (!PAYING.has(account.billing_status)) return ignored("not_paying");
+  if ("ignore" in found) return found.ignore;
+  const { account, recorded } = found;
+  if (!PAYING.has(account.billing_status)) return ignored("not_paying", recorded);
   const graceUntil =
     account.billing_status === "past_due" && account.billing_grace_until !== null
       ? account.billing_grace_until
@@ -261,13 +388,7 @@ async function pastDue(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEve
        WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
     )
     .bind(graceUntil, event.at, account.id, account.whop_membership_id, event.at);
-  return {
-    result: "applied",
-    accountId: account.id,
-    status: "past_due",
-    statements: [update],
-    replacedMembershipId: null,
-  };
+  return { result: "applied", accountId: account.id, status: "past_due", statements: [...recorded, update] };
 }
 
 /** membership.deactivated: the paid period is over, the account moves to Free. */
@@ -276,30 +397,25 @@ async function deactivate(ctx: WhopEventContext, event: WhopEvent): Promise<Whop
   // grace period, not the end.
   if (event.status === "past_due") return pastDue(ctx, event);
   const found = await currentAccount(ctx, event);
-  if ("reason" in found) return ignored(found.reason);
+  if ("ignore" in found) return found.ignore;
+  const { account, recorded } = found;
   const update = ctx.db
     .prepare(
       `UPDATE accounts SET plan = 'free', billing_status = 'canceled', billing_grace_until = NULL,
          current_period_end = COALESCE(?, current_period_end), billing_event_at = ?
        WHERE id = ? AND whop_membership_id = ? AND ${NOT_OLDER}`,
     )
-    .bind(event.periodEnd, event.at, found.account.id, found.account.whop_membership_id, event.at);
-  return {
-    result: "applied",
-    accountId: found.account.id,
-    status: "canceled",
-    statements: [update],
-    replacedMembershipId: null,
-  };
+    .bind(event.periodEnd, event.at, account.id, account.whop_membership_id, event.at);
+  return { result: "applied", accountId: account.id, status: "canceled", statements: [...recorded, update] };
 }
 
 /** membership.cancel_at_period_end_changed: cancelled (paid until the period ends) or resumed. */
 async function cancelAtPeriodEnd(ctx: WhopEventContext, event: WhopEvent): Promise<WhopEventPlan> {
   const found = await currentAccount(ctx, event);
-  if ("reason" in found) return ignored(found.reason);
-  const { account } = found;
-  if (event.cancelAtPeriodEnd === null) return ignored("missing_fields");
-  if (!PAYING.has(account.billing_status)) return ignored("not_paying");
+  if ("ignore" in found) return found.ignore;
+  const { account, recorded } = found;
+  if (event.cancelAtPeriodEnd === null) return ignored("missing_fields", recorded);
+  if (!PAYING.has(account.billing_status)) return ignored("not_paying", recorded);
   const status: BillingStatus = event.cancelAtPeriodEnd
     ? "canceling"
     : account.billing_status === "canceling"
@@ -320,13 +436,7 @@ async function cancelAtPeriodEnd(ctx: WhopEventContext, event: WhopEvent): Promi
       account.whop_membership_id,
       event.at,
     );
-  return {
-    result: "applied",
-    accountId: account.id,
-    status,
-    statements: [update],
-    replacedMembershipId: null,
-  };
+  return { result: "applied", accountId: account.id, status, statements: [...recorded, update] };
 }
 
 /** What a verified event changes. Reads only; the caller runs the statements in one batch. */
