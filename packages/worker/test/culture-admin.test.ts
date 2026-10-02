@@ -19,7 +19,6 @@ import { runScheduled } from "../src/scheduled.ts";
 import {
   addTrend,
   type CultureWorld,
-  createTrendsTable,
   deployedFiles,
   insertDraft,
   NOW,
@@ -112,7 +111,6 @@ describe("nightly culture proposals", () => {
   beforeEach(() => {
     ai = scriptedAi(answers);
     w = world({ ai: ai.binding });
-    createTrendsTable(w.db);
   });
 
   it("drafts from the calendar and rising searches, stores drafts with evidence, approves nothing", async () => {
@@ -221,7 +219,7 @@ describe("nightly culture proposals", () => {
     expect(proposalBudget({})).toBe(12);
   });
 
-  it("skips when switched off, without Workers AI, or without the trends table", async () => {
+  it("skips when switched off or without Workers AI, and drafts from the calendar without trends", async () => {
     expect(
       (await runCultureProposals({ ...w.env, CULTURE_CRON_ENABLED: "false" }, w.runtime, { now: NOW }))
         .reason,

@@ -1,13 +1,14 @@
 /**
- * Rising search phrases for the proposal job, from D1 `trends_daily` (written by the regional
- * trends step of the 03:17 cron, migration 0004: one row per day, locale, country and normalized
- * query; every row is k-anonymous and privacy-filtered when it is written). Only aggregate counts
- * are read; nothing here can identify an app, an account or a person.
+ * Rising search phrases for the proposal job, from D1 `trends_daily` through the regional trends
+ * reader (src/trends.ts; the 03:17 cron writes it). Every row is k-anonymous and privacy-filtered
+ * when it is written, and holds aggregate counts only: nothing here can identify an app, an
+ * account or a person.
  */
-import type { CultureTrendEvidence } from "@emojisense/platform";
+import { type CultureTrendEvidence, TRENDS_RISING_SCORE } from "@emojisense/platform";
 import type { D1Like } from "../store.ts";
+import { readRegionalTrends } from "../trends.ts";
 
-export interface TrendQuery {
+export interface RisingQuery {
   locale: string;
   query: string;
   /** Rows of this query, one per country ("*" = the whole locale), highest score first. */
@@ -16,42 +17,25 @@ export interface TrendQuery {
   score: number;
 }
 
-interface TrendRow {
-  day: string;
-  locale: string;
-  country: string;
-  query: string;
-  score: number;
-  searches: number;
-}
+/** Rows read per night: the trends cap is 10,000, and only the top of each group is used. */
+const TRENDS_READ_LIMIT = 2_000;
 
 /**
- * The newest day's rising rows (score ≥ `minScore`), at most `perGroup` per (locale, country),
- * grouped by (locale, query) and ordered by score. A database without the table (before
- * migration 0004) has no trends: an empty list, not an error.
+ * The newest day's rising rows (score ≥ TRENDS_RISING_SCORE), at most `perGroup` per
+ * (locale, country), grouped by (locale, query) and ordered by score. Locales without a pack
+ * (e.g. rows from before migration 0004) are left out.
  */
 export async function readRisingQueries(
   db: D1Like,
-  options: { minScore: number; perGroup: number; locales: readonly string[] },
-): Promise<TrendQuery[]> {
-  let rows: TrendRow[];
-  try {
-    const result = await db
-      .prepare(
-        `SELECT day, locale, country, query, score, searches FROM trends_daily
-         WHERE day = (SELECT MAX(day) FROM trends_daily) AND score >= ?
-         ORDER BY score DESC, searches DESC, query`,
-      )
-      .bind(options.minScore)
-      .all<TrendRow>();
-    rows = result.results;
-  } catch (error) {
-    if (/no such table/i.test((error as Error).message)) return [];
-    throw error;
-  }
+  options: { perGroup: number; locales: readonly string[]; minScore?: number },
+): Promise<RisingQuery[]> {
+  const rows = await readRegionalTrends(db, {
+    minScore: options.minScore ?? TRENDS_RISING_SCORE,
+    limit: TRENDS_READ_LIMIT,
+  });
   const locales = new Set(options.locales);
   const taken = new Map<string, number>();
-  const byQuery = new Map<string, TrendQuery>();
+  const byQuery = new Map<string, RisingQuery>();
   for (const row of rows) {
     if (!locales.has(row.locale)) continue;
     const group = `${row.locale}\u0000${row.country}`;
@@ -78,7 +62,7 @@ export async function readRisingQueries(
 }
 
 /** Where a rising phrase applies: every region when the whole locale rose, else its countries. */
-export function trendRegions(trend: TrendQuery): string[] {
+export function trendRegions(trend: RisingQuery): string[] {
   const countries = trend.rows.map((r) => r.country);
   if (countries.includes("*")) return ["*"];
   return [...new Set(countries.filter((c) => /^[A-Z]{2}$/.test(c) && c !== "XX"))].sort();

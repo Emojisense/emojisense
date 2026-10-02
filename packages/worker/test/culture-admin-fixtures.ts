@@ -219,14 +219,6 @@ export function insertDraft(db: DatabaseSync, draft: CultureRecord, id = `p_${dr
   return id;
 }
 
-/** The regional trends table (migration 0004 of the regional work), for databases without it. */
-export function createTrendsTable(db: DatabaseSync) {
-  db.exec(`CREATE TABLE IF NOT EXISTS trends_daily (
-    day TEXT NOT NULL, locale TEXT NOT NULL, country TEXT NOT NULL, query TEXT NOT NULL,
-    score REAL NOT NULL, searches INTEGER NOT NULL, accounts INTEGER NOT NULL,
-    PRIMARY KEY (day, locale, country, query))`);
-}
-
 export function addTrend(
   db: DatabaseSync,
   row: { day?: string; locale?: string; country?: string; query: string; score: number; searches?: number },

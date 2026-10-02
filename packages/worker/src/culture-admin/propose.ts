@@ -35,13 +35,12 @@ import {
   CULTURE_PROPOSE_MODEL,
   CULTURE_PROPOSE_TOKENS_PER_LOCALE,
   CULTURE_TREND_EVENT_DAYS,
-  CULTURE_TREND_MIN_SCORE,
   CULTURE_TRENDS_PER_GROUP,
 } from "./config.ts";
 import { type CultureRuntime, runGateEach, validate } from "./runtime.ts";
 import { readDeployedCulture } from "./storage.ts";
 import { createCultureStore } from "./store.ts";
-import { readRisingQueries, type TrendQuery, trendRegions } from "./trends-input.ts";
+import { type RisingQuery, readRisingQueries, trendRegions } from "./trends-input.ts";
 
 export interface ProposalRunReport {
   status: "done" | "skipped";
@@ -58,7 +57,7 @@ export interface ProposalRunReport {
   stored: number;
 }
 
-type Candidate = { origin: "calendar"; dated: DatedCandidate } | { origin: "trend"; trend: TrendQuery };
+type Candidate = { origin: "calendar"; dated: DatedCandidate } | { origin: "trend"; trend: RisingQuery };
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -88,7 +87,7 @@ async function shortHash(text: string): Promise<string> {
 }
 
 /** The draft's fixed fields for a trend: the model picks the id and kind, the evidence the regions. */
-async function trendDraft(trend: TrendQuery, answer: DraftAnswer, today: string): Promise<DraftCandidate> {
+async function trendDraft(trend: RisingQuery, answer: DraftAnswer, today: string): Promise<DraftCandidate> {
   const suggested = typeof answer.id === "string" ? answer.id.trim().toLowerCase().slice(0, 48) : "";
   const id = ID.test(suggested) ? suggested : `trend-${trend.locale}-${await shortHash(trend.query)}`;
   const event = answer.kind === "event";
@@ -187,11 +186,7 @@ export async function runCultureProposals(
     .filter((c) => !ids.has(c.id))
     .map((dated) => ({ origin: "calendar", dated }));
   const trends: Candidate[] = (
-    await readRisingQueries(env.DB, {
-      minScore: CULTURE_TREND_MIN_SCORE,
-      perGroup: CULTURE_TRENDS_PER_GROUP,
-      locales: LOCALE_CODES,
-    })
+    await readRisingQueries(env.DB, { perGroup: CULTURE_TRENDS_PER_GROUP, locales: LOCALE_CODES })
   )
     .filter(
       (t) =>

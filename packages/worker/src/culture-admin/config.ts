@@ -33,8 +33,6 @@ export const CULTURE_DEFAULT_BUDGET = 12;
 export const CULTURE_MAX_BUDGET = 100;
 /** Rising queries per (locale, country) that may become candidates. */
 export const CULTURE_TRENDS_PER_GROUP = 3;
-/** `trends_daily.score` at or above this is rising (the regional agent's TRENDS_RISING_SCORE). */
-export const CULTURE_TREND_MIN_SCORE = 2;
 /** Calendar and event sources that start within this many days become candidates. */
 export const CULTURE_CALENDAR_DAYS = 45;
 /** Days before a calendar moment that its window opens (people talk about it in advance). */
