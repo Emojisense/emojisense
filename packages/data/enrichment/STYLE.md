@@ -42,6 +42,10 @@ All seven arrays must exist. Use `[]` when a category does not apply.
 | `intent` | Short phrases (2–5 words) a person types when they *want to say something* and this emoji says it. Feelings, reactions, situations, idioms. | 😴 `so tired`, `im exhausted`, `need a nap`; 🍀 `break a leg`, `good luck`; 🎉 `congrats on the launch` |
 | `low` | Subset of the aliases above that you are **not sure about**: tangential, ambiguous, regional, or likely to collide with many other emoji. Every item must also appear in a category. | |
 
+Optional `top` (at most 3): the 1–3 strongest real-world phrases for this emoji (😂 `im dead`). Aliases are placed in
+category order (synonym first) and the core pack keeps only the first ~16, so `top` is the only way to beat the category
+order. Do not repeat a `top` phrase in a category, and never put it in `low`.
+
 ## Rules
 
 1. Lowercase everything. For Turkish, use Turkish lowercase (`İ` → `i`, `I` → `ı`).

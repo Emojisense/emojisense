@@ -17,7 +17,12 @@ export interface BaseEmoji {
 export const ALIAS_CATEGORIES = ["synonym", "slang", "pop_culture", "dev", "typo", "intent"] as const;
 export type AliasCategory = (typeof ALIAS_CATEGORIES)[number];
 
-export type LocaleEnrichment = { desc: string; low: string[] } & Record<AliasCategory, string[]>;
+export type LocaleEnrichment = {
+  desc: string;
+  low: string[];
+  /** Optional: the 1–3 strongest real-world phrases, placed before every category (alias-order.ts). */
+  top?: string[];
+} & Record<AliasCategory, string[]>;
 
 /** One record per emoji and locale in enrichment/i18n/<locale>/<group>.json. */
 export interface LocaleRecord extends LocaleEnrichment {

@@ -12,25 +12,16 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { normalize } from "emojisense";
+import { orderedAliases } from "./alias-order.ts";
 import { moderate } from "./blocklist.ts";
 import { capCollisions } from "./collisions.ts";
 import { curatedAdditions, curationAction, loadCurations } from "./curation.ts";
 import { COMBINED_LOCALES, LOCALE_CODES } from "./locales.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
-import type {
-  AliasCategory,
-  BaseEmoji,
-  EnrichmentRecord,
-  LocaleEnrichment,
-  LocaleRecord,
-  MinedAlias,
-} from "./types.ts";
+import type { BaseEmoji, EnrichmentRecord, LocaleEnrichment, LocaleRecord, MinedAlias } from "./types.ts";
 
 const LOCALES = LOCALE_CODES;
 type Locale = string;
-
-/** Category order = priority when the same alias appears twice for one emoji. */
-const ALIAS_ORDER: AliasCategory[] = ["synonym", "slang", "pop_culture", "dev", "intent"];
 
 export interface ValidatedLocale {
   desc: string;
@@ -150,7 +141,8 @@ for (const e of emoji) {
     // Curated additions first: they are reviewed fixes, so they belong in the core pack.
     for (const { phrase, field } of additions) if (place(phrase, field, true)) curatedAdded++;
     if (!block) continue;
-    for (const category of ALIAS_ORDER) for (const a of block[category]) place(a, "alias");
+    // `top` first, then category order: the first placement of a phrase wins (alias-order.ts).
+    for (const a of orderedAliases(block, `${e.hexcode} ${locale}`)) place(a, "alias");
     for (const m of mined) if (m.hexcode === e.hexcode && m.locale === locale) place(m.alias, "alias");
     for (const a of block.typo) place(a, "typo");
   }

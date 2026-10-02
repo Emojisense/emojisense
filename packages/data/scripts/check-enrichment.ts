@@ -7,6 +7,7 @@
  * follows the schema and size rules in enrichment/STYLE.md. Exits non-zero on errors.
  */
 import { readFileSync } from "node:fs";
+import { MAX_TOP } from "../src/alias-order.ts";
 import { ALIAS_CATEGORIES, type EnrichmentRecord } from "../src/types.ts";
 
 const LIMITS = {
@@ -65,8 +66,12 @@ for (const r of records) {
     else if (block.desc.length > LIMITS.descMax) warnings.push(`${where}: desc > ${LIMITS.descMax} chars`);
 
     const all: string[] = [];
-    for (const category of [...ALIAS_CATEGORIES, "low"] as const) {
-      const list = block[category];
+    if (Array.isArray(block.top) && block.top.length > MAX_TOP) {
+      errors.push(`${where}: "top" has ${block.top.length} phrases (max ${MAX_TOP})`);
+    }
+    // `top` is optional; when present it is checked like any other alias list.
+    for (const category of ["top", ...ALIAS_CATEGORIES, "low"] as const) {
+      const list = category === "top" ? (block.top ?? []) : block[category];
       if (!Array.isArray(list)) {
         errors.push(`${where}: "${category}" must be an array (use [] when empty)`);
         continue;
@@ -88,7 +93,8 @@ for (const r of records) {
     const unique = new Set(all);
     if (unique.size !== all.length) warnings.push(`${where}: ${all.length - unique.size} duplicate aliases`);
     for (const alias of block.low ?? []) {
-      if (!unique.has(alias)) errors.push(`${where}: low-confidence "${alias}" is not in any category`);
+      if (block.top?.includes(alias)) warnings.push(`${where}: top "${alias}" is also low`);
+      else if (!unique.has(alias)) errors.push(`${where}: low-confidence "${alias}" is not in any category`);
     }
     const { min, max } = groupOf.get(r.hexcode) === "flags" ? LIMITS.flags[locale] : LIMITS[locale];
     if (unique.size < min) errors.push(`${where}: only ${unique.size} aliases (min ${min})`);

@@ -8,6 +8,7 @@
  */
 import { readFileSync } from "node:fs";
 import { normalize } from "emojisense";
+import { MAX_TOP } from "../src/alias-order.ts";
 import { localeInfo } from "../src/locales.ts";
 import { ALIAS_CATEGORIES, type LocaleRecord } from "../src/types.ts";
 
@@ -68,8 +69,12 @@ for (const r of records) {
 
   const cldr = new Set([input.label ?? "", ...input.tags].map((s) => normalize(s)));
   const unique = new Set<string>();
-  for (const category of [...ALIAS_CATEGORIES, "low"] as const) {
-    const list = r[category];
+  if (Array.isArray(r.top) && r.top.length > MAX_TOP) {
+    errors.push(`${where}: "top" has ${r.top.length} phrases (max ${MAX_TOP})`);
+  }
+  // `top` is optional; when present it is checked like any other alias list.
+  for (const category of ["top", ...ALIAS_CATEGORIES, "low"] as const) {
+    const list = category === "top" ? (r.top ?? []) : r[category];
     if (!Array.isArray(list)) {
       errors.push(`${where}: "${category}" must be an array (use [] when empty)`);
       continue;
@@ -91,7 +96,8 @@ for (const r of records) {
     }
   }
   for (const alias of r.low ?? []) {
-    if (![...ALIAS_CATEGORIES].some((c) => r[c]?.includes(alias))) {
+    if (r.top?.includes(alias)) warnings.push(`${where}: top "${alias}" is also low`);
+    else if (![...ALIAS_CATEGORIES].some((c) => r[c]?.includes(alias))) {
       errors.push(`${where}: low "${alias}" is not in any category`);
     }
   }

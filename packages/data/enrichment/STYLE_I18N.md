@@ -15,7 +15,9 @@ its categories, quality bar and rules all apply. This file only lists what is di
 }
 ```
 
-All seven arrays must exist. Use `[]` when a category does not apply.
+All seven arrays must exist. Use `[]` when a category does not apply. The optional `top` list (STYLE.md) works the
+same here: the 1–3 strongest real-world phrases for this emoji (zh 😂 `笑死`), placed before every category; it is
+the only way to beat the category order and reach the core pack.
 
 ## Input you get per emoji
 
