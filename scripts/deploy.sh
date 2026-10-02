@@ -45,7 +45,10 @@ no_index() {
 echo "→ Build packages and data"
 pnpm -C "$ROOT" exec turbo run build --filter=emojisense --filter=@emojisense/platform --filter=@emojisense/data
 # Vectors come from the embedding cache; only changed documents call Workers AI.
-pnpm -C "$ROOT" --filter @emojisense/data embed -- --models bge-m3 --dims 1024
+# The semantic model comes from packages/data/pack.config.json.
+EMBED_MODEL=$(node -p 'require(process.argv[1]).model.key' "$ROOT/packages/data/pack.config.json")
+EMBED_DIMS=$(node -p 'require(process.argv[1]).model.dims' "$ROOT/packages/data/pack.config.json")
+pnpm -C "$ROOT" --filter @emojisense/data embed -- --models "$EMBED_MODEL" --dims "$EMBED_DIMS"
 pnpm -C "$ROOT" --filter @emojisense/data embed:glyph
 pnpm -C "$ROOT" --filter @emojisense/worker sync
 
