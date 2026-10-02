@@ -4,16 +4,13 @@ import {
   type AnalyticsWindow,
   addDays,
   dayOf,
-  getPlan,
   lowestPlanWithAnalytics,
   PLANS,
-  type Plan,
 } from "@emojisense/platform";
 import type { AnalyticsDay, AnalyticsResponse } from "../../shared/contract";
-import type { D1Database } from "../d1";
+import { requireAppAccess } from "../access";
 import type { AuthedContext } from "../env";
-import { errorJson, HttpError, json, planRequired as planRequiredError } from "../http";
-import { requireOwnedApp } from "../records";
+import { HttpError, json, planRequired } from "../http";
 
 const DEFAULT_WINDOW: AnalyticsWindow = 30;
 /** Length of each top list. */
@@ -31,33 +28,18 @@ function parseWindow(value: string | null): AnalyticsWindow {
   );
 }
 
-/** The plan lives on the account that owns the app; team members see the owner's plan. */
-async function loadOwnerPlan(db: D1Database, ownerId: string): Promise<Plan> {
-  const row = await db
-    .prepare("SELECT plan FROM accounts WHERE id = ?")
-    .bind(ownerId)
-    .first<{ plan: string }>();
-  return getPlan(row?.plan ?? "free");
-}
-
-function planRequired(): Response {
-  const plan = lowestPlanWithAnalytics();
-  return errorJson(
-    planRequiredError(plan, `Search analytics are part of the ${PLANS[plan].name} plan and above.`),
-  );
-}
-
 /**
  * Daily totals and top queries from `query_daily`, which the API Worker flushes in batches and a
  * daily cron prunes to the plan's retention (DECISIONS.md, "Search analytics retention").
+ * Every team role may read them; the app owner's plan decides retention.
  */
 export async function getAnalytics({ url, env, deps, account, params }: AuthedContext): Promise<Response> {
-  // accessFor (the team role gate) is not on main yet: until it lands, only the owner passes.
-  // Every role may read analytics, so the gate will only need to admit members too.
-  const app = await requireOwnedApp(env.DB, params.id, account.id);
+  const { app, plan } = await requireAppAccess(env.DB, account.id, params.id, "view");
   const requested = parseWindow(url.searchParams.get("days"));
-  const plan = await loadOwnerPlan(env.DB, app.account_id);
-  if (plan.analyticsRetentionDays <= 0) return planRequired();
+  if (plan.analyticsRetentionDays <= 0) {
+    const required = lowestPlanWithAnalytics();
+    throw planRequired(required, `Search analytics are part of the ${PLANS[required].name} plan and above.`);
+  }
 
   const window = Math.min(requested, plan.analyticsRetentionDays);
   const to = dayOf(deps.now());

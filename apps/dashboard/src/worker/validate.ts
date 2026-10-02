@@ -1,4 +1,13 @@
-import { type KeyKind, PLAN_IDS, type PlanId, periodOf } from "@emojisense/platform";
+import {
+  EMOJI_SETS,
+  type EmojiSet,
+  type KeyKind,
+  PLAN_IDS,
+  type PlanId,
+  periodOf,
+  TEAM_ROLES,
+  type TeamRole,
+} from "@emojisense/platform";
 import { ENVIRONMENTS, type Environment } from "../shared/contract";
 import { HttpError } from "./http";
 
@@ -58,13 +67,37 @@ export function parseEmail(value: unknown): string {
   return email;
 }
 
+/** `undefined`, `null` and "" mean "no email"; anything else must be valid. */
+export function parseOptionalEmail(value: unknown): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  return parseEmail(value);
+}
+
 const WAITLIST_PLANS = PLAN_IDS.filter((id) => id !== "free");
 
 /** Defaults to "pro": the dashboard and the website ask for the Pro waitlist. */
 export function parseWaitlistPlan(value: unknown): PlanId {
   if (value === undefined) return "pro";
+  return parsePaidPlan(value);
+}
+
+export function parsePaidPlan(value: unknown): PlanId {
   if (typeof value === "string" && (WAITLIST_PLANS as readonly string[]).includes(value)) {
     return value as PlanId;
   }
   throw invalid("plan", `plan must be one of: ${WAITLIST_PLANS.join(", ")}.`);
+}
+
+export function parseTeamRole(value: unknown): TeamRole {
+  if (typeof value === "string" && (TEAM_ROLES as readonly string[]).includes(value)) {
+    return value as TeamRole;
+  }
+  throw invalid("role", `role must be one of: ${TEAM_ROLES.join(", ")}.`);
+}
+
+export function parseEmojiSet(value: unknown): EmojiSet {
+  if (typeof value === "string" && (EMOJI_SETS as readonly string[]).includes(value)) {
+    return value as EmojiSet;
+  }
+  throw invalid("emojiSet", `emojiSet must be one of: ${EMOJI_SETS.join(", ")}.`);
 }
