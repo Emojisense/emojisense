@@ -40,6 +40,12 @@ export interface EmojiAutocompleteOptions {
   shortcodes: boolean;
   /** Menu renderer; default {@link createEmojiMenu}. Same contract as Tiptap's suggestion `render`. */
   render: () => EmojiSuggestionRenderer;
+  /**
+   * Element the menu mounts into, e.g. the host's own frame or a dialog. Default `document.body`.
+   * A getter is read each time the menu opens; while it returns `null` or `undefined`, the menu
+   * mounts on `document.body`. Applies to every renderer that calls `props.mount`.
+   */
+  menuContainer: Dynamic<HTMLElement | null | undefined>;
   pluginKey: PluginKey;
 }
 
@@ -74,6 +80,7 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
       minQueryLength: 1,
       shortcodes: true,
       render: createEmojiMenu(),
+      menuContainer: undefined,
       pluginKey: EmojiAutocompletePluginKey,
     };
   },
@@ -94,6 +101,7 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
       renderer.onUpdate?.(shown);
     });
     this.storage.dispose = sources.dispose;
+    const inContainer = (props: EmojiSuggestionProps) => withMenuContainer(props, options.menuContainer);
 
     return [
       Suggestion<EmojiSuggestion, EmojiSuggestion>({
@@ -106,19 +114,19 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
         items: ({ query }) => withSkinTone(sources.search(query), options.skinTone),
         command: ({ editor, range, props }) => insertEmoji(editor, range, props.emoji),
         render: () => ({
-          onBeforeStart: (props) => renderer.onBeforeStart?.(props),
+          onBeforeStart: (props) => renderer.onBeforeStart?.(inContainer(props)),
           onStart: (props) => {
-            shown = props;
-            renderer.onStart?.(props);
+            shown = inContainer(props);
+            renderer.onStart?.(shown);
           },
-          onBeforeUpdate: (props) => renderer.onBeforeUpdate?.(props),
+          onBeforeUpdate: (props) => renderer.onBeforeUpdate?.(inContainer(props)),
           onUpdate: (props) => {
-            shown = props;
-            renderer.onUpdate?.(props);
+            shown = inContainer(props);
+            renderer.onUpdate?.(shown);
           },
           onExit: (props) => {
             shown = undefined;
-            renderer.onExit?.(props);
+            renderer.onExit?.(inContainer(props));
           },
           onKeyDown: (props) => renderer.onKeyDown?.(props) ?? false,
         }),
@@ -198,6 +206,32 @@ function insertEmoji(editor: Editor, range: Range, emoji: string) {
       return true;
     })
     .run();
+}
+
+/**
+ * Point `props.mount` at the host's container. Tiptap's own `container` option is fixed when the
+ * plugin is created, and this one may be a getter. `mount` leaves an element that is already in
+ * the DOM where it is, so the element is appended here first and removed again on unmount.
+ */
+function withMenuContainer(
+  props: EmojiSuggestionProps,
+  menuContainer: Dynamic<HTMLElement | null | undefined>,
+): EmojiSuggestionProps {
+  const container = resolve(menuContainer);
+  if (!container) return props;
+  return {
+    ...props,
+    container,
+    mount: (element, mountOptions) => {
+      if (element.isConnected) return props.mount(element, mountOptions);
+      container.append(element);
+      const unmount = props.mount(element, mountOptions);
+      return () => {
+        unmount();
+        element.remove();
+      };
+    },
+  };
 }
 
 function withSkinTone(suggestions: EmojiSuggestion[], tone: Dynamic<SkinTone>): EmojiSuggestion[] {

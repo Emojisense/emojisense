@@ -176,6 +176,60 @@ describe("EmojiAutocomplete (Tiptap)", () => {
     expect(scrolls).not.toHaveBeenCalled();
   });
 
+  describe("menuContainer", () => {
+    function createFrame() {
+      const frame = document.createElement("section");
+      document.body.append(frame);
+      return frame;
+    }
+
+    it("mounts the menu on <body> by default", async () => {
+      const ed = createEditor();
+      await type(ed, ":jurassic");
+      expect(menu()?.parentElement).toBe(document.body);
+    });
+
+    it("mounts the menu inside the given element and removes it on close", async () => {
+      const frame = createFrame();
+      const ed = createEditor({ menuContainer: frame });
+      await type(ed, ":jurassic");
+      expect(menu()?.parentElement).toBe(frame);
+      press(ed, "Enter");
+      expect(ed.getText()).toBe("🦖");
+      expect(frame.children).toHaveLength(0);
+    });
+
+    it("reads a getter each time the menu opens, with <body> while it returns null", async () => {
+      let frame: HTMLElement | null = null;
+      const ed = createEditor({ menuContainer: () => frame });
+      await type(ed, ":jurassic");
+      expect(menu()?.parentElement).toBe(document.body);
+      press(ed, "Escape");
+      frame = createFrame();
+      await type(ed, " :fir");
+      expect(menu()?.parentElement).toBe(frame);
+    });
+
+    it("applies to a custom renderer's props.mount", async () => {
+      const frame = createFrame();
+      const element = document.createElement("div");
+      let unmount: (() => void) | undefined;
+      const ed = createEditor({
+        menuContainer: frame,
+        render: () => ({
+          onStart: (props) => {
+            unmount = props.mount(element);
+          },
+          onExit: () => unmount?.(),
+        }),
+      });
+      await type(ed, ":rock");
+      expect(element.parentElement).toBe(frame);
+      await type(ed, " ");
+      expect(element.isConnected).toBe(false);
+    });
+  });
+
   it("Escape closes the menu, keeps the typed text and stays closed for that word", async () => {
     const ed = createEditor();
     await type(ed, ":jurassic");
