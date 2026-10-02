@@ -37,3 +37,15 @@ export interface UsageRow {
   metric: Metric;
   count: number;
 }
+
+/** Rows of migrations/0002_product.sql. */
+export interface QueryDailyRow {
+  app_id: string;
+  /** "YYYY-MM-DD", UTC (dayOf). */
+  day: string;
+  /** Normalized query text, ≤ 64 characters. */
+  query: string;
+  searches: number;
+  /** Searches that returned no result. */
+  misses: number;
+}
