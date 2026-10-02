@@ -24,7 +24,9 @@ const REPO_ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const KOTLIN_OUTPUT = fileURLToPath(
   new URL("../src/main/kotlin/com/emojisense/UnicodeTables.kt", import.meta.url),
 );
-const FIXTURE_OUTPUT = fileURLToPath(new URL("../src/test/resources/normalization-forms.json", import.meta.url));
+const FIXTURE_OUTPUT = fileURLToPath(
+  new URL("../src/test/resources/normalization-forms.json", import.meta.url),
+);
 
 const MAX_CODE_POINT = 0x10ffff;
 /** Keep in sync with packages/core/src/normalize.ts. */
@@ -124,7 +126,8 @@ nonStarters.sort((a, b) => (sortsAfter(a, b) ? 1 : sortsAfter(b, a) ? -1 : a - b
 const classRank = new Map<number, number>();
 nonStarters.forEach((cp, i) => {
   const previous = nonStarters[i - 1];
-  const rank = previous === undefined ? 1 : (classRank.get(previous) as number) + (sortsAfter(cp, previous) ? 1 : 0);
+  const rank =
+    previous === undefined ? 1 : (classRank.get(previous) as number) + (sortsAfter(cp, previous) ? 1 : 0);
   classRank.set(cp, rank);
 });
 const rankOf = (cp: number) => classRank.get(cp) ?? 0;
@@ -166,7 +169,12 @@ function composePair(first: number, second: number): number | undefined {
   if (first >= L_BASE && first < L_BASE + 19 && second >= V_BASE && second < V_BASE + V_COUNT) {
     return S_BASE + ((first - L_BASE) * V_COUNT + (second - V_BASE)) * T_COUNT;
   }
-  if (isHangulSyllable(first) && (first - S_BASE) % T_COUNT === 0 && second > T_BASE && second < T_BASE + T_COUNT) {
+  if (
+    isHangulSyllable(first) &&
+    (first - S_BASE) % T_COUNT === 0 &&
+    second > T_BASE &&
+    second < T_BASE + T_COUNT
+  ) {
     return first + (second - T_BASE);
   }
   return compositions.get(pairKey(first, second));
@@ -285,7 +293,10 @@ function random(seed: number): () => number {
 const next = random(0x5eed);
 const pick = <T>(items: readonly T[]): T => items[Math.floor(next() * items.length)] as T;
 const between = (low: number, high: number) => low + Math.floor(next() * (high - low + 1));
-const compositionParts = [...compositions.keys()].flatMap((key) => [Math.floor(key / 0x110000), key % 0x110000]);
+const compositionParts = [...compositions.keys()].flatMap((key) => [
+  Math.floor(key / 0x110000),
+  key % 0x110000,
+]);
 const pools: (() => number)[] = [
   () => pick(nonStarters),
   () => pick(nonStarters),
@@ -324,7 +335,9 @@ const fixtureCases = Array.from({ length: FIXTURE_CASES }, () => {
 const rangeText = (ranges: readonly Range[]) =>
   ranges.map(([low, high]) => (low === high ? hex(low) : `${hex(low)}-${hex(high)}`));
 const mappingText = (map: ReadonlyMap<number, number[]>, separator: string) =>
-  [...map].sort(([a], [b]) => a - b).map(([cp, points]) => `${hex(cp)}${separator}${points.map(hex).join(",")}`);
+  [...map]
+    .sort(([a], [b]) => a - b)
+    .map(([cp, points]) => `${hex(cp)}${separator}${points.map(hex).join(",")}`);
 /** Runs of code points with the same class rank: `start-end:rank` or `cp:rank`. */
 const classText = () => {
   const ranked = [...classRank].sort(([a], [b]) => a - b);
@@ -334,7 +347,9 @@ const classText = () => {
     if (last && last[1] === cp - 1 && last[2] === rank) last[1] = cp;
     else runs.push([cp, cp, rank]);
   }
-  return runs.map(([low, high, rank]) => `${low === high ? hex(low) : `${hex(low)}-${hex(high)}`}:${hex(rank)}`);
+  return runs.map(
+    ([low, high, rank]) => `${low === high ? hex(low) : `${hex(low)}-${hex(high)}`}:${hex(rank)}`,
+  );
 };
 const compositionText = () =>
   [...compositions]
@@ -393,7 +408,11 @@ const kotlin = [
     rangeText(emojiParts),
   ),
   table("Letters, marks and numbers: `\\p{L}`, `\\p{M}`, `\\p{N}` (step 9).", "WORD", rangeText(word)),
-  table("`\\p{Cc}`, `\\p{Z}` and U+FEFF: what the embedding text turns into spaces.", "SPACING", rangeText(spacing)),
+  table(
+    "`\\p{Cc}`, `\\p{Z}` and U+FEFF: what the embedding text turns into spaces.",
+    "SPACING",
+    rangeText(spacing),
+  ),
   table("The Cased property (Final_Sigma context).", "CASED", rangeText(cased)),
   table("The Case_Ignorable property (Final_Sigma context).", "CASE_IGNORABLE", rangeText(caseIgnorable)),
   table(
@@ -431,7 +450,9 @@ const fixture = {
   cases: fixtureCases,
 };
 writeFileSync(FIXTURE_OUTPUT, `${JSON.stringify(fixture)}\n`);
-execFileSync(join(REPO_ROOT, "node_modules/.bin/biome"), ["format", "--write", FIXTURE_OUTPUT], { stdio: "ignore" });
+execFileSync(join(REPO_ROOT, "node_modules/.bin/biome"), ["format", "--write", FIXTURE_OUTPUT], {
+  stdio: "ignore",
+});
 
 console.log(
   `make-unicode-tables: Unicode ${unicode}, ${word.length} word ranges, ${lowercase.size} lowercase mappings, ` +
