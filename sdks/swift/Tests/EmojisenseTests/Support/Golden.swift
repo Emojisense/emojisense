@@ -74,8 +74,12 @@ struct Golden: Decodable, Sendable {
   let packSha256: [String: String]
   let normalization: Normalization
   let embeddingText: EmbeddingText
+  /// The reference function-word lists per locale (PACK_FORMAT.md §4).
+  let functionWords: [String: [String]]
   let search: [SearchConfig]
   let keystrokes: Keystrokes
+  /// Sentences of the other pack locales, typed keystroke by keystroke (en + that locale).
+  let sentenceKeystrokes: [Keystrokes]
 
   static func load() throws -> Golden {
     guard let url = Bundle.module.url(forResource: "golden", withExtension: "json") else {

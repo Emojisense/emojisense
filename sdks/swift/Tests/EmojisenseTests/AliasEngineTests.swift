@@ -194,10 +194,79 @@ final class AliasEngineTests: XCTestCase {
   func testKeepsUnknownCharactersTogetherAsOneToken() throws {
     let engine = try chinese()
     let search = { (query: String) in engine.search(query, options: AliasSearchOptions(locale: "zh")) }
-    XCTAssertEqual(search("今天的蛋糕").tokens, ["今天的", "蛋糕"])
-    XCTAssertEqual(search("今天的蛋糕").results.first?.emoji, "🎂")
-    XCTAssertEqual(search("今天的蛋糕呀").tokens, ["今天的", "蛋糕", "呀"])
-    XCTAssertEqual(search("今天的蛋糕呀").results, [])
+    XCTAssertEqual(search("今天蛋糕").tokens, ["今天", "蛋糕"])
+    XCTAssertEqual(search("今天蛋糕").results.first?.emoji, "🎂")
+    // Two unknown pieces outweigh one known piece: below the coverage threshold.
+    XCTAssertEqual(search("今天蛋糕明天").tokens, ["今天", "蛋糕", "明天"])
+    XCTAssertEqual(search("今天蛋糕明天").results, [])
+  }
+
+  func testSplitsFunctionWordsOutOfARunEvenWhenNoPhraseHoldsThem() throws {
+    let engine = try chinese()
+    let search = { (query: String) in engine.search(query, options: AliasSearchOptions(locale: "zh")) }
+    XCTAssertEqual(search("今天的蛋糕呀").tokens, ["今天", "的", "蛋糕", "呀"])
+    XCTAssertEqual(search("今天的蛋糕呀").results.first?.emoji, "🎂")
+  }
+
+  // MARK: Function words
+
+  /// The fixture's emoji stand in for the real ones: 🔥 = 🤔 (想 "think"), 🚀 = 🛌 (躺平),
+  /// 🐐 = 🙋 (我也是 "me too"), 👍 = 👌 (了解 "understood"), 🎃 = 😩 (устал "tired"), 🦖 = 🗿.
+  private func functionWordEngines() throws -> (zh: AliasEngine, ru: AliasEngine) {
+    var zh = Fixtures.english
+    zh.locale = "zh"
+    zh.emoji = [
+      PackRow(emoji: "🔥", hexcode: "1F525", label: "火", keyword: "想|思考"),
+      PackRow(emoji: "🚀", hexcode: "1F680", label: "火箭", alias: "躺平"),
+      PackRow(emoji: "🐐", hexcode: "1F410", label: "山羊", alias: "我也是|我"),
+      PackRow(emoji: "👍", hexcode: "1F44D", label: "竖起大拇指", alias: "了解|好的"),
+    ]
+    var ru = Fixtures.english
+    ru.locale = "ru"
+    ru.emoji = [
+      PackRow(emoji: "🎃", hexcode: "1F383", label: "тыква", keyword: "устал", alias: "я так устал"),
+      PackRow(emoji: "🐐", hexcode: "1F410", label: "коза", alias: "я тоже|я"),
+      PackRow(emoji: "🦖", hexcode: "1F996", label: "тираннозавр", alias: "очень"),
+    ]
+    return (
+      try AliasEngine(packs: [Fixtures.english, zh]), try AliasEngine(packs: [Fixtures.english, ru])
+    )
+  }
+
+  func testFunctionWordsNeverBlockTheContentWordOfASentence() throws {
+    let engines = try functionWordEngines()
+    let zh = { (query: String) in engines.zh.search(query, options: AliasSearchOptions(locale: "zh")) }
+    let ru = { (query: String) in engines.ru.search(query, options: AliasSearchOptions(locale: "ru")) }
+    XCTAssertEqual(zh("我想躺平").tokens, ["我", "想", "躺平"])
+    XCTAssertEqual(zh("我想躺平").results.first?.emoji, "🚀")
+    XCTAssertEqual(ru("я очень устал").results.first?.emoji, "🎃")
+  }
+
+  func testDoesNotCompleteAFunctionWordNextToAContentWord() throws {
+    let engines = try functionWordEngines()
+    let output = engines.zh.search("躺平了", options: AliasSearchOptions(locale: "zh"))
+    XCTAssertEqual(output.tokens, ["躺平", "了"])
+    XCTAssertEqual(output.results.map(\.emoji), ["🚀"])
+  }
+
+  func testStillMatchesAWholeQueryOfFunctionWords() throws {
+    let engines = try functionWordEngines()
+    let zh = { (query: String) in engines.zh.search(query, options: AliasSearchOptions(locale: "zh")) }
+    let ru = { (query: String) in engines.ru.search(query, options: AliasSearchOptions(locale: "ru")) }
+    XCTAssertEqual(zh("我也是").results.first?.emoji, "🐐")
+    XCTAssertEqual(zh("我").results.first?.emoji, "🐐")
+    XCTAssertEqual(ru("я тоже").results.first?.emoji, "🐐")
+    XCTAssertEqual(ru("очень").results.first?.emoji, "🦖")
+  }
+
+  func testAppliesTheQueryLocalesListPlusEnglishAndTurkish() {
+    let units = { (word: String) in UTF16Text(word.utf16) }
+    XCTAssertTrue(FunctionWords.active(forLocale: "zh").contains(units("我")))
+    XCTAssertTrue(FunctionWords.active(forLocale: "zh").contains(units("the")))
+    XCTAssertTrue(FunctionWords.active(forLocale: "zh").contains(units("bir")))
+    XCTAssertTrue(FunctionWords.active(forLocale: "es").contains(units("son")))
+    XCTAssertFalse(FunctionWords.active(forLocale: "en").contains(units("son")))
+    XCTAssertEqual(FunctionWords.active(forLocale: "ja"), FunctionWords.active(forLocale: "en"))
   }
 
   func testDoesNotSplitAnIndexedTokenOrOneStillBeingTyped() throws {

@@ -100,13 +100,16 @@ packs differ from the ones in `golden.json` (sha256), the tests fail and tell yo
 | Search, core + ext packs: same top-5 ids (required ≥ 98%) | 217 queries | 100% |
 | Search, core + ext packs: same query, top-10 ids and scores, confidence, matched phrase | 217 queries | 100% |
 | Search, core packs only: same top-5 ids / same top-10 ids and scores | 217 queries | 100% / 100% |
-| Keystrokes (every prefix of 44 queries): same top-5 ids and scores | 362 | 100% |
+| Sentences with function words, en + zh, ru, id, es, fr, pt, ar, hi or bn (core + ext): same top-5 ids / same top-10 ids and scores | 369 queries | 100% / 100% |
+| Keystrokes (every prefix of 44 queries and 81 sentences): same top-5 ids and scores | 1,572 | 100% |
+| Function-word lists (`FunctionWords.swift`) equal the reference | 11 locales | 100% |
 
 Measured on macOS 26 (arm64), Swift 6.4, Node 24.5.0, pack 0.1.0.
 
 Regenerate the reference data after a change to `packages/core`, the packs or the queries:
 
 ```sh
+pnpm exec tsx sdks/swift/scripts/make-function-words.ts    # after a function-word list changes
 pnpm exec tsx sdks/swift/scripts/make-golden.ts            # writes golden.json
 pnpm exec tsx sdks/swift/scripts/make-unicode-tables.ts    # after a Node (Unicode) upgrade
 ```
