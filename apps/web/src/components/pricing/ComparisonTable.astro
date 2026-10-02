@@ -1,0 +1,408 @@
+---
+import { DASHBOARD_URL } from "../../config";
+import { comparisonOf, planViews } from "../../lib/pricing";
+import CompareValue from "./CompareValue.astro";
+import { FEATURED_PLAN, PLAN_COPY } from "./plan-copy";
+
+const groups = comparisonOf();
+const plans = planViews(DASHBOARD_URL);
+---
+
+<section id="compare" class="section cmp" aria-labelledby="compare-title">
+  <div class="container">
+    <div class="section-head center">
+      <p class="kicker">Compare plans</p>
+      <h2 id="compare-title">Every feature, side by side.</h2>
+      <p class="lead">
+        Every plan gets the whole emoji platform. Higher plans add volume, custom emoji, teams and tenants.
+      </p>
+    </div>
+
+    <table class="cmp-table" id="compare-table">
+      <caption class="visually-hidden">Features and limits of each Emojisense plan</caption>
+      <thead>
+        <tr>
+          <td class="cmp-corner"></td>
+          {
+            plans.map((plan) => (
+              <th scope="col" data-col={plan.id} class:list={{ featured: plan.id === FEATURED_PLAN }}>
+                <span class="cmp-plan">
+                  <span class="emoji" aria-hidden="true">
+                    {PLAN_COPY[plan.id].emoji}
+                  </span>
+                  {plan.name}
+                </span>
+                <span class="cmp-price" aria-hidden="true">
+                  {plan.monthly} <span>/ month</span>
+                </span>
+              </th>
+            ))
+          }
+        </tr>
+      </thead>
+      {
+        groups.map((group) => (
+          <tbody>
+            <tr class="cmp-group">
+              <th scope="rowgroup" colspan={plans.length + 1}>
+                {group.title}
+              </th>
+            </tr>
+            {group.rows.map((row) => (
+              <tr data-feature={row.key}>
+                <th scope="row">
+                  <span class="cmp-label">{row.label}</span>
+                  {row.hint && <span class="cmp-hint">{row.hint}</span>}
+                </th>
+                {row.cells.map((cell) => (
+                  <td
+                    data-col={cell.plan}
+                    data-raw={cell.raw}
+                    class:list={{ featured: cell.plan === FEATURED_PLAN }}
+                  >
+                    <CompareValue value={cell.value} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        ))
+      }
+      <tfoot>
+        <tr>
+          <td></td>
+          {
+            plans.map((plan) => {
+              const featured = plan.id === FEATURED_PLAN;
+              return (
+                <td class:list={{ featured }}>
+                  <a class:list={["btn", "cmp-cta", featured ? "btn-primary" : "btn-secondary"]} href={plan.cta.href}>
+                    {plan.monthlyUsd === 0 ? (
+                      plan.cta.label
+                    ) : (
+                      <>
+                        <span>
+                          Join<span class="visually-hidden"> the {plan.name}</span> waitlist
+                        </span>
+                      </>
+                    )}
+                  </a>
+                </td>
+              );
+            })
+          }
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="cmp-stack">
+      {
+        plans.map((plan, index) => (
+          <details class:list={["cmp-card", { featured: plan.id === FEATURED_PLAN }]} data-col={plan.id}>
+            <summary>
+              <span class="cmp-card-emoji emoji" aria-hidden="true">
+                {PLAN_COPY[plan.id].emoji}
+              </span>
+              <h3>{plan.name}</h3>
+              <span class="cmp-card-price">{plan.monthly} / month</span>
+              <span class="cmp-toggle" aria-hidden="true" />
+            </summary>
+            <div class="cmp-card-body">
+              {groups.map((group) => (
+                <div class="cmp-card-group">
+                  <h4>{group.title}</h4>
+                  <dl>
+                    {group.rows.map((row) => {
+                      const cell = row.cells[index];
+                      return (
+                        cell && (
+                          <div>
+                            <dt>{row.label}</dt>
+                            <dd>
+                              <CompareValue value={cell.value} />
+                            </dd>
+                          </div>
+                        )
+                      );
+                    })}
+                  </dl>
+                </div>
+              ))}
+              <a
+                class:list={["btn", "cmp-card-cta", plan.id === FEATURED_PLAN ? "btn-primary" : "btn-secondary"]}
+                href={plan.cta.href}
+              >
+                {plan.cta.label}
+              </a>
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .cmp {
+    /* The sticky site header is 4rem plus a hairline. */
+    --cmp-top: 4.0625rem;
+  }
+
+  .cmp-table {
+    display: none;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 0.9375rem;
+  }
+
+  .cmp-stack {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 50rem) {
+    .cmp-table {
+      display: table;
+    }
+
+    .cmp-stack {
+      display: none;
+    }
+  }
+
+  /* Desktop table */
+  .cmp-table th,
+  .cmp-table td {
+    padding: 0.875rem 0.75rem;
+    border-bottom: 0.0625rem solid var(--line);
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .cmp-table .cmp-corner,
+  .cmp-table th[scope="row"] {
+    width: 34%;
+    padding-left: 0;
+    text-align: left;
+  }
+
+  .cmp-table thead th,
+  .cmp-table thead td {
+    position: sticky;
+    top: var(--cmp-top);
+    z-index: 2;
+    padding-block: 1.25rem 1rem;
+    border-bottom-color: var(--line-strong);
+    background: var(--bg);
+  }
+
+  .cmp-table thead th {
+    vertical-align: bottom;
+  }
+
+  .cmp-plan {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font: 650 1.125rem / 1.2 var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .cmp-plan .emoji {
+    font-size: 1.25rem;
+  }
+
+  .cmp-price {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--ink-2);
+    font-weight: 600;
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cmp-price span {
+    color: var(--ink-3);
+    font-weight: 400;
+  }
+
+  .cmp-table .featured {
+    background: var(--bg-soft);
+  }
+
+  /* Rounded tint drawn inside an opaque cell, so rows never show through the corners when stuck. */
+  .cmp-table thead th.featured {
+    background: var(--bg);
+  }
+
+  .cmp-table thead th.featured::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: var(--radius) var(--radius) 0 0;
+    background: var(--bg-soft);
+    content: "";
+  }
+
+  .cmp-table thead th {
+    isolation: isolate;
+  }
+
+  .cmp-table tfoot td.featured {
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .cmp-group th {
+    padding: 2.25rem 0 0.75rem;
+    border-bottom-color: var(--line-strong);
+    font: 500 0.8125rem / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+    text-align: left;
+  }
+
+  tbody:first-of-type .cmp-group th {
+    padding-top: 1.5rem;
+  }
+
+  .cmp-label {
+    display: block;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .cmp-hint {
+    display: block;
+    margin-top: 0.125rem;
+    color: var(--ink-3);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.4;
+  }
+
+  .cmp-table tfoot td {
+    padding-block: 1.25rem;
+    border-bottom: 0;
+  }
+
+  .cmp-cta {
+    width: 100%;
+    min-height: 2.5rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Phones: one card per plan */
+  .cmp-card {
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .cmp-card.featured {
+    border-color: var(--ink);
+  }
+
+  .cmp-card summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.125rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .cmp-card summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cmp-card-emoji {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    font-size: 1.25rem;
+  }
+
+  .cmp-card h3 {
+    font-size: 1.125rem;
+  }
+
+  .cmp-card-price {
+    margin-left: auto;
+    color: var(--ink-2);
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .cmp-toggle {
+    position: relative;
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .cmp-toggle::before,
+  .cmp-toggle::after {
+    position: absolute;
+    inset: 50% 0 auto;
+    height: 0.09375rem;
+    border-radius: var(--pill);
+    background: var(--ink-3);
+    content: "";
+    transition: transform 240ms var(--ease-out);
+  }
+
+  .cmp-toggle::after {
+    transform: rotate(90deg);
+  }
+
+  .cmp-card[open] .cmp-toggle::after {
+    transform: rotate(0deg);
+  }
+
+  .cmp-card-body {
+    display: grid;
+    gap: 1.25rem;
+    padding: 0.25rem 1.125rem 1.25rem;
+  }
+
+  .cmp-card-group h4 {
+    margin: 0 0 0.25rem;
+    color: var(--ink-3);
+    font: 500 0.75rem / 1.4 var(--font-mono);
+    letter-spacing: 0.02em;
+  }
+
+  .cmp-card dl {
+    margin: 0;
+  }
+
+  .cmp-card dl div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.625rem 0;
+    border-bottom: 0.0625rem solid var(--line);
+    font-size: 0.9375rem;
+  }
+
+  .cmp-card dt {
+    color: var(--ink-2);
+  }
+
+  .cmp-card dd {
+    flex: none;
+    margin: 0;
+    text-align: right;
+  }
+
+  .cmp-card-cta {
+    width: 100%;
+  }
+</style>

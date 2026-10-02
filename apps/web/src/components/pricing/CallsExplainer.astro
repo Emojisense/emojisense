@@ -1,0 +1,516 @@
+---
+import { stats } from "../../lib/showcase";
+
+/**
+ * How a request is answered and what is metered, as implemented in packages/worker
+ * (search.ts, reactions.ts, image.ts) and docs/PRICING.md. Keep the wording in sync with them.
+ */
+const layers = [
+  {
+    emoji: "📱",
+    title: "On the device",
+    speed: "< 1 ms",
+    body: `Names, slang, typos and ${stats.languages} languages, from the dictionary inside your app. Works offline.`,
+    counted: false,
+  },
+  {
+    emoji: "🗂️",
+    title: "Ready-made answers",
+    speed: "nearest city",
+    body: "Popular searches are answered ahead of time and served as plain files, close to your users.",
+    counted: false,
+  },
+  {
+    emoji: "🧠",
+    title: "Edge AI",
+    speed: "≈ 50 ms",
+    body: "Brand-new phrasing and reaction suggestions go to the edge API, which understands them by meaning.",
+    counted: true,
+  },
+];
+
+const counted = [
+  {
+    title: "AI calls",
+    body: "A meaning search or a reaction suggestion that reaches the edge API. One request, one call.",
+  },
+  { title: "Photos", body: "Each photo turned into emoji. Photos are processed in memory and never stored." },
+];
+
+const free = [
+  "On-device answers",
+  "Ready-made answers for popular searches",
+  "Dictionary and pack downloads",
+  "Requests that fail on our side",
+];
+
+const atLimit = [
+  { state: "on", title: "On-device answers", note: "keep answering" },
+  { state: "on", title: "Ready-made answers", note: "keep answering" },
+  { state: "on", title: "Cached answers at the edge", note: "still served, not counted" },
+  { state: "paused", title: "New AI calls and photos", note: "resume on the 1st" },
+];
+---
+
+<section id="calls" class="section section-soft" aria-labelledby="calls-title">
+  <div class="container">
+    <div class="section-head center">
+      <p class="kicker">How usage works</p>
+      <h2 id="calls-title">What counts as a call?</h2>
+      <p class="lead">
+        Most emoji searches never reach our servers. The device and ready-made answers handle them, free and
+        unlimited on every plan. A call is counted only when the edge AI does the work.
+      </p>
+    </div>
+
+    <ol class="calls-flow" aria-label="How a search is answered">
+      {
+        layers.map((layer, index) => (
+          <li class:list={["calls-layer", { counted: layer.counted }]}>
+            <div class="calls-layer-top">
+              <span class="calls-emoji emoji" aria-hidden="true">
+                {layer.emoji}
+              </span>
+              <span class="calls-step">
+                {index + 1} · {layer.speed}
+              </span>
+            </div>
+            <h3>{layer.title}</h3>
+            <p>{layer.body}</p>
+            <p class="calls-status">
+              {layer.counted ? (
+                <>
+                  <span class="calls-dot" aria-hidden="true" /> Counted as AI calls
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="m3.5 8.5 3 3 6-7" />
+                  </svg>
+                  Free · unlimited
+                </>
+              )}
+            </p>
+            {index < layers.length - 1 && (
+              <span class="calls-next" aria-hidden="true">
+                <svg viewBox="0 0 16 16">
+                  <path d="M3.5 8h9M8.5 4l4 4-4 4" />
+                </svg>
+              </span>
+            )}
+          </li>
+        ))
+      }
+    </ol>
+
+    <div class="calls-grid">
+      <article class="calls-card" aria-labelledby="calls-counted-title">
+        <h3 id="calls-counted-title">What your plan counts</h3>
+        <ul class="calls-counted">
+          {
+            counted.map((item) => (
+              <li>
+                <span class="calls-dot" aria-hidden="true" />
+                <span>
+                  <strong>{item.title}.</strong> {item.body}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+        <h3 class="calls-subtitle">Never counted</h3>
+        <ul class="calls-free">
+          {
+            free.map((item) => (
+              <li>
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="m3.5 8.5 3 3 6-7" />
+                </svg>
+                {item}
+              </li>
+            ))
+          }
+        </ul>
+      </article>
+
+      <article class="calls-card" aria-labelledby="calls-limit-title">
+        <h3 id="calls-limit-title">When you reach a limit</h3>
+        <div class="calls-meter" aria-hidden="true">
+          <div class="calls-bar">
+            <span class="calls-used"></span>
+            <span class="calls-past"></span>
+          </div>
+          <div class="calls-scale">
+            <span>1st of the month</span>
+            <span class="calls-mark">your limit</span>
+            <span>next month</span>
+          </div>
+        </div>
+        <ul class="calls-states">
+          {
+            atLimit.map((item) => (
+              <li class={item.state}>
+                <span class="calls-state-icon" aria-hidden="true">
+                  {item.state === "on" ? (
+                    <svg viewBox="0 0 16 16">
+                      <path d="m3.5 8.5 3 3 6-7" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 16 16">
+                      <path d="M6 4.5v7M10 4.5v7" />
+                    </svg>
+                  )}
+                </span>
+                <span class="calls-state-title">{item.title}</span>
+                <span class="calls-state-note">{item.note}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="calls-foot">
+          No errors and no broken pickers. The API answers with <code>overLimit: true</code>, and the SDK switches to
+          the device on its own. Limits reset monthly (UTC), with no daily caps.
+        </p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Three layers, left to right on wide screens, top to bottom on phones. */
+  .calls-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (min-width: 56rem) {
+    .calls-flow {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2.5rem;
+    }
+  }
+
+  .calls-layer {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .calls-layer.counted {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+  }
+
+  .calls-layer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+  }
+
+  .calls-emoji {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    font-size: 1.375rem;
+  }
+
+  .calls-step {
+    color: var(--ink-3);
+    font: 400 0.8125rem / 1 var(--font-mono);
+  }
+
+  .calls-layer h3 {
+    font-size: 1.25rem;
+  }
+
+  .calls-layer p {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .calls-layer .calls-status {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 0.4375rem;
+    margin-top: auto;
+    padding: 0.375rem 0.75rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+
+  .calls-layer:not(.counted) .calls-status {
+    margin-top: auto;
+  }
+
+  .calls-layer .calls-status svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .calls-layer.counted .calls-status {
+    border-color: transparent;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .calls-layer.counted .calls-dot {
+    background: var(--on-accent);
+  }
+
+  .calls-layer p:last-of-type:not(.calls-status) {
+    margin-bottom: 0.75rem;
+  }
+
+  /* The arrow between two layers sits in the gap: down on phones, right on wide screens. */
+  .calls-next {
+    position: absolute;
+    top: calc(100% + 0.375rem);
+    left: 50%;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: 50%;
+    background: var(--bg);
+    color: var(--ink-3);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(-50%) rotate(90deg);
+  }
+
+  .calls-next svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  @media (min-width: 56rem) {
+    .calls-next {
+      top: 50%;
+      left: calc(100% + 1.25rem);
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .calls-dot {
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--ink);
+  }
+
+  /* Counted / at the limit */
+  .calls-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: clamp(2rem, 4vw, 3rem);
+  }
+
+  @media (min-width: 56rem) {
+    .calls-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .calls-card {
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .calls-card h3 {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+  }
+
+  .calls-card .calls-subtitle {
+    margin: 1.75rem 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  .calls-card ul {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .calls-counted li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .calls-counted .calls-dot {
+    transform: translateY(-0.0625rem);
+  }
+
+  .calls-counted strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .calls-free li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .calls-free svg {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    color: var(--good);
+  }
+
+  /* A month of AI calls: used up to the limit, then the device carries on. */
+  .calls-meter {
+    margin-bottom: 1.25rem;
+  }
+
+  .calls-bar {
+    display: flex;
+    height: 0.625rem;
+    overflow: hidden;
+    border-radius: var(--pill);
+    background: var(--bg-sunk);
+  }
+
+  .calls-used {
+    flex: 0 0 68%;
+    background: var(--ink);
+  }
+
+  .calls-past {
+    flex: 1;
+    border-left: 0.125rem solid var(--bg);
+    background: repeating-linear-gradient(
+      -45deg,
+      var(--line-strong) 0 0.25rem,
+      transparent 0.25rem 0.5rem
+    );
+  }
+
+  .calls-scale {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    color: var(--ink-3);
+    font: 400 0.75rem / 1 var(--font-mono);
+  }
+
+  .calls-mark {
+    position: absolute;
+    left: 68%;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+
+  .calls-states li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 0.0625rem solid var(--line);
+  }
+
+  .calls-state-icon {
+    display: grid;
+    place-items: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--good) 14%, transparent);
+    color: var(--good);
+  }
+
+  .paused .calls-state-icon {
+    background: var(--bg-sunk);
+    color: var(--ink-2);
+  }
+
+  .calls-state-icon svg {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .calls-state-title {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .calls-state-note {
+    color: var(--ink-3);
+    font-size: 0.875rem;
+    text-align: right;
+  }
+
+  .calls-foot {
+    margin-top: 1.25rem;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .calls-foot code {
+    white-space: nowrap;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.375rem;
+    background: var(--bg-sunk);
+    color: var(--ink);
+    font-size: 0.8125rem;
+  }
+
+  @media (max-width: 30rem) {
+    .calls-states li {
+      grid-template-columns: auto minmax(0, 1fr);
+      row-gap: 0.125rem;
+    }
+
+    .calls-state-note {
+      grid-column: 2;
+      text-align: left;
+    }
+
+    .calls-scale span:first-child,
+    .calls-scale span:last-child {
+      visibility: hidden;
+    }
+  }
+</style>

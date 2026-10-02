@@ -1,10 +1,16 @@
 ---
-import PageHero from "../components/PageHero.astro";
-import Pricing from "../components/Pricing.astro";
+import BeyondPlans from "../components/pricing/BeyondPlans.astro";
+import CallsExplainer from "../components/pricing/CallsExplainer.astro";
+import ComparisonTable from "../components/pricing/ComparisonTable.astro";
+import { pricingFaqs } from "../components/pricing/faq";
+import PricingFaq from "../components/pricing/PricingFaq.astro";
+import PricingHero from "../components/pricing/PricingHero.astro";
 import { DASHBOARD_URL, SITE_URL } from "../config";
 import Base from "../layouts/Base.astro";
 import { planViews } from "../lib/pricing";
 
+const url = `${SITE_URL}/pricing/`;
+const faqs = pricingFaqs();
 const offers = planViews(DASHBOARD_URL).map((plan) => ({
   "@type": "Offer",
   name: plan.name,
@@ -12,85 +18,81 @@ const offers = planViews(DASHBOARD_URL).map((plan) => ({
   priceCurrency: "USD",
 }));
 
-const faqs = [
-  {
-    q: "What counts as a Worker call?",
-    a: "A search or reaction suggestion that reaches our API. Searches answered on the device or from precomputed files are free and unlimited.",
-  },
-  {
-    q: "What happens over the limit?",
-    a: "Nothing breaks for your users. Answers that are cached at the edge or prepared in advance keep coming and are not counted. Brand-new searches use the on-device dictionary until the next month.",
-  },
-  {
-    q: "Can I self-host instead?",
-    a: "Yes. The engine, data and API server are MIT. You pay your own Cloudflare costs and get quarterly dictionary updates.",
-  },
-  {
-    q: "When do paid plans open?",
-    a: "Soon. Join the waitlist and we write once, when your plan opens. The free plan works today.",
-  },
-];
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "Product", name: "Emojisense", url, offers },
+    {
+      "@type": "FAQPage",
+      url,
+      mainEntity: faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.q,
+        acceptedAnswer: { "@type": "Answer", text: faq.a },
+      })),
+    },
+  ],
+};
 ---
 
 <Base
   title="Pricing"
-  description="Emojisense pricing: free for most apps. Pay for volume, photo classifications and custom emoji."
+  description="Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume, photos, custom emoji and teams."
   path="/pricing/"
-  jsonLd={{ "@context": "https://schema.org", "@type": "Product", name: "Emojisense", url: `${SITE_URL}/pricing/`, offers }}
+  jsonLd={jsonLd}
 >
-  <PageHero eyebrow="Pricing" emoji="💸" title="Free to start. Fair when you grow.">
-    <p>Search and reaction suggestions are free on every plan. Pay only for volume, photos and custom emoji.</p>
-  </PageHero>
-  <section class="section" style="padding-top: 1rem">
-    <div class="container">
-      <Pricing />
-    </div>
-  </section>
-  <section class="section section-soft">
-    <div class="container narrow">
-      <h2>Pricing questions</h2>
-      <div class="faq">
-        {faqs.map((f) => (
-          <details>
-            <summary>{f.q}</summary>
-            <p>{f.a}</p>
-          </details>
-        ))}
+  <PricingHero />
+  <ComparisonTable />
+  <CallsExplainer />
+  <BeyondPlans />
+  <PricingFaq faqs={faqs} />
+
+  <section class="final" aria-labelledby="final-title">
+    <div class="container final-inner">
+      <p class="final-emoji emoji" aria-hidden="true">🦖</p>
+      <h2 id="final-title">Start free. Grow when you are ready.</h2>
+      <p>Get a key in a minute and keep the free plan as long as it fits.</p>
+      <div class="final-ctas">
+        <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>Get a free API key</a>
+        <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
       </div>
     </div>
   </section>
 </Base>
 
 <style>
-  .narrow {
-    max-width: 50rem;
-  }
-
-  h2 {
-    margin-bottom: 1.5rem;
-    font-size: 2rem;
+  .final {
+    padding: clamp(4.5rem, 10vw, 7.5rem) 0;
+    border-top: 0.0625rem solid var(--line);
     text-align: center;
   }
 
-  .faq {
+  .final-inner {
     display: grid;
-    gap: 0.75rem;
+    justify-items: center;
   }
 
-  details {
-    border: 0.0625rem solid var(--line);
-    border-radius: var(--radius);
-    background: var(--bg);
+  .final-emoji {
+    font-size: 3.5rem;
   }
 
-  summary {
-    padding: 1.125rem 1.25rem;
-    font-weight: 700;
-    cursor: pointer;
+  .final h2 {
+    margin-top: 1rem;
+    font-size: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
   }
 
-  details p {
-    padding: 0 1.25rem 1.25rem;
+  .final p:not(.final-emoji) {
+    max-width: 30rem;
+    margin-top: 0.875rem;
     color: var(--ink-2);
+    font-size: 1.125rem;
+  }
+
+  .final-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
   }
 </style>

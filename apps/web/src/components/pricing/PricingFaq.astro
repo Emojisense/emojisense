@@ -1,0 +1,116 @@
+---
+import { REPO_URL } from "../../config";
+import type { PricingFaq } from "./faq";
+
+interface Props {
+  faqs: PricingFaq[];
+}
+
+const { faqs } = Astro.props;
+---
+
+<section id="faq" class="section" aria-labelledby="faq-title">
+  <div class="container faq-wrap">
+    <div class="section-head faq-head">
+      <p class="kicker">FAQ</p>
+      <h2 id="faq-title">Pricing questions.</h2>
+      <p class="lead">Something missing? <a href={`${REPO_URL}/discussions`}>Ask on GitHub Discussions</a>.</p>
+    </div>
+    <div class="faq">
+      {
+        faqs.map((faq) => (
+          <details>
+            <summary>{faq.q}</summary>
+            <div class="faq-answer">
+              <p>{faq.a}</p>
+              {faq.link && (
+                <p>
+                  <a href={faq.link.href}>{faq.link.label}</a>
+                </p>
+              )}
+            </div>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq-wrap {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  @media (min-width: 60rem) {
+    .faq-wrap {
+      grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+      align-items: start;
+    }
+
+    .faq-head {
+      position: sticky;
+      top: 6rem;
+    }
+  }
+
+  .faq-head {
+    margin: 0;
+  }
+
+  .faq {
+    border-top: 0.0625rem solid var(--line);
+  }
+
+  details {
+    border-bottom: 0.0625rem solid var(--line);
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 0;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    flex: none;
+    color: var(--ink-3);
+    content: "+";
+    font: 400 1.25rem / 1 var(--font-mono);
+    transition: transform 200ms var(--ease-out);
+  }
+
+  details[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  .faq-answer {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0 2rem 1.25rem 0;
+    color: var(--ink-2);
+  }
+
+  .lead a,
+  .faq-answer a {
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 0.2em;
+    text-decoration-color: var(--line-strong);
+  }
+
+  .lead a:hover,
+  .faq-answer a:hover {
+    text-decoration-color: currentColor;
+  }
+</style>

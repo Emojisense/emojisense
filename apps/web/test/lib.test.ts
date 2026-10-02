@@ -2,7 +2,7 @@ import { PLANS } from "@emojisense/platform";
 import { describe, expect, it } from "vitest";
 import { codePointLabel, formatCount, formatDays, formatUsd } from "../src/lib/format";
 import { docsLinkResolver, renderMarkdown, slugify } from "../src/lib/markdown";
-import { planViews } from "../src/lib/pricing";
+import { planViews, yearlySavingsPercent } from "../src/lib/pricing";
 
 describe("format", () => {
   it.each([
@@ -52,6 +52,23 @@ describe("planViews", () => {
     const free = views[0]?.features.find((f) => f.key === "custom_emoji");
     expect(PLANS.free.limits.custom_emoji).toBe(0);
     expect(free?.value).toBe(false);
+  });
+
+  it("frames each paid card as everything in the plan before it, plus what it adds", () => {
+    expect(views.map((v) => v.inherits)).toEqual([undefined, "Free", "Solo", "Pro"]);
+    const keys = (id: string) => views.find((v) => v.id === id)?.highlights.map((f) => f.key) ?? [];
+    expect(keys("free")).toContain("search");
+    expect(keys("free")).not.toContain("custom_emoji");
+    expect(keys("solo")).toEqual(expect.arrayContaining(["semantic_calls", "custom_emoji", "hosted_sets"]));
+    expect(keys("solo")).not.toContain("search");
+    expect(keys("pro")).toEqual(expect.arrayContaining(["team", "emoji_import", "analytics"]));
+    expect(keys("pro")).not.toContain("hosted_sets");
+    expect(keys("scale")).toEqual(expect.arrayContaining(["tenants", "webhooks", "priority_support"]));
+  });
+
+  it("spreads the yearly price over twelve months", () => {
+    expect(views.find((v) => v.id === "solo")?.yearlyPerMonth).toBe("$4");
+    expect(yearlySavingsPercent()).toBe(20);
   });
 });
 

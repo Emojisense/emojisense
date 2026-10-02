@@ -1,0 +1,54 @@
+---
+interface Props {
+  value: string | boolean;
+}
+
+const { value } = Astro.props;
+---
+
+{
+  value === true ? (
+    <>
+      <svg class="cmp-check" viewBox="0 0 16 16" aria-hidden="true">
+        <path d="m3.5 8.5 3 3 6-7" />
+      </svg>
+      <span class="visually-hidden">Included</span>
+    </>
+  ) : value === false ? (
+    <>
+      <span class="cmp-dash" aria-hidden="true" />
+      <span class="visually-hidden">Not included</span>
+    </>
+  ) : (
+    <span class="cmp-text">{value}</span>
+  )
+}
+
+<style>
+  .cmp-check {
+    display: inline-block;
+    width: 1.125rem;
+    height: 1.125rem;
+    vertical-align: middle;
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .cmp-dash {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.0625rem;
+    vertical-align: middle;
+    background: var(--ink-3);
+    opacity: 0.6;
+  }
+
+  .cmp-text {
+    color: var(--ink);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+</style>

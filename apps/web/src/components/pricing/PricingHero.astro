@@ -1,0 +1,89 @@
+---
+import Pricing from "../Pricing.astro";
+
+const assurances = ["No card for the free plan", "Never a hard failure at a limit", "MIT-licensed core"];
+---
+
+<section class="pricing-hero" aria-labelledby="pricing-title">
+  <div class="container">
+    <div class="pricing-hero-head">
+      <p class="kicker"><span class="emoji" aria-hidden="true">💸</span> Pricing</p>
+      <h1 id="pricing-title">Free to start. <span>Fair when you grow.</span></h1>
+      <p class="lead">
+        The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for
+        volume, photos, custom emoji and team features.
+      </p>
+    </div>
+    <Pricing />
+    <ul class="pricing-assurances">
+      {
+        assurances.map((item) => (
+          <li>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="m3.5 8.5 3 3 6-7" />
+            </svg>
+            {item}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .pricing-hero {
+    padding: clamp(3.5rem, 8vw, 6rem) 0 clamp(1rem, 3vw, 2rem);
+    background: radial-gradient(60rem 26rem at 50% -8rem, var(--bg-soft), transparent 70%);
+  }
+
+  .pricing-hero-head {
+    display: grid;
+    justify-items: center;
+    max-width: 46rem;
+    margin: 0 auto clamp(2rem, 4vw, 2.75rem);
+    text-align: center;
+  }
+
+  h1 {
+    font-size: clamp(2.75rem, 1.5rem + 4.6vw, 4.75rem);
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+  }
+
+  h1 span {
+    display: inline-block;
+  }
+
+  .lead {
+    max-width: 38rem;
+    margin-top: 1.25rem;
+  }
+
+  .pricing-assurances {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.75rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--ink-3);
+    font-size: 0.875rem;
+  }
+
+  .pricing-assurances li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4375rem;
+  }
+
+  .pricing-assurances svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    fill: none;
+    stroke: var(--ink-2);
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>
