@@ -6,6 +6,12 @@ export interface FuseOptions {
   limit?: number;
   /** Alias results at or above this score keep their place on top, so results do not jump. */
   pinScore?: number;
+  /**
+   * Alias results at or above this score (below `pinScore`) come before every other result,
+   * ordered among themselves by fused score: semantic evidence breaks their near-ties, but it
+   * cannot lift a clearly weaker alias hit or a semantic-only hit above them. Default: off.
+   */
+  aliasFloor?: number;
   aliasWeight?: number;
   semanticWeight?: number;
 }
@@ -20,7 +26,7 @@ export function fuseResults(
   semantic: readonly SearchResult[],
   options: FuseOptions = {},
 ): SearchResult[] {
-  const { k = 60, limit = 24, pinScore = 0.9, aliasWeight = 1, semanticWeight = 1 } = options;
+  const { k = 60, limit = 24, pinScore = 0.9, aliasWeight = 1, semanticWeight = 1, aliasFloor } = options;
   const pinned = alias.filter((r) => r.score >= pinScore);
   const pinnedIds = new Set(pinned.map((r) => r.id));
   const fused = new Map<string, { result: SearchResult; score: number }>();
@@ -38,7 +44,13 @@ export function fuseResults(
   accumulate(semantic, semanticWeight);
 
   const rest = [...fused.values()].sort((a, b) => b.score - a.score).map((entry) => entry.result);
-  return [...pinned, ...rest].slice(0, limit);
+  if (aliasFloor === undefined) return [...pinned, ...rest].slice(0, limit);
+  const floored = new Set(alias.filter((r) => r.score >= aliasFloor).map((r) => r.id));
+  return [
+    ...pinned,
+    ...rest.filter((r) => floored.has(r.id)),
+    ...rest.filter((r) => !floored.has(r.id)),
+  ].slice(0, limit);
 }
 
 /** Cosine range of the semantic model over which its top match goes from "rarely right" to "usually right". */
@@ -65,10 +77,53 @@ export function semanticConfidence(
   return Math.min(1, Math.max(0, (best - floor) / (ceiling - floor)));
 }
 
+const REGIONAL_INDICATOR_A = 0x1f1e6;
+const REGIONAL_INDICATOR_Z = 0x1f1ff;
+const BLACK_FLAG = 0x1f3f4;
+const TAG_SPACE = 0xe0020;
+const CANCEL_TAG = 0xe007f;
+
+/** A country (two regional indicators) or subdivision (black flag + tags) flag, by hexcode. */
+function isCountryFlag(id: string): boolean {
+  const points = id.split("-").map((hex) => Number.parseInt(hex, 16));
+  const [first = 0, second = 0] = points;
+  if (points.length === 2) {
+    return points.every((p) => p >= REGIONAL_INDICATOR_A && p <= REGIONAL_INDICATOR_Z);
+  }
+  return points.length > 2 && first === BLACK_FLAG && second >= TAG_SPACE && second <= CANCEL_TAG;
+}
+
+/**
+ * The semantic list with its unsupported country flags moved after its other results. A flag is
+ * supported when the alias results hold the same flag (the query names that country in a loaded
+ * locale) or its cosine reaches the calibration ceiling. Short Latin-script queries the model
+ * does not know (romanized Hindi, Bengali and Arabic, slang) land near the flag documents, whose
+ * texts are mostly foreign names: without this, flags filled the top 5 of 19% of such queries.
+ */
+export function demoteUnsupportedFlags(
+  semantic: readonly SearchResult[],
+  alias: readonly SearchResult[],
+  calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
+): readonly SearchResult[] {
+  const aliasIds = new Set(alias.map((r) => r.id));
+  const supported = (r: SearchResult) =>
+    !isCountryFlag(r.id) || aliasIds.has(r.id) || r.score >= calibration.ceiling;
+  if (semantic.every(supported)) return semantic;
+  return [...semantic.filter(supported), ...semantic.filter((r) => !supported(r))];
+}
+
+/** Alias results this close to a confident top score stay above the rest (`aliasFloor`). */
+const ALIAS_BAND = 0.1;
+/** Below this alias confidence the alias tier is unsure (as in `shouldUseSemantic`): no floor. */
+const ALIAS_FLOOR_MIN_CONFIDENCE = 0.6;
+
 /**
  * Fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when its
  * best match is strong, down to 0.4 when it is weak (unknown slang, romanized text, a language
- * the model handles poorly), so a weak semantic list no longer outranks an alias hit.
+ * the model handles poorly), so a weak semantic list no longer outranks an alias hit. When the
+ * alias tier is sure (confidence ≥ 0.6), its results within 0.1 of the top score stay first; the
+ * semantic tier reorders them but cannot push in a clearly weaker one. Semantic country flags the
+ * alias tier does not support go last (`demoteUnsupportedFlags`).
  */
 export function fuse(
   alias: AliasSearchOutput,
@@ -76,10 +131,12 @@ export function fuse(
   limit = 24,
   calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
 ) {
-  return fuseResults(alias.results, semantic, {
+  const guarded = demoteUnsupportedFlags(semantic, alias.results, calibration);
+  return fuseResults(alias.results, guarded, {
     limit,
     aliasWeight: 0.4 + alias.confidence,
-    semanticWeight: 0.4 + 0.6 * semanticConfidence(semantic, calibration),
+    semanticWeight: 0.4 + 0.6 * semanticConfidence(guarded, calibration),
+    ...(alias.confidence >= ALIAS_FLOOR_MIN_CONFIDENCE ? { aliasFloor: alias.confidence - ALIAS_BAND } : {}),
   });
 }
 

@@ -33,7 +33,9 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with the chosen Wo
 | L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | built (plans, metering: Phase 1) |
 
 **Fusion.** The client merges L0 with L2 or L3 results by reciprocal rank fusion. Confident L0
-hits stay pinned, so the list does not jump when semantic results arrive.
+hits stay pinned, so the list does not jump when semantic results arrive. When L0 is sure, its
+results within 0.1 of its top score stay above the rest (semantic results only reorder them), and
+semantic country flags that L0 does not also hold rank last (`packages/core/src/fusion.ts`).
 
 **Layer coupling.** L2 takes the most frequent queries, so the queries that still reach L3 are
 the long tail. The L3 Cache API hit rate is therefore low. Cost estimates model the layers
