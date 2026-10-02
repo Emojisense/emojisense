@@ -1,0 +1,43 @@
+name: release
+
+# Publishes the public npm packages with provenance. Manual only: the owner starts it from the
+# Actions tab after `pnpm release:version` is merged into main. It holds no npm token: each package
+# must trust this workflow first (npm trusted publishing, RELEASING.md). The first release of a new
+# package is published from a workstation, because npm can trust a workflow only for an existing
+# package.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the release tags that `changeset publish` creates
+  id-token: write # OIDC token for npm trusted publishing and provenance
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: npm must be 11.5.1 or later for trusted publishing
+        run: node -e 'const [a,b,c]=process.argv[1].split(".").map(Number); process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$(npm --version)"
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Check and publish (clean build, typecheck, tests, README samples, tarball checks)
+        run: pnpm release:publish
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
+      - name: Push the release tags
+        run: git push origin --tags
