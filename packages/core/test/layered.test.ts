@@ -48,7 +48,7 @@ describe("createLayeredSemantic", () => {
       endpoint: "https://api.test",
       fetch,
     });
-    const response = await semantic?.search("Volcano eruption!");
+    const response = await semantic?.search("Volcano  eruption");
     expect(response?.layer).toBe("shard");
     expect(response?.results[0]?.emoji).toBe("🌋");
     expect(apiCalls(fetch)).toHaveLength(0);

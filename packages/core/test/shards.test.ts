@@ -40,12 +40,22 @@ describe("shard provider", () => {
   it("answers from a shard and downloads each shard once", async () => {
     const fetch = fakeFetch();
     const provider = createShardProvider({ baseUrl: "https://x.test/p/1/", fetch });
-    const first = await provider.search("Congrats on the launch!");
+    const first = await provider.search("Congrats  on the launch");
     expect(first?.layer).toBe("shard");
     expect(first?.results.map((r) => r.emoji)).toEqual(["🚀", "🎉"]);
     await provider.search("congrats on the launch");
     expect(fetch).toHaveBeenCalledTimes(2);
     expect((await provider.search("the office"))?.results[0]?.emoji).toBe("🏢");
+  });
+
+  it("leaves text typed with accents, punctuation or emoji to the API, which embeds it as typed", async () => {
+    const fetch = fakeFetch();
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch });
+    for (const typed of ["congrats on the launch!", "cöngrats on the launch", "congrats on the launch 🚀"]) {
+      expect(await provider.search(typed)).toBeUndefined();
+    }
+    expect(fetch).not.toHaveBeenCalled();
+    expect((await provider.search("CONGRATS on the launch"))?.layer).toBe("shard");
   });
 
   it("returns undefined for unknown queries so the next layer is asked", async () => {

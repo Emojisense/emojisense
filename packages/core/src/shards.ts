@@ -1,5 +1,5 @@
 import type { SearchResult } from "./engine.js";
-import { normalize } from "./normalize.js";
+import { embeddingText, normalize } from "./normalize.js";
 import type { SemanticProvider, SemanticResponse } from "./provider.js";
 
 /** `<base>/index.json`: which prefix keys exist (adaptive: hot prefixes get longer keys). */
@@ -39,6 +39,10 @@ export function shardKeyFor(keys: readonly string[], query: string): string | un
  * Layer 2: precomputed results served as static files. One download per prefix, then every
  * further keystroke with that prefix is answered locally. Unknown queries return `undefined`
  * so the next provider (the API) is asked.
+ *
+ * Shards hold the answers for normalized text. A query typed with accents, punctuation or emoji
+ * ("doğum günü", "i'm done!") also returns `undefined`: the API embeds it as typed, and the folded
+ * text's answer would differ (PACK_FORMAT.md §6).
  */
 export function createShardProvider(options: ShardProviderOptions): SemanticProvider {
   const base = options.baseUrl.replace(/\/+$/, "");
@@ -58,7 +62,7 @@ export function createShardProvider(options: ShardProviderOptions): SemanticProv
   return {
     async search(query, { limit = 24 } = {}) {
       const q = normalize(query);
-      if (q === "") return undefined;
+      if (q === "" || embeddingText(query) !== q) return undefined;
       index ??= getJson<ShardIndex>(`${base}/index.json`);
       const loaded = await index;
       const key = loaded && shardKeyFor(loaded.keys, q);

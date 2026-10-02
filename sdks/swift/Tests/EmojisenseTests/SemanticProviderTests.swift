@@ -109,7 +109,7 @@ final class ShardProviderTests: XCTestCase {
     let transport = StubTransport(files: Self.files)
     let provider = ShardProvider(baseURL: URL(string: "https://x.test/p/1/")!, transport: transport)
 
-    let first = try await provider.search("Congrats on the launch!")
+    let first = try await provider.search("Congrats  on the launch")
     XCTAssertEqual(first?.layer, .shard)
     XCTAssertEqual(first?.model, "m@256")
     XCTAssertEqual(first?.results.map(\.emoji), ["🚀", "🎉"])
@@ -119,6 +119,19 @@ final class ShardProviderTests: XCTestCase {
 
     let office = try await provider.search("the office")
     XCTAssertEqual(office?.results.first?.emoji, "🏢")
+  }
+
+  func testLeavesTextTypedWithAccentsPunctuationOrEmojiToTheAPI() async throws {
+    let transport = StubTransport(files: Self.files)
+    let provider = ShardProvider(baseURL: URL(string: "https://x.test/p/1")!, transport: transport)
+    for typed in ["congrats on the launch!", "cöngrats on the launch", "congrats on the launch 🚀"] {
+      let response = try await provider.search(typed)
+      XCTAssertNil(response, typed)
+    }
+    let requestCount = await transport.requests.count
+    XCTAssertEqual(requestCount, 0)
+    let upper = try await provider.search("CONGRATS on the launch")
+    XCTAssertEqual(upper?.layer, .shard)
   }
 
   func testReturnsNilForUnknownQueriesSoTheNextLayerIsAsked() async throws {

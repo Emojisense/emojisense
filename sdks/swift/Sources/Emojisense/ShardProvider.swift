@@ -50,6 +50,9 @@ public actor ShardProvider: SemanticProvider {
   public func search(_ query: String, options: SemanticSearchOptions) async -> SemanticResponse? {
     let normalized = Normalizer.normalize(query)
     if normalized.isEmpty { return nil }
+    // Shards hold the answers for normalized text. Text typed with accents, punctuation or emoji
+    // goes to the API, which embeds it as typed (compared in UTF-16 units, like JavaScript).
+    if !Normalizer.embeddingText(query).utf16.elementsEqual(normalized.utf16) { return nil }
     guard let loaded = await loadIndex(),
       let key = Self.shardKey(for: normalized, keys: loaded.keys),
       let entry = await loadShard(key: key)?.entries[normalized]
