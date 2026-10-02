@@ -1,19 +1,19 @@
 {
- "date": "2026-10-02T16:11:51.437Z",
+ "date": "2026-10-02T16:50:34.765Z",
  "packVersion": "0.1.0",
  "conceptTag": "gemma-4-26b-a4b-it:1",
  "sets": {
   "entities-dev": {
    "n": 258,
-   "unsure": 213,
+   "unsure": 96,
    "modes": {
     "alias": {
      "n": 258,
      "r1": 40.7,
      "r5": 60.5,
-     "r10": 64.7,
+     "r10": 64.3,
      "mrr": 0.493,
-     "forbidRate": 5.8
+     "forbidRate": 5.4
     },
     "semantic": {
      "n": 258,
@@ -25,19 +25,19 @@
     },
     "fused": {
      "n": 258,
-     "r1": 43.4,
-     "r5": 64,
-     "r10": 70.2,
-     "mrr": 0.526,
-     "forbidRate": 5.8
+     "r1": 44.2,
+     "r5": 64.7,
+     "r10": 69.8,
+     "mrr": 0.533,
+     "forbidRate": 5.4
     },
     "gated": {
      "n": 258,
-     "r1": 42.6,
-     "r5": 63.2,
-     "r10": 70.2,
-     "mrr": 0.521,
-     "forbidRate": 5.8
+     "r1": 43.4,
+     "r5": 64,
+     "r10": 69.8,
+     "mrr": 0.527,
+     "forbidRate": 5.4
     },
     "fused+concept": {
      "n": 258,
@@ -59,14 +59,14 @@
   },
   "queries": {
    "n": 214,
-   "unsure": 71,
+   "unsure": 1,
    "modes": {
     "alias": {
      "n": 214,
-     "r1": 81.8,
+     "r1": 82.2,
      "r5": 99.1,
      "r10": 99.1,
-     "mrr": 0.888,
+     "mrr": 0.891,
      "forbidRate": 1.4
     },
     "semantic": {
@@ -87,10 +87,10 @@
     },
     "gated": {
      "n": 214,
-     "r1": 83.6,
+     "r1": 84.1,
      "r5": 99.1,
      "r10": 99.1,
-     "mrr": 0.9,
+     "mrr": 0.903,
      "forbidRate": 1.4
     },
     "fused+concept": {
@@ -103,17 +103,17 @@
     },
     "gated+concept": {
      "n": 214,
-     "r1": 84.1,
+     "r1": 84.6,
      "r5": 99.5,
      "r10": 99.5,
-     "mrr": 0.905,
+     "mrr": 0.907,
      "forbidRate": 1.4
     }
    }
   },
   "semantic-dev": {
    "n": 180,
-   "unsure": 59,
+   "unsure": 7,
    "modes": {
     "alias": {
      "n": 180,
@@ -167,12 +167,12 @@
   },
   "romanized-dev": {
    "n": 116,
-   "unsure": 91,
+   "unsure": 24,
    "modes": {
     "alias": {
      "n": 116,
      "r1": 69.8,
-     "r5": 83.6,
+     "r5": 84.5,
      "r10": 87.1,
      "mrr": 0.761,
      "forbidRate": 0
@@ -221,14 +221,14 @@
   },
   "sentences-dev": {
    "n": 369,
-   "unsure": 144,
+   "unsure": 57,
    "modes": {
     "alias": {
      "n": 369,
-     "r1": 55,
+     "r1": 54.7,
      "r5": 85.4,
-     "r10": 89.7,
-     "mrr": 0.677,
+     "r10": 89.4,
+     "mrr": 0.675,
      "forbidRate": 2.2
     },
     "semantic": {
@@ -241,18 +241,18 @@
     },
     "fused": {
      "n": 369,
-     "r1": 61.8,
-     "r5": 90.8,
+     "r1": 61.5,
+     "r5": 90.5,
      "r10": 94.3,
-     "mrr": 0.739,
+     "mrr": 0.736,
      "forbidRate": 2.2
     },
     "gated": {
      "n": 369,
-     "r1": 61.5,
-     "r5": 90.2,
+     "r1": 61.2,
+     "r5": 90,
      "r10": 94,
-     "mrr": 0.735,
+     "mrr": 0.733,
      "forbidRate": 2.2
     },
     "fused+concept": {
