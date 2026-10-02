@@ -35,8 +35,10 @@ headers. Every key also has per-second rate limits.
 - Each API instance counts calls in memory. Its copy of the account's total is never older than
   a minute, and each write of its counts (about every 10 s while busy) refreshes it. So calls on
   other instances can take about a minute to count, and an account can go a little over its limit.
-- **One shared cache.** The cache key is the normalized query, locale, limit, mode and index
-  version. It has no key, app or origin in it, so every app warms the same edge cache.
+- **One shared cache.** The cache key is the embedded query text, locale, limit, mode, index
+  version and a hash of the served packs, vectors and engine (written by the Worker's `sync`
+  step), so a data fix under the same pack version is not answered from older entries. It has
+  no key, app or origin in it, so every app warms the same edge cache.
 - **Over the limit, the API never fails.** A query that is in the shared cache is still answered
   (`"cached": true`, not metered). Other queries return `200` with `"overLimit": true` and
   alias-only (hybrid) or empty (semantic) results. The SDK keeps asking (the edge cache may know

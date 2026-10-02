@@ -23,7 +23,8 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { buildCultureFiles } from "@emojisense/data/culture";
 import { LOCALE_CODES } from "@emojisense/data/locales";
@@ -31,6 +32,7 @@ import { formatQuery, getModel } from "@emojisense/data/models";
 import { DATA_ROOT } from "@emojisense/data/paths";
 import { vectorFileName } from "@emojisense/data/vector-files";
 import { decodeVectors, encodeVectors } from "emojisense";
+import { contentHash } from "./content-hash.ts";
 
 const { values: args } = parseArgs({
   // pnpm forwards a literal "--"; drop it so flags after it still parse.
@@ -91,8 +93,26 @@ if (unpublished.length > 0) throw new Error(`no core pack for ${unpublished.join
 const BUNDLED = ["pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
 for (const file of BUNDLED) copyFileSync(join(source, file), join(generated, file));
 writeFileSync(join(generated, "vectors.bin"), vectorBytes);
+const queryTemplate = formatQuery(model, "{q}");
+// What a cached search answer depends on besides the request: every locale pack and locale vector
+// file the Worker can load, the shared vectors, the model and the built core engine
+// (normalization, alias search, fusion). The search cache key holds it, so a data hotfix or a
+// ranking change under the same pack version is not answered from the edge cache for a week.
+const coreDist = dirname(fileURLToPath(import.meta.resolve("emojisense")));
+const hash = await contentHash([
+  ...PACK_FILES.map((file) => ({ name: file, bytes: readFileSync(join(source, file)) })),
+  { name: "vectors.bin", bytes: vectorBytes },
+  ...vectorLocales.map((code) => {
+    const file = vectorFileName(model.key, dims, code);
+    return { name: file, bytes: readFileSync(join(source, file)) };
+  }),
+  { name: "model", bytes: new TextEncoder().encode(`${model.id}@${dims}\n${queryTemplate}`) },
+  ...readdirSync(coreDist)
+    .filter((file) => file.endsWith(".js"))
+    .map((file) => ({ name: `core/${file}`, bytes: readFileSync(join(coreDist, file)) })),
+]);
 const configJson = JSON.stringify(
-  { packVersion, modelKey: model.key, modelId: model.id, dims, queryTemplate: formatQuery(model, "{q}") },
+  { packVersion, modelKey: model.key, modelId: model.id, dims, queryTemplate },
   null,
   2,
 );
@@ -100,7 +120,7 @@ const configJson = JSON.stringify(
 const localeList = vectorLocales.map((code) => JSON.stringify(code)).join(", ");
 writeFileSync(
   join(generated, "config.json"),
-  `${configJson.replace(/\n}$/, `,\n  "vectorLocales": [${localeList}]\n}`)}\n`,
+  `${configJson.replace(/\n}$/, `,\n  "vectorLocales": [${localeList}],\n  "contentHash": "${hash}"\n}`)}\n`,
 );
 
 const publicPack = join(workerRoot, "public", "v1", "pack");
@@ -165,6 +185,6 @@ writeFileSync(
   ["/v1/pack/*", ...immutable, "/p/*", ...immutable, "/v1/culture/*", ...hourly, ""].join("\n"),
 );
 console.log(
-  `sync: pack ${packVersion} + ${model.id}@${dims} (locale vectors: ${vectorLocales.join(", ") || "none"}) → ` +
-    `src/generated, public/v1/pack/${packVersion}; ${shardNote}; ${cultureNote}`,
+  `sync: pack ${packVersion} + ${model.id}@${dims} (locale vectors: ${vectorLocales.join(", ") || "none"}; ` +
+    `content ${hash}) → src/generated, public/v1/pack/${packVersion}; ${shardNote}; ${cultureNote}`,
 );

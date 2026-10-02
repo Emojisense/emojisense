@@ -59,6 +59,31 @@ describe("GET /v1/search", () => {
     expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
+  it("keys the cache by the data's content hash, never by the key, user or origin", async () => {
+    const h = harness({ env: { DEV_KEYS: "pk_test" } });
+    await h.call(
+      search("lava eruption", "&key=pk_test", {
+        headers: { origin: "https://app.example.com", "cf-connecting-ip": "203.0.113.9" },
+      }),
+    );
+    await h.ctx.settle();
+    expect(h.cache.puts).toHaveLength(1);
+    const key = new URL(h.cache.puts[0] as string);
+    expect(Object.fromEntries(key.searchParams)).toEqual({
+      q: "lava eruption",
+      locale: "en",
+      limit: "24",
+      mode: "hybrid",
+      v: "test:bge-m3@8",
+      c: "c0ffee",
+    });
+
+    const hotfix = harness({ catalog: { ...catalog, config: { ...catalog.config, contentHash: "beef" } } });
+    hotfix.cache.store.set(key.href, h.cache.store.get(key.href) as Response);
+    const fresh = await hotfix.call(search("lava eruption"));
+    expect(((await fresh.json()) as SearchBody).cached).toBe(false);
+  });
+
   it("keys the cache by the embedded text, so an accent is a different answer", async () => {
     const h = harness();
     await h.call(search("lavá"));

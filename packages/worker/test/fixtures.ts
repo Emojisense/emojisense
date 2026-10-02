@@ -63,6 +63,7 @@ export const catalog: Catalog = {
     dims: DIMS,
     queryTemplate: "{q}",
     vectorLocales: [],
+    contentHash: "c0ffee",
   },
   model: getModel("bge-m3"),
   engine: () => createEngine(pack),

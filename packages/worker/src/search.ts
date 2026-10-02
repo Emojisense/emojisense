@@ -116,11 +116,14 @@ export const handleSearch: Handler = async (
       limit: String(params.limit),
       mode: params.mode,
       v: indexTag(catalog),
+      c: catalog.config.contentHash,
     })}`,
   );
   // The cache key has no key, user or origin in it: every app's searches warm the same edge cache,
-  // so popular queries get faster and cheaper for everyone. Cached answers are served even over
-  // the plan limit (they cost no model call), and those are not counted.
+  // so popular queries get faster and cheaper for everyone. `c` changes with the bundled data and
+  // engine, so a hotfix under the same pack version is not answered from week-old entries.
+  // Cached answers are served even over the plan limit (they cost no model call), and those are
+  // not counted.
   const overLimit = await metering.overLimit("semantic_calls");
   const hit = await cache.match(cacheKey);
   if (hit) {
