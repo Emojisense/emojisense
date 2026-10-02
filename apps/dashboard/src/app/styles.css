@@ -1,0 +1,847 @@
+/*
+ * Dashboard styles, "calm" level of docs/DESIGN.md: keycap buttons, pill badges, sticker
+ * empty states. Tables, forms and the key dialog stay plain so they read at a glance.
+ */
+:root {
+  --sun: #ffd23f;
+  --ink: #1e1631;
+  --paper: #ffffff;
+  --cloud: #f4f6ff;
+  --tomato: #ff5b3a;
+  --mint: #12c79c;
+  --sky: #3d7bff;
+  --bubblegum: #ff6fb5;
+  --muted: #6b6380;
+  /* --ink turns light in dark mode; text on --sun or --tomato must stay dark in both themes. */
+  --on-bright: #1e1631;
+  --meter-track: #1e1631;
+
+  --radius-key: 0.875rem;
+  --radius-pill: 999px;
+  --radius-card: 1.25rem;
+  --outline: 0.125rem solid var(--ink);
+  --depth: 0 0.25rem 0 var(--ink);
+  --depth-pressed: 0 0.0625rem 0 var(--ink);
+  --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --font-display: "DynaPuff", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: clamp(1.75rem, 1.3rem + 1.8vw, 2.5rem);
+  --measure: 72rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #17121f;
+    --cloud: #221a2e;
+    --ink: #f5f1ff;
+    --muted: #a79fba;
+    --depth: 0 0.25rem 0 #0b0811;
+    --depth-pressed: 0 0.0625rem 0 #0b0811;
+    --meter-track: #0b0811;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--step-0) / 1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--sky);
+  text-decoration-thickness: 0.125rem;
+  text-underline-offset: 0.2em;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+:focus-visible {
+  outline: 0.1875rem solid var(--sky);
+  outline-offset: 0.1875rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  top: -4rem;
+  left: 1rem;
+  z-index: 10;
+  padding: 0.5rem 1rem;
+  background: var(--sun);
+  color: var(--on-bright);
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* ── Frame ──────────────────────────────────────────────── */
+.topbar {
+  border-bottom: var(--outline);
+}
+
+.topbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0.875rem var(--gutter);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font: 800 var(--step-1) / 1 var(--font-body);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.wordmark-glyph {
+  font: 1.5rem / 1 var(--font-emoji);
+}
+
+.wordmark-tag {
+  font: 400 var(--step--1) var(--font-mono);
+  color: var(--muted);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.account-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.page {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2rem var(--gutter) 4rem;
+}
+
+.page:focus {
+  outline: none;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+}
+
+.layout-main {
+  display: grid;
+  gap: 2rem;
+  min-width: 0;
+}
+
+@media (min-width: 62rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: start;
+  }
+
+  .layout-aside {
+    position: sticky;
+    top: 1.5rem;
+  }
+}
+
+.page-title {
+  font: 700 var(--step-2) / 1.1 var(--font-display);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.page-title:focus {
+  outline: none;
+}
+
+.lede {
+  margin-top: 0.5rem;
+  max-width: 60ch;
+  color: var(--muted);
+}
+
+.section-title {
+  font: 800 var(--step-1) / 1.2 var(--font-body);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.card {
+  background: var(--paper);
+  border: var(--outline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--depth);
+  min-width: 0;
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.card-body {
+  display: grid;
+  gap: 1rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+/* ── Keycap buttons ─────────────────────────────────────── */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.125rem;
+  border: var(--outline);
+  border-radius: var(--radius-key);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--depth);
+  font: 800 var(--step--1) / 1.2 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* With reduced motion the press still shows, but as an instant change. */
+@media (prefers-reduced-motion: no-preference) {
+  .button {
+    transition:
+      transform 120ms var(--spring),
+      box-shadow 120ms var(--spring);
+  }
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0.1875rem);
+  box-shadow: var(--depth-pressed);
+}
+
+.button-primary {
+  background: var(--sun);
+  color: var(--on-bright);
+}
+
+.button-danger {
+  background: var(--tomato);
+  color: var(--on-bright);
+}
+
+.button-small {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.625rem;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* ── Pills ──────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.125rem 0.625rem;
+  border: 0.0625rem solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  font: 600 0.8125rem / 1.5 var(--font-body);
+  white-space: nowrap;
+}
+
+.pill-emoji {
+  font-family: var(--font-emoji);
+}
+
+.pill[data-tone="plan"] {
+  background: var(--sun);
+  color: var(--on-bright);
+  border-color: var(--on-bright);
+}
+
+.pill[data-tone="prod"] {
+  background: color-mix(in srgb, var(--mint) 22%, var(--paper));
+}
+
+.pill[data-tone="staging"] {
+  background: color-mix(in srgb, var(--sky) 18%, var(--paper));
+}
+
+.pill[data-tone="dev"] {
+  background: color-mix(in srgb, var(--bubblegum) 20%, var(--paper));
+}
+
+.pill[data-tone="revoked"] {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.pill[data-tone="active"] {
+  background: color-mix(in srgb, var(--mint) 22%, var(--paper));
+}
+
+/* ── Stickers and empty states ──────────────────────────── */
+.sticker {
+  display: inline-block;
+  font: 3.5rem / 1 var(--font-emoji);
+  transform: rotate(var(--tilt, -6deg));
+  filter: drop-shadow(0 0 0.15rem #fff) drop-shadow(0 0 0.15rem #fff) drop-shadow(0 0 0.1rem #fff)
+    drop-shadow(0 0.25rem 0.375rem rgb(30 22 49 / 0.25));
+}
+
+.sticker-large {
+  font-size: 5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sticker {
+    animation: sticker-pop 350ms var(--spring) both;
+  }
+
+  @keyframes sticker-pop {
+    from {
+      transform: rotate(var(--tilt, -6deg)) scale(0.4);
+      opacity: 0;
+    }
+  }
+}
+
+.empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.25rem 1.75rem;
+  padding: 1.5rem;
+  border: 0.125rem dashed color-mix(in srgb, var(--ink) 35%, transparent);
+  border-radius: var(--radius-card);
+  background: var(--cloud);
+}
+
+.empty-text {
+  display: grid;
+  gap: 0.375rem;
+  flex: 1 1 16rem;
+}
+
+.empty-title {
+  font: 800 var(--step-1) / 1.2 var(--font-body);
+}
+
+/* ── Notices ────────────────────────────────────────────── */
+.notice {
+  padding: 0.75rem 1rem;
+  border: 0.125rem solid;
+  border-radius: var(--radius-key);
+}
+
+.notice-error {
+  border-color: var(--tomato);
+  background: color-mix(in srgb, var(--tomato) 12%, var(--paper));
+}
+
+.notice-warning {
+  border-color: var(--on-bright);
+  background: var(--sun);
+  color: var(--on-bright);
+}
+
+.notice-success {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 14%, var(--paper));
+}
+
+/* ── Forms: plain and clear ─────────────────────────────── */
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+}
+
+label,
+legend {
+  font-weight: 600;
+}
+
+.input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: var(--outline);
+  border-radius: 0.625rem;
+  background: var(--cloud);
+}
+
+textarea.input {
+  min-height: 7rem;
+  font: 400 var(--step--1) / 1.6 var(--font-mono);
+  resize: vertical;
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--tomato);
+}
+
+.choices {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choices legend {
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  align-items: start;
+  padding: 0.75rem 1rem;
+  border: var(--outline);
+  border-radius: var(--radius-key);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.choice:has(input:checked) {
+  background: color-mix(in srgb, var(--sky) 15%, var(--paper));
+  border-color: var(--sky);
+}
+
+.choice input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--sky);
+}
+
+.choice-title {
+  font-weight: 800;
+}
+
+.choice .hint {
+  grid-column: 2;
+}
+
+/* ── Lists and tables ───────────────────────────────────── */
+.app-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-item {
+  position: relative;
+  display: grid;
+  gap: 0.625rem;
+  padding: 1.125rem 1.25rem;
+}
+
+.app-item a {
+  font: 800 var(--step-1) / 1.2 var(--font-body);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+/* The whole card is the link target; the link text stays the accessible name. */
+.app-item a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+}
+
+.app-item:hover {
+  background: var(--cloud);
+}
+
+.app-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-top: var(--outline);
+}
+
+.table {
+  width: 100%;
+  min-width: 46rem;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 0.0625rem solid color-mix(in srgb, var(--ink) 18%, transparent);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table thead th {
+  background: var(--cloud);
+  font-weight: 800;
+}
+
+.table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.table tr[data-revoked] {
+  color: var(--muted);
+}
+
+.key-prefix {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.origin-list {
+  display: grid;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cell-actions {
+  text-align: right;
+}
+
+.cell-actions .button-row {
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+
+/* ── App header facts ───────────────────────────────────── */
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  list-style: none;
+  font-size: var(--step--1);
+}
+
+.breadcrumb li + li::before {
+  content: "/";
+  margin-right: 0.5rem;
+  color: var(--muted);
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0.75rem 0 0;
+  font-size: var(--step--1);
+}
+
+.facts div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* ── Usage meters: emoji yellow on ink ──────────────────── */
+.meters {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.meter {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.meter-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+
+.meter-label {
+  font-weight: 800;
+}
+
+.meter-figure {
+  font: 400 var(--step--1) var(--font-mono);
+}
+
+.meter-track {
+  height: 1rem;
+  padding: 0.1875rem;
+  border-radius: var(--radius-pill);
+  background: var(--meter-track);
+  outline: 0.0625rem solid var(--ink);
+}
+
+.meter-fill {
+  height: 100%;
+  min-width: 0;
+  border-radius: var(--radius-pill);
+  background: var(--sun);
+}
+
+.meter[data-status="over_limit"] .meter-fill {
+  background: var(--tomato);
+}
+
+.meter[data-status="near_limit"] .meter-note,
+.meter[data-status="over_limit"] .meter-note {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Plan card ──────────────────────────────────────────── */
+.plan-price {
+  font: 800 var(--step-2) / 1 var(--font-body);
+}
+
+.plan-price span {
+  font-size: var(--step--1);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.limits {
+  display: grid;
+  gap: 0.375rem;
+  margin: 0;
+  font-size: var(--step--1);
+}
+
+.limits div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.limits dt {
+  color: var(--muted);
+}
+
+.limits dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.upsell {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 0.125rem dashed color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+/* ── Dialog: plain, high clarity ────────────────────────── */
+.dialog {
+  width: min(36rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: var(--outline);
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: var(--depth);
+  overflow: auto;
+}
+
+.dialog::backdrop {
+  background: rgb(30 22 49 / 0.55);
+}
+
+.dialog-title {
+  padding: 1.125rem 1.25rem 0;
+  font: 800 var(--step-1) / 1.25 var(--font-body);
+}
+
+.dialog-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: dialog-in 200ms var(--spring);
+  }
+
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem) scale(0.98);
+    }
+  }
+}
+
+.reveal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.reveal-key {
+  flex: 1 1 18rem;
+  font: 400 var(--step--1) / 1.4 var(--font-mono);
+}
+
+/* ── Sign-in ────────────────────────────────────────────── */
+.signin {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 2rem 1rem;
+  background: var(--cloud);
+}
+
+.signin-card {
+  display: grid;
+  gap: 1.25rem;
+  width: min(30rem, 100%);
+  padding: 2rem 1.75rem;
+}
+
+.signin-card .sticker {
+  --tilt: 6deg;
+  justify-self: start;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-top: 0.0625rem solid color-mix(in srgb, var(--ink) 25%, transparent);
+}
+
+.status-line {
+  padding: 3rem var(--gutter);
+  color: var(--muted);
+}
