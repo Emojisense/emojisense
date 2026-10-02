@@ -119,11 +119,12 @@ packs differ from the ones in `golden.json` (sha256), the tests fail and tell yo
 | Search, core + ext packs: same query, top-10 ids and scores, confidence, matched phrase | 217 queries | 100% |
 | Search, core packs only: same top-5 ids / same top-10 ids and scores | 217 queries | 100% / 100% |
 | Sentences with function words, en + zh, ru, id, es, fr, pt, ar, hi or bn (core + ext): same top-5 ids / same top-10 ids and scores | 369 queries | 100% / 100% |
-| Entities (names, titles, brands, memes, holidays), en alone or en + es, fr, ru, zh, hi, ar, bn, pt, id or tr (core + ext): same top-5 ids / same top-10 ids and scores | 258 queries | 100% / 100% |
+| Entities (names, titles, brands, memes, holidays), en alone or en + es, fr, ru, zh, hi, ar, bn, pt, id or tr (core + ext), every other one: same top-5 ids / same top-10 ids and scores | 132 queries | 100% / 100% |
 | Partial-match guard queries, all 22 packs of 11 locales in one engine: same top-5 ids / same top-10 ids and scores | 28 queries | 100% / 100% |
-| Coverage (`AliasSearchOutput.coverage`) of every search query above: same value (required 100%) | 1,089 queries | 100% |
-| Keystrokes (every prefix of 44 queries, 81 sentences, 55 entities and 3 guard queries): same top-5 ids and scores | 2,168 | 100% |
-| Confidence cases (`Confidence.assess`, `semanticStrength`, `mergeConcept`): same confidence, unsure and merged ids (required 100%); strength within 1e-12 (71 cases with a semantic list; largest difference 0) | 80 cases | 100% |
+| Coverage (`AliasSearchOutput.coverage`) of every search query above: same value (required 100%) | 963 queries | 100% |
+| Keystrokes (every prefix of 44 queries, 63 sentences and 10 guard queries): same top-5 ids and scores | 1,452 | 100% |
+| Fusion (`Fusion.fuse`) on recorded lists, with and without the reranker (55 queries and 2 number-slang queries): same top-10 ids | 57 × 2 | 100% |
+| Confidence cases (`Confidence.assess`, `semanticStrength`, `mergeConcept`): same confidence, unsure and merged ids (required 100%); strength within 1e-12 (39 cases with a semantic list; largest difference 0) | 44 cases | 100% |
 | Function-word lists (`FunctionWords.swift`) equal the reference | 11 locales | 100% |
 
 Measured on macOS 26 (arm64), Swift 6.4, Node 24.5.0, pack 0.1.0.

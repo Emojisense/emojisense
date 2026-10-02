@@ -131,7 +131,12 @@ class ConformanceTest {
             val alias = AliasSearchOutput<SearchResult>(
                 query = case.aliasQuery,
                 tokens = emptyList(),
-                results = case.alias.map { AliasResult(it.id, it.id, it.score, ResultSource.ALIAS, "", "", Field.ALIAS) },
+                results = case.alias.mapIndexed { index, result ->
+                    val isTop = index == 0
+                    val match = if (isTop) case.aliasMatch ?: "" else ""
+                    val field = if (isTop) case.aliasField?.let(Field::fromKey) ?: Field.ALIAS else Field.ALIAS
+                    AliasResult(result.id, result.id, result.score, ResultSource.ALIAS, "", match, field)
+                },
                 confidence = case.aliasConfidence,
             )
             val semantic = case.semantic.map { (emoji, id, score) -> EmojiResult(emoji, id, score, ResultSource.SEMANTIC) }

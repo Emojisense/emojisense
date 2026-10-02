@@ -25,7 +25,8 @@ const REPO_ROOT = args.root ? resolve(args.root) : THIS_REPO;
 const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
-const { assessConfidence, createEngine, embeddingText, fuse, mergeConcept, normalize, semanticStrength } = core;
+const { assessConfidence, createEngine, embeddingText, fuse, mergeConcept, normalize, semanticStrength } =
+  core;
 const { FUNCTION_WORDS }: typeof import("../../../packages/core/src/function-words.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/function-words.ts")).href
 );
@@ -33,6 +34,8 @@ const TOP = 10;
 const KEYSTROKE_TOP = 5;
 /** Every n-th query is also replayed keystroke by keystroke. */
 const KEYSTROKE_SAMPLE_EVERY = 5;
+/** Every n-th sentence is replayed keystroke by keystroke: the file stays under Biome's 1 MiB. */
+const SENTENCE_KEYSTROKE_EVERY = 6;
 
 const packVersion: string = JSON.parse(
   readFileSync(join(REPO_ROOT, "packages/data/pack.config.json"), "utf8"),
@@ -100,6 +103,11 @@ const GUARD_QUERIES: Query[] = [
   ["bad bunny", "en"],
   ["drake", "en"],
 ].map(([q, locale], i) => ({ id: `guard-${i + 1}`, q: q as string, locale: locale as string }));
+/** Number slang: `fuse` keeps the dictionary's whole-query answer first (core/src/rerank.ts). */
+const SLANG_QUERIES: Query[] = [
+  ["666", "zh"],
+  ["88", "zh"],
+].map(([q, locale], i) => ({ id: `slang-${i + 1}`, q: q as string, locale: locale as string }));
 
 const packFiles = [
   ...new Set(["tr", ...sentenceLocales, ...entityLocales].flatMap(filesFor).concat(allFiles)),
@@ -298,8 +306,8 @@ function random(seed: number): () => number {
 /**
  * `fuse` with and without the reranker on each query's real alias output (limit 12) and a
  * stand-in semantic list: some alias ids and random emoji (flags included), descending scores in
- * the API's range, three decimals. Self-contained (lists and popularity values), so a port checks
- * its fusion even where its alias output differs.
+ * the API's range, three decimals. Self-contained (lists, the top result's match and field, and
+ * popularity values), so a port checks its fusion even where its alias output differs.
  */
 function fusionCases(engine: AliasEngine, list: Query[]) {
   return list.map((q) => {
@@ -326,6 +334,8 @@ function fusionCases(engine: AliasEngine, list: Query[]) {
         query: alias.query,
         confidence: alias.confidence,
         results: alias.results.map((r) => [r.id, r.score]),
+        match: alias.results[0]?.match ?? null,
+        field: alias.results[0]?.field ?? null,
       },
       semantic,
       popularity,
@@ -356,8 +366,8 @@ const entityEngines = entityLocales.map((locale) => {
     locale,
     files,
     engine: createEngine(files.map(pack)),
-    // Every English entity, every other one of the other locales: the file stays under 1 MiB.
-    list: entities.filter((q) => q.locale === locale).filter((_, i) => locale === "en" || i % 2 === 0),
+    // Every other entity of each locale: the file stays under the 1 MiB that Biome checks.
+    list: entities.filter((q) => q.locale === locale).filter((_, i) => i % 2 === 0),
   };
 });
 const allEngine = createEngine(allFiles.map(pack));
@@ -456,21 +466,25 @@ const golden = {
   ],
   keystrokes: { packs: fullFiles, cases: keystrokeCases(fullEngine) },
   /** `fuse` with (reranked) and without (reciprocal) the reranker; PACK_FORMAT.md §10. */
-  fusion: fusionCases(
-    fullEngine,
-    queries.filter((_, i) => i % 2 === 0),
-  ),
+  fusion: [
+    // Every fourth query: the file stays under the 1 MiB that Biome checks.
+    ...fusionCases(
+      fullEngine,
+      queries.filter((_, i) => i % 4 === 0),
+    ),
+    ...fusionCases(createEngine(filesFor("zh").map(pack)), SLANG_QUERIES),
+  ],
   /** Per sentence locale: every n-th sentence, keystroke by keystroke. */
   sentenceKeystrokes: localeEngines.map(({ files, engine, list }) => ({
     packs: files,
-    cases: keystrokeCases(engine, list),
+    cases: keystrokeCases(engine, list, SENTENCE_KEYSTROKE_EVERY),
   })),
   /**
-   * Every other guard query with every locale, keystroke by keystroke (prefix completions into other
+   * Every third guard query with every locale, keystroke by keystroke (prefix completions into other
    * locales' words happen while typing). Entity queries per locale are checked whole, above:
    * their keystrokes would take the file past the 1 MiB that Biome checks.
    */
-  entityKeystrokes: [{ packs: allFiles, cases: keystrokeCases(allEngine, GUARD_QUERIES, 2) }],
+  entityKeystrokes: [{ packs: allFiles, cases: keystrokeCases(allEngine, GUARD_QUERIES, 3) }],
   /**
    * The unsure verdict and the concept merge (core/src/confidence.ts) on generated inputs.
    * `alias` / `semantic` null = not given. Results are `[id, score]` (alias, concept) or

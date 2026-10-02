@@ -176,8 +176,12 @@ final class ConformanceTests: XCTestCase {
     for testCase in cases {
       let alias = AliasSearchOutput(
         query: testCase.alias.query, tokens: [],
-        results: testCase.alias.results.map {
-          AliasResult(emoji: $0.id, id: $0.id, score: $0.score, label: "", match: "", field: .alias)
+        results: testCase.alias.results.enumerated().map { index, result in
+          let isTop = index == 0
+          return AliasResult(
+            emoji: result.id, id: result.id, score: result.score, label: "",
+            match: isTop ? testCase.alias.match ?? "" : "",
+            field: isTop ? Field(rawValue: testCase.alias.field ?? "") ?? .alias : .alias)
         },
         confidence: testCase.alias.confidence)
       let semantic = testCase.semantic.map {

@@ -137,6 +137,9 @@ struct Golden: Decodable, Sendable {
       let query: String
       let confidence: Double
       let results: [Ranked]
+      /// The top result's match and field (null without results).
+      let match: String?
+      let field: String?
     }
 
     /// Stored as `[emoji, id, score]`.

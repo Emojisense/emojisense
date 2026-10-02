@@ -134,6 +134,9 @@ class Golden private constructor(root: JsonObject) {
         val aliasQuery: String,
         val aliasConfidence: Double,
         val alias: List<Ranked>,
+        /** The top alias result's match and field (null without results). */
+        val aliasMatch: String?,
+        val aliasField: String?,
         /** (emoji, id, score) */
         val semantic: List<Triple<String, String, Double>>,
         val popularity: Map<String, Double>,
@@ -149,6 +152,8 @@ class Golden private constructor(root: JsonObject) {
             aliasQuery = alias.text("query"),
             aliasConfidence = alias.getValue("confidence").jsonPrimitive.double,
             alias = ranked(alias.getValue("results").jsonArray),
+            aliasMatch = (alias["match"] as? JsonPrimitive)?.takeIf { it.isString }?.content,
+            aliasField = (alias["field"] as? JsonPrimitive)?.takeIf { it.isString }?.content,
             semantic = case.getValue("semantic").jsonArray.map {
                 val row = it.jsonArray
                 Triple(row[0].jsonPrimitive.content, row[1].jsonPrimitive.content, row[2].jsonPrimitive.double)
