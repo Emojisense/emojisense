@@ -57,14 +57,16 @@ public final class AliasEngine: @unchecked Sendable {
   {
     let normalized = Normalizer.normalize(query)
     let lastIsPrefix = options.prefix && !JavaScriptWhitespace.endsWithWhitespace(query)
-    let tokens = queryTokens(normalized, lastIsPrefix: lastIsPrefix)
+    let functionWords = FunctionWords.active(forLocale: options.locale ?? index.primaryLocale)
+    let tokens = queryTokens(normalized, lastIsPrefix: lastIsPrefix, functionWords: functionWords)
     if tokens.isEmpty {
       return AliasSearchOutput(query: normalized, tokens: tokens, results: [], confidence: 0)
     }
 
     lock.lock()
     defer { lock.unlock() }
-    let ranked = rank(tokens: tokens, lastIsPrefix: lastIsPrefix, options: options)
+    let ranked = rank(
+      tokens: tokens, lastIsPrefix: lastIsPrefix, functionWords: functionWords, options: options)
     let results = ranked.prefix(max(0, options.limit)).map { candidate in
       makeResult(candidate, locale: options.locale)
     }
@@ -82,9 +84,10 @@ public final class AliasEngine: @unchecked Sendable {
 
   /// Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds
   /// `lock`.
-  private func rank(tokens: [String], lastIsPrefix: Bool, options: AliasSearchOptions)
-    -> [RankedEmoji]
-  {
+  private func rank(
+    tokens: [String], lastIsPrefix: Bool, functionWords: Set<UTF16Text>,
+    options: AliasSearchOptions
+  ) -> [RankedEmoji] {
     let tokenCount = tokens.count
     let preferredMask = index.localeMasks[options.locale ?? index.primaryLocale] ?? 1
     let isPreferred = { (phrase: Int32) in
@@ -92,10 +95,16 @@ public final class AliasEngine: @unchecked Sendable {
     }
     scratch.startSearch()
 
+    let isFunctionWord = tokens.map { functionWords.contains(UTF16Text($0.utf16)) }
+    // Next to a content word, a function word neither completes as a prefix ("了" is not "了解")
+    // nor stands for a typo. A query of function words only ("я тоже") is searched as typed.
+    let hasContentWord = isFunctionWord.contains(false)
     var weights: [Double] = []
     for (position, token) in tokens.enumerated() {
       let asPrefix = lastIsPrefix && position == tokenCount - 1
-      let candidates = expand(token, asPrefix: asPrefix)
+      let candidates =
+        hasContentWord && isFunctionWord[position]
+        ? exactly(token) : expand(token, asPrefix: asPrefix)
       var bestQuality = 0.0
       var weight = index.maxIdf
       for (id, quality) in zip(candidates.ids, candidates.qualities) {
@@ -110,7 +119,7 @@ public final class AliasEngine: @unchecked Sendable {
         }
       }
       weights.append(
-        Scoring.stopwords.contains(token) ? min(weight, Scoring.stopwordWeightCap) : weight)
+        isFunctionWord[position] ? min(weight, Scoring.functionWordWeightCap) : weight)
     }
     let totalWeight = weights.reduce(0, +)
 
@@ -216,8 +225,11 @@ public final class AliasEngine: @unchecked Sendable {
   // MARK: Query tokens
 
   /// Query tokens (PACK_FORMAT.md §4). A token of an unspaced script that is not in the
-  /// vocabulary (and, while typing, is not the start of one) is split into the tokens it holds.
-  private func queryTokens(_ normalized: String, lastIsPrefix: Bool) -> [String] {
+  /// vocabulary (and, while typing, is not the start of one) is split into the vocabulary tokens
+  /// and function words it holds.
+  private func queryTokens(
+    _ normalized: String, lastIsPrefix: Bool, functionWords: Set<UTF16Text>
+  ) -> [String] {
     let tokens = Array(Normalizer.tokenize(normalized).prefix(Scoring.maxQueryTokens))
     var result: [String] = []
     for (position, token) in tokens.enumerated() {
@@ -227,10 +239,18 @@ public final class AliasEngine: @unchecked Sendable {
       } else if lastIsPrefix && position == tokens.count - 1 && completes(units) {
         result.append(token)
       } else {
-        result.append(contentsOf: segment(token))
+        result.append(contentsOf: segment(token, functionWords: functionWords))
       }
     }
     return Array(result.prefix(Scoring.maxQueryTokens))
+  }
+
+  /// The vocabulary token equal to `token`, if any: a function word next to content words
+  /// matches only itself.
+  private func exactly(_ token: String) -> CandidateList {
+    var candidates = CandidateList()
+    if let id = index.tokenIds[UTF16Text(token.utf16)] { candidates.add(id, quality: 1) }
+    return candidates
   }
 
   /// Does a longer vocabulary token start with `prefix`?
@@ -239,21 +259,24 @@ public final class AliasEngine: @unchecked Sendable {
     return position < index.vocabulary.count && index.vocabulary[position].starts(with: prefix)
   }
 
-  /// Splits a run into vocabulary tokens, longest match first from the left. Code points where no
-  /// vocabulary token starts stay together as one unknown piece.
-  private func segment(_ run: String) -> [String] {
+  /// Splits a run into vocabulary tokens and function words, longest match first from the left.
+  /// Code points where neither starts stay together as one unknown piece.
+  private func segment(_ run: String, functionWords: Set<UTF16Text>) -> [String] {
     let scalars = Array(run.unicodeScalars)
     let text = { (range: Range<Int>) in
       var view = String.UnicodeScalarView()
       view.append(contentsOf: scalars[range])
       return String(view)
     }
+    let isPiece = { (units: UTF16Text) in
+      self.index.tokenIds[units] != nil || functionWords.contains(units)
+    }
     var pieces: [String] = []
     var unknownStart: Int?
     var start = 0
     while start < scalars.count {
       var length = min(Scoring.maxPieceLength, scalars.count - start)
-      while length > 0 && index.tokenIds[UTF16Text(text(start..<start + length).utf16)] == nil {
+      while length > 0 && !isPiece(UTF16Text(text(start..<start + length).utf16)) {
         length -= 1
       }
       if length == 0 {
@@ -347,15 +370,10 @@ enum Scoring {
   static let dominantFields: Set<Field> = [.name, .shortcode]
   static let evidenceBonus = 0.02
   static let maxEvidenceBonus = 0.06
-  static let stopwordWeightCap = 0.3
+  /// The most a function word (`FunctionWords`) weighs, so it never blocks a match.
+  static let functionWordWeightCap = 0.3
   /// Longest piece (code points) tried when a run of an unspaced script is split.
   static let maxPieceLength = 16
-
-  /// Function words that carry little meaning in a query (en + folded tr).
-  static let stopwords: Set<String> = Set(
-    ("a an the of to in on at for from by is are am be im i me my you your u it its this that "
-      + "so and or with just very really too we our they them he she his her bir ve ile bu su cok "
-      + "da de mi ben sen o icin gibi").split(separator: " ").map(String.init))
 }
 
 /// Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han

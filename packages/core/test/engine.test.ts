@@ -236,11 +236,16 @@ describe("unspaced scripts", () => {
   });
 
   it("keeps unknown characters together as one token, which counts like an unknown word", () => {
-    expect(search("今天的蛋糕").tokens).toEqual(["今天的", "蛋糕"]);
-    expect(search("今天的蛋糕").results[0]?.emoji).toBe("🎂");
+    expect(search("今天蛋糕").tokens).toEqual(["今天", "蛋糕"]);
+    expect(search("今天蛋糕").results[0]?.emoji).toBe("🎂");
     // Two unknown pieces outweigh one known piece: below the coverage threshold, as for spaced text.
-    expect(search("今天的蛋糕呀").tokens).toEqual(["今天的", "蛋糕", "呀"]);
-    expect(search("今天的蛋糕呀").results).toEqual([]);
+    expect(search("今天蛋糕明天").tokens).toEqual(["今天", "蛋糕", "明天"]);
+    expect(search("今天蛋糕明天").results).toEqual([]);
+  });
+
+  it("splits function words out of a run even when no phrase holds them", () => {
+    expect(search("今天的蛋糕呀").tokens).toEqual(["今天", "的", "蛋糕", "呀"]);
+    expect(search("今天的蛋糕呀").results[0]?.emoji).toBe("🎂");
   });
 
   it("does not split a token that is indexed, or one still being typed", () => {
@@ -252,5 +257,53 @@ describe("unspaced scripts", () => {
 
   it("leaves spaced scripts alone", () => {
     expect(engine.search("rockets").tokens).toEqual(["rockets"]);
+  });
+});
+
+describe("function words", () => {
+  // The fixture's emoji stand in for the real ones: 🔥 = 🤔 (想 "think"), 🚀 = 🛌 (躺平 "lie flat"),
+  // 🐐 = 🙋 (我也是 "me too"), 👍 = 👌 (了解 "understood"), 🎃 = 😩 (устал "tired"), 🦖 = 🗿.
+  const zh = {
+    ...en,
+    locale: "zh",
+    emoji: [
+      row("🔥", "1F525", "火", { keyword: "想|思考" }),
+      row("🚀", "1F680", "火箭", { alias: "躺平" }),
+      row("🐐", "1F410", "山羊", { alias: "我也是|我" }),
+      row("👍", "1F44D", "竖起大拇指", { alias: "了解|好的" }),
+    ],
+  };
+  const ru = {
+    ...en,
+    locale: "ru",
+    emoji: [
+      row("🎃", "1F383", "тыква", { keyword: "устал", alias: "я так устал" }),
+      row("🐐", "1F410", "коза", { alias: "я тоже|я" }),
+      row("🦖", "1F996", "тираннозавр", { alias: "очень" }),
+    ],
+  };
+  const chinese = createEngine([en, zh]);
+  const russian = createEngine([en, ru]);
+  const zhTop = (q: string) => chinese.search(q, { locale: "zh" }).results.map((r) => r.emoji);
+  const ruTop = (q: string) => russian.search(q, { locale: "ru" }).results.map((r) => r.emoji);
+
+  it("never lets function words block the content word of a sentence", () => {
+    // 我 and 想 are indexed phrases: at full weight they outweighed 躺平, and 想 (🔥) came first.
+    expect(chinese.search("我想躺平", { locale: "zh" }).tokens).toEqual(["我", "想", "躺平"]);
+    expect(zhTop("我想躺平")[0]).toBe("🚀");
+    expect(ruTop("я очень устал")[0]).toBe("🎃");
+  });
+
+  it("does not complete a function word next to a content word", () => {
+    // 了 is the last piece while typing; as a prefix it would stand for 了解 (👍).
+    expect(chinese.search("躺平了", { locale: "zh" }).tokens).toEqual(["躺平", "了"]);
+    expect(zhTop("躺平了")).toEqual(["🚀"]);
+  });
+
+  it("still matches a whole query made of function words, and completes it while typing", () => {
+    expect(zhTop("我也是")[0]).toBe("🐐");
+    expect(zhTop("我")[0]).toBe("🐐");
+    expect(ruTop("я тоже")[0]).toBe("🐐");
+    expect(ruTop("очень")[0]).toBe("🦖");
   });
 });

@@ -231,9 +231,10 @@ describe("aliases of every pack locale", () => {
     const h = localeHarness();
     const reacted = (await (await h.call(reactions(message, KEYED))).json()) as SearchBody;
     expect(reacted.aliasLocale).toBe("hi");
-    // The fake embedding puts 🌋 and 🚀 first; the Hindi aliases add the congratulation emoji.
+    // The fake embedding puts 🌋 and 🚀 first; the Hindi aliases add the congratulation emoji
+    // (🎊 too since हो is a hi function word and no longer dilutes बधाई).
     const aliasHits = reacted.results.filter((r) => r.source === "alias").map((r) => r.emoji);
-    expect(aliasHits).toEqual(["㊗️", "🎉", "👏"]);
+    expect(aliasHits).toEqual(["㊗️", "🎉", "👏", "🎊"]);
 
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const missing = localeHarness({ read: async (file) => Promise.reject(new Error(`${file}: HTTP 404`)) });

@@ -26,6 +26,9 @@ const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
 const { createEngine, embeddingText, normalize } = core;
+const { FUNCTION_WORDS }: typeof import("../../../packages/core/src/function-words.ts") = await import(
+  pathToFileURL(join(REPO_ROOT, "packages/core/src/function-words.ts")).href
+);
 const TOP = 10;
 const KEYSTROKE_TOP = 5;
 /** Every n-th query is also replayed keystroke by keystroke. */
@@ -35,19 +38,31 @@ const packVersion: string = JSON.parse(
   readFileSync(join(REPO_ROOT, "packages/data/pack.config.json"), "utf8"),
 ).packVersion;
 const packDir = join(REPO_ROOT, "packages/data/dist/packs", packVersion);
-const packFiles = ["pack.en.json", "pack.tr.json", "pack.en.ext.json", "pack.tr.ext.json"];
-const packBytes = new Map(packFiles.map((file) => [file, readFileSync(join(packDir, file))]));
-const pack = (file: string): Pack => JSON.parse((packBytes.get(file) as Buffer).toString("utf8"));
-
 interface Query {
   id: string;
   q: string;
   locale: string;
 }
-const queries: Query[] = readFileSync(join(REPO_ROOT, "packages/eval/queries/queries.jsonl"), "utf8")
-  .split("\n")
-  .filter((line) => line.trim() !== "")
-  .map((line) => JSON.parse(line));
+const readQueries = (file: string): Query[] =>
+  readFileSync(join(REPO_ROOT, "packages/eval/queries", file), "utf8")
+    .split("\n")
+    .filter((line) => line.trim() !== "")
+    .map((line) => JSON.parse(line));
+const queries = readQueries("queries.jsonl");
+/** Sentences with function words in the other pack locales, searched with en + that locale. */
+const sentences = readQueries("sentences-dev.jsonl");
+const sentenceLocales = [...new Set(sentences.map((q) => q.locale))];
+/** Index order of PACK_FORMAT.md §2: every core part first (English first), then the ext parts. */
+const filesFor = (locale: string) => [
+  "pack.en.json",
+  `pack.${locale}.json`,
+  "pack.en.ext.json",
+  `pack.${locale}.ext.json`,
+];
+
+const packFiles = [...new Set(["tr", ...sentenceLocales].flatMap(filesFor))];
+const packBytes = new Map(packFiles.map((file) => [file, readFileSync(join(packDir, file))]));
+const pack = (file: string): Pack => JSON.parse((packBytes.get(file) as Buffer).toString("utf8"));
 
 // ── Normalization ─────────────────────────────────────────────────────────────────────────────
 /** Invisible and combining characters, spelled out so the formatter cannot make them literal. */
@@ -188,8 +203,8 @@ function sweepHashes(): string[] {
 // ── Search ────────────────────────────────────────────────────────────────────────────────────
 type Ranked = [id: string, score: number];
 
-function searchCases(engine: AliasEngine) {
-  return queries.map((q) => {
+function searchCases(engine: AliasEngine, list: Query[] = queries) {
+  return list.map((q) => {
     const out = engine.search(q.q, { locale: q.locale, limit: TOP });
     const best = out.results[0];
     return {
@@ -208,8 +223,8 @@ function searchCases(engine: AliasEngine) {
 /** A prefix that ends inside a surrogate pair is not a string Swift can hold. */
 const endsInsideSurrogatePair = (text: string) => /[\ud800-\udbff]$/.test(text);
 
-function keystrokeCases(engine: AliasEngine) {
-  return queries
+function keystrokeCases(engine: AliasEngine, list: Query[] = queries) {
+  return list
     .filter((_, i) => i % KEYSTROKE_SAMPLE_EVERY === 0)
     .flatMap((q) =>
       Array.from({ length: q.q.length }, (_, i) => q.q.slice(0, i + 1))
@@ -224,12 +239,20 @@ function keystrokeCases(engine: AliasEngine) {
     );
 }
 
-/** Index order of PACK_FORMAT.md §2: every core part first (English first), then the ext parts. */
-const fullFiles = ["pack.en.json", "pack.tr.json", "pack.en.ext.json", "pack.tr.ext.json"];
+const fullFiles = filesFor("tr");
 const coreFiles = ["pack.en.json", "pack.tr.json"];
 const fullEngine = createEngine(fullFiles.map(pack));
 const coreEngine = createEngine(coreFiles.map(pack));
 const sha256 = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+const localeEngines = sentenceLocales.map((locale) => {
+  const files = filesFor(locale);
+  return {
+    locale,
+    files,
+    engine: createEngine(files.map(pack)),
+    list: sentences.filter((q) => q.locale === locale),
+  };
+});
 
 const golden = {
   generatedBy: "sdks/swift/scripts/make-golden.ts",
@@ -243,17 +266,32 @@ const golden = {
   },
   /** The text the semantic client sends and the API embeds (accents and punctuation kept). */
   embeddingText: { cases: NORMALIZATION_INPUTS.map((input) => [input, embeddingText(input)]) },
+  /** The function-word lists (PACK_FORMAT.md §4) that the Swift copy must equal. */
+  functionWords: FUNCTION_WORDS,
   search: [
     { name: "core+ext", packs: fullFiles, cases: searchCases(fullEngine) },
     { name: "core", packs: coreFiles, cases: searchCases(coreEngine) },
+    ...localeEngines.map(({ locale, files, engine, list }) => ({
+      name: `${locale} sentences`,
+      packs: files,
+      cases: searchCases(engine, list),
+    })),
   ],
   keystrokes: { packs: fullFiles, cases: keystrokeCases(fullEngine) },
+  /** Per sentence locale: every n-th sentence, keystroke by keystroke. */
+  sentenceKeystrokes: localeEngines.map(({ files, engine, list }) => ({
+    packs: files,
+    cases: keystrokeCases(engine, list),
+  })),
 };
+const keystrokeCount =
+  golden.keystrokes.cases.length + golden.sentenceKeystrokes.reduce((sum, k) => sum + k.cases.length, 0);
 
 writeFileSync(OUTPUT, `${JSON.stringify(golden)}\n`);
 // Keep the file in the repository's canonical format so `pnpm lint` stays green.
 execFileSync(join(THIS_REPO, "node_modules/.bin/biome"), ["format", "--write", OUTPUT], { stdio: "ignore" });
 console.log(
-  `make-golden: ${queries.length} queries × 2 configs, ${golden.keystrokes.cases.length} keystrokes, ` +
+  `make-golden: ${queries.length} queries × 2 configs, ${sentences.length} sentences in ` +
+    `${sentenceLocales.length} locales, ${keystrokeCount} keystrokes, ` +
     `${NORMALIZATION_INPUTS.length} normalization cases, ${golden.normalization.sweep.hashes.length} sweep blocks → ${OUTPUT}`,
 );

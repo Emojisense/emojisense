@@ -10,93 +10,32 @@
  * writes reports/romanized.md: recall per category and mode, the share of non-country queries
  * with a country flag in the top 5, and how many country queries rank their flag first.
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
-import { disposeEmbeddings, embedTexts } from "@emojisense/data/embeddings";
-import { formatQuery, getModel } from "@emojisense/data/models";
-import { DATA_ROOT } from "@emojisense/data/paths";
-import {
-  type AliasEngine,
-  createEngine,
-  embeddingText,
-  fuse,
-  l2normalize,
-  type Pack,
-  type SearchResult,
-  shouldUseSemantic,
-} from "emojisense";
 import { EVAL_ROOT } from "./cost-inputs.ts";
+import { type DevRow, DEV_MODES as MODES, type DevMode as Mode, rankDevSet } from "./dev-set.ts";
 import { judge, type QueryOutcome, summarize } from "./metrics.ts";
 import { loadQueries } from "./queries.ts";
-import { loadVectorLayout } from "./vector-layout.ts";
 
-const LIMIT = 10;
 const COUNTRY_FLAG = /^[\u{1F1E6}-\u{1F1FF}]{2}$|^\u{1F3F4}[\u{E0020}-\u{E007F}]+$/u;
 const { values: args } = parseArgs({
   args: process.argv.slice(2).filter((a) => a !== "--"),
   options: { pack: { type: "string" }, offline: { type: "boolean", default: false } },
 });
-const packConfig: { packVersion: string; model: { key: string; dims: number } } = JSON.parse(
-  readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8"),
-);
-const packDir = args.pack ?? join(DATA_ROOT, "dist", "packs", packConfig.packVersion);
-const readPack = (name: string): Pack => JSON.parse(readFileSync(join(packDir, `pack.${name}.json`), "utf8"));
-const en = [readPack("en"), readPack("en.ext")];
-const engines = new Map<string, AliasEngine>();
-function engineFor(locale: string): AliasEngine {
-  let engine = engines.get(locale);
-  if (!engine) {
-    engine = createEngine(locale === "en" ? en : [...en, readPack(locale), readPack(`${locale}.ext`)]);
-    engines.set(locale, engine);
-  }
-  return engine;
-}
 
 const queries = loadQueries(join(EVAL_ROOT, "queries", "romanized-dev.jsonl"));
-const { key, dims } = packConfig.model;
-const model = getModel(key);
-// The shared file plus the query locale's own file, as the Worker searches (PACK_FORMAT §5).
-const layout = loadVectorLayout(packDir, model, dims);
-if (!layout) throw new Error(`no vectors.${key}.${dims}*.bin in ${packDir}: run the embed step`);
-let vectors: Float32Array[];
-try {
-  ({ vectors } = await embedTexts(
-    model,
-    queries.map((q) => formatQuery(model, embeddingText(q.q))),
-    "query",
-    { offline: args.offline },
-  ));
-} finally {
-  await disposeEmbeddings();
-}
-
-type Mode = "alias" | "semantic" | "fused" | "gated";
-const MODES: Mode[] = ["alias", "semantic", "fused", "gated"];
-const rows = queries.map((q, i) => {
-  const engine = engineFor(q.locale);
-  const alias = engine.search(q.q, { locale: q.locale, limit: 24 });
-  const semantic: SearchResult[] = layout
-    .search(q.locale, l2normalize((vectors[i] as Float32Array).slice(0, dims)), 24)
-    .map((m) => ({ emoji: engine.get(m.id)?.emoji ?? "", id: m.id, score: m.score, source: "semantic" }));
-  const fused = fuse(alias, semantic, LIMIT);
-  const lists: Record<Mode, string[]> = {
-    alias: alias.results.slice(0, LIMIT).map((r) => r.emoji),
-    semantic: semantic.slice(0, LIMIT).map((r) => r.emoji),
-    fused: fused.map((r) => r.emoji),
-    gated: (shouldUseSemantic(alias) ? fused : alias.results.slice(0, LIMIT)).map((r) => r.emoji),
-  };
-  return { q, lists };
-});
+const run = await rankDevSet(queries, { pack: args.pack, offline: args.offline });
+const { rows } = run;
 
 const pct = (n: number, of: number) => (of === 0 ? "–" : ((100 * n) / of).toFixed(1));
-const outcomes = (subset: typeof rows, mode: Mode): QueryOutcome[] =>
+const outcomes = (subset: DevRow[], mode: Mode): QueryOutcome[] =>
   subset.map(({ q, lists }) => judge(q, lists[mode]));
 const lines = [
   "# Romanized and slang dev set",
   "",
-  `- ${queries.length} queries (queries/romanized-dev.jsonl) · pack ${packConfig.packVersion} · ` +
-    `${layout.label} · embedded text = \`embeddingText(q)\`, as the Worker embeds it`,
+  `- ${queries.length} queries (queries/romanized-dev.jsonl) · pack ${run.packVersion} · ` +
+    `${run.vectors} · embedded text = \`embeddingText(q)\`, as the Worker embeds it`,
   "- gated = what a client shows: fused only when `shouldUseSemantic` calls the semantic tier.",
   "",
   "## Recall@5 (R@1 in brackets)",

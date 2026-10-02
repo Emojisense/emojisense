@@ -131,22 +131,42 @@ final class ConformanceTests: XCTestCase {
   /// Every prefix of a sample of queries, as typed: exercises prefix completion.
   func testKeystrokesMatchTheReference() throws {
     let golden = try Self.golden.get()
-    let engine = try loadPacks().engine(files: golden.keystrokes.packs)
+    let packs = try loadPacks()
+    for keystrokes in [golden.keystrokes] + golden.sentenceKeystrokes {
+      let engine = try packs.engine(files: keystrokes.packs)
+      var differences: [String] = []
+      for testCase in keystrokes.cases {
+        let options = AliasSearchOptions(limit: 5, locale: testCase.locale)
+        let actual = engine.search(testCase.q, options: options).results.map(Golden.Ranked.init)
+        if actual != testCase.top {
+          differences.append(
+            "  \(debug(testCase.q)):\n    swift \(actual)\n    ts    \(testCase.top)")
+        }
+      }
+      let count = keystrokes.cases.count
+      report(
+        "[keystrokes \(keystrokes.packs.joined(separator: " "))] identical top-5 ids + scores",
+        agreed: count - differences.count, of: count, differences)
+      XCTAssertGreaterThanOrEqual(
+        Double(count - differences.count) / Double(count), Self.requiredTopFiveAgreement)
+    }
+  }
+
+  // MARK: Function words
+
+  /// The Swift copy (FunctionWords.swift, generated) holds exactly the reference lists.
+  func testFunctionWordsMatchTheReference() throws {
+    let expected = try Self.golden.get().functionWords
     var differences: [String] = []
-    for testCase in golden.keystrokes.cases {
-      let options = AliasSearchOptions(limit: 5, locale: testCase.locale)
-      let actual = engine.search(testCase.q, options: options).results.map(Golden.Ranked.init)
-      if actual != testCase.top {
-        differences.append(
-          "  \(debug(testCase.q)):\n    swift \(actual)\n    ts    \(testCase.top)")
+    for locale in Set(expected.keys).union(FunctionWords.lists.keys).sorted() {
+      if FunctionWords.lists[locale] != expected[locale] {
+        differences.append("  \(locale): regenerate with sdks/swift/scripts/make-function-words.ts")
       }
     }
-    let count = golden.keystrokes.cases.count
     report(
-      "[keystrokes] identical top-5 ids + scores", agreed: count - differences.count, of: count,
+      "function-word lists", agreed: expected.count - differences.count, of: expected.count,
       differences)
-    XCTAssertGreaterThanOrEqual(
-      Double(count - differences.count) / Double(count), Self.requiredTopFiveAgreement)
+    XCTAssertEqual(differences, [])
   }
 
   // MARK: Helpers
