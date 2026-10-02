@@ -20,6 +20,7 @@ import {
 import * as core from "emojisense";
 import { Window } from "happy-dom";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { LOCALE_INFO, LOCALES } from "../src/i18n/locales";
 import { DOCS_PAGES } from "../src/lib/docs-nav";
 import { formatCount, formatDays } from "../src/lib/format";
 
@@ -318,6 +319,101 @@ describe("waitlist page", () => {
       readFileSync(file(href ?? ""), "utf8"),
     ).join("\n");
     expect(css).toMatch(/\.wl-result(\[[^\]]+\])?:target(\[[^\]]+\])?\s*\{\s*display:\s*block/);
+  });
+});
+
+describe("languages", () => {
+  const TRANSLATED = ["/", "/pricing/", "/waitlist/", "/about/"];
+  const OTHER = LOCALES.filter((locale) => locale !== "en");
+  const localized = (path: string, locale: string) => (locale === "en" ? path : `/${locale}${path}`);
+  const everyVersion = OTHER.flatMap((locale) => TRANSLATED.map((path) => [locale, path] as const));
+
+  it.each(everyVersion)("builds /%s%s with its own language, title and canonical URL", (locale, path) => {
+    const url = localized(path, locale);
+    expect(existsSync(file(url)), url).toBe(true);
+    const doc = page(url);
+    expect(doc.documentElement.getAttribute("lang")).toBe(LOCALE_INFO[locale].tag);
+    expect(doc.documentElement.getAttribute("dir")).toBe(locale === "ar" ? "rtl" : "ltr");
+    expect(doc.querySelectorAll("h1")).toHaveLength(1);
+    expect(doc.title).not.toBe(page(path).title);
+    expect(doc.querySelector('link[rel="canonical"]')?.getAttribute("href")).toBe(`${SITE}${url}`);
+    expect(doc.querySelector('meta[property="og:locale"]')?.getAttribute("content")).toBe(
+      LOCALE_INFO[locale].og,
+    );
+  });
+
+  it.each(TRANSLATED)("lists every language of %s as an hreflang alternate, plus x-default", (path) => {
+    const expected = [
+      ...LOCALES.map((locale) => [LOCALE_INFO[locale].tag, `${SITE}${localized(path, locale)}`]),
+      ["x-default", `${SITE}${path}`],
+    ].sort();
+    for (const locale of LOCALES) {
+      const doc = page(localized(path, locale));
+      const alternates = Array.from(doc.querySelectorAll('link[rel="alternate"][hreflang]'), (link) => [
+        link.getAttribute("hreflang"),
+        link.getAttribute("href"),
+      ]).sort();
+      expect(alternates, `${locale} ${path}`).toEqual(expected);
+    }
+  });
+
+  it("gives English-only pages no language alternates", () => {
+    for (const path of ["/docs/", "/playground/", "/changelog/", "/legal/privacy/"]) {
+      expect(page(path).querySelectorAll('link[rel="alternate"][hreflang]'), path).toHaveLength(0);
+    }
+  });
+
+  it("writes Arabic right to left", () => {
+    for (const path of TRANSLATED) {
+      expect(page(localized(path, "ar")).documentElement.getAttribute("dir")).toBe("rtl");
+    }
+  });
+
+  it("lists every language version in the sitemap, with its alternates", () => {
+    const sitemap = readFileSync(file("/sitemap.xml"), "utf8");
+    for (const [locale, path] of everyVersion) {
+      expect(sitemap).toContain(`<loc>${SITE}${localized(path, locale)}</loc>`);
+    }
+    expect(sitemap).toContain(`hreflang="ar" href="${SITE}/ar/pricing/"`);
+    expect(sitemap).not.toContain(`${SITE}/es/docs/`);
+  });
+
+  it("links every language from the footer, named in its own language, without flags", () => {
+    const doc = page("/es/pricing/");
+    const links = Array.from(doc.querySelectorAll("footer .lang-list a"));
+    expect(links.map((a) => a.getAttribute("href"))).toEqual(
+      LOCALES.map((locale) => localized("/pricing/", locale)),
+    );
+    expect(links.map((a) => a.textContent?.trim())).toEqual(
+      LOCALES.map((locale) => LOCALE_INFO[locale].name),
+    );
+    expect(links.find((a) => a.getAttribute("aria-current"))?.getAttribute("hreflang")).toBe("es");
+    for (const a of links) expect(a.textContent).not.toMatch(/\p{Regional_Indicator}/u);
+  });
+
+  it("keeps translated pages' links on their language and marks English-only links", () => {
+    const doc = page("/fr/");
+    const nav = Array.from(doc.querySelectorAll(".nav-main a"), (a) => a.getAttribute("href"));
+    expect(nav).toContain("/fr/pricing/");
+    expect(nav).toContain("/docs/");
+    expect(doc.querySelector('.nav-main a[href="/docs/"]')?.getAttribute("hreflang")).toBe("en");
+    expect(doc.querySelector('[data-plan="pro"] a.btn')?.getAttribute("href")).toBe("/fr/waitlist/?plan=pro");
+  });
+
+  it("hands the hero and the demos the page's language", () => {
+    const doc = page("/es/");
+    const hero = doc.querySelector('astro-island[component-url*="HeroSearch"]')?.getAttribute("props") ?? "";
+    expect(hero).toContain("feliz cumpleaños");
+    const demos = doc.querySelector('astro-island[component-url*="UseCases"]')?.getAttribute("props") ?? "";
+    expect(demos).toContain('"lang":[0,"es"]');
+    expect(doc.querySelector(`link[rel="preload"][href="${API}/v1/pack/0.1.0/pack.es.json"]`)).not.toBeNull();
+  });
+
+  it("shows prices and limits in the page's number format, from PLANS", () => {
+    const solo = page("/fr/pricing/").querySelector('[data-plan="solo"]');
+    expect(Number(solo?.getAttribute("data-price-monthly"))).toBe(PLANS.solo.priceUsdMonthly);
+    expect(solo?.querySelector(".price .amount")?.textContent).toContain(String(PLANS.solo.priceUsdMonthly));
+    expect(solo?.querySelector(".price .amount")?.textContent).not.toBe(`$${PLANS.solo.priceUsdMonthly}`);
   });
 });
 
