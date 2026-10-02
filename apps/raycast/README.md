@@ -44,7 +44,7 @@ in development mode and rebuilds on save.
 | `src/lib/format.ts` | Result → list row: label, "why it matched", match kind |
 | `src/lib/semantic.ts` | Optional API provider from the preferences: key handling, timeout |
 | `src/lib/packs.ts` | Loads `assets/packs/` and caches the engine |
-| `scripts/bundle-packs.mts` | Copies the English and Turkish packs of the current pack version from `packages/data/dist/packs/`, with the data license notices |
+| `scripts/bundle-packs.mts` | Copies the current pack version from `packages/data/dist/packs/`, with the data license notices |
 | `scripts/store-export.mts` | Writes the standalone Store project to `release/raycast/emojisense/` |
 
 `assets/packs/` and `raycast-env.d.ts` are generated and not committed.
@@ -57,7 +57,7 @@ repository root) writes that project to `release/raycast/emojisense/`:
 - `name` is `emojisense` (here it is `emojisense-search`, because the monorepo already has a package
   called `emojisense`). `author` comes from `RAYCAST_AUTHOR`.
 - `emojisense` comes from npm at the version of `packages/core`, so publish the npm packages first.
-- `assets/packs/` holds the English and Turkish packs and their license notices.
+- `assets/packs/` holds the packs of all 11 languages (14 MB) and their license notices.
 - The Raycast ESLint config, a Prettier config, the standard scripts and `CHANGELOG.md` are added.
   Tests and build scripts stay here.
 

@@ -129,7 +129,7 @@ time", "kolay gelsin") and get ranked emoji. Each row shows why it matched: the 
 shortcode, or "similar meaning" for a semantic result.
 
 Search runs on your Mac or PC with the open-source [Emojisense](https://emojisense.com) engine and
-the English and Turkish data packs inside the extension. It needs no network and no account.
+the data packs of 11 languages inside the extension. It needs no network and no account.
 
 | Key | Action |
 | --- | ------ |
@@ -141,7 +141,7 @@ the English and Turkish data packs inside the extension. It needs no network and
 
 | Preference | Default | Meaning |
 | ---------- | ------- | ------- |
-| Language | English | Labels and ranking. English and Turkish are always both searched. |
+| Language | English | Labels and ranking. Every bundled language is always searched. |
 | Primary Action | Paste | What \`↵\` does. |
 | API URL | empty | Optional. With a URL, unsure queries also get semantic results from the Emojisense API. |
 | API Key | empty | Optional. A key from the [Emojisense dashboard](https://app.emojisense.com). |

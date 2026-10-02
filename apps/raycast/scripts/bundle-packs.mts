@@ -1,7 +1,7 @@
 /**
- * Copy the English and Turkish packs of the current pack version from packages/data into
- * assets/packs/, with the data license notices. Raycast ships the assets folder with the
- * extension, so search works offline with no download.
+ * Copy the current pack version from packages/data into assets/packs/, with the data license
+ * notices. Raycast ships the assets folder with the extension, so search works offline with no
+ * download.
  *
  *   tsx scripts/bundle-packs.mts
  */
@@ -18,23 +18,23 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { DATA_ROOT } from "@emojisense/data/paths";
 
-/** The languages of the Language preference in package.json. Both are always searched. */
-const LOCALES = ["en", "tr"];
-
 const { packVersion } = JSON.parse(readFileSync(join(DATA_ROOT, "pack.config.json"), "utf8")) as {
   packVersion: string;
 };
 const source = join(DATA_ROOT, "dist", "packs", packVersion);
 if (!existsSync(source)) throw new Error(`${source} not found. Build the data packs first: pnpm data:build`);
 
+const CORE = /^pack\.([a-z-]+)\.json$/;
+const EXT = /^pack\.([a-z-]+)\.ext\.json$/;
 // Index order from PACK_FORMAT.md: every core part first (English first), then the ext parts.
+const englishFirst = (a: string, b: string) =>
+  Number(b.startsWith("pack.en.")) - Number(a.startsWith("pack.en.")) || a.localeCompare(b);
+const available = readdirSync(source);
 const files = [
-  ...LOCALES.map((locale) => `pack.${locale}.json`),
-  ...LOCALES.map((locale) => `pack.${locale}.ext.json`),
+  ...available.filter((f) => CORE.test(f)).sort(englishFirst),
+  ...available.filter((f) => EXT.test(f)).sort(englishFirst),
 ];
-for (const file of files) {
-  if (!existsSync(join(source, file))) throw new Error(`${source} has no ${file}`);
-}
+if (files.length === 0) throw new Error(`${source} has no pack files`);
 
 const target = fileURLToPath(new URL("../assets/packs/", import.meta.url));
 rmSync(target, { recursive: true, force: true });
