@@ -155,13 +155,26 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
     `Whop ${sandbox ? "sandbox" : "live"} API ${base}, company ${companyId}${shared ? ", dev names" : ""}`,
   );
 
+  // Whop's API reference now calls plans "variants": GET/POST /variants and GET /variants/{id},
+  // with the same plan_ ids. /plans is the deprecated name of the same endpoints; it is used only
+  // where /variants does not exist.
+  let variantsPath = "/variants";
+  let listed;
+  try {
+    listed = await whop.list(variantsPath, { account_id: companyId });
+  } catch (error) {
+    if (error?.status !== 404) throw error;
+    variantsPath = "/plans";
+    listed = await whop.list(variantsPath, { account_id: companyId });
+  }
+
   // Variants this script made before, by the ids in WHOP_PLAN_IDS: a hidden variant may be missing
   // from Whop's lists, and a second copy must never be made.
   const known = [];
   const knownIds = platform.parseWhopPlanIds(env.WHOP_PLAN_IDS) ?? {};
   for (const option of platform.billingOptions()) {
     const id = knownIds[option.plan]?.[option.interval];
-    const variant = id ? await whop.retrieve(`/variants/${encodeURIComponent(id)}`) : null;
+    const variant = id ? await whop.retrieve(`${variantsPath}/${encodeURIComponent(id)}`) : null;
     if (variant) known.push(variant);
   }
 
@@ -195,7 +208,6 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
   }
 
   // Variants: one per plan and interval, priced from PLANS.
-  const listed = await whop.list("/variants", { account_id: companyId });
   const variants = [...known, ...listed.filter((v) => !known.some((k) => k.id === v?.id))];
   const planIds = {};
   let mismatch = false;
@@ -217,7 +229,7 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
       report.push(`variant ${key}: ${created(`$${option.priceUsd} every ${option.periodDays} days`)}`);
       continue;
     } else {
-      variant = await whop.request("POST", "/variants", {
+      variant = await whop.request("POST", variantsPath, {
         account_id: companyId,
         product_id: productId,
         title: `${platform.PLANS[option.plan].name} ${option.interval === "year" ? "yearly" : "monthly"}${titleSuffix}`,

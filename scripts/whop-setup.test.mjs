@@ -21,7 +21,7 @@ const KEY = "test_key_not_real";
 const SECRET = "ws_testsecret_not_real";
 
 /** Whop's products, variants and webhooks in memory, behind fetch. Hidden ones can be left out of lists. */
-function fakeWhop({ listHidden = true } = {}) {
+function fakeWhop({ listHidden = true, variantsPath = "/variants" } = {}) {
   const state = { products: [], variants: [], webhooks: [], calls: [] };
   let next = 1;
   const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
@@ -33,8 +33,13 @@ function fakeWhop({ listHidden = true } = {}) {
     const method = init.method ?? "GET";
     assert.equal(new Headers(init.headers).get("authorization"), `Bearer ${KEY}`);
     const body = init.body ? JSON.parse(init.body) : undefined;
-    const path = pathname.replace(/^\/api\/v1/, "");
+    let path = pathname.replace(/^\/api\/v1/, "");
     state.calls.push(`${method} ${path}`);
+    // An API without the /variants name answers 404 there and serves the same under /plans.
+    if (path.startsWith("/variants") && variantsPath !== "/variants") {
+      return json({ error: { message: "Not found" } }, 404);
+    }
+    if (path.startsWith("/plans") && variantsPath === "/plans") path = path.replace("/plans", "/variants");
     if (method === "GET" && path === "/products") {
       assert.equal(searchParams.get("account_id"), DEFAULT_COMPANY_ID);
       return page(state.products.filter(visible));
@@ -198,6 +203,19 @@ describe("whop-setup", () => {
     const second = await setup(whop, { ...first.updates });
     assert.match(second.warnings.join("\n"), /emojisense-pro-month .* costs 25/);
     assert.equal(second.updates.WHOP_PLAN_IDS, undefined);
+  });
+
+  it("uses Whop's current /variants endpoints, and the deprecated /plans only where /variants is missing", async () => {
+    const current = fakeWhop();
+    await setup(current, {});
+    assert.ok(current.state.calls.includes("POST /variants"));
+    assert.ok(!current.state.calls.some((call) => call.includes("/plans")));
+
+    const older = fakeWhop({ variantsPath: "/plans" });
+    const result = await setup(older, {});
+    assert.ok(older.state.calls.includes("POST /plans"));
+    assert.equal(older.state.variants.length, 4);
+    assert.ok(result.updates.WHOP_PLAN_IDS);
   });
 
   it("needs the API key", async () => {
