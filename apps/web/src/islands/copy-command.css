@@ -12,7 +12,7 @@
   background: var(--bg-soft);
   color: var(--ink);
   font: 400 0.78125rem / 1.5 var(--font-mono);
-  text-align: left;
+  text-align: start;
   cursor: copy;
   transition:
     border-color 160ms,
@@ -63,7 +63,7 @@
 .copycmd-done {
   position: absolute;
   top: 50%;
-  right: 0.4375rem;
+  inset-inline-end: 0.4375rem;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;

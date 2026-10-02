@@ -112,7 +112,7 @@
   display: inline-block;
   width: 0.0625rem;
   height: 1.15em;
-  margin-left: 0.125rem;
+  margin-inline-start: 0.125rem;
   background: var(--ink);
   content: "";
   vertical-align: -0.2em;
@@ -145,7 +145,7 @@
 .culture-switch-thumb {
   position: absolute;
   top: 0.125rem;
-  left: 0.125rem;
+  inset-inline-start: 0.125rem;
   width: 0.875rem;
   height: 0.875rem;
   border-radius: 50%;
@@ -157,7 +157,7 @@
 @media (max-width: 30rem) {
   .culture-field {
     gap: 0.5rem;
-    padding-left: 0.875rem;
+    padding-inline-start: 0.875rem;
   }
 
   .culture-field-icon {
@@ -176,6 +176,10 @@
 .culture-switch[aria-checked="true"] .culture-switch-thumb {
   background: var(--on-accent);
   transform: translateX(0.75rem);
+}
+
+.culture-switch[aria-checked="true"] .culture-switch-thumb:dir(rtl) {
+  transform: translateX(-0.75rem);
 }
 
 /* Results: the top answer, the cultural group, then the rest of the canonical list. */
@@ -290,7 +294,7 @@
 .culture-brace {
   position: absolute;
   top: calc(var(--top) + 0.375rem);
-  left: calc(var(--top) + var(--gap) + 0.25rem);
+  inset-inline-start: calc(var(--top) + var(--gap) + 0.25rem);
   width: max(var(--full) - 0.5rem, 0rem);
   padding-top: 0.5rem;
   border-top: 0.0625rem solid var(--line-strong);
@@ -302,7 +306,7 @@
 .culture-brace::after {
   position: absolute;
   top: -0.3125rem;
-  left: -0.0625rem;
+  inset-inline-start: -0.0625rem;
   width: 0.0625rem;
   height: 0.3125rem;
   background: var(--line-strong);
@@ -310,8 +314,8 @@
 }
 
 .culture-brace::after {
-  right: -0.0625rem;
-  left: auto;
+  inset-inline-end: -0.0625rem;
+  inset-inline-start: auto;
 }
 
 .culture-results[data-open="false"] .culture-brace {
@@ -485,7 +489,7 @@
   position: absolute;
   top: 1.75rem;
   bottom: 1.75rem;
-  left: 1.0625rem;
+  inset-inline-start: 1.0625rem;
   width: 0.0625rem;
   background: var(--line);
   content: "";
@@ -506,7 +510,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  text-align: left;
+  text-align: start;
 }
 
 button.culture-cal-row {

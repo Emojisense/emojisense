@@ -437,9 +437,13 @@ const kindLabel = (kind: string) => {
   }
 
   .checks li {
-    padding-left: 1.5rem;
+    padding-inline-start: 1.5rem;
     background: no-repeat 0 0.45em / 0.75rem
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 5.5 4 8l5-6' fill='none' stroke='%230f9f74' stroke-width='1.6'/%3E%3C/svg%3E");
+  }
+
+  .checks li:dir(rtl) {
+    background-position: right 0 top 0.45em;
   }
 
   .code-grid :global(.code-tabs) {
@@ -482,7 +486,7 @@ const kindLabel = (kind: string) => {
   .code-grid :global(.code-copy) {
     flex: none;
     align-self: start;
-    margin-left: auto;
+    margin-inline-start: auto;
   }
 
   .code-grid :global(pre) {

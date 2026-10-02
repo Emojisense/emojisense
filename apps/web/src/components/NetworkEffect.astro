@@ -154,7 +154,7 @@ const layers = [
   .thumb {
     position: absolute;
     top: 0.1875rem;
-    left: 0.1875rem;
+    inset-inline-start: 0.1875rem;
     width: 1.125rem;
     height: 1.125rem;
     border-radius: 50%;
@@ -169,6 +169,10 @@ const layers = [
 
   .switch:has(input:checked) .thumb {
     transform: translateX(1rem);
+  }
+
+  .switch:has(input:checked) .thumb:dir(rtl) {
+    transform: translateX(-1rem);
   }
 
   .switch:has(input:focus-visible) {
@@ -326,7 +330,7 @@ const layers = [
   /* Clockwise: top-left → top-right → bottom-right → bottom-left → back up. */
   .cycle li:nth-child(1)::after {
     content: "→";
-    right: -1.625rem;
+    inset-inline-end: -1.625rem;
     top: 50%;
     transform: translateY(-50%);
   }
@@ -344,7 +348,7 @@ const layers = [
 
   .cycle li:nth-child(3)::after {
     content: "←";
-    left: -1.625rem;
+    inset-inline-start: -1.625rem;
     top: 50%;
     transform: translateY(-50%);
   }
@@ -353,6 +357,15 @@ const layers = [
     order: 3;
     background: var(--ink);
     color: var(--bg);
+  }
+
+  /* Right to left the grid mirrors, so the sideways arrows swap. */
+  .cycle li:nth-child(1):dir(rtl)::after {
+    content: "←";
+  }
+
+  .cycle li:nth-child(3):dir(rtl)::after {
+    content: "→";
   }
 
   .cycle li:nth-child(4)::after {

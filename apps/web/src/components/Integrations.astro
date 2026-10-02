@@ -390,6 +390,15 @@ const docsLang = locale === "en" ? undefined : "en";
     translate: 0.125rem -0.125rem;
   }
 
+  /* A link to a page on this site points the way the text reads. */
+  .int-arrow:not(.external):dir(rtl) {
+    scale: -1 1;
+  }
+
+  .int-card:hover .int-arrow:not(.external):dir(rtl) {
+    translate: -0.1875rem 0;
+  }
+
   .int-blurb {
     margin: 0.375rem 0 1.125rem;
     font-size: 0.9375rem;

@@ -307,8 +307,14 @@ const step = (index: number, speed: string) =>
   @media (min-width: 56rem) {
     .calls-next {
       top: 50%;
-      left: calc(100% + 1.25rem);
+      inset-inline-start: calc(100% + 1.25rem);
       transform: translate(-50%, -50%);
+    }
+
+    /* Right to left the flow runs leftwards, and so does the arrow. */
+    .calls-next:dir(rtl) {
+      left: auto;
+      transform: translate(50%, -50%) scaleX(-1);
     }
   }
 
@@ -418,7 +424,7 @@ const step = (index: number, speed: string) =>
 
   .calls-past {
     flex: 1;
-    border-left: 0.125rem solid var(--bg);
+    border-inline-start: 0.125rem solid var(--bg);
     background: repeating-linear-gradient(
       -45deg,
       var(--line-strong) 0 0.25rem,
@@ -437,7 +443,7 @@ const step = (index: number, speed: string) =>
 
   .calls-mark {
     position: absolute;
-    left: 68%;
+    inset-inline-start: 68%;
     transform: translateX(-50%);
     color: var(--ink);
   }
@@ -479,7 +485,7 @@ const step = (index: number, speed: string) =>
   .calls-state-note {
     color: var(--ink-3);
     font-size: 0.875rem;
-    text-align: right;
+    text-align: end;
   }
 
   .calls-foot {
@@ -505,7 +511,7 @@ const step = (index: number, speed: string) =>
 
     .calls-state-note {
       grid-column: 2;
-      text-align: left;
+      text-align: start;
     }
 
     .calls-scale span:first-child,

@@ -54,7 +54,7 @@
 }
 
 .wl-select {
-  padding-right: 2.5rem;
+  padding-inline-end: 2.5rem;
   appearance: none;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
@@ -65,6 +65,13 @@
   background-size: 0.3125rem 0.3125rem;
   background-repeat: no-repeat;
   cursor: pointer;
+}
+
+/* The chevron sits at the end of the line: on the left in a right-to-left page. */
+.wl-select:dir(rtl) {
+  background-position:
+    left 0.8125rem center,
+    left 1.125rem center;
 }
 
 .wl-hint,
