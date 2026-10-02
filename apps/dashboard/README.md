@@ -19,12 +19,33 @@ From the repo root:
 pnpm install
 pnpm --filter @emojisense/platform build
 cp apps/dashboard/.dev.vars.example apps/dashboard/.dev.vars
-pnpm --filter @emojisense/dashboard db:migrate   # wrangler d1 migrations apply emojisense --local
+pnpm db:migrate                                  # local D1 for BOTH Workers (see below)
 pnpm --filter @emojisense/dashboard dev          # builds the SPA, then wrangler dev on :8790
 ```
 
 Open http://localhost:8790 and use **Sign in as dev user**. Each name is its own account, so two
 names let you test that one account cannot see the other's apps.
+
+### Local database (D1 migrations)
+
+`wrangler dev` does not apply migrations. Run this once, and again after a new file appears in
+`packages/platform/migrations`:
+
+```bash
+pnpm db:migrate
+# = cd apps/dashboard && wrangler d1 migrations apply emojisense --local --persist-to ../../.wrangler/state
+```
+
+| Rule | Why |
+| ---- | --- |
+| Both Workers use `--persist-to ../../.wrangler/state` (package scripts and `.claude/launch.json`) | One state directory at the repo root |
+| Both `wrangler.jsonc` files have the same placeholder `database_id` (`00000000-…`) | Wrangler names the local SQLite file after the id, so one apply serves both Workers |
+
+`pnpm --filter @emojisense/worker db:migrate` applies the same files to the same database, so it
+prints "No migrations to apply" after the first run. To start from an empty database, delete
+`.wrangler/state/v3/d1` and apply again. Before a deploy, replace the placeholder id in both
+`wrangler.jsonc` files with the id that `wrangler d1 create emojisense` prints, then run
+`wrangler d1 migrations apply emojisense --remote` once.
 
 | Command | What it does |
 | ------- | ------------ |

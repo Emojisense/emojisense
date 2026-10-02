@@ -16,9 +16,17 @@
   // Without it the Worker degrades to alias-only results.
   "ai": { "binding": "AI" },
   // Shared with apps/dashboard: keys, apps and usage_monthly (packages/platform/migrations).
-  // `wrangler dev` uses a local SQLite copy; apply migrations with `pnpm db:migrate`.
+  // `wrangler dev` uses a local SQLite file named after `database_id`. It must equal the
+  // dashboard's id, so both Workers read the same local database under ../../.wrangler/state.
+  // Before a deploy, replace the placeholder with the id from `wrangler d1 create emojisense`.
+  // Apply migrations with `pnpm db:migrate` (once for both Workers).
   "d1_databases": [
-    { "binding": "DB", "database_name": "emojisense", "migrations_dir": "../platform/migrations" }
+    {
+      "binding": "DB",
+      "database_name": "emojisense",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "../platform/migrations"
+    }
   ],
   "ratelimits": [
     { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
@@ -40,7 +48,12 @@
     // Bindings do not inherit into environments, so they are repeated here.
     "offline": {
       "d1_databases": [
-        { "binding": "DB", "database_name": "emojisense", "migrations_dir": "../platform/migrations" }
+        {
+          "binding": "DB",
+          "database_name": "emojisense",
+          "database_id": "00000000-0000-0000-0000-000000000000",
+          "migrations_dir": "../platform/migrations"
+        }
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
