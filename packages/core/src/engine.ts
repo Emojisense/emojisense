@@ -109,6 +109,13 @@ const FOREIGN_LOCALE_FACTOR = 0.92;
 const EVIDENCE_BONUS = 0.02;
 const MAX_EVIDENCE_BONUS = 0.06;
 const STOPWORD_WEIGHT_CAP = 0.3;
+/** Longest piece (code points) tried when a run of an unspaced script is split. */
+const MAX_PIECE_LENGTH = 16;
+/**
+ * Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han. A run of
+ * them is one token after normalization, so a sentence only matches if it is a whole phrase.
+ */
+const UNSPACED_SCRIPT = /[฀-໿က-႟ក-៿぀-ヿ㐀-䶿一-鿿豈-﫿\u{20000}-\u{3134F}]/u;
 
 /** Function words that carry little meaning in a query (en + folded tr). */
 const STOPWORDS = new Set(
@@ -386,15 +393,61 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     return candidates;
   }
 
+  /** Does a longer vocabulary token start with `prefix`? */
+  function completes(prefix: string): boolean {
+    return vocab[lowerBound(prefix)]?.startsWith(prefix) ?? false;
+  }
+
+  /**
+   * Split a run of an unspaced script into vocabulary tokens, longest match first from the left.
+   * Characters where no vocabulary token starts stay together as one unknown piece.
+   */
+  function segment(run: string): string[] {
+    const chars = Array.from(run);
+    const pieces: string[] = [];
+    let unknown = "";
+    let i = 0;
+    while (i < chars.length) {
+      let length = Math.min(MAX_PIECE_LENGTH, chars.length - i);
+      while (length > 0 && !tokenId.has(chars.slice(i, i + length).join(""))) length--;
+      if (length === 0) {
+        unknown += chars[i];
+        i++;
+        continue;
+      }
+      if (unknown) pieces.push(unknown);
+      unknown = "";
+      pieces.push(chars.slice(i, i + length).join(""));
+      i += length;
+    }
+    if (unknown) pieces.push(unknown);
+    return pieces;
+  }
+
+  /**
+   * Query tokens. A token of an unspaced script that is not in the vocabulary (and, while typing,
+   * is not the start of one) is split into the vocabulary tokens it contains.
+   */
+  function queryTokens(normalized: string, lastIsPrefix: boolean): string[] {
+    const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
+    return tokens
+      .flatMap((token, i) => {
+        if (tokenId.has(token) || !UNSPACED_SCRIPT.test(token)) return [token];
+        if (lastIsPrefix && i === tokens.length - 1 && completes(token)) return [token];
+        return segment(token);
+      })
+      .slice(0, MAX_QUERY_TOKENS);
+  }
+
   function search(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
-    const tokens = tokenize(normalized).slice(0, MAX_QUERY_TOKENS);
+    const lastIsPrefix = prefix && !/\s$/.test(query);
+    const tokens = queryTokens(normalized, lastIsPrefix);
     if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0 };
 
     const preferredMask = (preferredMasks.get(locale ?? primary.locale) ?? 1) | customMask;
     const isPreferred = (phrase: number) => ((phraseLocaleMask[phrase] as number) & preferredMask) !== 0;
-    const lastIsPrefix = prefix && !/\s$/.test(query);
     const n = tokens.length;
     const weights: number[] = [];
     generation++;

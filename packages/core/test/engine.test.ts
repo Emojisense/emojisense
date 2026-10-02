@@ -164,3 +164,43 @@ describe("alias engine memory", () => {
     expect(perEngine(arrays, count(Array))).toBeLessThan((EMOJI * PHRASES_PER_EMOJI) / 2);
   });
 });
+
+describe("unspaced scripts", () => {
+  const zh = {
+    ...en,
+    locale: "zh",
+    emoji: [
+      row("🎂", "1F382", "生日蛋糕", { keyword: "生日|蛋糕", alias: "生日快乐" }),
+      row("🚀", "1F680", "火箭", { keyword: "火箭", alias: "发射" }),
+    ],
+  };
+  const chinese = createEngine([en, zh]);
+  const search = (q: string) => chinese.search(q, { locale: "zh" });
+
+  it("splits a run that is not one token into the tokens it holds, longest first", () => {
+    const out = search("今天生日快乐");
+    expect(out.tokens).toEqual(["今天", "生日快乐"]);
+    expect(out.results[0]?.emoji).toBe("🎂");
+    expect(search("火箭发射").tokens).toEqual(["火箭", "发射"]);
+    expect(search("火箭发射").results[0]?.emoji).toBe("🚀");
+  });
+
+  it("keeps unknown characters together as one token, which counts like an unknown word", () => {
+    expect(search("今天的蛋糕").tokens).toEqual(["今天的", "蛋糕"]);
+    expect(search("今天的蛋糕").results[0]?.emoji).toBe("🎂");
+    // Two unknown pieces outweigh one known piece: below the coverage threshold, as for spaced text.
+    expect(search("今天的蛋糕呀").tokens).toEqual(["今天的", "蛋糕", "呀"]);
+    expect(search("今天的蛋糕呀").results).toEqual([]);
+  });
+
+  it("does not split a token that is indexed, or one still being typed", () => {
+    expect(search("生日快乐").tokens).toEqual(["生日快乐"]);
+    expect(search("生日快").tokens).toEqual(["生日快"]);
+    expect(search("生日快").results[0]?.emoji).toBe("🎂");
+    expect(chinese.search("生日快 ", { locale: "zh" }).tokens).toEqual(["生日", "快"]);
+  });
+
+  it("leaves spaced scripts alone", () => {
+    expect(engine.search("rockets").tokens).toEqual(["rockets"]);
+  });
+});
