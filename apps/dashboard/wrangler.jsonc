@@ -24,7 +24,9 @@
       "migrations_dir": "../../packages/platform/migrations"
     }
   ],
-  // Custom emoji images, shared with the API Worker (CONTRACT.md "Storage").
+  // Custom emoji images. The API Worker binds the same bucket and serves them at
+  // `${API_URL}/v1/custom/:appId/:emojiId`. Local R2 state is keyed by bucket_name, so both
+  // Workers share it under --persist-to ../../.wrangler/state.
   "r2_buckets": [{ "binding": "EMOJI", "bucket_name": "emojisense-emoji" }],
   // The waitlist is the only public write. Keyed by client IP, held in memory only.
   "ratelimits": [
@@ -35,6 +37,8 @@
   "vars": {
     "ENVIRONMENT": "production",
     // Comma-separated website origins that may POST /api/waitlist from the browser.
-    "WEBSITE_ORIGINS": ""
+    "WEBSITE_ORIGINS": "",
+    // The API Worker's origin: custom emoji imageUrl values point at it.
+    "API_URL": "https://api.emojisense.com"
   }
 }
