@@ -1,0 +1,1245 @@
+{
+ "date": "2026-10-02T18:51:52.378Z",
+ "packVersion": "0.1.0",
+ "skipped": [],
+ "variants": {
+  "bge-m3@1024": {
+   "note": "production",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 75.2,
+      "r5": 90.2,
+      "r10": 93,
+      "mrr": 0.81,
+      "forbidRate": 2.3
+     },
+     "fused": {
+      "n": 214,
+      "r1": 88.3,
+      "r5": 99.1,
+      "r10": 100,
+      "mrr": 0.929,
+      "forbidRate": 1.9
+     },
+     "unsure": 0
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 28.3,
+      "r5": 46.9,
+      "r10": 53.9,
+      "mrr": 0.365,
+      "forbidRate": 5
+     },
+     "fused": {
+      "n": 258,
+      "r1": 44.6,
+      "r5": 65.1,
+      "r10": 70.5,
+      "mrr": 0.537,
+      "forbidRate": 6.6
+     },
+     "unsure": 96
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 71.1,
+      "r5": 91.1,
+      "r10": 95,
+      "mrr": 0.791,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 75.6,
+      "r5": 97.2,
+      "r10": 100,
+      "mrr": 0.855,
+      "forbidRate": 0
+     },
+     "unsure": 5
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 62.6,
+      "r5": 90,
+      "r10": 94.9,
+      "mrr": 0.74,
+      "forbidRate": 1.4
+     },
+     "fused": {
+      "n": 369,
+      "r1": 70.2,
+      "r5": 91.9,
+      "r10": 97.3,
+      "mrr": 0.798,
+      "forbidRate": 2.4
+     },
+     "unsure": 44
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 35.3,
+      "r5": 55.2,
+      "r10": 62.9,
+      "mrr": 0.43,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 74.1,
+      "r5": 90.5,
+      "r10": 93.1,
+      "mrr": 0.817,
+      "forbidRate": 0
+     },
+     "unsure": 14
+    }
+   },
+   "heldout": {
+    "sem": {
+     "n": 734,
+     "r1": 29.6,
+     "r5": 51.4,
+     "r10": 59.5,
+     "mrr": 0.388,
+     "forbidRate": 0
+    },
+    "fused": {
+     "n": 734,
+     "r1": 37.3,
+     "r5": 64.4,
+     "r10": 72.8,
+     "mrr": 0.488,
+     "forbidRate": 0
+    }
+   },
+   "calibration": {
+    "floor": 0.44,
+    "ceiling": 0.58
+   },
+   "weights": [
+    0.04023,
+    1.781,
+    1.697,
+    0.8871,
+    13.72,
+    -19.46,
+    2.342,
+    2.146,
+    3.891
+   ],
+   "memory": {
+    "sharedMB": 8.1,
+    "glyphMB": 4.2,
+    "localeMB": 8.1,
+    "bundleMB": 3.4,
+    "localeFileMB": 2.2
+   },
+   "latency": {
+    "p50": 214.91604200000438,
+    "p95": 305.13958300000377,
+    "n": 40,
+    "tokens": 5.3
+   },
+   "documents": {
+    "documents": 21054,
+    "tokensPerDocument": 290
+   }
+  },
+  "embeddinggemma@768": {
+   "note": "task prompts: \"task: search result | query: …\", \"title: … | text: …\"",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 79,
+      "r5": 92.1,
+      "r10": 96.3,
+      "mrr": 0.845,
+      "forbidRate": 1.9
+     },
+     "fused": {
+      "n": 214,
+      "r1": 89.3,
+      "r5": 99.1,
+      "r10": 99.1,
+      "mrr": 0.936,
+      "forbidRate": 1.9
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 41.5,
+      "r5": 65.5,
+      "r10": 73.3,
+      "mrr": 0.517,
+      "forbidRate": 5.4
+     },
+     "fused": {
+      "n": 258,
+      "r1": 49.2,
+      "r5": 74,
+      "r10": 79.1,
+      "mrr": 0.592,
+      "forbidRate": 6.6
+     },
+     "unsure": 97
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 73.9,
+      "r5": 90,
+      "r10": 91.7,
+      "mrr": 0.806,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 77.8,
+      "r5": 98.9,
+      "r10": 98.9,
+      "mrr": 0.869,
+      "forbidRate": 0
+     },
+     "unsure": 7
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 66.1,
+      "r5": 86.7,
+      "r10": 91.9,
+      "mrr": 0.748,
+      "forbidRate": 2.4
+     },
+     "fused": {
+      "n": 369,
+      "r1": 71,
+      "r5": 92.4,
+      "r10": 95.9,
+      "mrr": 0.799,
+      "forbidRate": 2.7
+     },
+     "unsure": 58
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 50,
+      "r5": 63.8,
+      "r10": 69,
+      "mrr": 0.553,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 77.6,
+      "r5": 93.1,
+      "r10": 94.8,
+      "mrr": 0.843,
+      "forbidRate": 0
+     },
+     "unsure": 17
+    }
+   },
+   "heldout": {
+    "sem": {
+     "n": 734,
+     "r1": 30.7,
+     "r5": 55.6,
+     "r10": 63.8,
+     "mrr": 0.411,
+     "forbidRate": 0
+    },
+    "fused": {
+     "n": 734,
+     "r1": 39,
+     "r5": 66.2,
+     "r10": 75.3,
+     "mrr": 0.504,
+     "forbidRate": 0
+    }
+   },
+   "calibration": {
+    "floor": 0.39,
+    "ceiling": 0.56
+   },
+   "weights": [
+    -0.3194,
+    1.715,
+    1.572,
+    0.4362,
+    12.17,
+    -8.461,
+    3.18,
+    2.132,
+    1.426
+   ],
+   "memory": {
+    "sharedMB": 6.1,
+    "glyphMB": 6.1,
+    "localeMB": 6.1,
+    "bundleMB": 3.4,
+    "localeFileMB": 1.7
+   },
+   "latency": {
+    "p50": 284.3582080000051,
+    "p95": 745.7012919999979,
+    "n": 40
+   },
+   "documents": {
+    "documents": 21054
+   }
+  },
+  "embeddinggemma@512": {
+   "note": "task prompts: \"task: search result | query: …\", \"title: … | text: …\"",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 78,
+      "r5": 92.1,
+      "r10": 95.3,
+      "mrr": 0.838,
+      "forbidRate": 1.9
+     },
+     "fused": {
+      "n": 214,
+      "r1": 89.3,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.935,
+      "forbidRate": 1.9
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 41.9,
+      "r5": 61.6,
+      "r10": 69.8,
+      "mrr": 0.506,
+      "forbidRate": 4.7
+     },
+     "fused": {
+      "n": 258,
+      "r1": 47.7,
+      "r5": 72.1,
+      "r10": 79.1,
+      "mrr": 0.582,
+      "forbidRate": 5.8
+     },
+     "unsure": 101
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 73.3,
+      "r5": 90,
+      "r10": 93.3,
+      "mrr": 0.81,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 78.9,
+      "r5": 98.9,
+      "r10": 98.9,
+      "mrr": 0.876,
+      "forbidRate": 0
+     },
+     "unsure": 7
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 64.5,
+      "r5": 86.7,
+      "r10": 92.1,
+      "mrr": 0.734,
+      "forbidRate": 2.2
+     },
+     "fused": {
+      "n": 369,
+      "r1": 70.2,
+      "r5": 92.4,
+      "r10": 96.2,
+      "mrr": 0.797,
+      "forbidRate": 2.7
+     },
+     "unsure": 65
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 48.3,
+      "r5": 61.2,
+      "r10": 66.4,
+      "mrr": 0.529,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 75,
+      "r5": 91.4,
+      "r10": 95.7,
+      "mrr": 0.83,
+      "forbidRate": 0
+     },
+     "unsure": 17
+    }
+   },
+   "heldout": {
+    "sem": {
+     "n": 734,
+     "r1": 30.4,
+     "r5": 53.8,
+     "r10": 62.1,
+     "mrr": 0.403,
+     "forbidRate": 0
+    },
+    "fused": {
+     "n": 734,
+     "r1": 38.8,
+     "r5": 64.9,
+     "r10": 74.9,
+     "mrr": 0.5,
+     "forbidRate": 0
+    }
+   },
+   "calibration": {
+    "floor": 0.42,
+    "ceiling": 0.56
+   },
+   "weights": [
+    -0.1038,
+    1.657,
+    1.631,
+    0.4038,
+    13.36,
+    -8.862,
+    2.959,
+    2.159,
+    0.8508
+   ],
+   "memory": {
+    "sharedMB": 4.1,
+    "glyphMB": 4.1,
+    "localeMB": 4.1,
+    "bundleMB": 2.3,
+    "localeFileMB": 1.1
+   },
+   "latency": {
+    "p50": 284.3582080000051,
+    "p95": 745.7012919999979,
+    "n": 40
+   },
+   "documents": {
+    "documents": 21054
+   }
+  },
+  "embeddinggemma@256": {
+   "note": "task prompts: \"task: search result | query: …\", \"title: … | text: …\"",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 79,
+      "r5": 89.3,
+      "r10": 92.5,
+      "mrr": 0.831,
+      "forbidRate": 1.4
+     },
+     "fused": {
+      "n": 214,
+      "r1": 89.7,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.936,
+      "forbidRate": 1.9
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 38,
+      "r5": 58.1,
+      "r10": 65.9,
+      "mrr": 0.467,
+      "forbidRate": 5
+     },
+     "fused": {
+      "n": 258,
+      "r1": 46.5,
+      "r5": 70.5,
+      "r10": 78.7,
+      "mrr": 0.569,
+      "forbidRate": 6.2
+     },
+     "unsure": 101
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 71.7,
+      "r5": 89.4,
+      "r10": 90.6,
+      "mrr": 0.789,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 78.9,
+      "r5": 98.9,
+      "r10": 98.9,
+      "mrr": 0.876,
+      "forbidRate": 0
+     },
+     "unsure": 10
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 63.4,
+      "r5": 85.1,
+      "r10": 89.7,
+      "mrr": 0.722,
+      "forbidRate": 2.2
+     },
+     "fused": {
+      "n": 369,
+      "r1": 70.2,
+      "r5": 91.3,
+      "r10": 95.4,
+      "mrr": 0.792,
+      "forbidRate": 2.7
+     },
+     "unsure": 64
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 40.5,
+      "r5": 53.4,
+      "r10": 59.5,
+      "mrr": 0.459,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 75.9,
+      "r5": 91.4,
+      "r10": 94.8,
+      "mrr": 0.831,
+      "forbidRate": 0
+     },
+     "unsure": 16
+    }
+   },
+   "calibration": {
+    "floor": 0.47,
+    "ceiling": 0.61
+   },
+   "weights": [
+    0.05389,
+    1.664,
+    1.691,
+    0.6091,
+    13.19,
+    -9.537,
+    2.739,
+    2.083,
+    1.599
+   ],
+   "memory": {
+    "sharedMB": 2,
+    "glyphMB": 2,
+    "localeMB": 2,
+    "bundleMB": 1.2,
+    "localeFileMB": 0.6
+   },
+   "latency": {
+    "p50": 284.3582080000051,
+    "p95": 745.7012919999979,
+    "n": 40
+   },
+   "documents": {
+    "documents": 21054
+   }
+  },
+  "qwen3@1024": {
+   "note": "instruction from models.ts (emoji search query → emoji description)",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 69.2,
+      "r5": 84.1,
+      "r10": 87.9,
+      "mrr": 0.757,
+      "forbidRate": 3.3
+     },
+     "fused": {
+      "n": 214,
+      "r1": 88.3,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.928,
+      "forbidRate": 2.3
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 21.3,
+      "r5": 39.5,
+      "r10": 46.5,
+      "mrr": 0.287,
+      "forbidRate": 5.8
+     },
+     "fused": {
+      "n": 258,
+      "r1": 42.6,
+      "r5": 64.7,
+      "r10": 70.2,
+      "mrr": 0.519,
+      "forbidRate": 7.4
+     },
+     "unsure": 97
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 49.4,
+      "r5": 75.6,
+      "r10": 80.6,
+      "mrr": 0.605,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 72.8,
+      "r5": 97.2,
+      "r10": 98.9,
+      "mrr": 0.838,
+      "forbidRate": 0
+     },
+     "unsure": 12
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 48.8,
+      "r5": 83.5,
+      "r10": 88.1,
+      "mrr": 0.63,
+      "forbidRate": 1.6
+     },
+     "fused": {
+      "n": 369,
+      "r1": 66.1,
+      "r5": 91.9,
+      "r10": 94.9,
+      "mrr": 0.767,
+      "forbidRate": 3
+     },
+     "unsure": 64
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 31.9,
+      "r5": 50.9,
+      "r10": 62.9,
+      "mrr": 0.412,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 75,
+      "r5": 88.8,
+      "r10": 94.8,
+      "mrr": 0.82,
+      "forbidRate": 0
+     },
+     "unsure": 13
+    }
+   },
+   "calibration": {
+    "floor": 0.54,
+    "ceiling": 0.66
+   },
+   "weights": [
+    0.1646,
+    1.892,
+    1.627,
+    0.9114,
+    11.67,
+    -7.799,
+    2.775,
+    2.62,
+    2.557
+   ],
+   "memory": {
+    "sharedMB": 8.1,
+    "glyphMB": 8.1,
+    "localeMB": 8.1,
+    "bundleMB": 4.5,
+    "localeFileMB": 2.2
+   },
+   "latency": {
+    "p50": 319.36408400000073,
+    "p95": 2858.1008750000037,
+    "n": 40,
+    "tokens": 23.7
+   },
+   "documents": {
+    "documents": 21054,
+    "tokensPerDocument": 243.73333333333332
+   }
+  },
+  "qwen3-default@1024": {
+   "note": "Workers AI default instruction (web search query → passages)",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 67.3,
+      "r5": 85.5,
+      "r10": 89.3,
+      "mrr": 0.752,
+      "forbidRate": 3.3
+     },
+     "fused": {
+      "n": 214,
+      "r1": 87.4,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.923,
+      "forbidRate": 2.3
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 23.6,
+      "r5": 44.2,
+      "r10": 50.4,
+      "mrr": 0.32,
+      "forbidRate": 6.6
+     },
+     "fused": {
+      "n": 258,
+      "r1": 43,
+      "r5": 67.8,
+      "r10": 76,
+      "mrr": 0.536,
+      "forbidRate": 8.5
+     },
+     "unsure": 97
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 52.2,
+      "r5": 77.8,
+      "r10": 82.8,
+      "mrr": 0.635,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 73.9,
+      "r5": 97.8,
+      "r10": 98.9,
+      "mrr": 0.846,
+      "forbidRate": 0
+     },
+     "unsure": 11
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 52.3,
+      "r5": 78.6,
+      "r10": 85.6,
+      "mrr": 0.637,
+      "forbidRate": 2.4
+     },
+     "fused": {
+      "n": 369,
+      "r1": 65,
+      "r5": 89.7,
+      "r10": 94,
+      "mrr": 0.761,
+      "forbidRate": 3.5
+     },
+     "unsure": 64
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 37.9,
+      "r5": 50.9,
+      "r10": 56,
+      "mrr": 0.432,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 72.4,
+      "r5": 90.5,
+      "r10": 94.8,
+      "mrr": 0.812,
+      "forbidRate": 0
+     },
+     "unsure": 12
+    }
+   },
+   "calibration": {
+    "floor": 0.41,
+    "ceiling": 0.6
+   },
+   "weights": [
+    -0.212,
+    1.91,
+    1.419,
+    1.133,
+    10.79,
+    -6.512,
+    3.823,
+    2.424,
+    0.9135
+   ],
+   "memory": {
+    "sharedMB": 8.1,
+    "glyphMB": 8.1,
+    "localeMB": 8.1,
+    "bundleMB": 4.5,
+    "localeFileMB": 2.2
+   },
+   "latency": {
+    "p50": 458.57499999995343,
+    "p95": 8887.882459000044,
+    "n": 40,
+    "tokens": 24.7
+   },
+   "documents": {
+    "documents": 21054,
+    "tokensPerDocument": 243.73333333333332
+   }
+  },
+  "qwen3-task@1024": {
+   "note": "instruction: word or phrase typed into an emoji search → emoji",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 65.9,
+      "r5": 80.8,
+      "r10": 87.9,
+      "mrr": 0.72,
+      "forbidRate": 2.8
+     },
+     "fused": {
+      "n": 214,
+      "r1": 88.3,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.928,
+      "forbidRate": 1.4
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 19.8,
+      "r5": 36.8,
+      "r10": 45,
+      "mrr": 0.274,
+      "forbidRate": 4.7
+     },
+     "fused": {
+      "n": 258,
+      "r1": 43,
+      "r5": 64.7,
+      "r10": 69.8,
+      "mrr": 0.521,
+      "forbidRate": 6.6
+     },
+     "unsure": 94
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 47.8,
+      "r5": 71.7,
+      "r10": 78.9,
+      "mrr": 0.584,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 71.7,
+      "r5": 98.3,
+      "r10": 98.9,
+      "mrr": 0.832,
+      "forbidRate": 0
+     },
+     "unsure": 11
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 48.5,
+      "r5": 81.3,
+      "r10": 87.8,
+      "mrr": 0.625,
+      "forbidRate": 1.4
+     },
+     "fused": {
+      "n": 369,
+      "r1": 66.1,
+      "r5": 91.6,
+      "r10": 95.4,
+      "mrr": 0.771,
+      "forbidRate": 2.7
+     },
+     "unsure": 57
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 32.8,
+      "r5": 51.7,
+      "r10": 60.3,
+      "mrr": 0.412,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 75,
+      "r5": 90.5,
+      "r10": 94.8,
+      "mrr": 0.823,
+      "forbidRate": 0
+     },
+     "unsure": 12
+    }
+   },
+   "calibration": {
+    "floor": 0.54,
+    "ceiling": 0.65
+   },
+   "weights": [
+    0.1276,
+    1.977,
+    1.693,
+    0.8179,
+    11.78,
+    -8.55,
+    2.631,
+    2.915,
+    2.264
+   ],
+   "memory": {
+    "sharedMB": 8.1,
+    "glyphMB": 8.1,
+    "localeMB": 8.1,
+    "bundleMB": 4.5,
+    "localeFileMB": 2.2
+   },
+   "latency": {
+    "p50": 1208.1705409999704,
+    "p95": 6136.392375000054,
+    "n": 40,
+    "tokens": 30.7
+   },
+   "documents": {
+    "documents": 21054,
+    "tokensPerDocument": 243.73333333333332
+   }
+  },
+  "qwen3-task@512": {
+   "note": "instruction: word or phrase typed into an emoji search → emoji",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 61.2,
+      "r5": 76.6,
+      "r10": 84.1,
+      "mrr": 0.68,
+      "forbidRate": 1.4
+     },
+     "fused": {
+      "n": 214,
+      "r1": 87.9,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.925,
+      "forbidRate": 1.4
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 17.8,
+      "r5": 32.6,
+      "r10": 41.1,
+      "mrr": 0.241,
+      "forbidRate": 4.7
+     },
+     "fused": {
+      "n": 258,
+      "r1": 43.8,
+      "r5": 64,
+      "r10": 68.6,
+      "mrr": 0.52,
+      "forbidRate": 6.2
+     },
+     "unsure": 95
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 46.7,
+      "r5": 65.6,
+      "r10": 74.4,
+      "mrr": 0.549,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 71.7,
+      "r5": 98.3,
+      "r10": 98.9,
+      "mrr": 0.831,
+      "forbidRate": 0
+     },
+     "unsure": 12
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 43.6,
+      "r5": 78.9,
+      "r10": 86.2,
+      "mrr": 0.58,
+      "forbidRate": 0.8
+     },
+     "fused": {
+      "n": 369,
+      "r1": 64.5,
+      "r5": 91.1,
+      "r10": 95.4,
+      "mrr": 0.762,
+      "forbidRate": 2.7
+     },
+     "unsure": 59
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 35.3,
+      "r5": 46.6,
+      "r10": 56,
+      "mrr": 0.406,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 75,
+      "r5": 92.2,
+      "r10": 95.7,
+      "mrr": 0.823,
+      "forbidRate": 0
+     },
+     "unsure": 13
+    }
+   },
+   "calibration": {
+    "floor": 0.58,
+    "ceiling": 0.68
+   },
+   "weights": [
+    0.1621,
+    2.044,
+    1.778,
+    0.7402,
+    11.11,
+    -9.298,
+    2.663,
+    3.087,
+    1.735
+   ],
+   "memory": {
+    "sharedMB": 4.1,
+    "glyphMB": 4.1,
+    "localeMB": 4.1,
+    "bundleMB": 2.3,
+    "localeFileMB": 1.1
+   },
+   "latency": {
+    "p50": 1208.1705409999704,
+    "p95": 6136.392375000054,
+    "n": 40,
+    "tokens": 30.7
+   },
+   "documents": {
+    "documents": 21054,
+    "tokensPerDocument": 243.73333333333332
+   }
+  },
+  "qwen3-task@256": {
+   "note": "instruction: word or phrase typed into an emoji search → emoji",
+   "sets": {
+    "in-house": {
+     "sem": {
+      "n": 214,
+      "r1": 57,
+      "r5": 76.2,
+      "r10": 81.8,
+      "mrr": 0.648,
+      "forbidRate": 1.4
+     },
+     "fused": {
+      "n": 214,
+      "r1": 87.4,
+      "r5": 99.1,
+      "r10": 99.5,
+      "mrr": 0.924,
+      "forbidRate": 0.9
+     },
+     "unsure": 1
+    },
+    "entities-dev": {
+     "sem": {
+      "n": 258,
+      "r1": 15.5,
+      "r5": 31,
+      "r10": 39.9,
+      "mrr": 0.223,
+      "forbidRate": 3.5
+     },
+     "fused": {
+      "n": 258,
+      "r1": 44.2,
+      "r5": 65.9,
+      "r10": 69,
+      "mrr": 0.524,
+      "forbidRate": 7
+     },
+     "unsure": 86
+    },
+    "semantic-dev": {
+     "sem": {
+      "n": 180,
+      "r1": 43.3,
+      "r5": 62.2,
+      "r10": 69.4,
+      "mrr": 0.51,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 180,
+      "r1": 72.8,
+      "r5": 97.2,
+      "r10": 97.8,
+      "mrr": 0.836,
+      "forbidRate": 0
+     },
+     "unsure": 10
+    },
+    "sentences-dev": {
+     "sem": {
+      "n": 369,
+      "r1": 42.8,
+      "r5": 74.3,
+      "r10": 81.8,
+      "mrr": 0.563,
+      "forbidRate": 0.5
+     },
+     "fused": {
+      "n": 369,
+      "r1": 64.2,
+      "r5": 90.2,
+      "r10": 95.4,
+      "mrr": 0.756,
+      "forbidRate": 2.2
+     },
+     "unsure": 45
+    },
+    "romanized-dev": {
+     "sem": {
+      "n": 116,
+      "r1": 33.6,
+      "r5": 50,
+      "r10": 56,
+      "mrr": 0.4,
+      "forbidRate": 0
+     },
+     "fused": {
+      "n": 116,
+      "r1": 74.1,
+      "r5": 91.4,
+      "r10": 94,
+      "mrr": 0.822,
+      "forbidRate": 0
+     },
+     "unsure": 14
+    }
+   },
+   "calibration": {
+    "floor": 0.6,
+    "ceiling": 0.69
+   },
+   "weights": [
+    0.2662,
+    2.061,
+    1.762,
+    0.9366,
+    10.57,
+    -9.985,
+    2.494,
+    2.811,
+    1.375
+   ],
+   "memory": {
+    "sharedMB": 2,
+    "glyphMB": 2,
+    "localeMB": 2,
+    "bundleMB": 1.2,
+    "localeFileMB": 0.6
+   },
+   "latency": {
+    "p50": 1208.1705409999704,
+    "p95": 6136.392375000054,
+    "n": 40,
+    "tokens": 30.7
+   },
+   "documents": {
+    "documents": 21054,
+    "tokensPerDocument": 243.73333333333332
+   }
+  }
+ },
+ "conceptModel": "@cf/google/gemma-4-26b-a4b-it",
+ "usdPer1kNeurons": 0.011
+}
