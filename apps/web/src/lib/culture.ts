@@ -39,217 +39,14 @@ export interface CultureEntry {
   createdAt?: string;
 }
 
-/**
- * Sample entries in the real format, used only while packages/data/culture/entries does not exist.
- * Replaced by the real, reviewed data when the culture layer lands on main; delete them then.
- */
-export const PREVIEW_ENTRIES: CultureEntry[] = [
-  {
-    id: "goat-football",
-    status: "approved",
-    kind: "lasting",
-    context: {
-      en: "Football's GOAT debate",
-      es: "El debate del mejor de la historia",
-      pt: "O debate do melhor de todos",
-    },
-    when: null,
-    regions: ["*"],
-    locales: ["*"],
-    triggers: {
-      en: ["goat", "greatest of all time"],
-      es: ["el mejor de la historia"],
-      pt: ["o melhor de todos"],
-    },
-    emoji: [
-      { hexcode: "26BD", weight: 0.6 },
-      { hexcode: "1F1E6-1F1F7", weight: 0.45 },
-      { hexcode: "1F1F5-1F1F9", weight: 0.45 },
-    ],
-    featured: false,
-    source: "editorial",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "goat-basketball-us",
-    status: "approved",
-    kind: "lasting",
-    context: { en: "Basketball's GOAT debate" },
-    when: null,
-    regions: ["US"],
-    locales: ["en"],
-    triggers: { en: ["goat", "greatest of all time"] },
-    emoji: [{ hexcode: "1F3C0", weight: 0.7 }],
-    featured: false,
-    source: "editorial",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "goat-cricket-in",
-    status: "approved",
-    kind: "lasting",
-    context: { en: "Cricket's GOAT debate" },
-    when: null,
-    regions: ["IN"],
-    locales: ["en", "hi"],
-    triggers: { en: ["goat", "greatest of all time"] },
-    emoji: [{ hexcode: "1F3CF", weight: 0.7 }],
-    featured: false,
-    source: "editorial",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "skull-laughing",
-    status: "approved",
-    kind: "lasting",
-    context: { en: "Slang for “I'm dying laughing”" },
-    when: null,
-    regions: ["*"],
-    locales: ["en"],
-    triggers: { en: ["im dead", "dying laughing", "lmao", "so funny", "hilarious", "crying laughing"] },
-    emoji: [
-      { hexcode: "1F480", weight: 0.85 },
-      { hexcode: "1F62D", weight: 0.5 },
-    ],
-    featured: false,
-    source: "editorial",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "thanks-bow-jp",
-    status: "approved",
-    kind: "lasting",
-    context: { en: "In Japan, thanks often comes with a bow" },
-    when: null,
-    regions: ["JP"],
-    locales: ["*"],
-    triggers: { en: ["thank you", "thanks", "arigato"] },
-    emoji: [{ hexcode: "1F647", weight: 0.6 }],
-    featured: false,
-    source: "editorial",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "oktoberfest-2026",
-    status: "approved",
-    kind: "event",
-    context: { en: "Oktoberfest" },
-    when: { from: "2026-09-19", to: "2026-10-04" },
-    regions: ["DE", "AT"],
-    locales: ["*"],
-    triggers: { en: ["oktoberfest", "prost", "cheers"] },
-    emoji: [
-      { hexcode: "1F37B", weight: 0.6 },
-      { hexcode: "1F968", weight: 0.5 },
-    ],
-    featured: true,
-    source: "calendar",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-09-01T00:00:00Z",
-  },
-  {
-    id: "halloween",
-    status: "approved",
-    kind: "seasonal",
-    context: { en: "Halloween", es: "Halloween", pt: "Halloween" },
-    when: { from: "10-15", to: "10-31", recurs: "yearly" },
-    regions: ["*"],
-    locales: ["*"],
-    triggers: { en: ["halloween", "spooky", "costume", "trick or treat", "celebrate", "party tonight"] },
-    emoji: [
-      { hexcode: "1F383", weight: 0.7 },
-      { hexcode: "1F47B", weight: 0.5 },
-    ],
-    featured: true,
-    source: "calendar",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "dia-de-muertos",
-    status: "approved",
-    kind: "seasonal",
-    context: { en: "Día de Muertos", es: "Día de Muertos" },
-    when: { from: "10-31", to: "11-02", recurs: "yearly" },
-    regions: ["MX"],
-    locales: ["*"],
-    triggers: { en: ["day of the dead"], es: ["dia de muertos", "dia de los muertos", "ofrenda"] },
-    emoji: [
-      { hexcode: "1F480", weight: 0.7 },
-      { hexcode: "1F33C", weight: 0.5 },
-    ],
-    featured: true,
-    source: "calendar",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "diwali-2026",
-    status: "approved",
-    kind: "event",
-    context: { en: "Diwali", hi: "दिवाली" },
-    when: { from: "2026-11-06", to: "2026-11-11" },
-    regions: ["*"],
-    locales: ["*"],
-    triggers: {
-      en: ["diwali", "happy diwali", "festival of lights", "celebrate"],
-      hi: ["दिवाली", "शुभ दीपावली"],
-    },
-    emoji: [
-      { hexcode: "1FA94", weight: 0.7 },
-      { hexcode: "1F386", weight: 0.45 },
-    ],
-    featured: true,
-    source: "calendar",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-  {
-    id: "ramadan-2027",
-    status: "approved",
-    kind: "event",
-    context: { en: "Ramadan and Eid", ar: "رمضان والعيد" },
-    when: { from: "2027-02-08", to: "2027-03-10" },
-    regions: ["*"],
-    locales: ["*"],
-    triggers: {
-      en: ["ramadan", "ramadan kareem", "iftar", "suhoor", "eid", "eid mubarak", "celebrate"],
-      ar: ["رمضان كريم", "عيد مبارك"],
-    },
-    emoji: [
-      { hexcode: "1F319", weight: 0.7 },
-      { hexcode: "1F54C", weight: 0.45 },
-    ],
-    featured: true,
-    source: "calendar",
-    createdBy: "ai+review",
-    reviewedBy: "preview",
-    createdAt: "2026-10-01T00:00:00Z",
-  },
-];
-
 // --- Loading ---------------------------------------------------------------------------------
 
 const ENTRIES_DIR = join(process.cwd(), "../../packages/data/culture/entries");
 
 export interface LoadedCulture {
   entries: CultureEntry[];
-  /** "preview" while the real data has not landed; the page marks itself with it. */
-  source: "data" | "preview";
+  /** "empty" when no entry is approved (or the data folder is missing); the page marks itself with it. */
+  source: "data" | "empty";
 }
 
 function isEntry(value: unknown): value is CultureEntry {
@@ -264,9 +61,9 @@ function isEntry(value: unknown): value is CultureEntry {
   );
 }
 
-/** Approved entries from the data folder, or {@link PREVIEW_ENTRIES} when there are none yet. */
+/** Approved entries from the data folder (packages/data/culture/entries). */
 export function loadCultureEntries(dir = ENTRIES_DIR): LoadedCulture {
-  if (!existsSync(dir)) return { entries: PREVIEW_ENTRIES, source: "preview" };
+  if (!existsSync(dir)) return { entries: [], source: "empty" };
   const entries = readdirSync(dir)
     .filter((name) => name.endsWith(".json"))
     .sort()
@@ -276,7 +73,7 @@ export function loadCultureEntries(dir = ENTRIES_DIR): LoadedCulture {
       return value;
     })
     .filter((entry) => entry.status === "approved");
-  return entries.length > 0 ? { entries, source: "data" } : { entries: PREVIEW_ENTRIES, source: "preview" };
+  return { entries, source: entries.length > 0 ? "data" : "empty" };
 }
 
 // --- Rules (pure) ----------------------------------------------------------------------------
