@@ -19,6 +19,12 @@ All seven arrays must exist. Use `[]` when a category does not apply. The option
 same here: the 1–3 strongest real-world phrases for this emoji (zh 😂 `笑死`), placed before every category; it is
 the only way to beat the category order and reach the core pack.
 
+## Turkish overlay
+
+Turkish lives in the combined en + tr files. Extra Turkish phrases go in `i18n/tr/<group>.json` instead: `hexcode`,
+`emoji` and only the lists you add (`top`, categories, `low`; no `desc`). The build puts them first in each tr list,
+drops the same phrase from the base block, and fails on an unknown hexcode (src/overlay.ts).
+
 ## Input you get per emoji
 
 | Field | Meaning |

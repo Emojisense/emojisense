@@ -1,6 +1,7 @@
 /**
  * Step 3: enrichment/*.json → build/validated.json + build/review.csv
  *
+ * - merge the tr overlay (enrichment/i18n/tr, overlay.ts) into the combined tr blocks
  * - normalize every alias with the shared normalizer, drop empties and duplicates
  * - drop aliases that repeat an indexed name / shortcode / keyword of the same emoji
  * - curation.json (curation.ts): remove an alias, demote it to `low`, or add a missed phrase
@@ -17,6 +18,7 @@ import { moderate } from "./blocklist.ts";
 import { capCollisions } from "./collisions.ts";
 import { curatedAdditions, curationAction, loadCurations } from "./curation.ts";
 import { COMBINED_LOCALES, LOCALE_CODES } from "./locales.ts";
+import { loadOverlay, mergeOverlay, OVERLAY_LOCALES } from "./overlay.ts";
 import { BASE_FILE, BUILD_DIR, ENRICHMENT_DIR } from "./paths.ts";
 import type { BaseEmoji, EnrichmentRecord, LocaleEnrichment, LocaleRecord, MinedAlias } from "./types.ts";
 
@@ -48,6 +50,17 @@ for (const group of groups) {
   const path = join(ENRICHMENT_DIR, `${group}.json`);
   if (!existsSync(path)) continue;
   for (const r of JSON.parse(readFileSync(path, "utf8")) as EnrichmentRecord[]) records.set(r.hexcode, r);
+}
+
+// Overlay files of combined locales (overlay.ts) join their block before anything else runs.
+const knownHexcodes = new Set(emoji.map((e) => e.hexcode));
+for (const locale of OVERLAY_LOCALES) {
+  const overlay = loadOverlay(join(ENRICHMENT_DIR, "i18n", locale), groups, knownHexcodes);
+  for (const [hexcode, extra] of overlay) {
+    const record = records.get(hexcode);
+    if (!record) throw new Error(`i18n/${locale} overlay: ${hexcode} has no record in the combined files`);
+    record[locale] = mergeOverlay(record[locale], extra);
+  }
 }
 
 /** Locales beyond the combined en + tr files: enrichment/i18n/<locale>/<group>.json. */
