@@ -35,6 +35,12 @@ export const MAX_IMAGE_BYTES = 256 * 1024;
 
 /** Revocations and plan changes reach a running isolate within this time. */
 export const KEY_CACHE_TTL_MS = 60_000;
+/**
+ * Past its TTL, a cached key still serves this long, but only while a new read is refused (miss
+ * limiter) or fails (D1). Then the call fails closed: a revoked key cannot stay valid by spending
+ * its IP's miss budget on random keys.
+ */
+export const KEY_CACHE_STALE_MS = 2 * KEY_CACHE_TTL_MS;
 /** Upper bound on cached key lookups per isolate, so a flood of random keys cannot grow memory. */
 export const KEY_CACHE_MAX_ENTRIES = 10_000;
 /** How long an isolate trusts its usage snapshot before it reads usage_monthly again. */

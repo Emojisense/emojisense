@@ -7,9 +7,9 @@ import {
   type Plan,
   planHasEnvironment,
 } from "@emojisense/platform";
-import { KEY_CACHE_MAX_ENTRIES, KEY_CACHE_TTL_MS } from "./config.ts";
 import type { Env, RateLimiter } from "./env.ts";
 import { errorResponse, json } from "./http.ts";
+import { KeyCache, type KeyCacheOptions } from "./key-cache.ts";
 import type { ApiKey, Store } from "./store.ts";
 
 export type Principal =
@@ -34,13 +34,10 @@ interface ResolvedKey {
   persistUsage: boolean;
 }
 
-export interface KeyResolverOptions {
+export interface KeyResolverOptions extends KeyCacheOptions {
   store?: Store | undefined;
   /** `DEV_KEYS`: comma-separated `key` or `key:plan` entries that need no database row. */
   devKeys?: string | undefined;
-  now?: () => number;
-  ttlMs?: number;
-  maxEntries?: number;
 }
 
 /**
@@ -79,24 +76,19 @@ export interface ResolveOptions {
 }
 
 /**
- * Key lookups, cached per isolate for `ttlMs`, unknown keys included, so repeated bad keys do
- * not reach D1. When the store fails, a stale entry is still used; with none, the caller gets
- * "unavailable".
+ * Key lookups, cached per isolate (KeyCache), unknown keys included, so repeated bad keys do
+ * not reach D1. When the store fails, a stale entry is still used until KeyCache drops it; with
+ * none, the caller gets "unavailable".
  */
 export class KeyResolver {
   readonly #store: Store | undefined;
   readonly #devKeys: Map<string, ApiKey>;
-  readonly #now: () => number;
-  readonly #ttlMs: number;
-  readonly #maxEntries: number;
-  readonly #cache = new Map<string, { key: ApiKey | undefined; expiresAt: number }>();
+  readonly #cache: KeyCache;
 
   constructor(options: KeyResolverOptions = {}) {
     this.#store = options.store;
     this.#devKeys = parseDevKeys(options.devKeys);
-    this.#now = options.now ?? Date.now;
-    this.#ttlMs = options.ttlMs ?? KEY_CACHE_TTL_MS;
-    this.#maxEntries = options.maxEntries ?? KEY_CACHE_MAX_ENTRIES;
+    this.#cache = new KeyCache(options);
   }
 
   async resolve(token: string, options: ResolveOptions = {}): Promise<KeyResolution> {
@@ -106,26 +98,17 @@ export class KeyResolver {
 
     const hash = await hashKey(token);
     const cached = this.#cache.get(hash);
-    if (cached && cached.expiresAt > this.#now()) return wrap(cached.key);
+    if (cached?.fresh) return wrap(cached.key);
     // Random keys always miss the cache: each would cost a D1 read without this gate.
     if (options.mayLookUp && !(await options.mayLookUp())) return cached ? wrap(cached.key) : "limited";
     try {
       const key = await this.#store.findKeyByHash(hash);
-      this.#remember(hash, key);
+      this.#cache.set(hash, key);
       return wrap(key);
     } catch (error) {
       console.warn(JSON.stringify({ event: "key_lookup_failed", error: (error as Error).name }));
       return cached ? wrap(cached.key) : "unavailable";
     }
-  }
-
-  #remember(hash: string, key: ApiKey | undefined) {
-    this.#cache.delete(hash);
-    if (this.#cache.size >= this.#maxEntries) {
-      // Map iteration is insertion order: drop the oldest entry.
-      this.#cache.delete(this.#cache.keys().next().value as string);
-    }
-    this.#cache.set(hash, { key, expiresAt: this.#now() + this.#ttlMs });
   }
 }
 
