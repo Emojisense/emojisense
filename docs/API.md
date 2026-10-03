@@ -50,9 +50,9 @@ it holds. The website's own publishable key is public (it ships in the site's Ja
 calls have their own per-IP limit, and the website account's plan (Pro) caps what the key can use
 in a month.
 
-**Anonymous calls never reach Workers AI.** Without a key, `/v1/search` answers from the shared
-cache when it can; on a miss it answers like an account over its limit: alias results in `hybrid`
-mode, none in `semantic` mode, `"overLimit": true`, not cached. `/v1/suggest-reactions` ranks
+**Anonymous calls never reach Workers AI.** Without a key, `/v1/search` reads no cache (the cache
+is per account) and answers like an account over its limit: alias results in `hybrid` mode, none
+in `semantic` mode, `"overLimit": true`, not cached. `/v1/suggest-reactions` ranks
 without the embedding (alias results, `"overLimit": true`). `/v1/classify-image` and
 `/v1/custom-pack` answer `401`, the tenants API `401 unauthorized`. Anonymous calls are never
 metered, get no custom emoji, and are not in any app's analytics. When a key was sent but the key
@@ -76,12 +76,14 @@ use the website's own publishable key, so they are not anonymous.
 - Each API instance counts calls in memory. Its copy of the account's total is never older than
   a minute, and each write of its counts (about every 10 s while busy) refreshes it. So calls on
   other instances can take about a minute to count, and an account can go a little over its limit.
-- **One shared cache.** The cache key is the embedded query text, locale, limit, mode, index
-  version and a hash of the served packs, vector files and engine (written by the Worker's
-  `sync` step), so a data fix under the same pack version is not answered from older entries. It has
-  no key, app or origin in it, so every app warms the same edge cache. Entries stay for 7 days.
-  Custom emoji and culture are applied after the cache, per request, and never stored in it.
-- **Over the limit, the API never fails.** A query that is in the shared cache is still answered
+- **One cache per account.** The cache key is the key's account, the embedded query text,
+  locale, limit, mode, index version and a hash of the served packs, vector files and engine
+  (written by the Worker's `sync` step), so a data fix under the same pack version is not answered
+  from older entries. It has no key, app or origin in it, so all apps of an account warm the same
+  edge cache. Accounts never share entries: a hit (`cached`, a fast answer) would tell one
+  customer what another customer's users searched. Anonymous calls read no cache. Entries stay for
+  7 days. Custom emoji and culture are applied after the cache, per request, and never stored in it.
+- **Over the limit, the API never fails.** A query that is in the account's cache is still answered
   (`"cached": true`, not metered). Other queries return `200` with `"overLimit": true` and
   alias-only (hybrid) or empty (semantic) results. The SDK keeps asking (the edge cache may know
   the next query), remembers each over-limit miss, and stays on the on-device dictionary and
@@ -125,7 +127,7 @@ use the website's own publishable key, so they are not anonymous.
 | `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below) or `culture` (not with `culture=0`; with `context` and `cultureId`, see [Culture in search](#culture-in-search)) |
 | `packVersion`, `model` | The data the Worker serves, e.g. `0.1.0` and `bge-m3@1024` (model key @ dims) |
 | `calibration` | The calibration of `model`: the score ranges over which its top match goes from rarely to usually right (PACK_FORMAT.md §10). A client that fuses `semantic` results with its own aliases uses it for `fuse` and the unsure verdict, so a model change on the server needs no client update. Absent in answers cached before 2026-10-03 |
-| `cached` | The answer came from the shared edge cache |
+| `cached` | The answer came from the edge cache of the key's account |
 | `degraded` | Workers AI was unavailable, so the results are alias-only (and not cached) |
 | `overLimit` | The key's account has used its monthly `semantic_calls` limit (see "Metering and plan limits") |
 | `aliasLocale` | The locale whose aliases were fused into the results. `null` in `semantic` mode, or when that locale's pack could not be loaded (the results are then semantic-only and not cached) |
@@ -140,7 +142,7 @@ the answer, key check included):
 | Stage | What it timed |
 | ----- | ------------- |
 | `auth` | The key check: an isolate-cached lookup, or a D1 read, plus the rate limiter |
-| `cache` | The shared edge-cache lookup. It starts before the key check and runs at the same time |
+| `cache` | The edge-cache lookup of the key's account (none without a key). It starts after the key check, at the same time as the reads below |
 | `custom` | The app's custom emoji (isolate-cached for 60 s; 0 for an app without custom emoji) |
 | `usage` | The account's usage for the plan limit, when this isolate must read it from D1 (a hit sends its answer first and counts after) |
 | `culture` | The culture file (not with `culture=0`) |

@@ -41,24 +41,25 @@ async function storeWith(overrides: Partial<Store>, hasCustomEmoji = false): Pro
   };
 }
 
-/** Warms the shared cache with a development key's search. */
+/** Warms the development key's account partition of the edge cache. */
 async function warm(h: ReturnType<typeof harness>, q: string) {
   await h.call(keyedSearch(q));
   await h.ctx.settle();
 }
 
 describe("search latency: what a request waits for", () => {
-  it("looks up the edge cache while the key is checked", async () => {
+  it("looks up the edge cache while the custom emoji are read", async () => {
     const matched = gate();
-    const seeded = await seededStore();
-    const store = await storeWith({
-      // The key lookup finishes only after the cache lookup has started.
-      findKeyByHash: async (hash) => {
+    const reader: CustomEmojiReader = {
+      // The custom emoji read finishes only after the cache lookup has started.
+      listUsable: async () => {
         await matched.opened;
-        return seeded.findKeyByHash(hash);
+        return [];
       },
-    });
-    const h = harness({ store });
+      listTenantsWithEmoji: async () => [],
+      find: async () => undefined,
+    };
+    const h = harness({ store: await storeWith({}, true), customEmoji: reader });
     const match = h.cache.match.bind(h.cache);
     h.cache.match = (request) => {
       matched.open();
@@ -67,17 +68,29 @@ describe("search latency: what a request waits for", () => {
     expect((await within(h.call(keyed("lava eruption")))).status).toBe(200);
   });
 
+  it("looks up the edge cache only for a key that passed the check: the entry is the account's", async () => {
+    const h = harness({ store: await seededStore() });
+    const match = vi.spyOn(h.cache, "match");
+    expect((await h.call(search("lava eruption", `&key=${KEYS.revoked}`))).status).toBe(401);
+    expect(match).not.toHaveBeenCalled();
+    await h.call(keyed("lava eruption"));
+    expect(new URL(match.mock.calls[0]?.[0].url ?? "").searchParams.get("account")).toBe("acc_free");
+  });
+
   it("answers a cache hit without waiting for the account's usage, and counts it after", async () => {
     const usage = gate<Record<string, number>>();
     const memory = await seededStore();
     const store = await storeWith({
-      // Only the keyed account's read is held; the development key that warms the cache reads at once.
       readAccountUsage: (account, period) =>
         account === "acc_free" ? usage.opened : memory.readAccountUsage(account, period),
       addUsage: memory.addUsage,
     });
     const h = harness({ store, now: () => NOW });
-    await warm(h, "lava eruption");
+    // Warmed by the same account in another isolate: this one's usage read stays held.
+    const warmer = harness({ store: await seededStore(), now: () => NOW });
+    await warmer.call(keyed("lava eruption"));
+    await warmer.ctx.settle();
+    for (const [url, response] of warmer.cache.store) h.cache.store.set(url, response);
     const hit = (await (await within(h.call(keyed("lava eruption")))).json()) as SearchBody;
     expect(hit.cached).toBe(true);
     usage.open({});

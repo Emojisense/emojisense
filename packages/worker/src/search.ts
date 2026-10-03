@@ -10,6 +10,7 @@ import {
   semanticStrength,
 } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
+import type { Principal } from "./auth.ts";
 import {
   BROWSER_CACHE,
   CALLER_BROWSER_CACHE,
@@ -89,12 +90,22 @@ function parseParams(url: URL) {
 type SearchParams = ReturnType<typeof parseParams>;
 
 /**
- * The shared edge-cache entry of a search. It has no key, user or origin in it: every app's
- * searches warm the same edge cache, so popular queries get faster and cheaper for everyone. `c`
- * changes with the bundled data and engine, so a hotfix under the same pack version is not
+ * The edge-cache entry of a search, in the caller's account partition. A hit shows (`cached`, the
+ * answer time) that the query was searched before, so it may only show that to the same account:
+ * a shared entry would tell any key holder what other customers' users search, which only
+ * k-anonymous aggregates may (the shards). It has no key, app, user or origin in it, so all apps
+ * of an account share it. Anonymous callers fill no cache (no model calls), so they read none.
+ * `c` changes with the bundled data and engine, so a hotfix under the same pack version is not
  * answered from week-old entries.
  */
-function cacheKeyOf(url: URL, params: SearchParams, locale: string, catalog: Catalog): Request {
+function cacheKeyOf(
+  url: URL,
+  params: SearchParams,
+  locale: string,
+  catalog: Catalog,
+  caller: Principal,
+): Request | undefined {
+  if (caller.kind !== "key") return undefined;
   return new Request(
     `${url.origin}/v1/search?${new URLSearchParams({
       q: params.embedText,
@@ -103,14 +114,15 @@ function cacheKeyOf(url: URL, params: SearchParams, locale: string, catalog: Cat
       mode: params.mode,
       v: indexTag(catalog),
       c: catalog.config.contentHash,
+      account: caller.key.accountId,
     })}`,
   );
 }
 
 /** The cache entry of a valid search request, else undefined (app.ts looks it up early). */
-export function searchCacheKey(url: URL, catalog: Catalog): Request | undefined {
+export function searchCacheKey(url: URL, catalog: Catalog, caller: Principal): Request | undefined {
   const params = parseParams(url);
-  return params.query && params.locale ? cacheKeyOf(url, params, params.locale, catalog) : undefined;
+  return params.query && params.locale ? cacheKeyOf(url, params, params.locale, catalog, caller) : undefined;
 }
 
 /**
@@ -145,10 +157,10 @@ function started<T>(promise: Promise<T>): Promise<T> {
  * GET /v1/search. Metered as semantic_calls, Cache API hits included. Every answered search of a
  * key, cached and over-limit ones included, also goes to the app's analytics (query_daily). The
  * caller's custom emoji (with `tenant=`, the tenant's too) are matched per request and merged
- * first; they never enter the shared cache. Anonymous callers never cause a model call: they get
- * shared-cache hits, else the answer of an account over its limit.
+ * first; they never enter the edge cache. Anonymous callers never cause a model call and read no
+ * cache: they get the answer of an account over its limit.
  *
- * Nothing waits for what it does not need. The edge-cache lookup starts before the key check
+ * Nothing waits for what it does not need. The edge-cache lookup starts right after the key check
  * (app.ts); the culture file, the custom emoji and the account's usage are read at the same time.
  * A hit waits for the custom emoji and the culture file only. A miss starts the embedding at
  * once, while the usage is read.
@@ -247,8 +259,8 @@ export const handleSearch: Handler = async (
   };
   const serverTiming = () => timing.header();
 
-  const cacheKey = cacheKeyOf(url, params, locale, catalog);
-  const hit = await cache.match(cacheKey);
+  const cacheKey = cacheKeyOf(url, params, locale, catalog, caller);
+  const hit = cacheKey && (await cache.match(cacheKey));
   if (hit) {
     const [cached, view] = await Promise.all([hit.json() as Promise<SearchBody>, presenter()]);
     const body: SearchBody = {
@@ -339,7 +351,7 @@ export const handleSearch: Handler = async (
   // cached a week.
   const cacheable = !ranked.degraded && !ranked.aliasUnavailable && !ranked.vectorsUnavailable;
   if (ranked.semantic) metering.count("semantic_calls");
-  if (ranked.semantic && cacheable) {
+  if (ranked.semantic && cacheable && cacheKey) {
     const stored = json(body, 200, { "Cache-Control": `public, max-age=${EDGE_CACHE_SECONDS}` });
     ctx.waitUntil(cache.put(cacheKey, stored));
   }

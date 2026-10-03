@@ -134,7 +134,8 @@ the emoji is kept. The reports go to Cloudflare Workers Analytics Engine, which 
 months. For this data, our customer is the controller.
 
 Search results are cached on Cloudflare's network for up to 7 days. The cache key holds only the
-normalized search text, the language, the number of results, the mode and the index version.
+customer account, the normalized search text, the language, the number of results, the mode and
+the index version, so one customer's cached results are never shown to another.
 
 For searches that use an API key of an app, we also count, per app, UTC day, normalized search
 text, language and country, how many searches there were and how many found nothing. Searches without a key, and

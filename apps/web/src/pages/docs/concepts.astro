@@ -83,7 +83,7 @@ const { results, confidence } = engine.search("jurassic park");
   <h2 id="caching">Caching</h2>
   <ul>
     <li><strong>Packs and shards</strong> are static files. They are free, cached for a year and never metered.</li>
-    <li><strong>One shared edge cache.</strong> The Worker caches answers in each data center for up to a week. The cache key is the query text, locale, limit, mode, index version and a hash of the served data, so a data fix is never answered from old entries. It holds no key, app or origin, so every app warms the same cache for everyone. Custom emoji and culture are added after the cache, per request, so one cached answer serves every region and day.</li>
+    <li><strong>One edge cache per account.</strong> The Worker caches answers in each data center for up to a week. The cache key is the account, query text, locale, limit, mode, index version and a hash of the served data, so a data fix is never answered from old entries. It holds no key, app or origin, so all apps of an account warm the same cache. Accounts never share entries, because a cached answer would tell one customer what another customer’s users searched. Calls without a key read no cache. Custom emoji and culture are added after the cache, per request, so one cached answer serves every region and day.</li>
     <li><strong>In the client</strong>, the semantic client keeps the last 200 answers in memory.</li>
     <li><strong>Reaction suggestions are never cached</strong>, because message text is private. For photos, only the model’s label (caption, reaction, keywords and proposed emoji) is cached, keyed by a perceptual hash of the image.</li>
   </ul>
@@ -112,12 +112,12 @@ const { results, confidence } = engine.search("jurassic park");
   </div>
   <p>Over a limit, the API does not return an error:</p>
   <ul>
-    <li>A query that is in the shared edge cache is still answered, with <code>"cached": true</code>, and is not metered.</li>
+    <li>A query that is in your account’s edge cache is still answered, with <code>"cached": true</code>, and is not metered.</li>
     <li>Any other query returns <code>200</code> with <code>"overLimit": true</code>: dictionary results only in hybrid mode, no results in semantic mode.</li>
     <li>The SDK keeps asking, because the edge cache may know the next query. It remembers each over-limit miss and stays on the device and the shards for it.</li>
   </ul>
   <Callout type="tip" title="What your users notice">
-    <p>Nothing breaks. Typing still gets instant dictionary results, and popular queries still get meaning results from the shared cache. Only rare phrases lose the meaning layer until the next month or an upgrade.</p>
+    <p>Nothing breaks. Typing still gets instant dictionary results, and popular queries still get meaning results from the shards and your account’s cache. Only other phrases lose the meaning layer until the next month or an upgrade.</p>
   </Callout>
 
   <h2 id="privacy">Privacy</h2>

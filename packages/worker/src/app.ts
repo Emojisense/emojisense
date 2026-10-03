@@ -1,6 +1,6 @@
 import type { WebhookRuntime } from "@emojisense/platform";
 import { withAnswerStore } from "./answer-store.ts";
-import { authenticate, KeyResolver } from "./auth.ts";
+import { authenticate, KeyResolver, type Principal } from "./auth.ts";
 import { type CacheLike, createMetering, type Handler } from "./context.ts";
 import {
   CULTURE_PATH_PREFIX,
@@ -50,8 +50,8 @@ export interface AppOptions {
 interface Route {
   method: "GET" | "POST";
   handle: Handler;
-  /** The shared edge-cache entry of the request, when it has one (see `lookAhead`). */
-  cacheKey?: (url: URL, catalog: Catalog) => Request | undefined;
+  /** The caller's edge-cache entry of the request, when it has one (see `lookAhead`). */
+  cacheKey?: (url: URL, catalog: Catalog, caller: Principal) => Request | undefined;
 }
 
 const ROUTES: Record<string, Route> = {
@@ -182,19 +182,19 @@ export function createApp(options: AppOptions) {
 
       const { resolver, meter, queryStats, custom } = servicesFor(env);
       const timing = new ServerTiming();
-      // The edge-cache lookup needs no key: it runs while the key is checked, and a refused key
-      // never sees its answer.
-      const early = route.cacheKey?.(url, catalog);
+      const authStarted = Date.now();
+      const principal = await authenticate(request, url, env, resolver);
+      timing.add("auth", Date.now() - authStarted);
+      if (principal instanceof Response) return principal;
+      // The edge cache is partitioned by account, so its lookup waits for the key check. It then
+      // runs while the route reads the rest (custom emoji, culture, usage).
+      const early = route.cacheKey?.(url, catalog, principal);
       // Search answers may also be shared across data centers through R2 (off by default).
       const shared =
         route.cacheKey && env.ANSWER_CACHE_ENABLED === "true" && env.SHARDS
           ? withAnswerStore(options.cache(), env.SHARDS, ctx)
           : options.cache();
       const cache = early ? lookAhead(shared, early, timing) : shared;
-      const authStarted = Date.now();
-      const principal = await authenticate(request, url, env, resolver);
-      timing.add("auth", Date.now() - authStarted);
-      if (principal instanceof Response) return principal;
       const metering = createMetering(principal, meter, queryStats, ctx);
       return route.handle(request, env, ctx, { catalog, cache, custom, timing }, metering, principal);
     },
@@ -208,7 +208,7 @@ export function createApp(options: AppOptions) {
 function lookAhead(cache: CacheLike, key: Request, timing: ServerTiming): CacheLike {
   const started = Date.now();
   const pending = cache.match(key).finally(() => timing.add("cache", Date.now() - started));
-  // Unused when the key check refuses the request: its failure must not go unhandled.
+  // Unused when the route answers before its lookup (a bad parameter): no unhandled failure.
   pending.catch(() => {});
   return {
     match: (request) => (request.url === key.url ? pending : cache.match(request)),

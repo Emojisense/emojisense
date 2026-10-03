@@ -83,16 +83,27 @@ describe("GET /v1/search", () => {
     }
   });
 
-  it("serves the second identical query from cache, ignoring the key, case and spacing", async () => {
+  it("serves the second identical query of an account from cache, ignoring case and spacing", async () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
     await h.call(search("Lava  eruption", "&key=pk_test"));
     await h.ctx.settle();
-    const second = await h.call(search("LAVA eruption"));
+    const second = await h.call(search("LAVA eruption", "&key=pk_test"));
     expect(((await second.json()) as SearchBody).cached).toBe(true);
     expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
-  it("keys the cache by the data's content hash, never by the key, user or origin", async () => {
+  it("never answers one account from another account's cache entries", async () => {
+    // Two development keys: two accounts. A hit would tell the second that the first searched it.
+    const h = harness({ env: { DEV_KEYS: "pk_test,pk_other" } });
+    await h.call(search("lava eruption", "&key=pk_test"));
+    await h.ctx.settle();
+    const res = await h.call(search("lava eruption", "&key=pk_other"));
+    expect(((await res.json()) as SearchBody).cached).toBe(false);
+    expect(res.headers.get("server-timing")).toMatch(/(^|, )embed;dur=/);
+    expect(h.ai).toHaveBeenCalledTimes(2);
+  });
+
+  it("keys the cache by account and the data's content hash, never by the key, user or origin", async () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
     await h.call(
       search("lava eruption", "&key=pk_test", {
@@ -109,11 +120,12 @@ describe("GET /v1/search", () => {
       mode: "hybrid",
       v: "test:bge-m3@8",
       c: "c0ffee",
+      account: "dev:0",
     });
 
     const hotfix = harness({ catalog: { ...catalog, config: { ...catalog.config, contentHash: "beef" } } });
     hotfix.cache.store.set(key.href, h.cache.store.get(key.href) as Response);
-    const fresh = await hotfix.call(search("lava eruption"));
+    const fresh = await hotfix.call(keyedSearch("lava eruption"));
     expect(((await fresh.json()) as SearchBody).cached).toBe(false);
   });
 
@@ -203,14 +215,15 @@ describe("anonymous search", () => {
     expect(h.ai).not.toHaveBeenCalled();
   });
 
-  it("is still served from the shared cache that keyed callers fill", async () => {
+  it("is never served from the cache that keyed callers fill", async () => {
     const h = harness();
     await h.call(keyedSearch("lava eruption"));
     await h.ctx.settle();
     const res = await h.call(search("lava eruption"));
     const body = (await res.json()) as SearchBody;
-    expect(body).toMatchObject({ cached: true, overLimit: false, degraded: false });
-    expect(body.results.some((r) => r.source === "semantic")).toBe(true);
+    expect(body).toMatchObject({ cached: false, overLimit: true });
+    expect(body.results.every((r) => r.source === "alias")).toBe(true);
+    expect(res.headers.get("server-timing")).not.toMatch(/(^|, )cache;dur=/);
     expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
@@ -230,7 +243,7 @@ describe("search analytics", () => {
     const h = harness({ env: { DEV_KEYS: "pk_test" } });
     await h.call(search(" Rocket ", "&key=pk_test", { headers: { "cf-connecting-ip": "203.0.113.9" } }));
     await h.ctx.settle();
-    await h.call(search("rocket"));
+    await h.call(search("rocket", "&key=pk_test"));
     await h.call(keyedSearch("lava eruption", "&mode=semantic"));
     await h.call(search("volcano"));
     const points = h.events.mock.calls.map(([point]) => point);

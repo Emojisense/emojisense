@@ -226,15 +226,16 @@ authenticate: key → app + plan, or anonymous ─▶ rate limit (120/min key+IP
 parse q (embeddingText), locale (11 + BCP 47 → else 400), limit, mode, culture, region
    (region=auto → request.cf.country; the country is never part of the cache key)
    ▼
-over the account's limit? ─▶ the shared cache may still answer; else alias-only, overLimit: true
+over the account's limit? ─▶ the account's cache may still answer; else alias-only, overLimit: true
    ▼
-Cache API (key: text, locale, limit, mode, index tag, content hash; no key/app/origin)
+Cache API (key: account, text, locale, limit, mode, index tag, content hash; no key/app/origin;
+   │       anonymous: no cache)
    │ miss
    ▼
 alias engine of the locale (en bundled; others, tr included: core+ext packs via ASSETS, LRU 2)
    + embed (Workers AI) ─▶ searchVectorSets(shared index, locale index via ASSETS, LRU 2)
    ▼ fuse ─▶ assessConfidence (confidence, unsure)
-   ▼ store in the shared cache (only when nothing degraded or failed to load)
+   ▼ store in the account's cache (only when nothing degraded or failed to load)
    ▼
 per request, never cached: culture (unless culture=0; day, region) ─▶ custom emoji first (key's app, tenant)
    ▼

@@ -6,7 +6,7 @@ The Emojisense Search API: a Cloudflare Worker, deployed at `https://api.emojise
 
 | Route | Runs | Metered as |
 | ----- | ---- | ---------- |
-| `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API; the culture layer after the cache, unless `culture=0` (`region`, `day`; `src/culture.ts`) | `semantic_calls` (cache hits too) |
+| `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API per account; the culture layer after the cache, unless `culture=0` (`region`, `day`; `src/culture.ts`) | `semantic_calls` (cache hits too) |
 | `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), then culture triggers inside the message after the top reaction (unless `"culture": false`), no cache | `semantic_calls` |
 | `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached (with `X-Image-Hash`) by the SHA-256 of the bytes | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API; a key on a plan with hosted sets (`src/sets/access.ts`), none for `FIRST_PARTY_ORIGINS` | — |
@@ -115,7 +115,7 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | `?key=pk_live_…` must match the key's allowed origins (empty list = any) → else 403 | `src/auth.ts` |
 | `Authorization: Bearer sk_live_…` only; with an `Origin` header or in the URL → 403 | `src/auth.ts` |
 | Unknown or revoked key → 401. No key → anonymous: not metered, no custom emoji or analytics | `src/auth.ts`, `src/context.ts` |
-| Anonymous callers never call Workers AI: search gets cache hits, else the over-limit answer; reactions rank without the embedding; classify-image and custom-pack → 401 | handlers |
+| Anonymous callers never call Workers AI: search gets the over-limit answer (no cache: it is per account); reactions rank without the embedding; classify-image and custom-pack → 401 | handlers |
 | Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Sets, custom images, health and static files are not limited per call. | `src/auth.ts`, `wrangler.jsonc` |
 | Key lookups are cached per isolate for 60 s (unknown keys too). A revocation takes ≤ 60 s. | `src/config.ts` |
 | Lookups that miss that cache (a D1 read each) are limited per IP (`KEY_MISS_LIMITER`, 60/min) → 429; a stale entry still serves | `src/auth.ts` |

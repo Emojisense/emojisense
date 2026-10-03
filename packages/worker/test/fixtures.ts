@@ -272,7 +272,7 @@ export const API = "https://api.test";
 
 /**
  * The harness's development key (`DEV_KEYS` unless a test sets its own): a caller with a model
- * budget. Anonymous callers get cache hits and alias answers only.
+ * budget. Anonymous callers get alias answers only.
  */
 export const TEST_KEY = "pk_test";
 /** `?key=` for a request with the harness's development key. */

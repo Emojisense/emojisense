@@ -87,18 +87,30 @@ describe("over the plan limit", () => {
     expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
-  it("still serves the shared cache, without counting it", async () => {
-    const { store, h } = await setup(FREE_LIMIT);
-    // Another app (here a development key) puts the answer in the shared cache first.
-    await h.call(keyedSearch("lava eruption"));
+  it("still serves the account's own cached answers, without counting them, and no others", async () => {
+    let now = NOW;
+    const store = await seededStore();
+    const h = harness({ store, now: () => now });
+    await h.call(keyed("lava eruption"));
+    // Another account (here a development key) caches a query this account never searched.
+    await h.call(keyedSearch("volcano eruption"));
     await h.ctx.settle();
-    const res = await h.call(keyed("lava eruption"));
-    const body = (await res.json()) as SearchBody;
-    expect(body).toMatchObject({ cached: true, overLimit: false, degraded: false });
-    expect(body.results.some((r) => r.source === "semantic")).toBe(true);
-    expect(h.ai).toHaveBeenCalledTimes(1);
     await h.app.meter?.flush();
-    expect(store.usageOf("app_free", PERIOD, "semantic_calls")).toBe(FREE_LIMIT);
+    await store.addUsage([
+      { appId: "app_free", period: PERIOD, metric: "semantic_calls", count: FREE_LIMIT },
+    ]);
+    // The isolate reads the account's usage again: it is now over the limit.
+    now += 2 * 60_000;
+    const hit = (await (await h.call(keyed("lava eruption"))).json()) as SearchBody;
+    expect(hit).toMatchObject({ cached: true, overLimit: false, degraded: false });
+    expect(hit.results.some((r) => r.source === "semantic")).toBe(true);
+    await h.ctx.settle();
+    const other = (await (await h.call(keyed("volcano eruption"))).json()) as SearchBody;
+    expect(other).toMatchObject({ cached: false, overLimit: true });
+    expect(h.ai).toHaveBeenCalledTimes(2);
+    await h.ctx.settle();
+    await h.app.meter?.flush();
+    expect(store.usageOf("app_free", PERIOD, "semantic_calls")).toBe(FREE_LIMIT + 1);
   });
 
   it("applies the limit of the key's plan", async () => {
@@ -211,15 +223,23 @@ describe("limits are per account", () => {
     expect(store.usageOf("app_free", PERIOD, "semantic_calls")).toBe(1);
   });
 
-  it("still serves cached answers over the account limit, without counting them", async () => {
-    const store = await account({ app_pro: PRO.semantic_calls });
-    await h.call(keyedSearch("lava eruption"));
+  it("shares cached answers between the apps of an account, also over its limit, uncounted", async () => {
+    let now = NOW;
+    const store = await seededStore();
+    h = harness({ store, now: () => now });
+    await searchAs(KEYS.pro, "lava eruption");
     await h.ctx.settle();
+    await h.app.meter?.flush();
+    await store.addUsage([
+      { appId: "app_pro", period: PERIOD, metric: "semantic_calls", count: PRO.semantic_calls },
+    ]);
+    now += 2 * 60_000;
     const hit = await searchAs(KEYS.proSibling, "lava eruption");
     expect(hit).toMatchObject({ cached: true, overLimit: false, degraded: false });
     expect(hit.results.some((r) => r.source === "semantic")).toBe(true);
+    await h.ctx.settle();
     await h.app.meter?.flush();
     expect(store.usageOf("app_pro_2", PERIOD, "semantic_calls")).toBe(0);
-    expect(store.usageOf("app_pro", PERIOD, "semantic_calls")).toBe(PRO.semantic_calls);
+    expect(store.usageOf("app_pro", PERIOD, "semantic_calls")).toBe(PRO.semantic_calls + 1);
   });
 });

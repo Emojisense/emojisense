@@ -70,7 +70,7 @@ const goat = shown("greatest of all time", { part: "full", locale: "en", prefix:
   <ul>
     <li><code>search_emoji</code> calls <code>GET /v1/search</code> in semantic mode only when the offline engine is unsure, with the same rule as the browser SDK. Confident queries cost nothing.</li>
     <li><code>emoji_for_text</code> and <code>suggest_reactions</code> send the text, at most 256 characters, to <code>POST /v1/suggest-reactions</code>. Message text never goes to the search endpoint, because the reactions endpoint never logs or caches text.</li>
-    <li>On a network error, a 4-second timeout, an HTTP error or <code>overLimit</code>, a tool returns the offline results. After <code>overLimit</code>, the server keeps asking: the shared edge cache still answers popular queries.</li>
+    <li>On a network error, a 4-second timeout, an HTTP error or <code>overLimit</code>, a tool returns the offline results. After <code>overLimit</code>, the server keeps asking: the account’s edge cache still answers the queries it holds.</li>
   </ul>
   <Callout type="warning" title="Keep the secret key secret">
     <p>The server sends the key as <code>Authorization: Bearer</code>. Keep it in your client’s config, out of repositories and away from browsers.</p>
