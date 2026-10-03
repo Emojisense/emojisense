@@ -16,7 +16,6 @@ import {
   isEmojiSet,
   loadCulture,
   loadCustomPack,
-  loadPacks,
   localDay,
   type Pack,
   relevantNow,
@@ -27,6 +26,7 @@ import {
   SKIN_TONES,
   type SkinTone,
 } from "emojisense";
+import { createEngineLoader, type EngineLoader } from "emojisense/autocomplete";
 import { createStatsReporter, type StatsReporter } from "emojisense/stats";
 import { type GridLayout, isGridKey, layoutRows, moveActive } from "./grid.js";
 import { styles } from "./styles.js";
@@ -82,7 +82,6 @@ const DEFAULT_COLUMNS = 9;
 const MAX_COLUMNS = 24;
 const DEFAULT_PLACEHOLDER = "Search emoji…";
 const RELEVANT_NOW_LABEL = "Relevant now";
-const IDLE_TIMEOUT_MS = 2000;
 
 const TEMPLATE = `<style>${styles}</style>
 <div class="root" part="root">
@@ -173,8 +172,8 @@ export class EmojisensePickerElement extends Base {
   #sessionStatus: SessionStatus = "idle";
   #status: PickerStatus = "idle";
   #packs: Pack[] | undefined;
-  /** The locale packs in the engine; the custom pack is added on top. */
-  #basePacks: Pack[] | undefined;
+  /** The locale packs in the engine, and their shared index; the custom pack is added on top. */
+  #base: { packs: readonly Pack[]; engine?: AliasEngine } | undefined;
   #customPack: Pack | undefined;
   #customKey: string | undefined;
   #customLoading: AbortController | undefined;
@@ -185,8 +184,9 @@ export class EmojisensePickerElement extends Base {
   #stats: { key: string; reporter: StatsReporter } | undefined;
   /** Kept across engine rebuilds (the ext pack, custom emoji), so loaded shards stay loaded. */
   #semantic: { key: string; provider: SemanticProvider | undefined } | undefined;
-  #loading: AbortController | undefined;
-  #cancelIdle: (() => void) | undefined;
+  /** The shared pack loader of `pack-url` and `locale`, while connected. */
+  #loader: EngineLoader | undefined;
+  #stopLoader: (() => void) | undefined;
   #scheduled = false;
   /** Set as a property, it wins over `culture-url`. */
   #cultureOverride: Culture | undefined;
@@ -407,11 +407,11 @@ export class EmojisensePickerElement extends Base {
   }
 
   disconnectedCallback(): void {
-    if (this.#status === "loading") this.#packKey = undefined;
+    // Reconnecting loads again after a failure, and picks up an engine that arrived meanwhile.
+    if (this.#status !== "ready" || this.#loader) this.#packKey = undefined;
     if (this.#cultureLoading) this.#cultureKey = undefined;
     this.#cultureLoading?.abort();
-    this.#loading?.abort();
-    this.#cancelIdle?.();
+    this.#stopLoading();
     if (this.#customLoading) {
       // Reconnecting starts the custom pack request again.
       this.#customLoading.abort();
@@ -467,8 +467,10 @@ export class EmojisensePickerElement extends Base {
     const packKey = this.#packs ?? `${this.packUrl}\n${this.locale}`;
     if (packKey !== this.#packKey) {
       this.#packKey = packKey;
-      if (this.#packs) this.#usePacks(this.#packs, true);
-      else if (this.packUrl) void this.#load(this.packUrl, this.locale);
+      if (this.#packs) {
+        this.#stopLoading();
+        this.#usePacks({ packs: this.#packs }, true);
+      } else if (this.packUrl) this.#load(this.packUrl, this.locale);
       else this.#reset();
       return;
     }
@@ -532,39 +534,49 @@ export class EmojisensePickerElement extends Base {
     this.#search(this.#input.value);
   }
 
-  async #load(baseUrl: string, locale: string) {
-    this.#loading?.abort();
-    this.#cancelIdle?.();
-    const controller = new AbortController();
-    this.#loading = controller;
-    const { signal } = controller;
-    this.#setStatus("loading");
-    try {
-      const core = await loadPacks({ baseUrl, locales: [locale], signal });
-      if (signal.aborted) return;
-      this.#usePacks(core, true);
-      // The extension (more aliases and typos) is about twice the size of the core pack.
-      this.#cancelIdle = whenIdle(() => {
-        loadPacks({ baseUrl, locales: [locale], signal, part: "ext" }).then(
-          (ext) => {
-            if (!signal.aborted) this.#usePacks([...core, ...ext], false);
-          },
-          () => {
-            // Optional upgrade: the core packs keep working.
-          },
-        );
-      });
-    } catch {
-      if (!signal.aborted) this.#setStatus("error");
+  /**
+   * The packs come from the page's shared loader: every picker with the same `pack-url` and
+   * `locale` shares one download and one index, so a picker that opens again is ready at once.
+   */
+  #load(packUrl: string, locale: string) {
+    this.#stopLoading();
+    // The element loads its culture file itself (`culture-url`, or the `culture` property).
+    const loader = createEngineLoader({ packUrl, locale, cultureUrl: false });
+    this.#loader = loader;
+    const use = (renderBrowse: boolean) => {
+      const engine = loader.current();
+      if (this.#loader !== loader || !engine || engine === this.#base?.engine) return;
+      this.#usePacks({ packs: loader.packs(), engine }, renderBrowse);
+    };
+    // A later engine (the extension packs) keeps the browse view as it is.
+    this.#stopLoader = loader.subscribe(() => use(this.#status !== "ready"));
+    if (loader.current()) {
+      use(true);
+      return;
     }
+    this.#setStatus("loading");
+    loader.load().then(
+      () => use(true),
+      () => {
+        if (this.#loader === loader) this.#setStatus("error");
+      },
+    );
   }
 
-  #usePacks(packs: Pack[], renderBrowse: boolean) {
-    this.#basePacks = packs;
-    this.#engine = createEngine(
-      this.#customPack ? [...packs, this.#customPack] : packs,
-      this.#culture ? { culture: this.#culture } : {},
-    );
+  #stopLoading() {
+    this.#stopLoader?.();
+    this.#stopLoader = undefined;
+    this.#loader = undefined;
+  }
+
+  #usePacks(base: { packs: readonly Pack[]; engine?: AliasEngine }, renderBrowse: boolean) {
+    this.#base = base;
+    const culture = this.#culture ? { culture: this.#culture } : {};
+    this.#engine = this.#customPack
+      ? createEngine([...base.packs, this.#customPack], culture)
+      : base.engine
+        ? base.engine.withCulture(this.#culture)
+        : createEngine([...base.packs], culture);
     this.#status = "ready";
     if (renderBrowse) this.#renderBrowse();
     this.#sessionKey = undefined;
@@ -585,7 +597,7 @@ export class EmojisensePickerElement extends Base {
     this.#customLoading = undefined;
     const use = (pack: Pack | undefined) => {
       this.#customPack = pack;
-      if (this.#basePacks) this.#usePacks(this.#basePacks, true);
+      if (this.#base) this.#usePacks(this.#base, true);
     };
     if (!enabled) {
       if (this.#customPack) use(undefined);
@@ -611,8 +623,8 @@ export class EmojisensePickerElement extends Base {
   }
 
   #reset() {
-    this.#loading?.abort();
-    this.#basePacks = undefined;
+    this.#stopLoading();
+    this.#base = undefined;
     this.#session?.dispose();
     this.#session = undefined;
     this.#engine = undefined;
@@ -646,7 +658,8 @@ export class EmojisensePickerElement extends Base {
       engine,
       semantic: this.#semantic.provider,
       locale: this.locale,
-      ...(region ? { region } : {}),
+      // The region is resolved here; "" tells the session not to use the device's region.
+      region: region ?? "",
       onChange: (state) => {
         this.#showResults(state);
         this.#stats?.reporter.observe(state);
@@ -958,13 +971,4 @@ function element(tag: string, attributes: Record<string, string>): HTMLElement {
 function optionIndex(event: Event): number {
   const option = (event.target as Element | null)?.closest?.("[role=option]");
   return option instanceof HTMLElement ? Number(option.dataset.index) : -1;
-}
-
-function whenIdle(callback: () => void): () => void {
-  if (typeof requestIdleCallback === "function") {
-    const handle = requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS });
-    return () => cancelIdleCallback(handle);
-  }
-  const handle = setTimeout(callback, 1);
-  return () => clearTimeout(handle);
 }

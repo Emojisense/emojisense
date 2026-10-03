@@ -20,7 +20,7 @@ npm install @emojisense/web-component
 import "@emojisense/web-component"; // registers <emojisense-picker>
 ```
 
-Without a bundler, load the self-contained build (`dist/emojisense-picker.js`, about 22 KB gz with
+Without a bundler, load the self-contained build (`dist/emojisense-picker.js`, about 23 KB gz with
 the search engine) from your own server or from a CDN that mirrors npm:
 
 ```html
@@ -52,7 +52,7 @@ Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integr
 
 | Attribute | Property | Default | Meaning |
 | --------- | -------- | ------- | ------- |
-| `pack-url` | `packUrl` | — | Pack version directory. The core pack renders first. The extension pack loads when the browser is idle. |
+| `pack-url` | `packUrl` | — | Pack version directory. The core pack renders first. The extension pack downloads when the browser is idle, and its index is built in a pause in typing. |
 | `shards-url` | `shardsUrl` | — | Precomputed results (layer 2). Free static files, asked before the API. |
 | `endpoint` | `endpoint` | — | Semantic API (layer 3). Omit `shards-url` and `endpoint` for fully offline search. |
 | `stats-url` | `statsUrl` | — | Report how searches end and which results are picked (`POST /v1/events`), e.g. `https://stats.emojisense.com`. Off when omitted. |
@@ -70,6 +70,21 @@ Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integr
 | — | `packs` | — | Pack objects to use instead of fetching `pack-url` (bundled or offline apps) |
 | — | `query` | `""` | Read or set the search text |
 | — | `status`, `engine` | — | `idle`, `loading`, `ready` or `error`; the alias engine once ready |
+
+**When the packs load:** a picker starts loading when it is added to the page. Add it when your
+popover opens to load on open. Pickers with the same `pack-url` and `locale` share one download
+and one index, so a picker that opens again is ready at once. To start a little earlier, preload
+when the pointer moves onto or focus enters your emoji button:
+
+```js
+import { preloadEmojisense } from "@emojisense/web-component";
+
+const warm = () => preloadEmojisense({ packUrl: "https://api.emojisense.com/v1/pack/0.1.0" });
+button.addEventListener("pointerenter", warm, { once: true });
+button.addEventListener("focus", warm, { once: true });
+```
+
+A query typed while the packs load shows "Loading…" and runs as soon as they arrive.
 
 **Event** `emoji-select` (bubbles, composed): `detail = { emoji, label, id }`. `emoji` has the skin
 tone applied. `id` is the Emojibase hexcode of the base emoji.

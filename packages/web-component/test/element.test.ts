@@ -241,12 +241,11 @@ describe("<emojisense-picker>", () => {
     expect(picker.publishableKey).toBe("pk_test_2");
   });
 
-  it("loads the extension packs when idle", async () => {
+  it("adds the extension packs in a pause in typing, and runs the open query again", async () => {
     const picker = await mount();
-    await vi.waitFor(() => {
-      type(picker, "to infinity and beyond");
-      expect(results(picker)[0]?.textContent).toBe("🚀");
-    });
+    type(picker, "to infinity and beyond");
+    expect(results(picker)[0]?.textContent).not.toBe("🚀");
+    await vi.waitFor(() => expect(results(picker)[0]?.textContent).toBe("🚀"), { timeout: 5000 });
   });
 
   it("reports a load error", async () => {
