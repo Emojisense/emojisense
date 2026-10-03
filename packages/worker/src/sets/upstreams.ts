@@ -1,3 +1,4 @@
+import { NOTO_EMOJI, notoEmojiPath } from "@emojisense/platform/noto-emoji";
 import type { HostedEmojiSet, SkinTone } from "emojisense";
 import type { SetEmoji } from "./catalog.ts";
 
@@ -22,12 +23,8 @@ export const UPSTREAMS: Record<HostedEmojiSet, Upstream> = {
     release: "v17.0.3",
     license: { spdx: "CC-BY-4.0", url: "https://creativecommons.org/licenses/by/4.0/" },
   },
-  noto: {
-    repo: "googlefonts/noto-emoji",
-    commit: "e20cbc2bbec1926686be9f9bee7d1d2cfa1fea0e",
-    release: "v2026-09-24-unicode18_0",
-    license: { spdx: "Apache-2.0", url: "https://www.apache.org/licenses/LICENSE-2.0" },
-  },
+  // Shared with the website's share cards.
+  noto: NOTO_EMOJI,
   fluent: {
     repo: "microsoft/fluentui-emoji",
     commit: "1ffb34c752ecf5d402f04cfb4b392c77f57c54bc",
@@ -70,9 +67,6 @@ export interface FluentData extends SetData {
 
 const ZERO_WIDTH_JOINER = 0x200d;
 const VARIATION_SELECTOR_16 = 0xfe0f;
-const BLACK_FLAG = 0x1f3f4;
-const isRegionalIndicator = (codePoint: number) => codePoint >= 0x1f1e6 && codePoint <= 0x1f1ff;
-const isTag = (codePoint: number) => codePoint >= 0xe0020 && codePoint <= 0xe007f;
 const codePointsOf = (emoji: string) => Array.from(emoji, (char) => char.codePointAt(0) as number);
 
 /** Twemoji's own rule (`grabTheRightIcon`): U+FE0F stays only in ZWJ sequences; lowercase hex. */
@@ -84,19 +78,8 @@ export function twemojiPath(emoji: string): string {
   return `assets/svg/${kept.map((codePoint) => codePoint.toString(16)).join("-")}.svg`;
 }
 
-/**
- * Noto names files `emoji_u<hex>_<hex>.svg` without U+FE0F. Country and subdivision flags are the
- * waved flags the Noto font uses; everything else is in `2D/svg`.
- */
-export function notoPath(emoji: string): string {
-  const codePoints = codePointsOf(emoji).filter((codePoint) => codePoint !== VARIATION_SELECTOR_16);
-  const name = `emoji_u${codePoints.map((codePoint) => codePoint.toString(16).padStart(4, "0")).join("_")}.svg`;
-  const [first = 0, second = 0] = codePoints;
-  const flag =
-    (codePoints.length === 2 && isRegionalIndicator(first) && isRegionalIndicator(second)) ||
-    (first === BLACK_FLAG && isTag(second));
-  return flag ? `third_party/region-flags/waved-svg/${name}` : `2D/svg/${name}`;
-}
+/** Noto's naming rule; the website's share cards use the same one. */
+export const notoPath = notoEmojiPath;
 
 const FLUENT_TONES: Record<Exclude<SkinTone, "none">, string> = {
   light: "Light",

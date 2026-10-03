@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./noto-emoji": {
+      "types": "./dist/noto-emoji.d.ts",
+      "default": "./dist/noto-emoji.js"
     }
   },
   "scripts": {
