@@ -44,8 +44,8 @@ const { values: args } = parseArgs({
   args: process.argv.slice(2).filter((a) => a !== "--"),
   options: { env: { type: "string" }, dir: { type: "string" } },
 });
-const binding = { dev: "CDN_DEV", production: "CDN_PRODUCTION" }[args.env ?? ""];
-if (!binding) {
+const environment = args.env === "dev" || args.env === "production" ? args.env : undefined;
+if (!environment) {
   console.error("upload-shards: pass --env dev or --env production");
   process.exit(2);
 }
@@ -63,11 +63,12 @@ const FILE_CACHE = "public, max-age=31536000, immutable";
 const INDEX_CACHE = "public, max-age=3600";
 
 const { getPlatformProxy } = await import("wrangler");
-const proxy = await getPlatformProxy<Record<string, Bucket>>({
+const proxy = await getPlatformProxy<{ CDN: Bucket }>({
   configPath: join(DATA_ROOT, "wrangler.upload.jsonc"),
+  environment,
 });
 try {
-  const bucket = proxy.env[binding] as Bucket;
+  const bucket = proxy.env.CDN;
   const version = cdnVersionDir(manifest.packVersion);
 
   const existing = new Set<string>();
