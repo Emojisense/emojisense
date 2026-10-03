@@ -58,7 +58,8 @@ export function pickerAttributes(config: ClientConfig, placeholder?: string): Re
   };
   if (config.endpoint) attributes.endpoint = config.endpoint;
   if (config.endpoint && config.key) attributes["publishable-key"] = config.key;
-  if (config.cultureUrl) attributes["culture-url"] = config.cultureUrl;
+  // The picker loads the file next to pack-url by default: "off" keeps the admin's choice.
+  attributes["culture-url"] = config.cultureUrl || "off";
   if (placeholder) attributes.placeholder = placeholder;
   return attributes;
 }

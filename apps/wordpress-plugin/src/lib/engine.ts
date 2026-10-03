@@ -21,7 +21,8 @@ export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
   return createPackLoader({
     packUrl: config.packUrl,
     locale: config.locale,
-    cultureUrl: config.cultureUrl || undefined,
+    // "" is the admin's "off": the loader's default would load the file next to the packs.
+    cultureUrl: config.cultureUrl || false,
     ...(options.fetch ? { fetch: options.fetch } : {}),
     ...(options.whenIdle ? { whenIdle: options.whenIdle } : {}),
   });

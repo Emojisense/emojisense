@@ -78,7 +78,7 @@ export function createEmojisense(options: EmojisenseDiscourseOptions): Emojisens
   const loader = createEngineLoader({
     packUrl: FILE_BASE,
     locale,
-    cultureUrl: options.culture === false ? undefined : FILE_BASE,
+    cultureUrl: options.culture === false ? false : FILE_BASE,
     extraPacks: custom ? [custom] : [],
     fetch: fileFetch,
     ...(options.whenIdle ? { whenIdle: options.whenIdle } : {}),

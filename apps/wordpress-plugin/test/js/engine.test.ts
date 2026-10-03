@@ -49,6 +49,14 @@ describe("createEngineLoader", () => {
     await expect(loader.load()).resolves.toBeDefined();
   });
 
+  it("loads no culture file when the site turned culture off, also from the API's packs", async () => {
+    const { fetchImpl, requests } = packFetch();
+    const config = { ...base, packUrl: "https://api.emojisense.com/v1/pack/0.1.0", cultureUrl: "" };
+    const loader = createEngineLoader({ config, fetch: fetchImpl, whenIdle: () => {} });
+    expect((await loader.load()).culture).toBeUndefined();
+    expect(requests.some((url) => url.includes("/culture/"))).toBe(false);
+  });
+
   it("works without the culture file", async () => {
     const { fetchImpl } = packFetch();
     const config = { ...base, cultureUrl: "https://site.test/missing" };
@@ -100,6 +108,7 @@ describe("pickerAttributes", () => {
       "pack-url": base.packUrl,
       locale: "tr",
       "emoji-set": "native",
+      "culture-url": "off",
       placeholder: "Search",
     });
   });
