@@ -60,9 +60,41 @@ public final class AliasEngine: @unchecked Sendable {
     index.entryIndexById[id].map { Double(index.entryPopularity[$0]) / 100 } ?? 0
   }
 
+  /// The search of the query as typed, merged with the search of its split word joined back
+  /// (`joinedQuery`) at `joinedWordFactor`: each emoji keeps its better score (PACK_FORMAT.md §4).
   public func search(_ query: String, options: AliasSearchOptions = AliasSearchOptions())
     -> AliasSearchOutput
   {
+    let output = searchAsTyped(query, options: options)
+    guard let joined = joinedQuery(query, tokens: output.tokens) else { return output }
+    let other = searchAsTyped(joined, options: options)
+    var merged = output.results
+    var positionById = Dictionary(
+      uniqueKeysWithValues: merged.enumerated().map { ($0.element.id, $0.offset) })
+    for var result in other.results {
+      result.score = (result.score * Scoring.joinedWordFactor * 1000).rounded() / 1000
+      if let position = positionById[result.id] {
+        if result.score > merged[position].score { merged[position] = result }
+      } else {
+        positionById[result.id] = merged.count
+        merged.append(result)
+      }
+    }
+    // Stable: equal scores keep the as-typed order, then the joined search's.
+    let results = merged.indices
+      .sorted {
+        merged[$0].score != merged[$1].score ? merged[$0].score > merged[$1].score : $0 < $1
+      }
+      .prefix(max(0, options.limit))
+      .map { merged[$0] }
+    var combined = output
+    combined.results = results
+    combined.confidence = results.first?.score ?? 0
+    combined.coverage = max(output.coverage, other.coverage)
+    return combined
+  }
+
+  private func searchAsTyped(_ query: String, options: AliasSearchOptions) -> AliasSearchOutput {
     let normalized = Normalizer.normalize(query)
     let lastIsPrefix = options.prefix && !JavaScriptWhitespace.endsWithWhitespace(query)
     let functionWords = FunctionWords.active(forLocale: options.locale ?? index.primaryLocale)
@@ -283,6 +315,24 @@ public final class AliasEngine: @unchecked Sendable {
 
   // MARK: Query tokens
 
+  /// The query with its first pair of neighbouring tokens that together are a vocabulary word
+  /// joined into it ("hallo ween" → "halloween"), else `nil`. Pieces of an unspaced script are
+  /// left alone. Lengths are UTF-16 code units, as in the reference.
+  private func joinedQuery(_ query: String, tokens: [String]) -> String? {
+    for position in tokens.indices.dropLast() {
+      let (left, right) = (tokens[position], tokens[position + 1])
+      let word = left + right
+      if left.utf16.count < 2 || right.utf16.count < 2 || UnspacedScript.contains(word) { continue }
+      if index.tokenIds[UTF16Text(word.utf16)] == nil { continue }
+      var joined = tokens
+      joined.replaceSubrange(position...position + 1, with: [word])
+      let text = joined.joined(separator: " ")
+      // A trailing space still means the last word is finished.
+      return JavaScriptWhitespace.endsWithWhitespace(query) ? text + " " : text
+    }
+    return nil
+  }
+
   /// Query tokens (PACK_FORMAT.md §4). A token of an unspaced script that is not in the
   /// vocabulary (and, while typing, is not the start of one) is split into the vocabulary tokens
   /// and function words it holds.
@@ -369,6 +419,7 @@ public final class AliasEngine: @unchecked Sendable {
 
     var prefixMatches = 0
     if asPrefix {
+      let completion = exact == nil ? 1 : Scoring.wholeWordCompletionQuality
       let start = lowerBound(units)
       var position = start
       while position < index.vocabulary.count && position < start + Scoring.maxPrefixExpansion {
@@ -376,7 +427,8 @@ public final class AliasEngine: @unchecked Sendable {
         if !candidate.starts(with: units) { break }
         if candidate.count > units.count {
           let id = Int32(position)
-          let quality = 0.6 + (0.35 * Double(units.count)) / Double(candidate.count)
+          let quality =
+            (0.6 + (0.35 * Double(units.count)) / Double(candidate.count)) * completion
           if isPreferredToken(id) {
             candidates.add(id, quality: quality)
           } else {
@@ -405,7 +457,10 @@ public final class AliasEngine: @unchecked Sendable {
         // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
         if short && (units.starts(with: candidate) || !isPreferredToken(id)) { continue }
         let distance = scratch.editDistance.compute(units, candidate, max: maxEdits)
-        if distance <= maxEdits { candidates.add(id, quality: distance == 1 ? 0.8 : 0.65) }
+        if distance <= maxEdits {
+          candidates.add(
+            id, quality: distance == 1 ? (short ? Scoring.shortTypoQuality : 0.8) : 0.65)
+        }
       }
     }
     return candidates
@@ -448,8 +503,16 @@ enum Scoring {
   /// Quality factor of a prefix completion into a word that only other locales' packs have: en
   /// "lamar" → id "lamaran" (💍) is a partial match, not the word the user is typing.
   static let foreignPrefixQuality = 0.7
+  /// Quality factor of a prefix completion of a token that is a whole vocabulary word already:
+  /// "hell" means hell before it means "hello", "bee" before "beer".
+  static let wholeWordCompletionQuality = 0.5
   /// Tokens up to this UTF-16 length need stronger evidence for a typo match.
   static let shortTypoLength = 5
+  /// One-edit typo quality for a short token: a short unknown word is often a name ("messi"),
+  /// not a slip.
+  static let shortTypoQuality = 0.7
+  /// Score factor of a word split by a space and joined back ("hallo ween" → "halloween").
+  static let joinedWordFactor = 0.95
   /// Longest piece (code points) tried when a run of an unspaced script is split.
   static let maxPieceLength = 16
 }

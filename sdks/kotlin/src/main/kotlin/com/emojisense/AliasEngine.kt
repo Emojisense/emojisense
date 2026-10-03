@@ -154,7 +154,48 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
     /** The ranked emoji, and the largest share of the query one phrase matches with whole tokens. */
     private class Ranking(val scored: List<Scored>, val wholeCoverage: Double)
 
+    /**
+     * The search of the query as typed, merged with the search of its split word joined back
+     * ([joinedQuery]) at [JOINED_WORD_FACTOR]: each emoji keeps its better score (PACK_FORMAT.md §4).
+     */
     fun search(query: String, options: AliasSearchOptions): AliasSearchOutput<AliasResult> {
+        val output = searchAsTyped(query, options)
+        val joined = joinedQuery(query, output.tokens) ?: return output
+        val other = searchAsTyped(joined, options)
+        val byId = LinkedHashMap<String, AliasResult>()
+        for (result in output.results) byId[result.id] = result
+        for (result in other.results) {
+            val score = roundScore(result.score * JOINED_WORD_FACTOR)
+            val current = byId[result.id]
+            if (current == null || score > current.score) byId[result.id] = result.copy(score = score)
+        }
+        // Stable: equal scores keep the as-typed order, then the joined search's.
+        val results = byId.values.sortedWith { a, b -> b.score.compareTo(a.score) }.take(maxOf(0, options.limit))
+        return output.copy(
+            results = results,
+            confidence = results.firstOrNull()?.score ?: 0.0,
+            coverage = maxOf(output.coverage, other.coverage),
+        )
+    }
+
+    /**
+     * The query with its first pair of neighbouring tokens that together are a vocabulary word joined
+     * into it ("hallo ween" → "halloween"), else null. Pieces of an unspaced script are left alone.
+     */
+    private fun joinedQuery(query: String, tokens: List<String>): String? {
+        for (i in 0 until tokens.size - 1) {
+            val left = tokens[i]
+            val right = tokens[i + 1]
+            if (left.length < 2 || right.length < 2 || isUnspacedScript(left + right)) continue
+            if (!index.tokenIds.containsKey(left + right)) continue
+            val joined = (tokens.subList(0, i) + (left + right) + tokens.subList(i + 2, tokens.size)).joinToString(" ")
+            // A trailing space still means the last word is finished.
+            return if (endsWithJavaScriptWhitespace(query)) "$joined " else joined
+        }
+        return null
+    }
+
+    private fun searchAsTyped(query: String, options: AliasSearchOptions): AliasSearchOutput<AliasResult> {
         val normalized = Normalizer.normalize(query)
         val lastIsPrefix = options.prefix && !endsWithJavaScriptWhitespace(query)
         val functionWords = FunctionWords.active(options.locale ?: index.primary.locale)
@@ -459,13 +500,14 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
 
         var prefixMatches = 0
         if (asPrefix) {
+            val completion = if (exact == null) 1.0 else WHOLE_WORD_COMPLETION_QUALITY
             val start = lowerBound(token)
             var position = start
             while (position < index.vocabulary.size && position < start + MAX_PREFIX_EXPANSION) {
                 val candidate = index.vocabulary[position]
                 if (!candidate.startsWith(token)) break
                 if (candidate.length > token.length) {
-                    val quality = 0.6 + (0.35 * token.length) / candidate.length
+                    val quality = (0.6 + (0.35 * token.length) / candidate.length) * completion
                     if (isPreferredToken(position)) {
                         add(position, quality)
                     } else {
@@ -494,7 +536,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
                 if (short && (token.startsWith(candidate) || !isPreferredToken(id))) continue
                 val distance = editDistance.compute(token, candidate, maxEdits)
-                if (distance <= maxEdits) add(id, if (distance == 1) 0.8 else 0.65)
+                if (distance <= maxEdits) add(id, if (distance == 1) (if (short) SHORT_TYPO_QUALITY else 0.8) else 0.65)
             }
         }
         return candidates
@@ -539,8 +581,20 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
          */
         const val FOREIGN_PREFIX_QUALITY = 0.7
 
+        /**
+         * Quality factor of a prefix completion of a token that is a whole vocabulary word already: "hell"
+         * means hell before it means "hello", "bee" before "beer".
+         */
+        const val WHOLE_WORD_COMPLETION_QUALITY = 0.5
+
         /** Tokens up to this length (UTF-16 units) need stronger evidence for a typo match (PACK_FORMAT.md §4). */
         const val SHORT_TYPO_LENGTH = 5
+
+        /** One-edit typo quality for a short token: a short unknown word is often a name ("messi"), not a slip. */
+        const val SHORT_TYPO_QUALITY = 0.7
+
+        /** Score factor of a word split by a space and joined back ("hallo ween" → "halloween"). */
+        const val JOINED_WORD_FACTOR = 0.95
 
         /** Longest piece (code points) tried when a run of an unspaced script is split. */
         const val MAX_PIECE_LENGTH = 16

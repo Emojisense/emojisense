@@ -55,7 +55,13 @@ public actor SemanticClient: SemanticProvider {
 
     // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
     let url = try requestURL(query: Normalizer.embeddingText(query), options: options)
-    if let hit = cache.value(forKey: url.absoluteString) { return hit.overLimit ? nil : hit }
+    if let hit = cache.value(forKey: url.absoluteString) {
+      if hit.overLimit { return nil }
+      // From this client's memory: no request went out, so it is not a fresh model answer.
+      var remembered = hit
+      remembered.cached = true
+      return remembered
+    }
 
     let response = try await transport.get(url)
     guard response.isSuccess else { throw EmojisenseError.httpStatus(response.status, url: url) }

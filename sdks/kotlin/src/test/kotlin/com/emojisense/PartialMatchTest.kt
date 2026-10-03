@@ -88,9 +88,12 @@ class PartialMatchTest {
 
     @Test
     fun `rank below an exact word, in any locale`() {
-        // id "lamar" (in "lamar pacar") is a whole word; id "lamaran" only completes it.
+        // id "lamar" (in "lamar pacar") is a whole word; id "lamaran" only completes it. A completion
+        // of a whole word is weak enough to drop out entirely (WHOLE_WORD_COMPLETION_QUALITY).
         val results = emoji(enId, "lamar")
-        assertTrue(results.indexOf("🧎") < results.indexOf("💍"))
+        val ring = results.indexOf("💍")
+        assertEquals(0, results.indexOf("🧎"))
+        assertTrue(ring == -1 || ring > 0)
     }
 
     @Test

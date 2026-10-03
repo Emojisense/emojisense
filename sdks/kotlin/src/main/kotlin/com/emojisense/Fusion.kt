@@ -17,20 +17,39 @@ public data class FuseOptions @JvmOverloads constructor(
     val semanticWeight: Double = 1.0,
 )
 
-/** Cosine range of the semantic model over which its top match goes from "rarely right" to "usually right". */
-public data class SemanticCalibration(val floor: Double, val ceiling: Double) {
+/** Score ranges of the semantic model over which its top match goes from "rarely right" to "usually right". */
+public data class SemanticCalibration @JvmOverloads constructor(
+    /** Best cosine. */
+    val floor: Double,
+    val ceiling: Double,
+    /**
+     * Gap between the best cosine and the mean of ranks 2–5. Optional: without it only the best
+     * cosine counts. A name scores low on every emoji but clearly highest on one ("messi" → ⚽ 0.35,
+     * the next four 0.24–0.28), so the gap knows it when the cosine does not.
+     */
+    val gapFloor: Double? = null,
+    val gapCeiling: Double? = null,
+) {
     public companion object {
         /**
-         * bge-m3 @1024, the production model: the same values as `DEFAULT_SEMANTIC_CALIBRATION` in
-         * packages/core/src/fusion.ts. Another model or dims needs its own (`pnpm eval` measures them).
+         * EmbeddingGemma @768, the production model: the same values as `DEFAULT_SEMANTIC_CALIBRATION`
+         * in packages/core/src/fusion.ts. Another model or dims needs its own; the API sends the
+         * calibration of its model ([SemanticResponse.calibration]).
          */
         @JvmField
-        public val DEFAULT: SemanticCalibration = SemanticCalibration(floor = 0.44, ceiling = 0.58)
+        public val DEFAULT: SemanticCalibration = SemanticCalibration(floor = 0.39, ceiling = 0.56, gapFloor = 0.02, gapCeiling = 0.1)
     }
 }
 
 /** Merges Tier 0 (alias) and Tier 1 (semantic) rankings, like `packages/core/src/fusion.ts`. */
 public object Fusion {
+    /**
+     * Candidates each tier brings to fusion, however many results are shown. The reranker's features
+     * read the lists (ranks, the lowest semantic score), so a shorter list would rank differently: a
+     * client showing 12 results must fuse the same 24 candidates as the API.
+     */
+    public const val RANK_DEPTH: Int = 24
+
     /**
      * Weighted reciprocal rank fusion. Confident alias hits stay pinned in their original order, so
      * the list does not flicker when semantic results arrive. Each result keeps the object (and
@@ -65,16 +84,27 @@ public object Fusion {
         return (pinned + rest.filter { it.id in floored } + rest.filter { it.id !in floored }).take(limit)
     }
 
-    /** How sure the semantic tier is, 0–1, from its best cosine score. */
+    /** How sure the semantic tier is, 0–1: from its best cosine, or from how far that stands out (the larger). */
     @JvmStatic
     @JvmOverloads
     public fun semanticConfidence(
         semantic: List<SearchResult>,
         calibration: SemanticCalibration = SemanticCalibration.DEFAULT,
     ): Double {
-        val best = semantic.fold(0.0) { max, result -> maxOf(max, result.score) }
-        return minOf(1.0, maxOf(0.0, (best - calibration.floor) / (calibration.ceiling - calibration.floor)))
+        val scores = semantic.map { it.score }.sortedDescending()
+        val best = scores.firstOrNull() ?: 0.0
+        val level = unit((best - calibration.floor) / (calibration.ceiling - calibration.floor))
+        val next = scores.drop(1).take(GAP_RANKS)
+        val gapFloor = calibration.gapFloor
+        val gapCeiling = calibration.gapCeiling
+        if (gapFloor == null || gapCeiling == null || next.isEmpty()) return level
+        var sum = 0.0
+        for (score in next) sum += score
+        val gap = best - sum / next.size
+        return maxOf(level, unit((gap - gapFloor) / (gapCeiling - gapFloor)))
     }
+
+    private fun unit(value: Double): Double = minOf(1.0, maxOf(0.0, value))
 
     /**
      * The semantic list with its unsupported country flags moved after its other results. A flag
@@ -162,6 +192,9 @@ public object Fusion {
         if (points.size == 2) return points.all { it in REGIONAL_INDICATOR_A..REGIONAL_INDICATOR_Z }
         return points.size > 2 && points[0] == BLACK_FLAG && points[1] in TAG_SPACE..CANCEL_TAG
     }
+
+    /** Ranks 2–5 whose mean the best score is compared with. */
+    private const val GAP_RANKS = 4
 
     /** Alias results this close to a confident top score stay above the rest (`aliasFloor`). */
     private const val ALIAS_BAND = 0.1

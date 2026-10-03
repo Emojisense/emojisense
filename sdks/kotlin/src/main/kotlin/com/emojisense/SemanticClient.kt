@@ -40,7 +40,8 @@ public class SemanticClient @JvmOverloads constructor(
         if (Normalizer.normalize(query).isEmpty() || clock() < synchronized(lock) { pausedUntil }) return null
         // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
         val url = requestUrl(Normalizer.embeddingText(query), options)
-        synchronized(lock) { cache[url] }?.let { hit -> return if (hit.overLimit) null else hit }
+        // From this client's memory: no request went out, so it is not a fresh model answer.
+        synchronized(lock) { cache[url] }?.let { hit -> return if (hit.overLimit) null else hit.copy(cached = true) }
 
         val response = transport.get(url)
         if (!response.isSuccess) throw EmojisenseException.HttpStatus(response.status, url)

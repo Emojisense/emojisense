@@ -83,12 +83,12 @@ final class PartialMatchTests: XCTestCase {
 
   // MARK: Prefix completions into another locale's words
 
-  func testRankBelowAnExactWordInAnyLocale() throws {
-    // id "lamar" (in "lamar pacar") is a whole word; id "lamaran" only completes it.
+  func testRankBelowAnExactWordInAnyLocale() {
+    // id "lamar" (in "lamar pacar") is a whole word; id "lamaran" only completes it. A completion
+    // of a whole word is weak enough to drop out entirely (`wholeWordCompletionQuality`).
     let results = emoji(englishIndonesian, "lamar")
-    let kneeling = try XCTUnwrap(results.firstIndex(of: "🧎"))
-    let ring = try XCTUnwrap(results.firstIndex(of: "💍"))
-    XCTAssertLessThan(kneeling, ring)
+    XCTAssertEqual(results.firstIndex(of: "🧎"), 0)
+    XCTAssertNotEqual(results.firstIndex(of: "💍"), 0)
   }
 
   func testNeverOutrankAMatchOfThePreferredLocale() throws {

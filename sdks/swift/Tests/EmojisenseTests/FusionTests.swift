@@ -96,13 +96,33 @@ final class FusionTests: XCTestCase {
 
   func testMapsTheBestCosineBetweenTheCalibrationFloorAndCeiling() {
     XCTAssertEqual(Fusion.semanticConfidence([]), 0)
-    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.4)), 0)
-    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.51)), 0.5, accuracy: 1e-9)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.38)), 0)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.475)), 0.5, accuracy: 1e-9)
     XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.8)), 1)
+    XCTAssertEqual(
+      Fusion.semanticConfidence([result("x", 0.47, .semantic), result("y", 0.475, .semantic)]),
+      0.5, accuracy: 1e-9)
     XCTAssertEqual(
       Fusion.semanticConfidence(
         semanticList(0.5), calibration: Fusion.SemanticCalibration(floor: 0.2, ceiling: 0.6)),
       0.75, accuracy: 1e-9)
+  }
+
+  func testCountsATopThatStandsOutFromRanksTwoToFiveEvenWhenItsCosineIsLow() {
+    // "messi": ⚽ 0.35, then 0.284, 0.257, 0.253, 0.244 (gap 0.09).
+    let clear = [0.35, 0.284, 0.257, 0.253, 0.244].enumerated().map {
+      result("S\($0.offset)", $0.element, .semantic)
+    }
+    XCTAssertEqual(Fusion.semanticConfidence(clear), 0.88, accuracy: 0.005)
+    let flat = [0.35, 0.345, 0.34, 0.335, 0.33].enumerated().map {
+      result("S\($0.offset)", $0.element, .semantic)
+    }
+    XCTAssertEqual(Fusion.semanticConfidence(flat), 0)
+    // Without gap values only the best cosine counts.
+    XCTAssertEqual(
+      Fusion.semanticConfidence(
+        clear, calibration: Fusion.SemanticCalibration(floor: 0.39, ceiling: 0.56)),
+      0)
   }
 
   func testKeepsAnUnsureAliasHitAboveAWeakSemanticList() {

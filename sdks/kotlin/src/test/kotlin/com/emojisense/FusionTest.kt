@@ -99,10 +99,23 @@ class FusionTest {
     @Test
     fun `maps the best cosine between the calibration floor and ceiling`() {
         assertEquals(0.0, Fusion.semanticConfidence(emptyList()))
-        assertEquals(0.0, Fusion.semanticConfidence(semanticList(0.4)))
-        assertEquals(0.5, Fusion.semanticConfidence(semanticList(0.51)), 1e-9)
+        assertEquals(0.0, Fusion.semanticConfidence(semanticList(0.38)))
+        assertEquals(0.5, Fusion.semanticConfidence(semanticList(0.475)), 1e-9)
         assertEquals(1.0, Fusion.semanticConfidence(semanticList(0.8)))
+        val unsorted = listOf(result("x", 0.47, ResultSource.SEMANTIC), result("y", 0.475, ResultSource.SEMANTIC))
+        assertEquals(0.5, Fusion.semanticConfidence(unsorted), 1e-9)
         assertEquals(0.75, Fusion.semanticConfidence(semanticList(0.5), SemanticCalibration(0.2, 0.6)), 1e-9)
+    }
+
+    @Test
+    fun `counts a top that stands out from ranks 2-5 even when its cosine is low`() {
+        // "messi": ⚽ 0.35, then 0.284, 0.257, 0.253, 0.244 (gap 0.09).
+        val clear = listOf(0.35, 0.284, 0.257, 0.253, 0.244).mapIndexed { i, score -> result("S$i", score, ResultSource.SEMANTIC) }
+        assertEquals(0.88, Fusion.semanticConfidence(clear), 0.005)
+        val flat = listOf(0.35, 0.345, 0.34, 0.335, 0.33).mapIndexed { i, score -> result("S$i", score, ResultSource.SEMANTIC) }
+        assertEquals(0.0, Fusion.semanticConfidence(flat))
+        // Without gap values only the best cosine counts.
+        assertEquals(0.0, Fusion.semanticConfidence(clear, SemanticCalibration(floor = 0.39, ceiling = 0.56)))
     }
 
     @Test

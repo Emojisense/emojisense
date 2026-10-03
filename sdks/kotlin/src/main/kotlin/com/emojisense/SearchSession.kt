@@ -88,9 +88,12 @@ public class SearchSession @JvmOverloads constructor(
     /** Call on every keystroke. The alias results are delivered before it returns. */
     public fun update(query: String) {
         cancel()
+        // Fusion sees the same candidates whatever the limit (RANK_DEPTH); the results are cut to it.
+        val depth = maxOf(limit, Fusion.RANK_DEPTH)
         val started = System.nanoTime()
-        val alias = engine.canonicalSearch(query, AliasSearchOptions(limit = limit, locale = locale))
+        val alias = engine.canonicalSearch(query, AliasSearchOptions(limit = depth, locale = locale))
         val aliasMillis = (System.nanoTime() - started) / 1_000_000.0
+        val shown = alias.results.take(maxOf(0, limit))
         val wantsSemantic = semantic != null && shouldUseSemantic(alias)
         val status = when {
             alias.tokens.isEmpty() -> SessionStatus.IDLE
@@ -100,7 +103,7 @@ public class SearchSession @JvmOverloads constructor(
         val aliasOnly = Confidence.assessConfidence(alias, null)
         fun aliasState(status: SessionStatus, error: Throwable? = null) = SessionState(
             query = query,
-            results = present(query, alias.results),
+            results = present(query, shown),
             alias = alias,
             status = status,
             aliasMillis = aliasMillis,
@@ -115,7 +118,7 @@ public class SearchSession @JvmOverloads constructor(
             delay(debounceMillis)
             val requested = System.nanoTime()
             val response = try {
-                semantic.search(query, SemanticSearchOptions(locale = locale, limit = limit, region = if (autoRegion) AUTO_REGION else null))
+                semantic.search(query, SemanticSearchOptions(locale = locale, limit = depth, region = if (autoRegion) AUTO_REGION else null))
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
@@ -128,11 +131,13 @@ public class SearchSession @JvmOverloads constructor(
                 return@launch
             }
             if (autoRegion && learnedRegion == null) learnedRegion = response.region
-            val verdict = Confidence.assessConfidence(alias, response.results)
+            // The model that scored the results knows its calibration; older servers send none.
+            val calibration = response.calibration ?: SemanticCalibration.DEFAULT
+            val verdict = Confidence.assessConfidence(alias, response.results, calibration)
             onChange(
                 SessionState(
                     query = query,
-                    results = present(query, Fusion.fuse(alias, response.results, limit, ranking = Fusion.Ranking(engine::popularity))),
+                    results = present(query, Fusion.fuse(alias, response.results, limit, calibration, Fusion.Ranking(engine::popularity))),
                     alias = alias,
                     status = SessionStatus.FUSED,
                     aliasMillis = aliasMillis,

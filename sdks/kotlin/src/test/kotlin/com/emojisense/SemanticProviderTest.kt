@@ -44,6 +44,13 @@ class SemanticClientTest {
     }
 
     @Test
+    fun `marks an answer from its own memory as cached`() = runBlocking {
+        val client = client(StubTransport.json(SEMANTIC_BODY))
+        assertEquals(false, client.search("volcano")?.cached)
+        assertEquals(true, client.search("volcano")?.cached)
+    }
+
+    @Test
     fun `encodes like URLSearchParams`() = runBlocking {
         val transport = StubTransport.json(SEMANTIC_BODY)
         client(transport).search("+1")
@@ -124,6 +131,19 @@ class SemanticClientTest {
         val older = SemanticResponse.fromJson(SEMANTIC_BODY)
         assertNull(older.confidence)
         assertNull(older.unsure)
+    }
+
+    @Test
+    fun `decodes the calibration of the server's model`() {
+        val withGap = SemanticResponse.fromJson(
+            SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"calibration\":{\"floor\":0.39,\"ceiling\":0.56,\"gapFloor\":0.02,\"gapCeiling\":0.1}"),
+        )
+        assertEquals(SemanticCalibration(0.39, 0.56, 0.02, 0.1), withGap.calibration)
+        val withoutGap = SemanticResponse.fromJson(SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"calibration\":{\"floor\":0.1,\"ceiling\":0.3}"))
+        assertEquals(SemanticCalibration(0.1, 0.3), withoutGap.calibration)
+        // Older servers send none; an incomplete one is ignored. The client's default applies.
+        assertNull(SemanticResponse.fromJson(SEMANTIC_BODY).calibration)
+        assertNull(SemanticResponse.fromJson(SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"calibration\":{\"floor\":0.1}")).calibration)
     }
 
     @Test
@@ -284,6 +304,28 @@ class SearchSessionTest {
     }
 
     @Test
+    fun `fuses the same candidates whatever its limit, and shows the limit`() = runTest {
+        val results = listOf("🌋" to "1F30B", "🔥" to "1F525", "🚒" to "1F692", "🎃" to "1F383").joinToString(",") { (emoji, id) ->
+            """{"emoji":"$emoji","id":"$id","score":0.5,"source":"semantic"}"""
+        }
+        val transport = StubTransport.json("""{"packVersion":"test","cached":false,"results":[$results]}""")
+        val states = mutableListOf<SessionState>()
+        SearchSession(
+            engine = engine,
+            scope = this,
+            semantic = SemanticClient(SemanticClient.Configuration("https://api.test"), transport),
+            limit = 2,
+            debounceMillis = 10,
+            onChange = { states.add(it) },
+        ).update("volcano eruption")
+        advanceTimeBy(100)
+        runCurrent()
+        assertEquals("24", transport.requests.single().substringAfter("limit=").substringBefore('&'))
+        assertEquals(SessionStatus.FUSED, states.last().status)
+        assertTrue(states.all { it.results.size <= 2 })
+    }
+
+    @Test
     fun `keeps alias results when no layer answers`() = runTest {
         val states = mutableListOf<SessionState>()
         val session = SearchSession(engine, this, semantic = { _, _ -> null }, debounceMillis = 10, onChange = { states.add(it) })
@@ -353,5 +395,25 @@ class UnsureSessionTest {
         assertEquals(SessionStatus.FUSED, last.status)
         assertTrue(last.unsure)
         assertEquals(ResultSource.SEMANTIC, last.results.first().source)
+    }
+
+    @Test
+    fun `judges with the calibration the API sends for its model`() = runTest {
+        // A top of 0.4 that stands out: weak under the default calibration, sure under one whose
+        // ceiling is below it.
+        val body = """{"packVersion":"test","cached":false,"unsure":true,"confidence":0,"calibration":{"floor":0.1,"ceiling":0.3},"results":[""" +
+            """{"emoji":"🌋","id":"1F30B","score":0.4,"source":"semantic"},{"emoji":"🐐","id":"1F410","score":0.3,"source":"semantic"}]}"""
+        val states = mutableListOf<SessionState>()
+        SearchSession(
+            engine = engine,
+            scope = this,
+            semantic = SemanticClient(SemanticClient.Configuration("https://api.test"), StubTransport.json(body)),
+            debounceMillis = 10,
+            onChange = { states.add(it) },
+        ).update("kendrick lamar")
+        advanceTimeBy(1000)
+        runCurrent()
+        assertEquals(SessionStatus.FUSED, states.last().status)
+        assertFalse(states.last().unsure)
     }
 }

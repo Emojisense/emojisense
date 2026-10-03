@@ -64,6 +64,81 @@ final class SemanticClientTests: XCTestCase {
     XCTAssertEqual(requestCount, 2)
   }
 
+  func testMarksAnAnswerFromItsOwnMemoryAsCached() async throws {
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8)) }
+    let client = client(transport)
+    let first = try await client.search("volcano")
+    let second = try await client.search("volcano")
+    XCTAssertEqual(first?.cached, false)
+    XCTAssertEqual(second?.cached, true)
+    XCTAssertEqual(second?.results, first?.results)
+    let requestCount = await transport.requests.count
+    XCTAssertEqual(requestCount, 1)
+  }
+
+  func testDecodesTheCalibrationOfTheServerModel() throws {
+    let decode = { (json: String) in
+      try JSONDecoder().decode(SemanticResponse.self, from: Data(json.utf8))
+    }
+    XCTAssertNil(try decode(semanticBody).calibration)
+    let body = """
+      {"results":[],"packVersion":"test","cached":false,
+       "calibration":{"floor":0.39,"ceiling":0.56,"gapFloor":0.02,"gapCeiling":0.1}}
+      """
+    XCTAssertEqual(try decode(body).calibration, .standard)
+    let withoutGap = body.replacingOccurrences(of: #","gapFloor":0.02,"gapCeiling":0.1"#, with: "")
+    XCTAssertEqual(
+      try decode(withoutGap).calibration, Fusion.SemanticCalibration(floor: 0.39, ceiling: 0.56))
+  }
+
+  // MARK: The search loop of the README (the session tests of client-session.test.ts)
+
+  func testFusesTheSameCandidatesWhateverItsLimitAndShowsTheLimit() async throws {
+    let body = """
+      {"packVersion":"test","cached":false,"results":[
+       {"emoji":"🚒","id":"1F692","score":0.6,"source":"semantic"},
+       {"emoji":"🌋","id":"1F30B","score":0.55,"source":"semantic"},
+       {"emoji":"🔥","id":"1F525","score":0.5,"source":"semantic"}]}
+      """
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(body.utf8)) }
+    let engine = try AliasEngine(packs: [Fixtures.english])
+    let limit = 2
+    let depth = max(limit, Fusion.rankDepth)
+    let alias = engine.search("fire", options: AliasSearchOptions(limit: depth))
+    let response = try await client(transport).search(
+      "fire", options: SemanticSearchOptions(limit: depth))
+    let requests = await transport.requests
+    let url = try XCTUnwrap(requests.first)
+    let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+    XCTAssertEqual(query?.first { $0.name == "limit" }?.value, "24")
+
+    let semantic = try XCTUnwrap(response).results
+    let ranking = Fusion.Ranking(popularity: { [engine] in engine.popularity($0) })
+    let shown = Fusion.fuse(alias: alias, semantic: semantic, limit: limit, ranking: ranking)
+    let deep = Fusion.fuse(alias: alias, semantic: semantic, limit: depth, ranking: ranking)
+    XCTAssertGreaterThan(deep.count, limit)
+    XCTAssertEqual(shown, Array(deep.prefix(limit)))
+  }
+
+  func testJudgesWithTheCalibrationTheAPISendsForItsModel() async throws {
+    // A top of 0.4 that stands out: weak under the default calibration, sure under one whose
+    // ceiling is below it.
+    let body = """
+      {"packVersion":"test","cached":false,"unsure":true,"confidence":0,
+       "calibration":{"floor":0.1,"ceiling":0.3},
+       "results":[{"emoji":"🌋","id":"1F30B","score":0.4,"source":"semantic"},
+                  {"emoji":"🐐","id":"1F410","score":0.3,"source":"semantic"}]}
+      """
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(body.utf8)) }
+    let alias = try AliasEngine(packs: [Fixtures.english]).search("kendrick lamar")
+    let answer = try await client(transport).search("kendrick lamar")
+    let response = try XCTUnwrap(answer)
+    let calibration = response.calibration ?? .standard
+    XCTAssertFalse(
+      Confidence.assess(alias: alias, semantic: response.results, calibration: calibration).unsure)
+    XCTAssertTrue(Confidence.assess(alias: alias, semantic: response.results).unsure)
+  }
+
   func testThrowsOnHTTPErrors() async {
     let transport = StubTransport { _ in HTTPResponse(status: 429, body: Data("nope".utf8)) }
     do {

@@ -20,6 +20,7 @@ public data class SemanticResponse(
     val results: List<SearchResult>,
     val packVersion: String,
     val model: String? = null,
+    /** Answered from a cache: the server's shared one, or the client's own memory. */
     val cached: Boolean = false,
     /** Server: Workers AI was unavailable, results are alias-only. */
     val degraded: Boolean = false,
@@ -36,6 +37,11 @@ public data class SemanticResponse(
     val confidence: Double? = null,
     /** Server: no tier understood the query ([Confidence.assessConfidence] with its own dictionary). */
     val unsure: Boolean? = null,
+    /**
+     * Server: the calibration of the model that scored [results]. The client fuses and judges with
+     * it, so a model change on the server needs no client update. Null: [SemanticCalibration.DEFAULT].
+     */
+    val calibration: SemanticCalibration? = null,
 ) {
     public companion object {
         /** Decodes an API answer (`/v1/search`). Unknown keys are ignored. */
@@ -53,7 +59,15 @@ public data class SemanticResponse(
                 region = root.optionalString("region"),
                 confidence = root.optionalDouble("confidence"),
                 unsure = root.optionalBoolean("unsure"),
+                calibration = root.optionalObject("calibration")?.let(::decodeCalibration),
             )
+        }
+
+        /** Null without a numeric `floor` and `ceiling`: the client's default applies. */
+        private fun decodeCalibration(value: JsonObject): SemanticCalibration? {
+            val floor = value.optionalDouble("floor") ?: return null
+            val ceiling = value.optionalDouble("ceiling") ?: return null
+            return SemanticCalibration(floor, ceiling, value.optionalDouble("gapFloor"), value.optionalDouble("gapCeiling"))
         }
 
         private fun decodeResult(element: JsonElement): SearchResult {

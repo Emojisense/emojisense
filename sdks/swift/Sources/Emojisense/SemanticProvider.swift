@@ -9,6 +9,12 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
   public var results: [SearchResult]
   public var packVersion: String
   public var model: String?
+  /// Server: the calibration of the model that scored `results`. Pass it to
+  /// ``Fusion/fuse(alias:semantic:limit:calibration:ranking:)`` and
+  /// ``Confidence/assess(alias:semantic:calibration:)``, so a model change on the server needs no
+  /// client update. `nil` (older servers): use ``Fusion/SemanticCalibration/standard``.
+  public var calibration: Fusion.SemanticCalibration?
+  /// Answered from a cache: the server's shared one, or the client's own memory.
   public var cached: Bool
   /// Server: Workers AI was unavailable, results are alias-only.
   public var degraded: Bool
@@ -23,13 +29,15 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
   public var layer: SemanticLayer?
 
   public init(
-    results: [SearchResult], packVersion: String, model: String? = nil, cached: Bool,
-    degraded: Bool = false, overLimit: Bool = false, confidence: Double? = nil,
-    unsure: Bool? = nil, layer: SemanticLayer? = nil
+    results: [SearchResult], packVersion: String, model: String? = nil,
+    calibration: Fusion.SemanticCalibration? = nil, cached: Bool, degraded: Bool = false,
+    overLimit: Bool = false, confidence: Double? = nil, unsure: Bool? = nil,
+    layer: SemanticLayer? = nil
   ) {
     self.results = results
     self.packVersion = packVersion
     self.model = model
+    self.calibration = calibration
     self.cached = cached
     self.degraded = degraded
     self.overLimit = overLimit
@@ -43,6 +51,8 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
     results = try container.decode([SearchResult].self, forKey: .results)
     packVersion = try container.decode(String.self, forKey: .packVersion)
     model = try container.decodeIfPresent(String.self, forKey: .model)
+    calibration = try container.decodeIfPresent(
+      Fusion.SemanticCalibration.self, forKey: .calibration)
     cached = try container.decodeIfPresent(Bool.self, forKey: .cached) ?? false
     degraded = try container.decodeIfPresent(Bool.self, forKey: .degraded) ?? false
     overLimit = try container.decodeIfPresent(Bool.self, forKey: .overLimit) ?? false

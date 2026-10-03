@@ -49,9 +49,12 @@ let manifest = try await loader.loadManifest()
 let core = try await loader.loadPacks(locales: ["en", "tr"], manifest: manifest)
 var engine = try AliasEngine(core: core)
 
-// 2. Search on every keystroke. This is synchronous and fast (see Performance).
-let alias = engine.search("jurassic pa", options: AliasSearchOptions(locale: "en"))
-var results = alias.results.map(\.searchResult)
+// 2. Search on every keystroke. This is synchronous and fast (see Performance). Fusion needs the
+//    same candidates whatever the limit (`Fusion.rankDepth`), so search deeper and show `limit`.
+let limit = 12
+let depth = max(limit, Fusion.rankDepth)
+let alias = engine.search("jurassic pa", options: AliasSearchOptions(limit: depth, locale: "en"))
+var results = alias.results.prefix(limit).map(\.searchResult)
 
 // 3. When the device is idle, load the extension parts and rebuild the index.
 let extensions = try await loader.loadPacks(locales: ["en", "tr"], part: .ext, manifest: manifest)
@@ -66,13 +69,18 @@ let semantic = ProviderChain([
       packVersion: engine.packVersion)),
 ])
 if Fusion.shouldUseSemantic(alias),
-  let response = try await semantic.search("jurassic pa", options: .init(locale: "en"))
+  let response = try await semantic.search(
+    "jurassic pa", options: .init(locale: "en", limit: depth))
 {
+  // The calibration of the server's model; older servers send none.
+  let calibration = response.calibration ?? .standard
   results = Fusion.fuse(
-    alias: alias, semantic: response.results,
+    alias: alias, semantic: response.results, limit: limit, calibration: calibration,
     ranking: .init(popularity: { [engine] in engine.popularity($0) }))
   // 5. No tier understood the query: show the results as guesses.
-  let isUnsure = Confidence.assess(alias: alias, semantic: response.results).unsure
+  let isUnsure = Confidence.assess(
+    alias: alias, semantic: response.results, calibration: calibration
+  ).unsure
 }
 ```
 

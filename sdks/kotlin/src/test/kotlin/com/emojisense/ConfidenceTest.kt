@@ -29,7 +29,7 @@ class ConfidenceTest {
 
     @Test
     fun `strength is 0 below the calibration floor and 1 for a clear top at the ceiling`() {
-        assertEquals(0.0, Confidence.semanticStrength(semantic(0.4, 0.01)))
+        assertEquals(0.0, Confidence.semanticStrength(semantic(0.38, 0.01)))
         assertEquals(1.0, Confidence.semanticStrength(semantic(0.6, 0.1)))
     }
 
@@ -91,7 +91,8 @@ class ConfidenceTest {
     @Test
     fun `uses one threshold for the semantic list`() {
         assertTrue(Confidence.SEMANTIC_SURE > 0)
-        val justBelow = semantic(0.44 + 0.14 * (Confidence.SEMANTIC_SURE - 0.01), 0.06)
+        val (floor, ceiling) = SemanticCalibration.DEFAULT
+        val justBelow = semantic(floor + (ceiling - floor) * (Confidence.SEMANTIC_SURE - 0.01), 0.06)
         assertTrue(Confidence.assessConfidence(alias(0.0, 0.0, emptyList()), justBelow).unsure)
     }
 }

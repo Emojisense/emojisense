@@ -29,7 +29,7 @@ final class ConfidenceTests: XCTestCase {
   // MARK: semanticStrength
 
   func testStrengthIsZeroBelowTheFloorAndOneForAClearTopAtTheCeiling() {
-    XCTAssertEqual(Confidence.semanticStrength(semantic(0.4, 0.01)), 0)
+    XCTAssertEqual(Confidence.semanticStrength(semantic(0.38, 0.01)), 0)
     XCTAssertEqual(Confidence.semanticStrength(semantic(0.6, 0.1)), 1)
   }
 
@@ -90,7 +90,9 @@ final class ConfidenceTests: XCTestCase {
 
   func testUsesOneThresholdForTheSemanticList() {
     XCTAssertGreaterThan(Confidence.semanticSure, 0)
-    let justBelow = semantic(0.44 + 0.14 * (Confidence.semanticSure - 0.01), 0.06)
+    let standard = Fusion.SemanticCalibration.standard
+    let justBelow = semantic(
+      standard.floor + (standard.ceiling - standard.floor) * (Confidence.semanticSure - 0.01), 0.06)
     XCTAssertTrue(Confidence.assess(alias: alias(0, 0, []), semantic: justBelow).unsure)
   }
 }

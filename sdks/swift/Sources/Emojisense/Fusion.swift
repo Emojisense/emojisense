@@ -63,29 +63,61 @@ public enum Fusion {
     return Array((pinned + ordered).prefix(max(0, options.limit)))
   }
 
-  /// Cosine range of the semantic model over which its top match goes from "rarely right" to
-  /// "usually right".
-  public struct SemanticCalibration: Sendable, Equatable {
+  /// Score ranges of the semantic model over which its top match goes from "rarely right" to
+  /// "usually right". The API sends the one of its model (``SemanticResponse/calibration``).
+  public struct SemanticCalibration: Codable, Sendable, Equatable {
+    /// Best cosine.
     public var floor: Double
     public var ceiling: Double
+    /// Gap between the best cosine and the mean of ranks 2–5. Optional: without it only the best
+    /// cosine counts. A name scores low on every emoji but clearly highest on one ("messi" → ⚽
+    /// 0.35, the next four 0.24–0.28), so the gap knows it when the cosine does not.
+    public var gapFloor: Double?
+    public var gapCeiling: Double?
 
-    public init(floor: Double, ceiling: Double) {
+    public init(floor: Double, ceiling: Double, gapFloor: Double? = nil, gapCeiling: Double? = nil)
+    {
       self.floor = floor
       self.ceiling = ceiling
+      self.gapFloor = gapFloor
+      self.gapCeiling = gapCeiling
     }
 
-    /// bge-m3 @1024, the production model. Same values as `DEFAULT_SEMANTIC_CALIBRATION` in
-    /// packages/core/src/fusion.ts; another model or dims needs its own (`pnpm eval` measures them).
-    public static let standard = SemanticCalibration(floor: 0.44, ceiling: 0.58)
+    /// EmbeddingGemma @768, the production model. Same values as `DEFAULT_SEMANTIC_CALIBRATION`
+    /// in packages/core/src/fusion.ts; another model or dims needs its own (`pnpm eval` measures
+    /// floor and ceiling).
+    public static let standard = SemanticCalibration(
+      floor: 0.39, ceiling: 0.56, gapFloor: 0.02, gapCeiling: 0.1)
   }
 
-  /// How sure the semantic tier is, 0–1, from its best cosine score.
+  /// Candidates each tier brings to fusion, however many results are shown. The reranker's
+  /// features read the lists (ranks, the lowest semantic score), so a shorter list would rank
+  /// differently: search the alias engine and ask the semantic provider for
+  /// `max(limit, rankDepth)` results, then cut the fused list to `limit`. Same value as
+  /// `RANK_DEPTH` in packages/core/src/fusion.ts.
+  public static let rankDepth = 24
+
+  /// Ranks 2–5, whose mean the best score is compared with.
+  private static let gapRanks = 4
+
+  /// How sure the semantic tier is, 0–1: from its best cosine, or from how far that stands out
+  /// (the larger).
   public static func semanticConfidence(
     _ semantic: [SearchResult], calibration: SemanticCalibration = .standard
   ) -> Double {
-    let best = semantic.reduce(0) { max($0, $1.score) }
-    let value = (best - calibration.floor) / (calibration.ceiling - calibration.floor)
-    return min(1, max(0, value))
+    let scores = semantic.map(\.score).sorted(by: >)
+    let best = scores.first ?? 0
+    let level = unit((best - calibration.floor) / (calibration.ceiling - calibration.floor))
+    let next = scores.dropFirst().prefix(gapRanks)
+    guard let gapFloor = calibration.gapFloor, let gapCeiling = calibration.gapCeiling,
+      !next.isEmpty
+    else { return level }
+    let gap = best - next.reduce(0, +) / Double(next.count)
+    return max(level, unit((gap - gapFloor) / (gapCeiling - gapFloor)))
+  }
+
+  private static func unit(_ value: Double) -> Double {
+    min(1, max(0, value))
   }
 
   /// The semantic list with its unsupported country flags moved after its other results, like
