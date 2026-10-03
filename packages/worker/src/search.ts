@@ -1,4 +1,3 @@
-import { UNKNOWN_COUNTRY } from "@emojisense/platform";
 import {
   assessConfidence,
   DEFAULT_SEMANTIC_CALIBRATION,
@@ -13,25 +12,31 @@ import {
 import { type Outcome, record } from "./analytics.ts";
 import {
   BROWSER_CACHE,
+  CALLER_BROWSER_CACHE,
   CULTURE_BROWSER_CACHE,
   EDGE_CACHE_SECONDS,
   MAX_LIMIT,
-  REGION_AUTO_BROWSER_CACHE,
   SEARCH_DEFAULT_LIMIT,
 } from "./config.ts";
 import type { Handler } from "./context.ts";
-import { type ApiCultureResult, applyServerCulture, parseCultureParams, utcDay } from "./culture.ts";
+import {
+  type ApiCultureResult,
+  applyServerCulture,
+  cultureEcho,
+  parseCultureParams,
+  regionEcho,
+} from "./culture.ts";
 import { CUSTOM_BROWSER_CACHE, imageOrigin, mergeCustom, parseTenant } from "./custom.ts";
 import type { Env } from "./env.ts";
 import { errorResponse, json, parseLimit, parseLocale, unknownLocale } from "./http.ts";
-import { edgeCountry } from "./region.ts";
+import { edgeCaller, edgeCountry } from "./region.ts";
 import { type Catalog, indexTag, modelTag, type Ranked, rank } from "./semantic.ts";
 import type { ServerTiming } from "./timing.ts";
 
 /** Response of /v1/search and /v1/suggest-reactions (docs/API.md). */
 export interface SearchBody {
   query: string;
-  /** With `culture=1`, culture results (`source: "culture"`) carry `context` and `cultureId`. */
+  /** Culture results (`source: "culture"`) carry `context` and `cultureId`. */
   results: (SearchResult | ApiCultureResult)[];
   packVersion: string;
   model: string;
@@ -51,15 +56,15 @@ export interface SearchBody {
    */
   aliasLocale: string | null;
   /**
-   * Search only. The culture file applied with `culture=1`: its first day, the UTC day its windows
-   * were checked against, and the caller's region. null when culture is off, or no culture file
-   * could be loaded for the locale.
+   * The culture file applied: its first day, the day its windows were checked against, and the
+   * caller's region. null when culture is off, or no culture file could be loaded for the locale.
+   * Absent from the shared cache entry.
    */
   culture?: { from: string; day: string; region: string | null } | null;
   /**
-   * Search only, and only when the request has `region`: the region used for regional culture
-   * entries. With `region=auto` it is the request's country (null when unknown), so an SDK can
-   * apply regional entries on the device.
+   * Only when the request has `region`: the region used for regional culture entries. With
+   * `region=auto` it is the request's country (null when unknown), so an SDK can apply regional
+   * entries on the device.
    */
   region?: string | null;
   /** Search only: 0–1, how well the tiers understood the query (`assessConfidence`). */
@@ -165,16 +170,16 @@ export const handleSearch: Handler = async (
   const tenant = parseTenant(url.searchParams.get("tenant"));
   if (tenant === "invalid") return errorResponse(400, "tenant must be at most 128 characters");
   // The edge country selects regional entries only with region=auto, and is an aggregate count
-  // dimension of the app's analytics. It is never stored with a user and never keys the cache.
+  // dimension of the app's analytics; the edge time zone picks the caller's day for culture. They
+  // are never stored with a user and never key the cache.
   const country = edgeCountry(request);
-  const cultureParams = parseCultureParams(url, country === UNKNOWN_COUNTRY ? undefined : country);
+  const cultureParams = parseCultureParams(url, edgeCaller(request), startedAt);
   if (cultureParams instanceof Response) return cultureParams;
 
   // Culture and custom emoji are applied per request after the shared cache (never stored in it).
+  const cultureRead = cultureParams.enabled ? catalog.culture?.(locale, env) : undefined;
   const cultureLoad = started(
-    cultureParams.enabled
-      ? timing.measure("culture", catalog.culture?.(locale, env) ?? Promise.resolve(undefined))
-      : Promise.resolve(undefined),
+    cultureRead ? timing.measure("culture", cultureRead) : Promise.resolve(undefined),
   );
   const customLoad = started(timing.measure("custom", custom.forCaller(caller, tenant)));
   // Cached answers are served even over the plan limit (they cost no model call), and those are
@@ -188,7 +193,7 @@ export const handleSearch: Handler = async (
       : timing.measure("usage", metering.overLimit("semantic_calls")),
   );
 
-  const regionEcho = cultureParams.regionRequested ? { region: cultureParams.region ?? null } : {};
+  const echoedRegion = regionEcho(cultureParams);
   const searchRegion = { locale, country };
   const base = {
     query: params.query,
@@ -223,20 +228,18 @@ export const handleSearch: Handler = async (
             engine: catalog.engine(),
             locale,
             region: cultureParams.region,
+            day: cultureParams.day,
             limit: params.limit,
-            now: startedAt,
           })
         : results;
     return {
       present: (results: SearchResult[]) => mergeCustom(customResults, withCulture(results), params.limit),
-      culture: cultureFile
-        ? { from: cultureFile.from, day: utcDay(startedAt), region: cultureParams.region ?? null }
-        : null,
+      culture: cultureEcho(cultureFile, cultureParams),
       browserCache:
         customSet.rows.length > 0
           ? CUSTOM_BROWSER_CACHE
-          : cultureParams.auto
-            ? REGION_AUTO_BROWSER_CACHE
+          : cultureParams.auto || (cultureFile && cultureParams.dayFromCaller)
+            ? CALLER_BROWSER_CACHE
             : cultureFile
               ? CULTURE_BROWSER_CACHE
               : BROWSER_CACHE,
@@ -255,7 +258,7 @@ export const handleSearch: Handler = async (
       degraded: false,
       overLimit: false,
       culture: view.culture,
-      ...regionEcho,
+      ...echoedRegion,
     };
     metering.recordSearch(params.query, body.results.length, searchRegion);
     const ms = Date.now() - startedAt;
@@ -304,7 +307,7 @@ export const handleSearch: Handler = async (
       overLimit: true,
       aliasLocale: ranked?.aliasLocale ?? null,
       culture: view.culture,
-      ...regionEcho,
+      ...echoedRegion,
       ...verdict,
     };
     metering.recordSearch(params.query, body.results.length, searchRegion);
@@ -345,7 +348,7 @@ export const handleSearch: Handler = async (
     ...body,
     results: view.present(body.results),
     culture: view.culture,
-    ...regionEcho,
+    ...echoedRegion,
   };
   metering.recordSearch(params.query, answer.results.length, searchRegion);
   log(ranked.degraded ? "degraded" : "miss", {

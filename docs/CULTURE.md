@@ -44,7 +44,7 @@ publish    ▼ deployed culture files (git entries, built at deploy) + approved 
              on "Publish now", the nightly job, and every 10 minutes when a deploy or an
              approval changed something
 serve      ▼ GET /v1/culture/<v>/<file>: the R2 build when its pointer names this deployment's
-             files, else the deployed files (ASSETS); search with culture=1 reads the same
+             files, else the deployed files (ASSETS); search and reactions read the same
 export     ▼ "Export to git" → culture:import-live → packages/data/culture/entries/<id>.json → commit
              after the next deploy the git entry wins; its live copy is history
 ```

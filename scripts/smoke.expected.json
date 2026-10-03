@@ -1,5 +1,5 @@
 {
-  "$comment": "Answers scripts/smoke.mjs expects from a deployed environment. `top`: the first result must be one of these. `includes`: each must be somewhere in the results. Variation selectors (U+FE0F) are ignored.",
+  "$comment": "Answers scripts/smoke.mjs expects from a deployed environment. `top`: the first result must be one of these. `includes`: each must be somewhere in the results. `excludes`: none may be in the results. Variation selectors (U+FE0F) are ignored. Culture is on by default.",
   "search": [
     { "params": { "q": "cold feet", "locale": "en" }, "top": ["😰"] },
     { "params": { "q": "jurassic park", "locale": "en" }, "top": ["🦖"] },
@@ -22,7 +22,9 @@
       "params": { "q": "greatest of all time", "culture": "1", "region": "AR" },
       "top": ["🐐"],
       "includes": ["⚽"]
-    }
+    },
+    { "params": { "q": "thank you", "locale": "en", "region": "JP" }, "top": ["🙏"], "includes": ["🙇"] },
+    { "params": { "q": "thank you", "locale": "en", "region": "US" }, "top": ["🙏"], "excludes": ["🙇"] }
   ],
   "hero": { "q": "pizza", "top": ["🍕"] }
 }

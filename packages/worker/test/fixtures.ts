@@ -1,6 +1,6 @@
 import { getModel } from "@emojisense/data/models";
 import { hashKey } from "@emojisense/platform";
-import { createEngine, type Pack } from "emojisense";
+import { type Culture, type CultureEntry, createEngine, type Pack } from "emojisense";
 import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { vi } from "vitest";
 import { createApp } from "../src/app.ts";
@@ -285,9 +285,41 @@ export const search = (q: string, extra = "", init?: RequestInit) =>
 export const keyedSearch = (q: string, extra = "", init?: RequestInit) =>
   search(q, `&key=${TEST_KEY}${extra}`, init);
 
+/** The request as Cloudflare's edge hands it over: `request.cf` (country, timezone) from the IP. */
+export const fromEdge = (request: Request, cf: { country?: string; timezone?: string }): Request =>
+  Object.defineProperty(request, "cf", { value: cf });
+
 /** The request as Cloudflare's edge hands it over: `request.cf.country` from the caller's IP. */
-export const fromCountry = (request: Request, country: string): Request =>
-  Object.defineProperty(request, "cf", { value: { country } });
+export const fromCountry = (request: Request, country: string): Request => fromEdge(request, { country });
+
+/** A culture entry: lasting, for every region, with no triggers or emoji unless given. */
+export const cultureEntry = (overrides: Partial<CultureEntry> & Pick<CultureEntry, "id">): CultureEntry => ({
+  kind: "lasting",
+  context: "Context",
+  when: null,
+  regions: ["*"],
+  triggers: [],
+  emoji: [],
+  ...overrides,
+});
+
+/** A culture file of the fixture pack version, 2026-10-02 → 2026-10-16. */
+export const cultureFile = (entries: CultureEntry[], locale = "en"): Culture => ({
+  format: "emojisense-culture",
+  formatVersion: 1,
+  packVersion: "test",
+  locale,
+  from: "2026-10-02",
+  until: "2026-10-16",
+  entries,
+  relevantNow: [],
+});
+
+/** The fixture catalog with `file` as its English culture file (`null` = none is published). */
+export const culturedCatalog = (file: Culture | null) => {
+  const read = vi.fn(async (locale: string) => (locale === "en" ? (file ?? undefined) : undefined));
+  return { catalog: { ...catalog, culture: read } satisfies Catalog, read };
+};
 
 export const reactions = (body: unknown, query = "", init: RequestInit = {}) =>
   new Request(`${API}/v1/suggest-reactions${query}`, {

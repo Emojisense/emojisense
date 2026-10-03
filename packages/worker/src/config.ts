@@ -54,15 +54,16 @@ export const RETENTION_MAX_BATCHES = 200;
 
 export const BROWSER_CACHE = "public, max-age=3600, s-maxage=86400";
 /**
- * Answers with `culture=1`: no longer than the culture file itself (max-age=3600), so no shared
- * cache keeps a seasonal emoji a day past its window.
+ * Answers with the culture layer (on unless `culture=0`): no longer than the culture file itself
+ * (max-age=3600), so no shared cache keeps a seasonal emoji a day past its window.
  */
 export const CULTURE_BROWSER_CACHE = "public, max-age=3600";
 /**
- * Answers with `region=auto` depend on the caller's country, which the URL does not show: only the
+ * Answers that depend on the caller in a way the URL does not show: `region=auto` (the caller's
+ * country), or culture windows checked on the caller's local day (its time zone). Only the
  * caller's own browser may keep them, never a shared cache.
  */
-export const REGION_AUTO_BROWSER_CACHE = "private, max-age=3600";
+export const CALLER_BROWSER_CACHE = "private, max-age=3600";
 export const EDGE_CACHE_SECONDS = 7 * 24 * 3600;
 
 /**

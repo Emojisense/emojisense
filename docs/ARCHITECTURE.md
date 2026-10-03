@@ -116,8 +116,8 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
    │                             lasting entries + seasonal/event entries active in [d, d+366], exact windows
    ▼ Worker sync at deploy (culture:build from yesterday, UTC) ──▶ /v1/culture/<packVersion>/… static assets, max-age=3600
    │                             no daily rebuild: clients check the windows by their own day
-   ▼ SDK: loadCulture → engine.withCulture(culture) → session applies it after fusion
-   ▼ API: /v1/search?culture=1&region=XX → same file through ASSETS, applied after the shared cache
+   ▼ SDK: the loader loads it next to the packs → engine.withCulture(culture) → session applies it after fusion
+   ▼ API: /v1/search and /v1/suggest-reactions (on unless culture=0) → same file, applied after the shared cache
 ```
 
 | Rule | Where |
@@ -125,14 +125,14 @@ culture/sources/*.json (holiday calendar, 2026–2027 events, slang notes) + ana
 | **Add, never replace.** Culture emoji go right after the canonical top result. They are above it only when the canonical list is empty. | `insertCulture` in `packages/core/src/culture.ts` |
 | Applied last, after the semantic results are fused in, so a semantic answer cannot lift a culture emoji over the top result. | `packages/core/src/session.ts` |
 | Results carry `source: "culture"`, `context` (the reason, localized) and `cultureId`. At most 5 per query. | `matchCulture` |
-| A trigger matches the whole normalized query, or a prefix being typed (≥ 3 characters and ≥ half the trigger). | `matchCulture` |
+| A trigger matches the whole normalized query, or a prefix being typed (≥ 3 characters and ≥ half the trigger). In a message (reactions), a trigger matches as whole words anywhere in it. | `matchCulture`, `matchCultureInText` |
 | Windows are local calendar days, checked at query time against a 12-month file. Yearly windows may wrap the year end. Lunar-calendar festivals get one dated entry per year. | `isActiveOn`, `CultureScope.day` |
-| Without a region, only entries for every region (`"*"`) apply. `useEmojisense` and `<emojisense-picker>` default to the region of the browser's language, read on the device and never sent. | `CultureScope.region`, `deviceRegion` |
-| `culture: false` keeps the canonical ranking (tests, benchmarks). Without a culture file nothing changes. | engine, session, React, web component |
+| On by default: the loader loads the culture file next to the packs. Without a region, only entries for every region (`"*"`) apply. Every SDK surface defaults to the device's region: the region of its language, else of its time zone (the file's `zones`), read on the device and never sent. `""` = none. | `resolveRegion`, `deviceRegion` |
+| `culture: false` (`cultureUrl: false`, `culture-url="off"`) keeps the canonical ranking (tests, benchmarks). Without a culture file nothing changes. | engine, session, loader, React, web component, editors |
 | A "relevant now" shelf (featured seasonal and event emoji) is off by default. | `relevantNow`, `showRelevantNow` |
 | CI gate: with every approved entry active, no top-1 answer of the eval suites changes, and each trigger brings its entry's strongest emoji into the top 3. | `packages/eval/src/culture-gate.ts` |
 | **Regional senses** (`kind: "regional"`, e.g. "football" → ⚽ outside North America) are the one exception to "never above": the app names a region in scope, the query equals a trigger, and the canonical top is one the entry `outranks`. The canonical answer moves to second place. The gate checks the lead in scope, no change out of scope, and no other in-house query changing its top answer with the region. | `matchRegionalLead`, `culture-gate.ts` |
-| The search API applies culture only with `culture=1` (off by default: SDKs already apply it on the device). It uses the UTC day and never stores culture in the shared cache. | `packages/worker/src/culture.ts` |
+| The search and reactions API apply culture unless `culture=0` (the SDK client sends it: it applies culture on the device). The day is `day=`, else the caller's local day (`request.cf.timezone`), else UTC. Culture is never stored in the shared cache. | `packages/worker/src/culture.ts` |
 
 The culture file is optional and small (≤ 2.7 KB gz per locale for 12 months today). A failed load leaves
 search unchanged, and the engine index is shared, not rebuilt, when the file arrives.
@@ -145,7 +145,7 @@ trends_daily (03:17) + culture/sources ─▶ API Worker cron 04:41: Workers AI 
 dashboard Internal → Culture (ADMIN_EMAILS) ─service binding (RPC CultureAdmin)─▶ API Worker
    preview per trigger / locale / region · edit · approve / reject ─▶ D1 culture_entries_live
 publish (Publish now · nightly · every 10 min after a change): deployed files + live entries
-   ─▶ R2 SHARDS culture/<v>/<build>/… + current.json ─▶ GET /v1/culture/<v>/* and culture=1
+   ─▶ R2 SHARDS culture/<v>/<build>/… + current.json ─▶ GET /v1/culture/<v>/* and search/reactions
    (no build for this deployment ─▶ the deployed files from ASSETS)
 export ─▶ culture:import-live ─▶ culture/entries/<id>.json (git stays the long-term record)
 ```
@@ -233,7 +233,7 @@ alias engine of the locale (en bundled; others, tr included: core+ext packs via 
    ▼ fuse ─▶ assessConfidence (confidence, unsure)
    ▼ store in the shared cache (only when nothing degraded or failed to load)
    ▼
-per request, never cached: culture (culture=1, UTC day, region) ─▶ custom emoji first (key's app, tenant)
+per request, never cached: culture (unless culture=0; day, region) ─▶ custom emoji first (key's app, tenant)
    ▼
 metering (semantic_calls, batched to D1) + query_daily (keyed calls; + locale, country)
    + Analytics Engine point

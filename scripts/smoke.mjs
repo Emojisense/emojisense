@@ -227,8 +227,12 @@ async function apiChecks() {
     return `pack ${health.packVersion}, ${health.model}`;
   });
 
-  for (const { params, top, includes = [] } of expected.search) {
-    const flags = [params.locale, params.culture && `culture${params.region ? ` ${params.region}` : ""}`];
+  for (const { params, top, includes = [], excludes = [] } of expected.search) {
+    const flags = [
+      params.locale,
+      params.culture && `culture=${params.culture}`,
+      params.region && `region ${params.region}`,
+    ];
     const name = `search "${params.q}" ${flags.filter(Boolean).join(", ")}`.trim();
     await check(name, async () => {
       expect(siteKey, `no site key: set PUBLIC_PUBLISHABLE_KEY or create .deploy/${environment}.env`);
@@ -249,7 +253,13 @@ async function apiChecks() {
       for (const wanted of includes) {
         expect(emoji.includes(withoutVariationSelectors(wanted)), `${wanted} not in the results: ${shown}`);
       }
-      if (params.culture) expect(body.culture, "culture is null: no culture file was applied");
+      for (const unwanted of excludes) {
+        expect(!emoji.includes(withoutVariationSelectors(unwanted)), `${unwanted} in the results: ${shown}`);
+      }
+      // Culture is on by default: a case about culture names a region.
+      if (params.region && params.culture !== "0") {
+        expect(body.culture, "culture is null: no culture file was applied");
+      }
       if (body.degraded) throw new Warning(`${shown} (degraded: alias-only, Workers AI unavailable)`);
       return shown;
     });

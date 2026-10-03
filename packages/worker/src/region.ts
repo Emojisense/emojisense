@@ -17,3 +17,27 @@ export function edgeCountry(request: Request): string {
   const code = country.toUpperCase();
   return code !== UNKNOWN_COUNTRY && isRegionCode(code) ? code : UNKNOWN_COUNTRY;
 }
+
+/**
+ * The IANA time zone of the request, from Cloudflare's edge (`request.cf.timezone`, derived from
+ * the IP address), e.g. "Asia/Tokyo"; undefined outside Cloudflare. It only picks the caller's
+ * local day for the culture windows of one answer (culture.ts `dayIn`, which checks the name). It
+ * is never stored and it is not part of the shared cache key.
+ */
+export function edgeTimeZone(request: Request): string | undefined {
+  const zone = (request as { cf?: { timezone?: unknown } }).cf?.timezone;
+  return typeof zone === "string" && zone !== "" ? zone : undefined;
+}
+
+/** What Cloudflare's edge knows about the caller, for the culture layer of one answer. */
+export interface EdgeCaller {
+  /** {@link edgeCountry}, undefined when it is unknown: `region=auto` then selects no region. */
+  country: string | undefined;
+  /** {@link edgeTimeZone}. */
+  timeZone: string | undefined;
+}
+
+export function edgeCaller(request: Request): EdgeCaller {
+  const country = edgeCountry(request);
+  return { country: country === UNKNOWN_COUNTRY ? undefined : country, timeZone: edgeTimeZone(request) };
+}

@@ -6,8 +6,8 @@ The Emojisense Search API: a Cloudflare Worker, deployed at `https://api.emojise
 
 | Route | Runs | Metered as |
 | ----- | ---- | ---------- |
-| `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API; `culture=1` (+ `region`) applies the culture layer after the cache (`src/culture.ts`) | `semantic_calls` (cache hits too) |
-| `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), no cache | `semantic_calls` |
+| `GET /v1/search` | alias + semantic search (shared + locale vectors), Cache API; the culture layer after the cache, unless `culture=0` (`region`, `day`; `src/culture.ts`) | `semantic_calls` (cache hits too) |
+| `POST /v1/suggest-reactions` | first 256 characters of a message: intent cues, reaction prior from one embedding, clause alias hits (`src/reaction-rank.ts`), then culture triggers inside the message after the top reaction (unless `"culture": false`), no cache | `semantic_calls` |
 | `POST /v1/classify-image` | vision label (caption, keywords, proposed emoji) → fused ranking (`src/image-rank.ts`); label cached (with `X-Image-Hash`) by the SHA-256 of the bytes | `image_classifications` (cache hits too) |
 | `GET /v1/sets/:set/:hexcode.svg` | hosted emoji image (Twemoji, Noto, Fluent) from a pinned upstream, Cache API; a key on a plan with hosted sets (`src/sets/access.ts`), none for `FIRST_PARTY_ORIGINS` | — |
 | `/v1/tenants[/:externalId[/emoji[/:shortcode]]]` | tenants and their custom emoji (Scale, secret key); D1 + R2 `EMOJI`; sends webhooks | — |
@@ -175,7 +175,7 @@ runs the whole flow on Miniflare's local R2, D1 and Cache API with a fake model.
 | Cron `41 4 * * *`: drafts from `trends_daily` (rising queries) and `culture/sources`, ≤ `CULTURE_PROPOSE_BUDGET` Workers AI calls; validation, dedupe and the culture gate; stored as drafts in D1 `culture_proposals`. Runs with `CULTURE_CRON_ENABLED=true`; then a publish either way. | `propose.ts`, `job.ts` |
 | Named RPC entrypoint `CultureAdmin` (no URL): list, preview, edit, approve, reject, retire, publish, export. Only the dashboard's `CULTURE_ADMIN` service binding calls it. | `service.ts`, `src/index.ts` |
 | Publish: deployed culture files + approved `culture_entries_live` → R2 `culture/<v>/<build>/…` and `current.json`; the pointer names the deployed `index.json` it was built from. Cron `*/10 * * * *` publishes again after a deploy or an approval. | `publish.ts`, `storage.ts` |
-| `GET /v1/culture/<v>/<file>` and `culture=1` read the build named by the pointer (5 min per isolate), else the deployed files. | `route.ts`, `src/culture.ts` |
+| `GET /v1/culture/<v>/<file>`, search and reactions read the build named by the pointer (5 min per isolate), else the deployed files. | `route.ts`, `src/culture.ts` |
 
 Logs hold counts and entry ids only (`culture_proposals`, `culture_published`,
 `culture_publish_skipped`, `culture_publish_failed`), never query text.

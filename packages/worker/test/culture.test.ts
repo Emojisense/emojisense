@@ -1,46 +1,38 @@
-import type { Culture, CultureEntry } from "emojisense";
+import type { Culture } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   assetCultureReader,
   type CultureReader,
   createCultureFiles,
+  dayIn,
+  isCalendarDay,
   isRegionCode,
+  parseCultureBody,
   parseCultureParams,
   utcDay,
 } from "../src/culture.ts";
 import type { Env } from "../src/env.ts";
+import type { EdgeCaller } from "../src/region.ts";
 import type { SearchBody } from "../src/search.ts";
-import type { Catalog } from "../src/semantic.ts";
-import { catalog, fromCountry, harness, keyedSearch, ROW } from "./fixtures.ts";
+import {
+  catalog,
+  culturedCatalog,
+  cultureEntry,
+  cultureFile,
+  fromCountry,
+  fromEdge,
+  harness,
+  keyedSearch,
+  ROW,
+} from "./fixtures.ts";
 
-const entry = (overrides: Partial<CultureEntry> & Pick<CultureEntry, "id">): CultureEntry => ({
-  kind: "lasting",
-  context: "Context",
-  when: null,
-  regions: ["*"],
-  triggers: [],
-  emoji: [],
-  ...overrides,
-});
-
-const cultureFile = (entries: CultureEntry[], locale = "en"): Culture => ({
-  format: "emojisense-culture",
-  formatVersion: 1,
-  packVersion: "test",
-  locale,
-  from: "2026-10-02",
-  until: "2026-10-16",
-  entries,
-  relevantNow: [],
-});
-
-const shipParty = entry({
+const shipParty = cultureEntry({
   id: "ship-it-party",
   context: "Release days come with a party",
   triggers: ["ship it"],
   emoji: [["🐶", "1F436", 0.6]],
 });
-const rocketDino = entry({
+const rocketDino = cultureEntry({
   id: "rocket-dino",
   kind: "regional",
   context: "In this test region, a rocket is a dinosaur",
@@ -49,7 +41,7 @@ const rocketDino = entry({
   emoji: [["🦖", "1F996", 0.9]],
   outranks: ["1F680"],
 });
-const lavaWeek = entry({
+const lavaWeek = cultureEntry({
   id: "lava-week",
   kind: "seasonal",
   context: "Volcano week, early October",
@@ -60,8 +52,7 @@ const lavaWeek = entry({
 
 /** `null` = no culture file is published. */
 const withCulture = (file: Culture | null = cultureFile([shipParty, rocketDino, lavaWeek])) => {
-  const read = vi.fn(async (locale: string) => (locale === "en" ? (file ?? undefined) : undefined));
-  const cultured: Catalog = { ...catalog, culture: read };
+  const { catalog: cultured, read } = culturedCatalog(file);
   // A semantic tier with no opinion: the canonical top is the alias answer the entries are about.
   return { h: harness({ catalog: cultured, embedTo: ROW.neutral }), read };
 };
@@ -72,18 +63,28 @@ const glyphs = (b: SearchBody) => b.results.map((r) => r.emoji);
 afterEach(() => vi.useRealTimers());
 
 describe("GET /v1/search with culture", () => {
-  it("is off by default", async () => {
+  it("is on by default", async () => {
+    const { h } = withCulture();
+    const res = await h.call(keyedSearch("ship it"));
+    const b = await body(res);
+    expect(glyphs(b).slice(0, 2)).toEqual(["🚀", "🐶"]);
+    expect(b.results[1]).toMatchObject({ source: "culture", cultureId: "ship-it-party" });
+    expect(b.culture).toEqual({ from: "2026-10-02", day: utcDay(Date.now()), region: null });
+    expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
+  });
+
+  it("is off with culture=0 or culture=false: the canonical ranking", async () => {
     const { h, read } = withCulture();
-    const res = await body(await h.call(keyedSearch("ship it")));
-    expect(res.culture).toBeNull();
-    expect(res.results.every((r) => r.source !== "culture")).toBe(true);
-    expect(read).not.toHaveBeenCalled();
-    const off = await body(
-      await harness({ catalog: { ...catalog }, embedTo: ROW.neutral }).call(
-        keyedSearch("ship it", "&culture=0"),
-      ),
+    const canonical = await body(
+      await harness({ catalog: { ...catalog }, embedTo: ROW.neutral }).call(keyedSearch("ship it")),
     );
-    expect(glyphs(off)).toEqual(glyphs(res));
+    for (const extra of ["&culture=0", "&culture=false", "&culture=0&region=GB&day=2026-10-05"]) {
+      const res = await h.call(keyedSearch("ship it", extra));
+      const b = await body(res);
+      expect([extra, b.culture, glyphs(b)]).toEqual([extra, null, glyphs(canonical)]);
+      expect(res.headers.get("cache-control")).toBe("public, max-age=3600, s-maxage=86400");
+    }
+    expect(read).not.toHaveBeenCalled();
   });
 
   it("adds culture results after the canonical top result, with context and cultureId", async () => {
@@ -106,8 +107,8 @@ describe("GET /v1/search with culture", () => {
   it("never changes the canonical top answer without a regional sense in the caller's region", async () => {
     const { h } = withCulture();
     for (const q of ["ship it", "rocket", "lava eruption", "jurassic park", "puppy", "dog"]) {
-      const plain = await body(await h.call(keyedSearch(q)));
-      for (const extra of ["&culture=1", "&culture=1&region=US", "&culture=1&region=FR"]) {
+      const plain = await body(await h.call(keyedSearch(q, "&culture=0")));
+      for (const extra of ["", "&culture=1", "&region=US", "&culture=1&region=FR", "&locale=en-US"]) {
         const cultured = await body(await h.call(keyedSearch(q, extra)));
         expect([q, extra, cultured.results[0]?.id]).toEqual([q, extra, plain.results[0]?.id]);
       }
@@ -120,7 +121,11 @@ describe("GET /v1/search with culture", () => {
     expect(glyphs(gb).slice(0, 2)).toEqual(["🦖", "🚀"]);
     expect(gb.results[0]).toMatchObject({ source: "culture", cultureId: "rocket-dino" });
     expect(gb.culture).toEqual({ from: "2026-10-02", day: utcDay(Date.now()), region: "GB" });
-    for (const extra of ["&culture=1&region=US", "&culture=1", "&region=GB"]) {
+    expect(glyphs(await body(await h.call(keyedSearch("rocket", "&region=GB")))).slice(0, 2)).toEqual([
+      "🦖",
+      "🚀",
+    ]);
+    for (const extra of ["&culture=1&region=US", "&culture=1", "&culture=0&region=GB"]) {
       expect((await body(await h.call(keyedSearch("rocket", extra)))).results[0]?.emoji).toBe("🚀");
     }
   });
@@ -136,7 +141,7 @@ describe("GET /v1/search with culture", () => {
     expect(stored.results.every((r) => r.source !== "culture")).toBe(true);
     expect(stored).not.toHaveProperty("culture");
 
-    const plain = await body(await h.call(keyedSearch("rocket")));
+    const plain = await body(await h.call(keyedSearch("rocket", "&culture=0")));
     expect(plain).toMatchObject({ cached: true, culture: null });
     expect(plain.results[0]?.emoji).toBe("🚀");
     const gb = await body(await h.call(keyedSearch("rocket", "&culture=1&region=GB")));
@@ -145,7 +150,31 @@ describe("GET /v1/search with culture", () => {
     expect(h.ai).toHaveBeenCalledTimes(1);
   });
 
-  it("follows the culture file's windows by the server's UTC day", async () => {
+  it("never stores culture in the shared cache with culture on by default", async () => {
+    const { h } = withCulture();
+    // Culture by default, and a region from the locale tag: both answers carry culture results.
+    const shipped = await body(await h.call(keyedSearch("ship it")));
+    expect(shipped.results.some((r) => r.source === "culture")).toBe(true);
+    const gb = await body(await h.call(keyedSearch("rocket", "&locale=en-GB")));
+    expect(glyphs(gb).slice(0, 2)).toEqual(["🦖", "🚀"]);
+    await h.ctx.settle();
+    expect(h.cache.puts).toHaveLength(2);
+    for (const key of h.cache.puts) expect(key).not.toMatch(/culture|region|day|GB/);
+    for (const stored of h.cache.store.values()) {
+      const cached = (await stored.clone().json()) as SearchBody;
+      expect(cached.results.every((r) => r.source !== "culture")).toBe(true);
+      expect(cached).not.toHaveProperty("culture");
+      expect(cached).not.toHaveProperty("region");
+    }
+    // The cached canonical answer, with the culture layer applied again per request.
+    const again = await body(await h.call(keyedSearch("rocket", "&locale=en-GB")));
+    expect([again.cached, glyphs(again).slice(0, 2)]).toEqual([true, ["🦖", "🚀"]]);
+    const plain = await body(await h.call(keyedSearch("ship it", "&culture=0")));
+    expect([plain.cached, plain.results.some((r) => r.source === "culture")]).toEqual([true, false]);
+    expect(h.ai).toHaveBeenCalledTimes(2);
+  });
+
+  it("follows the culture file's windows by the UTC day when the time zone is unknown", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     const { h } = withCulture();
     vi.setSystemTime(new Date("2026-10-05T12:00:00Z"));
@@ -189,6 +218,62 @@ describe("GET /v1/search with culture", () => {
     } finally {
       if (zone === undefined) delete process.env.TZ;
       else process.env.TZ = zone;
+    }
+  });
+
+  it("checks the windows against the caller's local day, from the edge's time zone", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    const { h } = withCulture();
+    const seen: [string, string, string | undefined, boolean][] = [];
+    for (const [moment, timezone] of [
+      ["2026-09-30T23:30:00Z", "Asia/Tokyo"],
+      ["2026-09-30T23:30:00Z", "Mars/Olympus_Mons"],
+      ["2026-10-08T00:30:00Z", "America/Los_Angeles"],
+      ["2026-10-08T00:30:00Z", "Europe/Berlin"],
+    ] as const) {
+      vi.setSystemTime(new Date(moment));
+      const b = await body(await h.call(fromEdge(keyedSearch("puppy"), { timezone })));
+      seen.push([moment, timezone, b.culture?.day, b.results.some((r) => r.source === "culture")]);
+    }
+    // lava-week is 10-01 → 10-07. An unknown zone falls back to the UTC day.
+    expect(seen).toEqual([
+      ["2026-09-30T23:30:00Z", "Asia/Tokyo", "2026-10-01", true],
+      ["2026-09-30T23:30:00Z", "Mars/Olympus_Mons", "2026-09-30", false],
+      ["2026-10-08T00:30:00Z", "America/Los_Angeles", "2026-10-07", true],
+      ["2026-10-08T00:30:00Z", "Europe/Berlin", "2026-10-08", false],
+    ]);
+  });
+
+  it("takes day=YYYY-MM-DD over the caller's time zone", async () => {
+    const { h } = withCulture();
+    const inside = await body(
+      await h.call(fromEdge(keyedSearch("puppy", "&day=2026-10-05"), { timezone: "Asia/Tokyo" })),
+    );
+    expect(inside.culture?.day).toBe("2026-10-05");
+    expect(inside.results.find((r) => r.source === "culture")?.emoji).toBe("🌋");
+    const outside = await body(await h.call(keyedSearch("puppy", "&day=2026-12-01")));
+    expect(outside.culture?.day).toBe("2026-12-01");
+    expect(outside.results.some((r) => r.source === "culture")).toBe(false);
+  });
+
+  it("keeps an answer for the caller's local day out of shared caches", async () => {
+    const { h } = withCulture();
+    const local = await h.call(fromEdge(keyedSearch("puppy"), { timezone: "Asia/Tokyo" }));
+    expect(local.headers.get("cache-control")).toBe("private, max-age=3600");
+    const named = await h.call(fromEdge(keyedSearch("puppy", "&day=2026-10-05"), { timezone: "Asia/Tokyo" }));
+    expect(named.headers.get("cache-control")).toBe("public, max-age=3600");
+    const utc = await h.call(keyedSearch("puppy"));
+    expect(utc.headers.get("cache-control")).toBe("public, max-age=3600");
+  });
+
+  it("rejects a day that is not a calendar day", async () => {
+    const { h } = withCulture();
+    for (const day of ["2026-02-30", "2026-13-01", "2026-10-5", "yesterday", "2026-10-05T10:00"]) {
+      const res = await h.call(keyedSearch("puppy", `&day=${encodeURIComponent(day)}`));
+      expect([day, res.status]).toEqual([day, 400]);
+      expect(((await res.json()) as { error: string }).error).toMatch(
+        /^day must be a calendar day as YYYY-MM-DD/,
+      );
     }
   });
 
@@ -241,16 +326,21 @@ describe("GET /v1/search with culture", () => {
     expect(await body(await h.call(keyedSearch("rocket")))).not.toHaveProperty("region");
     const explicit = await h.call(keyedSearch("rocket", "&region=gb"));
     expect((await body(explicit)).region).toBe("GB");
-    expect(explicit.headers.get("cache-control")).toBe("public, max-age=3600, s-maxage=86400");
-    const auto = await body(await h.call(fromCountry(keyedSearch("rocket", "&region=auto"), "BR")));
-    // Without culture=1, auto only tells an SDK its region; the ranking stays canonical.
+    expect(explicit.headers.get("cache-control")).toBe("public, max-age=3600");
+    const auto = await body(await h.call(fromCountry(keyedSearch("rocket", "&culture=0&region=auto"), "BR")));
+    // With culture=0, auto only tells an SDK its region; the ranking stays canonical.
     expect([auto.region, auto.culture, auto.results[0]?.emoji]).toEqual(["BR", null, "🚀"]);
+    // A region from the locale tag is used, not echoed: the request did not name one.
+    const fromLocale = await body(await h.call(keyedSearch("rocket", "&locale=en-GB")));
+    expect(fromLocale).not.toHaveProperty("region");
+    expect(fromLocale.culture?.region).toBe("GB");
   });
 
   it("rejects an unknown culture value or a region that is not ISO 3166-1 alpha-2", async () => {
     const { h } = withCulture();
     for (const extra of [
       "&culture=yes",
+      "&culture=on",
       "&culture=1&region=GBR",
       "&culture=1&region=ZZ",
       "&region=QQ",
@@ -264,33 +354,115 @@ describe("GET /v1/search with culture", () => {
 });
 
 describe("culture parameters", () => {
-  const parse = (query: string) => parseCultureParams(new URL(`https://api.test/v1/search?q=x${query}`));
+  const NOW = Date.parse("2026-10-02T20:00:00Z");
+  const noEdge: EdgeCaller = { country: undefined, timeZone: undefined };
+  const parse = (query: string, edge = noEdge) =>
+    parseCultureParams(new URL(`https://api.test/v1/search?q=x${query}`), edge, NOW);
 
-  it("reads culture and region", () => {
-    expect(parse("")).toEqual({ enabled: false, region: undefined, regionRequested: false, auto: false });
-    expect(parse("&culture=1&region=br")).toEqual({
+  it("reads culture, region and day", () => {
+    expect(parse("")).toEqual({
+      enabled: true,
+      region: undefined,
+      regionRequested: false,
+      auto: false,
+      day: "2026-10-02",
+      dayFromCaller: false,
+    });
+    expect(parse("&culture=1&region=br&day=2026-12-24")).toEqual({
       enabled: true,
       region: "BR",
       regionRequested: true,
       auto: false,
+      day: "2026-12-24",
+      dayFromCaller: false,
     });
     expect(parse("&culture=false&region=JP")).toMatchObject({ enabled: false, region: "JP" });
+    expect(parse("&culture=")).toMatchObject({ enabled: true });
+  });
+
+  it("takes the region of the locale tag when the request names none", () => {
+    expect(parse("&locale=pt-BR")).toMatchObject({ region: "BR", regionRequested: false, auto: false });
+    expect(parse("&locale=en_us")).toMatchObject({ region: "US" });
+    expect(parse("&locale=zh-Hant-TW")).toMatchObject({ region: "TW" });
+    for (const locale of ["en", "es-419", "en-ZZ", "pt-XX"]) {
+      expect([locale, (parse(`&locale=${locale}`) as { region?: string }).region]).toEqual([
+        locale,
+        undefined,
+      ]);
+    }
+    expect(parse("&locale=pt-BR&region=PT")).toMatchObject({ region: "PT", regionRequested: true });
+    expect(parse("&locale=pt-BR&region=auto")).toMatchObject({ region: undefined, auto: true });
   });
 
   it("takes the edge region for region=auto, and none when it is unknown", () => {
-    const url = (query: string) => new URL(`https://api.test/v1/search?q=x${query}`);
-    expect(parseCultureParams(url("&culture=1&region=auto"), "DE")).toEqual({
+    expect(parse("&culture=1&region=auto", { country: "DE", timeZone: undefined })).toEqual({
       enabled: true,
       region: "DE",
       regionRequested: true,
       auto: true,
+      day: "2026-10-02",
+      dayFromCaller: false,
     });
-    expect(parseCultureParams(url("&region=Auto"))).toEqual({
+    expect(parse("&culture=0&region=Auto")).toEqual({
       enabled: false,
       region: undefined,
       regionRequested: true,
       auto: true,
+      day: "2026-10-02",
+      dayFromCaller: false,
     });
+  });
+
+  it("takes the caller's local day from the edge's time zone, unless the request names a day", () => {
+    const tokyo: EdgeCaller = { country: undefined, timeZone: "Asia/Tokyo" };
+    expect(parse("", tokyo)).toMatchObject({ day: "2026-10-03" });
+    expect(parse("&day=2026-10-01", tokyo)).toMatchObject({ day: "2026-10-01" });
+    expect(parse("", { country: undefined, timeZone: "Not/A_Zone" })).toMatchObject({ day: "2026-10-02" });
+  });
+
+  it("reads the same fields from a reactions body, culture as a boolean", () => {
+    const edge: EdgeCaller = { country: "JP", timeZone: "Asia/Tokyo" };
+    expect(parseCultureBody({}, edge, NOW)).toEqual({
+      enabled: true,
+      region: undefined,
+      regionRequested: false,
+      auto: false,
+      day: "2026-10-03",
+      dayFromCaller: true,
+    });
+    expect(parseCultureBody({ culture: false, region: "auto", day: "2026-01-01" }, edge, NOW)).toEqual({
+      enabled: false,
+      region: "JP",
+      regionRequested: true,
+      auto: true,
+      day: "2026-01-01",
+      dayFromCaller: false,
+    });
+    expect(parseCultureBody({ culture: null, locale: "ja-JP" }, edge, NOW)).toMatchObject({
+      enabled: true,
+      region: "JP",
+      regionRequested: false,
+    });
+    for (const input of [
+      { culture: "1" },
+      { culture: 0 },
+      { region: 42 },
+      { region: "Japan" },
+      { day: 20261003 },
+    ]) {
+      const result = parseCultureBody(input, edge, NOW);
+      expect([input, result instanceof Response && result.status]).toEqual([input, 400]);
+    }
+  });
+
+  it("knows calendar days and the day of a time zone", () => {
+    expect(["2024-02-29", "2026-12-31"].every(isCalendarDay)).toBe(true);
+    expect(["2025-02-29", "2026-04-31", "2026-1-01", "20261003", ""].some(isCalendarDay)).toBe(false);
+    const moment = Date.parse("2026-10-08T00:30:00Z");
+    expect(dayIn("America/Los_Angeles", moment)).toBe("2026-10-07");
+    expect(dayIn("Pacific/Kiritimati", moment)).toBe("2026-10-08");
+    expect(dayIn(undefined, moment)).toBe("2026-10-08");
+    expect(dayIn("Nowhere/Land", moment)).toBe("2026-10-08");
   });
 
   it("knows real regions only", () => {

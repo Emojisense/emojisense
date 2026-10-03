@@ -92,8 +92,9 @@ use the website's own publishable key, so they are not anonymous.
 | `pack` | — | Client pack version (informational) |
 | `key` | — | Publishable key |
 | `tenant` | — | The app owner's id for one of their customers (`tenants.external_id`, ≤ 128 characters): that tenant's custom emoji are searched too |
-| `culture` | `0` | `1` (or `true`) applies the [culture layer](#culture-in-search) to the answer. `0`, `false` or none: the canonical ranking only. Any other value answers `400`. |
-| `region` | — | ISO 3166-1 alpha-2 code of the user's region, e.g. `GB`, `BR` (case does not matter), or `auto`. Turns on regional culture entries; used only with `culture=1`. `auto` uses the country of the request, which Cloudflare's edge derives from the IP address (`request.cf.country`); when it is unknown, no regional entry applies. A code that is not a real region answers `400`. See [Region auto](#region-auto). |
+| `culture` | `1` | The [culture layer](#culture-in-search) is on by default (`1`, `true` or none). `0` (or `false`) turns it off: the canonical ranking only. Any other value answers `400`. |
+| `region` | region of `locale` | ISO 3166-1 alpha-2 code of the user's region, e.g. `GB`, `BR` (case does not matter), or `auto`. Turns on regional culture entries; not used with `culture=0`. Without it, the region of the `locale` tag applies (`pt-BR` → `BR`; none for `pt`). `auto` uses the country of the request, which Cloudflare's edge derives from the IP address (`request.cf.country`); when it is unknown, no regional entry applies. A code that is not a real region answers `400`. See [Region auto](#region-auto). |
+| `day` | caller's local day | `YYYY-MM-DD`: the day the culture windows are checked against. Without it, the caller's local day in the time zone that Cloudflare's edge derives from the IP address (`request.cf.timezone`), else the UTC day. A value that is not a real calendar day answers `400`. |
 
 ```json
 {
@@ -106,7 +107,7 @@ use the website's own publishable key, so they are not anonymous.
   "degraded": false,
   "overLimit": false,
   "aliasLocale": "en",
-  "culture": null,
+  "culture": { "from": "2026-10-01", "day": "2026-10-03", "region": null },
   "confidence": 0.94,
   "unsure": false
 }
@@ -115,15 +116,15 @@ use the website's own publishable key, so they are not anonymous.
 | Field | Meaning |
 | ----- | ------- |
 | `query` | The normalized query (PACK_FORMAT.md §3) |
-| `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below) or `culture` (only with `culture=1`, with `context` and `cultureId`, see [Culture in search](#culture-in-search)) |
+| `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below) or `culture` (not with `culture=0`; with `context` and `cultureId`, see [Culture in search](#culture-in-search)) |
 | `packVersion`, `model` | The data the Worker serves, e.g. `0.1.0` and `bge-m3@1024` (model key @ dims) |
 | `calibration` | The calibration of `model`: the score ranges over which its top match goes from rarely to usually right (PACK_FORMAT.md §10). A client that fuses `semantic` results with its own aliases uses it for `fuse` and the unsure verdict, so a model change on the server needs no client update. Absent in answers cached before 2026-10-03 |
 | `cached` | The answer came from the shared edge cache |
 | `degraded` | Workers AI was unavailable, so the results are alias-only (and not cached) |
 | `overLimit` | The key's account has used its monthly `semantic_calls` limit (see "Metering and plan limits") |
 | `aliasLocale` | The locale whose aliases were fused into the results. `null` in `semantic` mode, or when that locale's pack could not be loaded (the results are then semantic-only and not cached) |
-| `culture` | With `culture=1`: `{ "from": "2026-10-01", "day": "2026-10-02", "region": "GB" }`, the culture file's first day, the UTC day its windows were checked against, and the region (`null` without one). `null` when culture is off or the locale has no culture file |
-| `region` | Only when the request has `region`: the region used for regional entries, uppercase. With `region=auto`, the request's country, or `null` when it is unknown. Also with `culture=0`, so an SDK can apply regional entries on the device |
+| `culture` | `{ "from": "2026-10-01", "day": "2026-10-02", "region": "GB" }`: the culture file's first day, the day its windows were checked against (`day`, else the caller's local day, else UTC), and the region (`null` without one). `null` with `culture=0` or when the locale has no culture file |
+| `region` | Only when the request has `region`: the region used for regional entries, uppercase. With `region=auto`, the request's country, or `null` when it is unknown. Also with `culture=0`, so an SDK can apply regional entries on the device. A region from the `locale` tag is not echoed here; `culture.region` shows it |
 | `confidence`, `unsure` | How well the query was understood: see [Unsure queries](#unsure-queries). Over the limit and for anonymous calls, `unsure` is the dictionary's verdict alone |
 
 Headers: `Server-Timing` and `Cache-Control`. `Server-Timing` lists the stages of the request,
@@ -136,7 +137,7 @@ the answer, key check included):
 | `cache` | The shared edge-cache lookup. It starts before the key check and runs at the same time |
 | `custom` | The app's custom emoji (isolate-cached for 60 s; 0 for an app without custom emoji) |
 | `usage` | The account's usage for the plan limit, when this isolate must read it from D1 (a hit sends its answer first and counts after) |
-| `culture` | The culture file, with `culture=1` |
+| `culture` | The culture file (not with `culture=0`) |
 | `rank` | The whole ranking of a miss: `embed`, `vectors` and `locale` at the same time, then fusion |
 | `embed` | The Workers AI embedding call alone |
 | `vectors`, `locale` | Waiting for the locale's vector file and alias engine (0 once they are resident in the isolate) |
@@ -147,7 +148,8 @@ moves only on I/O, so pure computation reports 0.
 | Answer | `Cache-Control` |
 | ------ | --------------- |
 | Normal answer | `public, max-age=3600, s-maxage=86400` |
-| With `culture=1` | `public, max-age=3600` (no longer than the culture file) |
+| With culture (a culture file was applied) on a named or UTC day | `public, max-age=3600` (no longer than the culture file) |
+| With culture on the caller's local day (from its time zone, no `day=`) | `private, max-age=3600` (the day is not in the URL) |
 | With `region=auto` | `private, max-age=3600` (the answer depends on the caller's country, which the URL does not show) |
 | The app has custom emoji | `private, max-age=60` |
 | Over the limit (not from the cache), degraded, or a locale pack or vector file did not load | `no-store` |
@@ -215,8 +217,8 @@ No language model reads search queries. (An LLM concept tier for unsure queries 
 
 Request `{ "text": "we just shipped the new onboarding!", "locale": "en", "limit": 8 }`. The text
 is truncated to 256 characters (≈ 64 tokens). `locale` follows the [search rules](#locales) and
-picks the alias pack. The response has the same shape as search (`aliasLocale` included, no
-`culture`), with the caller's custom emoji first (`tenant` in the body or the query), and
+picks the alias pack. The response has the same shape as search (`aliasLocale`, `culture` and
+`region` included), with the caller's custom emoji first (`tenant` in the body or the query), and
 `Cache-Control: no-store`. The body must be JSON of at most 16 KB (`400` for other JSON, `413`
 for a larger body). **The text is never logged or cached:** it is chat content.
 
@@ -228,6 +230,19 @@ signals, or a very close embedding match, so "smoke tests are failing" does not 
 embedding call per request, no LLM. `source` is `semantic` for the embedding signals and
 `alias` for the rest; over the limit and without a key, all results are `alias`. The list can be
 shorter than `limit` when the text gives little to go on.
+
+**Culture** is on by default, as in search. Culture emoji whose trigger is in the message (as whole
+words) come right after the top reaction: "thanks so much for the help!" with `"region": "JP"`
+gives 🙏 then 🙇. A message never gets a regional lead. The body fields follow the search rules:
+
+| Field | Default | Notes |
+| ----- | ------- | ----- |
+| `culture` | `true` | `false` turns the culture layer off |
+| `region` | region of `locale` | ISO 3166-1 alpha-2 code, or `"auto"` (the request's country) |
+| `day` | caller's local day | `"YYYY-MM-DD"`; without it, the caller's local day (`request.cf.timezone`), else UTC |
+
+Any other value answers `400`. Culture results carry `source: "culture"`, `context` and
+`cultureId`. Metering does not change.
 
 ## `POST /v1/classify-image`
 
@@ -292,13 +307,13 @@ search without the culture layer.
 | `context` | Why the emoji fits, in the file's locale |
 | `cultureId` | The entry id, e.g. `goat-football` |
 
-The SDK applies the culture layer on the device after fusion. Thin clients can ask the search API
-for it with `culture=1` ([Culture in search](#culture-in-search)). Culture results never rank above
-the top canonical result, except a regional sense in the caller's region (below).
+The SDK applies the culture layer on the device after fusion. For thin clients, the search and
+reactions APIs apply it by default ([Culture in search](#culture-in-search)). Culture results never
+rank above the top canonical result, except a regional sense in the caller's region (below).
 
 ### Culture in search
 
-`GET /v1/search?q=goat&culture=1` (and `&region=AR` for regional entries):
+`GET /v1/search?q=goat` (and `&region=AR` for regional entries):
 
 ```json
 { "query": "goat",
@@ -310,21 +325,23 @@ the top canonical result, except a regional sense in the caller's region (below)
   "culture": { "from": "2026-10-01", "day": "2026-10-02", "region": "AR" }, "…": "…" }
 ```
 
-- **Off by default.** The SDKs ask for `mode=semantic` and apply the culture file on the device;
-  a default-on server would apply it twice. Existing callers keep the ranking they tested.
+- **On by default.** `culture=0` gives the canonical ranking only. The SDKs send `culture=0` and
+  apply the culture file on the device after fusion, so it is never applied twice.
 - Culture results go right after the canonical (fused) top result, at most 5, cut to `limit`;
   `score` is the entry's weight (0–1). Custom emoji still come first.
 - **Regional senses** (`kind: "regional"`, [PACK_FORMAT.md §9](PACK_FORMAT.md)) are the only
-  exception: with a `region` in the entry's scope, a query equal to its trigger puts its emoji
-  first and the canonical answer second (`football` with `region=GB`: ⚽ then 🏈). Without
-  `region`, or with a region outside the scope, the canonical answer stays first.
-- Windows are checked against the request's UTC day (`culture.day`; `culture.from` is the culture
-  file's first day), so a seasonal entry can start or end a few hours early or late for a user.
-  The SDK uses the user's local day.
+  exception: with a region in the entry's scope (`region`, else the region of the `locale` tag), a
+  query equal to its trigger puts its emoji first and the canonical answer second (`football` with
+  `region=GB`: ⚽ then 🏈). Without a region, or with a region outside the scope, the canonical
+  answer stays first.
+- Windows are checked against one day, `culture.day`: the request's `day`, else the caller's local
+  day in the time zone Cloudflare's edge derives from the IP address (`request.cf.timezone`), else
+  the UTC day. `culture.from` is the culture file's first day. The SDK uses the device's local day.
 - Culture is applied to each answer after the shared cache, like custom emoji. The cache holds
-  the canonical answer only, so `culture` and `region` do not split it and no answer carries
-  another day's or region's culture. Culture answers send `Cache-Control: public, max-age=3600`
-  (the culture file's own lifetime).
+  the canonical answer only, so `culture`, `region` and `day` do not split it and no answer
+  carries another day's or region's culture. Culture answers send
+  `Cache-Control: public, max-age=3600` (the culture file's own lifetime), or `private` when the
+  day is the caller's local day (it is not in the URL, so a shared proxy must not keep it).
 - Metering does not change: a culture answer is one `semantic_calls` call, cached or not.
 
 ### Region auto
@@ -531,7 +548,7 @@ curl -X POST https://api.emojisense.com/v1/tenants/acme/emoji \
 | Status | Meaning |
 | ------ | ------- |
 | 200 | Also over a plan limit (`"overLimit": true`), without a key on search and reactions, and when Workers AI is down (`"degraded": true`): search never fails hard |
-| 400 | Missing or empty `q` / `text`, a body that is not JSON (reactions), a `locale` without a pack, a `culture` other than `0`/`1`/`true`/`false`, a `region` that is not an ISO 3166-1 alpha-2 region, a wrong image `Content-Type`, a bad `X-Image-Hash`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
+| 400 | Missing or empty `q` / `text`, a body that is not JSON (reactions), a `locale` without a pack, a `culture` other than `0`/`1`/`true`/`false` (`true`/`false` in a reactions body), a `region` that is not an ISO 3166-1 alpha-2 region, a `day` that is not a calendar day `YYYY-MM-DD`, a wrong image `Content-Type`, a bad `X-Image-Hash`, an unreadable image, an invalid emoji set hexcode, or a `tenant` longer than 128 characters |
 | 401 | Unknown or revoked key, an `Authorization` header that is not `Bearer <key>`, or no key for `/v1/classify-image`, `/v1/custom-pack`, a hosted set image (`key_required`) and the tenants API |
 | 402 | The account's plan does not include the feature (tenants API, hosted sets: `plan_required`) |
 | 403 | Plain `http://` to the hosted API, an origin not allowed for this publishable key (for set images: the `Referer`'s origin), a secret key in the URL, or a secret key with an `Origin` header (from a browser) |
@@ -929,6 +946,8 @@ What the hosted service collects, and for how long:
 - The country of a request is used only as a count dimension of `query_daily` and, with
   `region=auto`, to select the regional culture entries of that one answer. It is never stored
   with an IP address, a key or a user, and it is not part of the cache key.
+- The time zone of a request (`request.cf.timezone`) only picks the caller's local day for the
+  culture windows of that one answer. It is never stored, and it is not part of the cache key.
 - Never logged or stored: IP addresses (only an in-memory rate-limit key), user identifiers,
   reaction text, images sent to `/v1/classify-image`, Slack and Discord tokens. Keys are stored
   only as a hash and a 12-character prefix, never logged.

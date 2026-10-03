@@ -30,8 +30,8 @@ export interface Catalog {
   /** What a query of `locale` searches: the shared index and the locale's own (locale-vectors.ts). */
   vectors(locale: string, env: Env): Promise<LocaleIndexes>;
   /**
-   * The published culture file of a pack locale (culture.ts), for `/v1/search?culture=1`.
-   * Undefined (or a missing member) = no culture layer: the answer is the canonical ranking.
+   * The published culture file of a pack locale (culture.ts), for the culture layer of search and
+   * reactions. Undefined (or a missing member) = no culture layer: the canonical ranking.
    */
   culture?(locale: string, env: Env): Promise<Culture | undefined>;
 }
