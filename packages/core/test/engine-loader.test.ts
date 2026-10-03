@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Culture } from "../src/culture.js";
+import type { AliasEngine } from "../src/engine.js";
 import { createApiSemantic, createEngineLoader } from "../src/engine-loader.js";
 import type { Pack } from "../src/pack.js";
 import { en } from "./fixture.js";
@@ -83,7 +84,8 @@ describe("createEngineLoader", () => {
       fetch: fetchImpl,
       whenIdle: () => {},
     });
-    expect((await loader.load()).culture?.locale).toBe("en");
+    await loader.load();
+    await vi.waitFor(() => expect(loader.current()?.culture?.locale).toBe("en"));
     expect(requests).toContain("https://api.test/v1/culture/0.1.0/culture.en.json");
   });
 
@@ -107,7 +109,8 @@ describe("createEngineLoader", () => {
       fetch: fetchImpl,
       whenIdle: () => {},
     });
-    expect((await loader.load()).culture?.locale).toBe("en");
+    await loader.load();
+    await vi.waitFor(() => expect(loader.current()?.culture?.locale).toBe("en"));
   });
 
   it("keeps working without a culture file", async () => {
@@ -145,6 +148,65 @@ describe("createEngineLoader", () => {
     await expect(loader.load()).rejects.toThrow();
     fail = false;
     await expect(loader.load()).resolves.toBeDefined();
+  });
+});
+
+describe("createEngineLoader on one page", () => {
+  it("shares one download and one index between loaders", async () => {
+    const { fetchImpl, requests } = packFetch({ "pack.en.json": en });
+    const options = { packUrl: "https://shared.test/0.1.0", cultureUrl: false as const, fetch: fetchImpl };
+    const first = createEngineLoader({ ...options, extended: false });
+    first.preload();
+    const engine = await first.load();
+    const second = createEngineLoader({ ...options, extended: false });
+    expect(second.current()).toBe(engine);
+    const heard: unknown[] = [];
+    second.subscribe((next) => heard.push(next));
+    expect(await second.load()).toBe(engine);
+    expect(heard).toEqual([engine]);
+    expect(second.packs()).toEqual([en]);
+    expect(requests).toEqual(["https://shared.test/0.1.0/pack.en.json"]);
+  });
+
+  it("publishes the first engine before the culture file, then adds it", async () => {
+    let answerCulture: (() => void) | undefined;
+    const { fetchImpl } = packFetch({ "pack.en.json": en });
+    const slowCulture = (async (input: RequestInfo | URL) => {
+      if (!String(input).includes("culture.")) return fetchImpl(input);
+      await new Promise<void>((resolve) => {
+        answerCulture = resolve;
+      });
+      return new Response(JSON.stringify(cultureFile("en")));
+    }) as typeof fetch;
+    const loader = createEngineLoader({
+      packUrl: "https://slow.test/v1/pack/0.1.0",
+      extended: false,
+      fetch: slowCulture,
+    });
+    const first = await loader.load();
+    expect(first.culture).toBeUndefined();
+    const withCulture = new Promise<AliasEngine>((resolve) => loader.subscribe(resolve));
+    answerCulture?.();
+    expect((await withCulture).culture?.locale).toBe("en");
+  });
+
+  it("adds the extension packs in a pause in typing", async () => {
+    const { fetchImpl } = packFetch({ "pack.en.json": en, "pack.en.ext.json": { ...en, part: "ext" } });
+    let quiet: (() => void) | undefined;
+    const loader = createEngineLoader({
+      packUrl: "https://quiet.test/0.1.0",
+      cultureUrl: false,
+      fetch: fetchImpl,
+      whenIdle: (task) => task(),
+      whenQuiet: (task) => {
+        quiet = task;
+      },
+    });
+    await loader.load();
+    await vi.waitFor(() => expect(quiet).toBeDefined());
+    expect(loader.packs()).toHaveLength(1);
+    quiet?.();
+    expect(loader.packs().map((pack) => pack.part)).toEqual([undefined, "ext"]);
   });
 });
 

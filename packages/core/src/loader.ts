@@ -44,9 +44,12 @@ export async function loadPacks(options: LoadPacksOptions): Promise<Pack[]> {
       const file = part === "ext" ? `pack.${locale}.ext.json` : `pack.${locale}.json`;
       const hash = options.crossOriginStorage?.hashes[file];
       const shared = hash ? await viaCrossOriginStorage(hash) : undefined;
-      const pack: unknown =
-        shared ??
-        (await (await doFetch(`${baseUrl.replace(/\/+$/, "")}/${file}`, { signal: signal ?? null })).json());
+      let pack: unknown = shared;
+      if (!pack) {
+        const response = await doFetch(`${baseUrl.replace(/\/+$/, "")}/${file}`, { signal: signal ?? null });
+        if (!response.ok) throw new Error(`emojisense: ${file} failed with HTTP ${response.status}`);
+        pack = await response.json();
+      }
       assertPack(pack);
       return pack;
     }),

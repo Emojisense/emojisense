@@ -1,3 +1,4 @@
+import { noteSearch } from "./activity.js";
 import { assessConfidence } from "./confidence.js";
 import { applyCulture, type Culture, resolveRegion } from "./culture.js";
 import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
@@ -107,6 +108,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
   return {
     update(query) {
       cancel();
+      noteSearch();
       // Fusion sees the same candidates whatever the limit (RANK_DEPTH); the results are cut to it.
       const depth = Math.max(limit, RANK_DEPTH);
       const aliasStarted = performance.now();

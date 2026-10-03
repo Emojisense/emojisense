@@ -1,8 +1,8 @@
 import { type Culture, cultureUrlFor, loadCulture } from "./culture.js";
 import { type AliasEngine, createEngine } from "./engine.js";
 import { createLayeredSemantic } from "./layered.js";
-import { loadPacks } from "./loader.js";
 import type { Pack } from "./pack.js";
+import { type PackIndexState, sharedPackIndex, whenQuiet as defaultWhenQuiet } from "./pack-index.js";
 import type { SemanticProvider } from "./provider.js";
 
 export interface EngineLoaderOptions {
@@ -18,21 +18,38 @@ export interface EngineLoaderOptions {
   cultureUrl?: string | false | undefined;
   /** Packs to add to every engine, e.g. a custom emoji pack. */
   extraPacks?: readonly Pack[] | undefined;
+  /** Load the extension packs (more aliases and typos) after the core packs. Default true. */
+  extended?: boolean | undefined;
   fetch?: typeof fetch;
-  /** Runs a task when the browser is idle. Tests pass a synchronous one. */
+  /** Starts the extension download when the browser is idle. Tests pass a synchronous one. */
   whenIdle?: (task: () => void) => void;
+  /** Builds the extension index in a pause in typing. Tests pass a synchronous one. */
+  whenQuiet?: (task: () => void) => void;
 }
 
 /**
- * Loads the packs once, on first use: the core packs first, then the extension packs (more
- * aliases and typos) when the browser is idle. Listeners hear about each engine.
+ * Loads the packs on first use: the core packs, then the extension packs (more aliases and
+ * typos). Loaders with the same `packUrl`, `locale`, `extended` and `fetch` share one download and
+ * one index, so a second editor or a picker that opens again gets its engine at once. The culture
+ * file never delays the first engine: it is added when it arrives. Listeners hear about each
+ * engine.
  */
 export interface EngineLoader {
   /** The engine; starts loading on the first call. Rejects when the core packs fail. */
   load(): Promise<AliasEngine>;
+  /**
+   * Starts loading without waiting, e.g. when the pointer moves onto or focus enters the button
+   * that opens search. Errors are left to `load`.
+   */
+  preload(): void;
   /** The newest engine, or undefined before the core packs arrived. */
   current(): AliasEngine | undefined;
-  /** Called with each new engine (core, then core + extension). Returns an unsubscribe function. */
+  /** The locale packs in the newest engine: core, then core + extension. Extra packs are not included. */
+  packs(): readonly Pack[];
+  /**
+   * Called with each new engine: core, core + extension, and each with the culture file once it
+   * is there. Returns an unsubscribe function.
+   */
   subscribe(listener: (engine: AliasEngine) => void): () => void;
 }
 
@@ -44,71 +61,92 @@ const defaultWhenIdle = (task: () => void) => {
 };
 
 export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
-  const { packUrl, locale = "en", extraPacks = [], whenIdle = defaultWhenIdle } = options;
+  const { packUrl, locale = "en", extraPacks = [], extended = true } = options;
   const cultureUrl =
     options.cultureUrl === false ? undefined : (options.cultureUrl ?? cultureUrlFor(packUrl));
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
+  const index = sharedPackIndex({
+    packUrl,
+    locale,
+    extended,
+    fetch: options.fetch,
+    whenIdle: options.whenIdle ?? defaultWhenIdle,
+    whenQuiet: options.whenQuiet ?? defaultWhenQuiet,
+  });
   const listeners = new Set<(engine: AliasEngine) => void>();
-  let engine: AliasEngine | undefined;
-  let loading: Promise<AliasEngine> | undefined;
+  let stopListening: (() => void) | undefined;
+  let culture: Culture | undefined;
+  let cultureLocale: string | undefined;
+  let withExtras: { from: PackIndexState; engine: AliasEngine } | undefined;
+  let latest: { from: PackIndexState; culture: Culture | undefined; engine: AliasEngine } | undefined;
+  let notified: AliasEngine | undefined;
 
-  const publish = (next: AliasEngine) => {
-    engine = next;
-    for (const listener of listeners) listener(next);
-  };
-
-  const culture = (fileLocale: string): Promise<Culture | undefined> =>
-    cultureUrl
-      ? loadCulture({ baseUrl: cultureUrl, locale: fileLocale, fetch: doFetch }).catch(() => undefined)
-      : Promise.resolve(undefined);
-
-  const corePacks = async (): Promise<{ packs: Pack[]; locales: string[] }> => {
-    try {
-      return {
-        packs: await loadPacks({ baseUrl: packUrl, locales: [locale], fetch: doFetch }),
-        locales: [locale],
-      };
-    } catch (error) {
-      if (locale === "en") throw error;
-      // A locale without a pack (a site language Emojisense does not cover) still gets English.
-      return { packs: await loadPacks({ baseUrl: packUrl, fetch: doFetch }), locales: ["en"] };
+  const current = (): AliasEngine | undefined => {
+    const from = index.current();
+    if (!from) return undefined;
+    if (latest?.from === from && latest.culture === culture) return latest.engine;
+    let base = from.engine;
+    if (extraPacks.length > 0) {
+      if (withExtras?.from !== from) {
+        withExtras = { from, engine: createEngine([...from.packs, ...extraPacks]) };
+      }
+      base = withExtras.engine;
     }
+    // withCulture shares the index: a culture file that arrives later costs no rebuild.
+    latest = { from, culture, engine: culture ? base.withCulture(culture) : base };
+    return latest.engine;
   };
 
-  const start = async (): Promise<AliasEngine> => {
-    const wanted = culture(locale);
-    const { packs: core, locales } = await corePacks();
-    // Culture follows the packs: a locale that fell back to English gets the English file.
-    const cultureFile = locales[0] === locale ? await wanted : await culture(locales[0] as string);
-    const engineOptions = cultureFile ? { culture: cultureFile } : {};
-    const first = createEngine([...core, ...extraPacks], engineOptions);
-    publish(first);
-    whenIdle(() => {
-      loadPacks({ baseUrl: packUrl, locales, fetch: doFetch, part: "ext" }).then(
-        (ext) => publish(createEngine([...core, ...ext, ...extraPacks], engineOptions)),
-        () => {
-          // Optional upgrade: the core packs keep working.
-        },
-      );
+  const notify = () => {
+    const engine = current();
+    if (!engine || engine === notified) return;
+    notified = engine;
+    for (const listener of listeners) listener(engine);
+  };
+
+  const requestCulture = (fileLocale: string) => {
+    if (!cultureUrl || cultureLocale === fileLocale) return;
+    cultureLocale = fileLocale;
+    loadCulture({ baseUrl: cultureUrl, locale: fileLocale, fetch: doFetch }).then(
+      (file) => {
+        if (cultureLocale !== fileLocale) return;
+        culture = file;
+        notify();
+      },
+      () => {
+        // The culture layer only adds results; search works the same without it.
+      },
+    );
+  };
+
+  const load = (): Promise<AliasEngine> => {
+    requestCulture(locale);
+    return index.load().then((state) => {
+      // Culture follows the packs: a locale that fell back to English gets the English file.
+      requestCulture(state.engine.locales.includes(locale) ? locale : "en");
+      notify();
+      return current() as AliasEngine;
     });
-    return first;
   };
 
   return {
-    load() {
-      if (!loading) {
-        loading = start();
-        // A failed load may be retried (the network or the site may be back).
-        loading.catch(() => {
-          loading = undefined;
-        });
-      }
-      return loading;
+    load,
+    preload() {
+      load().catch(() => {
+        // `load` reports the error to whoever waits for the engine.
+      });
     },
-    current: () => engine,
+    current,
+    packs: () => index.current()?.packs ?? [],
     subscribe(listener) {
       listeners.add(listener);
-      return () => listeners.delete(listener);
+      stopListening ??= index.subscribe(notify);
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size > 0) return;
+        stopListening?.();
+        stopListening = undefined;
+      };
     },
   };
 }
