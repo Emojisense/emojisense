@@ -180,8 +180,9 @@
         { "binding": "EVENTS", "dataset": "emojisense_search_dev" },
         { "binding": "STATS", "dataset": "emojisense_events_dev" }
       ],
+      // No dev keys: emojisense.dev is public, and a dev key works from any origin with model calls.
       "vars": {
-        "DEV_KEYS": "pk_demo",
+        "DEV_KEYS": "",
         "ENVIRONMENT": "staging",
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev",
