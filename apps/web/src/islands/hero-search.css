@@ -26,6 +26,38 @@
     var(--shadow-lg);
 }
 
+/* Sits on the bar's top edge, so it adds no height and nothing moves when it goes. */
+.hs-hint {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  max-width: calc(100% - 2rem);
+  padding: 0.3125rem 0.6875rem;
+  border: 0.0625rem solid var(--line-strong);
+  border-radius: var(--pill);
+  background: var(--bg);
+  color: var(--ink-2);
+  font: 400 0.75rem / 1 var(--font-mono);
+  white-space: nowrap;
+  cursor: text;
+  translate: 0 -50%;
+  animation: hs-in 240ms var(--ease-out);
+}
+
+.hs-hint svg {
+  flex: none;
+  width: 0.9375rem;
+  height: 0.9375rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .hs-icon {
   flex: none;
   width: 1.375rem;

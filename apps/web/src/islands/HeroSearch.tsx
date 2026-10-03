@@ -166,6 +166,17 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   return (
     <div className="hs">
       <div className="hs-bar">
+        {auto && (
+          // The autoplay fills the box, so without this tab it reads as an animation, not an input.
+          // A label focuses the input on click; it is hidden from screen readers, as focus ends the demo.
+          <label className="hs-hint" htmlFor={`${id}-q`} aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="2.5" y="6" width="19" height="12" rx="2" />
+              <path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M8 14h8" />
+            </svg>
+            {t.t("typeHint")}
+          </label>
+        )}
         <svg className="hs-icon" viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.5-3.5" />
