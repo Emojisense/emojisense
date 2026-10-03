@@ -389,6 +389,14 @@
         "name": "emoji-mart अडैप्टर",
         "blurb": "emoji-mart पिकर बनाए रखें। उसमें लोगों की बात समझने वाली खोज जोड़ें।"
       },
+      "ckeditor5": {
+        "name": "CKEditor 5 प्लगइन",
+        "blurb": "Mention प्लगइन पर कोलन ऑटोकम्प्लीट। <code>:pizza</code> लिखें, <emoji>🍕</emoji> पाएँ।"
+      },
+      "tinymce": {
+        "name": "TinyMCE प्लगइन",
+        "blurb": "TinyMCE 7 और 8 के लिए कोलन ऑटोकम्प्लीट, इमोटिकॉन मेनू की जगह।"
+      },
       "swift": {
         "name": "Swift पैकेज",
         "blurb": "वही इंजन, iOS 16+ और macOS 13+ पर नेटिव रूप में।"
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "Raycast एक्सटेंशन",
         "blurb": "अपने लॉन्चर से अर्थ के आधार पर emoji खोजें। ऑफ़लाइन काम करता है।"
+      },
+      "wordpress": {
+        "name": "WordPress प्लगइन",
+        "blurb": "ब्लॉक एडिटर, रिएक्शन, टिप्पणियाँ, bbPress और BuddyPress। ऑफ़लाइन काम करता है।"
+      },
+      "discourse": {
+        "name": "Discourse थीम कॉम्पोनेन्ट",
+        "blurb": "एडिटर, चैट और पिकर में अर्थ से खोज। <code>:ship it</code> लिखें, <emoji>🚀</emoji> पाएँ।"
       },
       "mcp": {
         "name": "MCP सर्वर",

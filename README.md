@@ -86,9 +86,10 @@ gate. CI has no secrets and never deploys.
 | `packages/platform` | Shared contracts of the two Workers: D1 schema, plans, keys, webhooks |
 | `packages/worker` | Cloudflare Worker: the Search API |
 | `packages/react` | `@emojisense/react`: hooks + Frimousse adapter |
-| `packages/web-component`, `tiptap`, `lexical`, `emoji-mart`, `mcp` | Other integrations ([docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)) |
+| `packages/web-component`, `tiptap`, `lexical`, `ckeditor5`, `tinymce`, `emoji-mart`, `mcp` | Other integrations ([docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)) |
 | `apps/dashboard` | Dashboard Worker and app: accounts, keys, usage, custom emoji, teams, webhooks |
-| `apps/chrome-extension`, `apps/raycast`, `sdks/swift` | Chrome and Raycast extensions, Swift SDK |
+| `apps/chrome-extension`, `apps/raycast`, `sdks/swift`, `sdks/kotlin` | Chrome and Raycast extensions, Swift and Kotlin SDKs |
+| `apps/wordpress-plugin`, `apps/discourse` | WordPress plugin (bbPress, BuddyPress), Discourse theme component |
 | `apps/web` | Website, docs and the playground (`/playground/`): search inspector, reactions and photo labs |
 | `docs/` | [Architecture](docs/ARCHITECTURE.md), [pack format](docs/PACK_FORMAT.md), [API](docs/API.md), [research](docs/RESEARCH.md) |
 

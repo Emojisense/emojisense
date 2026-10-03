@@ -389,6 +389,14 @@
         "name": "Adaptador de emoji-mart",
         "blurb": "Conserva el selector de emoji-mart. Dale una búsqueda que entienda a la gente."
       },
+      "ckeditor5": {
+        "name": "Plugin de CKEditor 5",
+        "blurb": "Autocompletado con dos puntos sobre el plugin Mention. Escribe <code>:pizza</code> y obtienes <emoji>🍕</emoji>."
+      },
+      "tinymce": {
+        "name": "Plugin de TinyMCE",
+        "blurb": "Autocompletado con dos puntos para TinyMCE 7 y 8, en lugar del menú de emoticonos."
+      },
       "swift": {
         "name": "Paquete de Swift",
         "blurb": "El mismo motor, nativo en iOS 16+ y macOS 13+."
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "Extensión de Raycast",
         "blurb": "Busca emoji por significado desde tu lanzador. Funciona sin conexión."
+      },
+      "wordpress": {
+        "name": "Plugin de WordPress",
+        "blurb": "Editor de bloques, reacciones, comentarios, bbPress y BuddyPress. Funciona sin conexión."
+      },
+      "discourse": {
+        "name": "Componente de tema para Discourse",
+        "blurb": "Búsqueda por significado en el editor, el chat y el selector. Escribe <code>:ship it</code> y obtienes <emoji>🚀</emoji>."
       },
       "mcp": {
         "name": "Servidor MCP",

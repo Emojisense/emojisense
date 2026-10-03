@@ -389,6 +389,14 @@
         "name": "emoji-mart adaptörü",
         "blurb": "emoji-mart seçicinizi koruyun. İnsanları anlayan arama ekleyin."
       },
+      "ckeditor5": {
+        "name": "CKEditor 5 eklentisi",
+        "blurb": "Mention eklentisi üzerinde iki noktayla otomatik tamamlama. <code>:pizza</code> yazın, <emoji>🍕</emoji> alın."
+      },
+      "tinymce": {
+        "name": "TinyMCE eklentisi",
+        "blurb": "TinyMCE 7 ve 8 için iki noktayla otomatik tamamlama, ifade menüsünün yerine."
+      },
       "swift": {
         "name": "Swift paketi",
         "blurb": "Aynı motor, iOS 16+ ve macOS 13+ üzerinde yerel olarak çalışır."
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "Raycast eklentisi",
         "blurb": "Başlatıcınızdan anlama göre emoji arayın. Çevrimdışı çalışır."
+      },
+      "wordpress": {
+        "name": "WordPress eklentisi",
+        "blurb": "Blok düzenleyici, tepkiler, yorumlar, bbPress ve BuddyPress. Çevrimdışı çalışır."
+      },
+      "discourse": {
+        "name": "Discourse tema bileşeni",
+        "blurb": "Düzenleyicide, sohbette ve seçicide anlama göre arama. <code>:ship it</code> yazın, <emoji>🚀</emoji> alın."
       },
       "mcp": {
         "name": "MCP sunucusu",

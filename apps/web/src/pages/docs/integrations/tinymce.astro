@@ -1,0 +1,107 @@
+---
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import CodeTabs from "../../../components/docs/CodeTabs.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, shown } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const bundler = `import "tinymce";
+import "tinymce/models/dom";
+import "tinymce/themes/silver";
+import "tinymce/icons/default";
+import { registerEmojisense } from "@emojisense/tinymce";
+import tinymce from "tinymce";
+
+registerEmojisense(tinymce);
+
+await tinymce.init({
+  selector: "#editor",
+  license_key: "gpl",
+  plugins: "emojisense",
+  emojisense_pack_url: "${PACK_URL}",
+  // Optional: meaning results from the API.
+  emojisense_endpoint: "${API_HOST}",
+  emojisense_publishable_key: "pk_live_…",
+});`;
+
+const script = `<script src="https://cdn.jsdelivr.net/npm/tinymce@8/tinymce.min.js"></script>
+<script>
+  tinymce.init({
+    selector: "#editor",
+    license_key: "gpl",
+    external_plugins: {
+      emojisense: "https://cdn.jsdelivr.net/npm/@emojisense/tinymce/dist/plugin.min.js",
+    },
+    emojisense_pack_url: "${PACK_URL}",
+  });
+</script>`;
+
+const own = `import { createAutocompleter } from "@emojisense/tinymce";
+import { createSuggestionSource } from "emojisense/autocomplete";
+
+const source = createSuggestionSource({ engine, minQueryLength: 2, includeCustom: false });
+
+editor.ui.registry.addAutocompleter("emoji", createAutocompleter({
+  source: () => source,
+  insert: (range, emoji) => {
+    editor.selection.setRng(range);
+    editor.insertContent(emoji);
+  },
+}));`;
+---
+
+<DocsLayout path="/docs/integrations/tinymce/">
+  <p><code>@emojisense/tinymce</code> adds <code>:</code> emoji autocomplete to TinyMCE 7 and 8. Type <code>:pizza</code> and the menu shows <span class="emoji">{shown("pizza", { part: "core" })}</span>. Type <code>:ship it</code> and <span class="emoji">{shown("ship it", { limit: 1 })}</span> comes first. It uses TinyMCE’s own autocompleter, so the menu looks like the rest of the editor.</p>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/tinymce emojisense tinymce" />
+
+  <h2 id="setup">Setup</h2>
+  <CodeTabs
+    tabs={[
+      { label: "Bundler", code: bundler, lang: "ts" },
+      { label: "Script tag", code: script, lang: "html" },
+    ]}
+    group="tinymce-setup"
+    label="Setup"
+  />
+  <p>With a script tag, pin exact versions in both URLs and add <code>integrity</code> attributes in production. With the emoticons plugin loaded, Emojisense takes over its <code>:</code> menu; the emoticons dialog and toolbar button stay.</p>
+
+  <h2 id="options">Options</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>emojisense_pack_url</code></td><td>—</td><td>Base URL of a pack version. Set it or <code>emojisense_engine</code>.</td></tr>
+        <tr><td><code>emojisense_engine</code></td><td>—</td><td>A ready engine instead of a pack URL</td></tr>
+        <tr><td><code>emojisense_locale</code></td><td>the editor’s <code>language</code></td><td><code>tr_TR</code> becomes <code>tr</code>. English always loads too.</td></tr>
+        <tr><td><code>emojisense_culture_url</code></td><td>—</td><td>Culture files, for cultural and seasonal emoji after the best match</td></tr>
+        <tr><td><code>emojisense_endpoint</code></td><td>—</td><td>The Emojisense API. Without it, search stays on the device.</td></tr>
+        <tr><td><code>emojisense_publishable_key</code></td><td>—</td><td>A <code>pk_…</code> key. Never put a secret key in a browser.</td></tr>
+        <tr><td><code>emojisense_skin_tone</code></td><td>—</td><td><code>light</code>, <code>medium-light</code>, <code>medium</code>, <code>medium-dark</code> or <code>dark</code></td></tr>
+        <tr><td><code>emojisense_limit</code></td><td><code>8</code></td><td>Menu size</td></tr>
+        <tr><td><code>emojisense_replace_emoticons</code></td><td><code>true</code></td><td>Take over the emoticons plugin’s <code>:</code> menu</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="behaviour">Keyboard</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Input</th><th scope="col">Result</th></tr></thead>
+      <tbody>
+        <tr><td><code>:</code> and two characters</td><td>The menu opens. <code>:)</code> and <code>:D</code> stay text.</td></tr>
+        <tr><td><code>12:30</code>, <code>https://</code></td><td>No menu: the colon must start a word</td></tr>
+        <tr><td><code>:ship it</code></td><td>Spaces are allowed while the menu is open, up to four words</td></tr>
+        <tr><td>↑ ↓, Enter</td><td>Move through the menu, insert the emoji</td></tr>
+        <tr><td>Escape</td><td>Close the menu and keep the text</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>TinyMCE looks up the query 50 ms after the last keystroke and keeps a space in the query only while the menu is open. When the dictionary is unsure and the API is configured, the menu waits up to 600 ms for results by meaning.</p>
+
+  <h2 id="own-autocompleter">Your own autocompleter</h2>
+  <p><code>createAutocompleter</code> returns the spec for <code>editor.ui.registry.addAutocompleter</code>, for code that registers its own:</p>
+  <CodeBlock code={own} lang="ts" />
+  <p>WordPress’s classic editor runs TinyMCE 4, which has no autocompleter API. The <a href="/docs/integrations/wordpress/">WordPress plugin</a> covers it with a toolbar button.</p>
+</DocsLayout>

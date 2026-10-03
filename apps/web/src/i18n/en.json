@@ -389,6 +389,14 @@
         "name": "emoji-mart adapter",
         "blurb": "Keep the emoji-mart picker. Give it search that understands people."
       },
+      "ckeditor5": {
+        "name": "CKEditor 5 plugin",
+        "blurb": "Colon autocomplete on the Mention plugin. Type <code>:pizza</code>, get <emoji>🍕</emoji>."
+      },
+      "tinymce": {
+        "name": "TinyMCE plugin",
+        "blurb": "Colon autocomplete for TinyMCE 7 and 8, in place of the emoticons menu."
+      },
       "swift": {
         "name": "Swift package",
         "blurb": "The same engine, native on iOS 16+ and macOS 13+."
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "Raycast extension",
         "blurb": "Search emoji by meaning from your launcher. Works offline."
+      },
+      "wordpress": {
+        "name": "WordPress plugin",
+        "blurb": "Block editor, reactions, comments, bbPress and BuddyPress. Works offline."
+      },
+      "discourse": {
+        "name": "Discourse theme component",
+        "blurb": "Search by meaning in the composer, chat and picker. Type <code>:ship it</code>, get <emoji>🚀</emoji>."
       },
       "mcp": {
         "name": "MCP server",

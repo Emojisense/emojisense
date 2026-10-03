@@ -5,10 +5,12 @@ build and check artifacts on this machine.
 
 | Artifact | Build and check | Publish | The owner needs |
 | -------- | --------------- | ------- | --------------- |
-| 7 npm packages: `emojisense`, `@emojisense/{react,web-component,mcp,emoji-mart,lexical,tiptap}` | `pnpm release:check` | `pnpm release:publish` | npm account with 2FA, npm org `emojisense` |
+| 9 npm packages: `emojisense`, `@emojisense/{react,web-component,mcp,emoji-mart,lexical,tiptap,ckeditor5,tinymce}` | `pnpm release:check` | `pnpm release:publish` | npm account with 2FA, npm org `emojisense` |
 | Chrome extension | `pnpm package:chrome` → `release/chrome/emojisense-chrome-<version>.zip` | Upload in the Chrome Web Store dashboard | Chrome Web Store developer account (one-time fee), screenshots, promo tile |
 | Raycast extension | `pnpm package:raycast` → `release/raycast/emojisense/` | `npm run publish` in that folder (opens a pull request on raycast/extensions) | Raycast account, `emojisense` on npm first, screenshots |
 | Swift package | `cd sdks/swift && swift build && swift test` | `scripts/release-swift.sh <version>` | GitHub repository `emojisense/emojisense-swift` |
+| WordPress plugin | `pnpm --filter @emojisense/wordpress-plugin release` → `apps/wordpress-plugin/release/emojisense-<version>.zip`, then `e2e` and `e2e:forums` | WordPress.org SVN (see `apps/wordpress-plugin/README.md`) | WordPress.org account, plugin slug `emojisense` |
+| Discourse theme component | `pnpm --filter @emojisense/discourse build` → `apps/discourse/dist/theme`, then `e2e` on a site with it | `scripts/release-discourse.sh <version>` (PUSHES) | GitHub repository `emojisense/discourse-emojisense`, a Meta topic in Theme component |
 
 `release/` is gitignored.
 
@@ -65,6 +67,8 @@ Tarballs (2026-10-02, packed by `pnpm release:check`):
 | `@emojisense/emoji-mart` | 7.7 KB | 24.1 KB | 11 |
 | `@emojisense/lexical` | 10.8 KB | 33.4 KB | 16 |
 | `@emojisense/tiptap` | 11.2 KB | 36.8 KB | 14 |
+| `@emojisense/ckeditor5` | 4.9 KB | 12.4 KB | 9 |
+| `@emojisense/tinymce` | 22.9 KB | 58.4 KB | 12 (with `dist/plugin.min.js` for `external_plugins`) |
 
 `pnpm release:check --files` lists every file.
 
@@ -75,7 +79,8 @@ Tarballs (2026-10-02, packed by `pnpm release:check`):
 
    ```bash
    for pkg in emojisense @emojisense/react @emojisense/web-component @emojisense/mcp \
-     @emojisense/emoji-mart @emojisense/lexical @emojisense/tiptap; do
+     @emojisense/emoji-mart @emojisense/lexical @emojisense/tiptap @emojisense/ckeditor5 \
+     @emojisense/tinymce; do
      npm trust github "$pkg" --repo emojisense/emojisense --file release.yml --env npm
    done
    ```
@@ -228,3 +233,20 @@ SwiftPM needs `Package.swift` at the root of a repository, so the package lives 
 `Package.swift` needs no change: tools version 6.0, iOS 16 and macOS 13, one library product, no
 dependencies. In the mirror the conformance tests skip the search cases, because the packs live in
 `packages/data`.
+
+## Discourse theme component
+
+Discourse installs a theme from the root of a git repository, so the build (`apps/discourse/dist/theme`)
+is published as its own repository, `emojisense/discourse-emojisense`.
+
+1. Set `"theme_version"` in `apps/discourse/theme/about.json`, commit.
+2. Check it on a Discourse site with the component (see `apps/discourse/README.md`):
+   `pnpm --filter @emojisense/discourse e2e`.
+3. `scripts/release-discourse.sh 0.1.0` (PUSHES). It builds the theme, replaces the repository's files
+   with the build, commits and tags the version. Sites that installed the component from git get the
+   update with Discourse's daily check.
+4. First release only: post a topic in the Theme component category on meta.discourse.org.
+
+The hooks are internal Discourse methods. After a Discourse release that breaks them, add a
+`.discourse-compatibility` file to the theme repository that pins older Discourse versions to the last
+working commit, then fix the component.

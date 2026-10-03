@@ -16,7 +16,7 @@ const examples = [
 ---
 
 <DocsLayout path="/docs/integrations/wordpress/">
-  <p>The Emojisense plugin for WordPress. Type a colon and a word in any text block of the block editor and pick from emoji ranked by meaning. The classic editor gets an emoji button. Optionally, visitors can react to posts with emoji and search emoji in the comment form.</p>
+  <p>The Emojisense plugin for WordPress. Type a colon and a word in any text block of the block editor and pick from emoji ranked by meaning. The classic editor gets an emoji button. Optionally, visitors can react to posts with emoji and search emoji in the comment form. With bbPress or BuddyPress, the same works in forums and activity streams.</p>
   <ul class="docs-results" aria-label="Examples">
     {examples.map((e) => <li><span class="docs-results-query">“{e.query}”</span><span class="docs-results-emoji emoji">{e.top}</span></li>)}
   </ul>
@@ -36,10 +36,14 @@ const examples = [
         <tr><td>Block editor</td><td><kbd>:</kbd> autocomplete in every rich text field, and an <strong>Emoji</strong> button in the block toolbar’s “More” menu</td><td>On</td></tr>
         <tr><td>Classic editor</td><td>An emoji button in the TinyMCE toolbar</td><td>On</td></tr>
         <tr><td>Reactions</td><td>Emoji reactions after single posts of the chosen post types. Authors pick the reactions in the editor sidebar. Only counts are stored.</td><td>Off</td></tr>
-        <tr><td>Comments</td><td>An <strong>Emoji</strong> button under the comment field</td><td>Off</td></tr>
+        <tr><td>Comments</td><td>An <strong>Emoji</strong> button under the comment field, and <kbd>:</kbd> autocomplete in it</td><td>Off</td></tr>
+        <tr><td>bbPress</td><td>The <strong>Emoji</strong> button and <kbd>:</kbd> autocomplete in the topic and reply forms. Reactions under topics and replies of public forums.</td><td>Off</td></tr>
+        <tr><td>BuddyPress</td><td>The <strong>Emoji</strong> button and <kbd>:</kbd> autocomplete in activity updates, activity comments and messages. Reactions under public activity updates.</td><td>Off</td></tr>
       </tbody>
     </table>
   </div>
+
+  <p>The forum settings are in <strong>Settings → Emojisense → Forums and communities</strong>, shown when bbPress or BuddyPress is active. Reactions are anonymous, so only public topics, replies and activity updates show them. Forum replies never get reaction suggestions from the API.</p>
 
   <h2 id="api">Connect the API</h2>
   <p>In <strong>Settings → Emojisense</strong>, turn on <strong>Connect to the Emojisense API</strong> and paste a publishable key (<code>pk_live_…</code>). Add the site origin that the settings page shows (for example <code>https://example.com</code>) to the key’s allowed origins in the dashboard. <strong>Test the saved settings</strong> checks the key and the origin. The connection adds:</p>

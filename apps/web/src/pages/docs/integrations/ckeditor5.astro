@@ -1,0 +1,84 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { API_HOST, PACK_URL, shown } from "../../../components/docs/facts";
+import InstallTabs from "../../../components/docs/InstallTabs.astro";
+
+const setup = `import { EmojisenseMention } from "@emojisense/ckeditor5";
+import { ClassicEditor, Essentials, Paragraph } from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
+
+await ClassicEditor.create({
+  attachTo: document.querySelector("#editor"),
+  licenseKey: "GPL",
+  plugins: [Essentials, Paragraph, EmojisenseMention],
+  emojisense: {
+    packUrl: "${PACK_URL}",
+    // Optional: meaning results from the API.
+    endpoint: "${API_HOST}",
+    publishableKey: "pk_live_…",
+  },
+});`;
+
+const picker = `import { EmojisenseMention } from "@emojisense/ckeditor5";
+import { ClassicEditor, EmojiPicker, Essentials, Paragraph } from "ckeditor5";
+
+await ClassicEditor.create({
+  attachTo: document.querySelector("#editor"),
+  licenseKey: "GPL",
+  // EmojiPicker for browsing; not Emoji or EmojiMention, which bring their own ":" feed.
+  plugins: [Essentials, Paragraph, EmojiPicker, EmojisenseMention],
+  toolbar: ["emoji"],
+  emojisense: { packUrl: "${PACK_URL}" },
+});`;
+---
+
+<DocsLayout path="/docs/integrations/ckeditor5/">
+  <p><code>@emojisense/ckeditor5</code> adds <code>:</code> emoji autocomplete to CKEditor 5 (47 and later). Type <code>:pizza</code> and the list shows <span class="emoji">{shown("pizza", { part: "core" })}</span>. Type <code>:ship it</code> and <span class="emoji">{shown("ship it", { limit: 1 })}</span> comes first. It is a feed on the official Mention plugin, and the chosen emoji goes in as plain text.</p>
+
+  <h2 id="install">Install</h2>
+  <InstallTabs packages="@emojisense/ckeditor5 emojisense ckeditor5" />
+
+  <h2 id="setup">Setup</h2>
+  <CodeBlock code={setup} lang="ts" />
+  <p>CKEditor 47 takes the element as the first argument: <code>ClassicEditor.create(element, config)</code>. The list items use CKEditor’s own button classes, so editor themes style them.</p>
+
+  <h2 id="emoji-picker">With the official emoji picker</h2>
+  <Callout type="note" title="One feed per marker">
+    <p>The Mention plugin allows one feed for <code>:</code>. Load <code>EmojiPicker</code> for the emoji dialog and leave out <code>Emoji</code> and <code>EmojiMention</code>. If two <code>:</code> feeds are loaded, the first keeps <code>:</code> and the console shows <code>emojisense-marker-conflict</code>.</p>
+  </Callout>
+  <CodeBlock code={picker} lang="ts" />
+
+  <h2 id="options">Options (<code>config.emojisense</code>)</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>packUrl</code></td><td>—</td><td>Base URL of a pack version. Set it or <code>engine</code>.</td></tr>
+        <tr><td><code>engine</code></td><td>—</td><td>A ready engine instead of a pack URL</td></tr>
+        <tr><td><code>locale</code></td><td>the content language</td><td><code>pt-br</code> becomes <code>pt</code>. English always loads too.</td></tr>
+        <tr><td><code>cultureUrl</code></td><td>—</td><td>Culture files, for cultural and seasonal emoji after the best match</td></tr>
+        <tr><td><code>endpoint</code></td><td>—</td><td>The Emojisense API. Without it, search stays on the device.</td></tr>
+        <tr><td><code>publishableKey</code></td><td>—</td><td>A <code>pk_…</code> key. Never put a secret key in a browser.</td></tr>
+        <tr><td><code>semantic</code></td><td>—</td><td>A semantic provider instead of <code>endpoint</code></td></tr>
+        <tr><td><code>skinTone</code></td><td>—</td><td><code>light</code>, <code>medium-light</code>, <code>medium</code>, <code>medium-dark</code> or <code>dark</code></td></tr>
+        <tr><td><code>limit</code></td><td><code>8</code></td><td>List size</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="behaviour">Behaviour</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Input</th><th scope="col">Result</th></tr></thead>
+      <tbody>
+        <tr><td><code>:</code> and two characters</td><td>The list opens. <code>:)</code> and <code>:D</code> stay text.</td></tr>
+        <tr><td><code>12:30</code>, <code>https://</code></td><td>No list: the colon must follow a space, a bracket or the line start</td></tr>
+        <tr><td><code>:ship it</code></td><td>Spaces are allowed, up to four words</td></tr>
+        <tr><td>↑ ↓, Enter, Tab, Escape</td><td>The Mention plugin’s keys</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>When the dictionary is unsure and the API is configured, the list waits up to 600 ms for results by meaning. Because <code>packUrl</code> is a plain string, CMS integrations that configure CKEditor with YAML or PHP (Drupal, Craft CMS) can pass the options without code.</p>
+</DocsLayout>

@@ -389,6 +389,14 @@
         "name": "emoji-mart অ্যাডাপ্টার",
         "blurb": "emoji-mart পিকার রাখুন। এতে যোগ করুন মানুষের কথা বোঝে এমন অনুসন্ধান।"
       },
+      "ckeditor5": {
+        "name": "CKEditor 5 প্লাগইন",
+        "blurb": "Mention প্লাগইনের উপর কোলন অটোকমপ্লিট। <code>:pizza</code> লিখুন, <emoji>🍕</emoji> পান।"
+      },
+      "tinymce": {
+        "name": "TinyMCE প্লাগইন",
+        "blurb": "TinyMCE 7 ও 8-এর জন্য কোলন অটোকমপ্লিট, ইমোটিকন মেনুর বদলে।"
+      },
       "swift": {
         "name": "Swift প্যাকেজ",
         "blurb": "একই ইঞ্জিন, iOS ১৬+ ও macOS ১৩+-এ নেটিভভাবে চলে।"
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "Raycast এক্সটেনশন",
         "blurb": "আপনার লঞ্চার থেকেই অর্থ দিয়ে ইমোজি খুঁজুন। অফলাইনে কাজ করে।"
+      },
+      "wordpress": {
+        "name": "WordPress প্লাগইন",
+        "blurb": "ব্লক এডিটর, রিঅ্যাকশন, মন্তব্য, bbPress ও BuddyPress। অফলাইনে কাজ করে।"
+      },
+      "discourse": {
+        "name": "Discourse থিম কম্পোনেন্ট",
+        "blurb": "এডিটর, চ্যাট ও পিকারে অর্থ দিয়ে খোঁজ। <code>:ship it</code> লিখুন, <emoji>🚀</emoji> পান।"
       },
       "mcp": {
         "name": "MCP সার্ভার",

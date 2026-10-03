@@ -12,9 +12,13 @@ type ItemKey =
   | "tiptap"
   | "lexical"
   | "emojiMart"
+  | "ckeditor5"
+  | "tinymce"
   | "swift"
   | "chrome"
   | "raycast"
+  | "wordpress"
+  | "discourse"
   | "mcp"
   | "http"
   | "selfHosted";
@@ -86,6 +90,18 @@ const groups: Group[] = [
         command: "npm i @emojisense/emoji-mart emojisense",
         docs: readme("packages/emoji-mart"),
       },
+      {
+        key: "ckeditor5",
+        logos: ["ckeditor"],
+        command: "npm i @emojisense/ckeditor5 emojisense",
+        docs: "/docs/integrations/ckeditor5/",
+      },
+      {
+        key: "tinymce",
+        logos: ["tinymce"],
+        command: "npm i @emojisense/tinymce emojisense",
+        docs: "/docs/integrations/tinymce/",
+      },
     ],
   },
   {
@@ -111,6 +127,20 @@ const groups: Group[] = [
         command: "pnpm --filter emojisense-search dev",
         fromSource: true,
         docs: readme("apps/raycast"),
+      },
+      {
+        key: "wordpress",
+        logos: ["wordpress"],
+        command: "pnpm --filter @emojisense/wordpress-plugin release",
+        fromSource: true,
+        docs: "/docs/integrations/wordpress/",
+      },
+      {
+        key: "discourse",
+        logos: ["discourse"],
+        command: "pnpm --filter @emojisense/discourse build",
+        fromSource: true,
+        docs: "/docs/integrations/discourse/",
       },
     ],
   },

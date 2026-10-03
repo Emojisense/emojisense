@@ -389,6 +389,14 @@
         "name": "emoji-mart适配器",
         "blurb": "保留emoji-mart选择器，为它接入理解用户表达的搜索。"
       },
+      "ckeditor5": {
+        "name": "CKEditor 5插件",
+        "blurb": "基于Mention插件的冒号自动补全。输入<code>:pizza</code>，得到<emoji>🍕</emoji>。"
+      },
+      "tinymce": {
+        "name": "TinyMCE插件",
+        "blurb": "TinyMCE 7和8的冒号自动补全，取代表情符号菜单。"
+      },
       "swift": {
         "name": "Swift包",
         "blurb": "同一个引擎，在iOS 16+和macOS 13+上原生运行。"
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "Raycast扩展",
         "blurb": "从启动器按含义搜索emoji。支持离线使用。"
+      },
+      "wordpress": {
+        "name": "WordPress插件",
+        "blurb": "区块编辑器、回应、评论、bbPress和BuddyPress。可离线使用。"
+      },
+      "discourse": {
+        "name": "Discourse主题组件",
+        "blurb": "在编辑器、聊天和选择器中按含义搜索。输入<code>:ship it</code>，得到<emoji>🚀</emoji>。"
       },
       "mcp": {
         "name": "MCP服务器",

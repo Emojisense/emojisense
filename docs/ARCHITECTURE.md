@@ -165,8 +165,9 @@ Details, checks and costs: [CULTURE.md](CULTURE.md). Code: `packages/worker/src/
 | `packages/worker` | Search API Worker: search, reactions, photo to emoji, custom emoji, tenants, hosted sets, packs, vectors and culture files as assets, nightly shard build into the CDN bucket and `/p/*` from it, plans, metering | MIT |
 | `apps/dashboard` | Dashboard Worker + SPA: accounts, apps, keys, usage, analytics, custom emoji, teams, webhooks, waitlist | MIT |
 | `packages/react` (`@emojisense/react`) | Hooks, Frimousse adapter, shadcn registry item | MIT |
-| `packages/web-component`, `tiptap`, `lexical`, `emoji-mart`, `mcp` | Picker element, editor autocompletes, emoji-mart adapter, MCP server | MIT |
-| `apps/chrome-extension`, `apps/raycast`, `sdks/swift` | Chrome extension, Raycast extension, Swift port of the engine | MIT |
+| `packages/web-component`, `tiptap`, `lexical`, `ckeditor5`, `tinymce`, `emoji-mart`, `mcp` | Picker element and textarea autocomplete, editor autocompletes (on `emojisense/autocomplete`), emoji-mart adapter, MCP server | MIT |
+| `apps/chrome-extension`, `apps/raycast`, `sdks/swift`, `sdks/kotlin` | Chrome extension, Raycast extension, Swift and Kotlin ports of the engine | MIT |
+| `apps/wordpress-plugin`, `apps/discourse` | WordPress plugin (with bbPress and BuddyPress), Discourse theme component | GPL-2.0+ (WordPress), MIT |
 | `apps/web` | Website, docs and `/playground/`: per-layer timings, cache state, copy-as-code, reactions and photo labs | MIT |
 | private repo `emojisense-cloud` | Miss mining, daily alias updates, billing | closed |
 

@@ -27,7 +27,11 @@ export type LogoName =
   | "tiptap"
   | "lexical"
   | "frimousse"
-  | "emojiMart";
+  | "emojiMart"
+  | "ckeditor"
+  | "tinymce"
+  | "wordpress"
+  | "discourse";
 
 interface LogoBase {
   /** Short display name, e.g. "Vue". */
@@ -149,4 +153,8 @@ export const LOGOS: Record<LogoName, Logo> = {
   lexical: { kind: "wordmark", label: "Lexical", title: "Lexical" },
   frimousse: { kind: "wordmark", label: "Frimousse", title: "Frimousse" },
   emojiMart: { kind: "wordmark", label: "emoji-mart", title: "emoji-mart" },
+  ckeditor: { kind: "wordmark", label: "CKEditor", title: "CKEditor 5" },
+  tinymce: { kind: "wordmark", label: "TinyMCE", title: "TinyMCE" },
+  wordpress: { kind: "wordmark", label: "WordPress", title: "WordPress" },
+  discourse: { kind: "wordmark", label: "Discourse", title: "Discourse" },
 };

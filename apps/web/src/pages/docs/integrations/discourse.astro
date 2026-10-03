@@ -1,0 +1,64 @@
+---
+import Callout from "../../../components/docs/Callout.astro";
+import CodeBlock from "../../../components/docs/CodeBlock.astro";
+import DocsLayout from "../../../components/docs/DocsLayout.astro";
+import { shown } from "../../../components/docs/facts";
+
+const repository = "https://github.com/emojisense/discourse-emojisense";
+
+const build = `pnpm install && pnpm data:build             # once, from the repository root
+pnpm --filter @emojisense/discourse build          # → apps/discourse/dist/theme
+tar -czf emojisense-theme.tar.gz -C apps/discourse/dist theme`;
+
+const examples = [
+  { query: ":ship it", top: shown("ship it", { limit: 1 }) },
+  { query: ":mind blown", top: shown("mind blown", { limit: 1 }) },
+  { query: ":pizza", top: shown("pizza", { limit: 1 }) },
+];
+---
+
+<DocsLayout path="/docs/integrations/discourse/">
+  <p>A Discourse theme component: emoji by meaning in the composer (Markdown and rich text), in chat and in the emoji picker’s search. Emojisense ranks the emoji, and Discourse’s own matches fill the rest of the list.</p>
+  <ul class="docs-results" aria-label="Examples">
+    {examples.map((e) => <li><span class="docs-results-query">“{e.query}”</span><span class="docs-results-emoji emoji">{e.top}</span></li>)}
+  </ul>
+  <p>The packs ship as theme assets and load from the site the first time someone types <code>:</code> or searches the picker. Out of the box, no search text leaves the browser.</p>
+
+  <h2 id="install">Install</h2>
+  <p>In <strong>Admin → Appearance → Themes and components</strong>, choose <strong>Install → From a git repository</strong> and enter <code>{repository}</code>. Then add the component to your site’s themes. It works on self-hosted sites and on Discourse-hosted plans that allow theme components.</p>
+  <Callout type="note" title="Not published yet">
+    <p>Until the theme repository is public, build the component from the Emojisense repository and upload the archive with <strong>Install → From your device</strong>.</p>
+  </Callout>
+  <CodeBlock code={build} lang="bash" />
+
+  <h2 id="features">What changes</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Where</th><th scope="col">What</th></tr></thead>
+      <tbody>
+        <tr><td>Composer</td><td><kbd>:</kbd> autocomplete ranked by meaning, also for phrases with spaces (<code>:ship it</code>) and letters outside ASCII (<code>:çay</code>), in the Markdown and the rich text editor</td></tr>
+        <tr><td>Chat</td><td>The same <kbd>:</kbd> autocomplete in the chat composer</td></tr>
+        <tr><td>Emoji picker</td><td>The search box ranks by meaning</td></tr>
+        <tr><td>Custom emoji</td><td>The site’s custom emoji join the results by their names: <code>:party parrot</code> finds <code>:party_parrot:</code></td></tr>
+        <tr><td>Unchanged</td><td>Favorites (a bare <code>:</code>), skin tones (<code>:wave:t3</code>), text smileys (<code>:)</code>) and the user’s skin tone choice stay Discourse’s</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="settings">Settings</h2>
+  <div class="table-scroll" tabindex="0">
+    <table>
+      <thead><tr><th scope="col">Setting</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>search_locale</code></td><td><code>auto</code></td><td>Each user’s interface language; English when Emojisense has no data for it</td></tr>
+        <tr><td><code>culture</code></td><td>On</td><td>Cultural and seasonal emoji after the best match</td></tr>
+        <tr><td><code>api_enabled</code></td><td>Off</td><td>Ask the Emojisense API when the dictionary is unsure</td></tr>
+        <tr><td><code>publishable_key</code></td><td>—</td><td>A <code>pk_live_…</code> key with the site’s address in its allowed origins. Theme settings are public: never a secret key.</td></tr>
+        <tr><td><code>api_url</code></td><td><code>https://api.emojisense.com</code></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="compatibility">Compatibility</h2>
+  <p>Discourse has no emoji search API for themes, so the component wraps three internal methods: the composer’s and the chat composer’s emoji autocomplete, and the picker’s search. A Discourse update can change them. When the packs have not loaded, or something fails, Discourse’s own search answers. Tested on Discourse 2026.10.</p>
+</DocsLayout>

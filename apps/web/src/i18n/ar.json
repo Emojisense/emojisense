@@ -389,6 +389,14 @@
         "name": "محوّل emoji-mart",
         "blurb": "احتفظ بمنتقي emoji-mart. أضف إليه بحثًا يفهم الناس."
       },
+      "ckeditor5": {
+        "name": "إضافة CKEditor 5",
+        "blurb": "إكمال تلقائي يبدأ بنقطتين على إضافة Mention. اكتب <code>:pizza</code> لتحصل على <emoji>🍕</emoji>."
+      },
+      "tinymce": {
+        "name": "إضافة TinyMCE",
+        "blurb": "إكمال تلقائي يبدأ بنقطتين لـ TinyMCE 7 و8، بدلًا من قائمة الوجوه التعبيرية."
+      },
       "swift": {
         "name": "حزمة Swift",
         "blurb": "المحرك نفسه، يعمل أصليًا على iOS 16+ وmacOS 13+."
@@ -400,6 +408,14 @@
       "raycast": {
         "name": "إضافة Raycast",
         "blurb": "ابحث عن الإيموجي بالمعنى من مشغّل التطبيقات. يعمل دون اتصال."
+      },
+      "wordpress": {
+        "name": "إضافة WordPress",
+        "blurb": "محرر المكوّنات والتفاعلات والتعليقات وbbPress وBuddyPress. تعمل دون اتصال."
+      },
+      "discourse": {
+        "name": "مكوّن قالب Discourse",
+        "blurb": "بحث بالمعنى في المحرر والدردشة ومنتقي الإيموجي. اكتب <code>:ship it</code> لتحصل على <emoji>🚀</emoji>."
       },
       "mcp": {
         "name": "خادم MCP",

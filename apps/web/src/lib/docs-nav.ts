@@ -152,6 +152,16 @@ export const DOCS_SECTIONS: DocsSection[] = [
         description: "Colon autocomplete for Lexical editors in React.",
       },
       {
+        href: "/docs/integrations/ckeditor5/",
+        title: "CKEditor 5",
+        description: "Colon autocomplete for CKEditor 5 on the official Mention plugin.",
+      },
+      {
+        href: "/docs/integrations/tinymce/",
+        title: "TinyMCE",
+        description: "Colon autocomplete for TinyMCE 7 and 8, in place of the emoticons menu.",
+      },
+      {
         href: "/docs/integrations/emoji-mart/",
         title: "emoji-mart",
         description: "Keep emoji-mart and give it Emojisense ranking.",
@@ -180,7 +190,12 @@ export const DOCS_SECTIONS: DocsSection[] = [
         href: "/docs/integrations/wordpress/",
         title: "WordPress",
         description:
-          "Colon autocomplete in the block editor, post reactions and an emoji picker in comments.",
+          "Colon autocomplete in the block editor, reactions, comments, and bbPress and BuddyPress.",
+      },
+      {
+        href: "/docs/integrations/discourse/",
+        title: "Discourse",
+        description: "A theme component: emoji by meaning in the composer, chat and the emoji picker.",
       },
       {
         href: "/docs/integrations/http/",
