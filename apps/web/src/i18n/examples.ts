@@ -18,7 +18,8 @@ export type ExampleKind =
   | "idiom"
   | "greeting"
   | "wish"
-  | "thanks";
+  | "thanks"
+  | "athlete";
 
 export interface HeroExample {
   query: string;
@@ -115,6 +116,7 @@ const ENGLISH_PAGE: HeroExample[] = [
   { query: "greatest of all time", kind: "meaning" },
   { query: "hallowelen", kind: "typo" },
   { query: "feliz cumpleaños", kind: "wish", lang: "es" },
+  { query: "mbappe", kind: "athlete" },
   { query: "i'm exhausted", kind: "feeling" },
   { query: "生日快乐", kind: "wish", lang: "zh" },
   { query: "congrats on the launch", kind: "intent" },

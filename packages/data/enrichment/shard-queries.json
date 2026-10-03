@@ -1,0 +1,187 @@
+[
+  {
+    "locale": "en",
+    "query": "jurassic park",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "macintosh",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "big apple",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "photosynthesis",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "hallowelen",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "area 51",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "greatest of all time",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "mbappe",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "congrats on the launch",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "break a leg",
+    "why": "landing hero"
+  },
+  {
+    "locale": "en",
+    "query": "nervous before the demo",
+    "why": "chat demo"
+  },
+  {
+    "locale": "en",
+    "query": "the wifi keeps dropping",
+    "why": "docs demo"
+  },
+  {
+    "locale": "en",
+    "query": "pager went off at 3am",
+    "why": "workspaces demo"
+  },
+  {
+    "locale": "en",
+    "query": "laptop died mid demo",
+    "why": "assistant demo"
+  },
+  {
+    "locale": "zh",
+    "query": "生日快乐",
+    "why": "landing hero"
+  },
+  {
+    "locale": "zh",
+    "query": "我爱你",
+    "why": "landing hero"
+  },
+  {
+    "locale": "zh",
+    "query": "谢谢",
+    "why": "landing hero"
+  },
+  {
+    "locale": "hi",
+    "query": "जन्मदिन मुबारक",
+    "why": "landing hero"
+  },
+  {
+    "locale": "hi",
+    "query": "बधाई हो",
+    "why": "landing hero"
+  },
+  {
+    "locale": "hi",
+    "query": "धन्यवाद",
+    "why": "landing hero"
+  },
+  {
+    "locale": "es",
+    "query": "estoy agotado",
+    "why": "landing hero"
+  },
+  {
+    "locale": "es",
+    "query": "felicidades",
+    "why": "landing hero"
+  },
+  {
+    "locale": "ar",
+    "query": "عيد ميلاد سعيد",
+    "why": "landing hero"
+  },
+  {
+    "locale": "ar",
+    "query": "مبروك",
+    "why": "landing hero"
+  },
+  {
+    "locale": "ar",
+    "query": "شكرا",
+    "why": "landing hero"
+  },
+  {
+    "locale": "fr",
+    "query": "joyeux anniversaire",
+    "why": "landing hero"
+  },
+  {
+    "locale": "bn",
+    "query": "শুভ জন্মদিন",
+    "why": "landing hero"
+  },
+  {
+    "locale": "bn",
+    "query": "অভিনন্দন",
+    "why": "landing hero"
+  },
+  {
+    "locale": "bn",
+    "query": "ধন্যবাদ",
+    "why": "landing hero"
+  },
+  {
+    "locale": "pt",
+    "query": "estou exausto",
+    "why": "landing hero"
+  },
+  {
+    "locale": "ru",
+    "query": "поздравляю",
+    "why": "landing hero"
+  },
+  {
+    "locale": "ru",
+    "query": "спасибо",
+    "why": "landing hero"
+  },
+  {
+    "locale": "id",
+    "query": "selamat ulang tahun",
+    "why": "landing hero"
+  },
+  {
+    "locale": "id",
+    "query": "terima kasih",
+    "why": "landing hero"
+  },
+  {
+    "locale": "id",
+    "query": "aku cinta kamu",
+    "why": "landing hero"
+  },
+  {
+    "locale": "tr",
+    "query": "kolay gelsin",
+    "why": "landing hero"
+  },
+  {
+    "locale": "tr",
+    "query": "tebrikler",
+    "why": "landing hero"
+  }
+]

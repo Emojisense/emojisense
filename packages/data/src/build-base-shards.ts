@@ -1,6 +1,7 @@
 /**
- * Layer 2, base layer (PACK_FORMAT.md §6): synthetic queries from our own data for every pack
- * locale, resolved like the API's answers in that locale → dist/shards-base/<packVersion>/:
+ * Layer 2, base layer (PACK_FORMAT.md §6): synthetic queries from our own data, plus the curated
+ * ones of enrichment/shard-queries.json (shards/curated.ts), for every pack locale, resolved like
+ * the API's answers in that locale → dist/shards-base/<packVersion>/:
  *
  *   f/<hash>.json   shard files and one base index per locale, named by content
  *   base.json       manifest: locale → its base index
@@ -23,10 +24,11 @@ import { readPackConfig } from "./config.ts";
 import { disposeEmbeddings } from "./embeddings.ts";
 import { LOCALE_CODES } from "./locales.ts";
 import { getModel } from "./models.ts";
-import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
+import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
 import { semanticBonus } from "./semantic-score.ts";
 import { bootstrapQueries } from "./shards/bootstrap.ts";
 import { buildShards } from "./shards/build.ts";
+import { curatedRows, loadCuratedQueries } from "./shards/curated.ts";
 import { cachedEmbedder, workersAiEmbedder } from "./shards/embedders.ts";
 import { gzipBytes } from "./shards/files.ts";
 import {
@@ -123,6 +125,7 @@ function reusePrevious(
 
 const { emoji }: { emoji: BaseEmoji[] } = JSON.parse(readFileSync(BASE_FILE, "utf8"));
 const validated = JSON.parse(readFileSync(join(BUILD_DIR, "validated.json"), "utf8"));
+const curated = loadCuratedQueries(join(ENRICHMENT_DIR, "shard-queries.json"), LOCALE_CODES);
 const modelTag = fake ? "fake@0" : `${model.key}@${dims}`;
 // Locales this run does not build keep their entry when the model is the same.
 const manifest: ShardBaseManifest = {
@@ -188,7 +191,8 @@ try {
           embedder,
         });
 
-    const queries = aggregateQueries(bootstrapQueries(emoji, validated, minCount, [locale]), {
+    const synthetic = bootstrapQueries(emoji, validated, minCount, [locale]);
+    const queries = aggregateQueries([...synthetic, ...curatedRows(curated, locale)], {
       minCount,
       maxQueries: Number(args["max-queries"]),
     });
@@ -216,6 +220,17 @@ try {
         `${built.store.size} entries in ${stats.shards} shards` +
         (stats.oversized.length ? ` (⚠ over budget: ${stats.oversized.join(", ")})` : ""),
     );
+    // Curated answers are shown to visitors as they are: list them for review.
+    for (const { query } of curated.filter((c) => c.locale === locale)) {
+      const results = built.store.get(query);
+      const shown = results
+        ? results
+            .slice(0, 12)
+            .map(([glyph]) => glyph)
+            .join(" ")
+        : "not in shards (the device answers it, or it was not resolved)";
+      console.log(`  curated "${query}": ${shown}`);
+    }
   }
 
   const pruned = pruneUnnamed();
