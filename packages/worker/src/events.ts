@@ -2,7 +2,7 @@ import { privacyReason } from "@emojisense/data/shards";
 import { normalize } from "emojisense";
 import { EVENTS_MAX_BYTES, EVENTS_MAX_PICKS } from "./config.ts";
 import type { Handler } from "./context.ts";
-import { corsHeaders, errorResponse } from "./http.ts";
+import { corsHeaders, errorResponse, readBodyCapped } from "./http.ts";
 
 /** The outcomes a client counts (emojisense/stats, SearchOutcome), in the order of the doubles. */
 export const OUTCOMES = ["device", "memory", "shard", "api", "none", "error", "cancelled"] as const;
@@ -55,12 +55,9 @@ function parseReport(text: string): Report | undefined {
  * is dropped, the emoji is kept. No IP, key or user id is written.
  */
 export const handleEvents: Handler = async (request, env, _ctx, _deps, _metering, principal) => {
-  const length = Number(request.headers.get("content-length") ?? "0");
-  if (length > EVENTS_MAX_BYTES) return errorResponse(413, `a report is at most ${EVENTS_MAX_BYTES} bytes`);
-  const text = await request.text();
-  if (text.length > EVENTS_MAX_BYTES)
-    return errorResponse(413, `a report is at most ${EVENTS_MAX_BYTES} bytes`);
-  const report = parseReport(text);
+  const bytes = await readBodyCapped(request, EVENTS_MAX_BYTES);
+  if (!bytes) return errorResponse(413, `a report is at most ${EVENTS_MAX_BYTES} bytes`);
+  const report = parseReport(new TextDecoder().decode(bytes));
   if (!report) return errorResponse(400, "not an emojisense events report (v 1)");
 
   const app = principal.kind === "key" ? principal.key.appId : "anon";

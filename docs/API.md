@@ -470,9 +470,9 @@ backend with no client update.
 | `counts` | keystrokes by how their search ended: on the device, from memory (a loaded shard or an answer seen before), a shard file, the API, no layer answering, an error, or replaced by the next keystroke while it waited |
 | `picks` | up to 50 `[normalized query, hexcode]` pairs of search results that were chosen |
 
-Sent as `text/plain` (`navigator.sendBeacon`), so no CORS preflight. At most 16 KB; a body that
-is not a report answers `400`. Pick text goes through the shard privacy filter; text it refuses
-is dropped and the emoji kept.
+Sent as `text/plain` (`navigator.sendBeacon`), so no CORS preflight. At most 16 KB (a larger
+body answers `413`, also without `Content-Length`); a body that is not a report answers `400`.
+Pick text goes through the shard privacy filter; text it refuses is dropped and the emoji kept.
 
 ## `GET /v1/health`
 

@@ -66,6 +66,24 @@ describe("POST /v1/events", () => {
     expect(stats).not.toHaveBeenCalled();
   });
 
+  it("stops reading a streamed body without Content-Length at the size limit", async () => {
+    const { stats, h } = await setup();
+    let pulled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled += 1;
+        if (pulled > 1_000) controller.close();
+        else controller.enqueue(new Uint8Array(4096).fill(0x20));
+      },
+    });
+    const request = new Request(`${API}/v1/events`, { method: "POST", body, duplex: "half" } as RequestInit);
+    expect(request.headers.get("content-length")).toBeNull();
+    const res = await h.call(request);
+    expect(res.status).toBe(413);
+    expect(pulled).toBeLessThan(10);
+    expect(stats).not.toHaveBeenCalled();
+  });
+
   it("answers only /v1/events on a stats host", async () => {
     const { post, h } = await setup();
     expect((await post(report(), "", "https://stats.test")).status).toBe(204);
