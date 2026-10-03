@@ -80,26 +80,36 @@ Tarballs (2026-10-02, packed by `pnpm release:check`):
 
 `pnpm release:check --files` lists every file.
 
-### Later releases: CI with provenance
+### Later releases: staged from CI, approved by a person
 
-1. Make the GitHub repository public. npm adds provenance only for public repositories.
-2. Trust the release workflow once per package (npm 11.5.1 or later):
+The private repository `emojisense/emojisense` runs `.github/workflows/release.yml`. It stages each
+public package whose version npm does not have (`pnpm release:stage`: the checks of
+`release-check.mjs --build --strict`, then `scripts/stage-release.mjs`). A staged version is not
+public until a person approves it with 2FA. npm records "GitHub Actions", not a person, as the
+publisher.
+
+1. Trust the workflow once per package, for `npm stage publish` only (npm 11.19 or later; the first
+   call asks for 2FA, and "skip for 5 minutes" covers the rest). Only a package that is on npm can
+   be trusted: publish a new package once from a workstation first.
 
    ```bash
    for pkg in emojisense @emojisense/react @emojisense/web-component @emojisense/mcp \
      @emojisense/emoji-mart @emojisense/lexical @emojisense/tiptap @emojisense/ckeditor5 \
      @emojisense/tinymce; do
-     npm trust github "$pkg" --repo emojisense/emojisense --file release.yml --env npm
+     npm trust github "$pkg" --repository emojisense/emojisense --file release.yml --allow-stage-publish --yes
    done
    ```
 
-3. In GitHub, create the environment `npm` (Settings → Environments). Add yourself as a required
-   reviewer, so each release waits for your approval.
-4. For each release: `pnpm release:version`, commit, merge into `main`, then start the `release`
-   workflow (Actions → release → Run workflow). It runs the same `pnpm release:publish` with
-   `NPM_CONFIG_PROVENANCE=true`, an OIDC token instead of an npm token, and pushes the tags.
-5. After the first CI release, set each package to "Require two-factor authentication and disallow
-   tokens" on npmjs.com (Settings → Publishing access). Trusted publishing still works.
+   `emojisense` is trusted (2026-10-03). The `@emojisense/*` packages wait for their first publish.
+2. For each release: `pnpm release:version`, commit, merge into `main`, then Actions → release →
+   Run workflow. It stages the new versions and pushes their tags (`<name>@<version>`).
+3. Approve each staged version: npmjs.com → Staged Packages, or `npm stage list` and
+   `npm stage approve <id>` (2FA). `npm stage reject <id>` drops one; then delete its tag.
+4. Set each package to "Require two-factor authentication and disallow tokens" on npmjs.com
+   (Settings → Publishing access). Trusted publishing still works.
+5. When the repository is public: npm adds provenance by itself. Create the GitHub environment
+   `npm` with yourself as a required reviewer, add `environment: npm` to the job, and recreate each
+   trust with `--env npm` (`npm trust list <pkg>`, `npm trust revoke --id <id> <pkg>`).
 
 ## Chrome Web Store
 
