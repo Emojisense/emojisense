@@ -21,4 +21,10 @@ export const INDEXABLE = env.PUBLIC_INDEXABLE !== "false";
 export const REPO_URL = trimSlash(env.PUBLIC_REPO_URL ?? "https://github.com/emojisense/emojisense");
 
 export const PACK_BASE_URL = `${API_URL}/v1/pack/${PACK_VERSION}`;
+/** Precomputed results (layer 2): the CDN host when deployed, else the API Worker's /p/ route. */
+export const SHARDS_URL = trimSlash(env.PUBLIC_SHARDS_URL ?? `${API_URL}/p/${PACK_VERSION}`);
+/** Where search reports go (`POST /v1/events`); none when unset. */
+export const STATS_URL = env.PUBLIC_STATS_URL ? trimSlash(env.PUBLIC_STATS_URL) : undefined;
+/** Share of visits that report. */
+export const STATS_SAMPLE = Number(env.PUBLIC_STATS_SAMPLE ?? "0.1");
 export const WAITLIST_ENDPOINT = `${DASHBOARD_URL}/api/waitlist`;

@@ -50,9 +50,12 @@ describe("createApiProvider", () => {
     );
     await provider?.search("ship it");
 
-    expect(calls[0]?.url).toContain("pack=0.1.0");
-    expect(calls[0]?.url).toContain("key=pk_live_public");
-    expect(calls[0]?.headers.get("Authorization")).toBeNull();
+    // The API host's shards first, then the API.
+    expect(calls[0]?.url).toBe("https://api.test/p/0.1.0/index.json");
+    const search = calls.find((call) => call.url.includes("/v1/search"));
+    expect(search?.url).toContain("pack=0.1.0");
+    expect(search?.url).toContain("key=pk_live_public");
+    expect(search?.headers.get("Authorization")).toBeNull();
   });
 
   it("aborts a slow request after the timeout", async () => {

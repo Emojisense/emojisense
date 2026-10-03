@@ -1,4 +1,4 @@
-import { createSemanticClient, type SemanticProvider } from "emojisense";
+import { createLayeredSemantic, createSemanticClient, type SemanticProvider } from "emojisense";
 
 export interface ApiSettings {
   apiUrl?: string | undefined;
@@ -53,12 +53,16 @@ export function createApiProvider(
     return doFetch(input, { ...init, headers, signal: AbortSignal.any(signals) });
   };
 
-  return {
-    provider: createSemanticClient({
-      endpoint: url.origin + url.pathname,
-      fetch: timedFetch,
-      ...(publishable && apiKey ? { key: apiKey } : {}),
-      ...(settings.packVersion ? { packVersion: settings.packVersion } : {}),
-    }),
+  const endpoint = (url.origin + url.pathname).replace(/\/+$/, "");
+  const api = {
+    endpoint,
+    fetch: timedFetch,
+    ...(publishable && apiKey ? { key: apiKey } : {}),
+    ...(settings.packVersion ? { packVersion: settings.packVersion } : {}),
   };
+  // With a pack version, the API host's shards (/p/<packVersion>) are asked first: free files.
+  const provider = settings.packVersion
+    ? createLayeredSemantic({ ...api, shardsUrl: `${endpoint}/p/${settings.packVersion}` })
+    : createSemanticClient(api);
+  return provider ? { provider } : {};
 }

@@ -144,7 +144,10 @@ describe("search service (service worker)", () => {
 
     await vi.advanceTimersByTimeAsync(50);
 
-    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    const urls = fetchMock.mock.calls.map(([input]) => new URL(String(input)));
+    // The API host's shard index is asked first; this one is not a shard index.
+    expect(urls[0]?.href).toBe("https://api.example.com/p/test/index.json");
+    const url = urls.find((u) => u.pathname === "/v1/search") as URL;
     expect(url.origin + url.pathname).toBe("https://api.example.com/v1/search");
     expect(url.searchParams.get("mode")).toBe("semantic");
     expect(url.searchParams.get("key")).toBe("pk_live_abcdefgh");

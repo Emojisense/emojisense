@@ -169,10 +169,12 @@ describe("hashed files and the base layer", () => {
     expect(provider.peek?.("thank you!")).toBeUndefined();
   });
 
-  it("asks again after a network error, but not after a 404", async () => {
+  it("asks again a while after a network error, but not after a 404", async () => {
     const fetch = layeredFetch({ failOnce: new Set(["index.json"]) });
-    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch });
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch, retryMs: 20 });
     expect(await provider.search("congrats on the launch")).toBeUndefined();
+    expect(await provider.search("congrats on the launch")).toBeUndefined();
+    await new Promise((resolve) => setTimeout(resolve, 30));
     expect((await provider.search("congrats on the launch"))?.layer).toBe("shard");
     expect(await provider.search("thanks", { locale: "de" })).toBeUndefined();
     expect(await provider.search("thanks", { locale: "de" })).toBeUndefined();

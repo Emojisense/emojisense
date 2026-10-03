@@ -2,7 +2,7 @@ import {
   type AliasEngine,
   type Culture,
   createEngine,
-  createSemanticClient,
+  createLayeredSemantic,
   loadCulture,
   loadPacks,
   type Pack,
@@ -95,14 +95,18 @@ export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
   };
 }
 
-/** The API as a semantic provider, only when search by meaning is on. */
+/**
+ * The API's shards, then the API, as a semantic provider, only when search by meaning is on. The
+ * API host serves the shards (/p/<packVersion>): free files, asked first.
+ */
 export function semanticProvider(
   config: ClientConfig,
   packVersion: string,
   fetchImpl?: typeof fetch,
 ): SemanticProvider | undefined {
   if (!config.endpoint) return undefined;
-  return createSemanticClient({
+  return createLayeredSemantic({
+    shardsUrl: `${config.endpoint.replace(/\/+$/, "")}/p/${packVersion}`,
     endpoint: config.endpoint,
     ...(config.key ? { key: config.key } : {}),
     packVersion,

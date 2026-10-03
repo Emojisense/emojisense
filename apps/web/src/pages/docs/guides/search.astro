@@ -113,7 +113,7 @@ applySkinTone("🧑‍🤝‍🧑", "dark"); // "${applySkinTone("🧑‍🤝‍
     group="framework"
     label="Stack"
   />
-  <p>The hosted API does not publish shards yet. With <code>shardsUrl</code> set, the SDK finds no shard index and asks the API, so the option is safe to keep. Each result is <code>{"{ emoji, id, score, source }"}</code>. The <code>id</code> is the Emojibase hexcode of the base emoji, for example <code>1F996</code>. The <code>source</code> is <code>alias</code> for the dictionary and <code>semantic</code> for meaning search. With <a href="/docs/guides/custom-emoji/">custom emoji</a> it can be <code>custom</code>, and with a culture file <code>culture</code> (see <a href="/docs/sdk/#culture">Culture layer</a>).</p>
+  <p>Shards are static files on the CDN with the API's answers for common phrases in every language (built with the data pack) and for frequent searches (rebuilt every night). A loaded shard answers between keystrokes, with no request; a query without a shard goes to the API. Each result is <code>{"{ emoji, id, score, source }"}</code>. The <code>id</code> is the Emojibase hexcode of the base emoji, for example <code>1F996</code>. The <code>source</code> is <code>alias</code> for the dictionary and <code>semantic</code> for meaning search. With <a href="/docs/guides/custom-emoji/">custom emoji</a> it can be <code>custom</code>, and with a culture file <code>culture</code> (see <a href="/docs/sdk/#culture">Culture layer</a>).</p>
 
   <h3 id="states">States and layers</h3>
   <div class="table-scroll" tabindex="0">

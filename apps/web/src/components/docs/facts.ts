@@ -12,7 +12,8 @@ import fixtures from "./fixtures.json";
 /** The public API host used in examples. Self-hosters replace it with their Worker URL. */
 export const API_HOST = "https://api.emojisense.com";
 export const PACK_URL = `${API_HOST}/v1/pack/${PACK_VERSION}`;
-export const SHARDS_URL = `${API_HOST}/p/${PACK_VERSION}`;
+/** Shards come straight from the CDN; the API host serves the same files at /p/. */
+export const SHARDS_URL = `https://cdn.emojisense.com/p/${PACK_VERSION}`;
 export { PACK_VERSION };
 
 const PACK_DIR = join(process.cwd(), "../../packages/data/dist/packs", PACK_VERSION);

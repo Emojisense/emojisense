@@ -14,8 +14,9 @@ import {
   type Pack,
   type SemanticProvider,
 } from "emojisense";
+import { createStatsReporter, type StatsReporter } from "emojisense/stats";
 import { useEffect, useState } from "react";
-import { API_URL, PACK_BASE_URL, PUBLISHABLE_KEY } from "../config";
+import { API_URL, PACK_BASE_URL, PUBLISHABLE_KEY, SHARDS_URL, STATS_SAMPLE, STATS_URL } from "../config";
 
 export const DEMO_LOCALES = ["en", "es", "zh", "hi", "ar", "fr", "bn", "pt", "ru", "id", "tr"] as const;
 
@@ -169,10 +170,24 @@ function loadFullEngineWhenIdle(): void {
   else addEventListener("load", start, { once: true });
 }
 
-/** The hosted meaning search (edge cache, then Workers AI), shared by all demos. */
+/** The hosted meaning search (shards, then the API's edge cache and Workers AI), shared by all demos. */
 export function sharedSemantic(): SemanticProvider | undefined {
-  semantic ??= createLayeredSemantic({ endpoint: API_URL, key: PUBLISHABLE_KEY });
+  semantic ??= createLayeredSemantic({ shardsUrl: SHARDS_URL, endpoint: API_URL, key: PUBLISHABLE_KEY });
   return semantic;
+}
+
+let stats: StatsReporter | undefined;
+
+/** Reports how the visitors' own searches end (STATS_URL), shared by all demos. */
+export function sharedStats(): StatsReporter | undefined {
+  if (!STATS_URL) return undefined;
+  stats ??= createStatsReporter({
+    endpoint: STATS_URL,
+    key: PUBLISHABLE_KEY,
+    sampleRate: STATS_SAMPLE,
+    locale: pageLocale(),
+  });
+  return stats;
 }
 
 /** "english" is the first engine: English, plus the page's language on a translated page. */

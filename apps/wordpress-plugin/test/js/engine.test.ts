@@ -77,7 +77,9 @@ describe("semanticProvider", () => {
       fetchImpl,
     );
     await provider?.search("ship it", { locale: "tr" });
-    const url = new URL(urls[0] ?? "");
+    // The API host's shards of the locale first, then the API.
+    expect(urls[0]).toBe("https://api.emojisense.com/p/0.1.0/tr/index.json");
+    const url = new URL(urls.find((u) => u.includes("/v1/search")) ?? "");
     expect(url.origin + url.pathname).toBe("https://api.emojisense.com/v1/search");
     expect(url.searchParams.get("key")).toBe("pk_live_abcdefgh");
     expect(url.searchParams.get("pack")).toBe("0.1.0");

@@ -3,7 +3,14 @@ import { Fragment, type KeyboardEvent, useEffect, useId, useMemo, useRef, useSta
 import type { Messages } from "../i18n/catalogs";
 import type { HeroExample } from "../i18n/examples";
 import { rich, useTranslator } from "../i18n/react";
-import { fullEngine, labelOf, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
+import {
+  fullEngine,
+  labelOf,
+  pageLocale,
+  sharedSemantic,
+  sharedStats,
+  useEngine,
+} from "../lib/engine-client";
 import "./hero-search.css";
 
 /** One row of 12 on wide screens, two rows of 6 on phones (hero-search.css). */
@@ -42,6 +49,9 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   const [example, setExample] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const exampleRef = useRef(0);
+  /** Only the visitor's own typing is reported, never the autoplay. */
+  const visitorRef = useRef(false);
+  visitorRef.current = !auto;
   const id = useId();
   const multilingual = ready === "all";
   const locale = useMemo(() => pageLocale(), []);
@@ -59,7 +69,10 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
       locale: searchLocale,
       limit: LIMIT,
       debounceMs: 160,
-      onChange: setState,
+      onChange: (next) => {
+        setState(next);
+        if (visitorRef.current) sharedStats()?.observe(next);
+      },
     });
   }, [engine, searchLocale]);
 

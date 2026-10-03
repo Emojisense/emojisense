@@ -111,7 +111,7 @@ export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) 
       <tbody>
         <tr><td><code>packBaseUrl</code></td><td>Required. The pack version directory. The core pack renders first.</td></tr>
         <tr><td><code>locale</code></td><td>Default <code>"en"</code>. Another locale, such as <code>"es"</code>, loads that pack next to English.</td></tr>
-        <tr><td><code>shardsUrl</code></td><td>Precomputed results (layer 2), asked before the API. The hosted API does not publish shards yet; without a shard index the SDK asks the API.</td></tr>
+        <tr><td><code>shardsUrl</code></td><td>Precomputed results (layer 2), free static files on the CDN, asked before the API. A loaded shard answers between keystrokes; a query without a shard goes to the API.</td></tr>
         <tr><td><code>endpoint</code></td><td>The API (layer 3). Omit <code>shardsUrl</code> and <code>endpoint</code> for fully offline search.</td></tr>
         <tr><td><code>publishableKey</code></td><td>Your <code>pk_live_…</code> key for the API.</td></tr>
         <tr><td><code>extended</code></td><td>Default <code>true</code>: load the extension packs when the browser is idle.</td></tr>

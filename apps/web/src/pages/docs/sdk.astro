@@ -134,6 +134,11 @@ const providers = `interface SemanticProvider {
     query: string,
     options?: { locale?: string; limit?: number; signal?: AbortSignal },
   ): Promise<SemanticResponse | undefined>;
+  // An answer already in memory (a loaded shard, an answer seen before), with no I/O.
+  // A session shows it at once, with no debounce.
+  peek?(query: string, options?: { locale?: string; limit?: number }): SemanticResponse | undefined;
+  // Load what peek needs for this query; "" loads the shard indexes only.
+  prefetch?(query: string, options?: { locale?: string }): void;
 }
 
 // Layer 3, the API (GET /v1/search?mode=semantic)
@@ -146,7 +151,13 @@ createShardProvider({ baseUrl: "${SHARDS_URL}" });
 createLayeredSemantic({ shardsUrl, endpoint, key, packVersion });
 
 // Any providers, in order: the first answer wins.
-chainProviders(shards, api);`;
+chainProviders(shards, api);
+
+// Search reports (emojisense/stats): how searches end and which results are picked,
+// one report per page view from 1 in 10 sessions. Off unless you create it.
+const stats = createStatsReporter({ endpoint: "https://stats.emojisense.com", key: "pk_live_…" });
+createSearchSession({ engine, semantic, onChange: (state) => stats.observe(state) });
+stats.pick(query, "1F382");`;
 
 const helpers = `normalize("¡Feliz cumpleaños!"); // "${normalize("¡Feliz cumpleaños!")}"
 tokenize(normalize("Ship it!")); // ${JSON.stringify(tokenize(normalize("Ship it!")))}
@@ -224,7 +235,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
   <h2 id="fusion">Fusion</h2>
   <ul>
     <li><code>shouldUseSemantic(alias)</code>: <code>true</code> when the confidence is under 0.6, or for a phrase of two or more words under 0.9.</li>
-    <li><code>fuse(alias, semantic, limit, calibration, ranking)</code>: dictionary results with a score of 0.9 or more stay pinned on top, in their order. Every other result of both lists is then ordered by the learned reranker, a linear score over the dictionary score, rank and confidence, the semantic score and its gap to the best one, the semantic confidence and the emoji’s popularity (<a href="/docs/pack-format/">Pack format §10</a>). Pass <code>{"{ popularity: engine.popularity }"}</code> as <code>ranking</code>; a search session does. <code>rerank(input, limit, weights)</code>, <code>rerankFeatures(input, id)</code> and <code>RERANK_WEIGHTS</code> are the reranker itself.</li>
+    <li><code>fuse(alias, semantic, limit, calibration, ranking)</code>: dictionary results with a score of 0.9 or more stay pinned on top, in their order. Every other result of both lists is then ordered by the learned reranker, a linear score over the dictionary score, rank and confidence, the semantic score and its gap to the best one, the semantic confidence and the emoji’s popularity (<a href="/docs/pack-format/">Pack format §10</a>). Pass <code>{"{ popularity: engine.popularity }"}</code> as <code>ranking</code>; a search session does. <code>rerank(input, limit, weights)</code>, <code>rerankFeatures(input, id)</code> and <code>RERANK_WEIGHTS</code> are the reranker itself. Both tiers bring <code>RANK_DEPTH</code> (24) candidates whatever the limit, so a short list is the top of the same ranking.</li>
     <li>With <code>{"{ rerank: false }"}</code> as <code>ranking</code>, <code>fuse</code> merges with weights from the confidence of each tier instead. The dictionary weight is 0.4 + its confidence. The semantic weight goes from 0.4 to 1 as its best cosine goes from <code>calibration.floor</code> to <code>calibration.ceiling</code> (default <code>DEFAULT_SEMANTIC_CALIBRATION</code>, 0.44–0.58, for bge-m3). Results with a score of 0.9 or more stay pinned on top. When the dictionary is sure (confidence 0.6 or more), its results within 0.1 of its top score come next, in fused order. Semantic country flags that the dictionary results do not hold go last, unless their cosine reaches the calibration ceiling.</li>
     <li><code>semanticConfidence(semantic, calibration)</code>: that 0–1 value. Use your own calibration if you embed with another model.</li>
     <li><code>fuseResults(alias, semantic, options)</code>: the same, with your own <code>k</code> (60), <code>pinScore</code> (0.9), <code>aliasFloor</code> (off), <code>aliasWeight</code> and <code>semanticWeight</code>.</li>

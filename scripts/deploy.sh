@@ -36,6 +36,10 @@ esac
 SITE_URL="https://$DOMAIN"
 API_URL="https://api.$DOMAIN"
 DASHBOARD_URL="https://app.$DOMAIN"
+# Shards straight from the CDN bucket (no Worker); search reports to the stats host.
+PACK_VERSION=$(node -p 'require(process.argv[1]).packVersion' "$ROOT/packages/data/pack.config.json")
+SHARDS_URL="https://cdn.$DOMAIN/p/$PACK_VERSION"
+STATS_URL="https://stats.$DOMAIN"
 
 # Internal environments must never be indexed: header on every response, next to robots.txt.
 no_index() {
@@ -95,6 +99,8 @@ PUBLIC_SITE_URL="$SITE_URL" \
   PUBLIC_API_URL="$API_URL" \
   PUBLIC_DASHBOARD_URL="$DASHBOARD_URL" \
   PUBLIC_PUBLISHABLE_KEY="$PUBLISHABLE_KEY" \
+  PUBLIC_SHARDS_URL="$SHARDS_URL" \
+  PUBLIC_STATS_URL="$STATS_URL" \
   PUBLIC_INDEXABLE="$INDEXABLE" \
   pnpm exec astro build
 [ "$INDEXABLE" = "false" ] && no_index dist

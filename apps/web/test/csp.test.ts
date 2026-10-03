@@ -64,6 +64,29 @@ describe("buildContentSecurityPolicy", () => {
     expect(directive("form-action")).toBe("form-action 'self' https://app.example.com");
   });
 
+  it("adds the shard and stats hosts when the pages use them", () => {
+    const withHosts = buildContentSecurityPolicy({
+      apiUrl: "https://api.example.com",
+      dashboardUrl: "https://app.example.com",
+      shardsUrl: "https://cdn.example.com/p/0.1.0",
+      statsUrl: "https://stats.example.com",
+      scriptHashes: [],
+      styleHashes: [],
+    });
+    expect(withHosts.split("; ").find((d) => d.startsWith("connect-src "))).toBe(
+      "connect-src 'self' https://api.example.com https://app.example.com https://cdn.example.com https://stats.example.com",
+    );
+    // Shards on the API host (the default) add nothing.
+    const sameHost = buildContentSecurityPolicy({
+      apiUrl: "https://api.example.com",
+      dashboardUrl: "https://app.example.com",
+      shardsUrl: "https://api.example.com/p/0.1.0",
+      scriptHashes: [],
+      styleHashes: [],
+    });
+    expect(sameHost).toContain("connect-src 'self' https://api.example.com https://app.example.com;");
+  });
+
   it("allows inline scripts and styles only by hash, sorted and without duplicates", () => {
     expect(directive("script-src")).toBe(
       `script-src 'self' ${[hashSource("a"), hashSource("b")].sort().join(" ")}`,

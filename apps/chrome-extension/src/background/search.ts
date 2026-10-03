@@ -2,8 +2,8 @@ import {
   type AliasEngine,
   applySkinTone,
   createEngine,
+  createLayeredSemantic,
   createSearchSession,
-  createSemanticClient,
   type Pack,
   type SearchResult,
   type SearchSession,
@@ -75,13 +75,15 @@ export function createSearchService(deps: SearchServiceDeps): SearchService {
     const cacheKey = `${config.endpoint}\n${config.key}\n${packVersion}`;
     let client = clients.get(cacheKey);
     if (!client) {
-      client = createSemanticClient({
+      // The API host serves the shards too (/p/<packVersion>): free files, asked before the API.
+      client = createLayeredSemantic({
+        shardsUrl: `${config.endpoint.replace(/\/+$/, "")}/p/${packVersion}`,
         endpoint: config.endpoint,
         packVersion,
         ...(config.key ? { key: config.key } : {}),
         ...(deps.fetch ? { fetch: deps.fetch } : {}),
       });
-      clients.set(cacheKey, client);
+      if (client) clients.set(cacheKey, client);
     }
     return client;
   }

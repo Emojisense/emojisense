@@ -86,6 +86,9 @@ function originOf(url: string, variable: string): string {
 export interface PolicyInput {
   apiUrl: string;
   dashboardUrl: string;
+  /** PUBLIC_SHARDS_URL and PUBLIC_STATS_URL, when the pages use other hosts for them. */
+  shardsUrl?: string | undefined;
+  statsUrl?: string | undefined;
   scriptHashes: Iterable<string>;
   styleHashes: Iterable<string>;
 }
@@ -98,6 +101,10 @@ function sources(values: Iterable<string>): string {
 export function buildContentSecurityPolicy(input: PolicyInput): string {
   const api = originOf(input.apiUrl, "PUBLIC_API_URL");
   const dashboard = originOf(input.dashboardUrl, "PUBLIC_DASHBOARD_URL");
+  const extra = [
+    ...(input.shardsUrl ? [originOf(input.shardsUrl, "PUBLIC_SHARDS_URL")] : []),
+    ...(input.statsUrl ? [originOf(input.statsUrl, "PUBLIC_STATS_URL")] : []),
+  ].filter((origin) => origin !== api);
   return [
     "default-src 'self'",
     // Bundles and island imports are 'self'. Hashes: Astro's inline scripts (island loaders,
@@ -112,8 +119,9 @@ export function buildContentSecurityPolicy(input: PolicyInput): string {
     // Vite inlines the smallest @fontsource subset as a data: URL.
     "font-src 'self' data:",
     // The API serves the packs, culture files, search, reactions and photo calls. The dashboard
-    // takes the waitlist sign-up (fetch, or a plain form post without JavaScript).
-    `connect-src 'self' ${api} ${dashboard}`,
+    // takes the waitlist sign-up (fetch, or a plain form post without JavaScript). Shards may
+    // come from the CDN host and search reports go to the stats host.
+    `connect-src 'self' ${[api, dashboard, ...new Set(extra)].join(" ")}`,
     `form-action 'self' ${dashboard}`,
     "frame-ancestors 'none'",
     "base-uri 'none'",
@@ -183,6 +191,8 @@ export function cspHeaders(): AstroIntegration {
         const policy = buildContentSecurityPolicy({
           apiUrl: env.PUBLIC_API_URL ?? DEFAULT_API_URL,
           dashboardUrl: env.PUBLIC_DASHBOARD_URL ?? DEFAULT_DASHBOARD_URL,
+          shardsUrl: env.PUBLIC_SHARDS_URL,
+          statsUrl: env.PUBLIC_STATS_URL,
           scriptHashes,
           styleHashes,
         });

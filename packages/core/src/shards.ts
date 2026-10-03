@@ -37,8 +37,10 @@ export interface ShardProviderOptions {
    */
   baseUrl: string;
   fetch?: typeof fetch;
-  /** Abandon a file request after this long; a later keystroke asks again. Default 5000 ms. */
+  /** Abandon a file request after this long. Default 5000 ms. */
   timeoutMs?: number;
+  /** After a network error or a timeout, ask for that file again after this long. Default 10 s. */
+  retryMs?: number;
 }
 
 /**
@@ -83,9 +85,11 @@ interface Loading<T> {
 export function createShardProvider(options: ShardProviderOptions): SemanticProvider {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const timeoutMs = options.timeoutMs ?? 5000;
+  const retryMs = options.retryMs ?? 10_000;
   /**
-   * A 404 stays remembered (the file does not exist); a network error or a timeout is forgotten,
-   * so a later keystroke asks again.
+   * A 404 stays remembered (the file does not exist); a network error or a timeout is forgotten
+   * after `retryMs`, so a later keystroke asks again, but an unreachable host is not asked on
+   * every keystroke.
    */
   const load = <T>(url: string, memo: Map<string, Loading<T>>): Loading<T> => {
     const known = memo.get(url);
@@ -102,7 +106,7 @@ export function createShardProvider(options: ShardProviderOptions): SemanticProv
         loading.value = value;
         return value;
       } catch {
-        memo.delete(url);
+        setTimeout(() => memo.delete(url), retryMs);
         return undefined;
       } finally {
         clearTimeout(timer);
@@ -116,12 +120,14 @@ export function createShardProvider(options: ShardProviderOptions): SemanticProv
   const resolve = (path: string, from: string) => new URL(path, from).href;
   const liveUrl = (locale: string | undefined) => `${shardBaseFor(options.baseUrl, locale)}/index.json`;
 
+  /** A file that is not a shard index (e.g. an error page served as 200) counts as none. */
+  const valid = (index: ShardIndex | undefined) => (Array.isArray(index?.keys) ? index : undefined);
+
   /** The layers of a locale as [index URL, index]: the live index, then the base it names. */
   const layers = (live: ShardIndex | undefined, url: string, base: ShardIndex | undefined) =>
-    (live ? [[url, live], ...(base ? [[resolve(live.base as string, url), base]] : [])] : []) as [
-      string,
-      ShardIndex,
-    ][];
+    (valid(live)
+      ? [[url, live], ...(valid(base) ? [[resolve(live?.base as string, url), base]] : [])]
+      : []) as [string, ShardIndex][];
 
   /** Both indexes, loaded if needed. */
   const loadLayers = async (locale: string | undefined) => {
