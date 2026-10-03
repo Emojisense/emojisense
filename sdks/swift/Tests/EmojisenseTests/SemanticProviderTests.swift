@@ -174,6 +174,33 @@ final class SemanticClientTests: XCTestCase {
     let requestCount = await transport.requests.count
     XCTAssertEqual(requestCount, 0)
   }
+
+  // MARK: Answers without waiting (client-session.test.ts)
+
+  func testPeeksAtItsOwnMemoryOnly() async throws {
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8)) }
+    let client = client(transport)
+    XCTAssertNil(client.peek("volcano eruption"))
+    _ = try await client.search("volcano eruption")
+
+    let peeked = client.peek("volcano eruption")
+    XCTAssertEqual(peeked?.cached, true)
+    XCTAssertEqual(peeked?.layer, .api)
+    XCTAssertEqual(peeked?.results.first?.emoji, "🌋")
+    XCTAssertNil(client.peek("volcano eruption", options: SemanticSearchOptions(locale: "tr")))
+    let requestCount = await transport.requests.count
+    XCTAssertEqual(requestCount, 1)
+  }
+
+  func testNeverPeeksAtAnOverLimitAnswer() async throws {
+    let overLimit = semanticBody.replacingOccurrences(
+      of: #""cached":false"#, with: #""cached":false,"overLimit":true"#)
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(overLimit.utf8)) }
+    let client = client(transport, cooldown: 0)
+    let response = try await client.search("lava eruption")
+    XCTAssertNil(response)
+    XCTAssertNil(client.peek("lava eruption"))
+  }
 }
 
 /// Ports packages/core/test/shards.test.ts.
@@ -272,7 +299,7 @@ final class ShardProviderTests: XCTestCase {
     let transport = StubTransport(urls: Self.localeFiles)
     let provider = ShardProvider(baseURL: URL(string: "\(Self.base)/")!, transport: transport)
     for locale in [nil, "en", "EN", "", "en-GB"] {
-      let response = try await provider.search(
+      let response = await provider.search(
         "congrats on the launch", options: SemanticSearchOptions(locale: locale))
       XCTAssertEqual(response?.results.first?.emoji, "🚀", locale ?? "nil")
     }
@@ -283,13 +310,13 @@ final class ShardProviderTests: XCTestCase {
   func testAsksTheFolderOfAnyOtherLocaleInLowercase() async throws {
     let transport = StubTransport(urls: Self.localeFiles)
     let provider = ShardProvider(baseURL: URL(string: Self.base)!, transport: transport)
-    let upper = try await provider.search("Dogum gunu", options: SemanticSearchOptions(locale: "TR"))
+    let upper = await provider.search("Dogum gunu", options: SemanticSearchOptions(locale: "TR"))
     XCTAssertEqual(upper?.layer, .shard)
     XCTAssertEqual(upper?.results.map(\.emoji), ["🎂"])
-    let lower = try await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr"))
+    let lower = await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr"))
     XCTAssertEqual(lower?.results.map(\.emoji), ["🎂"])
     // Only the language subtag counts, like the API's locale.
-    let tagged = try await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr-TR"))
+    let tagged = await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr-TR"))
     XCTAssertEqual(tagged?.results.map(\.emoji), ["🎂"])
     let requests = await requestedURLs(transport)
     XCTAssertEqual(requests, ["\(Self.base)/tr/index.json", "\(Self.base)/tr/dogum%20.json"])
@@ -299,9 +326,9 @@ final class ShardProviderTests: XCTestCase {
     let transport = StubTransport(urls: Self.localeFiles)
     let provider = ShardProvider(baseURL: URL(string: Self.base)!, transport: transport)
     for _ in 0..<2 {
-      let english = try await provider.search(
+      let english = await provider.search(
         "congrats on the launch", options: SemanticSearchOptions(locale: "en"))
-      let turkish = try await provider.search(
+      let turkish = await provider.search(
         "congrats on the launch", options: SemanticSearchOptions(locale: "tr"))
       XCTAssertEqual(english?.results.first?.emoji, "🚀")
       XCTAssertEqual(turkish?.results.first?.emoji, "🎊")
@@ -319,8 +346,8 @@ final class ShardProviderTests: XCTestCase {
     let transport = StubTransport(urls: Self.localeFiles)
     let shards = ShardProvider(baseURL: URL(string: Self.base)!, transport: transport)
     let german = SemanticSearchOptions(locale: "de")
-    let first = try await shards.search("congrats on the launch", options: german)
-    let second = try await shards.search("congrats on the way", options: german)
+    let first = await shards.search("congrats on the launch", options: german)
+    let second = await shards.search("congrats on the way", options: german)
     XCTAssertNil(first)
     XCTAssertNil(second)
     var requests = await requestedURLs(transport)
@@ -337,6 +364,201 @@ final class ShardProviderTests: XCTestCase {
     XCTAssertEqual(english?.layer, .shard)
     requests = await requestedURLs(transport)
     XCTAssertEqual(requests.filter { $0.hasSuffix("/de/index.json") }.count, 1)
+  }
+
+  // MARK: Hashed files and the base layer
+
+  /// Live English index with hashed files and a base index. The base files are in f/ as well.
+  /// The Turkish index names its file and the same base index with "../f/".
+  private static let layeredFiles = [
+    "\(base)/index.json": """
+    {"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256",
+     "keys":["co"],"files":{"co":"f/live-co.json"},"base":"f/base-en.json"}
+    """,
+    "\(base)/f/live-co.json": files["co.json"]!,
+    "\(base)/f/base-en.json": """
+    {"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256",
+     "keys":["th"],"files":{"th":"base-th.json"}}
+    """,
+    "\(base)/f/base-th.json": #"{"key":"th","entries":{"thank you so much":[["🙏","1F64F",0.9]]}}"#,
+    "\(base)/tr/index.json": """
+    {"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256",
+     "keys":["do"],"files":{"do":"../f/tr-do.json"},"base":"../f/base-en.json"}
+    """,
+    "\(base)/f/tr-do.json": #"{"key":"do","entries":{"dogum gunu":[["🎂","1F382",0.9]]}}"#,
+  ]
+
+  private func layeredProvider(
+    _ transport: StubTransport, now: @escaping @Sendable () -> Date = { Date() }
+  ) -> ShardProvider {
+    ShardProvider(baseURL: URL(string: Self.base)!, transport: transport, retryDelay: 10, now: now)
+  }
+
+  /// The requested paths below the base URL.
+  private func paths(_ transport: StubTransport) async -> [String] {
+    await requestedURLs(transport).map { String($0.dropFirst(Self.base.count + 1)) }
+  }
+
+  func testResolvesPathsAgainstTheIndexURL() {
+    let resolve = { (path: String, index: String) in
+      ShardProvider.resolve(path, against: URL(string: index)!)?.absoluteString
+    }
+    XCTAssertEqual(resolve("f/a.json", "https://x/p/1/index.json"), "https://x/p/1/f/a.json")
+    XCTAssertEqual(resolve("../f/a.json", "https://x/p/1/tr/index.json"), "https://x/p/1/f/a.json")
+    XCTAssertEqual(resolve("b.json", "https://x/p/1/f/a.json"), "https://x/p/1/f/b.json")
+    XCTAssertEqual(resolve("the%20.json", "https://x/p/1/index.json"), "https://x/p/1/the%20.json")
+  }
+
+  func testReadsTheFilesTheIndexNamesThenTheBaseLayer() async throws {
+    let transport = StubTransport(urls: Self.layeredFiles)
+    let provider = layeredProvider(transport)
+    let congrats = await provider.search("congrats on the launch", options: .init())
+    XCTAssertEqual(congrats?.results.first?.emoji, "🚀")
+    let thanks = await provider.search("thank you so much", options: .init())
+    XCTAssertEqual(thanks?.results.first?.emoji, "🙏")
+    XCTAssertEqual(thanks?.layer, .shard)
+    let unknown = await provider.search("thanks a lot", options: .init())
+    XCTAssertNil(unknown)
+    let requested = await paths(transport)
+    XCTAssertEqual(requested, ["index.json", "f/base-en.json", "f/live-co.json", "f/base-th.json"])
+  }
+
+  func testResolvesPathsRelativeToALocaleDirectory() async throws {
+    let transport = StubTransport(urls: Self.layeredFiles)
+    let provider = layeredProvider(transport)
+    let turkish = SemanticSearchOptions(locale: "tr")
+    let birthday = await provider.search("dogum gunu", options: turkish)
+    XCTAssertEqual(birthday?.results.map(\.emoji), ["🎂"])
+    let thanks = await provider.search("thank you so much", options: turkish)
+    XCTAssertEqual(thanks?.layer, .shard)
+    // English names the same base index, so it is not downloaded again.
+    let english = await provider.search("thank you so much", options: .init())
+    XCTAssertEqual(english?.results.first?.emoji, "🙏")
+    let requested = await paths(transport)
+    XCTAssertEqual(
+      requested,
+      ["tr/index.json", "f/base-en.json", "f/tr-do.json", "f/base-th.json", "index.json"])
+  }
+
+  func testPeeksOnlyAtWhatIsLoadedAndPrefetchLoadsIt() async throws {
+    let transport = StubTransport(urls: Self.layeredFiles)
+    let provider = layeredProvider(transport)
+    XCTAssertNil(provider.peek("thank you so much"))
+    var requested = await paths(transport)
+    XCTAssertEqual(requested, [])
+
+    provider.prefetch("thank you", locale: nil)
+    await waitUntil { provider.peek("thank you so much") != nil }
+    XCTAssertEqual(provider.peek("thank you so much")?.results.first?.emoji, "🙏")
+    XCTAssertEqual(provider.peek("thank you so much")?.layer, .shard)
+    let none = provider.peek("thank you so much", options: SemanticSearchOptions(limit: 0))
+    XCTAssertEqual(none?.results, [])
+    XCTAssertNil(provider.peek("thank you!"))
+    requested = await paths(transport)
+    XCTAssertEqual(requested, ["index.json", "f/base-en.json", "f/base-th.json"])
+  }
+
+  func testPrefetchesTheIndexesOnlyForAnEmptyQuery() async throws {
+    let transport = StubTransport(urls: Self.layeredFiles)
+    let provider = layeredProvider(transport)
+    provider.prefetch("", locale: "tr")
+    await waitUntil { await transport.requests.count >= 2 }
+    // The search that follows needs only its shard.
+    let birthday = await provider.search("dogum gunu", options: SemanticSearchOptions(locale: "tr"))
+    XCTAssertEqual(birthday?.layer, .shard)
+    let requested = await paths(transport)
+    XCTAssertEqual(requested, ["tr/index.json", "f/base-en.json", "f/tr-do.json"])
+  }
+
+  func testAsksAgainAfterANetworkErrorButNotAfterA404() async throws {
+    let transport = StubTransport(urls: Self.layeredFiles)
+    await transport.failOnce("\(Self.base)/index.json")
+    await transport.failOnce("\(Self.base)/f/live-co.json")
+    let clock = TestClock()
+    let provider = layeredProvider(transport, now: { clock.now })
+    let congrats = "congrats on the launch"
+
+    let first = await provider.search(congrats, options: .init())
+    XCTAssertNil(first)
+    // Within the retry delay, an unreachable host is not asked again.
+    let second = await provider.search(congrats, options: .init())
+    XCTAssertNil(second)
+    clock.advance(by: 11)
+    let third = await provider.search(congrats, options: .init())
+    XCTAssertNil(third)
+    clock.advance(by: 11)
+    let fourth = await provider.search(congrats, options: .init())
+    XCTAssertEqual(fourth?.layer, .shard)
+
+    let german = SemanticSearchOptions(locale: "de")
+    let missing = await provider.search("thanks", options: german)
+    XCTAssertNil(missing)
+    clock.advance(by: 11)
+    let stillMissing = await provider.search("thanks", options: german)
+    XCTAssertNil(stillMissing)
+
+    let requested = await paths(transport)
+    XCTAssertEqual(requested.filter { $0 == "index.json" }.count, 2)
+    XCTAssertEqual(requested.filter { $0 == "f/live-co.json" }.count, 2)
+    XCTAssertEqual(requested.filter { $0 == "de/index.json" }.count, 1)
+  }
+
+  func testTreatsAnIndexWithoutAKeysArrayAsNoIndex() async throws {
+    var files = Self.layeredFiles
+    files["\(Self.base)/index.json"] = """
+      {"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256","keys":"co"}
+      """
+    files["\(Self.base)/tr/index.json"] = "<!doctype html><title>Not found</title>"
+    let transport = StubTransport(urls: files)
+    let provider = layeredProvider(transport)
+    for _ in 0..<2 {
+      let english = await provider.search("congrats on the launch", options: .init())
+      XCTAssertNil(english)
+      let turkish = await provider.search(
+        "dogum gunu", options: SemanticSearchOptions(locale: "tr"))
+      XCTAssertNil(turkish)
+    }
+    XCTAssertNil(provider.peek("congrats on the launch"))
+    let requested = await paths(transport)
+    XCTAssertEqual(requested, ["index.json", "tr/index.json"])
+  }
+
+  func testKeepsTheLiveLayerWhenTheBaseIndexIsNotValid() async throws {
+    var files = Self.layeredFiles
+    files["\(Self.base)/f/base-en.json"] = #"{"keys":null}"#
+    let provider = layeredProvider(StubTransport(urls: files))
+    let congrats = await provider.search("congrats on the launch", options: .init())
+    XCTAssertEqual(congrats?.results.first?.emoji, "🚀")
+    let thanks = await provider.search("thank you so much", options: .init())
+    XCTAssertNil(thanks)
+  }
+
+  func testAChainPeeksAndPrefetchesThroughItsProviders() async throws {
+    let shards = layeredProvider(StubTransport(urls: Self.layeredFiles))
+    let apiTransport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8))
+    }
+    let api = SemanticClient(
+      configuration: .init(endpoint: URL(string: "https://api.test")!), transport: apiTransport)
+    let chain = ProviderChain([shards, api])
+
+    XCTAssertNil(chain.peek("coffee time"))
+    _ = try await chain.search("coffee time")
+    XCTAssertEqual(chain.peek("coffee time")?.layer, .api)
+
+    XCTAssertNil(chain.peek("thank you so much"))
+    chain.prefetch("thank you", locale: nil)
+    await waitUntil { chain.peek("thank you so much") != nil }
+    XCTAssertEqual(chain.peek("thank you so much")?.layer, .shard)
+    let apiRequests = await apiTransport.requests.count
+    XCTAssertEqual(apiRequests, 1)
+  }
+}
+
+/// Waits until `condition` holds, for work that `prefetch` starts in the background (at most 2 s).
+private func waitUntil(_ condition: () async -> Bool) async {
+  for _ in 0..<400 {
+    if await condition() { return }
+    try? await Task.sleep(nanoseconds: 5_000_000)
   }
 }
 

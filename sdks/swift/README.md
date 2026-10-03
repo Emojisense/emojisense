@@ -8,8 +8,8 @@ same results as the TypeScript engine.
 | Tier 0 | `AliasEngine` | Offline alias search over the packs (PACK_FORMAT.md §4). Runs on every keystroke. |
 | Normalization | `Normalizer` | PACK_FORMAT.md §3, for queries and labels. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes `pack.<locale>.json` and `pack.<locale>.ext.json`. Verifies `sha256`. |
-| Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6). |
-| Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache. Over the limit it still gets the edge's cached answers. |
+| Layer 2 | `ShardProvider` | Precomputed semantic results from static shards on the CDN (§6): a live layer, then a base layer. A loaded shard answers `peek` between keystrokes. |
+| Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache that answers `peek`. Over the limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Pinned reciprocal rank fusion, as in `core/src/fusion.ts`. |
 | Confidence | `Confidence` | The unsure verdict (`assess`), as in `core/src/confidence.ts`. |
 | Emoji sets | `EmojiSet`, `Hexcode` | The `emojiSet` option of the pickers: `.native` or a hosted set. `imageURL(for:endpoint:key:)` gives `/v1/sets/<set>/<hexcode>.svg?key=…` (a key whose plan includes hosted sets). No UI. |
@@ -49,51 +49,84 @@ let manifest = try await loader.loadManifest()
 let core = try await loader.loadPacks(locales: ["en", "tr"], manifest: manifest)
 var engine = try AliasEngine(core: core)
 
-// 2. Search on every keystroke. This is synchronous and fast (see Performance). Fusion needs the
-//    same candidates whatever the limit (`Fusion.rankDepth`), so search deeper and show `limit`.
+// 2. Alias search runs on every keystroke. It is synchronous and fast (see Performance). Fusion
+//    needs the same candidates whatever the limit (`Fusion.rankDepth`), so search deeper and show
+//    `limit`.
 let limit = 12
 let depth = max(limit, Fusion.rankDepth)
-let alias = engine.search("jurassic pa", options: AliasSearchOptions(limit: depth, locale: "en"))
-var results = alias.results.prefix(limit).map(\.searchResult)
 
 // 3. When the device is idle, load the extension parts and rebuild the index.
 let extensions = try await loader.loadPacks(locales: ["en", "tr"], part: .ext, manifest: manifest)
 engine = try AliasEngine(core: core, extensions: extensions)
 
-// 4. Semantic layers: static shards first, then the API.
+// 4. Semantic layers: static shards first (free files on the CDN), then the API. Load the shard
+//    indexes while the user starts to type.
 let semantic = ProviderChain([
-  ShardProvider(baseURL: URL(string: "https://api.emojisense.com/p/0.1.0")!),
+  ShardProvider(baseURL: URL(string: "https://cdn.emojisense.com/p/0.1.0")!),
   SemanticClient(
     configuration: .init(
       endpoint: URL(string: "https://api.emojisense.com")!, key: "pk_live_…",
       packVersion: engine.packVersion)),
 ])
-if Fusion.shouldUseSemantic(alias),
-  let response = try await semantic.search(
-    "jurassic pa", options: .init(locale: "en", limit: depth))
-{
+semantic.prefetch("", locale: "en")
+
+// 5. The search loop: call `update` on every keystroke. `show` is your UI.
+var semanticTask: Task<Void, Never>?
+
+func update(_ query: String) {
+  semanticTask?.cancel()
+  let alias = engine.search(query, options: AliasSearchOptions(limit: depth, locale: "en"))
+  show(alias.results.prefix(limit).map(\.searchResult))
+  guard Fusion.shouldUseSemantic(alias) else { return }
+  let options = SemanticSearchOptions(locale: "en", limit: depth)
+  // A loaded shard, or an answer the client already has: show it at once, with no debounce.
+  if let response = semantic.peek(query, options: options) {
+    return show(fused(alias, response))
+  }
+  // Load the query's shard during the debounce, so that the next keystroke can peek at it.
+  semantic.prefetch(query, locale: "en")
+  semanticTask = Task {
+    try? await Task.sleep(for: .milliseconds(200))
+    guard !Task.isCancelled, let response = try? await semantic.search(query, options: options),
+      !Task.isCancelled
+    else { return }
+    show(fused(alias, response))
+  }
+}
+
+func fused(_ alias: AliasSearchOutput, _ response: SemanticResponse) -> [SearchResult] {
   // The calibration of the server's model; older servers send none.
   let calibration = response.calibration ?? .standard
-  results = Fusion.fuse(
-    alias: alias, semantic: response.results, limit: limit, calibration: calibration,
-    ranking: .init(popularity: { [engine] in engine.popularity($0) }))
-  // 5. No tier understood the query: show the results as guesses.
+  // 6. No tier understood the query: show the results as guesses.
   let isUnsure = Confidence.assess(
     alias: alias, semantic: response.results, calibration: calibration
   ).unsure
+  return Fusion.fuse(
+    alias: alias, semantic: response.results, limit: limit, calibration: calibration,
+    ranking: .init(popularity: { [engine] in engine.popularity($0) }))
 }
 ```
 
 Notes:
 
-- Debounce the semantic call (for example 200 ms). Cancel the task when the query changes.
+- Call `peek` first on each keystroke. A loaded shard, or an answer that `SemanticClient` already
+  has, needs no debounce and no request. Otherwise call `prefetch`, then debounce `search` (for
+  example 200 ms). Cancel the task when the query changes. `peek` never returns an `overLimit`
+  answer.
 - `AliasEngine` is thread-safe. Concurrent searches use one shared scratch buffer, one at a time.
 - `SemanticClient` returns `nil` while it is paused after an `overLimit` answer. It throws
   `EmojisenseError.httpStatus` for HTTP errors. `ShardProvider` returns `nil` for network errors,
   so the next provider gets the query.
 - `ShardProvider` reads the shards of `SemanticSearchOptions.locale`. English (or no locale) uses
-  `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. If a
-  locale has no shards (404), the provider stops asking for that locale and the API answers.
+  `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. The
+  index names the file of each key (`files`) and the index of the base layer (`base`), as URLs
+  relative to the index. The provider asks the live layer, then the base layer. An index without
+  `files` (older builds) means `<key>.json` next to the index.
+- Use the CDN, `https://cdn.emojisense.com/p/0.1.0`: the shards are free static files there. The API
+  host serves the same files at `https://api.emojisense.com/p/0.1.0`.
+- If a file does not exist (404) or is not valid, `ShardProvider` remembers that and does not ask
+  again: a locale without shards goes to the API. After a network error, it asks again once
+  `retryDelay` (10 s) has passed.
 - Inject an `HTTPTransport` to add headers, logging or a stub for tests.
 - `AliasSearchOutput.coverage` is the largest share of the query that one phrase matches with
   whole tokens. Below `Confidence.wholeCoverage` (0.85) the dictionary does not explain the query.

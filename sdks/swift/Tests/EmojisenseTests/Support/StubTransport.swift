@@ -6,6 +6,8 @@ import Foundation
 actor StubTransport: HTTPTransport {
   private let respond: @Sendable (URL) -> HTTPResponse
   private(set) var requests: [URL] = []
+  /// Full URLs whose next request fails as if the host could not be reached.
+  private var unreachable: Set<String> = []
 
   init(_ respond: @escaping @Sendable (URL) -> HTTPResponse) {
     self.respond = respond
@@ -32,8 +34,14 @@ actor StubTransport: HTTPTransport {
     }
   }
 
+  /// The next request for `url` throws `URLError(.notConnectedToInternet)`.
+  func failOnce(_ url: String) {
+    unreachable.insert(url)
+  }
+
   func get(_ url: URL) async throws -> HTTPResponse {
     requests.append(url)
+    if unreachable.remove(url.absoluteString) != nil { throw URLError(.notConnectedToInternet) }
     return respond(url)
   }
 }

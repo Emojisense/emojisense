@@ -78,12 +78,31 @@ public struct SemanticSearchOptions: Sendable {
 /// its alias results. Cancel the surrounding task to abandon a search.
 public protocol SemanticProvider: Sendable {
   func search(_ query: String, options: SemanticSearchOptions) async throws -> SemanticResponse?
+
+  /// The answer that is already in memory, without I/O: a loaded shard, or a response this client
+  /// received before. Show it at once, with no debounce. The default returns `nil`.
+  func peek(_ query: String, options: SemanticSearchOptions) -> SemanticResponse?
+
+  /// Starts to load what ``peek(_:options:)`` needs for this query (a shard index, the query's
+  /// shard), so that it is there by the next keystroke. An empty query loads the indexes only.
+  /// Returns at once and never fails. The default does nothing.
+  func prefetch(_ query: String, locale: String?)
 }
 
 extension SemanticProvider {
   public func search(_ query: String) async throws -> SemanticResponse? {
     try await search(query, options: SemanticSearchOptions())
   }
+
+  public func peek(_ query: String, options: SemanticSearchOptions) -> SemanticResponse? {
+    nil
+  }
+
+  public func peek(_ query: String) -> SemanticResponse? {
+    peek(query, options: SemanticSearchOptions())
+  }
+
+  public func prefetch(_ query: String, locale: String?) {}
 }
 
 /// Tries providers in order (cheapest first, e.g. shards then API); the first answer wins.
@@ -102,5 +121,17 @@ public struct ProviderChain: SemanticProvider {
       if let response = try await provider.search(query, options: options) { return response }
     }
     return nil
+  }
+
+  /// The first answer in memory, in provider order.
+  public func peek(_ query: String, options: SemanticSearchOptions) -> SemanticResponse? {
+    for provider in providers {
+      if let response = provider.peek(query, options: options) { return response }
+    }
+    return nil
+  }
+
+  public func prefetch(_ query: String, locale: String?) {
+    for provider in providers { provider.prefetch(query, locale: locale) }
   }
 }

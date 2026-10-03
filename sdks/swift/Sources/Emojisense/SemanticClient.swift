@@ -30,11 +30,17 @@ public actor SemanticClient: SemanticProvider {
     }
   }
 
+  /// Recent responses and the end of an over-limit pause.
+  private struct Memory {
+    var cache: LRUCache<String, SemanticResponse>
+    var pausedUntil = Date.distantPast
+  }
+
   private let configuration: Configuration
   private let transport: any HTTPTransport
   private let now: @Sendable () -> Date
-  private var cache: LRUCache<String, SemanticResponse>
-  private var pausedUntil = Date.distantPast
+  /// In a lock, so that ``peek(_:options:)`` reads it without waiting for the actor.
+  private let memory: Locked<Memory>
 
   public init(
     configuration: Configuration, transport: any HTTPTransport = URLSessionTransport(),
@@ -43,7 +49,7 @@ public actor SemanticClient: SemanticProvider {
     self.configuration = configuration
     self.transport = transport
     self.now = now
-    cache = LRUCache(capacity: configuration.cacheSize)
+    memory = Locked(Memory(cache: LRUCache(capacity: configuration.cacheSize)))
   }
 
   /// Returns `nil` for an empty query and while paused after an over-limit answer.
@@ -51,35 +57,50 @@ public actor SemanticClient: SemanticProvider {
   public func search(_ query: String, options: SemanticSearchOptions) async throws
     -> SemanticResponse?
   {
-    if Normalizer.normalize(query).isEmpty || now() < pausedUntil { return nil }
-
-    // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
-    let url = try requestURL(query: Normalizer.embeddingText(query), options: options)
-    if let hit = cache.value(forKey: url.absoluteString) {
-      if hit.overLimit { return nil }
-      // From this client's memory: no request went out, so it is not a fresh model answer.
-      var remembered = hit
-      remembered.cached = true
-      return remembered
-    }
+    guard let url = try requestURL(query: query, options: options) else { return nil }
+    let key = url.absoluteString
+    if let hit = memory.withLock({ $0.cache.value(forKey: key) }) { return Self.remembered(hit) }
 
     let response = try await transport.get(url)
     guard response.isSuccess else { throw EmojisenseError.httpStatus(response.status, url: url) }
     var body = try JSONDecoder().decode(SemanticResponse.self, from: response.body)
     body.layer = .api
-    cache.insert(body, forKey: url.absoluteString)
-    if body.overLimit {
-      pausedUntil = now().addingTimeInterval(configuration.overLimitCooldown)
-      return nil
+    let pausedUntil = now().addingTimeInterval(configuration.overLimitCooldown)
+    memory.withLock { memory in
+      memory.cache.insert(body, forKey: key)
+      if body.overLimit { memory.pausedUntil = pausedUntil }
     }
-    return body
+    return body.overLimit ? nil : body
   }
 
-  /// The client fuses with its own alias results, so it asks for semantic results only.
-  private func requestURL(query: String, options: SemanticSearchOptions) throws -> URL {
+  /// A response this client received before for the same request. Never an over-limit answer.
+  public nonisolated func peek(_ query: String, options: SemanticSearchOptions)
+    -> SemanticResponse?
+  {
+    guard let url = try? requestURL(query: query, options: options) else { return nil }
+    let key = url.absoluteString
+    return memory.withLock { $0.cache.value(forKey: key) }.flatMap(Self.remembered)
+  }
+
+  /// From this client's memory: no request goes out, so it is not a fresh model answer.
+  private static func remembered(_ hit: SemanticResponse) -> SemanticResponse? {
+    if hit.overLimit { return nil }
+    var remembered = hit
+    remembered.cached = true
+    return remembered
+  }
+
+  /// The request URL, which is also the key of the memory. `nil`: nothing to ask (an empty query,
+  /// or a pause after an over-limit answer). The client fuses with its own alias results, so it
+  /// asks for semantic results only.
+  private nonisolated func requestURL(query: String, options: SemanticSearchOptions) throws -> URL? {
+    if Normalizer.normalize(query).isEmpty || now() < memory.withLock({ $0.pausedUntil }) {
+      return nil
+    }
+    // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
     var parameters = [
-      ("q", query), ("locale", options.locale ?? "en"), ("limit", String(options.limit)),
-      ("mode", "semantic"),
+      ("q", Normalizer.embeddingText(query)), ("locale", options.locale ?? "en"),
+      ("limit", String(options.limit)), ("mode", "semantic"),
     ]
     if let packVersion = configuration.packVersion { parameters.append(("pack", packVersion)) }
     if let key = configuration.key { parameters.append(("key", key)) }
