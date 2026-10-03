@@ -9,7 +9,7 @@
   "//requestsPerSemanticSearch": "Debounced requests per search that needs semantic results (a pause while typing sends a request for a prefix).",
   "requestsPerSemanticSearch": 1.5,
 
-  "//shardHitShare": "L2: share of those semantic requests answered by a static prefix shard (free asset request).",
+  "//shardHitShare": "L2: share of those semantic requests answered by a shard: the live layer (real queries) or the base layer (synthetic phrases). Shards come from the CDN host: a cache hit runs no Worker and costs nothing; R2 reads on CDN misses are not counted (10M free per month, then $0.36 / 1M). Clients that read shards on the API host's /p/ route pay a Worker request each, not counted here.",
   "shardHitShare": 0.5,
 
   "//cacheHitRate": "L3: Cache API hit rate of the requests that still reach the Worker. Low, because L2 already takes the frequent queries; what is left is the long tail.",
@@ -22,7 +22,7 @@
     "id": null,
     "tokensPerQuery": 8,
     "pricePerMTokens": null,
-    "assumedPricePerMTokens": 0.02
+    "assumedPricePerMTokens": 0.067
   },
 
   "reactions": {
@@ -33,10 +33,10 @@
   },
 
   "images": {
-    "//": "POST /v1/classify-image. ⚠ pricePerImage is an assumption (vision model not chosen yet). The perceptual-hash cache skips the model for repeated memes; the caption then goes through text search (tokensPerImage).",
+    "//": "POST /v1/classify-image. gemma-4-26b-a4b-it reads a 384 px image (≈ 800 input tokens at $0.10 / 1M) and writes a short caption (≈ 50 tokens at $0.30 / 1M): ≈ $0.0001 per image (DECISIONS.md). The perceptual-hash cache skips the model for repeated memes; the caption then goes through text search (tokensPerImage).",
     "perSearch": 0.001,
     "cacheHitRate": 0.3,
-    "pricePerImage": 0.001,
+    "pricePerImage": 0.0001,
     "tokensPerImage": 24,
     "cpuMsPerRequest": 5,
     "billedAsWorkersAi": true
@@ -63,6 +63,20 @@
     "billingStarted": false
   },
 
+  "workersLogs": {
+    "//": "Workers Logs: src/analytics.ts writes one structured line per API request (production keeps logs, without URLs). 20M lines a month included in Workers Paid, then $0.60 / 1M.",
+    "linesPerWorkerRequest": 1,
+    "includedLines": 20000000,
+    "pricePerMLines": 0.6
+  },
+
+  "d1": {
+    "//": "D1 rows written per search request: its app's query_daily count (src/query-stats.ts). ⚠ 2 = a new row plus its day index; a query repeated within a flush window or a day adds to the same row, so this is high for the head and right for the long tail. 50M rows a month included, then $1.00 / 1M.",
+    "rowsWrittenPerSearchRequest": 2,
+    "includedRowsWritten": 50000000,
+    "pricePerMRowsWritten": 1
+  },
+
   "sensitivity": {
     "//": "Low and high values for the one-at-a-time sensitivity table.",
     "deviceShare": [0.4, 0.9],
@@ -70,9 +84,9 @@
     "cacheHitRate": [0, 0.5],
     "requestsPerSemanticSearch": [1, 3],
     "model.tokensPerQuery": [4, 24],
-    "model.pricePerMTokens": [0.012, 0.067],
+    "model.pricePerMTokens": [0.012, 0.2],
     "reactions.perSearch": [0, 0.1],
     "images.perSearch": [0, 0.01],
-    "images.pricePerImage": [0.0002, 0.005]
+    "images.pricePerImage": [0.00005, 0.001]
   }
 }

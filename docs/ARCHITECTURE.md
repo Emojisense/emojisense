@@ -20,10 +20,12 @@ L0  alias dictionary ─── on device, $0, < 16 ms ────────�
 L1  on-device semantic model ─── DEFERRED (SemanticProvider slot + Cross-Origin Storage hook)
    │
    ▼
-L2  precomputed results, prefix shard /p/<v>/<prefix>.json ─── edge-cached, not metered ── exact hit? ──▶ fuse ▶ results
+L2  precomputed results: live (nightly) and base (synthetic) shards on the CDN, content-named files
+   │  loaded shard? ──▶ fuse ▶ results at once, no debounce, no request
+   │  shard not loaded yet: it loads during the debounce (prefetch on the first unsure keystroke)
    │ miss (debounced 150–250 ms)
    ▼
-L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (bge-m3, 1024 dims)
+L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (EmbeddingGemma, 768 dims)
                                          ─▶ dot product over ≈1.9k emoji vectors, English + the query locale (3–6 ms) ─▶ fuse ▶ results
    │ key over its monthly limit
    └──▶ { overLimit: true } ─▶ client stays on L0 + L2 silently (never a hard failure)
@@ -33,8 +35,8 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (b
 | ----- | ----- | ---- | ------- | ----- |
 | L0 alias dictionary (prefix index, IDF, fuzzy) | device | $0 | p95 0.4 ms per keystroke | built |
 | L1 on-device semantic | device | — | — | deferred: no small multilingual off-the-shelf model fits unchanged |
-| L2 precomputed prefix shards | Worker → R2, edge-cached (nightly build) | not metered; ≈ $0.30 per 1M Worker requests | 10–30 ms first fetch, then local | built; served after the first nightly build |
-| L3 Worker + Cache API + Workers AI embedding | edge | ≈ $0.6–0.9 per 1M | +20–80 ms for the model call | live, with keys, plans and metering |
+| L2 precomputed prefix shards (live + base layer) | CDN → R2 (no Worker); also `/p/*` on the API host | not metered; $0 per CDN hit | one CDN round trip per shard, then local (between keystrokes) | built; base layer with the pack, live layer nightly |
+| L3 Worker + Cache API + Workers AI embedding | edge | ≈ $3.7 per 1M calls with bookkeeping (docs/PRICING.md) | EmbeddingGemma embed p50 118–134 ms, p95 335–473 ms in the Worker (DECISIONS.md) | live, with keys, plans and metering |
 
 **Fusion.** The client merges L0 with L2 or L3 results with a learned reranker: confident L0 hits
 (≥ 0.9) stay pinned, so the list does not jump when semantic results arrive, and so does the

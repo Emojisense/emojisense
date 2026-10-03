@@ -1,6 +1,7 @@
 /**
- * Layered cost model (docs/ARCHITECTURE.md): L0 device → L2 static shards → L3 Worker with the
- * Cache API and a Workers AI embedding. Each layer only sees the traffic the layer before it
+ * Layered cost model (docs/ARCHITECTURE.md): L0 device → L2 shards on the CDN (no Worker) → L3
+ * Worker with the Cache API and a Workers AI embedding, plus what each Worker request writes
+ * (Analytics Engine, Workers Logs, D1 query counts). Each layer only sees the traffic the layer before it
  * could not answer, so the L3 cache hit rate applies to the long tail, never to all searches.
  * Inputs: cost.assumptions.json. Prices: docs/RESEARCH.md.
  */
@@ -53,6 +54,10 @@ export interface CostAssumptions {
     pricePerMWrites: number;
     billingStarted: boolean;
   };
+  /** Workers Logs: the structured log line each API request writes. Absent: not counted. */
+  workersLogs?: { linesPerWorkerRequest: number; includedLines: number; pricePerMLines: number };
+  /** D1 rows a search request writes (query_daily counts). Absent: not counted. */
+  d1?: { rowsWrittenPerSearchRequest: number; includedRowsWritten: number; pricePerMRowsWritten: number };
   sensitivity: Partial<Record<SensitivityPath, [number, number]>>;
 }
 
@@ -210,7 +215,15 @@ export interface LayeredCost {
   volumes: Volumes;
   layers: LayerCost[];
   /** Marginal $ per month by cost line. */
-  lines: { requests: number; cpu: number; embeddings: number; images: number; analyticsEngine: number };
+  lines: {
+    requests: number;
+    cpu: number;
+    embeddings: number;
+    images: number;
+    analyticsEngine: number;
+    logs: number;
+    d1: number;
+  };
   /** What Analytics Engine would add per month once its billing starts. */
   analyticsEngineIfBilled: number;
   /** Headline: marginal $ per 1M searches, all layers. Independent of volume. */
@@ -239,17 +252,21 @@ export function computeLayeredCost(a: CostAssumptions): LayeredCost {
 
   const ae = a.analyticsEngine;
   const w = a.workers;
+  const logLines = a.workersLogs?.linesPerWorkerRequest ?? 0;
+  const d1Rows = a.d1?.rowsWrittenPerSearchRequest ?? 0;
   /** Marginal cost of `count` Worker requests that each use `cpuMs` and `tokens`. */
-  const workerUsd = (count: number, cpuMs: number, tokens: number) => ({
+  const workerUsd = (count: number, cpuMs: number, tokens: number, rows = 0) => ({
     requests: perM(count, w.requestPricePerM),
     cpu: perM(count * cpuMs, w.cpuPricePerMMs),
     embeddings: perM(count * tokens, price.pricePerMTokens),
     analyticsEngine: ae.billingStarted ? perM(count * ae.writesPerWorkerRequest, ae.pricePerMWrites) : 0,
+    logs: perM(count * logLines, a.workersLogs?.pricePerMLines ?? 0),
+    d1: perM(count * rows, a.d1?.pricePerMRowsWritten ?? 0),
   });
   const sum = (o: Record<string, number>) => Object.values(o).reduce((s, v) => s + v, 0);
 
-  const hits = workerUsd(cacheHits, a.cpuMsPerRequest, 0);
-  const misses = workerUsd(embeddedSearches, a.cpuMsPerRequest, a.model.tokensPerQuery);
+  const hits = workerUsd(cacheHits, a.cpuMsPerRequest, 0, d1Rows);
+  const misses = workerUsd(embeddedSearches, a.cpuMsPerRequest, a.model.tokensPerQuery, d1Rows);
   const reactions = workerUsd(reactionRequests, a.reactions.cpuMsPerRequest, a.reactions.tokensPerRequest);
   const imageWorker = workerUsd(imageRequests, a.images.cpuMsPerRequest, 0);
   const imageCaptions = perM(imageModelCalls * a.images.tokensPerImage, price.pricePerMTokens);
@@ -257,7 +274,7 @@ export function computeLayeredCost(a: CostAssumptions): LayeredCost {
 
   const layers: LayerCost[] = [
     { layer: "L0 on device", volume: onDevice, usd: 0 },
-    { layer: "L2 static shards", volume: shardHits, usd: 0 },
+    { layer: "L2 shards on the CDN", volume: shardHits, usd: 0 },
     { layer: "L3 Worker, Cache API hit", volume: cacheHits, usd: sum(hits) },
     { layer: "L3 Worker, embed + search", volume: embeddedSearches, usd: sum(misses) },
     { layer: "Reaction suggestions", volume: reactionRequests, usd: sum(reactions) },
@@ -274,6 +291,8 @@ export function computeLayeredCost(a: CostAssumptions): LayeredCost {
     embeddings: parts.reduce((s, p) => s + p.embeddings, 0) + imageCaptions,
     images: imageModel,
     analyticsEngine: parts.reduce((s, p) => s + p.analyticsEngine, 0),
+    logs: parts.reduce((s, p) => s + p.logs, 0),
+    d1: parts.reduce((s, p) => s + p.d1, 0),
   };
   const marginalMonthly = sum(lines);
 
@@ -298,7 +317,15 @@ export function computeLayeredCost(a: CostAssumptions): LayeredCost {
     perM(Math.max(0, cpuMs - w.includedCpuMs), w.cpuPricePerMMs) +
     Math.max(0, workersAiUsd - freeAiCredit) +
     (a.images.billedAsWorkersAi ? 0 : lines.images) +
-    (ae.billingStarted ? perM(Math.max(0, analyticsWrites - ae.includedWrites), ae.pricePerMWrites) : 0);
+    (ae.billingStarted ? perM(Math.max(0, analyticsWrites - ae.includedWrites), ae.pricePerMWrites) : 0) +
+    perM(
+      Math.max(0, workerRequests * logLines - (a.workersLogs?.includedLines ?? 0)),
+      a.workersLogs?.pricePerMLines ?? 0,
+    ) +
+    perM(
+      Math.max(0, workerSearchRequests * d1Rows - (a.d1?.includedRowsWritten ?? 0)),
+      a.d1?.pricePerMRowsWritten ?? 0,
+    );
 
   return {
     price,

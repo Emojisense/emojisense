@@ -87,7 +87,9 @@ export function renderCostReport(a: CostAssumptions, options: CostReportOptions 
   row(["Workers AI embeddings", usd(per1M(cost.lines.embeddings))]);
   row(["Image model", usd(per1M(cost.lines.images))]);
   row(["Analytics Engine", usd(per1M(cost.lines.analyticsEngine))]);
-  row(["Static shards (L2), on device (L0)", "$0"]);
+  row(["Workers Logs", usd(per1M(cost.lines.logs))]);
+  row(["D1 query counts", usd(per1M(cost.lines.d1))]);
+  row(["Shards on the CDN (L2), on device (L0)", "$0"]);
 
   lines.push("", `${sub} Sensitivity (one input at a time)`, "");
   row(["Input", "Low", "Base", "High", "$ / 1M at low", "at base", "at high"]);

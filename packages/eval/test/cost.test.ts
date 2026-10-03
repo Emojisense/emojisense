@@ -78,7 +78,7 @@ describe("layered cost", () => {
     expect(cost.searchPerMillion).toBeCloseTo(0.218);
     const usd = Object.fromEntries(cost.layers.map((l) => [l.layer, l.usd]));
     expect(usd["L0 on device"]).toBe(0);
-    expect(usd["L2 static shards"]).toBe(0);
+    expect(usd["L2 shards on the CDN"]).toBe(0);
     expect(usd["L3 Worker, Cache API hit"]).toBeCloseTo(0.034);
     expect(usd["L3 Worker, embed + search"]).toBeCloseTo(0.184);
   });
@@ -109,6 +109,18 @@ describe("layered cost", () => {
     const billed = structuredClone(base);
     billed.analyticsEngine.billingStarted = true;
     expect(computeLayeredCost(billed).lines.analyticsEngine).toBeCloseTo(0.125);
+  });
+
+  it("adds the log line and the D1 rows each search request writes, when they are set", () => {
+    const counted = structuredClone(base);
+    counted.workersLogs = { linesPerWorkerRequest: 1, includedLines: 2e7, pricePerMLines: 0.6 };
+    counted.d1 = { rowsWrittenPerSearchRequest: 2, includedRowsWritten: 5e7, pricePerMRowsWritten: 1 };
+    const cost = computeLayeredCost(counted);
+    expect(cost.lines.logs).toBeCloseTo(0.3); // 0.5M Worker requests × 1 line × $0.60
+    expect(cost.lines.d1).toBeCloseTo(1); // 0.5M search requests × 2 rows × $1.00
+    expect(cost.searchPerMillion).toBeCloseTo(0.218 + 0.3 + 1);
+    expect(cost.allInMonthly).toBeCloseTo(5); // all within the included quotas
+    expect(computeLayeredCost(base).lines).toMatchObject({ logs: 0, d1: 0 });
   });
 
   it("uses the listed price, an explicit override, or a flagged assumption", () => {
