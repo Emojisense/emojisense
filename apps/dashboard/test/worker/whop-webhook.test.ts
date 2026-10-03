@@ -593,6 +593,29 @@ describe("cancel retries", () => {
     expect(membershipOf(h, "mem_old").cancel_confirmed_at).not.toBeNull();
     expect(billingOf(h, adaId)).toMatchObject({ plan: "free", billing_status: "canceled" });
   });
+
+  it("the daily cron still retries cancels when the billing sweep fails, and logs the failure", async () => {
+    const { h } = await setup();
+    h.db.exec(
+      "INSERT INTO whop_memberships (id, state, event_at, retired_at) VALUES ('mem_old', 'active', 0, 1)",
+    );
+    h.db.exec("ALTER TABLE accounts RENAME COLUMN billing_grace_until TO grace_moved");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("{}", { status: 200 })),
+    );
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const background: Promise<unknown>[] = [];
+    worker.scheduled(undefined, h.env, { waitUntil: (promise) => void background.push(promise) });
+    await Promise.all(background);
+    vi.unstubAllGlobals();
+    expect(membershipOf(h, "mem_old").cancel_confirmed_at).not.toBeNull();
+    expect(JSON.parse(String(errors.mock.calls[0]?.[0]))).toEqual({
+      event: "billing_sweep",
+      changed: { error: "Error" },
+      cancelled: 1,
+    });
+  });
 });
 
 describe("POST /api/whop/webhook: retired memberships", () => {

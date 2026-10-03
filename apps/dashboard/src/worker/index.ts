@@ -31,11 +31,24 @@ export default {
   scheduled(_controller: unknown, env: Env, ctx: ExecutionContext): void {
     const deps = { fetch: (input: string, init?: RequestInit) => fetch(input, init), now: Date.now };
     ctx.waitUntil(
-      Promise.all([expireLapsedBilling(env.DB, Date.now()), cancelRetiredMemberships(env, deps)]).then(
+      Promise.allSettled([expireLapsedBilling(env.DB, Date.now()), cancelRetiredMemberships(env, deps)]).then(
         ([changed, cancelled]) => {
-          console.log(JSON.stringify({ event: "billing_sweep", changed, cancelled }));
+          const failed = changed.status === "rejected" || cancelled.status === "rejected";
+          const log = failed ? console.error : console.log;
+          log(
+            JSON.stringify({
+              event: "billing_sweep",
+              changed: outcome(changed),
+              cancelled: outcome(cancelled),
+            }),
+          );
         },
       ),
     );
   },
 };
+
+/** The count, or the error's name only: a message could carry a membership id or SQL. */
+function outcome(result: PromiseSettledResult<number>): number | { error: string } {
+  return result.status === "fulfilled" ? result.value : { error: (result.reason as Error)?.name ?? "Error" };
+}
