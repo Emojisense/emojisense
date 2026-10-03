@@ -5,9 +5,10 @@
 import { gzipSync } from "node:zlib";
 import { build } from "esbuild";
 
-// 15 → 16 KB for the unsure verdict (DECISIONS.md, "Unsure queries and the concept tier"); the
-// function-word lists take 4.2 KB of it and are the next thing to split.
-const BUDGET_BYTES = 16 * 1024;
+// 15 → 16 KB for the unsure verdict (DECISIONS.md, "Unsure queries and the concept tier"); 16 →
+// 17 KB for culture on by default (DECISIONS.md, 2026-10-03). The function-word lists take 4.2 KB
+// and are the next thing to split.
+const BUDGET_BYTES = 17 * 1024;
 const entries = {
   "full API": `export * from "./src/index.ts";`,
   "alias search only": `export { createEngine, normalize } from "./src/index.ts";`,
