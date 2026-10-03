@@ -1,0 +1,3077 @@
+{
+  "generatedBy": "sdks/swift/scripts/make-golden.ts",
+  "packVersion": "0.1.0",
+  "packs": ["pack.en.json", "pack.en.ext.json"],
+  "culture": {
+    "format": "emojisense-culture",
+    "formatVersion": 1,
+    "packVersion": "0.1.0",
+    "locale": "en",
+    "from": "2026-10-02",
+    "until": "2027-10-03",
+    "entries": [
+      {
+        "id": "africa-cup-of-nations-2027",
+        "kind": "event",
+        "context": "Africa Cup of Nations 2027 in Kenya, Tanzania and Uganda",
+        "when": { "from": "2027-06-12", "to": "2027-07-17" },
+        "regions": ["*"],
+        "triggers": ["afcon", "africa cup of nations"],
+        "emoji": [["⚽️", "26BD", 0.8], ["🏆️", "1F3C6", 0.6], ["🌍️", "1F30D", 0.45]]
+      },
+      {
+        "id": "american-football-final-2027",
+        "kind": "event",
+        "context": "American football's championship final, 14 February 2027",
+        "when": { "from": "2027-02-07", "to": "2027-02-14" },
+        "regions": ["US"],
+        "triggers": ["super bowl", "superbowl", "super bowl sunday", "halftime show", "big game"],
+        "emoji": [["🏈", "1F3C8", 0.85], ["🏟️", "1F3DF", 0.5], ["📺️", "1F4FA", 0.45], ["🍗", "1F357", 0.4]],
+        "featured": true
+      },
+      {
+        "id": "asian-games-2026",
+        "kind": "event",
+        "context": "Asian Games 2026 in Aichi and Nagoya, Japan",
+        "when": { "from": "2026-09-19", "to": "2026-10-04" },
+        "regions": ["*"],
+        "triggers": ["asian games", "asiad"],
+        "emoji": [
+          ["🏅", "1F3C5", 0.8],
+          ["🥇", "1F947", 0.65],
+          ["🇯🇵", "1F1EF-1F1F5", 0.4],
+          ["🏟️", "1F3DF", 0.4]
+        ],
+        "featured": true
+      },
+      {
+        "id": "cricket-world-cup-2027",
+        "kind": "event",
+        "context": "Men's Cricket World Cup 2027 in South Africa, Zimbabwe and Namibia",
+        "when": { "from": "2027-09-27", "to": "2027-11-21" },
+        "regions": ["*"],
+        "triggers": ["cricket world cup", "cwc"],
+        "emoji": [["🏏", "1F3CF", 0.85], ["🏆️", "1F3C6", 0.6], ["🇿🇦", "1F1FF-1F1E6", 0.35]],
+        "featured": true
+      },
+      {
+        "id": "diwali-2026-regional",
+        "kind": "event",
+        "context": "Diwali, the festival of lights, 8 November 2026",
+        "when": { "from": "2026-10-30", "to": "2026-11-11" },
+        "regions": ["IN", "NP", "LK", "SG", "MY", "MU", "FJ", "TT", "GY", "SR"],
+        "triggers": ["diwali", "happy diwali", "deepavali", "deepawali", "festival of lights"],
+        "emoji": [["🪔", "1FA94", 0.9], ["🎆", "1F386", 0.65], ["🪷", "1FAB7", 0.5], ["🎇", "1F387", 0.45]],
+        "featured": true
+      },
+      {
+        "id": "rugby-world-cup-2027",
+        "kind": "event",
+        "context": "Men's Rugby World Cup 2027 in Australia",
+        "when": { "from": "2027-09-24", "to": "2027-11-13" },
+        "regions": ["*"],
+        "triggers": ["rugby world cup", "rwc"],
+        "emoji": [["🏉", "1F3C9", 0.85], ["🏆️", "1F3C6", 0.6], ["🇦🇺", "1F1E6-1F1FA", 0.35]]
+      },
+      {
+        "id": "thanksgiving-canada-2026",
+        "kind": "event",
+        "context": "Thanksgiving in Canada, 12 October 2026",
+        "when": { "from": "2026-10-05", "to": "2026-10-12" },
+        "regions": ["CA"],
+        "triggers": ["thanksgiving", "happy thanksgiving", "thanksgiving dinner"],
+        "emoji": [["🦃", "1F983", 0.8], ["🥧", "1F967", 0.6], ["🍁", "1F341", 0.55], ["🍂", "1F342", 0.4]],
+        "featured": true
+      },
+      {
+        "id": "thanksgiving-us-2026",
+        "kind": "event",
+        "context": "Thanksgiving in the US, 26 November 2026",
+        "when": { "from": "2026-11-19", "to": "2026-11-26" },
+        "regions": ["US"],
+        "triggers": [
+          "thanksgiving",
+          "happy thanksgiving",
+          "turkey day",
+          "friendsgiving",
+          "thanksgiving dinner"
+        ],
+        "emoji": [["🦃", "1F983", 0.85], ["🥧", "1F967", 0.65], ["🍂", "1F342", 0.5], ["🙏", "1F64F", 0.4]],
+        "featured": true
+      },
+      {
+        "id": "womens-football-world-cup-2027",
+        "kind": "event",
+        "context": "Women's Football World Cup 2027 in Brazil",
+        "when": { "from": "2027-06-17", "to": "2027-07-25" },
+        "regions": ["*"],
+        "triggers": ["womens world cup", "world cup", "world cup 2027"],
+        "emoji": [["⚽️", "26BD", 0.8], ["🏆️", "1F3C6", 0.65], ["🇧🇷", "1F1E7-1F1F7", 0.45]],
+        "featured": true
+      },
+      {
+        "id": "april-fools",
+        "kind": "seasonal",
+        "context": "April Fools' Day, 1 April",
+        "when": { "from": "03-25", "to": "04-01", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["april fools", "april fools day", "april fool"],
+        "emoji": [["🤡", "1F921", 0.75], ["😜", "1F61C", 0.6], ["🃏", "1F0CF", 0.45]]
+      },
+      {
+        "id": "christmas",
+        "kind": "seasonal",
+        "context": "Christmas, 25 December",
+        "when": { "from": "12-01", "to": "12-26", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["christmas", "merry christmas", "xmas", "christmas eve"],
+        "emoji": [["🎄", "1F384", 0.9], ["🎁", "1F381", 0.75], ["🎅", "1F385", 0.65], ["⭐️", "2B50", 0.45]],
+        "featured": true
+      },
+      {
+        "id": "halloween",
+        "kind": "seasonal",
+        "context": "Halloween, 31 October",
+        "when": { "from": "10-15", "to": "10-31", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["halloween", "happy halloween", "spooky season", "trick or treat"],
+        "emoji": [
+          ["🎃", "1F383", 0.9],
+          ["👻", "1F47B", 0.75],
+          ["🦇", "1F987", 0.6],
+          ["🕷️", "1F577", 0.5],
+          ["🍬", "1F36C", 0.45]
+        ],
+        "featured": true
+      },
+      {
+        "id": "new-year",
+        "kind": "seasonal",
+        "context": "New Year's Eve and New Year's Day",
+        "when": { "from": "12-26", "to": "01-02", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["new year", "happy new year", "new years eve", "nye"],
+        "emoji": [["🎆", "1F386", 0.85], ["🥂", "1F942", 0.75], ["🎉", "1F389", 0.65], ["🍾", "1F37E", 0.5]],
+        "featured": true
+      },
+      {
+        "id": "pride-month",
+        "kind": "seasonal",
+        "context": "Pride Month, celebrating LGBTQ+ communities",
+        "when": { "from": "06-01", "to": "06-30", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["pride", "pride month", "happy pride", "lgbtq", "pride parade"],
+        "emoji": [
+          ["🏳️‍🌈", "1F3F3-FE0F-200D-1F308", 0.9],
+          ["🌈", "1F308", 0.7],
+          ["🏳️‍⚧️", "1F3F3-FE0F-200D-26A7-FE0F", 0.55]
+        ],
+        "featured": true
+      },
+      {
+        "id": "songkran",
+        "kind": "seasonal",
+        "context": "Songkran, the Thai New Year water festival",
+        "when": { "from": "04-06", "to": "04-15", "recurs": "yearly" },
+        "regions": ["TH"],
+        "triggers": ["songkran", "thai new year", "water festival", "happy songkran"],
+        "emoji": [
+          ["💦", "1F4A6", 0.8],
+          ["🔫", "1F52B", 0.6],
+          ["🪣", "1FAA3", 0.45],
+          ["🇹🇭", "1F1F9-1F1ED", 0.4]
+        ],
+        "featured": true
+      },
+      {
+        "id": "valentines-day",
+        "kind": "seasonal",
+        "context": "Valentine's Day, 14 February",
+        "when": { "from": "02-07", "to": "02-14", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["valentines day", "valentines", "valentine", "be my valentine"],
+        "emoji": [["💘", "1F498", 0.8], ["🌹", "1F339", 0.7], ["💌", "1F48C", 0.55], ["🍫", "1F36B", 0.45]],
+        "featured": true
+      },
+      {
+        "id": "world-emoji-day",
+        "kind": "seasonal",
+        "context": "World Emoji Day, 17 July",
+        "when": { "from": "07-10", "to": "07-17", "recurs": "yearly" },
+        "regions": ["*"],
+        "triggers": ["world emoji day", "emoji day"],
+        "emoji": [["😀", "1F600", 0.7], ["📅", "1F4C5", 0.6], ["🎉", "1F389", 0.5]],
+        "featured": true
+      },
+      {
+        "id": "cricket-sport",
+        "kind": "regional",
+        "context": "In cricket-playing countries, cricket means the sport",
+        "when": null,
+        "regions": [
+          "IN",
+          "PK",
+          "BD",
+          "LK",
+          "AF",
+          "NP",
+          "GB",
+          "IE",
+          "AU",
+          "NZ",
+          "ZA",
+          "ZW",
+          "JM",
+          "TT",
+          "BB",
+          "GY",
+          "AG",
+          "DM",
+          "GD",
+          "KN",
+          "LC",
+          "VC"
+        ],
+        "triggers": ["cricket"],
+        "emoji": [["🏏", "1F3CF", 0.9]],
+        "outranks": ["1F997"]
+      },
+      {
+        "id": "football-soccer",
+        "kind": "regional",
+        "context": "Outside North America and Australia, football means soccer",
+        "when": null,
+        "regions": ["*"],
+        "exceptRegions": ["US", "CA", "AU", "AS", "GU", "MP", "PR", "VI", "UM"],
+        "triggers": ["football", "play football", "football game"],
+        "emoji": [["⚽️", "26BD", 0.9]],
+        "outranks": ["1F3C8"]
+      },
+      {
+        "id": "hockey-field",
+        "kind": "regional",
+        "context": "Where field hockey is the main game, hockey means field hockey",
+        "when": null,
+        "regions": ["IN", "PK", "BD", "NL", "BE", "DE", "AR", "AU", "NZ", "GB", "IE", "ZA", "MY"],
+        "triggers": ["hockey"],
+        "emoji": [["🏑", "1F3D1", 0.9]],
+        "outranks": ["1F3D2"]
+      },
+      {
+        "id": "pants-underwear",
+        "kind": "regional",
+        "context": "In British English, pants are underwear",
+        "when": null,
+        "regions": ["GB", "IE"],
+        "triggers": ["pants"],
+        "emoji": [["🩲", "1FA72", 0.85]],
+        "outranks": ["1F456", "1FA73"]
+      },
+      {
+        "id": "bruh-moai",
+        "kind": "lasting",
+        "context": "A deadpan, unimpressed reaction",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["bruh", "bro what", "stone face", "moai"],
+        "emoji": [["🗿", "1F5FF", 0.8], ["😐️", "1F610", 0.5]]
+      },
+      {
+        "id": "cap-lie",
+        "kind": "lasting",
+        "context": "Slang: cap means a lie",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["cap", "thats cap", "capping", "stop capping", "big cap"],
+        "emoji": [["🧢", "1F9E2", 0.8], ["🤥", "1F925", 0.55]]
+      },
+      {
+        "id": "goat-football",
+        "kind": "lasting",
+        "context": "Football's greatest-of-all-time debate",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["goat", "the goat", "greatest of all time"],
+        "emoji": [
+          ["🐐", "1F410", 0.7],
+          ["⚽️", "26BD", 0.6],
+          ["🇦🇷", "1F1E6-1F1F7", 0.45],
+          ["🇵🇹", "1F1F5-1F1F9", 0.45]
+        ]
+      },
+      {
+        "id": "jurassic-park",
+        "kind": "lasting",
+        "context": "The dinosaur film series",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["jurassic park", "jurassic world", "clever girl", "life finds a way"],
+        "emoji": [["🦖", "1F996", 0.85], ["🦕", "1F995", 0.6], ["🧬", "1F9EC", 0.4]]
+      },
+      {
+        "id": "melting-embarrassed",
+        "kind": "lasting",
+        "context": "Embarrassed or overwhelmed, wanting to disappear",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["im melting", "so embarrassing", "so embarrassed", "i want to disappear", "so awkward"],
+        "emoji": [["🫠", "1FAE0", 0.8], ["😳", "1F633", 0.5]]
+      },
+      {
+        "id": "olympic-games",
+        "kind": "lasting",
+        "context": "The Olympic Games",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["olympics", "olympic games", "olympic"],
+        "emoji": [["🏅", "1F3C5", 0.8], ["🥇", "1F947", 0.65], ["🏟️", "1F3DF", 0.4]]
+      },
+      {
+        "id": "salute-respect",
+        "kind": "lasting",
+        "context": "Salute for respect, or for 'yes, on it'",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["yes sir", "yes maam", "aye aye", "copy that", "on it", "o7", "respect"],
+        "emoji": [["🫡", "1FAE1", 0.85]]
+      },
+      {
+        "id": "skull-laughing",
+        "kind": "lasting",
+        "context": "Slang for laughing so hard it is too much",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["lmao", "lmfao", "im dead", "im dying", "crying laughing", "dying laughing"],
+        "emoji": [["💀", "1F480", 0.85], ["😭", "1F62D", 0.55]]
+      },
+      {
+        "id": "slay",
+        "kind": "lasting",
+        "context": "Slang: confident and flawless",
+        "when": null,
+        "regions": ["*"],
+        "triggers": [
+          "slay",
+          "slayed",
+          "slaying",
+          "ate that",
+          "ate and left no crumbs",
+          "understood the assignment",
+          "serving looks"
+        ],
+        "emoji": [["💅", "1F485", 0.8], ["👑", "1F451", 0.6], ["✨️", "2728", 0.5]]
+      },
+      {
+        "id": "thanks-bow-jp",
+        "kind": "lasting",
+        "context": "In Japan, thanks and apologies often come with a bow",
+        "when": null,
+        "regions": ["JP"],
+        "triggers": ["thank you", "thanks", "thank you so much", "arigato", "arigatou", "sorry", "please"],
+        "emoji": [["🙇", "1F647", 0.7], ["🙏", "1F64F", 0.65]]
+      },
+      {
+        "id": "touch-grass",
+        "kind": "lasting",
+        "context": "Slang: log off and go outside",
+        "when": null,
+        "regions": ["*"],
+        "triggers": ["touch grass", "go touch grass"],
+        "emoji": [["🌱", "1F331", 0.75], ["🌳", "1F333", 0.55]]
+      }
+    ],
+    "relevantNow": [],
+    "zones": {
+      "Africa/Harare": "ZW",
+      "Africa/Johannesburg": "ZA",
+      "America/Adak": "US",
+      "America/Anchorage": "US",
+      "America/Antigua": "AG",
+      "America/Argentina/Buenos_Aires": "AR",
+      "America/Argentina/Catamarca": "AR",
+      "America/Argentina/Cordoba": "AR",
+      "America/Argentina/Jujuy": "AR",
+      "America/Argentina/La_Rioja": "AR",
+      "America/Argentina/Mendoza": "AR",
+      "America/Argentina/Rio_Gallegos": "AR",
+      "America/Argentina/Salta": "AR",
+      "America/Argentina/San_Juan": "AR",
+      "America/Argentina/San_Luis": "AR",
+      "America/Argentina/Tucuman": "AR",
+      "America/Argentina/Ushuaia": "AR",
+      "America/Atikokan": "CA",
+      "America/Barbados": "BB",
+      "America/Blanc-Sablon": "CA",
+      "America/Boise": "US",
+      "America/Buenos_Aires": "AR",
+      "America/Cambridge_Bay": "CA",
+      "America/Catamarca": "AR",
+      "America/Chicago": "US",
+      "America/Coral_Harbour": "CA",
+      "America/Cordoba": "AR",
+      "America/Creston": "CA",
+      "America/Dawson": "CA",
+      "America/Dawson_Creek": "CA",
+      "America/Denver": "US",
+      "America/Detroit": "US",
+      "America/Dominica": "DM",
+      "America/Edmonton": "CA",
+      "America/Fort_Nelson": "CA",
+      "America/Glace_Bay": "CA",
+      "America/Goose_Bay": "CA",
+      "America/Grenada": "GD",
+      "America/Guyana": "GY",
+      "America/Halifax": "CA",
+      "America/Indiana/Indianapolis": "US",
+      "America/Indiana/Knox": "US",
+      "America/Indiana/Marengo": "US",
+      "America/Indiana/Petersburg": "US",
+      "America/Indiana/Tell_City": "US",
+      "America/Indiana/Vevay": "US",
+      "America/Indiana/Vincennes": "US",
+      "America/Indiana/Winamac": "US",
+      "America/Indianapolis": "US",
+      "America/Inuvik": "CA",
+      "America/Iqaluit": "CA",
+      "America/Jamaica": "JM",
+      "America/Jujuy": "AR",
+      "America/Juneau": "US",
+      "America/Kentucky/Louisville": "US",
+      "America/Kentucky/Monticello": "US",
+      "America/Los_Angeles": "US",
+      "America/Louisville": "US",
+      "America/Mendoza": "AR",
+      "America/Menominee": "US",
+      "America/Metlakatla": "US",
+      "America/Moncton": "CA",
+      "America/New_York": "US",
+      "America/Nome": "US",
+      "America/North_Dakota/Beulah": "US",
+      "America/North_Dakota/Center": "US",
+      "America/North_Dakota/New_Salem": "US",
+      "America/Paramaribo": "SR",
+      "America/Phoenix": "US",
+      "America/Port_of_Spain": "TT",
+      "America/Puerto_Rico": "PR",
+      "America/Rankin_Inlet": "CA",
+      "America/Regina": "CA",
+      "America/Resolute": "CA",
+      "America/Sitka": "US",
+      "America/St_Johns": "CA",
+      "America/St_Kitts": "KN",
+      "America/St_Lucia": "LC",
+      "America/St_Thomas": "VI",
+      "America/St_Vincent": "VC",
+      "America/Swift_Current": "CA",
+      "America/Toronto": "CA",
+      "America/Vancouver": "CA",
+      "America/Whitehorse": "CA",
+      "America/Winnipeg": "CA",
+      "America/Yakutat": "US",
+      "Antarctica/Macquarie": "AU",
+      "Asia/Bangkok": "TH",
+      "Asia/Calcutta": "IN",
+      "Asia/Colombo": "LK",
+      "Asia/Dhaka": "BD",
+      "Asia/Kabul": "AF",
+      "Asia/Karachi": "PK",
+      "Asia/Kathmandu": "NP",
+      "Asia/Katmandu": "NP",
+      "Asia/Kolkata": "IN",
+      "Asia/Kuala_Lumpur": "MY",
+      "Asia/Kuching": "MY",
+      "Asia/Singapore": "SG",
+      "Asia/Tokyo": "JP",
+      "Australia/Adelaide": "AU",
+      "Australia/Brisbane": "AU",
+      "Australia/Broken_Hill": "AU",
+      "Australia/Darwin": "AU",
+      "Australia/Eucla": "AU",
+      "Australia/Hobart": "AU",
+      "Australia/Lindeman": "AU",
+      "Australia/Lord_Howe": "AU",
+      "Australia/Melbourne": "AU",
+      "Australia/Perth": "AU",
+      "Australia/Sydney": "AU",
+      "Europe/Amsterdam": "NL",
+      "Europe/Berlin": "DE",
+      "Europe/Brussels": "BE",
+      "Europe/Busingen": "DE",
+      "Europe/Dublin": "IE",
+      "Europe/London": "GB",
+      "Indian/Mauritius": "MU",
+      "Pacific/Auckland": "NZ",
+      "Pacific/Chatham": "NZ",
+      "Pacific/Fiji": "FJ",
+      "Pacific/Guam": "GU",
+      "Pacific/Honolulu": "US",
+      "Pacific/Midway": "UM",
+      "Pacific/Pago_Pago": "AS",
+      "Pacific/Saipan": "MP",
+      "Pacific/Wake": "UM"
+    }
+  },
+  "cases": [
+    {
+      "q": "afcon",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F1E8-1F1EE", "alias", null, 0.576],
+        ["26BD", "culture", "africa-cup-of-nations-2027", 0.8],
+        ["1F3C6", "culture", "africa-cup-of-nations-2027", 0.6],
+        ["1F30D", "culture", "africa-cup-of-nations-2027", 0.45],
+        ["1F1E9-1F1FF", "alias", null, 0.576],
+        ["1F1E8-1F1F2", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "afcon",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F1E8-1F1EE", "alias", null, 0.576],
+        ["26BD", "culture", "africa-cup-of-nations-2027", 0.8],
+        ["1F3C6", "culture", "africa-cup-of-nations-2027", 0.6],
+        ["1F30D", "culture", "africa-cup-of-nations-2027", 0.45],
+        ["1F1E9-1F1FF", "alias", null, 0.576],
+        ["1F1E8-1F1F2", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "afc",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F1E8-1F1EE", "alias", null, 0.467],
+        ["26BD", "culture", "africa-cup-of-nations-2027", 0.672],
+        ["1F3C6", "culture", "africa-cup-of-nations-2027", 0.504],
+        ["1F30D", "culture", "africa-cup-of-nations-2027", 0.378],
+        ["1F1E9-1F1FF", "alias", null, 0.467],
+        ["1F1FF-1F1F2", "alias", null, 0.428]
+      ]
+    },
+    {
+      "q": "afcon ",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F1E8-1F1EE", "alias", null, 0.576],
+        ["26BD", "culture", "africa-cup-of-nations-2027", 0.8],
+        ["1F3C6", "culture", "africa-cup-of-nations-2027", 0.6],
+        ["1F30D", "culture", "africa-cup-of-nations-2027", 0.45],
+        ["1F1E9-1F1FF", "alias", null, 0.576],
+        ["1F1E8-1F1F2", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "Well, afcon, everyone!",
+      "region": "",
+      "day": "2027-06-20",
+      "text": true,
+      "results": [
+        ["1F1E8-1F1EE", "alias", null, 0.242],
+        ["26BD", "culture", "africa-cup-of-nations-2027", 0.8],
+        ["1F3C6", "culture", "africa-cup-of-nations-2027", 0.6],
+        ["1F30D", "culture", "africa-cup-of-nations-2027", 0.45],
+        ["1F1E9-1F1FF", "alias", null, 0.242],
+        ["1F1FF-1F1F2", "alias", null, 0.221]
+      ]
+    },
+    {
+      "q": "afcon",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F1E8-1F1EE", "alias", null, 0.576],
+        ["1F1E9-1F1FF", "alias", null, 0.576],
+        ["1F1E8-1F1F2", "alias", null, 0.55],
+        ["1F1FF-1F1F2", "alias", null, 0.528],
+        ["1F1EC-1F1F6", "alias", null, 0.396],
+        ["1F1F8-1F1F3", "alias", null, 0.396]
+      ]
+    },
+    {
+      "q": "super bowl",
+      "region": "US",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F37A", "alias", null, 0.88],
+        ["1F3C8", "culture", "american-football-final-2027", 0.85],
+        ["1F3DF", "culture", "american-football-final-2027", 0.5],
+        ["1F4FA", "culture", "american-football-final-2027", 0.45],
+        ["1F357", "culture", "american-football-final-2027", 0.4],
+        ["1F3C6", "alias", null, 0.88]
+      ]
+    },
+    {
+      "q": "super bowl",
+      "region": "BR",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F37A", "alias", null, 0.88],
+        ["1F3C6", "alias", null, 0.88],
+        ["1F3DF", "alias", null, 0.88],
+        ["1F3C8", "alias", null, 0.76],
+        ["1F357", "alias", null, 0.624],
+        ["1F4FA", "alias", null, 0.605]
+      ]
+    },
+    {
+      "q": "super ",
+      "region": "US",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F3C8", "alias", null, 0.87],
+        ["1F9B8", "alias", null, 0.616],
+        ["1F1F3-1F1EC", "alias", null, 0.616],
+        ["1F52B", "alias", null, 0.596],
+        ["1F344", "alias", null, 0.596],
+        ["1F9B8-200D-2642-FE0F", "alias", null, 0.596]
+      ]
+    },
+    {
+      "q": "super bowl ",
+      "region": "US",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F37A", "alias", null, 0.88],
+        ["1F3C8", "culture", "american-football-final-2027", 0.85],
+        ["1F3DF", "culture", "american-football-final-2027", 0.5],
+        ["1F4FA", "culture", "american-football-final-2027", 0.45],
+        ["1F357", "culture", "american-football-final-2027", 0.4],
+        ["1F3C6", "alias", null, 0.88]
+      ]
+    },
+    {
+      "q": "Well, super bowl, everyone!",
+      "region": "US",
+      "day": "2027-02-10",
+      "text": true,
+      "results": [
+        ["1F37A", "alias", null, 0.374],
+        ["1F3C8", "culture", "american-football-final-2027", 0.85],
+        ["1F3DF", "culture", "american-football-final-2027", 0.5],
+        ["1F4FA", "culture", "american-football-final-2027", 0.45],
+        ["1F357", "culture", "american-football-final-2027", 0.4],
+        ["1F3C6", "alias", null, 0.374]
+      ]
+    },
+    {
+      "q": "super bowl",
+      "region": "US",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F37A", "alias", null, 0.88],
+        ["1F3C6", "alias", null, 0.88],
+        ["1F3DF", "alias", null, 0.88],
+        ["1F3C8", "alias", null, 0.76],
+        ["1F357", "alias", null, 0.624],
+        ["1F4FA", "alias", null, 0.605]
+      ]
+    },
+    {
+      "q": "asian games",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F47E", "alias", null, 0.362],
+        ["1F3C5", "culture", "asian-games-2026", 0.8],
+        ["1F947", "culture", "asian-games-2026", 0.65],
+        ["1F1EF-1F1F5", "culture", "asian-games-2026", 0.4],
+        ["1F3DF", "culture", "asian-games-2026", 0.4],
+        ["1F350", "alias", null, 0.303]
+      ]
+    },
+    {
+      "q": "asian games",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F47E", "alias", null, 0.362],
+        ["1F3C5", "culture", "asian-games-2026", 0.8],
+        ["1F947", "culture", "asian-games-2026", 0.65],
+        ["1F1EF-1F1F5", "culture", "asian-games-2026", 0.4],
+        ["1F3DF", "culture", "asian-games-2026", 0.4],
+        ["1F350", "alias", null, 0.303]
+      ]
+    },
+    {
+      "q": "asian g",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F998", "alias", null, 0.331],
+        ["1F3C5", "culture", "asian-games-2026", 0.684],
+        ["1F947", "culture", "asian-games-2026", 0.555],
+        ["1F1EF-1F1F5", "culture", "asian-games-2026", 0.342],
+        ["1F3DF", "culture", "asian-games-2026", 0.342],
+        ["1F3BC", "alias", null, 0.311]
+      ]
+    },
+    {
+      "q": "asian games ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F47E", "alias", null, 0.362],
+        ["1F3C5", "culture", "asian-games-2026", 0.8],
+        ["1F947", "culture", "asian-games-2026", 0.65],
+        ["1F1EF-1F1F5", "culture", "asian-games-2026", 0.4],
+        ["1F3DF", "culture", "asian-games-2026", 0.4],
+        ["1F350", "alias", null, 0.303]
+      ]
+    },
+    {
+      "q": "Well, asian games, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F3C5", "culture", "asian-games-2026", 0.8],
+        ["1F947", "culture", "asian-games-2026", 0.65],
+        ["1F1EF-1F1F5", "culture", "asian-games-2026", 0.4],
+        ["1F3DF", "culture", "asian-games-2026", 0.4]
+      ]
+    },
+    {
+      "q": "asian games",
+      "region": "",
+      "day": "2026-10-10",
+      "text": false,
+      "results": [
+        ["1F47E", "alias", null, 0.362],
+        ["1F350", "alias", null, 0.303],
+        ["1F403", "alias", null, 0.303],
+        ["1F418", "alias", null, 0.303],
+        ["1F35A", "alias", null, 0.298],
+        ["1F962", "alias", null, 0.298]
+      ]
+    },
+    {
+      "q": "cricket world cup",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3CF", "alias", null, 0.94],
+        ["1F3C6", "culture", "cricket-world-cup-2027", 0.6],
+        ["1F1FF-1F1E6", "culture", "cricket-world-cup-2027", 0.35],
+        ["1F997", "alias", null, 0.434],
+        ["1F30D", "alias", null, 0.405],
+        ["26BD", "alias", null, 0.405]
+      ]
+    },
+    {
+      "q": "cricket world cup",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3CF", "alias", null, 0.94],
+        ["1F3C6", "culture", "cricket-world-cup-2027", 0.6],
+        ["1F1FF-1F1E6", "culture", "cricket-world-cup-2027", 0.35],
+        ["1F997", "alias", null, 0.434],
+        ["1F30D", "alias", null, 0.405],
+        ["26BD", "alias", null, 0.405]
+      ]
+    },
+    {
+      "q": "cricket wor",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3CF", "alias", null, 0.627],
+        ["1F3C6", "culture", "cricket-world-cup-2027", 0.515],
+        ["1F1FF-1F1E6", "culture", "cricket-world-cup-2027", 0.301],
+        ["1F997", "alias", null, 0.508],
+        ["1FAB1", "alias", null, 0.433],
+        ["1F4A6", "alias", null, 0.377]
+      ]
+    },
+    {
+      "q": "cricket world cup ",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3CF", "alias", null, 0.94],
+        ["1F3C6", "culture", "cricket-world-cup-2027", 0.6],
+        ["1F1FF-1F1E6", "culture", "cricket-world-cup-2027", 0.35],
+        ["1F997", "alias", null, 0.434],
+        ["1F30D", "alias", null, 0.405],
+        ["26BD", "alias", null, 0.405]
+      ]
+    },
+    {
+      "q": "Well, cricket world cup, everyone!",
+      "region": "",
+      "day": "2027-10-01",
+      "text": true,
+      "results": [
+        ["1F3CF", "alias", null, 0.424],
+        ["1F3C6", "culture", "cricket-world-cup-2027", 0.6],
+        ["1F1FF-1F1E6", "culture", "cricket-world-cup-2027", 0.35]
+      ]
+    },
+    {
+      "q": "cricket world cup",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3CF", "alias", null, 0.94],
+        ["1F997", "alias", null, 0.434],
+        ["1F30D", "alias", null, 0.405],
+        ["26BD", "alias", null, 0.405],
+        ["1F30E", "alias", null, 0.405],
+        ["1F3C6", "alias", null, 0.405]
+      ]
+    },
+    {
+      "q": "diwali",
+      "region": "IN",
+      "day": "2026-11-05",
+      "text": false,
+      "results": [
+        ["1FA94", "alias", null, 0.86],
+        ["1F386", "culture", "diwali-2026-regional", 0.65],
+        ["1FAB7", "culture", "diwali-2026-regional", 0.5],
+        ["1F387", "culture", "diwali-2026-regional", 0.45],
+        ["1F6D5", "alias", null, 0.82],
+        ["1F97B", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "diwali",
+      "region": "BR",
+      "day": "2026-11-05",
+      "text": false,
+      "results": [
+        ["1FA94", "alias", null, 0.86],
+        ["1F6D5", "alias", null, 0.82],
+        ["1F97B", "alias", null, 0.8],
+        ["1FAB7", "alias", null, 0.8],
+        ["1F386", "alias", null, 0.8],
+        ["1F387", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "diwa",
+      "region": "IN",
+      "day": "2026-11-05",
+      "text": false,
+      "results": [
+        ["1FA94", "alias", null, 0.66],
+        ["1F386", "culture", "diwali-2026-regional", 0.563],
+        ["1FAB7", "culture", "diwali-2026-regional", 0.433],
+        ["1F387", "culture", "diwali-2026-regional", 0.39],
+        ["1F6D5", "alias", null, 0.64],
+        ["1F97B", "alias", null, 0.6]
+      ]
+    },
+    {
+      "q": "diwali ",
+      "region": "IN",
+      "day": "2026-11-05",
+      "text": false,
+      "results": [
+        ["1FA94", "alias", null, 0.86],
+        ["1F386", "culture", "diwali-2026-regional", 0.65],
+        ["1FAB7", "culture", "diwali-2026-regional", 0.5],
+        ["1F387", "culture", "diwali-2026-regional", 0.45],
+        ["1F6D5", "alias", null, 0.82],
+        ["1F97B", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "Well, diwali, everyone!",
+      "region": "IN",
+      "day": "2026-11-05",
+      "text": true,
+      "results": [
+        ["1FA94", "alias", null, 0.346],
+        ["1F386", "culture", "diwali-2026-regional", 0.65],
+        ["1FAB7", "culture", "diwali-2026-regional", 0.5],
+        ["1F387", "culture", "diwali-2026-regional", 0.45],
+        ["1F6D5", "alias", null, 0.306],
+        ["1F97B", "alias", null, 0.286]
+      ]
+    },
+    {
+      "q": "diwali",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FA94", "alias", null, 0.86],
+        ["1F6D5", "alias", null, 0.82],
+        ["1F97B", "alias", null, 0.8],
+        ["1FAB7", "alias", null, 0.8],
+        ["1F386", "alias", null, 0.8],
+        ["1F387", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "rugby world cup",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3C9", "alias", null, 0.94],
+        ["1F3C6", "culture", "rugby-world-cup-2027", 0.6],
+        ["1F1E6-1F1FA", "culture", "rugby-world-cup-2027", 0.35],
+        ["1F1FF-1F1E6", "alias", null, 0.668],
+        ["1F1F3-1F1FF", "alias", null, 0.605],
+        ["1F30D", "alias", null, 0.399]
+      ]
+    },
+    {
+      "q": "rugby world cup",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3C9", "alias", null, 0.94],
+        ["1F3C6", "culture", "rugby-world-cup-2027", 0.6],
+        ["1F1E6-1F1FA", "culture", "rugby-world-cup-2027", 0.35],
+        ["1F1FF-1F1E6", "alias", null, 0.668],
+        ["1F1F3-1F1FF", "alias", null, 0.605],
+        ["1F30D", "alias", null, 0.399]
+      ]
+    },
+    {
+      "q": "rugby wor",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3C9", "alias", null, 0.628],
+        ["1F3C6", "culture", "rugby-world-cup-2027", 0.504],
+        ["1F1E6-1F1FA", "culture", "rugby-world-cup-2027", 0.294],
+        ["1F1FF-1F1E6", "alias", null, 0.544],
+        ["1FAB1", "alias", null, 0.427],
+        ["1F1F3-1F1FF", "alias", null, 0.391]
+      ]
+    },
+    {
+      "q": "rugby world cup ",
+      "region": "",
+      "day": "2027-10-01",
+      "text": false,
+      "results": [
+        ["1F3C9", "alias", null, 0.94],
+        ["1F3C6", "culture", "rugby-world-cup-2027", 0.6],
+        ["1F1E6-1F1FA", "culture", "rugby-world-cup-2027", 0.35],
+        ["1F1FF-1F1E6", "alias", null, 0.668],
+        ["1F1F3-1F1FF", "alias", null, 0.605],
+        ["1F30D", "alias", null, 0.399]
+      ]
+    },
+    {
+      "q": "Well, rugby world cup, everyone!",
+      "region": "",
+      "day": "2027-10-01",
+      "text": true,
+      "results": [
+        ["1F3C9", "alias", null, 0.426],
+        ["1F3C6", "culture", "rugby-world-cup-2027", 0.6],
+        ["1F1E6-1F1FA", "culture", "rugby-world-cup-2027", 0.35],
+        ["1F1FF-1F1E6", "alias", null, 0.384],
+        ["1F1F3-1F1FF", "alias", null, 0.293]
+      ]
+    },
+    {
+      "q": "rugby world cup",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3C9", "alias", null, 0.94],
+        ["1F1FF-1F1E6", "alias", null, 0.668],
+        ["1F1F3-1F1FF", "alias", null, 0.605],
+        ["1F30D", "alias", null, 0.399],
+        ["26BD", "alias", null, 0.399],
+        ["1F30E", "alias", null, 0.399]
+      ]
+    },
+    {
+      "q": "thanksgiving",
+      "region": "CA",
+      "day": "2026-10-10",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "culture", "thanksgiving-canada-2026", 0.6],
+        ["1F341", "culture", "thanksgiving-canada-2026", 0.55],
+        ["1F342", "culture", "thanksgiving-canada-2026", 0.4],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "thanksgiving",
+      "region": "BR",
+      "day": "2026-10-10",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "alias", null, 0.84],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82],
+        ["1F33E", "alias", null, 0.8],
+        ["1F357", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "thanksgi",
+      "region": "CA",
+      "day": "2026-10-10",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.697],
+        ["1F967", "culture", "thanksgiving-canada-2026", 0.52],
+        ["1F341", "culture", "thanksgiving-canada-2026", 0.477],
+        ["1F342", "culture", "thanksgiving-canada-2026", 0.347],
+        ["1F9E1", "alias", null, 0.62],
+        ["1FAC3", "alias", null, 0.62]
+      ]
+    },
+    {
+      "q": "thanksgiving ",
+      "region": "CA",
+      "day": "2026-10-10",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "culture", "thanksgiving-canada-2026", 0.6],
+        ["1F341", "culture", "thanksgiving-canada-2026", 0.55],
+        ["1F342", "culture", "thanksgiving-canada-2026", 0.4],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "Well, thanksgiving, everyone!",
+      "region": "CA",
+      "day": "2026-10-10",
+      "text": true,
+      "results": [
+        ["1F983", "alias", null, 0.327],
+        ["1F967", "culture", "thanksgiving-canada-2026", 0.6],
+        ["1F341", "culture", "thanksgiving-canada-2026", 0.55],
+        ["1F342", "culture", "thanksgiving-canada-2026", 0.4],
+        ["1F465", "alias", null, 0.308],
+        ["1F9E1", "alias", null, 0.29]
+      ]
+    },
+    {
+      "q": "thanksgiving",
+      "region": "CA",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "alias", null, 0.84],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82],
+        ["1F33E", "alias", null, 0.8],
+        ["1F357", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "thanksgiving",
+      "region": "US",
+      "day": "2026-11-22",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "culture", "thanksgiving-us-2026", 0.65],
+        ["1F342", "culture", "thanksgiving-us-2026", 0.5],
+        ["1F64F", "culture", "thanksgiving-us-2026", 0.4],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "thanksgiving",
+      "region": "BR",
+      "day": "2026-11-22",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "alias", null, 0.84],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82],
+        ["1F33E", "alias", null, 0.8],
+        ["1F357", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "thanksgi",
+      "region": "US",
+      "day": "2026-11-22",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.697],
+        ["1F967", "culture", "thanksgiving-us-2026", 0.563],
+        ["1F342", "culture", "thanksgiving-us-2026", 0.433],
+        ["1F64F", "culture", "thanksgiving-us-2026", 0.347],
+        ["1F9E1", "alias", null, 0.62],
+        ["1FAC3", "alias", null, 0.62]
+      ]
+    },
+    {
+      "q": "thanksgiving ",
+      "region": "US",
+      "day": "2026-11-22",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "culture", "thanksgiving-us-2026", 0.65],
+        ["1F342", "culture", "thanksgiving-us-2026", 0.5],
+        ["1F64F", "culture", "thanksgiving-us-2026", 0.4],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "Well, thanksgiving, everyone!",
+      "region": "US",
+      "day": "2026-11-22",
+      "text": true,
+      "results": [
+        ["1F983", "alias", null, 0.327],
+        ["1F967", "culture", "thanksgiving-us-2026", 0.65],
+        ["1F342", "culture", "thanksgiving-us-2026", 0.5],
+        ["1F64F", "culture", "thanksgiving-us-2026", 0.4],
+        ["1F465", "alias", null, 0.308],
+        ["1F9E1", "alias", null, 0.29]
+      ]
+    },
+    {
+      "q": "thanksgiving",
+      "region": "US",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F983", "alias", null, 0.89],
+        ["1F967", "alias", null, 0.84],
+        ["1F9E1", "alias", null, 0.82],
+        ["1FAC3", "alias", null, 0.82],
+        ["1F33E", "alias", null, 0.8],
+        ["1F357", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "womens world cup",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F6BA", "alias", null, 0.431],
+        ["26BD", "culture", "womens-football-world-cup-2027", 0.8],
+        ["1F3C6", "culture", "womens-football-world-cup-2027", 0.65],
+        ["1F1E7-1F1F7", "culture", "womens-football-world-cup-2027", 0.45],
+        ["1F30D", "alias", null, 0.407],
+        ["1F30E", "alias", null, 0.407]
+      ]
+    },
+    {
+      "q": "womens world cup",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F6BA", "alias", null, 0.431],
+        ["26BD", "culture", "womens-football-world-cup-2027", 0.8],
+        ["1F3C6", "culture", "womens-football-world-cup-2027", 0.65],
+        ["1F1E7-1F1F7", "culture", "womens-football-world-cup-2027", 0.45],
+        ["1F30D", "alias", null, 0.407],
+        ["1F30E", "alias", null, 0.407]
+      ]
+    },
+    {
+      "q": "womens wor",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F94E", "alias", null, 0.523],
+        ["26BD", "culture", "womens-football-world-cup-2027", 0.68],
+        ["1F3C6", "culture", "womens-football-world-cup-2027", 0.553],
+        ["1F1E7-1F1F7", "culture", "womens-football-world-cup-2027", 0.383],
+        ["1F6BA", "alias", null, 0.501],
+        ["1FAB1", "alias", null, 0.436]
+      ]
+    },
+    {
+      "q": "womens world cup ",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F6BA", "alias", null, 0.431],
+        ["26BD", "culture", "womens-football-world-cup-2027", 0.8],
+        ["1F3C6", "culture", "womens-football-world-cup-2027", 0.65],
+        ["1F1E7-1F1F7", "culture", "womens-football-world-cup-2027", 0.45],
+        ["1F30D", "alias", null, 0.407],
+        ["1F30E", "alias", null, 0.407]
+      ]
+    },
+    {
+      "q": "Well, womens world cup, everyone!",
+      "region": "",
+      "day": "2027-06-20",
+      "text": true,
+      "results": [
+        ["1F94E", "alias", null, 0.228],
+        ["26BD", "culture", "womens-football-world-cup-2027", 0.8],
+        ["1F3C6", "culture", "womens-football-world-cup-2027", 0.65],
+        ["1F1E7-1F1F7", "culture", "womens-football-world-cup-2027", 0.45]
+      ]
+    },
+    {
+      "q": "womens world cup",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F6BA", "alias", null, 0.431],
+        ["1F30D", "alias", null, 0.407],
+        ["26BD", "alias", null, 0.407],
+        ["1F30E", "alias", null, 0.407],
+        ["1F3C6", "alias", null, 0.407],
+        ["1F3DF", "alias", null, 0.407]
+      ]
+    },
+    {
+      "q": "april fools",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F61C", "alias", null, 0.9],
+        ["1F921", "alias", null, 0.605],
+        ["1F925", "alias", null, 0.605],
+        ["1F326", "alias", null, 0.288],
+        ["2648", "alias", null, 0.204],
+        ["2649", "alias", null, 0.184]
+      ]
+    },
+    {
+      "q": "april fools",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F61C", "alias", null, 0.9],
+        ["1F921", "alias", null, 0.605],
+        ["1F925", "alias", null, 0.605],
+        ["1F326", "alias", null, 0.288],
+        ["2648", "alias", null, 0.204],
+        ["2649", "alias", null, 0.184]
+      ]
+    },
+    {
+      "q": "april f",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE1", "alias", null, 0.325],
+        ["1FAA6", "alias", null, 0.325],
+        ["1F61C", "alias", null, 0.311],
+        ["1F326", "alias", null, 0.311],
+        ["1F92C", "alias", null, 0.305],
+        ["1F50D", "alias", null, 0.305]
+      ]
+    },
+    {
+      "q": "april fools ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F61C", "alias", null, 0.9],
+        ["1F921", "alias", null, 0.605],
+        ["1F925", "alias", null, 0.605],
+        ["1F326", "alias", null, 0.288],
+        ["2648", "alias", null, 0.204],
+        ["2649", "alias", null, 0.184]
+      ]
+    },
+    {
+      "q": "Well, april fools, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F61C", "alias", null, 0.453],
+        ["1F921", "alias", null, 0.298],
+        ["1F925", "alias", null, 0.298]
+      ]
+    },
+    {
+      "q": "april fools",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F61C", "alias", null, 0.9],
+        ["1F921", "alias", null, 0.605],
+        ["1F925", "alias", null, 0.605],
+        ["1F326", "alias", null, 0.288],
+        ["2648", "alias", null, 0.204],
+        ["2649", "alias", null, 0.184]
+      ]
+    },
+    {
+      "q": "christmas",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F381", "alias", null, 0.91],
+        ["1F384", "alias", null, 0.91],
+        ["1F385", "alias", null, 0.91],
+        ["1F936", "alias", null, 0.91],
+        ["1F9D1-200D-1F384", "alias", null, 0.91],
+        ["1F332", "alias", null, 0.89]
+      ]
+    },
+    {
+      "q": "christmas",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F381", "alias", null, 0.91],
+        ["1F384", "alias", null, 0.91],
+        ["1F385", "alias", null, 0.91],
+        ["1F936", "alias", null, 0.91],
+        ["1F9D1-200D-1F384", "alias", null, 0.91],
+        ["1F332", "alias", null, 0.89]
+      ]
+    },
+    {
+      "q": "christ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["271D", "alias", null, 0.91],
+        ["2626", "alias", null, 0.588],
+        ["1F1E7-1F1F7", "alias", null, 0.528],
+        ["1F381", "alias", null, 0.379],
+        ["1F384", "alias", null, 0.379],
+        ["1F385", "alias", null, 0.379]
+      ]
+    },
+    {
+      "q": "christmas ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F381", "alias", null, 0.91],
+        ["1F384", "alias", null, 0.91],
+        ["1F385", "alias", null, 0.91],
+        ["1F936", "alias", null, 0.91],
+        ["1F9D1-200D-1F384", "alias", null, 0.91],
+        ["1F332", "alias", null, 0.87]
+      ]
+    },
+    {
+      "q": "Well, christmas, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.328],
+        ["1F4E2", "alias", null, 0.257],
+        ["1F44B", "alias", null, 0.217],
+        ["1F4E3", "alias", null, 0.217],
+        ["1F3A7", "alias", null, 0.217],
+        ["1F406", "alias", null, 0.217]
+      ]
+    },
+    {
+      "q": "christmas",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F381", "alias", null, 0.91],
+        ["1F384", "alias", null, 0.91],
+        ["1F385", "alias", null, 0.91],
+        ["1F936", "alias", null, 0.91],
+        ["1F9D1-200D-1F384", "alias", null, 0.91],
+        ["1F332", "alias", null, 0.89]
+      ]
+    },
+    {
+      "q": "halloween",
+      "region": "",
+      "day": "2026-10-25",
+      "text": false,
+      "results": [
+        ["1F383", "alias", null, 0.91],
+        ["1F47B", "culture", "halloween", 0.75],
+        ["1F987", "culture", "halloween", 0.6],
+        ["1F577", "culture", "halloween", 0.5],
+        ["1F36C", "culture", "halloween", 0.45],
+        ["1F9DB", "alias", null, 0.87]
+      ]
+    },
+    {
+      "q": "halloween",
+      "region": "",
+      "day": "2026-10-25",
+      "text": false,
+      "results": [
+        ["1F383", "alias", null, 0.91],
+        ["1F47B", "culture", "halloween", 0.75],
+        ["1F987", "culture", "halloween", 0.6],
+        ["1F577", "culture", "halloween", 0.5],
+        ["1F36C", "culture", "halloween", 0.45],
+        ["1F9DB", "alias", null, 0.87]
+      ]
+    },
+    {
+      "q": "hallow",
+      "region": "",
+      "day": "2026-10-25",
+      "text": false,
+      "results": [
+        ["2B55", "alias", null, 0.54],
+        ["1F383", "culture", "halloween", 0.78],
+        ["1F47B", "culture", "halloween", 0.65],
+        ["1F987", "culture", "halloween", 0.52],
+        ["1F577", "culture", "halloween", 0.433],
+        ["1F36C", "culture", "halloween", 0.39]
+      ]
+    },
+    {
+      "q": "halloween ",
+      "region": "",
+      "day": "2026-10-25",
+      "text": false,
+      "results": [
+        ["1F383", "alias", null, 0.91],
+        ["1F47B", "culture", "halloween", 0.75],
+        ["1F987", "culture", "halloween", 0.6],
+        ["1F577", "culture", "halloween", 0.5],
+        ["1F36C", "culture", "halloween", 0.45],
+        ["1F9DB", "alias", null, 0.87]
+      ]
+    },
+    {
+      "q": "Well, halloween, everyone!",
+      "region": "",
+      "day": "2026-10-25",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.326],
+        ["1F383", "culture", "halloween", 0.9],
+        ["1F47B", "culture", "halloween", 0.75],
+        ["1F987", "culture", "halloween", 0.6],
+        ["1F577", "culture", "halloween", 0.5],
+        ["1F36C", "culture", "halloween", 0.45]
+      ]
+    },
+    {
+      "q": "halloween",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F383", "alias", null, 0.91],
+        ["1F36C", "alias", null, 0.87],
+        ["1F9DB", "alias", null, 0.87],
+        ["1F47B", "alias", null, 0.85],
+        ["1F36B", "alias", null, 0.85],
+        ["1F9DF", "alias", null, 0.85]
+      ]
+    },
+    {
+      "q": "new year",
+      "region": "",
+      "day": "2026-12-28",
+      "text": false,
+      "results": [
+        ["1F973", "alias", null, 0.94],
+        ["1F386", "culture", "new-year", 0.85],
+        ["1F942", "culture", "new-year", 0.75],
+        ["1F389", "culture", "new-year", 0.65],
+        ["1F37E", "culture", "new-year", 0.5],
+        ["1F472", "alias", null, 0.684]
+      ]
+    },
+    {
+      "q": "new year",
+      "region": "",
+      "day": "2026-12-28",
+      "text": false,
+      "results": [
+        ["1F973", "alias", null, 0.94],
+        ["1F386", "culture", "new-year", 0.85],
+        ["1F942", "culture", "new-year", 0.75],
+        ["1F389", "culture", "new-year", 0.65],
+        ["1F37E", "culture", "new-year", 0.5],
+        ["1F472", "alias", null, 0.684]
+      ]
+    },
+    {
+      "q": "new y",
+      "region": "",
+      "day": "2026-12-28",
+      "text": false,
+      "results": [
+        ["1F973", "alias", null, 0.436],
+        ["1F386", "culture", "new-year", 0.722],
+        ["1F942", "culture", "new-year", 0.638],
+        ["1F389", "culture", "new-year", 0.553],
+        ["1F37E", "culture", "new-year", 0.425],
+        ["1FA72", "alias", null, 0.42]
+      ]
+    },
+    {
+      "q": "new year ",
+      "region": "",
+      "day": "2026-12-28",
+      "text": false,
+      "results": [
+        ["1F973", "alias", null, 0.94],
+        ["1F386", "culture", "new-year", 0.85],
+        ["1F942", "culture", "new-year", 0.75],
+        ["1F389", "culture", "new-year", 0.65],
+        ["1F37E", "culture", "new-year", 0.5],
+        ["1F472", "alias", null, 0.684]
+      ]
+    },
+    {
+      "q": "Well, new year, everyone!",
+      "region": "",
+      "day": "2026-12-28",
+      "text": true,
+      "results": [
+        ["1F973", "alias", null, 0.325],
+        ["1F386", "culture", "new-year", 0.85],
+        ["1F942", "culture", "new-year", 0.75],
+        ["1F389", "culture", "new-year", 0.65],
+        ["1F37E", "culture", "new-year", 0.5],
+        ["1F472", "alias", null, 0.324]
+      ]
+    },
+    {
+      "q": "new year",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F973", "alias", null, 0.94],
+        ["1F942", "alias", null, 0.94],
+        ["1F37E", "alias", null, 0.9],
+        ["1F472", "alias", null, 0.684],
+        ["1F432", "alias", null, 0.684],
+        ["1F38D", "alias", null, 0.684]
+      ]
+    },
+    {
+      "q": "pride",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F308", "alias", null, 0.91],
+        ["1F3F3-FE0F-200D-1F308", "culture", "pride-month", 0.9],
+        ["1F3F3-FE0F-200D-26A7-FE0F", "culture", "pride-month", 0.55],
+        ["1F468-200D-2764-FE0F-200D-1F48B-200D-1F468", "alias", null, 0.82],
+        ["1F469-200D-2764-FE0F-200D-1F48B-200D-1F469", "alias", null, 0.82],
+        ["1F468-200D-2764-FE0F-200D-1F468", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "pride",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F308", "alias", null, 0.91],
+        ["1F3F3-FE0F-200D-1F308", "culture", "pride-month", 0.9],
+        ["1F3F3-FE0F-200D-26A7-FE0F", "culture", "pride-month", 0.55],
+        ["1F468-200D-2764-FE0F-200D-1F48B-200D-1F468", "alias", null, 0.82],
+        ["1F469-200D-2764-FE0F-200D-1F48B-200D-1F469", "alias", null, 0.82],
+        ["1F468-200D-2764-FE0F-200D-1F468", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "pri",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F934", "alias", null, 0.757],
+        ["1F3F3-FE0F-200D-1F308", "culture", "pride-month", 0.756],
+        ["1F308", "culture", "pride-month", 0.588],
+        ["1F3F3-FE0F-200D-26A7-FE0F", "culture", "pride-month", 0.462],
+        ["1F5A8", "alias", null, 0.735],
+        ["1F478", "alias", null, 0.718]
+      ]
+    },
+    {
+      "q": "pride ",
+      "region": "",
+      "day": "2027-06-20",
+      "text": false,
+      "results": [
+        ["1F308", "alias", null, 0.91],
+        ["1F3F3-FE0F-200D-1F308", "culture", "pride-month", 0.9],
+        ["1F3F3-FE0F-200D-26A7-FE0F", "culture", "pride-month", 0.55],
+        ["1F468-200D-2764-FE0F-200D-1F48B-200D-1F468", "alias", null, 0.82],
+        ["1F469-200D-2764-FE0F-200D-1F48B-200D-1F469", "alias", null, 0.82],
+        ["1F468-200D-2764-FE0F-200D-1F468", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "Well, pride, everyone!",
+      "region": "",
+      "day": "2027-06-20",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.332],
+        ["1F3F3-FE0F-200D-1F308", "culture", "pride-month", 0.9],
+        ["1F308", "culture", "pride-month", 0.7],
+        ["1F3F3-FE0F-200D-26A7-FE0F", "culture", "pride-month", 0.55],
+        ["1F4E2", "alias", null, 0.26],
+        ["1F44B", "alias", null, 0.22]
+      ]
+    },
+    {
+      "q": "pride",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F308", "alias", null, 0.91],
+        ["1F3F3-FE0F-200D-1F308", "alias", null, 0.91],
+        ["1F468-200D-2764-FE0F-200D-1F48B-200D-1F468", "alias", null, 0.82],
+        ["1F469-200D-2764-FE0F-200D-1F48B-200D-1F469", "alias", null, 0.82],
+        ["1F468-200D-2764-FE0F-200D-1F468", "alias", null, 0.82],
+        ["26A7", "alias", null, 0.636]
+      ]
+    },
+    {
+      "q": "songkran",
+      "region": "TH",
+      "day": "2027-04-10",
+      "text": false,
+      "results": [
+        ["1F1F9-1F1ED", "alias", null, 0.82],
+        ["1F4A6", "culture", "songkran", 0.8],
+        ["1F52B", "culture", "songkran", 0.6],
+        ["1FAA3", "culture", "songkran", 0.45]
+      ]
+    },
+    {
+      "q": "songkran",
+      "region": "BR",
+      "day": "2027-04-10",
+      "text": false,
+      "results": [["1F1F9-1F1ED", "alias", null, 0.82]]
+    },
+    {
+      "q": "songk",
+      "region": "TH",
+      "day": "2027-04-10",
+      "text": false,
+      "results": [
+        ["1F1F9-1F1ED", "alias", null, 0.61],
+        ["1F4A6", "culture", "songkran", 0.68],
+        ["1F52B", "culture", "songkran", 0.51],
+        ["1FAA3", "culture", "songkran", 0.383]
+      ]
+    },
+    {
+      "q": "songkran ",
+      "region": "TH",
+      "day": "2027-04-10",
+      "text": false,
+      "results": [
+        ["1F1F9-1F1ED", "alias", null, 0.82],
+        ["1F4A6", "culture", "songkran", 0.8],
+        ["1F52B", "culture", "songkran", 0.6],
+        ["1FAA3", "culture", "songkran", 0.45]
+      ]
+    },
+    {
+      "q": "Well, songkran, everyone!",
+      "region": "TH",
+      "day": "2027-04-10",
+      "text": true,
+      "results": [
+        ["1F1F9-1F1ED", "alias", null, 0.37],
+        ["1F4A6", "culture", "songkran", 0.8],
+        ["1F52B", "culture", "songkran", 0.6],
+        ["1FAA3", "culture", "songkran", 0.45]
+      ]
+    },
+    {
+      "q": "songkran",
+      "region": "TH",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [["1F1F9-1F1ED", "alias", null, 0.82]]
+    },
+    {
+      "q": "valentines day",
+      "region": "",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F49D", "alias", null, 0.9],
+        ["1F498", "culture", "valentines-day", 0.8],
+        ["1F339", "culture", "valentines-day", 0.7],
+        ["1F48C", "culture", "valentines-day", 0.55],
+        ["1F36B", "culture", "valentines-day", 0.45],
+        ["1F353", "alias", null, 0.9]
+      ]
+    },
+    {
+      "q": "valentines day",
+      "region": "",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F49D", "alias", null, 0.9],
+        ["1F498", "culture", "valentines-day", 0.8],
+        ["1F339", "culture", "valentines-day", 0.7],
+        ["1F48C", "culture", "valentines-day", 0.55],
+        ["1F36B", "culture", "valentines-day", 0.45],
+        ["1F353", "alias", null, 0.9]
+      ]
+    },
+    {
+      "q": "valentine",
+      "region": "",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F49D", "alias", null, 0.91],
+        ["1F498", "culture", "valentines-day", 0.8],
+        ["1F339", "culture", "valentines-day", 0.7],
+        ["1F48C", "culture", "valentines-day", 0.55],
+        ["1F36B", "culture", "valentines-day", 0.45],
+        ["2764", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "valentines day ",
+      "region": "",
+      "day": "2027-02-10",
+      "text": false,
+      "results": [
+        ["1F49D", "alias", null, 0.9],
+        ["1F498", "culture", "valentines-day", 0.8],
+        ["1F339", "culture", "valentines-day", 0.7],
+        ["1F48C", "culture", "valentines-day", 0.55],
+        ["1F36B", "culture", "valentines-day", 0.45],
+        ["1F353", "alias", null, 0.9]
+      ]
+    },
+    {
+      "q": "Well, valentines day, everyone!",
+      "region": "",
+      "day": "2027-02-10",
+      "text": true,
+      "results": [
+        ["1F49D", "alias", null, 0.342],
+        ["1F498", "culture", "valentines-day", 0.8],
+        ["1F339", "culture", "valentines-day", 0.7],
+        ["1F48C", "culture", "valentines-day", 0.55],
+        ["1F36B", "culture", "valentines-day", 0.45],
+        ["1F353", "alias", null, 0.342]
+      ]
+    },
+    {
+      "q": "valentines day",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F49D", "alias", null, 0.9],
+        ["1F339", "alias", null, 0.9],
+        ["1F353", "alias", null, 0.9],
+        ["1F48C", "alias", null, 0.9],
+        ["1F61A", "alias", null, 0.88],
+        ["1F619", "alias", null, 0.88]
+      ]
+    },
+    {
+      "q": "world emoji day",
+      "region": "",
+      "day": "2027-07-12",
+      "text": false,
+      "results": [
+        ["1F4C5", "alias", null, 0.88],
+        ["1F600", "culture", "world-emoji-day", 0.7],
+        ["1F389", "culture", "world-emoji-day", 0.5],
+        ["1F928", "alias", null, 0.41],
+        ["1F602", "alias", null, 0.369],
+        ["1F4A9", "alias", null, 0.349]
+      ]
+    },
+    {
+      "q": "world emoji day",
+      "region": "",
+      "day": "2027-07-12",
+      "text": false,
+      "results": [
+        ["1F4C5", "alias", null, 0.88],
+        ["1F600", "culture", "world-emoji-day", 0.7],
+        ["1F389", "culture", "world-emoji-day", 0.5],
+        ["1F928", "alias", null, 0.41],
+        ["1F602", "alias", null, 0.369],
+        ["1F4A9", "alias", null, 0.349]
+      ]
+    },
+    {
+      "q": "world emo",
+      "region": "",
+      "day": "2027-07-12",
+      "text": false,
+      "results": [
+        ["1F5A4", "alias", null, 0.517],
+        ["1F600", "culture", "world-emoji-day", 0.588],
+        ["1F4C5", "culture", "world-emoji-day", 0.504],
+        ["1F389", "culture", "world-emoji-day", 0.42],
+        ["1F940", "alias", null, 0.477],
+        ["1F622", "alias", null, 0.328]
+      ]
+    },
+    {
+      "q": "world emoji day ",
+      "region": "",
+      "day": "2027-07-12",
+      "text": false,
+      "results": [
+        ["1F4C5", "alias", null, 0.88],
+        ["1F600", "culture", "world-emoji-day", 0.7],
+        ["1F389", "culture", "world-emoji-day", 0.5],
+        ["1F928", "alias", null, 0.41],
+        ["1F602", "alias", null, 0.369],
+        ["1F4A9", "alias", null, 0.349]
+      ]
+    },
+    {
+      "q": "Well, world emoji day, everyone!",
+      "region": "",
+      "day": "2027-07-12",
+      "text": true,
+      "results": [
+        ["1F4C5", "alias", null, 0.385],
+        ["1F600", "culture", "world-emoji-day", 0.7],
+        ["1F389", "culture", "world-emoji-day", 0.5]
+      ]
+    },
+    {
+      "q": "world emoji day",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F4C5", "alias", null, 0.88],
+        ["1F928", "alias", null, 0.41],
+        ["1F602", "alias", null, 0.369],
+        ["1F4A9", "alias", null, 0.349],
+        ["1F397", "alias", null, 0.309],
+        ["2764", "alias", null, 0.309]
+      ]
+    },
+    {
+      "q": "cricket",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3CF", "culture", "cricket-sport", 0.9],
+        ["1F997", "alias", null, 1],
+        ["1F1E7-1F1E9", "alias", null, 0.596],
+        ["1F320", "alias", null, 0.576],
+        ["1F1EE-1F1F3", "alias", null, 0.55],
+        ["1F1F1-1F1F0", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "cricket",
+      "region": "BR",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F997", "alias", null, 1],
+        ["1F3CF", "alias", null, 0.91],
+        ["1F1E7-1F1E9", "alias", null, 0.596],
+        ["1F320", "alias", null, 0.576],
+        ["1F1EE-1F1F3", "alias", null, 0.55],
+        ["1F1F1-1F1F0", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "crick",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F997", "alias", null, 0.825],
+        ["1F3CF", "culture", "cricket-sport", 0.797],
+        ["1F636", "alias", null, 0.61],
+        ["1F3DC", "alias", null, 0.59],
+        ["1F1E7-1F1E9", "alias", null, 0.51],
+        ["1F320", "alias", null, 0.49]
+      ]
+    },
+    {
+      "q": "cricket ",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3CF", "culture", "cricket-sport", 0.9],
+        ["1F997", "alias", null, 1],
+        ["1F1E7-1F1E9", "alias", null, 0.596],
+        ["1F320", "alias", null, 0.576],
+        ["1F1EE-1F1F3", "alias", null, 0.55],
+        ["1F1F1-1F1F0", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "Well, cricket, everyone!",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F997", "alias", null, 0.386],
+        ["1F3CF", "culture", "cricket-sport", 0.9],
+        ["1F465", "alias", null, 0.304],
+        ["1F1E7-1F1E9", "alias", null, 0.242],
+        ["1F4E2", "alias", null, 0.239],
+        ["1F320", "alias", null, 0.222]
+      ]
+    },
+    {
+      "q": "football",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["26BD", "culture", "football-soccer", 0.9],
+        ["1F3C8", "alias", null, 1],
+        ["1F3C9", "alias", null, 0.87],
+        ["1F915", "alias", null, 0.576],
+        ["1F9E3", "alias", null, 0.576],
+        ["1F3DF", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "football",
+      "region": "US",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3C8", "alias", null, 1],
+        ["26BD", "alias", null, 0.89],
+        ["1F3C9", "alias", null, 0.87],
+        ["1F915", "alias", null, 0.576],
+        ["1F9E3", "alias", null, 0.576],
+        ["1F3DF", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "footb",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3C8", "alias", null, 0.76],
+        ["26BD", "culture", "football-soccer", 0.765],
+        ["1F3C9", "alias", null, 0.646],
+        ["1F915", "alias", null, 0.472],
+        ["1F9E3", "alias", null, 0.472],
+        ["1F3DF", "alias", null, 0.472]
+      ]
+    },
+    {
+      "q": "football ",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["26BD", "culture", "football-soccer", 0.9],
+        ["1F3C8", "alias", null, 1],
+        ["1F3C9", "alias", null, 0.87],
+        ["1F915", "alias", null, 0.576],
+        ["1F9E3", "alias", null, 0.576],
+        ["1F3DF", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "Well, football, everyone!",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F3C8", "alias", null, 0.399],
+        ["26BD", "culture", "football-soccer", 0.9],
+        ["1F3C9", "alias", null, 0.324],
+        ["1F915", "alias", null, 0.229],
+        ["1F9E3", "alias", null, 0.229],
+        ["1F3DF", "alias", null, 0.229]
+      ]
+    },
+    {
+      "q": "hockey",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3D1", "culture", "hockey-field", 0.9],
+        ["1F3D2", "alias", null, 1],
+        ["1F1E8-1F1E6", "alias", null, 0.82],
+        ["2197", "alias", null, 0.596],
+        ["1F680", "alias", null, 0.576],
+        ["1F945", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "hockey",
+      "region": "BR",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3D2", "alias", null, 1],
+        ["1F3D1", "alias", null, 0.91],
+        ["1F1E8-1F1E6", "alias", null, 0.82],
+        ["2197", "alias", null, 0.596],
+        ["1F680", "alias", null, 0.576],
+        ["1F945", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "hock",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3D2", "alias", null, 0.772],
+        ["1F3D1", "culture", "hockey-field", 0.78],
+        ["1F1E8-1F1E6", "alias", null, 0.62],
+        ["2197", "alias", null, 0.5],
+        ["1F680", "alias", null, 0.48],
+        ["1F945", "alias", null, 0.48]
+      ]
+    },
+    {
+      "q": "hockey ",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3D1", "culture", "hockey-field", 0.9],
+        ["1F3D2", "alias", null, 1],
+        ["1F1E8-1F1E6", "alias", null, 0.82],
+        ["2197", "alias", null, 0.596],
+        ["1F680", "alias", null, 0.576],
+        ["1F945", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "Well, hockey, everyone!",
+      "region": "IN",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F3D2", "alias", null, 0.389],
+        ["1F3D1", "culture", "hockey-field", 0.9],
+        ["1F465", "alias", null, 0.304],
+        ["1F1E8-1F1E6", "alias", null, 0.297],
+        ["2197", "alias", null, 0.242],
+        ["1F4E2", "alias", null, 0.239]
+      ]
+    },
+    {
+      "q": "pants",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FA72", "culture", "pants-underwear", 0.85],
+        ["1F456", "alias", null, 0.91],
+        ["1FA73", "alias", null, 0.91],
+        ["1F9D0", "alias", null, 0.576],
+        ["1F913", "alias", null, 0.576],
+        ["1F3A9", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "pants",
+      "region": "BR",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F456", "alias", null, 0.91],
+        ["1FA73", "alias", null, 0.91],
+        ["1FA72", "alias", null, 0.616],
+        ["1F9D0", "alias", null, 0.576],
+        ["1F913", "alias", null, 0.576],
+        ["1F3A9", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "pan",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F958", "alias", null, 0.91],
+        ["1FA72", "culture", "pants-underwear", 0.714],
+        ["1F373", "alias", null, 0.89],
+        ["1FA88", "alias", null, 0.616],
+        ["1F30E", "alias", null, 0.576],
+        ["1F9D2", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "pants ",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FA72", "culture", "pants-underwear", 0.85],
+        ["1F456", "alias", null, 0.91],
+        ["1FA73", "alias", null, 0.91],
+        ["1F9D0", "alias", null, 0.576],
+        ["1F913", "alias", null, 0.576],
+        ["1F3A9", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "Well, pants, everyone!",
+      "region": "GB",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F456", "alias", null, 0.357],
+        ["1FA72", "culture", "pants-underwear", 0.85],
+        ["1FA73", "alias", null, 0.357],
+        ["1F465", "alias", null, 0.302],
+        ["1F4E2", "alias", null, 0.237],
+        ["1F925", "alias", null, 0.225]
+      ]
+    },
+    {
+      "q": "bruh",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F44A", "alias", null, 0.85],
+        ["1F5FF", "culture", "bruh-moai", 0.8],
+        ["1F610", "culture", "bruh-moai", 0.5],
+        ["1F926-200D-2642-FE0F", "alias", null, 0.82],
+        ["1F926", "alias", null, 0.8],
+        ["1F926-200D-2640-FE0F", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "bruh",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F44A", "alias", null, 0.85],
+        ["1F5FF", "culture", "bruh-moai", 0.8],
+        ["1F610", "culture", "bruh-moai", 0.5],
+        ["1F926-200D-2642-FE0F", "alias", null, 0.82],
+        ["1F926", "alias", null, 0.8],
+        ["1F926-200D-2640-FE0F", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "bru",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3F4-E0067-E0062-E0073-E0063-E0074-E007F", "alias", null, 0.576],
+        ["1F5FF", "culture", "bruh-moai", 0.72],
+        ["1F610", "culture", "bruh-moai", 0.45],
+        ["1F1E7-1F1F3", "alias", null, 0.391],
+        ["1FAA5", "alias", null, 0.37],
+        ["1F58C", "alias", null, 0.352]
+      ]
+    },
+    {
+      "q": "bruh ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F44A", "alias", null, 0.85],
+        ["1F5FF", "culture", "bruh-moai", 0.8],
+        ["1F610", "culture", "bruh-moai", 0.5],
+        ["1F926-200D-2642-FE0F", "alias", null, 0.82],
+        ["1F926", "alias", null, 0.8],
+        ["1F926-200D-2640-FE0F", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "Well, bruh, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.304],
+        ["1F5FF", "culture", "bruh-moai", 0.8],
+        ["1F610", "culture", "bruh-moai", 0.5],
+        ["1F926-200D-2642-FE0F", "alias", null, 0.297],
+        ["1F44A", "alias", null, 0.294],
+        ["1F926", "alias", null, 0.277]
+      ]
+    },
+    {
+      "q": "cap",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F393", "alias", null, 0.91],
+        ["1F9E2", "culture", "cap-lie", 0.8],
+        ["1F925", "culture", "cap-lie", 0.55],
+        ["1F472", "alias", null, 0.91],
+        ["1F928", "alias", null, 0.8],
+        ["2651", "alias", null, 0.636]
+      ]
+    },
+    {
+      "q": "cap",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F393", "alias", null, 0.91],
+        ["1F9E2", "culture", "cap-lie", 0.8],
+        ["1F925", "culture", "cap-lie", 0.55],
+        ["1F472", "alias", null, 0.91],
+        ["1F928", "alias", null, 0.8],
+        ["2651", "alias", null, 0.636]
+      ]
+    },
+    {
+      "q": "ca",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F1E8-1F1E6", "alias", null, 0.91],
+        ["1F1F1-1F1E7", "alias", null, 0.504],
+        ["1F1FB-1F1F3", "alias", null, 0.504],
+        ["1F697", "alias", null, 0.416],
+        ["1F36C", "alias", null, 0.393],
+        ["1F6F6", "alias", null, 0.393]
+      ]
+    },
+    {
+      "q": "cap ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F393", "alias", null, 0.91],
+        ["1F9E2", "culture", "cap-lie", 0.8],
+        ["1F925", "culture", "cap-lie", 0.55],
+        ["1F472", "alias", null, 0.91],
+        ["1F928", "alias", null, 0.8],
+        ["2651", "alias", null, 0.596]
+      ]
+    },
+    {
+      "q": "Well, cap, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F393", "alias", null, 0.345],
+        ["1F9E2", "culture", "cap-lie", 0.8],
+        ["1F925", "culture", "cap-lie", 0.55],
+        ["1F472", "alias", null, 0.345],
+        ["1F465", "alias", null, 0.309],
+        ["1F928", "alias", null, 0.268]
+      ]
+    },
+    {
+      "q": "goat",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F410", "alias", null, 1],
+        ["26BD", "culture", "goat-football", 0.6],
+        ["1F1E6-1F1F7", "culture", "goat-football", 0.45],
+        ["1F1F5-1F1F9", "culture", "goat-football", 0.45],
+        ["2651", "alias", null, 0.89],
+        ["1F451", "alias", null, 0.84]
+      ]
+    },
+    {
+      "q": "goat",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F410", "alias", null, 1],
+        ["26BD", "culture", "goat-football", 0.6],
+        ["1F1E6-1F1F7", "culture", "goat-football", 0.45],
+        ["1F1F5-1F1F9", "culture", "goat-football", 0.45],
+        ["2651", "alias", null, 0.89],
+        ["1F451", "alias", null, 0.84]
+      ]
+    },
+    {
+      "q": "goa",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F1EE-1F1F3", "alias", null, 0.8],
+        ["1F410", "culture", "goat-football", 0.63],
+        ["26BD", "culture", "goat-football", 0.54],
+        ["1F1E6-1F1F7", "culture", "goat-football", 0.405],
+        ["1F1F5-1F1F9", "culture", "goat-football", 0.405],
+        ["1F945", "alias", null, 0.39]
+      ]
+    },
+    {
+      "q": "goat ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F410", "alias", null, 1],
+        ["26BD", "culture", "goat-football", 0.6],
+        ["1F1E6-1F1F7", "culture", "goat-football", 0.45],
+        ["1F1F5-1F1F9", "culture", "goat-football", 0.45],
+        ["2651", "alias", null, 0.89],
+        ["1F451", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "Well, goat, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F410", "alias", null, 0.432],
+        ["26BD", "culture", "goat-football", 0.6],
+        ["1F1E6-1F1F7", "culture", "goat-football", 0.45],
+        ["1F1F5-1F1F9", "culture", "goat-football", 0.45],
+        ["2651", "alias", null, 0.356],
+        ["1F451", "alias", null, 0.317]
+      ]
+    },
+    {
+      "q": "jurassic park",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F996", "alias", null, 0.9],
+        ["1F995", "culture", "jurassic-park", 0.6],
+        ["1F9EC", "culture", "jurassic-park", 0.4],
+        ["1F99F", "alias", null, 0.88],
+        ["1F699", "alias", null, 0.624],
+        ["1F681", "alias", null, 0.605]
+      ]
+    },
+    {
+      "q": "jurassic park",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F996", "alias", null, 0.9],
+        ["1F995", "culture", "jurassic-park", 0.6],
+        ["1F9EC", "culture", "jurassic-park", 0.4],
+        ["1F99F", "alias", null, 0.88],
+        ["1F699", "alias", null, 0.624],
+        ["1F681", "alias", null, 0.605]
+      ]
+    },
+    {
+      "q": "jurassic",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F995", "alias", null, 0.596],
+        ["1F996", "culture", "jurassic-park", 0.719],
+        ["1F9EC", "culture", "jurassic-park", 0.338],
+        ["1F99F", "alias", null, 0.576],
+        ["1F699", "alias", null, 0.528],
+        ["1F681", "alias", null, 0.396]
+      ]
+    },
+    {
+      "q": "jurassic park ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F996", "alias", null, 0.9],
+        ["1F995", "culture", "jurassic-park", 0.6],
+        ["1F9EC", "culture", "jurassic-park", 0.4],
+        ["1F99F", "alias", null, 0.88],
+        ["1F699", "alias", null, 0.624],
+        ["1F681", "alias", null, 0.605]
+      ]
+    },
+    {
+      "q": "Well, jurassic park, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F996", "alias", null, 0.381],
+        ["1F995", "culture", "jurassic-park", 0.6],
+        ["1F9EC", "culture", "jurassic-park", 0.4],
+        ["1F99F", "alias", null, 0.381],
+        ["1F699", "alias", null, 0.33],
+        ["1F681", "alias", null, 0.262]
+      ]
+    },
+    {
+      "q": "im melting",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE0", "alias", null, 0.94],
+        ["1F633", "culture", "melting-embarrassed", 0.5],
+        ["1F975", "alias", null, 0.566],
+        ["1F635-200D-1F4AB", "alias", null, 0.546],
+        ["1F43B-200D-2744-FE0F", "alias", null, 0.546],
+        ["1F1E6-1F1F6", "alias", null, 0.546]
+      ]
+    },
+    {
+      "q": "im melting",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE0", "alias", null, 0.94],
+        ["1F633", "culture", "melting-embarrassed", 0.5],
+        ["1F975", "alias", null, 0.566],
+        ["1F635-200D-1F4AB", "alias", null, 0.546],
+        ["1F43B-200D-2744-FE0F", "alias", null, 0.546],
+        ["1F1E6-1F1F6", "alias", null, 0.546]
+      ]
+    },
+    {
+      "q": "im mel",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE0", "alias", null, 0.769],
+        ["1F633", "culture", "melting-embarrassed", 0.42],
+        ["1F348", "alias", null, 0.761],
+        ["1F1F2-1F1F9", "alias", null, 0.597],
+        ["1FAD5", "alias", null, 0.59],
+        ["1F1EA-1F1E6", "alias", null, 0.579]
+      ]
+    },
+    {
+      "q": "im melting ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE0", "alias", null, 0.94],
+        ["1F633", "culture", "melting-embarrassed", 0.5],
+        ["1F975", "alias", null, 0.566],
+        ["1F635-200D-1F4AB", "alias", null, 0.546],
+        ["1F43B-200D-2744-FE0F", "alias", null, 0.546],
+        ["1F1E6-1F1F6", "alias", null, 0.546]
+      ]
+    },
+    {
+      "q": "Well, im melting, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1FAE0", "alias", null, 0.365],
+        ["1F633", "culture", "melting-embarrassed", 0.5],
+        ["1F975", "alias", null, 0.249],
+        ["1F635-200D-1F4AB", "alias", null, 0.229],
+        ["1F43B-200D-2744-FE0F", "alias", null, 0.229],
+        ["1F1E6-1F1F6", "alias", null, 0.229]
+      ]
+    },
+    {
+      "q": "olympics",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F947", "alias", null, 0.8],
+        ["1F3C5", "culture", "olympic-games", 0.8],
+        ["1F3DF", "culture", "olympic-games", 0.4],
+        ["1F949", "alias", null, 0.8],
+        ["1F948", "alias", null, 0.8],
+        ["1F3C2", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "olympics",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F947", "alias", null, 0.8],
+        ["1F3C5", "culture", "olympic-games", 0.8],
+        ["1F3DF", "culture", "olympic-games", 0.4],
+        ["1F949", "alias", null, 0.8],
+        ["1F948", "alias", null, 0.8],
+        ["1F3C2", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "olymp",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F3C5", "alias", null, 0.65],
+        ["1F947", "culture", "olympic-games", 0.576],
+        ["1F3DF", "culture", "olympic-games", 0.354],
+        ["1F949", "alias", null, 0.61],
+        ["1F948", "alias", null, 0.61],
+        ["1F94C", "alias", null, 0.55]
+      ]
+    },
+    {
+      "q": "olympics ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F947", "alias", null, 0.8],
+        ["1F3C5", "culture", "olympic-games", 0.8],
+        ["1F3DF", "culture", "olympic-games", 0.4],
+        ["1F949", "alias", null, 0.8],
+        ["1F948", "alias", null, 0.8],
+        ["1F3C2", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "Well, olympics, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.317],
+        ["1F3C5", "culture", "olympic-games", 0.8],
+        ["1F947", "culture", "olympic-games", 0.65],
+        ["1F3DF", "culture", "olympic-games", 0.4],
+        ["1F949", "alias", null, 0.255],
+        ["1F948", "alias", null, 0.255]
+      ]
+    },
+    {
+      "q": "yes sir",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE1", "alias", null, 0.94],
+        ["1F44A", "alias", null, 0.523],
+        ["1F468", "alias", null, 0.402],
+        ["1F642-200D-2195-FE0F", "alias", null, 0.398],
+        ["1F44D", "alias", null, 0.397],
+        ["1F646-200D-2642-FE0F", "alias", null, 0.358]
+      ]
+    },
+    {
+      "q": "yes sir",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE1", "alias", null, 0.94],
+        ["1F44A", "alias", null, 0.523],
+        ["1F468", "alias", null, 0.402],
+        ["1F642-200D-2195-FE0F", "alias", null, 0.398],
+        ["1F44D", "alias", null, 0.397],
+        ["1F646-200D-2642-FE0F", "alias", null, 0.358]
+      ]
+    },
+    {
+      "q": "yes s",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F48D", "alias", null, 0.425],
+        ["1FAE1", "culture", "salute-respect", 0.753],
+        ["1F470", "alias", null, 0.405],
+        ["1F470-200D-2640-FE0F", "alias", null, 0.405],
+        ["1F492", "alias", null, 0.405],
+        ["1F37E", "alias", null, 0.385]
+      ]
+    },
+    {
+      "q": "yes sir ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1FAE1", "alias", null, 0.94],
+        ["1F44A", "alias", null, 0.523],
+        ["1F468", "alias", null, 0.402],
+        ["1F642-200D-2195-FE0F", "alias", null, 0.398],
+        ["1F44D", "alias", null, 0.397],
+        ["1F646-200D-2642-FE0F", "alias", null, 0.358]
+      ]
+    },
+    {
+      "q": "Well, yes sir, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [["1FAE1", "alias", null, 0.393], ["1F44A", "alias", null, 0.229]]
+    },
+    {
+      "q": "lmao",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F602", "alias", null, 0.97],
+        ["1F480", "culture", "skull-laughing", 0.85],
+        ["1F62D", "culture", "skull-laughing", 0.55],
+        ["1F923", "alias", null, 0.87],
+        ["1F639", "alias", null, 0.82],
+        ["1F606", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "lmao",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F602", "alias", null, 0.97],
+        ["1F480", "culture", "skull-laughing", 0.85],
+        ["1F62D", "culture", "skull-laughing", 0.55],
+        ["1F923", "alias", null, 0.87],
+        ["1F639", "alias", null, 0.82],
+        ["1F606", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "lma",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F602", "alias", null, 0.757],
+        ["1F480", "culture", "skull-laughing", 0.765],
+        ["1F62D", "culture", "skull-laughing", 0.495],
+        ["1F923", "alias", null, 0.68],
+        ["1F639", "alias", null, 0.641],
+        ["1F606", "alias", null, 0.621]
+      ]
+    },
+    {
+      "q": "lmao ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F602", "alias", null, 0.95],
+        ["1F480", "culture", "skull-laughing", 0.85],
+        ["1F62D", "culture", "skull-laughing", 0.55],
+        ["1F923", "alias", null, 0.85],
+        ["1F606", "alias", null, 0.8],
+        ["1F639", "alias", null, 0.8]
+      ]
+    },
+    {
+      "q": "Well, lmao, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F602", "alias", null, 0.353],
+        ["1F480", "culture", "skull-laughing", 0.85],
+        ["1F62D", "culture", "skull-laughing", 0.55],
+        ["1F923", "alias", null, 0.316],
+        ["1F606", "alias", null, 0.297],
+        ["1F639", "alias", null, 0.297]
+      ]
+    },
+    {
+      "q": "slay",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F485", "alias", null, 0.86],
+        ["1F451", "culture", "slay", 0.6],
+        ["2728", "culture", "slay", 0.5],
+        ["1F60E", "alias", null, 0.85],
+        ["1F3C6", "alias", null, 0.85],
+        ["1F460", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "slay",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F485", "alias", null, 0.86],
+        ["1F451", "culture", "slay", 0.6],
+        ["2728", "culture", "slay", 0.5],
+        ["1F60E", "alias", null, 0.85],
+        ["1F3C6", "alias", null, 0.85],
+        ["1F460", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "sla",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["231B", "alias", null, 0.576],
+        ["1F485", "culture", "slay", 0.72],
+        ["1F451", "culture", "slay", 0.54],
+        ["2728", "culture", "slay", 0.45],
+        ["23F0", "alias", null, 0.55],
+        ["1F3AC", "alias", null, 0.332]
+      ]
+    },
+    {
+      "q": "slay ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F60E", "alias", null, 0.85],
+        ["1F485", "culture", "slay", 0.8],
+        ["1F451", "culture", "slay", 0.6],
+        ["2728", "culture", "slay", 0.5],
+        ["1F3C6", "alias", null, 0.85],
+        ["1F460", "alias", null, 0.82]
+      ]
+    },
+    {
+      "q": "Well, slay, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.316],
+        ["1F485", "culture", "slay", 0.8],
+        ["1F451", "culture", "slay", 0.6],
+        ["2728", "culture", "slay", 0.5],
+        ["1F460", "alias", null, 0.277],
+        ["1F60E", "alias", null, 0.273]
+      ]
+    },
+    {
+      "q": "thank you",
+      "region": "JP",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.94],
+        ["1F647", "culture", "thanks-bow-jp", 0.7],
+        ["2764", "alias", null, 0.88],
+        ["263A", "alias", null, 0.88],
+        ["1F60A", "alias", null, 0.88],
+        ["1FAF6", "alias", null, 0.664]
+      ]
+    },
+    {
+      "q": "thank you",
+      "region": "BR",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.94],
+        ["2764", "alias", null, 0.88],
+        ["263A", "alias", null, 0.88],
+        ["1F60A", "alias", null, 0.88],
+        ["1FAF6", "alias", null, 0.664],
+        ["1F495", "alias", null, 0.644]
+      ]
+    },
+    {
+      "q": "thank ",
+      "region": "JP",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.636],
+        ["1F607", "alias", null, 0.596],
+        ["1F64C", "alias", null, 0.596],
+        ["2764", "alias", null, 0.576],
+        ["1F605", "alias", null, 0.576],
+        ["263A", "alias", null, 0.576]
+      ]
+    },
+    {
+      "q": "thank you ",
+      "region": "JP",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.94],
+        ["1F647", "culture", "thanks-bow-jp", 0.7],
+        ["2764", "alias", null, 0.88],
+        ["263A", "alias", null, 0.88],
+        ["1F60A", "alias", null, 0.88],
+        ["1FAF6", "alias", null, 0.664]
+      ]
+    },
+    {
+      "q": "Well, thank you, everyone!",
+      "region": "JP",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F465", "alias", null, 0.33],
+        ["1F647", "culture", "thanks-bow-jp", 0.7],
+        ["1F64F", "culture", "thanks-bow-jp", 0.65],
+        ["1F4E2", "alias", null, 0.258],
+        ["1F44B", "alias", null, 0.218],
+        ["1F4E3", "alias", null, 0.218]
+      ]
+    },
+    {
+      "q": "touch grass",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F33F", "alias", null, 0.92],
+        ["1F331", "culture", "touch-grass", 0.75],
+        ["1F333", "culture", "touch-grass", 0.55],
+        ["1F6B6", "alias", null, 0.9],
+        ["1F97E", "alias", null, 0.9],
+        ["1F6B6-200D-2640-FE0F", "alias", null, 0.88]
+      ]
+    },
+    {
+      "q": "touch grass",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F33F", "alias", null, 0.92],
+        ["1F331", "culture", "touch-grass", 0.75],
+        ["1F333", "culture", "touch-grass", 0.55],
+        ["1F6B6", "alias", null, 0.9],
+        ["1F97E", "alias", null, 0.9],
+        ["1F6B6-200D-2640-FE0F", "alias", null, 0.88]
+      ]
+    },
+    {
+      "q": "touch g",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["2709", "alias", null, 0.386],
+        ["1F331", "culture", "touch-grass", 0.641],
+        ["1F333", "culture", "touch-grass", 0.47],
+        ["1F998", "alias", null, 0.363],
+        ["1F3BC", "alias", null, 0.343],
+        ["231A", "alias", null, 0.343]
+      ]
+    },
+    {
+      "q": "touch grass ",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F33F", "alias", null, 0.92],
+        ["1F331", "culture", "touch-grass", 0.75],
+        ["1F333", "culture", "touch-grass", 0.55],
+        ["1F6B6", "alias", null, 0.9],
+        ["1F97E", "alias", null, 0.9],
+        ["1F6B6-200D-2640-FE0F", "alias", null, 0.88]
+      ]
+    },
+    {
+      "q": "Well, touch grass, everyone!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["1F6B6", "alias", null, 0.401],
+        ["1F331", "culture", "touch-grass", 0.75],
+        ["1F333", "culture", "touch-grass", 0.55],
+        ["1F97E", "alias", null, 0.401],
+        ["1F33F", "alias", null, 0.381],
+        ["1F6B6-200D-2640-FE0F", "alias", null, 0.381]
+      ]
+    },
+    {
+      "q": "thank you",
+      "region": "",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.94],
+        ["2764", "alias", null, 0.88],
+        ["263A", "alias", null, 0.88],
+        ["1F60A", "alias", null, 0.88],
+        ["1FAF6", "alias", null, 0.664],
+        ["1F495", "alias", null, 0.644]
+      ]
+    },
+    {
+      "q": "thanks so much for the help!",
+      "region": "",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["2764", "alias", null, 0.498],
+        ["1F60A", "alias", null, 0.498],
+        ["1F64F", "alias", null, 0.327],
+        ["1FAC2", "alias", null, 0.267],
+        ["1F91D", "alias", null, 0.255],
+        ["1F42C", "alias", null, 0.238]
+      ]
+    },
+    {
+      "q": "happy thanksgiving",
+      "region": "",
+      "day": "2026-11-22",
+      "text": true,
+      "results": [
+        ["1F9E1", "alias", null, 0.92],
+        ["1F983", "alias", null, 0.92],
+        ["1F967", "alias", null, 0.513],
+        ["1FAC3", "alias", null, 0.493],
+        ["1F33E", "alias", null, 0.473],
+        ["1F357", "alias", null, 0.473]
+      ]
+    },
+    {
+      "q": "thank you",
+      "region": "JP",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.94],
+        ["1F647", "culture", "thanks-bow-jp", 0.7],
+        ["2764", "alias", null, 0.88],
+        ["263A", "alias", null, 0.88],
+        ["1F60A", "alias", null, 0.88],
+        ["1FAF6", "alias", null, 0.664]
+      ]
+    },
+    {
+      "q": "thanks so much for the help!",
+      "region": "JP",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["2764", "alias", null, 0.498],
+        ["1F647", "culture", "thanks-bow-jp", 0.7],
+        ["1F64F", "culture", "thanks-bow-jp", 0.65],
+        ["1F60A", "alias", null, 0.498],
+        ["1FAC2", "alias", null, 0.267],
+        ["1F91D", "alias", null, 0.255]
+      ]
+    },
+    {
+      "q": "happy thanksgiving",
+      "region": "JP",
+      "day": "2026-11-22",
+      "text": true,
+      "results": [
+        ["1F9E1", "alias", null, 0.92],
+        ["1F983", "alias", null, 0.92],
+        ["1F967", "alias", null, 0.513],
+        ["1FAC3", "alias", null, 0.493],
+        ["1F33E", "alias", null, 0.473],
+        ["1F357", "alias", null, 0.473]
+      ]
+    },
+    {
+      "q": "thank you",
+      "region": "US",
+      "day": "2026-10-03",
+      "text": false,
+      "results": [
+        ["1F64F", "alias", null, 0.94],
+        ["2764", "alias", null, 0.88],
+        ["263A", "alias", null, 0.88],
+        ["1F60A", "alias", null, 0.88],
+        ["1FAF6", "alias", null, 0.664],
+        ["1F495", "alias", null, 0.644]
+      ]
+    },
+    {
+      "q": "thanks so much for the help!",
+      "region": "US",
+      "day": "2026-10-03",
+      "text": true,
+      "results": [
+        ["2764", "alias", null, 0.498],
+        ["1F60A", "alias", null, 0.498],
+        ["1F64F", "alias", null, 0.327],
+        ["1FAC2", "alias", null, 0.267],
+        ["1F91D", "alias", null, 0.255],
+        ["1F42C", "alias", null, 0.238]
+      ]
+    },
+    {
+      "q": "happy thanksgiving",
+      "region": "US",
+      "day": "2026-11-22",
+      "text": true,
+      "results": [
+        ["1F9E1", "alias", null, 0.92],
+        ["1F983", "culture", "thanksgiving-us-2026", 0.85],
+        ["1F967", "culture", "thanksgiving-us-2026", 0.65],
+        ["1F342", "culture", "thanksgiving-us-2026", 0.5],
+        ["1F64F", "culture", "thanksgiving-us-2026", 0.4],
+        ["1FAC3", "alias", null, 0.493]
+      ]
+    }
+  ]
+}

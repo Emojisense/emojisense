@@ -8,6 +8,10 @@
  *
  * The Swift tests read the packs themselves from packages/data/dist/packs/<version> (they are too
  * large to copy into the SDK) and check their sha256 against the hashes stored here.
+ *
+ * It also writes Resources/culture-golden.json: one English culture file (approved and draft
+ * entries, so regional senses are in it) and what the culture layer adds to searches and messages
+ * for fixed regions and days. Kotlin reads both files too.
  */
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -19,13 +23,28 @@ import type { AliasEngine, Pack } from "../../../packages/core/src/index.ts";
 
 const THIS_REPO = fileURLToPath(new URL("../../../", import.meta.url));
 const OUTPUT = fileURLToPath(new URL("../Tests/EmojisenseTests/Resources/golden.json", import.meta.url));
+const CULTURE_OUTPUT = fileURLToPath(
+  new URL("../Tests/EmojisenseTests/Resources/culture-golden.json", import.meta.url),
+);
 const { values: args } = parseArgs({ options: { root: { type: "string" } } });
 /** The checkout whose reference engine, packs and queries the golden file describes. */
 const REPO_ROOT = args.root ? resolve(args.root) : THIS_REPO;
 const core: typeof import("../../../packages/core/src/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/index.ts")).href
 );
-const { assessConfidence, createEngine, embeddingText, fuse, normalize, semanticStrength } = core;
+const {
+  applyCulture,
+  assessConfidence,
+  createEngine,
+  embeddingText,
+  fuse,
+  isActiveOn,
+  normalize,
+  semanticStrength,
+} = core;
+const cultureData: typeof import("../../../packages/data/src/culture/index.ts") = await import(
+  pathToFileURL(join(REPO_ROOT, "packages/data/src/culture/index.ts")).href
+);
 const { FUNCTION_WORDS }: typeof import("../../../packages/core/src/function-words.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/core/src/function-words.ts")).href
 );
@@ -480,17 +499,117 @@ const golden = {
    */
   confidence: confidenceCases(),
 };
+// --- Culture -------------------------------------------------------------------------------------
+
+/** A fixed first day, so the file (and its events) does not change with the day it is made. */
+const CULTURE_FROM = "2026-10-02";
+const CULTURE_TOP = 6;
+const CULTURE_DAYS = [
+  "2026-10-03",
+  "2026-10-10",
+  "2026-10-25",
+  "2026-11-05",
+  "2026-11-22",
+  "2026-12-28",
+  "2027-02-10",
+  "2027-04-10",
+  "2027-06-20",
+  "2027-07-12",
+  "2027-10-01",
+];
+const cultureFile = cultureData.compileCulture(
+  cultureData.loadRecords().map((loaded) => loaded.record),
+  "en",
+  { packVersion, from: CULTURE_FROM, catalog: cultureData.loadCatalog(), statuses: ["approved", "draft"] },
+);
+const cultureEngine = createEngine(filesFor("en").map(pack)).withCulture(cultureFile);
+
+interface CultureCase {
+  q: string;
+  /** "" = no region. */
+  region: string;
+  day: string;
+  /** Matched as a message (reaction suggestions): `applyCulture({ text: true })`. */
+  text: boolean;
+}
+/** `[id, source, cultureId or null, score]`. */
+type CultureRanked = [id: string, source: string, cultureId: string | null, score: number];
+
+function cultureCase(c: CultureCase) {
+  const scope = { region: c.region, day: c.day, locale: "en", limit: CULTURE_TOP };
+  const results = c.text
+    ? applyCulture(cultureEngine.search(c.q, { ...scope, culture: false }).results, cultureFile, c.q, {
+        ...scope,
+        region: c.region === "" ? undefined : c.region,
+        engine: cultureEngine,
+        text: true,
+      })
+    : cultureEngine.search(c.q, scope).results;
+  return {
+    ...c,
+    results: results.map(
+      (r): CultureRanked => [r.id, r.source, "cultureId" in r ? (r.cultureId as string) : null, r.score],
+    ),
+  };
+}
+
+/** Per entry: its first trigger in and out of its region and window, a prefix, a message. */
+function cultureCases() {
+  const cases: CultureCase[] = [];
+  for (const entry of cultureFile.entries) {
+    const trigger = entry.triggers[0];
+    if (!trigger) continue;
+    const region = entry.regions.includes("*")
+      ? entry.exceptRegions?.[0]
+        ? "GB"
+        : ""
+      : (entry.regions[0] as string);
+    const otherRegion = entry.regions.includes("*") ? (entry.exceptRegions?.[0] ?? "") : "BR";
+    const inside = CULTURE_DAYS.find((day) => isActiveOn(entry.when, day)) ?? (CULTURE_DAYS[0] as string);
+    const outside = CULTURE_DAYS.find((day) => !isActiveOn(entry.when, day));
+    const prefix = trigger.slice(0, Math.ceil(trigger.length * 0.6));
+    cases.push(
+      { q: trigger, region, day: inside, text: false },
+      { q: trigger, region: otherRegion, day: inside, text: false },
+      { q: prefix, region, day: inside, text: false },
+      { q: `${trigger} `, region, day: inside, text: false },
+      { q: `Well, ${trigger}, everyone!`, region, day: inside, text: true },
+    );
+    if (outside) cases.push({ q: trigger, region, day: outside, text: false });
+  }
+  for (const region of ["", "JP", "US"]) {
+    cases.push(
+      { q: "thank you", region, day: "2026-10-03", text: false },
+      { q: "thanks so much for the help!", region, day: "2026-10-03", text: true },
+      { q: "happy thanksgiving", region, day: "2026-11-22", text: true },
+    );
+  }
+  return cases.map(cultureCase);
+}
+
+const cultureGolden = {
+  generatedBy: "sdks/swift/scripts/make-golden.ts",
+  packVersion,
+  packs: filesFor("en"),
+  culture: cultureFile,
+  cases: cultureCases(),
+};
+
 const keystrokeCount =
   golden.keystrokes.cases.length +
   [...golden.sentenceKeystrokes, ...golden.entityKeystrokes].reduce((sum, k) => sum + k.cases.length, 0);
 
 writeFileSync(OUTPUT, `${JSON.stringify(golden)}\n`);
-// Keep the file in the repository's canonical format so `pnpm lint` stays green.
-execFileSync(join(THIS_REPO, "node_modules/.bin/biome"), ["format", "--write", OUTPUT], { stdio: "ignore" });
+writeFileSync(CULTURE_OUTPUT, `${JSON.stringify(cultureGolden)}\n`);
+// Keep the files in the repository's canonical format so `pnpm lint` stays green.
+execFileSync(join(THIS_REPO, "node_modules/.bin/biome"), ["format", "--write", OUTPUT, CULTURE_OUTPUT], {
+  stdio: "ignore",
+});
 console.log(
   `make-golden: ${queries.length} queries × 2 configs, ${sentences.length} sentences in ` +
     `${sentenceLocales.length} locales, ${entities.length} entities in ${entityLocales.length} locales, ` +
     `${GUARD_QUERIES.length} guard queries with every locale, ${golden.confidence.length} confidence cases, ` +
     `${keystrokeCount} keystrokes, ` +
-    `${NORMALIZATION_INPUTS.length} normalization cases, ${golden.normalization.sweep.hashes.length} sweep blocks → ${OUTPUT}`,
+    `${NORMALIZATION_INPUTS.length} normalization cases, ${golden.normalization.sweep.hashes.length} sweep blocks → ${OUTPUT}; ` +
+    `${cultureGolden.cases.length} culture cases → ${CULTURE_OUTPUT}`,
 );
