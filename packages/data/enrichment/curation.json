@@ -2077,5 +2077,47 @@
     "phrase": "kora",
     "action": "add",
     "why": "Arabizi (Egyptian) 'ball, football'; ⚽ is full at 50 aliases and did not have it"
+  },
+  {
+    "hexcode": "1F37F",
+    "locale": "en",
+    "alias": "messy",
+    "action": "low",
+    "why": "slang for stirring drama; the literal mess (🫟 🌪️ 🐖) comes first"
+  },
+  {
+    "hexcode": "1F92D",
+    "locale": "en",
+    "alias": "messy",
+    "action": "low",
+    "why": "slang for stirring drama; the literal mess comes first"
+  },
+  {
+    "hexcode": "1F47F",
+    "locale": "en",
+    "phrase": "hell",
+    "action": "add",
+    "why": "the base word; only 'hellish' and phrases like 'merge hell' had it"
+  },
+  {
+    "hexcode": "1F608",
+    "locale": "en",
+    "phrase": "hell",
+    "action": "add",
+    "why": "the base word belongs in the core pack, not only the ext one"
+  },
+  {
+    "hexcode": "1F340",
+    "locale": "en",
+    "phrase": "break a leg",
+    "action": "add",
+    "why": "the idiom means good luck; the embedding reads it literally (🦵)"
+  },
+  {
+    "hexcode": "1F3AD",
+    "locale": "en",
+    "phrase": "break a leg",
+    "action": "add",
+    "why": "said to performers before a show"
   }
 ]
