@@ -372,6 +372,19 @@ describe("managing members", () => {
     expect((await h.call("GET", `/api/team?owner=${adaId}`, { cookie: cookies.dan })).status).toBe(404);
   });
 
+  it("lets a member leave after the owner downgrades, while admins cannot manage the paused team", async () => {
+    const { h, cookies, ids, owner, adaId } = await withMembers();
+    setPlan(h, "ada", "free");
+    const removed = await h.call("DELETE", `/api/team/members/${ids.dan}${owner}`, { cookie: cookies.bob });
+    expect(removed.status).toBe(404);
+    const left = await h.call("DELETE", `/api/team/members/${ids.dan}${owner}`, { cookie: cookies.dan });
+    expect(left.status).toBe(200);
+    expect(h.db.rows("SELECT role FROM team_members WHERE owner_id = ? ORDER BY role", adaId)).toEqual([
+      { role: "admin" },
+      { role: "developer" },
+    ]);
+  });
+
   it("never changes or removes the owner", async () => {
     const { h, ada, adaId, cookies, owner } = await withMembers();
     const attempts = [

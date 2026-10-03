@@ -98,11 +98,15 @@ export interface TeamAccess {
   plan: Plan;
 }
 
-/** The caller's role on the team of `ownerId`: owner of their own team, or a member's role. */
+/**
+ * The caller's role on the team of `ownerId`: owner of their own team, or a member's role. A
+ * member's access pauses while the owner's plan has no team, unless `includePaused` is set.
+ */
 export async function teamAccessFor(
   db: D1Database,
   account: AccountRow,
   ownerId: string,
+  includePaused = false,
 ): Promise<TeamAccess | undefined> {
   if (ownerId === account.id) return { role: "owner", owner: account, plan: getPlan(account.plan) };
   if (!isValidId(ownerId)) return undefined;
@@ -116,7 +120,7 @@ export async function teamAccessFor(
   if (!row) return undefined;
   const { member_role: role, ...owner } = row;
   const plan = getPlan(owner.plan);
-  return plan.teamMembers ? { role, owner, plan } : undefined;
+  return plan.teamMembers || includePaused ? { role, owner, plan } : undefined;
 }
 
 /** Teams of other owners the account belongs to, while the owner's plan includes team members. */
@@ -138,9 +142,10 @@ export async function listMemberships(db: D1Database, accountId: string): Promis
 export async function requireTeamAccess(
   { url, env, account }: AuthedContext,
   permission: Permission,
+  includePaused = false,
 ): Promise<TeamAccess> {
   const ownerId = url.searchParams.get("owner") || account.id;
-  const access = await teamAccessFor(env.DB, account, ownerId);
+  const access = await teamAccessFor(env.DB, account, ownerId, includePaused);
   if (!access) throw new HttpError(404, "not_found", "You are not a member of this team.");
   assertCan(access.role, permission);
   return access;

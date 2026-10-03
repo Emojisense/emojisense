@@ -171,11 +171,14 @@ export async function updateMember(ctx: AuthedContext): Promise<Response> {
   return json(response);
 }
 
-/** Admins remove members; any member may remove themselves (leave). Works on any plan. */
+/**
+ * Admins remove members; any member may remove themselves (leave). Leaving works on any plan, so
+ * nobody stays in a team that the owner's downgrade paused. The owner cleans up on any plan too.
+ */
 export async function removeMember(ctx: AuthedContext): Promise<Response> {
   const memberId = ctx.params.id ?? "";
   const leaving = memberId === ctx.account.id;
-  const team = await requireTeamAccess(ctx, leaving ? "view" : "manage_team");
+  const team = await requireTeamAccess(ctx, leaving ? "view" : "manage_team", leaving);
   assertNotOwner(team, memberId);
   const result = isValidId(memberId)
     ? await ctx.env.DB.prepare("DELETE FROM team_members WHERE owner_id = ? AND member_id = ?")
