@@ -160,8 +160,10 @@ shards only, in the older layout (`<key>.json`).
 its alias engines (English + the locale, core and ext) drop what the device answers, and the
 answers are the API's for that locale (shared and locale vectors, popularity and glyph terms). The
 output is the published layout of PACK_FORMAT.md §6: content-named files in `f/` and `base.json`,
-which names each locale's base index. A rebuild reuses the entries of the previous one with the
-same model. `upload:shards` writes the files the bucket does not have, the manifest, and the
+which names each locale's base index. Each locale is written as soon as it is built, and a
+rebuild reuses the entries of the previous one with the same model, so a run that fails half way
+(a lost connection) loses at most the locale it was on. Failed Workers AI calls are retried
+after 2, 10 and 30 s. `upload:shards` writes the files the bucket does not have, the manifest, and the
 `base` field of each live index; the nightly build keeps it there and leaves out the queries the
 base holds. Rebuild and upload it when the pack, the vectors or the model change.
 

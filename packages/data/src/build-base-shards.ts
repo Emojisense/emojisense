@@ -9,11 +9,12 @@
  *     [--results 24] [--max-kb 30] [--resolver workers-ai|cached|fake] [--no-reuse]
  *
  * Then publish it with upload-shards.ts. The nightly build names each locale's base index in its
- * live index and leaves out the queries the base holds. Entries of the previous base build with
- * the same model are reused, so a rebuild embeds only new queries. Resolvers as in
+ * live index and leaves out the queries the base holds. Each locale is written as soon as it is
+ * built, and entries of the previous build with the same model are reused, so a rebuild (or a
+ * run after a failed one) embeds only new queries. Resolvers as in
  * build-shards.ts; EMOJISENSE_LOCAL_EMBED=1 embeds with scripts/local_embed_server.py.
  */
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { createEngine, type Pack } from "emojisense";
@@ -122,10 +123,51 @@ function reusePrevious(
 
 const { emoji }: { emoji: BaseEmoji[] } = JSON.parse(readFileSync(BASE_FILE, "utf8"));
 const validated = JSON.parse(readFileSync(join(BUILD_DIR, "validated.json"), "utf8"));
-const files = new Map<string, PublishedFile>();
-const manifestLocales: Record<string, string> = {};
-let modelTag = fake ? "fake@0" : `${model.key}@${dims}`;
+const modelTag = fake ? "fake@0" : `${model.key}@${dims}`;
+// Locales this run does not build keep their entry when the model is the same.
+const manifest: ShardBaseManifest = {
+  format: "emojisense-shard-base",
+  formatVersion: 1,
+  packVersion: config.packVersion,
+  model: modelTag,
+  locales: previous?.model === modelTag ? { ...previous.locales } : {},
+};
+let written = 0;
 const started = performance.now();
+mkdirSync(join(outDir, SHARD_FILES_DIR), { recursive: true });
+
+/**
+ * Writes a finished locale at once, with the manifest, so a run that fails later (a lost
+ * connection after an hour of embeddings) keeps it: the next run reuses its entries.
+ */
+function writeLocale(locale: string, files: readonly PublishedFile[], indexPath: string) {
+  for (const file of files) {
+    const path = join(outDir, file.path);
+    if (existsSync(path)) continue;
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, file.json);
+    written++;
+  }
+  manifest.locales[locale] = indexPath;
+  writeFileSync(join(outDir, BASE_MANIFEST_FILE), `${JSON.stringify(manifest, null, 2)}\n`);
+}
+
+/** Deletes the files of `f/` that no base index in the manifest names. */
+function pruneUnnamed(): number {
+  const named = new Set<string>();
+  for (const indexPath of Object.values(manifest.locales)) {
+    named.add(indexPath);
+    const index = readOut<ShardIndex>(indexPath);
+    for (const file of Object.values(index?.files ?? {})) named.add(resolveFrom(SHARD_FILES_DIR, file));
+  }
+  let pruned = 0;
+  for (const name of readdirSync(join(outDir, SHARD_FILES_DIR))) {
+    if (named.has(`${SHARD_FILES_DIR}${name}`)) continue;
+    rmSync(join(outDir, SHARD_FILES_DIR, name));
+    pruned++;
+  }
+  return pruned;
+}
 
 try {
   for (const locale of locales) {
@@ -145,7 +187,6 @@ try {
           emojiOf: (id) => full.get(id)?.emoji,
           embedder,
         });
-    modelTag = resolver.model;
 
     const queries = aggregateQueries(bootstrapQueries(emoji, validated, minCount, [locale]), {
       minCount,
@@ -167,8 +208,7 @@ try {
     });
     const layer = await hashLayer(built, SHARD_FILES_DIR);
     const index = await contentFile(JSON.stringify(layer.index));
-    for (const file of [...layer.files, index]) files.set(file.path, file);
-    manifestLocales[locale] = index.path;
+    writeLocale(locale, [...layer.files, index], index.path);
     const { stats } = built;
     console.log(
       `${locale}: ${stats.queries} queries, ${stats.answeredOnDevice} answered on device, ` +
@@ -178,24 +218,16 @@ try {
     );
   }
 
-  const manifest: ShardBaseManifest = {
-    format: "emojisense-shard-base",
-    formatVersion: 1,
-    packVersion: config.packVersion,
-    model: modelTag,
-    locales: manifestLocales,
-  };
-  // Written after every locale is built: the previous build was read for reuse until now.
-  rmSync(outDir, { recursive: true, force: true });
-  for (const file of files.values()) {
-    mkdirSync(dirname(join(outDir, file.path)), { recursive: true });
-    writeFileSync(join(outDir, file.path), file.json);
-  }
-  writeFileSync(join(outDir, BASE_MANIFEST_FILE), `${JSON.stringify(manifest, null, 2)}\n`);
-  const gzip = [...files.values()].reduce((sum, file) => sum + gzipBytes(file.json), 0);
+  const pruned = pruneUnnamed();
+  const files = readdirSync(join(outDir, SHARD_FILES_DIR));
+  const gzip = files.reduce(
+    (sum, name) => sum + gzipBytes(readFileSync(join(outDir, SHARD_FILES_DIR, name), "utf8")),
+    0,
+  );
   console.log(
-    `base: ${locales.length} locales, ${files.size} files, ${(gzip / 1024 / 1024).toFixed(1)} MB gzip, ` +
-      `model ${modelTag} → ${outDir} in ${((performance.now() - started) / 1000).toFixed(1)} s`,
+    `base: ${Object.keys(manifest.locales).length} locales, ${files.length} files (${written} new, ${pruned} ` +
+      `deleted), ${(gzip / 1024 / 1024).toFixed(1)} MB gzip, model ${modelTag} → ${outDir} in ` +
+      `${((performance.now() - started) / 1000).toFixed(1)} s`,
   );
 } finally {
   await disposeEmbeddings();

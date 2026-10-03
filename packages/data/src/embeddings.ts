@@ -101,6 +101,8 @@ function saveCache(model: EmbeddingModel, cache: Record<string, string>) {
 }
 
 const SAVE_EVERY_MS = 15_000;
+/** Waits before asking again after a failed call (not a context overflow). */
+const RETRY_DELAYS_MS = [2_000, 10_000, 30_000];
 
 const toBase64 = (v: Float32Array) => Buffer.from(v.buffer, v.byteOffset, v.byteLength).toString("base64");
 const fromBase64 = (s: string) => {
@@ -173,7 +175,7 @@ export async function embedTexts(
     // every batch would cost more than the API calls. A crash loses at most SAVE_EVERY_MS of work.
     let savedAt = performance.now();
     let next = 0;
-    const embedBatch = async (batch: number[]): Promise<void> => {
+    const embedBatch = async (batch: number[], attempt = 0): Promise<void> => {
       const started = performance.now();
       let result: unknown;
       try {
@@ -191,6 +193,11 @@ export async function embedTexts(
           await embedBatch(batch.slice(0, half));
           await embedBatch(batch.slice(half));
           return;
+        }
+        // A lost connection or a busy API: a long batch job waits and asks again.
+        if (attempt < RETRY_DELAYS_MS.length) {
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+          return embedBatch(batch, attempt + 1);
         }
         throw error;
       }
