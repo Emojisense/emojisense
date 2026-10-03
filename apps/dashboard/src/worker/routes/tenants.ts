@@ -15,6 +15,7 @@ import {
   parsePageLimit,
   parseTenantName,
   planAllows,
+  purgeCustomEmojiImages,
   type TenantRow,
   toTenant,
 } from "@emojisense/platform";
@@ -25,6 +26,7 @@ import type {
   TenantsResponse,
 } from "../../shared/contract";
 import { type AppAccess, type Permission, requireAppAccess } from "../access";
+import { apiUrlOf } from "../custom-emoji";
 import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { requirePlan } from "../plans";
@@ -101,13 +103,14 @@ export async function createAppTenant(ctx: AuthedContext): Promise<Response> {
 export async function deleteAppTenant(ctx: AuthedContext): Promise<Response> {
   const { app } = await requireTenantsAccess(ctx, "edit");
   const tenant = await requireTenant(ctx, app.id);
-  const emojiCount = await countTenantEmoji(ctx.env.DB, tenant);
-  const { emojiDeleted } = await deleteTenant(ctx.env.DB, ctx.env.EMOJI, tenant);
+  const { emojiDeleted, emojiIds } = await deleteTenant(ctx.env.DB, ctx.env.EMOJI, tenant);
+  // Same zone as the API Worker: its cached copies here go now, elsewhere within a day.
+  await purgeCustomEmojiImages(ctx.deps.cache, apiUrlOf(ctx.env), app.id, emojiIds);
   emitWebhookEvent(webhookRuntime(ctx), {
     type: "tenant.deleted",
     appId: app.id,
     data: { ...toTenant(tenant), emojiDeleted },
   });
-  const body: DeletedTenantResponse = { tenant: summary(tenant, emojiCount), emojiDeleted };
+  const body: DeletedTenantResponse = { tenant: summary(tenant, emojiDeleted), emojiDeleted };
   return json(body);
 }

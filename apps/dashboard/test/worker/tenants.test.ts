@@ -1,4 +1,4 @@
-import { verifyWebhookSignature } from "@emojisense/platform";
+import { customEmojiImageUrl, verifyWebhookSignature } from "@emojisense/platform";
 import { describe, expect, it } from "vitest";
 import type {
   CreatedWebhookResponse,
@@ -7,6 +7,8 @@ import type {
   TenantsResponse,
 } from "../../src/shared/contract";
 import { body, createAppFor, createHarness, joinTeam, NOW, setPlan } from "./harness";
+
+const API_URL = "https://api.test";
 
 /** An R2 stand-in that keeps objects in a Map. */
 function memoryBucket() {
@@ -25,7 +27,7 @@ function memoryBucket() {
 
 async function setup(plan: "scale" | "pro" = "scale") {
   const bucket = memoryBucket();
-  const h = createHarness({ EMOJI: bucket });
+  const h = createHarness({ EMOJI: bucket, API_URL });
   const cookie = await h.signIn("ada");
   setPlan(h, "ada", plan);
   const appId = await createAppFor(h, cookie);
@@ -147,6 +149,12 @@ describe("tenants: create, list, get, delete", () => {
     });
     expect([...bucket.objects.keys()]).toEqual([kept]);
     expect(h.db.rows("SELECT tenant_id FROM custom_emoji")).toEqual([{ tenant_id: other.id }]);
+    // The API Worker's cached images in this data center go now, as with a single emoji delete.
+    expect(h.purged.sort()).toEqual(
+      [`e_${acme.id}_wave`, `e_${acme.id}_party`]
+        .map((id) => customEmojiImageUrl(API_URL, context.appId, id))
+        .sort(),
+    );
     expect((await h.call("DELETE", `${tenants}/${acme.id}`, { cookie })).status).toBe(404);
   });
 });
