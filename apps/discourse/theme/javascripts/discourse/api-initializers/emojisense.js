@@ -125,6 +125,8 @@ export default apiInitializer((api) => {
     (Superclass) =>
       class extends Superclass {
         _applyEmojiAutocomplete() {
+          // The composer is open: load the packs now, so the first ":" answers at once.
+          sense.load();
           const textManipulation = this.textManipulation;
           if (!textManipulation?.autocomplete) {
             return super._applyEmojiAutocomplete();
@@ -152,6 +154,8 @@ export default apiInitializer((api) => {
     (Superclass) =>
       class extends Superclass {
         applyAutocomplete(textarea, options) {
+          // Chat inputs are on every chat page: load the packs when someone starts writing.
+          textarea?.addEventListener?.("focus", () => sense.load(), { once: true });
           return super.applyAutocomplete(textarea, withEmojisense(options));
         }
       },

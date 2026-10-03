@@ -2,7 +2,7 @@
  * The part of the Discourse theme component that is plain TypeScript: built into one ES module
  * (javascripts/discourse/lib/emojisense.js) that the theme's initializer imports.
  */
-import type { AliasEngine } from "emojisense";
+import type { AliasEngine, SemanticProvider } from "emojisense";
 import {
   createApiSemantic,
   createEngineLoader,
@@ -48,7 +48,10 @@ export interface SearchOptions {
 }
 
 export interface EmojisenseDiscourse {
-  /** Starts loading the packs, once. */
+  /**
+   * Starts loading the packs, once. Call it when someone shows the intent to write: the composer
+   * opens, or the chat input gets the focus.
+   */
   load(): void;
   isReady(): boolean;
   /** Discourse emoji names for a query, best first; `undefined` while the packs load. */
@@ -83,21 +86,28 @@ export function createEmojisense(options: EmojisenseDiscourseOptions): Emojisens
 
   const sources = new Map<SearchOptions["use"], SuggestionSource>();
   let engine: AliasEngine | undefined;
+  /** Kept across engines (core, then the extension packs), so loaded shards stay loaded. */
+  let semantic: { packVersion: string; provider: SemanticProvider | undefined } | undefined;
   loader.subscribe((next) => {
     engine = next;
     for (const source of sources.values()) source.dispose();
     sources.clear();
   });
+  const semanticFor = (packVersion: string) => {
+    if (semantic?.packVersion !== packVersion) {
+      semantic = {
+        packVersion,
+        provider: createApiSemantic({ endpoint: options.endpoint, key: options.publishableKey, packVersion }),
+      };
+    }
+    return semantic.provider;
+  };
   const sourceFor = (use: SearchOptions["use"], current: AliasEngine) => {
     let source = sources.get(use);
     if (!source) {
       source = createSuggestionSource({
         engine: current,
-        semantic: createApiSemantic({
-          endpoint: options.endpoint,
-          key: options.publishableKey,
-          packVersion: current.packVersion,
-        }),
+        semantic: semanticFor(current.packVersion),
         locale,
         limit: use === "picker" ? 48 : 12,
         region: "device",

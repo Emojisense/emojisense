@@ -12,7 +12,8 @@ in the emoji picker. Type `:ship it` and 🚀 comes first. Type `:mind blown` an
 ```
 
 - **Offline by default.** The packs (11 languages) ship as theme assets and load from the site
-  the first time someone types `:` or searches the picker. No search text leaves the browser.
+  when the composer opens or the chat input gets the focus, so the first `:` answers at once.
+  No search text leaves the browser.
 - **Site custom emoji** join the results by their names (`:party parrot` → `:party_parrot:`).
 - **Search by meaning** (optional): with a publishable key, unsure searches also ask the
   Emojisense API.
