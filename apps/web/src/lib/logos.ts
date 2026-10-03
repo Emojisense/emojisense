@@ -4,8 +4,13 @@
  * Icons come from Simple Icons 16.33.0 (CC0-1.0, https://simpleicons.org): the title and the single
  * path of `icons/<slug>.svg`, drawn on a 24 × 24 view box. They render in `currentColor`.
  *
- * Simple Icons does not carry Tiptap, Lexical, Frimousse, emoji-mart or Slack. Those are typographic
- * wordmarks: the name set in the display face, never a drawing that imitates a real logo.
+ * Simple Icons does not carry Tiptap or Lexical. Their marks are the official ones, unchanged and
+ * kept on their own view box: Tiptap's signet from the tiptap.dev navbar SVG, Lexical's from
+ * `packages/lexical-website/static/img/logo.svg` in facebook/lexical (both with the wordmark cut).
+ *
+ * Simple Icons does not carry Frimousse, emoji-mart, CKEditor, TinyMCE or Slack either. Those are
+ * typographic wordmarks: the name set in the display face, never a drawing that imitates a real
+ * logo.
  * All trademarks belong to their owners.
  */
 
@@ -42,10 +47,12 @@ interface LogoBase {
 
 export interface IconLogo extends LogoBase {
   kind: "icon";
-  /** Simple Icons slug. */
-  slug: string;
-  /** SVG path data on a 24 × 24 view box. */
+  /** Simple Icons slug, when the mark comes from Simple Icons. */
+  slug?: string;
+  /** SVG path data on `viewBox`. */
   path: string;
+  /** The path's view box, when it is not `LOGO_VIEWBOX`. */
+  viewBox?: string;
 }
 
 export interface WordmarkLogo extends LogoBase {
@@ -149,8 +156,20 @@ export const LOGOS: Record<LogoName, Logo> = {
     path: "M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z",
   },
   slack: { kind: "wordmark", label: "Slack", title: "Slack" },
-  tiptap: { kind: "wordmark", label: "Tiptap", title: "Tiptap" },
-  lexical: { kind: "wordmark", label: "Lexical", title: "Lexical" },
+  tiptap: {
+    kind: "icon",
+    label: "Tiptap",
+    title: "Tiptap",
+    viewBox: "0.25 0 20 20",
+    path: "M10.2499 0C8.40798 0 6.68237 0.497993 5.20039 1.36667C4.90185 1.54167 4.77093 1.93059 5.02448 2.16608C5.24757 2.37329 5.54646 2.5 5.87494 2.5H14.6248C14.9533 2.5 15.2522 2.37329 15.4753 2.16608C15.7289 1.93059 15.5979 1.54167 15.2994 1.36667C13.8174 0.497993 12.0918 0 10.2499 0ZM20.2498 10C20.2498 9.30963 19.6902 8.75 18.9998 8.75H1.49999C0.809625 8.75 0.25 9.30963 0.25 10C0.25 10.6904 0.809625 11.25 1.49999 11.25H18.9998C19.6902 11.25 20.2498 10.6904 20.2498 10ZM15.4753 17.8339C15.7289 18.0694 15.5979 18.4583 15.2994 18.6333C13.8174 19.502 12.0918 20 10.2499 20C8.40798 20 6.68236 19.502 5.20039 18.6333C4.90185 18.4583 4.77092 18.0694 5.02447 17.8339C5.24756 17.6267 5.54646 17.5 5.87494 17.5H14.6248C14.9533 17.5 15.2522 17.6267 15.4753 17.8339ZM1.49999 5.625C1.49999 4.93463 2.05961 4.375 2.74997 4.375H17.7498C18.4402 4.375 18.9998 4.93463 18.9998 5.625C18.9998 6.31537 18.4402 6.875 17.7498 6.875H2.74997C2.05961 6.875 1.49999 6.31537 1.49999 5.625ZM1.49999 14.375C1.49999 13.6846 2.05961 13.125 2.74997 13.125H17.7498C18.4402 13.125 18.9998 13.6846 18.9998 14.375C18.9998 15.0654 18.4402 15.625 17.7498 15.625H2.74997C2.05961 15.625 1.49999 15.0654 1.49999 14.375Z",
+  },
+  lexical: {
+    kind: "icon",
+    label: "Lexical",
+    title: "Lexical",
+    viewBox: "0 19 118 118",
+    path: "M0 37h83v10H10v62h73v10H0V37ZM118 37h-15v10h5v62h-5v10h15V37ZM78 32V22h31v10H98v92h11v10H78v-10h10V32H78ZM20 57h22v10H20V57ZM47 57h22v10H47V57ZM74 57h9v10h-9V57ZM20 73h36v10H20V73ZM61 73h22v10H61V73ZM20 89h22v10H20V89ZM47 89h22v10H47V89ZM74 89h9v10h-9V89Z",
+  },
   frimousse: { kind: "wordmark", label: "Frimousse", title: "Frimousse" },
   emojiMart: { kind: "wordmark", label: "emoji-mart", title: "emoji-mart" },
   ckeditor: { kind: "wordmark", label: "CKEditor", title: "CKEditor 5" },

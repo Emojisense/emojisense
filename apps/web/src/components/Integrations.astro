@@ -203,7 +203,7 @@ const docsLang = locale === "en" ? undefined : "en";
                       {item.logos.map((name) => {
                         const logo = LOGOS[name];
                         return logo.kind === "icon" ? (
-                          <svg class="int-icon" viewBox={LOGO_VIEWBOX} focusable="false">
+                          <svg class="int-icon" viewBox={logo.viewBox ?? LOGO_VIEWBOX} focusable="false">
                             <path d={logo.path} />
                           </svg>
                         ) : (

@@ -30,7 +30,7 @@ const names: LogoName[] = [
         return (
           <li class="strip-item" title={logo.title}>
             {logo.kind === "icon" && (
-              <svg viewBox={LOGO_VIEWBOX} aria-hidden="true" focusable="false">
+              <svg viewBox={logo.viewBox ?? LOGO_VIEWBOX} aria-hidden="true" focusable="false">
                 <path d={logo.path} />
               </svg>
             )}
