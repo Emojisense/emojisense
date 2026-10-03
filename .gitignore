@@ -26,3 +26,8 @@ apps/web/src/pages/dev/
 
 # Store artifacts built by `pnpm package:chrome` and `pnpm package:raycast` (RELEASING.md)
 /release/
+
+# Internal notes: kept on this machine, never in the repository
+/DECISIONS.md
+/TASKS.md
+/docs/PRICING.md
