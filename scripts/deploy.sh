@@ -43,7 +43,11 @@ no_index() {
 }
 
 echo "→ Build packages and data"
-pnpm -C "$ROOT" exec turbo run build --filter=emojisense --filter=@emojisense/platform --filter=@emojisense/data
+# The Worker's packages, and every workspace package the dashboard and the website import
+# (`^...`): a fresh checkout builds them (the website needs @emojisense/react and
+# @emojisense/tiptap), and none ships from a stale local build.
+pnpm -C "$ROOT" exec turbo run build --filter=emojisense --filter=@emojisense/platform --filter=@emojisense/data \
+  --filter='@emojisense/dashboard^...' --filter='@emojisense/web^...'
 # Vectors come from the embedding cache; only changed documents call Workers AI.
 # The semantic model comes from packages/data/pack.config.json.
 EMBED_MODEL=$(node -p 'require(process.argv[1]).model.key' "$ROOT/packages/data/pack.config.json")
