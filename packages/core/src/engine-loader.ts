@@ -2,7 +2,7 @@ import { type Culture, cultureUrlFor, loadCulture } from "./culture.js";
 import { type AliasEngine, createEngine } from "./engine.js";
 import { createLayeredSemantic } from "./layered.js";
 import type { Pack } from "./pack.js";
-import { type PackIndexState, sharedPackIndex, whenQuiet as defaultWhenQuiet } from "./pack-index.js";
+import { whenQuiet as defaultWhenQuiet, type PackIndexState, sharedPackIndex } from "./pack-index.js";
 import type { SemanticProvider } from "./provider.js";
 
 export interface EngineLoaderOptions {

@@ -5,9 +5,9 @@ import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { TextSelection } from "@tiptap/pm/state";
 import type { AliasEngine } from "emojisense";
+import { createEngineLoader } from "emojisense/autocomplete";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojiAutocomplete, type EmojiAutocompleteOptions } from "../src/index.js";
-import { createEngineLoader } from "emojisense/autocomplete";
 import { en, engine, stubSemantic } from "./fixture.js";
 
 let editor: Editor | undefined;

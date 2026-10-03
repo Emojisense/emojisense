@@ -34,7 +34,9 @@ describe("sharedPackIndex", () => {
     const [a, b] = await Promise.all([first.load(), second.load()]);
     expect(b).toBe(a);
     expect(requests).toHaveLength(2);
-    expect(sharedPackIndex({ ...options, packUrl: "https://packs.test/0.1.0", locale: "en" })).not.toBe(first);
+    expect(sharedPackIndex({ ...options, packUrl: "https://packs.test/0.1.0", locale: "en" })).not.toBe(
+      first,
+    );
   });
 
   it("builds the extension index only when typing pauses", async () => {
