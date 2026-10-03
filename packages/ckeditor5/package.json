@@ -1,0 +1,67 @@
+{
+  "name": "@emojisense/ckeditor5",
+  "version": "0.0.0",
+  "description": "CKEditor 5 plugin: `:` emoji autocomplete ranked by Emojisense.",
+  "keywords": [
+    "emoji",
+    "emoji-search",
+    "ckeditor5",
+    "ckeditor5-plugin",
+    "ckeditor5-feature",
+    "mention",
+    "autocomplete",
+    "editor"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/ckeditor5"
+  },
+  "license": "MIT",
+  "author": "Emojisense",
+  "type": "module",
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/augmentation.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run && vitest run --config vitest.ck47.config.ts"
+  },
+  "dependencies": {
+    "emojisense": "workspace:^"
+  },
+  "peerDependencies": {
+    "@ckeditor/ckeditor5-core": ">=47.0.0",
+    "ckeditor5": ">=47.0.0"
+  },
+  "devDependencies": {
+    "@ckeditor/ckeditor5-core": "48.5.2",
+    "ckeditor5": "48.5.2",
+    "ckeditor5-47": "npm:ckeditor5@47.6.2",
+    "happy-dom": "20.14.5"
+  }
+}
