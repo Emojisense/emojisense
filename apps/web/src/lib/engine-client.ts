@@ -1,12 +1,13 @@
 /**
  * One engine for every live demo on a page. The first engine is the English core plus the core
  * pack of the page's language (from `<html lang>`), so the first keystroke is answered at once in
- * the visitor's language. The full engine adds the visitor's other languages (the browser's) and
- * the extension packs, and loads only when something asks: a demo, a visitor who starts typing, or
- * an idle page on a desktop with a fast connection. Every language (22 packs, several MB, seconds
- * of indexing on a phone) loads only for the showcases that need it: the playground and the
- * assistant demo. Every pack file is fetched once and each engine is built once, shared by all
- * islands. Searches match the visitor's languages only (`visitorLocales`), whatever is loaded.
+ * the visitor's language. The full engine adds the core packs of every language and the extension
+ * packs of the visitor's languages (the browser's), and loads only when something asks: a demo, a
+ * visitor who starts typing, or an idle page on a desktop with a fast connection. Every extension
+ * pack too (22 packs, several MB, seconds of indexing on a phone) loads only for the showcases that
+ * need it: the playground and the assistant demo. Every pack file is fetched once and each engine
+ * is built once, shared by all islands. The demos show search in every language: a visitor whose
+ * phone is in English still finds a Turkish word (`searchLocales`), the visitor's own first.
  */
 import {
   type AliasEngine,
@@ -28,7 +29,7 @@ const QUIET_MS = 800;
 const IDLE_TIMEOUT_MS = 5000;
 
 type Part = "core" | "ext";
-/** "visitor": the visitor's languages (`fullEngine`). "all": every language (`showcaseEngine`). */
+/** "visitor": every core pack, the visitor's extensions (`fullEngine`). "all": every pack (`showcaseEngine`). */
 export type EngineScope = "visitor" | "all";
 type FullEngineListener = (engine: Promise<AliasEngine>) => void;
 
@@ -38,8 +39,6 @@ const fullEngineListeners: Record<EngineScope, Set<FullEngineListener>> = {
   all: new Set(),
 };
 const fullEngines: Partial<Record<EngineScope, Promise<AliasEngine>>> = {};
-/** Languages an island shows besides the visitor's (the hero's examples): their core packs join the full engine. */
-const requested = new Set<DemoLocale>();
 let first: Promise<AliasEngine> | undefined;
 let visitor: DemoLocale[] | undefined;
 let semantic: SemanticProvider | undefined;
@@ -114,7 +113,7 @@ export function labelOf(
 
 /**
  * The visitor's languages that have a pack: the page's first, then the browser's, always English.
- * Search only these: a visitor of English and Turkish never gets a Portuguese alias's match.
+ * Their extension packs join the full engine.
  */
 export function visitorLocales(): DemoLocale[] {
   visitor ??= userLocales({
@@ -125,14 +124,12 @@ export function visitorLocales(): DemoLocale[] {
 }
 
 /**
- * Adds the core packs of `locales` to the full engine, for an island that shows searches in them
- * (the hero's examples). Ask on mount: the full engine reads the list when it starts loading.
+ * What the demos search: every language, the visitor's first (`visitorLocales`). A demo shows
+ * search in all 11 languages, so a word of any of them is found whatever the phone is set to.
  */
-export function requestLanguages(locales: readonly string[]): void {
-  for (const locale of locales) {
-    const known = DEMO_LOCALES.find((demo) => demo === locale);
-    if (known) requested.add(known);
-  }
+export function searchLocales(): DemoLocale[] {
+  const own = visitorLocales();
+  return [...own, ...DEMO_LOCALES.filter((locale) => !own.includes(locale))];
 }
 
 /** English core plus the page language's core pack: small, fast, and in the visitor's language. */
@@ -148,8 +145,8 @@ export function firstEngine(): Promise<AliasEngine> {
 }
 
 /**
- * The visitor's languages, core and extension packs, plus the core packs of the languages islands
- * requested (`requestLanguages`). A pack that fails to load is skipped.
+ * Every language's core pack and the visitor's extension packs. A pack that fails to load is
+ * skipped.
  */
 export function fullEngine(): Promise<AliasEngine> {
   return startEngine("visitor");
@@ -174,7 +171,7 @@ function startEngine(scope: EngineScope): Promise<AliasEngine> {
 async function buildEngine(scope: EngineScope): Promise<AliasEngine> {
   await firstEngine();
   const extended = scope === "all" ? [...DEMO_LOCALES] : visitorLocales();
-  const core = [...new Set([...extended, ...requested])];
+  const core = [...new Set([...extended, ...DEMO_LOCALES])];
   // Core packs first, English first: the first pack is the primary one (with shortcodes).
   const ordered = (locales: readonly DemoLocale[]) => ["en", ...locales.filter((locale) => locale !== "en")];
   const wanted = [

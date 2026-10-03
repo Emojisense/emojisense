@@ -14,7 +14,7 @@ import { API_URL, PACK_VERSION } from "../config";
 import { classifyPhoto, downscale, type PhotoReading, UNREADABLE } from "../demos/photo/classify";
 import credits from "../demos/photo/credits.json";
 import fixtures from "../demos/photo/fixtures.json";
-import { visitorLocales } from "../lib/engine-client";
+import { searchLocales } from "../lib/engine-client";
 import { CodePanel } from "./CodePanel";
 import { parseServerTiming, type TimingEntry } from "./lib/edge";
 import { formatBytes } from "./lib/format";
@@ -244,7 +244,7 @@ export function PhotoLab({ engine, online, active, codeTab, onCodeTab, announce 
     const text = description.trim();
     if (!text || !engine) return;
     const startedAt = performance.now();
-    const { results } = engine.search(text, { limit: LIMIT, prefix: false, locales: visitorLocales() });
+    const { results } = engine.search(text, { limit: LIMIT, prefix: false, locales: searchLocales() });
     setStatus({
       kind: "done",
       reading: { caption: text, reaction: "", results },

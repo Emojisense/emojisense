@@ -2,7 +2,7 @@ import { type AliasResult, createSearchSession, type SearchResult, type SessionS
 import { type CSSProperties, type KeyboardEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useDemoI18n } from "../i18n/demos";
 import { rich } from "../i18n/react";
-import { labelOf, pageLocale, sharedSemantic, useEngine, visitorLocales } from "../lib/engine-client";
+import { labelOf, pageLocale, searchLocales, sharedSemantic, useEngine } from "../lib/engine-client";
 import { formatClock } from "./chat/content";
 import { meaningStage, usePromoted } from "./meaning";
 import { searchCustom } from "./workspaces/custom-engine";
@@ -120,7 +120,7 @@ export default function WorkspacesDemo() {
             engine,
             ...(semantic ? { semantic } : {}),
             locale,
-            locales: visitorLocales(),
+            locales: searchLocales(),
             limit: STANDARD_LIMIT,
             debounceMs: 180,
             onChange: setStandard,

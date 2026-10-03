@@ -1,6 +1,6 @@
 import type { AliasEngine, SearchResult } from "emojisense";
 import { API_URL, PUBLISHABLE_KEY } from "../../config";
-import { pageLocale, visitorLocales } from "../../lib/engine-client";
+import { pageLocale, searchLocales } from "../../lib/engine-client";
 
 export interface ReactionSuggestions {
   results: SearchResult[];
@@ -29,7 +29,7 @@ export function suggestOnDevice(engine: AliasEngine, text: string): SearchResult
     .filter((clause) => clause.split(/\s+/).length >= 2);
   const best = new Map<string, SearchResult>();
   for (const clause of new Set([text, ...clauses])) {
-    const options = { limit: SHOWN, prefix: false, locale: pageLocale(), locales: visitorLocales() };
+    const options = { limit: SHOWN, prefix: false, locale: pageLocale(), locales: searchLocales() };
     for (const result of engine.search(clause, options).results) {
       if (result.score < MIN_DEVICE_SCORE) continue;
       const previous = best.get(result.id);

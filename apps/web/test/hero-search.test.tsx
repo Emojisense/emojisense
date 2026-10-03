@@ -29,14 +29,13 @@ vi.mock("../src/lib/engine-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/lib/engine-client")>()),
   useEngine: () => ({ engine, ready: "english" }),
   fullEngine: async () => engine,
-  requestLanguages: () => {},
   sharedSemantic: (): SemanticProvider => ({
     search: (query, options) => edge(query, options),
     peek: (query, options) => peek(query, options),
   }),
   sharedStats: () => undefined,
   pageLocale: () => "en",
-  visitorLocales: () => ["en"],
+  searchLocales: () => ["en"],
 }));
 
 afterEach(() => {

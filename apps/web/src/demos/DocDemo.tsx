@@ -5,9 +5,9 @@ import {
   firstEngine,
   fullEngine,
   pageLocale,
+  searchLocales,
   sharedSemantic,
   useEngine,
-  visitorLocales,
 } from "../lib/engine-client";
 import { useAutoplayControl } from "./autoplay-control";
 import { DEFAULT_ICON, docCopy, documentHtml, TEAMMATE } from "./doc/content";
@@ -199,7 +199,7 @@ export default function DocDemo() {
         copy,
         words: messages.doc,
         locale: pageLocale(),
-        locales: visitorLocales(),
+        locales: searchLocales(),
         content: documentHtml(copy, reduced),
         engine: () => engineRef.current,
         semantic: sharedSemantic,

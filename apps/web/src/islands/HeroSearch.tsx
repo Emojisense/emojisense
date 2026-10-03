@@ -7,11 +7,10 @@ import {
   fullEngine,
   labelOf,
   pageLocale,
-  requestLanguages,
+  searchLocales,
   sharedSemantic,
   sharedStats,
   useEngine,
-  visitorLocales,
 } from "../lib/engine-client";
 import "./hero-search.css";
 
@@ -41,8 +40,6 @@ export interface HeroSearchProps {
 /** The hero: one big search box running the real engine in the visitor's browser. */
 export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   const t = useTranslator(messages, lang);
-  // The page's language answers the first keystroke; the others wait for interest or an idle page.
-  useEffect(() => requestLanguages(examples.flatMap((e) => (e.lang ? [e.lang] : []))), [examples]);
   const { engine, ready } = useEngine({ upgrade: "idle" });
   const [query, setQuery] = useState("");
   const [state, setState] = useState<SessionState | undefined>();
@@ -60,11 +57,12 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   const multilingual = ready === "all";
   const locale = useMemo(() => pageLocale(), []);
   // An example, autoplayed or picked from the chips, is searched in its own language only. The
-  // visitor's own typing is searched in the visitor's languages: never a Portuguese alias for a
-  // visitor of English and Turkish, though the page loads Spanish for its examples.
+  // visitor's own typing is searched in every language, the visitor's first: an English phone in
+  // Istanbul still finds "ruj". The page's language answers the first keystroke; the other
+  // languages join with the full engine.
   const picked = auto ? examples[example] : examples.find((e) => e.query === query);
   const searchLocale = picked?.lang || locale;
-  const searchLocales = picked ? searchLocale : visitorLocales().join(",");
+  const searched = picked ? searchLocale : searchLocales().join(",");
   const firstLocales = useMemo(() => new Set(["en", locale]), [locale]);
   const languageNames = useMemo(() => new Intl.DisplayNames([lang], { type: "language" }), [lang]);
 
@@ -75,7 +73,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
       engine,
       ...(semantic ? { semantic } : {}),
       locale: searchLocale,
-      locales: searchLocales.split(","),
+      locales: searched.split(","),
       limit: LIMIT,
       debounceMs: 160,
       onChange: (next) => {
@@ -83,7 +81,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
         if (visitorRef.current) sharedStats()?.observe(next);
       },
     });
-  }, [engine, searchLocale, searchLocales]);
+  }, [engine, searchLocale, searched]);
 
   useEffect(() => {
     session?.update(query);

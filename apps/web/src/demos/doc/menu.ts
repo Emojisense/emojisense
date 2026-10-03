@@ -2,7 +2,7 @@ import type { EmojiSuggestion, EmojiSuggestionProps, EmojiSuggestionRenderer } f
 import type { AliasEngine } from "emojisense";
 import type { DemoMessages } from "../../i18n/demos";
 import { interpolate, splitTags } from "../../i18n/translate";
-import { visitorLocales } from "../../lib/engine-client";
+import { searchLocales } from "../../lib/engine-client";
 import { type MeaningStage, promotedIds } from "../meaning";
 import { describeEmoji, matchesFor } from "./describe";
 
@@ -108,7 +108,7 @@ export function createDocMenu(
   function renderRows() {
     if (!listbox || !heading) return;
     const engine = getEngine();
-    const matches = engine && query ? matchesFor(engine, query, locale, visitorLocales()) : new Map();
+    const matches = engine && query ? matchesFor(engine, query, locale, searchLocales()) : new Map();
     const title = element("span", "doc-menu-title");
     title.append(
       ...splitTags(words.matching).map((part) => {
