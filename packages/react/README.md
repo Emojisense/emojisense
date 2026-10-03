@@ -27,14 +27,40 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 
 | Option | Effect |
 | ------ | ------ |
-| `packBaseUrl` | Pack version directory. The core pack renders first. The extension pack loads when the browser is idle (`extended: false` turns it off). |
+| `packBaseUrl` | Pack version directory. The core pack renders first. The extension pack downloads when the browser is idle, and its index is built in a pause in typing (`extended: false` turns it off). |
 | `locale` | `"tr"` loads the Turkish pack next to English. |
 | `shardsUrl` | Precomputed results. Omit it when no shards are deployed. |
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
 | `statsUrl`, `statsSample` | Report how searches end and which results are picked (`POST /v1/events`), from a share of sessions (default 0.1). Off when omitted. `EmojisensePicker` reports its picks; with your own UI call `sense.stats?.pick(query, id)`. |
-| `cultureUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the culture and the moment join the results after the top result, never above it (`source: "culture"`, with `context` and `cultureId`). A failed load is ignored. |
+| `cultureUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the culture and the moment join the results after the top result, never above it (`source: "culture"`, with `context` and `cultureId`). Default: the culture directory next to `packBaseUrl`; `false` keeps the canonical ranking. A failed load is ignored, and the file never delays the first results. |
 | `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. Default: the region of the browser's language (`navigator.language` `"pt-BR"` → `"BR"`; none without a region subtag). It is read on the device and never sent. `""` turns regional entries off. `"auto"`: the API reports the region of the request's country (`region=auto`, needs `endpoint`); searches use it after the first API answer, and `useRelevantNow` shows entries for every region only. |
 | `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg?key={publishableKey}" alt="{emoji}" loading="lazy">` and need `endpoint` and a `publishableKey` whose plan includes hosted sets (Solo and up). When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |
+
+### When the packs load
+
+The packs load when the component that calls `useEmojisense` mounts. To load them when the
+picker opens, call the hook inside the picker's popover. All hooks with the same `packBaseUrl`,
+`locale` and `extended` share one download and one index. A picker that opens again is ready on
+its first render. To start a little earlier, preload when the pointer moves onto or focus enters
+the button that opens the picker:
+
+```tsx
+import { preloadEmojisense } from "@emojisense/react";
+
+const packs = { packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0" };
+
+<button onPointerEnter={() => preloadEmojisense(packs)} onFocus={() => preloadEmojisense(packs)}>
+  🙂
+</button>;
+```
+
+| Moment | English core pack (156 KB with Brotli) |
+| ------ | -------------------------------------- |
+| Packs in the HTTP cache | Ready in 0.05–0.2 s, before the first keystroke |
+| First visit, 4G | Ready in 0.4–0.8 s, at about the first to third character |
+| Picker opens again | Ready at once (the index stays in memory) |
+
+A query typed before the packs arrive has the status `loading` and runs as soon as they arrive.
 
 `useEmojiSearch(query, sense, { culture: false })` keeps the canonical ranking (for tests and
 benchmarks). `useRelevantNow(sense, { limit })` returns `{ emoji, hexcode, context, cultureId }`
@@ -48,7 +74,7 @@ after a debounce and are fused in without moving confident alias hits.
 
 | Field | Meaning |
 | ----- | ------- |
-| `status` | `idle`, `alias`, `loading`, `fused` or `error` |
+| `status` | `idle`, `alias`, `loading` (packs or semantic results on the way), `fused` or `error` |
 | `layer` | Which layer produced `results`: `device`, `shard` or `api`. `undefined` while idle or loading. Count it when `status` settles to build per-layer counters. |
 | `aliasMs`, `semanticMs`, `semanticCached` | Timings for latency displays |
 
@@ -62,7 +88,8 @@ import { EmojisensePicker } from "@emojisense/react/frimousse";
 
 Frimousse keeps its browse view. Typed queries show the Emojisense ranking as an ARIA listbox
 with the same `onEmojiSelect` contract and skin tone. The picker can mount before the packs
-arrive. It shows Frimousse's loading state and remounts when they are ready.
+arrive. It shows Frimousse's loading state and remounts when they are ready. The search input
+keeps the focus and the typed text through that remount (`useFocusAcrossRemount`).
 
 `showRelevantNow` (off by default) adds a "Relevant now" row above the browse list when
 `cultureUrl` is set (`relevantNowLabel` renames it; style it with `[data-emojisense-relevant-now]`).

@@ -1,7 +1,7 @@
 "use client";
 
 import { EmojiGlyph, type Emojisense, useEmojiSearch } from "@emojisense/react";
-import { useEmojisenseResolver } from "@emojisense/react/frimousse";
+import { useEmojisenseResolver, useFocusAcrossRemount } from "@emojisense/react/frimousse";
 import { applySkinTone, type EmojiSet, type SearchResult, type SkinTone } from "emojisense";
 import {
   type EmojiPickerListCategoryHeaderProps,
@@ -43,6 +43,8 @@ type EmojiPickerContextValue = {
   onEmojiSelect: (emoji: SelectedEmoji) => void;
   /** Draws the emoji with the hosted set from `useEmojisense({ emojiSet })`. */
   glyph: { emojiSet: EmojiSet | undefined; endpoint: string | undefined };
+  /** Keeps the search input's focus when the picker remounts as the packs arrive. */
+  searchRef: (input: HTMLInputElement | null) => void;
 };
 
 const EmojiPickerContext = React.createContext<EmojiPickerContextValue | null>(null);
@@ -75,6 +77,7 @@ function EmojiPicker({
   const listboxId = React.useId();
   const { results } = useEmojiSearch(query, emojisense, { limit });
   const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
+  const searchRef = useFocusAcrossRemount();
   const { engine, locale, emojiSet, endpoint } = emojisense;
   const glyph = React.useMemo(() => ({ emojiSet, endpoint }), [emojiSet, endpoint]);
 
@@ -103,8 +106,9 @@ function EmojiPicker({
       labelOf,
       onEmojiSelect: select,
       glyph,
+      searchRef,
     }),
-    [query, setQuery, results, activeIndex, columns, listboxId, labelOf, select, glyph],
+    [query, setQuery, results, activeIndex, columns, listboxId, labelOf, select, glyph, searchRef],
   );
 
   return (
@@ -148,6 +152,7 @@ function EmojiPickerSearch({
     listboxId,
     labelOf,
     onEmojiSelect,
+    searchRef,
   } = useEmojiPicker();
   const [skinTone] = useSkinTone();
   const hasResults = query.trim() !== "" && results.length > 0;
@@ -186,6 +191,7 @@ function EmojiPickerSearch({
         <path d="m20 20-3.5-3.5" />
       </svg>
       <EmojiPickerPrimitive.Search
+        ref={searchRef}
         data-slot="emoji-picker-search"
         className="placeholder:text-muted-foreground flex h-10 w-full bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
         placeholder={placeholder}

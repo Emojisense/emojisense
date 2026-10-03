@@ -34,7 +34,8 @@ describe("useEmojisense + useEmojiSearch", () => {
   it("adds the extension packs when idle", async () => {
     vi.stubGlobal("fetch", packFetchWithExt());
     const { result: sense } = renderHook(() => useEmojisense({ packBaseUrl: "https://x.test" }));
-    await waitFor(() => expect(sense.current.extended).toBe(true));
+    // The extension index waits for a pause in typing; the test before this one typed.
+    await waitFor(() => expect(sense.current.extended).toBe(true), { timeout: 5000 });
     const { result } = renderHook(() => useEmojiSearch("to infinity and beyond", sense.current));
     await waitFor(() => expect(result.current.results[0]?.emoji).toBe("🚀"));
   });

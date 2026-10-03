@@ -8,9 +8,7 @@ import {
   deviceRegion,
   type EmojiSet,
   isAutoRegion,
-  loadCulture,
   loadCustomPack,
-  loadPacks,
   localDay,
   type Pack,
   type RelevantEmoji,
@@ -21,8 +19,9 @@ import {
   type SessionState,
   type SessionStatus,
 } from "emojisense";
+import { createEngineLoader, type EngineLoader } from "emojisense/autocomplete";
 import { createStatsReporter, type StatsReporter } from "emojisense/stats";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 export interface EmojisenseOptions {
   /** Pack version base URL, e.g. "https://api.emojisense.com/v1/pack/0.1.0". */
@@ -37,7 +36,10 @@ export interface EmojisenseOptions {
   /** Semantic API base URL (layer 3). Omit both this and `shardsUrl` for on-device search only. */
   endpoint?: string;
   publishableKey?: string;
-  /** Load the extension packs (more aliases, typos) when the browser is idle. Default true. */
+  /**
+   * Load the extension packs (more aliases, typos) after the core packs. Their index is built in
+   * a pause in typing. Default true.
+   */
   extended?: boolean;
   /**
    * How pickers draw emoji. Default "native" (the system font). "twemoji", "noto" and "fluent"
@@ -54,10 +56,11 @@ export interface EmojisenseOptions {
   tenant?: string;
   /**
    * Culture files, e.g. "https://api.emojisense.com/v1/culture/0.1.0". Editorial emoji for the
-   * moment and the culture join the results after the top result (never above it). Omit it for
-   * the canonical ranking. A failed load is ignored.
+   * moment and the culture join the results after the top result (never above it). Default: the
+   * culture directory next to `packBaseUrl`. `false`: the canonical ranking only. A failed load
+   * is ignored, and the culture file never delays the first engine.
    */
-  cultureUrl?: string;
+  cultureUrl?: string | false;
   /**
    * ISO 3166-1 alpha-2 region, e.g. "BR". Regional culture entries apply only with it. Default:
    * the region of the browser's language (`navigator.language` "pt-BR" → "BR"), read on the
@@ -85,7 +88,7 @@ export interface Emojisense {
   customPack?: Pack;
   locale: string;
   status: "loading" | "ready" | "error";
-  /** True once the idle-time extension packs are in the engine. */
+  /** True once the extension packs are in the engine. */
   extended: boolean;
   /** How pickers draw emoji; see `EmojisenseOptions.emojiSet`. Undefined = "native". */
   emojiSet?: EmojiSet;
@@ -102,7 +105,31 @@ export interface Emojisense {
   error?: unknown;
 }
 
-/** Load the data packs once and build the alias engine (and the semantic layers, if configured). */
+type LoaderOptions = Pick<EmojisenseOptions, "packBaseUrl" | "locale" | "extended" | "cultureUrl">;
+
+const NO_PACKS: readonly Pack[] = [];
+
+/**
+ * The pack loader for these options. Every hook, picker and `preloadEmojisense` call with the same
+ * `packBaseUrl`, `locale` and `extended` shares one download and one index, so a picker that mounts
+ * again is ready on its first render.
+ */
+function packLoader({ packBaseUrl, locale = "en", extended = true, cultureUrl }: LoaderOptions): EngineLoader {
+  return createEngineLoader({ packUrl: packBaseUrl, locale, extended, cultureUrl });
+}
+
+/**
+ * Start loading the packs before a picker mounts, e.g. when the pointer moves onto or focus enters
+ * the button that opens it. `useEmojisense` with the same options then uses this download.
+ */
+export function preloadEmojisense(options: LoaderOptions): void {
+  packLoader(options).preload();
+}
+
+/**
+ * Load the data packs and build the alias engine (and the semantic layers, if configured). The
+ * load starts when the component mounts: mount the hook with the picker to load on open.
+ */
 export function useEmojisense(options: EmojisenseOptions): Emojisense {
   const {
     packBaseUrl,
@@ -119,10 +146,6 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     statsUrl,
     statsSample,
   } = options;
-  const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
-    packs: [],
-    extended: false,
-  });
   const [customPack, setCustomPack] = useState<Pack>();
 
   useEffect(() => {
@@ -145,61 +168,38 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     return () => controller.abort();
   }, [customEmoji, endpoint, publishableKey, tenant]);
 
+  const loader = useMemo(
+    () => packLoader({ packBaseUrl, locale, extended, cultureUrl }),
+    [packBaseUrl, locale, extended, cultureUrl],
+  );
+  // The loader's engine carries the culture file once it is there (`engine.culture`).
+  const localeEngine = useSyncExternalStore(loader.subscribe, loader.current, loader.current);
+  const loadedPacks = localeEngine ? loader.packs() : NO_PACKS;
+  const packs = useMemo(() => [...loadedPacks], [loadedPacks]);
+  const [failure, setFailure] = useState<{ loader: EngineLoader; error: unknown }>();
   useEffect(() => {
-    const controller = new AbortController();
-    const { signal } = controller;
-    let idle: number | undefined;
-    setState({ packs: [], extended: false });
-    loadPacks({ baseUrl: packBaseUrl, locales: [locale], signal }).then(
-      (core) => {
-        setState({ packs: core, extended: false });
-        if (!extended) return;
-        // Core packs answer right away; the extension (≈ 2× the size) waits for an idle moment.
-        idle = whenIdle(() => {
-          loadPacks({ baseUrl: packBaseUrl, locales: [locale], signal, part: "ext" }).then(
-            (ext) => setState({ packs: [...core, ...ext], extended: true }),
-            () => {
-              // The core packs keep working; the extension is an optional upgrade.
-            },
-          );
-        });
-      },
-      (error: unknown) => {
-        if (!signal.aborted) setState({ packs: [], extended: false, error });
-      },
-    );
+    let active = true;
+    loader.load().catch((error: unknown) => {
+      if (active) setFailure({ loader, error });
+    });
     return () => {
-      controller.abort();
-      if (idle !== undefined) cancelIdle(idle);
+      active = false;
     };
-  }, [packBaseUrl, locale, extended]);
+  }, [loader]);
+  const error = failure?.loader === loader && !localeEngine ? failure.error : undefined;
 
-  const [culture, setCulture] = useState<Culture | undefined>(undefined);
-  useEffect(() => {
-    setCulture(undefined);
-    if (!cultureUrl) return;
-    const controller = new AbortController();
-    loadCulture({ baseUrl: cultureUrl, locale, signal: controller.signal }).then(
-      (loaded) => {
-        if (!controller.signal.aborted) setCulture(loaded);
-      },
-      () => {
-        // The culture layer only adds results; search works the same without it.
-      },
-    );
-    return () => controller.abort();
-  }, [cultureUrl, locale]);
-
-  const baseEngine = useMemo(
-    () =>
-      state.packs.length > 0
-        ? createEngine(customPack ? [...state.packs, customPack] : state.packs)
-        : undefined,
-    [state.packs, customPack],
+  const culture = localeEngine?.culture;
+  // The custom pack needs its own index; without one, the shared index is used as it is.
+  const customEngine = useMemo(
+    () => (customPack && packs.length > 0 ? createEngine([...packs, customPack]) : undefined),
+    [packs, customPack],
   );
   // withCulture shares the index, so a culture file arriving later does not rebuild it.
-  const engine = useMemo(() => baseEngine?.withCulture(culture), [baseEngine, culture]);
-  const packVersion = state.packs[0]?.packVersion;
+  const engine = useMemo(
+    () => (customEngine ? customEngine.withCulture(culture) : localeEngine),
+    [customEngine, culture, localeEngine],
+  );
+  const packVersion = packs[0]?.packVersion;
   const semantic = useMemo(
     () => createLayeredSemantic({ shardsUrl, endpoint, key: publishableKey, packVersion }),
     [shardsUrl, endpoint, publishableKey, packVersion],
@@ -222,18 +222,18 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
   return {
     engine,
     semantic,
-    packs: state.packs,
+    packs,
     ...(customPack ? { customPack } : {}),
     locale,
-    status: state.error ? "error" : engine ? "ready" : "loading",
-    extended: state.extended,
+    status: error !== undefined ? "error" : engine ? "ready" : "loading",
+    extended: packs.some((pack) => pack.part === "ext"),
     emojiSet,
     ...(endpoint ? { endpoint } : {}),
     ...(publishableKey ? { publishableKey } : {}),
     ...(culture ? { culture } : {}),
     ...(region ? { region } : {}),
     ...(stats ? { stats } : {}),
-    ...(state.error ? { error: state.error } : {}),
+    ...(error !== undefined ? { error } : {}),
   };
 }
 
@@ -270,6 +270,7 @@ const IDLE: EmojiSearchState = {
   semanticCached: undefined,
   layer: undefined,
 };
+const LOADING: EmojiSearchState = { ...IDLE, status: "loading" };
 
 /**
  * Search as the user types. Alias results update synchronously on every keystroke; semantic
@@ -295,7 +296,8 @@ export function useEmojiSearch(
       limit,
       debounceMs,
       ...(culture ? {} : { culture: false as const }),
-      ...(region ? { region } : {}),
+      // The region is resolved here; "" tells the session not to use the device's region.
+      region: region ?? "",
       onChange: (s) => {
         stats?.observe(s);
         setState({
@@ -321,7 +323,9 @@ export function useEmojiSearch(
     sessionRef.current?.update(query);
   }, [query, engine]);
 
-  return query.trim() === "" ? IDLE : state;
+  if (query.trim() === "") return IDLE;
+  // A query typed before the packs arrived runs as soon as they do.
+  return engine ? state : LOADING;
 }
 
 export interface UseRelevantNowOptions {
@@ -369,17 +373,4 @@ function layerOf(state: SessionState): SemanticLayer | undefined {
     default:
       return undefined;
   }
-}
-
-const IDLE_TIMEOUT_MS = 2000;
-
-function whenIdle(callback: () => void): number {
-  return typeof requestIdleCallback === "function"
-    ? requestIdleCallback(callback, { timeout: IDLE_TIMEOUT_MS })
-    : (setTimeout(callback, 1) as unknown as number);
-}
-
-function cancelIdle(handle: number) {
-  if (typeof cancelIdleCallback === "function") cancelIdleCallback(handle);
-  else clearTimeout(handle);
 }

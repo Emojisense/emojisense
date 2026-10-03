@@ -31,6 +31,7 @@ import {
   useContext,
   useId,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { EmojiGlyph } from "./glyph.js";
@@ -106,12 +107,35 @@ const PENDING: EmojiDataResolver = () => new Promise<never>(() => {});
 /**
  * Frimousse props for Emojisense packs that are still loading. Frimousse resolves its data once
  * per mount and ignores a new resolver, so the returned `key` remounts the picker when the packs
- * arrive. Until then Frimousse shows its loading state.
+ * arrive. Until then Frimousse shows its loading state. Pair it with `useFocusAcrossRemount`, so
+ * someone who types before the packs arrive keeps the focus.
  */
 export function useEmojisenseResolver(packs: Pack[]): { key: string; resolveEmojiData: EmojiDataResolver } {
   const ready = packs.length > 0;
   const resolveEmojiData = useMemo(() => (ready ? createEmojisenseResolver(packs) : PENDING), [ready, packs]);
   return { key: ready ? "ready" : "loading", resolveEmojiData };
+}
+
+/**
+ * A ref callback for the search input that keeps its focus through the remount when the packs
+ * arrive (`useEmojisenseResolver`). React detaches the old input's ref while it is still in the
+ * document, so it can tell whether the input had the focus.
+ */
+export function useFocusAcrossRemount(): (input: HTMLInputElement | null) => void {
+  const last = useRef<HTMLInputElement | null>(null);
+  const hadFocus = useRef(false);
+  return useCallback((input: HTMLInputElement | null) => {
+    if (input === null) {
+      hadFocus.current = last.current !== null && last.current.ownerDocument.activeElement === last.current;
+      last.current = null;
+      return;
+    }
+    last.current = input;
+    if (!hadFocus.current) return;
+    hadFocus.current = false;
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }, []);
 }
 
 export interface EmojisenseResultsProps
@@ -290,6 +314,7 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const listboxId = useId();
   const { results } = useEmojiSearch(query, emojisense, { limit });
   const { key, resolveEmojiData } = useEmojisenseResolver(emojisense.packs);
+  const searchRef = useFocusAcrossRemount();
   const searching = query.trim() !== "";
   const { emojiSet, endpoint, publishableKey } = emojisense;
   const glyph = useMemo(() => ({ emojiSet, endpoint, publishableKey }), [emojiSet, endpoint, publishableKey]);
@@ -323,6 +348,7 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
       onEmojiSelect={onEmojiSelect}
     >
       <SearchInput
+        inputRef={searchRef}
         query={query}
         onQueryChange={(next) => {
           setQuery(next);
@@ -373,6 +399,7 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
 }
 
 interface SearchInputProps {
+  inputRef: (input: HTMLInputElement | null) => void;
   query: string;
   onQueryChange: (q: string) => void;
   placeholder: string;
@@ -416,6 +443,7 @@ function SearchInput(props: SearchInputProps) {
 
   return (
     <EmojiPicker.Search
+      ref={props.inputRef}
       value={query}
       onChange={(event) => onQueryChange(event.target.value)}
       onKeyDown={onKeyDown}
