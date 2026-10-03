@@ -10,6 +10,13 @@ export type Metric = (typeof METRICS)[number];
 export const PLAN_IDS = ["free", "solo", "pro", "scale"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
+/**
+ * The plans on sale and on the pricing page. Scale stays in PLANS so accounts on it and its gates
+ * keep working, but it is not shown or sold until its features are ready (DECISIONS.md, "Scale
+ * hidden at launch").
+ */
+export const LISTED_PLAN_IDS: readonly PlanId[] = ["free", "solo", "pro"];
+
 export interface Plan {
   id: PlanId;
   name: string;
@@ -71,6 +78,10 @@ export const PLANS: Record<PlanId, Plan> = {
     tenants: true,
   },
 };
+
+export function isListedPlan(id: PlanId): boolean {
+  return LISTED_PLAN_IDS.includes(id);
+}
 
 export function getPlan(id: string): Plan {
   return PLANS[(PLAN_IDS as readonly string[]).includes(id) ? (id as PlanId) : "free"];
