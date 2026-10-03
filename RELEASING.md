@@ -24,17 +24,25 @@ packages and the bump, write one or two sentences for the changelog. The first c
 
 ### One-time setup
 
-1. Create an npm account and turn on two-factor authentication (security key or authenticator app).
-2. Create the free npm organization `emojisense` (npmjs.com → Add Organization). Without it,
-   `@emojisense/*` cannot be published.
-3. The unscoped name `emojisense`: npm shows it as published in 2018 (0.4.0) and 2023 (0.10.0) by
-   someone else and unpublished on 2023-06-06. No one holds it now, and npm frees a fully
-   unpublished name after 24 hours, so it can be published again. `changeset publish-plan` lists
-   `emojisense@0.1.0` as publishable. npm never allows a version twice, so **0.4.0 and 0.10.0 of
-   `emojisense` can never be published**: skip them (for example 0.3.x → 0.5.0). If npm refuses the
-   name at the first publish, use the fallback `@emojisense/core`: rename `packages/core` and replace
-   the `emojisense` imports and dependencies in the repository, then publish again. Publish soon:
-   until then anyone can take the free name.
+Done on 2026-10-03:
+
+1. npm account `mrpeker`, two-factor authentication with a security key for sign-in and publishing.
+2. npm organization `emojisense` (owner `mrpeker`): `@emojisense/*` belongs to it.
+3. The unscoped name `emojisense`: `emojisense@0.1.0` is published from `mrpeker` (git tag
+   `emojisense@0.1.0`). The same account published 0.4.0 (2018) and 0.10.0 (2023) and unpublished
+   them, and npm never allows a version twice, so **0.4.0 and 0.10.0 can never be published**: skip
+   them (for example 0.3.x → 0.5.0). The `@emojisense/*` packages are versioned 0.1.0 and not
+   published yet; `pnpm release:publish` publishes only what npm does not have.
+
+What the first publish showed:
+
+- npm stages a new package: it adds a placeholder version `0.0.0-stage` and serves the real version
+  a minute later.
+- The first try answered `409 Conflict … Failed to save packument` after it had already moved the
+  name to the account. The same command a few minutes later succeeded.
+- `~/.npmrc` on this machine has `min-release-age=7`, so `npm install` here refuses a version for
+  7 days after its publish (`notarget … with a date before …`). Test a fresh release with
+  `npm install emojisense@<version> --min-release-age=0`.
 
 ### First release (from this machine)
 
