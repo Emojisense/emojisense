@@ -16,7 +16,13 @@ export const PACK_URL = `${API_HOST}/v1/pack/${PACK_VERSION}`;
 export const SHARDS_URL = `https://cdn.emojisense.com/p/${PACK_VERSION}`;
 export { PACK_VERSION };
 
-const PACK_DIR = join(process.cwd(), "../../packages/data/dist/packs", PACK_VERSION);
+const DATA_DIR = join(process.cwd(), "../../packages/data");
+const PACK_DIR = join(DATA_DIR, "dist/packs", PACK_VERSION);
+
+/** The production semantic model: pack.config.json picks it, and scripts/deploy.sh reads it there. */
+export const SEMANTIC_MODEL: { key: string; dims: number } = JSON.parse(
+  readFileSync(join(DATA_DIR, "pack.config.json"), "utf8"),
+).model;
 
 interface ManifestFile {
   bytes: number;

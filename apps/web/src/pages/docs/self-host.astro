@@ -2,7 +2,7 @@
 import Callout from "../../components/docs/Callout.astro";
 import CodeBlock from "../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
-import { PACK_VERSION } from "../../components/docs/facts";
+import { PACK_VERSION, SEMANTIC_MODEL } from "../../components/docs/facts";
 import { REPO_URL } from "../../config";
 
 const build = `git clone ${REPO_URL}.git emojisense
@@ -11,9 +11,10 @@ pnpm install
 pnpm data:build`;
 
 const embed = `npx wrangler login
-pnpm --filter @emojisense/data embed -- --models bge-m3 --dims 1024`;
+pnpm --filter @emojisense/data embed -- --models ${SEMANTIC_MODEL.key} --dims ${SEMANTIC_MODEL.dims}
+pnpm --filter @emojisense/data embed:glyph`;
 
-const sync = "pnpm --filter @emojisense/worker sync -- --model bge-m3 --dims 1024";
+const sync = "pnpm --filter @emojisense/worker sync";
 
 const database = `cd packages/worker
 npx wrangler d1 create emojisense        # copy the database_id into wrangler.jsonc
@@ -54,7 +55,7 @@ pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
     </li>
     <li>
       <h3 id="embed">Embed the emoji on your account</h3>
-      <p>This sends the emoji descriptions to Workers AI in batches and writes the vector files: one shared file from the English descriptions and one per other language. Queries and emoji must use the same model at the same size, so keep your choice. <code>bge-m3</code> at 1,024 dimensions is the production model.</p>
+      <p>This sends the emoji descriptions to Workers AI in batches and writes the vector files: one shared file from the English descriptions and one per other language. <code>embed:glyph</code> also embeds each emoji character itself, for one more ranking term. The production model is <code>{SEMANTIC_MODEL.key}</code> at {SEMANTIC_MODEL.dims.toLocaleString("en-US")} dimensions. <code>packages/data/pack.config.json</code> sets it, and <code>embed:glyph</code> and <code>sync</code> read it from there. Queries and emoji must use the same model at the same size, and the default ranking calibration is for this model, so keep it.</p>
       <CodeBlock code={embed} lang="bash" />
     </li>
     <li>

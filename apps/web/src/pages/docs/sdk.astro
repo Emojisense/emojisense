@@ -1,5 +1,14 @@
 ---
-import { applySkinTone, baseId, emojiImageUrl, groupLabel, hexcodeOf, normalize, tokenize } from "emojisense";
+import {
+  applySkinTone,
+  baseId,
+  DEFAULT_SEMANTIC_CALIBRATION,
+  emojiImageUrl,
+  groupLabel,
+  hexcodeOf,
+  normalize,
+  tokenize,
+} from "emojisense";
 import CodeBlock from "../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
 import { API_HOST, PACK_URL, resultLiteral, SHARDS_URL } from "../../components/docs/facts";
@@ -243,7 +252,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
   <ul>
     <li><code>shouldUseSemantic(alias)</code>: <code>true</code> when the confidence is under 0.6, or for a phrase of two or more words under 0.9.</li>
     <li><code>fuse(alias, semantic, limit, calibration, ranking)</code>: dictionary results with a score of 0.9 or more stay pinned on top, in their order. Every other result of both lists is then ordered by the learned reranker, a linear score over the dictionary score, rank and confidence, the semantic score and its gap to the best one, the semantic confidence and the emoji’s popularity (<a href="/docs/pack-format/">Pack format §10</a>). Pass <code>{"{ popularity: engine.popularity }"}</code> as <code>ranking</code>; a search session does. <code>rerank(input, limit, weights)</code>, <code>rerankFeatures(input, id)</code> and <code>RERANK_WEIGHTS</code> are the reranker itself. Both tiers bring <code>RANK_DEPTH</code> (24) candidates whatever the limit, so a short list is the top of the same ranking.</li>
-    <li>With <code>{"{ rerank: false }"}</code> as <code>ranking</code>, <code>fuse</code> merges with weights from the confidence of each tier instead. The dictionary weight is 0.4 + its confidence. The semantic weight goes from 0.4 to 1 as its best cosine goes from <code>calibration.floor</code> to <code>calibration.ceiling</code> (default <code>DEFAULT_SEMANTIC_CALIBRATION</code>, 0.44–0.58, for bge-m3). Results with a score of 0.9 or more stay pinned on top. When the dictionary is sure (confidence 0.6 or more), its results within 0.1 of its top score come next, in fused order. Semantic country flags that the dictionary results do not hold go last, unless their cosine reaches the calibration ceiling.</li>
+    <li>With <code>{"{ rerank: false }"}</code> as <code>ranking</code>, <code>fuse</code> merges with weights from the confidence of each tier instead. The dictionary weight is 0.4 + its confidence. The semantic weight goes from 0.4 to 1 as its best cosine goes from <code>calibration.floor</code> to <code>calibration.ceiling</code> (default <code>DEFAULT_SEMANTIC_CALIBRATION</code>, {DEFAULT_SEMANTIC_CALIBRATION.floor}–{DEFAULT_SEMANTIC_CALIBRATION.ceiling}, for EmbeddingGemma at 768 dimensions). Results with a score of 0.9 or more stay pinned on top. When the dictionary is sure (confidence 0.6 or more), its results within 0.1 of its top score come next, in fused order. Semantic country flags that the dictionary results do not hold go last, unless their cosine reaches the calibration ceiling.</li>
     <li><code>semanticConfidence(semantic, calibration)</code>: that 0–1 value. Use your own calibration if you embed with another model.</li>
     <li><code>fuseResults(alias, semantic, options)</code>: the same, with your own <code>k</code> (60), <code>pinScore</code> (0.9), <code>aliasFloor</code> (off), <code>aliasWeight</code> and <code>semanticWeight</code>.</li>
     <li><code>assessConfidence(alias, semantic)</code>: <code>{"{ confidence, unsure }"}</code>. A query is unsure when the dictionary does not cover it with confidence (one phrase matches all its words, <code>alias.coverage</code> 0.85 or more, and the top score is 0.6 or more) and the semantic list is flat or low. The session sets <code>state.unsure</code> with it; show the results as guesses then.</li>
