@@ -1,0 +1,28 @@
+search_locale:
+  type: enum
+  default: auto
+  choices:
+    - auto
+    - en
+    - zh
+    - hi
+    - es
+    - ar
+    - fr
+    - bn
+    - pt
+    - ru
+    - id
+    - tr
+culture:
+  type: bool
+  default: true
+api_enabled:
+  type: bool
+  default: false
+publishable_key:
+  type: string
+  default: ""
+api_url:
+  type: string
+  default: "https://api.emojisense.com"

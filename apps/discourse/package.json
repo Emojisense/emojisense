@@ -1,0 +1,23 @@
+{
+  "name": "@emojisense/discourse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Discourse theme component: emoji by meaning in the composer, chat and the emoji picker.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "node scripts/e2e.mjs"
+  },
+  "dependencies": {
+    "emojisense": "workspace:*"
+  },
+  "devDependencies": {
+    "@emojisense/data": "workspace:*",
+    "@types/node": "24.13.6",
+    "esbuild": "0.28.2",
+    "playwright-core": "1.63.0"
+  }
+}

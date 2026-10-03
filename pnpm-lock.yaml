@@ -118,6 +118,25 @@ importers:
         specifier: 4.139.0
         version: 4.139.0(@cloudflare/workers-types@5.20260924.1)(@types/node@24.13.6)
 
+  apps/discourse:
+    dependencies:
+      emojisense:
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@emojisense/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@types/node':
+        specifier: 24.13.6
+        version: 24.13.6
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      playwright-core:
+        specifier: 1.63.0
+        version: 1.63.0
+
   apps/raycast:
     dependencies:
       '@raycast/api':
@@ -10920,8 +10939,6 @@ snapshots:
       '@ckeditor/ckeditor5-utils': 47.6.2
       ckeditor5: 47.6.2
       es-toolkit: 1.39.5
-    transitivePeerDependencies:
-      - supports-color
 
   '@ckeditor/ckeditor5-editor-inline@48.5.2':
     dependencies:
@@ -10979,8 +10996,6 @@ snapshots:
     dependencies:
       '@ckeditor/ckeditor5-utils': 47.6.2
       es-toolkit: 1.39.5
-    transitivePeerDependencies:
-      - supports-color
 
   '@ckeditor/ckeditor5-engine@48.5.2':
     dependencies:

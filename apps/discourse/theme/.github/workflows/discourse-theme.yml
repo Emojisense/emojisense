@@ -1,0 +1,15 @@
+name: Discourse Theme
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  ci:
+    uses: discourse/.github/.github/workflows/discourse-theme.yml@v1
+    with:
+      # The source is linted in the emojisense monorepo; javascripts/discourse/lib/emojisense.js is
+      # a minified build.
+      skip_linting: true

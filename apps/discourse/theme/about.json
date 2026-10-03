@@ -1,0 +1,13 @@
+{
+  "name": "Emojisense",
+  "component": true,
+  "authors": "Emojisense",
+  "about_url": "https://emojisense.com/docs/integrations/discourse/",
+  "license_url": "https://github.com/emojisense/discourse-emojisense/blob/main/LICENSE",
+  "learn_more": "https://emojisense.com/docs/integrations/discourse/",
+  "theme_version": "0.1.0",
+  "minimum_discourse_version": null,
+  "maximum_discourse_version": null,
+  "assets": {},
+  "modifiers": {}
+}
