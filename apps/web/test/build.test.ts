@@ -658,11 +658,22 @@ describe("legal pages", () => {
     expect(doc.querySelector("article")?.firstElementChild).toBe(draft);
   });
 
-  it.each(LEGAL)("%s uses placeholders for company details instead of inventing them", (path) => {
+  it.each(LEGAL)("%s marks each open detail as a [placeholder] instead of inventing it", (path) => {
     const doc = page(path);
     const placeholders = Array.from(doc.querySelectorAll(".legal-placeholder"), (el) => el.textContent);
-    expect(placeholders.length).toBeGreaterThan(1);
     expect(placeholders.every((text) => /^\[[^\]]+\]$/.test(text ?? ""))).toBe(true);
+  });
+
+  it("keeps the company details open and names the contact addresses", () => {
+    const text = (path: string) => (page(path).body.textContent ?? "").replace(/\s+/g, " ");
+    for (const path of ["/legal/terms/", "/legal/privacy/"]) {
+      expect(text(path)).toContain("[Company legal name]");
+      expect(text(path)).toContain("[Registered address]");
+    }
+    expect(text("/legal/privacy/")).toContain("privacy@emojisense.com");
+    expect(text("/legal/terms/")).toContain("support@emojisense.com");
+    expect(text("/legal/acceptable-use/")).toContain("security@emojisense.com");
+    expect(text("/legal/acceptable-use/")).toContain("abuse@emojisense.com");
   });
 
   it("states the real facts: what is never stored, the subprocessors and the payment status", () => {

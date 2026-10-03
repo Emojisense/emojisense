@@ -22,7 +22,7 @@
     "directory": "packages/ckeditor5"
   },
   "license": "MIT",
-  "author": "Emojisense",
+  "author": "Emojisense <support@emojisense.com> (https://emojisense.com)",
   "type": "module",
   "sideEffects": [
     "./dist/index.js",

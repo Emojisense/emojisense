@@ -14,7 +14,7 @@ export interface LegalPage {
 }
 
 /** The date of the current draft. Update it with every change to a legal text. */
-export const LEGAL_UPDATED = "2026-10-02";
+export const LEGAL_UPDATED = "2026-10-03";
 
 export const LEGAL_PAGES: LegalPage[] = [
   {

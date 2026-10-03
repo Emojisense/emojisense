@@ -113,7 +113,7 @@ You must obey the [Acceptable Use Policy](/legal/acceptable-use/). It is part of
 
 - You can stop using the Service at any time. To close your account, delete it in the dashboard
   (Settings, "Delete account", or `DELETE /api/me` in the [HTTP API](/docs/api/)), or write to
-  [Contact email]. Deletion is permanent and removes your apps, keys and custom emoji too.
+  [support@emojisense.com](mailto:support@emojisense.com). Deletion is permanent and removes your apps, keys and custom emoji too.
 - We can suspend or end your access when you break these terms, when your use puts the Service or
   other people at risk, or when the law requires it. When we can, we tell you first and give you
   time to correct the problem.
@@ -153,4 +153,4 @@ jurisdiction, except where consumer protection law gives you the right to go to 
 
 ## Contact
 
-[Company legal name], [Registered address]. Email: [Contact email].
+[Company legal name], [Registered address]. Email: [support@emojisense.com](mailto:support@emojisense.com).

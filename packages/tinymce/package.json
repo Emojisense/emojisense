@@ -20,7 +20,7 @@
     "directory": "packages/tinymce"
   },
   "license": "MIT",
-  "author": "Emojisense",
+  "author": "Emojisense <support@emojisense.com> (https://emojisense.com)",
   "type": "module",
   "sideEffects": [
     "./dist/global.js",

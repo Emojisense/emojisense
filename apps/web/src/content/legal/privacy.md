@@ -50,7 +50,7 @@ longer asks you to join it; the form stays for older links.
 | --- | --- | --- |
 | Your email address, the plan that you chose, the date of your first sign-up | To email you once, when that plan opens | 12 months after your first sign-up at most: a daily job deletes older entries. When you join again, we change the plan but keep the first date. After we send the email, we delete the entry within [Deletion period]. Earlier, when you ask, or when you delete a dashboard account with the same email address. |
 
-The legal basis is your consent. You can withdraw it at any time: write to [Privacy email].
+The legal basis is your consent. You can withdraw it at any time: write to [privacy@emojisense.com](mailto:privacy@emojisense.com).
 
 To limit the number of sign-ups, the waitlist uses your IP address as a rate-limit key in memory
 only. It never writes the address to logs or storage.
@@ -88,7 +88,7 @@ cookies: to be confirmed in legal review.]
 You can delete your account at any time. In the dashboard, open Settings, choose "Delete
 account" and type your account's email address to confirm. The dashboard API does the same:
 `DELETE /api/me` (see the [HTTP API](/docs/api/) reference). You can also write to
-[Privacy email].
+[privacy@emojisense.com](mailto:privacy@emojisense.com).
 
 One request deletes, at once, from the live database: your account, your apps
 with their API keys, usage counts, search analytics, tenants, custom emoji (records and images)
@@ -250,7 +250,7 @@ uses HTTPS. We collect as little data as the Service needs.
 Depending on where you live, you can ask to see, correct, delete or export your personal data,
 and you can object to or restrict its use. When we process data based on your consent, you can
 withdraw it at any time. You can delete your account yourself (see "Deleting your account"). For
-everything else, write to [Privacy email]. We answer within 30 days. You can also complain to your
+everything else, write to [privacy@emojisense.com](mailto:privacy@emojisense.com). We answer within 30 days. You can also complain to your
 data protection authority.
 
 If you use an app that is built with Emojisense, ask the company that makes the app. We help it to
@@ -268,5 +268,5 @@ account holders by email or in the dashboard.
 
 ## Contact
 
-[Company legal name], [Registered address]. Privacy questions: [Privacy email].
+[Company legal name], [Registered address]. Privacy questions: [privacy@emojisense.com](mailto:privacy@emojisense.com).
 [EU or UK representative, if required.]

@@ -65,5 +65,5 @@ drops the same phrase from the base block, and fails on an unknown hexcode (src/
 ## Check
 
 ```
-cd /Users/peker/GitHub/emojisense/packages/data && unset -f node npm npx pnpm 2>/dev/null; export PATH="$HOME/.nvm/versions/node/v24.5.0/bin:$PATH"; /Users/peker/GitHub/emojisense/node_modules/.bin/tsx scripts/check-locale.ts <locale> enrichment/_batches/<locale>/bNN.input.json enrichment/_batches/<locale>/bNN.p*.json
+cd packages/data && ../../node_modules/.bin/tsx scripts/check-locale.ts <locale> enrichment/_batches/<locale>/bNN.input.json enrichment/_batches/<locale>/bNN.p*.json
 ```

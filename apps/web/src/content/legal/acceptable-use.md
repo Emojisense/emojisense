@@ -59,7 +59,7 @@ custom emoji, your own terms must forbid the same things, and you must act on re
 
 ## Security research
 
-We welcome security research in good faith. Report a vulnerability to [Security email]. Do not
+We welcome security research in good faith. Report a vulnerability to [security@emojisense.com](mailto:security@emojisense.com). Do not
 access data that is not yours, do not degrade the Service, and give us a reasonable time to fix
 the problem before you publish details.
 
@@ -69,4 +69,4 @@ When content or use breaks this policy, we can remove the content, revoke keys o
 account. When we can, we tell you first and give you time to correct the problem. We do not wait
 when the risk is serious or when the law does not allow it.
 
-To report abuse, write to [Abuse email].
+To report abuse, write to [abuse@emojisense.com](mailto:abuse@emojisense.com).

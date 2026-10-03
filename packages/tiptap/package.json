@@ -21,7 +21,7 @@
     "directory": "packages/tiptap"
   },
   "license": "MIT",
-  "author": "Emojisense",
+  "author": "Emojisense <support@emojisense.com> (https://emojisense.com)",
   "type": "module",
   "sideEffects": [
     "*.css"
