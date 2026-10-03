@@ -1,3 +1,4 @@
+import { preloadEmojisense } from "@emojisense/web-component";
 import { readConfig } from "../lib/config.js";
 import { openPickerPopover, type PickerPopover } from "../shared/popover.js";
 import "./classic.scss";
@@ -43,6 +44,12 @@ tinymce.PluginManager.add("emojisense", function emojisensePlugin(editor) {
   editor.addButton("emojisense", {
     tooltip: strings.button ?? "Insert emoji",
     image: ICON,
+    onPostRender(this: TinyMceButton) {
+      // The packs start loading when the pointer moves onto or focus enters the button.
+      const warm = () => preloadEmojisense({ packUrl: config.packUrl, locale: config.locale });
+      this.getEl().addEventListener("pointerenter", warm, { once: true });
+      this.getEl().addEventListener("focus", warm, { once: true });
+    },
     onclick(this: TinyMceButton) {
       if (popover) {
         popover.close(true);

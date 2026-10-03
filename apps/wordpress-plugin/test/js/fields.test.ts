@@ -60,6 +60,15 @@ describe("setUpFields", () => {
     expect(field.value).toBe("Lunch? 🍕");
   });
 
+  it("starts the pack download when the pointer moves onto the emoji button", async () => {
+    document.body.innerHTML = `<textarea id="bbp_reply_content"></textarea>`;
+    const { fetchImpl, requests } = packFetch();
+    stop = setUpFields(document, config(["#bbp_reply_content"]), { fetch: fetchImpl, whenIdle: () => {} });
+    expect(requests).toEqual([]);
+    document.querySelector(".emojisense-field-button")?.dispatchEvent(new Event("pointerenter"));
+    await vi.waitFor(() => expect(requests.some((url) => url.endsWith("/pack.en.json"))).toBe(true));
+  });
+
   it("enhances fields that appear later (BuddyPress forms)", async () => {
     stop = setUpFields(document, config(["#whats-new", "textarea.ac-input"]), {
       fetch: packFetch().fetchImpl,

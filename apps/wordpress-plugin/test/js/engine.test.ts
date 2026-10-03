@@ -63,6 +63,12 @@ describe("semanticProvider", () => {
     expect(semanticProvider(base, "0.1.0")).toBeUndefined();
   });
 
+  it("keeps one provider per config and pack version, so loaded shards stay loaded", () => {
+    const config = { ...base, endpoint: "https://api.emojisense.com", key: "pk_live_abcdefgh" };
+    expect(semanticProvider(config, "0.1.0")).toBe(semanticProvider(config, "0.1.0"));
+    expect(semanticProvider(config, "0.2.0")).not.toBe(semanticProvider(config, "0.1.0"));
+  });
+
   it("sends the publishable key and the pack version", async () => {
     const urls: string[] = [];
     const fetchImpl = (async (input: RequestInfo | URL) => {

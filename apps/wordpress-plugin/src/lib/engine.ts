@@ -27,15 +27,29 @@ export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
   });
 }
 
+const providers = new WeakMap<ClientConfig, Map<string, SemanticProvider | undefined>>();
+
 /**
  * The API's shards, then the API, as a semantic provider, only when search by meaning is on. The
- * API host serves the shards (/p/<packVersion>): free files, asked first.
+ * API host serves the shards (/p/<packVersion>): free files, asked first. One provider per config
+ * and pack version, so the shards it loaded stay loaded when the extension packs arrive.
  */
 export function semanticProvider(
   config: ClientConfig,
   packVersion: string,
   fetchImpl?: typeof fetch,
 ): SemanticProvider | undefined {
+  if (fetchImpl) return createProvider(config, packVersion, fetchImpl);
+  let byVersion = providers.get(config);
+  if (!byVersion) {
+    byVersion = new Map();
+    providers.set(config, byVersion);
+  }
+  if (!byVersion.has(packVersion)) byVersion.set(packVersion, createProvider(config, packVersion));
+  return byVersion.get(packVersion);
+}
+
+function createProvider(config: ClientConfig, packVersion: string, fetchImpl?: typeof fetch) {
   return createApiSemantic({
     endpoint: config.endpoint,
     key: config.key,

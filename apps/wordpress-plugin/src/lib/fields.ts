@@ -70,7 +70,7 @@ export function setUpFields(doc: Document, config: FieldsConfig, options: Fields
         ariaLabel: strings.menu ?? "Emoji suggestions",
       }),
     );
-    addPickerButton(element, config);
+    addPickerButton(element, config, load);
   });
 }
 
@@ -81,8 +81,11 @@ function isTextField(element: Element): element is Field {
   return element instanceof view.HTMLInputElement && ["text", "search", ""].includes(element.type);
 }
 
-/** The "Emoji" button after the field; the picker inserts at the remembered caret. */
-function addPickerButton(field: Field, config: FieldsConfig) {
+/**
+ * The "Emoji" button after the field; the picker inserts at the remembered caret. `warm` starts the
+ * pack download when the pointer moves onto or focus enters the button.
+ */
+function addPickerButton(field: Field, config: FieldsConfig, warm: () => void) {
   const doc = field.ownerDocument;
   const strings = config.strings ?? {};
   const tools = doc.createElement("p");
@@ -98,6 +101,9 @@ function addPickerButton(field: Field, config: FieldsConfig) {
   button.append(icon, ` ${strings.button ?? "Emoji"}`);
   tools.append(button);
   field.insertAdjacentElement("afterend", tools);
+  // The picker shares the page's pack download with the colon search.
+  button.addEventListener("pointerenter", warm, { once: true });
+  button.addEventListener("focus", warm, { once: true });
 
   let popover: PickerPopover | undefined;
   let caret = { start: field.value.length, end: field.value.length };
