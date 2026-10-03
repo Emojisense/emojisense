@@ -11,6 +11,8 @@ layer-2 shards. Formats: [docs/PACK_FORMAT.md](../../docs/PACK_FORMAT.md).
 | `exec tsx scripts/import-popularity.ts <emoji-sp.xlsx>` | `priors/popularity.json` from Emoji-SP (CC BY 4.0, https://osf.io/dtfjv/); the build writes it as the `popularity` of `pack.en.json` |
 | `build:shards -- --log queries.jsonl` | `dist/shards/<packVersion>/` from the analytics export |
 | `build:shards -- --bootstrap` | the same from synthetic day-one queries (see the caveat below) |
+| `build:shards:base` | `dist/shards-base/<packVersion>/`: the base layer, synthetic queries of every pack locale (`--locales en,tr` for fewer; `--resolver fake` for a dry run into `dist/shards-base-fake/`) |
+| `upload:shards -- --env dev` | publishes that base layer to the CDN bucket of an environment (needs `wrangler login`) |
 | `culture:propose` | draft culture entries with Workers AI (needs `wrangler login`; see below) |
 | `culture:review` | preview drafts per trigger; `--approve <id> --reviewer <name>` |
 | `culture:check` | validate every culture entry (`--fix` normalizes triggers) |
@@ -146,10 +148,23 @@ build from real logs.
 
 ### Serving and the nightly build
 
-The API Worker builds the shards every night from `query_daily` with the same code
-(`@emojisense/data/shards`) and serves them from R2 (ARCHITECTURE.md, "Nightly shard build").
-It accepts a key file name encoded or not (`the%20.json`), and it never sends `immutable`: the
-files change under one pack version. This CLI stays for bootstrap shards, dry runs and exports
-(`--log`). Rows of a log go through the same privacy filter (`src/shards/privacy.ts`). The CLI
-writes the English (`locale=en`) shards only; the nightly build also writes one directory per
-other pack locale (`/p/<v>/<locale>/…`, PACK_FORMAT.md §6).
+The API Worker builds the live layer every night from `query_daily` with the same code
+(`@emojisense/data/shards`) and writes it to the CDN bucket (ARCHITECTURE.md, "Nightly shard
+build"). This CLI stays for bootstrap shards, dry runs and exports (`--log`). Rows of a log go
+through the same privacy filter (`src/shards/privacy.ts`). It writes the English (`locale=en`)
+shards only, in the older layout (`<key>.json`).
+
+### Base layer
+
+`build:shards:base` builds the bootstrap queries of every pack locale, each locale on its own:
+its alias engines (English + the locale, core and ext) drop what the device answers, and the
+answers are the API's for that locale (shared and locale vectors, popularity and glyph terms). The
+output is the published layout of PACK_FORMAT.md §6: content-named files in `f/` and `base.json`,
+which names each locale's base index. A rebuild reuses the entries of the previous one with the
+same model. `upload:shards` writes the files the bucket does not have, the manifest, and the
+`base` field of each live index; the nightly build keeps it there and leaves out the queries the
+base holds. Rebuild and upload it when the pack, the vectors or the model change.
+
+Dry run, 2026-10-03 (`--resolver fake`, Apple silicon laptop): 11 locales, ~232k entries after
+the device gate, 3,071 files, 43.8 MB gzip, 76 s. Chinese has few phrases with spaces, so its base
+is small (405 entries).

@@ -1,9 +1,18 @@
 import { LOCALE_CODES } from "@emojisense/data/locales";
-import { SHARD_INDEX_FILE, shardFileName } from "@emojisense/data/shards";
+import {
+  cdnVersionDir,
+  liveIndexDir,
+  liveIndexPath,
+  resolveFrom,
+  SHARD_FILES_DIR,
+  SHARD_INDEX_FILE,
+  type ShardIndex,
+} from "@emojisense/data/shards";
 import {
   SHARD_EDGE_CACHE_SECONDS,
-  SHARD_FILE_BROWSER_CACHE,
+  SHARD_FILE_CACHE,
   SHARD_INDEX_BROWSER_CACHE,
+  SHARD_KEY_FILE_BROWSER_CACHE,
   SHARD_MISSING_CACHE,
   SHARD_POINTER_TTL_MS,
 } from "../config.ts";
@@ -11,27 +20,24 @@ import type { CacheLike } from "../context.ts";
 import type { Env, GeneratedConfig } from "../env.ts";
 import { corsHeaders, errorResponse } from "../http.ts";
 import type { WaitUntil } from "../meter.ts";
-import { readPointer, type ShardBucket, storePrefix } from "./storage.ts";
+import type { ShardBucket } from "./storage.ts";
 
 export const SHARDS_PATH_PREFIX = "/p/";
-/** `/p/<packVersion>/<file>` (English) or `/p/<packVersion>/<locale>/<file>`. */
+/** `/p/<packVersion>/<file>` (English), `/p/<packVersion>/<locale>/<file>` or `/p/<packVersion>/f/<file>`. */
 const SHARD_PATH = /^\/p\/([^/]+)\/(?:([^/]+)\/)?([^/]+)$/;
+const CONTENT_FILE = /^[0-9a-f]{16}\.json$/;
 const PACK_LOCALES: ReadonlySet<string> = new Set(LOCALE_CODES);
 const JSON_TYPE = "application/json; charset=utf-8";
 
-/**
- * The stored name of a requested file: `index.json`, or `encodeURIComponent(key).json` whether
- * the client (or a proxy) sent the key encoded or not. Undefined for anything else.
- */
-function storedName(segment: string): string | undefined {
+/** The decoded key of a `<key>.json` segment, whether the client sent it encoded or not. */
+function keyOf(segment: string): string | undefined {
   let decoded: string;
   try {
     decoded = decodeURIComponent(segment);
   } catch {
     return undefined;
   }
-  if (!decoded.endsWith(".json") || decoded.length > 256) return undefined;
-  return decoded === SHARD_INDEX_FILE ? decoded : shardFileName(decoded.slice(0, -".json".length));
+  return decoded.endsWith(".json") && decoded.length <= 256 ? decoded.slice(0, -".json".length) : undefined;
 }
 
 const missing = () => errorResponse(404, "not found", { "Cache-Control": SHARD_MISSING_CACHE });
@@ -52,34 +58,38 @@ export interface ShardRouteOptions {
 }
 
 /**
- * GET /p/<packVersion>/<file> and /p/<packVersion>/<locale>/<file>: layer-2 shards (PACK_FORMAT
- * §6), English at the first path (`en/` is the same files), every other pack locale in its own
- * directory. The nightly build (job.ts) writes them to R2; this serves the build that the store's
- * pointer names, through the edge cache (keyed by build id, whose files never change). Without a
- * build for this deployment's pack version and data (no bucket, first night after a deploy,
- * another pack version), the static shards in public/p are served, if the deploy shipped any.
- * Free for callers: no key, not metered.
+ * GET /p/<packVersion>/… on the API host: the files of the CDN bucket (PACK_FORMAT §6), for
+ * clients that read shards here rather than on cdn.emojisense.*. Clients from before hashed files
+ * ask for `<key>.json`: the live index maps it to the key's file. The nightly build (job.ts)
+ * writes them. Without a bucket or a published file, the static shards in public/p are served, if
+ * the deploy shipped any. Free for callers: no key, not metered.
  */
 export function createShardRoute(options: ShardRouteOptions) {
   const { config } = options;
   const now = options.now ?? Date.now;
-  const prefix = storePrefix(config.packVersion, config.contentHash);
-  let pointer: { build: Promise<string | undefined>; until: number } | undefined;
+  /**
+   * Live indexes by R2 key, each trusted for SHARD_POINTER_TTL_MS per isolate. They are not put
+   * in the edge cache: their URL stays while the next build replaces them.
+   */
+  const indexes = new Map<string, { stored: Promise<StoredIndex | undefined>; until: number }>();
 
-  /** The served build id, read from R2 at most once per SHARD_POINTER_TTL_MS per isolate. */
-  const currentBuild = (bucket: ShardBucket): Promise<string | undefined> => {
-    if (!pointer || now() >= pointer.until) {
-      const build = readPointer(bucket, prefix).then(
-        (p) => p?.build,
-        (error: unknown) => {
-          console.warn(JSON.stringify({ event: "shards_pointer_failed", error: (error as Error).name }));
-          pointer = undefined;
-          return undefined;
-        },
-      );
-      pointer = { build, until: now() + SHARD_POINTER_TTL_MS };
-    }
-    return pointer.build;
+  const liveIndex = (bucket: ShardBucket, key: string): Promise<StoredIndex | undefined> => {
+    const known = indexes.get(key);
+    if (known && now() < known.until) return known.stored;
+    const stored = bucket.get(key).then(
+      async (object) => {
+        if (!object) return undefined;
+        const text = await object.text();
+        return { text, etag: object.httpEtag, index: JSON.parse(text) as ShardIndex };
+      },
+      (error: unknown) => {
+        console.warn(JSON.stringify({ event: "shards_index_failed", error: (error as Error).name }));
+        indexes.delete(key);
+        return undefined;
+      },
+    );
+    indexes.set(key, { stored, until: now() + SHARD_POINTER_TTL_MS });
+    return stored;
   };
 
   /** public/p, with the cache lifetime of a file that the next nightly build may replace. */
@@ -87,6 +97,32 @@ export function createShardRoute(options: ShardRouteOptions) {
     const asset = await env.ASSETS?.fetch(request.url);
     if (!asset?.ok) return missing();
     return present(request, asset, SHARD_INDEX_BROWSER_CACHE);
+  };
+
+  /** A content-named file: never changes, so the edge keeps it for a week. */
+  const contentFile = async (
+    request: Request,
+    url: URL,
+    bucket: ShardBucket,
+    objectKey: string,
+    browserCache: string,
+    ctx: WaitUntil,
+    cache: CacheLike,
+  ): Promise<Response> => {
+    const cacheKey = new Request(`${url.origin}/__cdn/${objectKey}`);
+    const hit = await cache.match(cacheKey);
+    if (hit) return present(request, hit, browserCache);
+    const object = await bucket.get(objectKey);
+    if (!object) return missing();
+    const stored = new Response(await object.text(), {
+      headers: {
+        "Content-Type": JSON_TYPE,
+        "Cache-Control": `public, max-age=${SHARD_EDGE_CACHE_SECONDS}`,
+        ETag: object.httpEtag,
+      },
+    });
+    ctx.waitUntil(cache.put(cacheKey, stored.clone()));
+    return present(request, stored, browserCache);
   };
 
   return async (
@@ -100,32 +136,46 @@ export function createShardRoute(options: ShardRouteOptions) {
       return errorResponse(405, "method not allowed", { Allow: "GET, HEAD, OPTIONS" });
     }
     const match = SHARD_PATH.exec(url.pathname);
-    const name = match && storedName(match[3] as string);
-    if (!match || !name) return missing();
-    const locale = match[2];
-    if (locale !== undefined && !PACK_LOCALES.has(locale)) return missing();
-    // English lives at the build root; another locale in its directory.
-    const dir = locale === undefined || locale === "en" ? "" : `${locale}/`;
+    if (!match) return missing();
+    const [, packVersion, dir, segment] = match as unknown as [string, string, string | undefined, string];
+    const bucket = env.CDN;
+    if (!bucket || packVersion !== config.packVersion) return fromAssets(request, env);
+    const versionDir = cdnVersionDir(packVersion);
 
-    const bucket = env.SHARDS;
-    const build = bucket && match[1] === config.packVersion ? await currentBuild(bucket) : undefined;
-    if (!bucket || !build) return fromAssets(request, env);
-
-    const browserCache = name === SHARD_INDEX_FILE ? SHARD_INDEX_BROWSER_CACHE : SHARD_FILE_BROWSER_CACHE;
-    const cacheKey = new Request(`${url.origin}/p/${config.packVersion}/${build}/${dir}${name}`);
-    const hit = await cache.match(cacheKey);
-    if (hit) return present(request, hit, browserCache);
-
-    const object = await bucket.get(`${prefix}${build}/${dir}${name}`);
-    if (!object) return missing();
-    const stored = new Response(await object.text(), {
-      headers: {
-        "Content-Type": JSON_TYPE,
-        "Cache-Control": `public, max-age=${SHARD_EDGE_CACHE_SECONDS}`,
-        ETag: object.httpEtag,
-      },
-    });
-    ctx.waitUntil(cache.put(cacheKey, stored.clone()));
-    return present(request, stored, browserCache);
+    if (dir === SHARD_FILES_DIR.slice(0, -1)) {
+      if (!CONTENT_FILE.test(segment)) return missing();
+      return contentFile(
+        request,
+        url,
+        bucket,
+        `${versionDir}${SHARD_FILES_DIR}${segment}`,
+        SHARD_FILE_CACHE,
+        ctx,
+        cache,
+      );
+    }
+    // English is at the version root; `en/` is the same files.
+    const locale = dir ?? "en";
+    if (!PACK_LOCALES.has(locale)) return missing();
+    const stored = await liveIndex(bucket, versionDir + liveIndexPath(locale));
+    // No build of this version yet: the static shards, if the deploy shipped any.
+    if (!stored) return fromAssets(request, env);
+    if (segment === SHARD_INDEX_FILE) {
+      const response = new Response(stored.text, { headers: { ETag: stored.etag } });
+      return present(request, response, SHARD_INDEX_BROWSER_CACHE);
+    }
+    // A client from before hashed files: the live index maps its key to the key's file.
+    const key = keyOf(segment);
+    const file = key === undefined ? undefined : stored.index.files?.[key];
+    if (file === undefined) return missing();
+    const objectKey = versionDir + resolveFrom(liveIndexDir(locale), file);
+    return contentFile(request, url, bucket, objectKey, SHARD_KEY_FILE_BROWSER_CACHE, ctx, cache);
   };
+}
+
+/** A live index as R2 holds it. */
+interface StoredIndex {
+  text: string;
+  etag: string;
+  index: ShardIndex;
 }

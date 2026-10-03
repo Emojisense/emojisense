@@ -160,7 +160,7 @@ Details, checks and costs: [CULTURE.md](CULTURE.md). Code: `packages/worker/src/
 | `packages/data` | Pipeline: ingest → enrichment → curation → validation → embeddings → packs → shards; culture entries and files | MIT |
 | `packages/eval` | Labelled queries, benchmark, `pnpm cost`, CI gate, culture gate | MIT |
 | `packages/platform` | Shared contracts of both Workers: D1 schema and migrations, plans, keys, webhooks | MIT |
-| `packages/worker` | Search API Worker: search, reactions, photo to emoji, custom emoji, tenants, hosted sets, packs, vectors and culture files as assets, nightly shard build and `/p/*` from R2, plans, metering | MIT |
+| `packages/worker` | Search API Worker: search, reactions, photo to emoji, custom emoji, tenants, hosted sets, packs, vectors and culture files as assets, nightly shard build into the CDN bucket and `/p/*` from it, plans, metering | MIT |
 | `apps/dashboard` | Dashboard Worker + SPA: accounts, apps, keys, usage, analytics, custom emoji, teams, webhooks, waitlist | MIT |
 | `packages/react` (`@emojisense/react`) | Hooks, Frimousse adapter, shadcn registry item | MIT |
 | `packages/web-component`, `tiptap`, `lexical`, `emoji-mart`, `mcp` | Picker element, editor autocompletes, emoji-mart adapter, MCP server | MIT |
@@ -283,18 +283,26 @@ so no job runner is needed. Code: `packages/worker/src/shards/`, shared build lo
 ```
 D1 query_daily, last 6 complete UTC days (keyed calls only), per locale ('und' rows count as en)
   ─▶ apps of ≥ 3 accounts and ≥ 10 searches in that locale; privacyReason drops emails, URLs, ids
-  ─▶ drop what the locale's device answers (that locale's alias engine)
-  ─▶ reuse the served build's entries; embed new queries like GET /v1/search?mode=semantic&locale=<l>
+  ─▶ drop what the locale's device answers (that locale's alias engine) and what its base layer holds
+  ─▶ reuse the entries of this data's last build; embed new queries like GET /v1/search?mode=semantic&locale=<l>
      (embeddingText, template, shared + locale vectors), ≤ 100 per Workers AI call,
      ≤ 5,000 per night over every locale (most searched first), ≤ 20,000 queries per build
   ─▶ adaptive prefix split per locale (≤ 96 KB raw ≈ 25 KB gzip)
-  ─▶ R2 SHARDS: shards/<packVersion>/<contentHash>/<build>/… (en) and …/<build>/<locale>/…,
-     then current.json (the pointer, with queries and shards per locale)
-GET /p/<v>/[<locale>/]<file> ─▶ Worker ─▶ pointer (per isolate, 5 min) ─▶ edge cache ─▶ R2
-                                                                      (no build: public/p)
+  ─▶ R2 CDN: p/<v>/f/<hash>.json (named by content, only the new ones are written)
+     ─▶ state/<v>/<contentHash>.json (the pointer: files per locale, and the previous build's)
+     ─▶ p/<v>/index.json and p/<v>/<locale>/index.json (live indexes, each naming its base index)
+
+base layer (with the pack, build:shards:base + upload:shards): synthetic queries of every locale
+  ─▶ the same answers, computed on a laptop ─▶ p/<v>/f/… and state/<v>/base.json
+
+cdn.emojisense.com/p/<v>/…  ─▶ CDN cache ─▶ R2 (no Worker, free per request)
+api.emojisense.com/p/<v>/…  ─▶ Worker ─▶ live index (per isolate, 5 min) ─▶ edge cache ─▶ R2
+                                         (older clients ask for <key>.json; no build: public/p)
 ```
 
-A build id is a hash of its content, so a re-run on the same day publishes nothing new. The
-previous build stays one more night for isolates that still hold the old pointer; older builds
-and the stores of gone deployments (nothing written for 7 days) are deleted.
+Files are named by their content, so a re-run on the same day writes nothing new and a shard that
+two builds share is downloaded once. The files of the current and the previous build stay; a file
+that nothing names is deleted a day later. Pointers of gone deployments (nothing written for 7
+days) and other pack versions are deleted. Under one pack version the CDN serves the last
+published build, so answers can lag a deploy until the next night.
 `SHARDS_CRON_ENABLED` switches the build off; the served build then stays.

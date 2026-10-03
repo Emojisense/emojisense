@@ -41,11 +41,16 @@ export interface Env {
    */
   EMOJI?: R2Bucket;
   /**
-   * R2 bucket `emojisense-shards`: layer-2 shard builds of the nightly job (src/shards/), served
-   * at /p/<packVersion>/…. Without it, /p/* serves the static shards in public/p (if any). Its
-   * `culture/` prefix holds the published culture builds (src/culture-admin/storage.ts).
+   * R2 bucket `emojisense-shards`, private: its `culture/` prefix holds the published culture
+   * builds (src/culture-admin/storage.ts).
    */
   SHARDS?: R2Bucket;
+  /**
+   * R2 bucket `emojisense-cdn`, public on cdn.emojisense.*: layer-2 shards (src/shards/,
+   * PACK_FORMAT §6), written by the nightly job and the base build, also served at /p/* on the
+   * API host. Without it, /p/* serves the static shards in public/p (if any).
+   */
+  CDN?: R2Bucket;
   /** "true" runs the nightly shard build; any other value skips it (wrangler.jsonc). */
   SHARDS_CRON_ENABLED?: string;
   /**

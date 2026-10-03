@@ -261,13 +261,17 @@ the SHA-256 of the image bytes, the vision model and the prompt version. A wrong
 | Path | Content | Cache |
 | ---- | ------- | ----- |
 | `/v1/pack/:version/manifest.json`, `pack.<locale>.json`, `pack.<locale>.ext.json`, `vectors.<model>.<dims>[.<locale>].bin` | data packs | `public, max-age=31536000, immutable` |
-| `/p/:packVersion/index.json`, `/p/:packVersion/<key>.json` | precomputed results (layer 2 shards) of `locale=en`, rebuilt nightly | `public, max-age=3600` (index), `public, max-age=86400` (key files) |
-| `/p/:packVersion/:locale/index.json`, `/p/:packVersion/:locale/<key>.json` | the shards of another pack locale: the API's answers for that `locale` ([PACK_FORMAT.md §6](PACK_FORMAT.md)). `en/` serves the English files. A locale without shards answers `404` | as above |
+| `/p/:packVersion/index.json` | live index of the precomputed results (layer 2 shards) of `locale=en`, rebuilt nightly; names its files and the base layer's index ([PACK_FORMAT.md §6](PACK_FORMAT.md)) | `public, max-age=3600` |
+| `/p/:packVersion/:locale/index.json` | the live index of another pack locale: the API's answers for that `locale`. `en/` serves the English index. A locale without shards answers `404` | `public, max-age=3600` |
+| `/p/:packVersion/f/<hash>.json` | a shard file or a base index, named by its content | `public, max-age=31536000, immutable` |
+| `/p/:packVersion/[:locale/]<key>.json` | for clients from before hashed files: the key's file in the live index | `public, max-age=86400` |
 | `/v1/culture/:packVersion/culture.<locale>.json`, `/v1/culture/:packVersion/index.json` | culture layer: editorial associations by culture, region and moment ([PACK_FORMAT.md §9](PACK_FORMAT.md)) | `public, max-age=3600` |
 
 These are free and need no key. Packs are static assets and do not run the Worker; shards and
 culture files run it, which serves the nightly (shards) or last published (culture,
-[CULTURE.md](CULTURE.md)) build from R2 through the edge cache, else the deployed files. All send
+[CULTURE.md](CULTURE.md)) build from R2 through the edge cache, else the deployed files. The same
+shard files are on `https://cdn.emojisense.com/p/…` (`cdn.emojisense.dev` for dev), straight from
+R2 through the CDN, with no Worker: use that host as `shardsUrl`. All send
 `Access-Control-Allow-Origin: *`. A `/v1/pack/` path that is not a published file answers `404`
 with `Cache-Control: no-store`, so a browser does not keep the miss. Until the first nightly
 shard build exists, `/p/<v>/index.json` answers `404` (no static shards are deployed); the SDK's
@@ -883,7 +887,7 @@ What the hosted service collects, and for how long:
 | ---- | ----- | ---- |
 | Per app, UTC day, normalized search query (≤ 64 chars), locale and country: number of searches and of misses. The country is `request.cf.country` (ISO 3166-1 alpha-2, derived from the IP address at Cloudflare's edge; `XX` when unknown). Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
-| Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below). No app, account, day or count. | R2 `emojisense-shards`, edge cache | Rebuilt nightly. The previous build is deleted after one more night; browser and edge copies expire within 1 day. |
+| Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below), plus synthetic queries from our own data (the base layer). No app, account, day or count. | R2 `emojisense-cdn`, CDN and edge cache | Rebuilt nightly. A file that no build names any more is deleted a day after the build that dropped it. Shard files are named by content and cached by browsers and the CDN for up to a year; a dropped query stays in such copies until they expire, but no index names it. |
 | Regional trends: normalized query text, locale, country (or `*`), score, searches and accounts, for queries over the trend thresholds (below). No app, account or user. Not served by any route. | D1 `trends_daily` | 90 days (`TRENDS_KEEP_DAYS`). The daily cron deletes older rows. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |

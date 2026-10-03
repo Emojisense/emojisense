@@ -338,4 +338,22 @@ describe("vector resolver", () => {
     ]);
     for (const [, , score] of top) expect(Math.round(score * 1000) / 1000).toBe(score);
   });
+
+  it("scores each emoji by its best row over a locale's vector files, as the API does", async () => {
+    // In the locale's own file, 🎉 is the query's direction.
+    const locale = decodeVectors(
+      encodeVectors("@cf/test/model", ["1F389"], [l2normalize(Float32Array.from([1, 0, 0, 0, 0, 0, 0, 0]))]),
+    );
+    const resolver = createVectorResolver({
+      tag: "test@8",
+      index: [index, locale],
+      emojiOf: (id) => catalog.find((c) => c.id === id)?.emoji,
+      embedder: { embed: async (qs) => qs.map(() => Float32Array.from([1, 0, 0, 0, 0, 0, 0, 0])) },
+    });
+    const top = (await resolver.resolve(["ship it"], 2)).get("ship it") ?? [];
+    expect(top.map(([emoji, , score]) => [emoji, score]).sort()).toEqual([
+      ["🎉", 1],
+      ["🚀", 1],
+    ]);
+  });
 });

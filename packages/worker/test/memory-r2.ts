@@ -5,7 +5,10 @@ import type { ShardBucket } from "../src/shards/storage.ts";
  * roll-ups into `delimitedPrefixes`, `limit` and `cursor` pages. Counts every call.
  */
 export function memoryR2(now: () => number = Date.now) {
-  const objects = new Map<string, { text: string; uploaded: Date; etag: string }>();
+  const objects = new Map<
+    string,
+    { text: string; uploaded: Date; etag: string; cacheControl: string | undefined }
+  >();
   const calls = { get: 0, put: 0, list: 0, delete: 0 };
   let version = 0;
   const bucket: ShardBucket = {
@@ -14,9 +17,14 @@ export function memoryR2(now: () => number = Date.now) {
       const object = objects.get(key);
       return object ? { text: async () => object.text, httpEtag: `"${object.etag}"` } : null;
     },
-    async put(key, value) {
+    async put(key, value, options) {
       calls.put++;
-      objects.set(key, { text: value, uploaded: new Date(now()), etag: `v${++version}` });
+      objects.set(key, {
+        text: value,
+        uploaded: new Date(now()),
+        etag: `v${++version}`,
+        cacheControl: options?.httpMetadata?.cacheControl,
+      });
       return {};
     },
     async list({ prefix, delimiter, cursor, limit = 1000 }) {

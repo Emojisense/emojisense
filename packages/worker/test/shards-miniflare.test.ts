@@ -5,7 +5,7 @@ import { createApp } from "../src/app.ts";
 import type { CacheLike } from "../src/context.ts";
 import type { AiBinding, Env } from "../src/env.ts";
 import { runShardBuild } from "../src/shards/job.ts";
-import { type ShardPointer, storePrefix } from "../src/shards/storage.ts";
+import type { ShardPointer } from "../src/shards/storage.ts";
 import { createD1Store, type D1Like } from "../src/store.ts";
 import { buildRegionalTrends, readRegionalTrends } from "../src/trends.ts";
 import { API, catalog, executionContext, ROW, unit } from "./fixtures.ts";
@@ -16,7 +16,6 @@ import { API, catalog, executionContext, ROW, unit } from "./fixtures.ts";
  * the runtime implements them, not as the in-memory stand-in assumes.
  */
 const NOW = Date.UTC(2026, 9, 15, 4, 23);
-const PREFIX = storePrefix("test", "c0ffee");
 const migrations = Object.entries(
   import.meta.glob<string>("../../platform/migrations/*.sql", {
     query: "?raw",
@@ -90,7 +89,7 @@ describe("shards and regional stats on Miniflare R2 and D1", () => {
   });
 
   it("publishes, rebuilds idempotently, prunes and serves through the SDK chain", async () => {
-    const bucket = env.SHARDS as R2Bucket;
+    const bucket = env.CDN as R2Bucket;
     const run = (limits = {}) => runShardBuild(env, catalog, { now: NOW, limits: { results: 4, ...limits } });
 
     // A budget of one entry per file and one embedding per night: three builds in three runs.
@@ -101,12 +100,13 @@ describe("shards and regional stats on Miniflare R2 and D1", () => {
     const again = await run({ maxEmbeddings: 1, maxShardBytes: 50 });
     expect(again).toMatchObject({ status: "unchanged", build: third.build, embedded: 0 });
 
-    const listed = await bucket.list({ prefix: PREFIX, delimiter: "/" });
-    expect(listed.delimitedPrefixes.sort()).toEqual(
-      [`${PREFIX}${second.build}/`, `${PREFIX}${third.build}/`].sort(),
-    );
-    const pointer = (await (await bucket.get(`${PREFIX}current.json`))?.json()) as ShardPointer;
-    expect(pointer).toMatchObject({ build: third.build, previous: second.build, queries: 3 });
+    const pointer = (await (await bucket.get("state/test/c0ffee.json"))?.json()) as ShardPointer;
+    expect(pointer).toMatchObject({ build: third.build, previous: { build: second.build }, queries: 3 });
+    // One file per entry, named by content: each build reuses the files of the one before.
+    const files = await bucket.list({ prefix: "p/test/f/" });
+    expect(files.objects).toHaveLength(3);
+    const head = await bucket.head(files.objects[0]?.key as string);
+    expect(head?.httpMetadata?.cacheControl).toBe("public, max-age=31536000, immutable");
 
     const app = createApp({ catalog, cache: () => proxy.caches.default });
     const ctx = executionContext();

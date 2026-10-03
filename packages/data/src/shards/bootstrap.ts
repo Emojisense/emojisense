@@ -55,25 +55,31 @@ const ANIMAL_MOODS = {
 /** Description fragments of 2–6 words read like conceptual queries ("fast growth", "going live"). */
 const MIN_FRAGMENT_TOKENS = 2;
 const MAX_FRAGMENT_TOKENS = 6;
-const FRAGMENT_BREAKS = /[;,.:!?()"“”‘’]+|\s(?:or|and|ve|veya|ya da)\s/;
+const FRAGMENT_BREAKS = /[;,.:!?()"“”‘’，。；：！？、،؛؟।]+|\s(?:or|and|ve|veya|ya da)\s/;
 const LEADING_FILLER = /^(?:or|and|for|ve|veya|icin) /;
 /** Strong aliases come first in the data; give them a slightly higher synthetic count. */
 const RANK_BONUS = 10;
 
 const isPhrase = (q: string) => tokenize(q).length >= 2;
 
+/**
+ * Synthetic queries of the given locales (default English and Turkish, the locales of the
+ * combined CLI build). Phrases come from every locale's data; mood templates exist for English
+ * and Turkish only.
+ */
 export function bootstrapQueries(
   emoji: readonly BaseEmoji[],
   validated: Validated,
   minCount: number,
+  locales: readonly string[] = ["en", "tr"],
 ): QueryLogRow[] {
   const rows: QueryLogRow[] = [];
-  const add = (q: string, locale: "en" | "tr", bonus = 0) => {
+  const add = (q: string, locale: string, bonus = 0) => {
     rows.push({ q, n: minCount + bonus, locale });
   };
 
   for (const e of emoji) {
-    for (const locale of ["en", "tr"] as const) {
+    for (const locale of locales) {
       const v = validated[e.hexcode]?.[locale];
       if (!v) continue;
       [...v.alias, ...v.low].forEach((alias, rank) => {
@@ -87,7 +93,8 @@ export function bootstrapQueries(
     }
   }
 
-  for (const locale of ["en", "tr"] as const) {
+  for (const locale of locales) {
+    if (locale !== "en" && locale !== "tr") continue;
     for (const m of MOODS[locale]) {
       for (const template of FEELING_TEMPLATES[locale]) add(template.replace("{m}", m), locale);
     }

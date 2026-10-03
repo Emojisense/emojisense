@@ -63,4 +63,31 @@ describe("bootstrap queries", () => {
     const growth = rows.find((r) => r.q === "growth mode")?.n ?? 0;
     expect(ship).toBeGreaterThan(growth);
   });
+
+  it("builds the queries of any locale it is given, with templates for English and Turkish only", () => {
+    const withSpanish: Validated = {
+      "1F680": {
+        ...validated["1F680"],
+        es: { desc: "Lanzamiento del producto, hacia la luna.", alias: ["a la luna"], typo: [], low: [] },
+      } as Validated[string],
+    };
+    const spanish = bootstrapQueries(emoji, withSpanish, 5, ["es"]);
+    expect(spanish.every((r) => r.locale === "es")).toBe(true);
+    expect(spanish.map((r) => r.q)).toEqual(
+      expect.arrayContaining(["a la luna", "lanzamiento del producto", "hacia la luna"]),
+    );
+    expect(spanish.map((r) => r.q)).not.toContain("feeling tired");
+  });
+
+  it("cuts descriptions at the punctuation of other scripts too", () => {
+    const withChinese: Validated = {
+      "1F680": {
+        ...validated["1F680"],
+        zh: { desc: "火箭 发射，冲向 月球。", alias: [], typo: [], low: [] },
+      } as Validated[string],
+    };
+    expect(bootstrapQueries(emoji, withChinese, 5, ["zh"]).map((r) => r.q)).toEqual(
+      expect.arrayContaining(["火箭 发射", "冲向 月球"]),
+    );
+  });
 });

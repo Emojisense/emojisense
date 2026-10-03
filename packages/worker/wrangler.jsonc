@@ -39,10 +39,13 @@
   // Custom emoji images, written by the dashboard and the tenants API, served at
   // /v1/custom/:appId/:emojiId. Local R2 state is keyed by bucket_name, so both Workers share it
   // under --persist-to (CONTRACT.md "Storage").
-  // SHARDS: layer-2 shard builds of the nightly job (src/shards/), served at /p/*. API Worker only.
+  // SHARDS (private): published culture builds. CDN (public on cdn.emojisense.*): layer-2 shards
+  // of the nightly job and the base build (src/shards/, PACK_FORMAT §6), also served at /p/*.
+  // API Worker only.
   "r2_buckets": [
     { "binding": "EMOJI", "bucket_name": "emojisense-emoji" },
-    { "binding": "SHARDS", "bucket_name": "emojisense-shards" }
+    { "binding": "SHARDS", "bucket_name": "emojisense-shards" },
+    { "binding": "CDN", "bucket_name": "emojisense-cdn" }
   ],
   // Per minute (src/auth.ts). SITE_LIMITER is the per-IP budget of publishable-key calls from
   // FIRST_PARTY_ORIGINS (the website's public key). KEY_MISS_LIMITER counts, per IP, key lookups
@@ -97,7 +100,8 @@
       ],
       "r2_buckets": [
         { "binding": "EMOJI", "bucket_name": "emojisense-emoji" },
-        { "binding": "SHARDS", "bucket_name": "emojisense-shards" }
+        { "binding": "SHARDS", "bucket_name": "emojisense-shards" },
+        { "binding": "CDN", "bucket_name": "emojisense-cdn" }
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
@@ -146,7 +150,8 @@
       ],
       "r2_buckets": [
         { "binding": "EMOJI", "bucket_name": "emojisense-emoji-dev" },
-        { "binding": "SHARDS", "bucket_name": "emojisense-shards-dev" }
+        { "binding": "SHARDS", "bucket_name": "emojisense-shards-dev" },
+        { "binding": "CDN", "bucket_name": "emojisense-cdn-dev" }
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1101", "simple": { "limit": 120, "period": 60 } },
@@ -181,7 +186,8 @@
       ],
       "r2_buckets": [
         { "binding": "EMOJI", "bucket_name": "emojisense-emoji-prod" },
-        { "binding": "SHARDS", "bucket_name": "emojisense-shards-prod" }
+        { "binding": "SHARDS", "bucket_name": "emojisense-shards-prod" },
+        { "binding": "CDN", "bucket_name": "emojisense-cdn-prod" }
       ],
       "ratelimits": [
         { "name": "SEARCH_LIMITER", "namespace_id": "1201", "simple": { "limit": 120, "period": 60 } },

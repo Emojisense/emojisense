@@ -1,36 +1,45 @@
 import {
-  type BuiltShards,
+  BASE_MANIFEST_FILE,
+  CDN_ROOT,
+  cdnVersionDir,
+  type HashedLayer,
+  type PublishedFile,
   type ResultStore,
-  SHARD_INDEX_FILE,
+  resolveFrom,
+  SHARD_FILES_DIR,
   type Shard,
+  type ShardBaseManifest,
   type ShardIndex,
-  shardFileName,
-  shardJson,
+  STATE_ROOT,
+  stateVersionDir,
   utf8Bytes,
 } from "@emojisense/data/shards";
+import { SHARD_FILE_CACHE, SHARD_INDEX_BROWSER_CACHE } from "../config.ts";
 import type { DayWindow } from "./select.ts";
 
 /**
- * R2 layout (PACK_FORMAT §6, "Nightly builds"):
+ * R2 layout, in the CDN bucket (PACK_FORMAT §6). The bucket is public on cdn.emojisense.*, where
+ * clients read `p/` without a Worker; the API Worker serves the same files at /p/* for older
+ * clients.
  *
- *   shards/<packVersion>/<contentHash>/current.json                   pointer to the served build
- *   shards/<packVersion>/<contentHash>/<build>/index.json             ShardIndex, English
- *   shards/<packVersion>/<contentHash>/<build>/<key>.json             Shard, file name encodeURIComponent(key)
- *   shards/<packVersion>/<contentHash>/<build>/<locale>/index.json    the same for another pack locale
- *   shards/<packVersion>/<contentHash>/<build>/<locale>/<key>.json
+ *   p/<packVersion>/index.json             live index, English (rewritten by every run)
+ *   p/<packVersion>/<locale>/index.json    live index of another pack locale
+ *   p/<packVersion>/f/<hash>.json          shard files and base indexes, named by content
+ *   state/<packVersion>/base.json          base manifest (the base build, build-shards.ts)
+ *   state/<packVersion>/<contentHash>.json pointer: the live build of this data
  *
- * One store per deployed pack version and content hash: answers depend on the vectors and the
- * model, so a deploy with new data starts a new store. `<build>` is a hash of the build's content
- * (every locale), so its files never change. English stays at the build root, where builds from
- * before locale shards put it.
+ * One pointer per deployed pack version and content hash: answers depend on the vectors and the
+ * model, so a deploy with new data does not reuse the entries of the old one.
  */
-export const SHARD_ROOT = "shards/";
-export const POINTER_FILE = "current.json";
 
 /** The part of R2Bucket the shard store uses. R2Bucket satisfies it; tests use a Map. */
 export interface ShardBucket {
   get(key: string): Promise<{ text(): Promise<string>; httpEtag: string } | null>;
-  put(key: string, value: string, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+  put(
+    key: string,
+    value: string,
+    options?: { httpMetadata?: { contentType?: string; cacheControl?: string } },
+  ): Promise<unknown>;
   list(options: { prefix: string; delimiter?: string; cursor?: string; limit?: number }): Promise<{
     objects: { key: string; uploaded: Date }[];
     delimitedPrefixes: string[];
@@ -40,53 +49,96 @@ export interface ShardBucket {
   delete(keys: string | string[]): Promise<void>;
 }
 
+/** The live files of one locale: key → file, relative to the version directory. */
+export interface LocaleBuild {
+  queries: number;
+  shards: number;
+  files: Record<string, string>;
+}
+
 export interface ShardPointer {
   format: "emojisense-shard-pointer";
-  formatVersion: 1;
+  formatVersion: 2;
   build: string;
-  /**
-   * The build before this one. Kept until the next run: an isolate trusts the pointer it read for
-   * up to SHARD_POINTER_TTL_MS and may still serve that build.
-   */
-  previous: string | null;
-  /** e.g. "bge-m3@1024" */
+  /** e.g. "embeddinggemma@768" */
   model: string;
   /** Results stored per query. */
   results: number;
   /** Over every locale. */
   queries: number;
   shards: number;
-  /** Per locale with a directory in the build. Missing in builds from before locale shards. */
-  locales?: Record<string, { queries: number; shards: number }>;
+  locales: Record<string, LocaleBuild>;
+  /**
+   * The build before this one. Its files are kept until the next run: clients keep an index for
+   * up to an hour (SHARD_INDEX_BROWSER_CACHE).
+   */
+  previous: { build: string; locales: Record<string, LocaleBuild> } | null;
   /** The days whose query_daily rows selected the queries. */
   window: DayWindow;
   /** UTC day of the last run that confirmed this pointer. */
   checkedDay: string;
 }
 
-const JSON_METADATA = { httpMetadata: { contentType: "application/json; charset=utf-8" } };
+const JSON_TYPE = "application/json; charset=utf-8";
+const PRIVATE = { httpMetadata: { contentType: JSON_TYPE, cacheControl: "no-store" } };
 
-export const storePrefix = (packVersion: string, contentHash: string) =>
-  `${SHARD_ROOT}${packVersion}/${contentHash}/`;
+export const pointerKey = (packVersion: string, contentHash: string) =>
+  `${stateVersionDir(packVersion)}${contentHash}.json`;
 
-/** The directory of a locale's files in a build: the build root for English, else `<locale>/`. */
-export const localeDir = (prefix: string, build: string, locale: string) =>
-  locale === "en" ? `${prefix}${build}/` : `${prefix}${build}/${locale}/`;
+const baseManifestKey = (packVersion: string) => `${stateVersionDir(packVersion)}${BASE_MANIFEST_FILE}`;
 
-export async function readPointer(bucket: ShardBucket, prefix: string): Promise<ShardPointer | undefined> {
-  const object = await bucket.get(prefix + POINTER_FILE);
-  if (!object) return undefined;
-  const pointer = JSON.parse(await object.text()) as Partial<ShardPointer>;
-  const valid = pointer.format === "emojisense-shard-pointer" && typeof pointer.build === "string";
+async function readJson<T>(bucket: ShardBucket, key: string): Promise<T | undefined> {
+  const object = await bucket.get(key);
+  return object ? (JSON.parse(await object.text()) as T) : undefined;
+}
+
+export async function readPointer(
+  bucket: ShardBucket,
+  packVersion: string,
+  contentHash: string,
+): Promise<ShardPointer | undefined> {
+  const pointer = await readJson<Partial<ShardPointer>>(bucket, pointerKey(packVersion, contentHash));
+  const valid = pointer?.format === "emojisense-shard-pointer" && pointer.formatVersion === 2;
   return valid ? (pointer as ShardPointer) : undefined;
 }
 
 export async function writePointer(
   bucket: ShardBucket,
-  prefix: string,
+  packVersion: string,
+  contentHash: string,
   pointer: ShardPointer,
 ): Promise<void> {
-  await bucket.put(prefix + POINTER_FILE, JSON.stringify(pointer), JSON_METADATA);
+  await bucket.put(pointerKey(packVersion, contentHash), JSON.stringify(pointer), PRIVATE);
+}
+
+export async function readBaseManifest(
+  bucket: ShardBucket,
+  packVersion: string,
+): Promise<ShardBaseManifest | undefined> {
+  const manifest = await readJson<Partial<ShardBaseManifest>>(bucket, baseManifestKey(packVersion));
+  return manifest?.format === "emojisense-shard-base" ? (manifest as ShardBaseManifest) : undefined;
+}
+
+export async function writeBaseManifest(bucket: ShardBucket, manifest: ShardBaseManifest): Promise<void> {
+  await bucket.put(baseManifestKey(manifest.packVersion), JSON.stringify(manifest), PRIVATE);
+}
+
+/** A published file (index or shard), by its path relative to the version directory. */
+export const readPublished = <T>(bucket: ShardBucket, packVersion: string, path: string) =>
+  readJson<T>(bucket, cdnVersionDir(packVersion) + path);
+
+/** A live index: cached for an hour, because the next run replaces it. */
+export async function writeLiveIndex(
+  bucket: ShardBucket,
+  packVersion: string,
+  path: string,
+  index: ShardIndex,
+): Promise<number> {
+  const json = JSON.stringify(index);
+  await bucket.put(cdnVersionDir(packVersion) + path, json, {
+    httpMetadata: { contentType: JSON_TYPE, cacheControl: SHARD_INDEX_BROWSER_CACHE },
+  });
+  return utf8Bytes(json);
 }
 
 /** Runs `task` over `items` with at most `limit` in flight. */
@@ -102,75 +154,23 @@ export async function forEachLimit<T>(
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, lane));
 }
 
-/** Copies every entry of one locale directory of a build (localeDir) into `store`; returns how many. */
-export async function loadBuild(
+/** Copies every entry of the given shard files into `store`; returns how many. */
+export async function loadEntries(
   bucket: ShardBucket,
-  dir: string,
+  packVersion: string,
+  files: Record<string, string>,
   store: ResultStore,
   concurrency: number,
 ): Promise<number> {
-  const indexObject = await bucket.get(dir + SHARD_INDEX_FILE);
-  if (!indexObject) return 0;
-  const index = JSON.parse(await indexObject.text()) as ShardIndex;
   let loaded = 0;
-  await forEachLimit(index.keys, concurrency, async (key) => {
-    const object = await bucket.get(dir + shardFileName(key));
-    if (!object) return;
-    const shard = JSON.parse(await object.text()) as Shard;
-    for (const [q, results] of Object.entries(shard.entries)) {
+  await forEachLimit(Object.values(files), concurrency, async (path) => {
+    const shard = await readPublished<Shard>(bucket, packVersion, path);
+    for (const [q, results] of Object.entries(shard?.entries ?? {})) {
       store.set(q, results);
       loaded++;
     }
   });
   return loaded;
-}
-
-async function sha256Hex(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-/** The shards of one locale in a build. */
-export interface LocaleShards {
-  locale: string;
-  built: BuiltShards;
-}
-
-/**
- * 16 hex digits over every locale's index and shard files: the same output gets the same id.
- * Locales are taken in the order given; the job sorts them.
- */
-export async function buildId(locales: readonly LocaleShards[]): Promise<string> {
-  const parts: string[] = [];
-  for (const { locale, built } of locales) {
-    parts.push(locale, JSON.stringify(built.index));
-    for (const plan of built.plans) {
-      parts.push(await sha256Hex(shardJson(plan.key, plan.queries, built.store)));
-    }
-  }
-  return (await sha256Hex(parts.join("\n"))).slice(0, 16);
-}
-
-/**
- * Writes the shard files of one locale directory (localeDir), then its index.json. A run that
- * stops half way leaves a build that nothing points to; the next run deletes it (pruneBuilds).
- * Returns the raw bytes written.
- */
-export async function writeBuild(
-  bucket: ShardBucket,
-  dir: string,
-  built: BuiltShards,
-  concurrency: number,
-): Promise<number> {
-  let bytes = 0;
-  await forEachLimit(built.plans, concurrency, async (plan) => {
-    const json = shardJson(plan.key, plan.queries, built.store);
-    bytes += utf8Bytes(json);
-    await bucket.put(dir + shardFileName(plan.key), json, JSON_METADATA);
-  });
-  const index = JSON.stringify(built.index);
-  await bucket.put(dir + SHARD_INDEX_FILE, index, JSON_METADATA);
-  return bytes + utf8Bytes(index);
 }
 
 async function listAll(bucket: ShardBucket, prefix: string, delimiter?: string) {
@@ -191,46 +191,127 @@ async function listAll(bucket: ShardBucket, prefix: string, delimiter?: string) 
   return { objects, prefixes };
 }
 
+/** The content-named files of a version that are in the bucket, by path ("f/….json"). */
+export async function listFiles(bucket: ShardBucket, packVersion: string): Promise<Map<string, Date>> {
+  const dir = cdnVersionDir(packVersion);
+  const { objects } = await listAll(bucket, dir + SHARD_FILES_DIR);
+  return new Map(objects.map((o) => [o.key.slice(dir.length), o.uploaded]));
+}
+
+/**
+ * Writes the files that are not in the bucket yet: a file is named by its content, so one that
+ * exists is the same file. Returns the raw bytes written.
+ */
+export async function writeFiles(
+  bucket: ShardBucket,
+  packVersion: string,
+  files: readonly PublishedFile[],
+  existing: ReadonlyMap<string, unknown>,
+  concurrency: number,
+): Promise<number> {
+  let bytes = 0;
+  const missing = files.filter((file) => !existing.has(file.path));
+  await forEachLimit(missing, concurrency, async (file) => {
+    bytes += utf8Bytes(file.json);
+    await bucket.put(cdnVersionDir(packVersion) + file.path, file.json, {
+      httpMetadata: { contentType: JSON_TYPE, cacheControl: SHARD_FILE_CACHE },
+    });
+  });
+  return bytes;
+}
+
+/** 16 hex digits over every locale's files: the same output gets the same id. */
+export async function buildId(layers: readonly { locale: string; layer: HashedLayer }[]): Promise<string> {
+  const text = layers.map(({ locale, layer }) => `${locale}\n${JSON.stringify(layer.index)}`).join("\n");
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 16);
+}
+
+/** The base index of every locale in the manifest and the files it names. */
+export async function baseFiles(
+  bucket: ShardBucket,
+  packVersion: string,
+  manifest: ShardBaseManifest | undefined,
+): Promise<string[]> {
+  const paths: string[] = [];
+  for (const indexPath of Object.values(manifest?.locales ?? {})) {
+    paths.push(indexPath);
+    const index = await readPublished<ShardIndex>(bucket, packVersion, indexPath);
+    for (const file of Object.values(index?.files ?? {})) paths.push(resolveFrom(SHARD_FILES_DIR, file));
+  }
+  return paths;
+}
+
+/** Every live file that a pointer of this version names (any data version, current or previous build). */
+export async function pointerFiles(bucket: ShardBucket, packVersion: string): Promise<string[]> {
+  const paths: string[] = [];
+  const { objects } = await listAll(bucket, stateVersionDir(packVersion));
+  for (const { key } of objects) {
+    if (key.endsWith(`/${BASE_MANIFEST_FILE}`)) continue;
+    const pointer = await readJson<Partial<ShardPointer>>(bucket, key);
+    for (const locales of [pointer?.locales, pointer?.previous?.locales]) {
+      for (const build of Object.values(locales ?? {})) paths.push(...Object.values(build.files));
+    }
+  }
+  return paths;
+}
+
 async function deleteKeys(bucket: ShardBucket, keys: readonly string[]): Promise<number> {
   for (let start = 0; start < keys.length; start += 1000)
     await bucket.delete(keys.slice(start, start + 1000));
   return keys.length;
 }
 
-/** Deletes the builds under `prefix` other than `keep`; returns how many objects it deleted. */
-export async function pruneBuilds(
+/**
+ * Deletes the content-named files of a version that nothing names any more, once they are older
+ * than `graceMs` (a run that is still writing must not lose its files). Returns how many.
+ */
+export async function pruneFiles(
   bucket: ShardBucket,
-  prefix: string,
-  keep: ReadonlySet<string>,
+  packVersion: string,
+  existing: ReadonlyMap<string, Date>,
+  referenced: ReadonlySet<string>,
+  now: number,
+  graceMs: number,
 ): Promise<number> {
-  let deleted = 0;
-  for (const dir of (await listAll(bucket, prefix, "/")).prefixes) {
-    if (keep.has(dir.slice(prefix.length, -1))) continue;
-    deleted += await deleteKeys(
-      bucket,
-      (await listAll(bucket, dir)).objects.map((o) => o.key),
-    );
-  }
-  return deleted;
+  const unused = [...existing]
+    .filter(([path, uploaded]) => !referenced.has(path) && uploaded.getTime() < now - graceMs)
+    .map(([path]) => cdnVersionDir(packVersion) + path);
+  return deleteKeys(bucket, unused);
 }
 
 /**
- * Deletes the stores of other pack versions and content hashes in which nothing was written for
- * `staleDays`: their deployment is gone (a live one rewrites its pointer every night). Returns how
- * many objects it deleted.
+ * Deletes what other deployments left behind once nothing was written there for `staleDays`: the
+ * pointers of other data versions of this pack version (their files are then unused and go in a
+ * later run), and every file of other pack versions. A live deployment rewrites its pointer every
+ * night. Returns how many objects it deleted.
  */
-export async function pruneStaleStores(
+export async function pruneStale(
   bucket: ShardBucket,
-  current: string,
+  packVersion: string,
+  contentHash: string,
   now: number,
   staleDays: number,
 ): Promise<number> {
   const cutoff = now - staleDays * 24 * 3600 * 1000;
+  const current = pointerKey(packVersion, contentHash);
   let deleted = 0;
-  for (const version of (await listAll(bucket, SHARD_ROOT, "/")).prefixes) {
-    for (const store of (await listAll(bucket, version, "/")).prefixes) {
-      if (store === current) continue;
-      const { objects } = await listAll(bucket, store);
+  const { objects: pointers } = await listAll(bucket, stateVersionDir(packVersion));
+  const stalePointers = pointers.filter(
+    (o) => o.key !== current && !o.key.endsWith(`/${BASE_MANIFEST_FILE}`) && o.uploaded.getTime() < cutoff,
+  );
+  deleted += await deleteKeys(
+    bucket,
+    stalePointers.map((o) => o.key),
+  );
+
+  for (const root of [CDN_ROOT, STATE_ROOT]) {
+    for (const version of (await listAll(bucket, root, "/")).prefixes) {
+      if (version === `${root}${packVersion}/`) continue;
+      const { objects } = await listAll(bucket, version);
       if (objects.some((o) => o.uploaded.getTime() >= cutoff)) continue;
       deleted += await deleteKeys(
         bucket,

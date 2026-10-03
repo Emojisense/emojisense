@@ -11,6 +11,8 @@
     "embed": "tsx src/embed.ts",
     "embed:glyph": "tsx src/embed-glyph.ts",
     "build:shards": "tsx src/build-shards.ts",
+    "build:shards:base": "tsx src/build-base-shards.ts",
+    "upload:shards": "tsx src/upload-shards.ts",
     "build": "tsx src/ingest.ts && tsx src/validate.ts && tsx src/build-pack.ts",
     "check:enrichment": "tsx scripts/check-enrichment.ts",
     "culture:check": "tsx src/culture/check.ts",

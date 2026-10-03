@@ -147,15 +147,15 @@ runs and logs on its own; a failure of any marks the run as failed.
 Run the cron locally: `pnpm exec wrangler dev --env offline --test-scheduled --persist-to ../../.wrangler/state`,
 then `curl "http://localhost:8788/__scheduled?cron=17+3+*+*+*"`.
 
-## Nightly shard build (`SHARDS`)
+## Nightly shard build (`CDN`)
 
 | Rule | Where |
 | ---- | ----- |
-| Cron `23 4 * * *` (after retention). Runs only with `SHARDS_CRON_ENABLED=true` and the `DB`, `SHARDS` and `AI` bindings; otherwise it logs `shards_skipped`. | `src/scheduled.ts`, `src/shards/job.ts` |
+| Cron `23 4 * * *` (after retention). Runs only with `SHARDS_CRON_ENABLED=true` and the `DB`, `CDN` and `AI` bindings; otherwise it logs `shards_skipped`. | `src/scheduled.ts`, `src/shards/job.ts` |
 | Candidates: `query_daily` of the last 6 complete UTC days, per locale (rows from before migration 0004 count as `en`); apps of ≥ 3 accounts and ≥ 10 searches in that locale (`SHARD_*` in `@emojisense/platform`); at most 20,000 over every locale, most searched first. `privacyReason` drops emails, URLs, phone/account/postal numbers, ids, long tokens and blocklisted text. | `src/shards/select.ts` |
-| Answers: the API's `mode=semantic&locale=<locale>` path (`embedTexts`, `semanticResults`, the locale's vectors), one Workers AI call per 100 queries, at most 5,000 new embeddings per run over every locale, most searched first; entries of the served build are reused. Each locale's alias engine drops what its clients answer on the device; a locale whose engine does not load is skipped (`skippedLocales`). | `src/shards/job.ts`, `src/semantic.ts` |
-| R2 layout `shards/<packVersion>/<contentHash>/<build>/{index.json,<key>.json}` (English), `…/<build>/<locale>/…` (other locales) and `current.json`. Build id = content hash over every locale; the pointer is written last and lists queries and shards per locale. Keeps the current and previous build; deletes older builds and stores not written for 7 days. | `src/shards/storage.ts` |
-| `GET /p/<v>/<file>` and `/p/<v>/<locale>/<file>` (`en/` = the English files; not a pack locale: 404): pointer per isolate (5 min), edge cache keyed by build, `index.json` 1 h and key files 1 day in browsers, 404s 5 min. Without a build: `public/p` (never immutable). | `src/shards/route.ts` |
+| Answers: the API's `mode=semantic&locale=<locale>` path (`embedTexts`, `semanticResults`, the locale's vectors), one Workers AI call per 100 queries, at most 5,000 new embeddings per run over every locale, most searched first; entries of this data's last build are reused. Each locale's alias engine drops what its clients answer on the device, and its base layer drops what it holds (`inBase`); a locale whose engine does not load is skipped (`skippedLocales`). | `src/shards/job.ts`, `src/semantic.ts` |
+| R2 layout (bucket `emojisense-cdn-*`, public on `cdn.emojisense.*`): `p/<v>/f/<hash>.json` shard files and base indexes named by content (`immutable`, 1 year); `p/<v>/index.json` and `p/<v>/<locale>/index.json` live indexes (1 h), each naming its locale's base index; `state/<v>/<contentHash>.json` pointer (files per locale, current and previous build); `state/<v>/base.json` base manifest (written by `upload:shards` in `@emojisense/data`). Only files the bucket does not have are written. Unnamed files are deleted after a day; pointers of gone deployments and other pack versions after 7 days. | `src/shards/storage.ts` |
+| `GET /p/<v>/index.json`, `/p/<v>/<locale>/index.json` (`en/` = English; not a pack locale: 404) and `/p/<v>/f/<hash>.json` on the API host: the same files as the CDN. Live indexes are read once per isolate per 5 minutes and kept 1 h in browsers; content-named files go through the edge cache and are `immutable`. Clients from before hashed files ask for `/p/<v>/<key>.json`: the live index maps the key to its file (1 day in browsers). 404s 5 min. Without a build: `public/p` (never immutable). | `src/shards/route.ts` |
 
 Logs hold counts only (`shards_built`, `shards_empty`, `shards_skipped`, `shards_build_failed`).
 Locally the `offline` env has no Workers AI, so the run is skipped; `test/shards-miniflare.test.ts`

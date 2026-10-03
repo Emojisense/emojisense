@@ -97,18 +97,24 @@ export const TRENDS_MAX_CANDIDATES = 20_000;
 export const TRENDS_MAX_ROWS = 10_000;
 /** …with at most this many per locale and country, so a big region cannot crowd out the others. */
 export const TRENDS_MAX_ROWS_PER_REGION = 500;
-/** Stores of another pack version or content hash are deleted after this many days unused. */
+/** Pointers of another data version, and other pack versions, are deleted after this many days unused. */
 export const SHARD_STALE_DAYS = 7;
-/** How long an isolate trusts the current-build pointer it read from R2. */
+/** A shard file nothing names any more is deleted once it is this old (a run may still be writing). */
+export const SHARD_FILE_GRACE_MS = 24 * 3600 * 1000;
+/** How long an isolate trusts a live index it read from R2 (the API host's `<key>.json` route). */
 export const SHARD_POINTER_TTL_MS = 5 * 60_000;
 /**
- * `/p/<v>/index.json` changes with each nightly build, so it is never `immutable`: clients pick
- * up a new build within an hour. Shard files of an older build hold valid answers for the same
- * model and data, so they may live a day.
+ * `index.json` changes with each nightly build, so it is never `immutable`: clients pick up a new
+ * build within an hour. Shard files are named by their content, so they never change.
  */
 export const SHARD_INDEX_BROWSER_CACHE = "public, max-age=3600";
-export const SHARD_FILE_BROWSER_CACHE = "public, max-age=86400";
-/** Edge copies are keyed by build id, whose content never changes. */
+export const SHARD_FILE_CACHE = "public, max-age=31536000, immutable";
+/**
+ * `<key>.json` on the API host (clients from before hashed files): the same URL serves the next
+ * build's file, so it may live a day, as before.
+ */
+export const SHARD_KEY_FILE_BROWSER_CACHE = "public, max-age=86400";
+/** Edge copies (Cache API) of R2 objects; a live index is re-read after SHARD_POINTER_TTL_MS. */
 export const SHARD_EDGE_CACHE_SECONDS = 7 * 24 * 3600;
 /** A missing file: the client asks the API. Short, so a new build shows up soon. */
 export const SHARD_MISSING_CACHE = "public, max-age=300";

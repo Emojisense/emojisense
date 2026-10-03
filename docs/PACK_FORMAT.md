@@ -373,7 +373,8 @@ published as static files, in two layers per locale:
 - **live**: real queries, rebuilt every night from the query counts (ARCHITECTURE.md, "Nightly
   shard build"),
 - **base**: synthetic queries from our own data, built with the pack (`pnpm --filter
-  @emojisense/data shards --layer base`), so layer 2 answers before any query log exists.
+  @emojisense/data build:shards:base`, published with `upload:shards`), so layer 2 answers
+  before any query log exists.
 
 ```
 /p/<packVersion>/index.json            live index, English: {"format":"emojisense-shards","formatVersion":1,

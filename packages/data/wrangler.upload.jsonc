@@ -1,0 +1,9 @@
+// Only used by src/upload-shards.ts (getPlatformProxy) to write the CDN buckets from Node. Not deployed.
+{
+  "name": "emojisense-shard-upload",
+  "compatibility_date": "2026-09-24",
+  "r2_buckets": [
+    { "binding": "CDN_DEV", "bucket_name": "emojisense-cdn-dev", "remote": true },
+    { "binding": "CDN_PRODUCTION", "bucket_name": "emojisense-cdn-prod", "remote": true }
+  ]
+}

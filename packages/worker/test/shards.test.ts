@@ -1,5 +1,12 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { Shard, ShardIndex } from "@emojisense/data/shards";
+import {
+  contentFile,
+  relativeTo,
+  resolveFrom,
+  type Shard,
+  type ShardIndex,
+  type ShardResult,
+} from "@emojisense/data/shards";
 import { addDays, dayOf } from "@emojisense/platform";
 import { createLayeredSemantic, createSemanticClient, createShardProvider } from "emojisense";
 import { decodeVectors, encodeVectors } from "emojisense/vectors";
@@ -9,7 +16,7 @@ import { runScheduled } from "../src/scheduled.ts";
 import type { Catalog } from "../src/semantic.ts";
 import { runShardBuild, type ShardLimits } from "../src/shards/job.ts";
 import { selectCandidates, selectionWindow } from "../src/shards/select.ts";
-import { type ShardPointer, storePrefix } from "../src/shards/storage.ts";
+import type { ShardPointer } from "../src/shards/storage.ts";
 import { API, catalog, EMBEDDING_MODEL, fixtureVectors, harness, ROW, TEST_KEY, unit } from "./fixtures.ts";
 import { memoryR2 } from "./memory-r2.ts";
 import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
@@ -17,7 +24,8 @@ import { migratedDatabase, sqliteD1 } from "./sqlite-d1.ts";
 /** The cron's scheduled time: 2026-10-15 04:23 UTC. */
 const NOW = Date.UTC(2026, 9, 15, 4, 23);
 const daysAgo = (n: number) => addDays(dayOf(NOW), -n);
-const PREFIX = storePrefix("test", "c0ffee");
+/** The pointer of the fixture catalog's data (pack "test", content hash "c0ffee"). */
+const POINTER = "state/test/c0ffee.json";
 const DAY = 24 * 3600 * 1000;
 
 /** Embeds by topic, a whole batch per call, like Workers AI. */
@@ -196,6 +204,52 @@ describe("selectCandidates", () => {
   });
 });
 
+/** Reads a test bucket the way a client reads the CDN. */
+function published(r2: ReturnType<typeof memoryR2>) {
+  const dirOf = (locale: string) => (locale === "en" ? "" : `${locale}/`);
+  const index = (locale = "en") => r2.json<ShardIndex>(`p/test/${dirOf(locale)}index.json`);
+  /** Every entry of a locale's live files. */
+  const entries = (locale = "en"): Record<string, ShardResult[]> =>
+    Object.assign(
+      {},
+      ...Object.values(index(locale).files ?? {}).map(
+        (file) => r2.json<Shard>(`p/test/${resolveFrom(dirOf(locale), file)}`).entries,
+      ),
+    );
+  return { index, entries, pointer: () => r2.json<ShardPointer>(POINTER) };
+}
+
+/** What the base build uploads (build-shards.ts --layer base): one English base shard and the manifest. */
+async function uploadBase(
+  r2: ReturnType<typeof memoryR2>,
+  entries: Record<string, ShardResult[]>,
+  model = "bge-m3@8",
+) {
+  const shard = await contentFile(JSON.stringify({ key: "l", entries }));
+  const index: ShardIndex = {
+    format: "emojisense-shards",
+    formatVersion: 1,
+    packVersion: "test",
+    model,
+    keys: ["l"],
+    files: { l: relativeTo("f/", shard.path) },
+  };
+  const indexFile = await contentFile(JSON.stringify(index));
+  await r2.bucket.put(`p/test/${shard.path}`, shard.json);
+  await r2.bucket.put(`p/test/${indexFile.path}`, indexFile.json);
+  await r2.bucket.put(
+    "state/test/base.json",
+    JSON.stringify({
+      format: "emojisense-shard-base",
+      formatVersion: 1,
+      packVersion: "test",
+      model,
+      locales: { en: indexFile.path },
+    }),
+  );
+  return indexFile.path;
+}
+
 describe("nightly shard build", () => {
   let db: DatabaseSync;
   let r2: ReturnType<typeof memoryR2>;
@@ -203,14 +257,15 @@ describe("nightly shard build", () => {
   let clock: number;
   const env = (overrides: Partial<Env> = {}): Env => ({
     DB: sqliteD1(db) as unknown as D1Database,
-    SHARDS: r2.r2,
+    CDN: r2.r2,
     AI: { run: ai },
     SHARDS_CRON_ENABLED: "true",
     ...overrides,
   });
   const run = (limits: Partial<ShardLimits> = {}, overrides: Partial<Env> = {}, now = NOW, from = catalog) =>
     runShardBuild(env(overrides), from, { now, limits: { results: 4, ...limits } });
-  const pointer = () => r2.json<ShardPointer>(`${PREFIX}current.json`);
+  const pointer = () => published(r2).pointer();
+  const entries = (locale?: string) => published(r2).entries(locale);
 
   beforeEach(() => {
     db = seededDatabase();
@@ -238,9 +293,9 @@ describe("nightly shard build", () => {
       reused: 0,
       deferred: 0,
     });
-    const { build } = pointer();
     expect(pointer()).toMatchObject({
       format: "emojisense-shard-pointer",
+      formatVersion: 2,
       previous: null,
       model: "bge-m3@8",
       results: 4,
@@ -248,17 +303,28 @@ describe("nightly shard build", () => {
       window: { from: daysAgo(6), to: daysAgo(1) },
       checkedDay: dayOf(NOW),
     });
-    const index = r2.json<ShardIndex>(`${PREFIX}${build}/index.json`);
+    const index = published(r2).index();
     expect(index).toMatchObject({ format: "emojisense-shards", packVersion: "test", model: "bge-m3@8" });
-    const entries = Object.assign(
-      {},
-      ...index.keys.map((key) => r2.json<Shard>(`${PREFIX}${build}/${encodeURIComponent(key)}.json`).entries),
-    );
-    expect(Object.keys(entries).sort()).toEqual(["extinct reptiles", "lava eruption"]);
-    expect(entries["lava eruption"][0]).toEqual(["🌋", "1F30B", 1]);
+    expect(index.base).toBeUndefined();
+    expect(Object.keys(entries()).sort()).toEqual(["extinct reptiles", "lava eruption"]);
+    expect(entries()["lava eruption"]?.[0]).toEqual(["🌋", "1F30B", 1]);
     // One Workers AI call for both queries, with the text the API embeds.
     expect(ai).toHaveBeenCalledTimes(1);
     expect(ai).toHaveBeenCalledWith("@cf/baai/bge-m3", { text: ["extinct reptiles", "lava eruption"] });
+  });
+
+  it("names files by their content: immutable on the CDN, while the index lives an hour", async () => {
+    popular(db, "lava eruption");
+    await run();
+    const files = r2.keys("p/test/f/");
+    expect(files.length).toBeGreaterThan(0);
+    for (const key of files) {
+      expect(key).toMatch(/^p\/test\/f\/[0-9a-f]{16}\.json$/);
+      expect(r2.objects.get(key)?.cacheControl).toBe("public, max-age=31536000, immutable");
+      expect((await contentFile(r2.objects.get(key)?.text as string)).path).toBe(key.slice("p/test/".length));
+    }
+    expect(r2.objects.get("p/test/index.json")?.cacheControl).toBe("public, max-age=3600");
+    expect(r2.objects.get(POINTER)?.cacheControl).toBe("no-store");
   });
 
   it("logs counts only, never query text", async () => {
@@ -283,7 +349,7 @@ describe("nightly shard build", () => {
 
     const first = await run({ maxEmbeddings: 2 });
     expect(first).toMatchObject({ status: "published", embedded: 2, deferred: 3, queries: 2 });
-    expect(Object.keys(await served())).toEqual(["lava one", "lava two"]);
+    expect(Object.keys(entries())).toEqual(["lava one", "lava two"]);
 
     const second = await run({ maxEmbeddings: 2 });
     expect(second).toMatchObject({ status: "published", reused: 2, embedded: 2, deferred: 1, queries: 4 });
@@ -295,15 +361,6 @@ describe("nightly shard build", () => {
     expect(new Set(embedded).size).toBe(5);
   });
 
-  async function served(): Promise<Record<string, unknown>> {
-    const { build } = pointer();
-    const index = r2.json<ShardIndex>(`${PREFIX}${build}/index.json`);
-    return Object.assign(
-      {},
-      ...index.keys.map((key) => r2.json<Shard>(`${PREFIX}${build}/${encodeURIComponent(key)}.json`).entries),
-    );
-  }
-
   it("is idempotent: a second run on the same day publishes the same build and embeds nothing", async () => {
     popular(db, "lava eruption");
     popular(db, "extinct reptiles");
@@ -313,53 +370,54 @@ describe("nightly shard build", () => {
 
     const again = await run();
 
-    expect(again).toMatchObject({
-      status: "unchanged",
-      build: first.build,
-      reused: 2,
-      embedded: 0,
-      bytes: 0,
-    });
+    expect(again).toMatchObject({ status: "unchanged", build: first.build, reused: 2, embedded: 0 });
     expect(ai).toHaveBeenCalledTimes(1);
-    // Only the pointer is written again, with the same content.
-    expect(r2.calls.put).toBe(puts + 1);
+    // Only the pointer and the live index are written again, with the same content.
+    expect(r2.calls.put).toBe(puts + 2);
     expect(new Map([...r2.objects].map(([key, o]) => [key, o.text]))).toEqual(objects);
   });
 
-  it("keeps the current and the previous build and deletes older ones", async () => {
+  it("keeps the files of the current and the previous build and deletes older ones after a day", async () => {
     popular(db, "lava one");
     const a = await run();
+    const aFiles = r2.keys("p/test/f/");
     popular(db, "lava two");
-    const b = await run();
+    clock = NOW + DAY + 1;
+    const b = await run({}, {}, clock);
     popular(db, "lava three");
-    const c = await run();
+    clock = NOW + 2 * DAY + 2;
+    const c = await run({}, {}, clock);
 
     expect(new Set([a.build, b.build, c.build]).size).toBe(3);
-    expect(pointer()).toMatchObject({ build: c.build, previous: b.build });
-    const builds = new Set(r2.keys(PREFIX).map((k) => k.slice(PREFIX.length).split("/")[0]));
-    expect(builds).toEqual(new Set(["current.json", b.build, c.build]));
+    expect(pointer()).toMatchObject({ build: c.build, previous: { build: b.build } });
+    const kept = new Set(r2.keys("p/test/f/"));
+    const named = [pointer().locales, pointer().previous?.locales].flatMap((locales) =>
+      Object.values(locales ?? {}).flatMap((l) => Object.values(l.files).map((f) => `p/test/${f}`)),
+    );
+    expect(kept).toEqual(new Set(named));
+    expect(aFiles.some((key) => !kept.has(key))).toBe(true);
     expect(c.pruned).toBeGreaterThan(0);
   });
 
-  it("deletes the stores of gone deployments after a week, and keeps live ones", async () => {
+  it("deletes what gone deployments left after a week, and keeps live ones", async () => {
     const put = (key: string, at: number) => {
       clock = at;
       return r2.bucket.put(key, "{}");
     };
-    await put("shards/test/0ld/current.json", NOW - 8 * DAY);
-    await put("shards/test/0ld/abc/index.json", NOW - 9 * DAY);
-    await put("shards/0.0.9/f00/abc/index.json", NOW - 30 * DAY);
-    await put("shards/test/l1ve/current.json", NOW - 2 * DAY);
-    await put("shards/test/l1ve/abc/index.json", NOW - 20 * DAY);
+    await put("state/test/0ld.json", NOW - 8 * DAY);
+    await put("state/test/l1ve.json", NOW - 2 * DAY);
+    await put("p/0.0.9/index.json", NOW - 30 * DAY);
+    await put("p/0.0.9/f/0123456789abcdef.json", NOW - 30 * DAY);
+    await put("state/0.0.9/f00.json", NOW - 30 * DAY);
     clock = NOW;
     popular(db, "lava eruption");
 
     const report = await run();
 
-    expect(report.pruned).toBe(3);
-    expect(r2.keys("shards/test/0ld/")).toEqual([]);
-    expect(r2.keys("shards/0.0.9/")).toEqual([]);
-    expect(r2.keys("shards/test/l1ve/")).toHaveLength(2);
+    expect(report.pruned).toBe(4);
+    expect(r2.keys("state/test/")).toEqual(["state/test/c0ffee.json", "state/test/l1ve.json"]);
+    expect(r2.keys("p/0.0.9/")).toEqual([]);
+    expect(r2.keys("state/0.0.9/")).toEqual([]);
   });
 
   it("keeps serving the current build when Workers AI fails", async () => {
@@ -378,14 +436,41 @@ describe("nightly shard build", () => {
     // A week later the searches are out of the window: an empty build replaces the old one.
     const later = await run({}, {}, NOW + 7 * DAY);
     expect(later).toMatchObject({ status: "published", queries: 0, shards: 0 });
-    const index = r2.json<ShardIndex>(`${PREFIX}${pointer().build}/index.json`);
-    expect(index.keys).toEqual([]);
+    expect(published(r2).index()).toMatchObject({ keys: [], files: {} });
   });
 
-  it("publishes nothing when no query passes the thresholds", async () => {
+  it("publishes nothing when no query passes the thresholds and there is no base layer", async () => {
     searched(db, "lava eruption", [["a", 100]]);
     expect(await run()).toMatchObject({ status: "empty", candidates: 0 });
     expect(r2.objects.size).toBe(0);
+  });
+
+  it("names the base layer in the live index and leaves out what the base answers", async () => {
+    const baseIndex = await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9]] });
+    popular(db, "lava eruption");
+    popular(db, "extinct reptiles");
+
+    const report = await run();
+
+    expect(report).toMatchObject({ status: "published", candidates: 2, inBase: 1, embedded: 1, queries: 1 });
+    expect(Object.keys(entries())).toEqual(["extinct reptiles"]);
+    expect(published(r2).index().base).toBe(baseIndex);
+    expect(ai).toHaveBeenCalledWith("@cf/baai/bge-m3", { text: ["extinct reptiles"] });
+    // The base files are kept: the live index names them.
+    expect(r2.keys("p/test/f/")).toEqual(expect.arrayContaining([`p/test/${baseIndex}`]));
+  });
+
+  it("publishes the base layer's index before any query passes the thresholds", async () => {
+    const baseIndex = await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9]] });
+    expect(await run()).toMatchObject({ status: "published", queries: 0 });
+    expect(published(r2).index()).toMatchObject({ keys: [], base: baseIndex });
+  });
+
+  it("ignores a base layer built for another model", async () => {
+    await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9]] }, "other@8");
+    popular(db, "lava eruption");
+    expect(await run()).toMatchObject({ inBase: 0, queries: 1 });
+    expect(published(r2).index().base).toBeUndefined();
   });
 
   it("skips when switched off or a binding is missing", async () => {
@@ -395,12 +480,12 @@ describe("nightly shard build", () => {
       reason: "disabled",
     });
     expect(await run({}, { AI: undefined })).toMatchObject({ status: "skipped", reason: "no Workers AI" });
-    expect(await run({}, { SHARDS: undefined })).toMatchObject({ status: "skipped", reason: "no bucket" });
+    expect(await run({}, { CDN: undefined })).toMatchObject({ status: "skipped", reason: "no bucket" });
     expect(r2.objects.size).toBe(0);
     expect(ai).not.toHaveBeenCalled();
   });
 
-  it("builds a directory per locale with that locale's answers, English at the build root", async () => {
+  it("publishes an index per locale with that locale's answers, English at the version root", async () => {
     popular(db, "lava eruption", 0, "en");
     popular(db, "lava eruption", 0, "tr");
     popular(db, "extinct reptiles", 0, "tr");
@@ -412,25 +497,17 @@ describe("nightly shard build", () => {
       queries: 3,
       locales: { en: { queries: 1, shards: 1 }, tr: { queries: 2, shards: 2 } },
     });
-    expect(pointer().locales).toEqual(report.locales);
-    const { build } = pointer();
-    const en = r2.json<ShardIndex>(`${PREFIX}${build}/index.json`);
-    const tr = r2.json<ShardIndex>(`${PREFIX}${build}/tr/index.json`);
-    const entries = (index: ShardIndex, dir: string) =>
-      Object.assign(
-        {},
-        ...index.keys.map(
-          (key) => r2.json<Shard>(`${PREFIX}${build}/${dir}${encodeURIComponent(key)}.json`).entries,
-        ),
-      );
-    expect(Object.keys(entries(en, ""))).toEqual(["lava eruption"]);
-    expect(Object.keys(entries(tr, "tr/")).sort()).toEqual(["extinct reptiles", "lava eruption"]);
-    expect(entries(en, "")["lava eruption"][0][0]).toBe("🌋");
+    expect(Object.values(published(r2).index("tr").files ?? {}).every((f) => f.startsWith("../f/"))).toBe(
+      true,
+    );
+    expect(Object.keys(entries("en"))).toEqual(["lava eruption"]);
+    expect(Object.keys(entries("tr")).sort()).toEqual(["extinct reptiles", "lava eruption"]);
+    expect(entries("en")["lava eruption"]?.[0]?.[0]).toBe("🌋");
     // The Turkish vectors put 🐶 level with 🌋 for this text.
     expect(
-      entries(tr, "tr/")
-        ["lava eruption"].slice(0, 2)
-        .map((r: [string]) => r[0])
+      entries("tr")
+        ["lava eruption"]?.slice(0, 2)
+        .map((r) => r[0])
         .sort(),
     ).toEqual(["🌋", "🐶"]);
     // One text, embedded once per locale that needs it.
@@ -439,6 +516,14 @@ describe("nightly shard build", () => {
       "lava eruption",
       "lava eruption",
     ]);
+  });
+
+  it("empties a locale's index once its queries are gone", async () => {
+    popular(db, "lava eruption", 0, "tr");
+    await run({}, {}, NOW, withTurkish);
+    expect(Object.keys(entries("tr"))).toEqual(["lava eruption"]);
+    await run({}, {}, NOW + 7 * DAY, withTurkish);
+    expect(published(r2).index("tr")).toMatchObject({ keys: [], files: {} });
   });
 
   it("spends one embedding budget on the most searched new queries of every locale", async () => {
@@ -465,7 +550,7 @@ describe("nightly shard build", () => {
       skippedLocales: ["de"],
       locales: { en: { queries: 1 } },
     });
-    expect(r2.keys(`${PREFIX}${pointer().build}/de/`)).toEqual([]);
+    expect(r2.keys("p/test/de/")).toEqual([]);
   });
 
   it("runs on its own cron; the other cron runs the retention jobs", async () => {
@@ -487,19 +572,20 @@ describe("GET /p/*", () => {
       : new Response("", { status: 404 }),
   );
 
-  const setup = () => {
+  const setup = (from: Catalog = catalog) => {
     const h = harness({
       now: () => clock,
+      catalog: from,
       env: {
         DB: sqliteD1(db) as unknown as D1Database,
-        SHARDS: r2.r2,
+        CDN: r2.r2,
         AI: { run: batchAi() },
         ASSETS: { fetch: assets },
         SHARDS_CRON_ENABLED: "true",
       },
     });
     const build = (limits: Partial<ShardLimits> = {}) =>
-      runShardBuild(h.env, catalog, { now: clock, limits: { results: 4, ...limits } });
+      runShardBuild(h.env, from, { now: clock, limits: { results: 4, ...limits } });
     const get = (path: string, init?: RequestInit) => h.call(new Request(`${API}${path}`, init));
     return { h, build, get };
   };
@@ -514,7 +600,7 @@ describe("GET /p/*", () => {
     popular(db, "the end of the world");
   });
 
-  it("serves the nightly build with an hourly index, CORS and an edge copy", async () => {
+  it("serves the live index for an hour, content-named files for good, with CORS and an edge copy", async () => {
     const { h, build, get } = setup();
     await build();
 
@@ -527,17 +613,23 @@ describe("GET /p/*", () => {
     expect(index.model).toBe("bge-m3@8");
 
     const key = index.keys.find((k) => k.startsWith("t")) as string;
-    const shard = await get(`/p/test/${encodeURIComponent(key)}.json`);
-    expect(shard.headers.get("cache-control")).toBe("public, max-age=86400");
-    expect(Object.keys(((await shard.json()) as Shard).entries)).toEqual(["the end of the world"]);
+    const file = await get(`/p/test/${index.files?.[key]}`);
+    expect(file.headers.get("cache-control")).toBe("public, max-age=31536000, immutable");
+    expect(Object.keys(((await file.json()) as Shard).entries)).toEqual(["the end of the world"]);
+
+    // A client from before hashed files asks for <key>.json: the same file, kept a day.
+    const legacy = await get(`/p/test/${encodeURIComponent(key)}.json`);
+    expect(legacy.headers.get("cache-control")).toBe("public, max-age=86400");
+    expect(Object.keys(((await legacy.json()) as Shard).entries)).toEqual(["the end of the world"]);
 
     await h.ctx.settle();
     const reads = r2.calls.get;
     expect((await get("/p/test/index.json")).status).toBe(200);
+    expect((await get(`/p/test/${index.files?.[key]}`)).status).toBe(200);
     expect(r2.calls.get).toBe(reads);
   });
 
-  it("finds a key file however its name is encoded, and answers 404 for unknown keys", async () => {
+  it("finds a key file however its name is encoded, and answers 404 for unknown keys and files", async () => {
     popular(db, "+1 for this");
     popular(db, "дом и сад");
     const { build, get } = setup();
@@ -557,6 +649,8 @@ describe("GET /p/*", () => {
     expect(missing.headers.get("cache-control")).toBe("public, max-age=300");
     expect((await get("/p/test/%E0%A4%A.json")).status).toBe(404);
     expect((await get("/p/test/a/b.json")).status).toBe(404);
+    expect((await get("/p/test/f/0123456789abcdef.json")).status).toBe(404);
+    expect((await get("/p/test/f/index.json")).status).toBe(404);
     expect((await get("/p/test/index.json", { method: "POST" })).status).toBe(405);
   });
 
@@ -573,7 +667,7 @@ describe("GET /p/*", () => {
     expect(await head.text()).toBe("");
   });
 
-  it("moves to a new build once the isolate's pointer expires", async () => {
+  it("moves to a new build once the isolate's copy of the index expires", async () => {
     const { build, get } = setup();
     await build();
     const before = (await (await get("/p/test/index.json")).json()) as ShardIndex;
@@ -632,12 +726,25 @@ describe("GET /p/*", () => {
     const shards = createShardProvider({ baseUrl: `${API}/p/test`, fetch });
     expect(await shards.search("lavá eruption")).toBeUndefined();
     expect(calls.filter((url) => url.includes("/v1/search"))).toHaveLength(3);
+    // The SDK reads content-named files; only clients from before them ask for <key>.json.
+    expect(calls.filter((url) => url.includes("/p/test/f/")).length).toBeGreaterThan(0);
   });
 
-  it("serves each locale's directory, English also under en/, and 404 for others", async () => {
+  it("serves the base layer to the SDK through the live index", async () => {
+    const { h, build } = setup();
+    await uploadBase(r2, { "lava flows": [["🌋", "1F30B", 0.9]] });
+    await build();
+    const fetch = (async (input: string | URL | Request) =>
+      h.call(new Request(String(input)))) as typeof globalThis.fetch;
+    const shards = createShardProvider({ baseUrl: `${API}/p/test`, fetch });
+    expect((await shards.search("lava flows"))?.results[0]?.emoji).toBe("🌋");
+    expect((await shards.search("lava eruption"))?.layer).toBe("shard");
+  });
+
+  it("serves each locale's index, English also under en/, and 404 for others", async () => {
     popular(db, "lava eruption", 0, "tr");
-    const { h, get } = setup();
-    await runShardBuild(h.env, withTurkish, { now: clock, limits: { results: 4 } });
+    const { get, build } = setup(withTurkish);
+    await build();
 
     const tr = await get("/p/test/tr/index.json");
     expect(tr.status).toBe(200);
@@ -658,18 +765,8 @@ describe("GET /p/*", () => {
   it("gives the SDK of each locale the API's answers for that locale", async () => {
     popular(db, "lava eruption", 0, "tr");
     popular(db, "extinct reptiles", 0, "tr");
-    const h = harness({
-      now: () => clock,
-      catalog: withTurkish,
-      env: {
-        DB: sqliteD1(db) as unknown as D1Database,
-        SHARDS: r2.r2,
-        AI: { run: batchAi() },
-        ASSETS: { fetch: assets },
-        SHARDS_CRON_ENABLED: "true",
-      },
-    });
-    await runShardBuild(h.env, withTurkish, { now: clock, limits: { results: 4 } });
+    const { h, build } = setup(withTurkish);
+    await build();
     const fetch = (async (input: string | URL | Request) =>
       h.call(new Request(String(input)))) as typeof globalThis.fetch;
     const shards = createShardProvider({ baseUrl: `${API}/p/test`, fetch });
