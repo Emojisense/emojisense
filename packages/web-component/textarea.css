@@ -1,0 +1,125 @@
+/*
+ * Optional default look for the textarea `:` autocomplete (`attachEmojiAutocomplete`): the same
+ * menu as @emojisense/tiptap and @emojisense/lexical (keycap rows in a rounded popover,
+ * emoji-yellow active row). Theme it by overriding the custom properties on `.emojisense-menu`.
+ */
+.emojisense-menu {
+  --emojisense-ink: #1e1631;
+  --emojisense-paper: #ffffff;
+  --emojisense-key: #ffffff;
+  --emojisense-sun: #ffd23f;
+  --emojisense-on-sun: #1e1631;
+  --emojisense-radius: 1.25rem;
+  --emojisense-key-radius: 0.625rem;
+  --emojisense-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --emojisense-font-emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+
+  position: relative;
+  z-index: 50;
+  box-sizing: border-box;
+  display: grid;
+  gap: 0.125rem;
+  min-width: 13rem;
+  max-width: min(20rem, calc(100vw - 2rem));
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: 0.375rem;
+  border: 0.125rem solid var(--emojisense-ink);
+  border-radius: var(--emojisense-radius);
+  background: var(--emojisense-paper);
+  color: var(--emojisense-ink);
+  box-shadow: 0 0.25rem 0 var(--emojisense-depth, var(--emojisense-ink));
+  font-size: 0.9375rem;
+  line-height: 1.25;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .emojisense-menu {
+    --emojisense-ink: #f5f1ff;
+    --emojisense-paper: #17121f;
+    --emojisense-key: #221a2e;
+    --emojisense-depth: #0b0811;
+  }
+}
+
+[data-theme="dark"] .emojisense-menu {
+  --emojisense-ink: #f5f1ff;
+  --emojisense-paper: #17121f;
+  --emojisense-key: #221a2e;
+  --emojisense-depth: #0b0811;
+}
+
+.emojisense-menu__option {
+  appearance: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.25rem 0.75rem 0.4375rem 0.3125rem;
+  border: 0;
+  border-radius: calc(var(--emojisense-radius) - 0.375rem);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.emojisense-menu__option[aria-selected="true"] {
+  background: var(--emojisense-sun);
+  color: var(--emojisense-on-sun);
+}
+
+/* The emoji sits on a keycap: outline and hard depth in the row's text color. */
+.emojisense-menu__emoji {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border: 0.125rem solid currentColor;
+  border-radius: var(--emojisense-key-radius);
+  background: var(--emojisense-key);
+  box-shadow: 0 0.1875rem 0 var(--emojisense-depth, currentColor);
+  font-family: var(--emojisense-font-emoji);
+  font-size: 1.25rem;
+  line-height: 1;
+  transition:
+    transform 150ms var(--emojisense-spring),
+    box-shadow 150ms ease-out;
+}
+
+.emojisense-menu__option:hover .emojisense-menu__emoji {
+  transform: rotate(-3deg);
+}
+
+.emojisense-menu__option:active .emojisense-menu__emoji {
+  transform: translateY(0.125rem);
+  box-shadow: 0 0.0625rem 0 var(--emojisense-depth, currentColor);
+}
+
+.emojisense-menu__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emojisense-menu__emoji {
+    transition: none;
+  }
+
+  .emojisense-menu__option:hover .emojisense-menu__emoji {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .emojisense-menu__option[aria-selected="true"] {
+    outline: 0.125rem solid Highlight;
+  }
+}

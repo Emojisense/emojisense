@@ -185,6 +185,36 @@ defineEmojisensePicker("my-emoji-picker");
 
 `@emojisense/web-component/element` exports the class without registering anything.
 
+## `:` autocomplete for a textarea
+
+`@emojisense/web-component/textarea` adds a `:` menu to a plain `<textarea>` or text `<input>`
+(comment forms, chat boxes). Type `:ship it` and 🚀 comes first. It does not register the picker
+element.
+
+```ts
+import { createEngine, loadPacks } from "emojisense";
+import { createSuggestionSource } from "emojisense/autocomplete";
+import { attachEmojiAutocomplete } from "@emojisense/web-component/textarea";
+import "@emojisense/web-component/textarea.css"; // optional default look
+
+const engine = createEngine(await loadPacks({ baseUrl: "https://api.emojisense.com/v1/pack/0.1.0" }));
+const source = createSuggestionSource({ engine, minQueryLength: 2, includeCustom: false });
+
+const autocomplete = attachEmojiAutocomplete(document.querySelector("textarea")!, { source });
+// Later: autocomplete.destroy();
+```
+
+| Key | Action |
+| --- | ------ |
+| ↑ ↓ | Move through the menu (it wraps) |
+| Enter, Tab | Replace `:query` with the emoji |
+| Escape | Close the menu and keep the text. It stays closed for that `:query`. |
+
+The menu opens only when the colon starts a word, so `12:30` and `https://` stay text. Options:
+`skinTone`, `maxWords` (default 4), `ariaLabel`, `className`, `container` (default: the body) and
+`onInsert`. `source` and `skinTone` can be getters, for packs that load later; call `refresh()` when
+they arrive.
+
 ## Limits
 
 - The browse view shows every emoji in the pack. It does not hide emoji that the operating system

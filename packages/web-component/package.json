@@ -26,7 +26,8 @@
   "type": "module",
   "sideEffects": [
     "./dist/index.js",
-    "./dist/emojisense-picker.js"
+    "./dist/emojisense-picker.js",
+    "*.css"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -39,11 +40,17 @@
       "types": "./dist/element.d.ts",
       "default": "./dist/element.js"
     },
+    "./textarea": {
+      "types": "./dist/textarea.d.ts",
+      "default": "./dist/textarea.js"
+    },
+    "./textarea.css": "./textarea.css",
     "./bundle": "./dist/emojisense-picker.js",
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "textarea.css"
   ],
   "engines": {
     "node": ">=20"
