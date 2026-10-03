@@ -42,8 +42,8 @@ headers, so every caller is also rate limited:
 | Anonymous | 30 requests a minute | IP address |
 | Key lookups that miss the per-isolate key cache (each one a database read, unknown keys included) | 60 a minute | IP address |
 
-Over the limit the answer is `429` with `Retry-After: 60`. The IP address is only an in-memory
-limiter key; it is never logged or stored. Static files, `/v1/health` and the emoji image routes
+Over the limit the answer is `429` with `Retry-After: 60`. An IPv6 address counts by its /64
+network. The IP address is only an in-memory limiter key; it is never logged or stored. Static files, `/v1/health` and the emoji image routes
 (`/v1/sets/…`, `/v1/custom/…`) are not limited per call. The key-lookup limit stops a flood of
 random keys before it reaches the database; a key the instance knew before keeps working while
 it holds, for at most three minutes after the instance last read it. The website's own publishable key is public (it ships in the site's JavaScript), so its

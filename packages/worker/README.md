@@ -116,7 +116,7 @@ jsDelivr's 50 MB listing limit (set `GITHUB_TOKEN` for a higher rate limit). Lic
 | `Authorization: Bearer sk_live_…` only; with an `Origin` header or in the URL → 403 | `src/auth.ts` |
 | Unknown or revoked key → 401. No key → anonymous: not metered, no custom emoji or analytics | `src/auth.ts`, `src/context.ts` |
 | Anonymous callers never call Workers AI: search gets the over-limit answer (no cache: it is per account); reactions rank without the embedding; classify-image and custom-pack → 401 | handlers |
-| Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Sets, custom images, health and static files are not limited per call. | `src/auth.ts`, `wrangler.jsonc` |
+| Rate limits: `SEARCH_LIMITER` 120 requests / 60 s per key and IP, `ANON_LIMITER` 30 / 60 s per IP → 429 with `Retry-After: 60`. Every per-IP limit counts an IPv6 address by its /64. Sets, custom images, health and static files are not limited per call. | `src/auth.ts`, `src/client-ip.ts`, `wrangler.jsonc` |
 | Key lookups are cached per isolate for 60 s (unknown keys too). A revocation takes ≤ 60 s, ≤ 3 min while new reads are refused or fail. | `src/config.ts`, `src/key-cache.ts` |
 | Lookups that miss that cache (a D1 read each) are limited per IP (`KEY_MISS_LIMITER`, 60/min) → 429; an expired entry still serves for 2 min more (`KEY_CACHE_STALE_MS`), then 429 | `src/auth.ts` |
 | Publishable-key calls whose `Origin` is in `FIRST_PARTY_ORIGINS` (the website's public key) use `SITE_LIMITER` per IP (60/min) instead of `SEARCH_LIMITER`. The website account is on Pro, whose limits cap its month (`scripts/set-site-plan.mjs`) | `src/auth.ts`, `scripts/site-account.mjs` |

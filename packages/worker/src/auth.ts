@@ -7,6 +7,7 @@ import {
   type Plan,
   planHasEnvironment,
 } from "@emojisense/platform";
+import { rateLimitAddress } from "./client-ip.ts";
 import type { Env, RateLimiter } from "./env.ts";
 import { errorResponse, json } from "./http.ts";
 import { KeyCache, type KeyCacheOptions } from "./key-cache.ts";
@@ -137,8 +138,9 @@ export async function authenticate(
   return principal;
 }
 
-/** The IP is a rate-limit key only. It is never logged or stored. */
-export const clientIp = (request: Request) => request.headers.get("cf-connecting-ip") ?? "local";
+/** The IP (its /64 for IPv6) is a rate-limit key only. It is never logged or stored. */
+export const clientIp = (request: Request) =>
+  rateLimitAddress(request.headers.get("cf-connecting-ip") ?? "local");
 
 /**
  * The caller's key, checked, without the per-call rate limit (key lookups that miss the isolate
