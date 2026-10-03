@@ -1,6 +1,7 @@
 import { type CustomEmojiRow, dayOf } from "@emojisense/platform";
 import { createEngine, type Pack } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
+import { CustomEmojiIndex } from "../src/custom.ts";
 import { buildCustomPack, customPackRow } from "../src/custom-pack.ts";
 import type { CustomEmojiReader } from "../src/custom-store.ts";
 import type { SearchBody } from "../src/search.ts";
@@ -85,6 +86,7 @@ describe("GET /v1/custom/:appId/:emojiId", () => {
   it("answers 503 when the database fails, without caching it", async () => {
     const reader: CustomEmojiReader = {
       listUsable: async () => [],
+      listTenantsWithEmoji: async () => [],
       find: async () => Promise.reject(new Error("D1 down")),
     };
     const { h } = await setup({ reader });
@@ -155,10 +157,8 @@ describe("GET /v1/custom-pack", () => {
     await h.call(pack());
     await h.call(pack("&tenant=acme"));
     await h.ctx.settle();
-    expect(listUsable.mock.calls).toEqual([
-      [APP, undefined],
-      [APP, "acme"],
-    ]);
+    // The tenant's miss reads the app's emoji too: which tenants have their own is part of them.
+    expect(listUsable.mock.calls).toEqual([[APP], [APP], [APP, "acme"]]);
     expect(h.cache.puts.every((url) => !url.includes(KEYS.pro))).toBe(true);
   });
 
@@ -175,9 +175,18 @@ describe("GET /v1/custom-pack", () => {
     expect((await h.call(pack(`&tenant=${"x".repeat(129)}`))).status).toBe(400);
   });
 
+  it("answers an unknown tenant with the app-wide pack, without reading tenant emoji", async () => {
+    const { h, reader } = await setup();
+    const listUsable = vi.spyOn(reader, "listUsable");
+    const body = (await (await h.call(pack("&tenant=nobody"))).json()) as Pack;
+    expect(body.emoji.map((row) => row[1])).toEqual(["C-e_parrot", "C-e_ship"]);
+    expect(listUsable.mock.calls).toEqual([[APP]]);
+  });
+
   it("answers an uncached empty pack when the database fails", async () => {
     const reader: CustomEmojiReader = {
       listUsable: async () => Promise.reject(new Error("D1 down")),
+      listTenantsWithEmoji: async () => [],
       find: async () => undefined,
     };
     const { h } = await setup({ reader });
@@ -267,6 +276,7 @@ describe("custom emoji in /v1/search", () => {
   it("searches on without custom emoji when the database fails", async () => {
     const reader: CustomEmojiReader = {
       listUsable: async () => Promise.reject(new Error("D1 down")),
+      listTenantsWithEmoji: async () => [],
       find: async () => undefined,
     };
     const { h } = await setup({ reader });
@@ -280,6 +290,32 @@ describe("custom emoji in /v1/search", () => {
   it("rejects an overlong tenant", async () => {
     const { h } = await setup();
     expect((await h.call(keyed("party", `&tenant=${"x".repeat(129)}`))).status).toBe(400);
+  });
+
+  it("gives tenants without emoji of their own the app's set, with one read for all of them", async () => {
+    const { h, reader } = await setup();
+    const listUsable = vi.spyOn(reader, "listUsable");
+    for (let i = 0; i < 20; i++) {
+      const body = (await (await h.call(keyed("shipit", `&tenant=made-up-${i}`))).json()) as SearchBody;
+      expect(body.results[0]).toMatchObject({ id: "C-e_ship", source: "custom" });
+    }
+    expect(listUsable.mock.calls).toEqual([[APP]]);
+  });
+});
+
+describe("CustomEmojiIndex", () => {
+  it("caches one set per app and per tenant with emoji, never per unknown tenant", async () => {
+    const { reader } = customEmojiDatabase();
+    const listUsable = vi.spyOn(reader, "listUsable");
+    const index = new CustomEmojiIndex({ reader, maxEntries: 2 });
+    const app = await index.get(APP);
+    expect(app.tenants).toEqual(new Set(["acme"]));
+    const acme = await index.get(APP, "acme");
+    expect(acme.rows.map((row) => row.id)).toEqual(["e_parrot", "e_acme"]);
+    for (let i = 0; i < 100; i++) expect(await index.get(APP, `t${i}`)).toBe(app);
+    // With room for two entries, the app's and acme's sets are both still cached.
+    expect(await index.get(APP, "acme")).toBe(acme);
+    expect(listUsable.mock.calls).toEqual([[APP], [APP, "acme"]]);
   });
 });
 

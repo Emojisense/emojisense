@@ -122,7 +122,7 @@ export const SHARD_MISSING_CACHE = "public, max-age=300";
 
 /** An app's custom emoji, as one isolate sees them for search, are at most this old. */
 export const CUSTOM_CACHE_TTL_MS = 60_000;
-/** Upper bound on cached custom emoji sets (app × tenant) per isolate. */
+/** Upper bound on cached custom emoji sets (apps, and tenants with emoji of their own) per isolate. */
 export const CUSTOM_CACHE_MAX_ENTRIES = 1_000;
 /** GET /v1/custom-pack is cached at the edge (and in browsers) for this long. */
 export const CUSTOM_PACK_CACHE_SECONDS = 60;

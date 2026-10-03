@@ -133,7 +133,11 @@ describe("search latency: what a request waits for", () => {
 
   it("reads custom emoji only for an app that has some", async () => {
     const listUsable = vi.fn<CustomEmojiReader["listUsable"]>(async () => []);
-    const reader: CustomEmojiReader = { listUsable, find: async () => undefined };
+    const reader: CustomEmojiReader = {
+      listUsable,
+      listTenantsWithEmoji: async () => [],
+      find: async () => undefined,
+    };
     const none = harness({ store: await storeWith({}, false), customEmoji: reader });
     await none.call(keyed("rocket"));
     expect(listUsable).not.toHaveBeenCalled();

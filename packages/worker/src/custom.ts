@@ -10,10 +10,14 @@ import type { Env } from "./env.ts";
 export class CustomEmojiSet {
   #built: { origin: string; pack: Pack; engine: AliasEngine | undefined } | undefined;
 
-  /** `complete: false` = the database could not be read and nothing older was cached. */
+  /**
+   * `complete: false` = the database could not be read and nothing older was cached. `tenants`
+   * (an app's own set only): the external ids of its tenants that have custom emoji of their own.
+   */
   constructor(
     readonly rows: readonly CustomEmojiRow[],
     readonly complete = true,
+    readonly tenants: ReadonlySet<string> = new Set(),
   ) {}
 
   #build(origin: string) {
@@ -72,9 +76,11 @@ export interface CustomEmojiIndexOptions {
 }
 
 /**
- * Custom emoji per app and tenant, cached per isolate for `ttlMs` (apps without any included),
- * so a search does not read D1 every time. When D1 fails, a stale set is used; with none, the
- * search goes on without custom emoji (search never fails hard).
+ * Custom emoji per app, cached per isolate for `ttlMs` (apps without any included), with the
+ * tenants that have emoji of their own. Only those tenants get a set (and an engine) of their own;
+ * any other `tenant=` gets the app's set, so made-up tenant ids add no cache entries. When D1
+ * fails, a stale set is used; with none, the search goes on without custom emoji (search never
+ * fails hard).
  */
 export class CustomEmojiIndex {
   readonly #reader: CustomEmojiReader | undefined;
@@ -97,34 +103,14 @@ export class CustomEmojiIndex {
 
   /** The cached set, reloaded after `ttlMs`. */
   async get(appId: string, tenant?: string): Promise<CustomEmojiSet> {
-    const cached = this.#cache.get(cacheKey(appId, tenant));
-    if (cached && cached.expiresAt > this.#now()) return cached.set;
-    return this.load(appId, tenant);
+    const app = await this.#cached(appId, undefined);
+    return tenant !== undefined && app.tenants.has(tenant) ? this.#cached(appId, tenant) : app;
   }
 
   /** Reads D1 now (parallel callers share one read) and caches the result. */
   async load(appId: string, tenant?: string): Promise<CustomEmojiSet> {
-    const reader = this.#reader;
-    if (!reader) return EMPTY;
-    const key = cacheKey(appId, tenant);
-    const pending = this.#loading.get(key);
-    if (pending) return pending;
-    const loading = reader
-      .listUsable(appId, tenant)
-      .then(
-        (rows) => {
-          const set = new CustomEmojiSet(rows);
-          this.#remember(key, set);
-          return set;
-        },
-        (error: unknown) => {
-          console.warn(JSON.stringify({ event: "custom_emoji_unavailable", error: (error as Error).name }));
-          return this.#cache.get(key)?.set ?? UNAVAILABLE;
-        },
-      )
-      .finally(() => this.#loading.delete(key));
-    this.#loading.set(key, loading);
-    return loading;
+    const app = await this.#read(appId, undefined);
+    return tenant !== undefined && app.tenants.has(tenant) ? this.#read(appId, tenant) : app;
   }
 
   /**
@@ -136,8 +122,42 @@ export class CustomEmojiIndex {
     const appId = callerApp(caller);
     if (!appId) return EMPTY;
     const none = caller.kind === "key" && caller.key.hasCustomEmoji === false;
-    if (none && !this.#cache.has(cacheKey(appId, tenant))) return EMPTY;
+    if (none && !this.#cache.has(cacheKey(appId, undefined))) return EMPTY;
     return this.get(appId, tenant);
+  }
+
+  async #cached(appId: string, tenant: string | undefined): Promise<CustomEmojiSet> {
+    const cached = this.#cache.get(cacheKey(appId, tenant));
+    if (cached && cached.expiresAt > this.#now()) return cached.set;
+    return this.#read(appId, tenant);
+  }
+
+  #read(appId: string, tenant: string | undefined): Promise<CustomEmojiSet> {
+    const reader = this.#reader;
+    if (!reader) return Promise.resolve(EMPTY);
+    const key = cacheKey(appId, tenant);
+    const pending = this.#loading.get(key);
+    if (pending) return pending;
+    const read =
+      tenant === undefined
+        ? Promise.all([reader.listUsable(appId), reader.listTenantsWithEmoji(appId)]).then(
+            ([rows, tenants]) => new CustomEmojiSet(rows, true, new Set(tenants)),
+          )
+        : reader.listUsable(appId, tenant).then((rows) => new CustomEmojiSet(rows));
+    const loading = read
+      .then(
+        (set) => {
+          this.#remember(key, set);
+          return set;
+        },
+        (error: unknown) => {
+          console.warn(JSON.stringify({ event: "custom_emoji_unavailable", error: (error as Error).name }));
+          return this.#cache.get(key)?.set ?? UNAVAILABLE;
+        },
+      )
+      .finally(() => this.#loading.delete(key));
+    this.#loading.set(key, loading);
+    return loading;
   }
 
   #remember(key: string, set: CustomEmojiSet) {
