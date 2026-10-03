@@ -167,6 +167,7 @@ after 2, 10 and 30 s. `upload:shards` writes the files the bucket does not have,
 `base` field of each live index; the nightly build keeps it there and leaves out the queries the
 base holds. Rebuild and upload it when the pack, the vectors or the model change.
 
-Dry run, 2026-10-03 (`--resolver fake`, Apple silicon laptop): 11 locales, ~232k entries after
-the device gate, 3,071 files, 43.8 MB gzip, 76 s. Chinese has few phrases with spaces, so its base
-is small (405 entries).
+First build, 2026-10-03 (EmbeddingGemma @768 on Workers AI): 11 locales, 232,069 entries after
+the device gate, 2,520 files, 34.2 MB gzip, 54 min. 12 of 12 sampled entries (6 locales) matched
+the dev API's answers exactly (top 10 ids and scores). Chinese has few phrases with spaces, so its
+base is small (405 entries). A dry run (`--resolver fake`) takes about 76 s.
