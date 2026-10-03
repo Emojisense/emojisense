@@ -290,3 +290,49 @@ describe("search session with region auto", () => {
     expect(glyphs()).toEqual(["🌋"]);
   });
 });
+
+describe("answers without waiting", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("the API client peeks at its own memory only", async () => {
+    const fetch = fakeFetch();
+    const client = createSemanticClient({ endpoint: "https://api.test", fetch });
+    expect(client.peek?.("volcano eruption")).toBeUndefined();
+    await client.search("volcano eruption");
+    expect(client.peek?.("volcano eruption")).toMatchObject({ cached: true, layer: "api" });
+    expect(client.peek?.("volcano eruption", { locale: "tr" })).toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("the API client abandons a request that takes too long", async () => {
+    const fetch = vi.fn(
+      (_url: string | URL | Request, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+        }),
+    );
+    const client = createSemanticClient({ endpoint: "https://api.test", fetch, timeoutMs: 100 });
+    const pending = expect(client.search("volcano eruption")).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(150);
+    await pending;
+  });
+
+  it("a session shows an answer in memory at once, with no debounce and no request", async () => {
+    const fetch = fakeFetch();
+    const client = createSemanticClient({ endpoint: "https://api.test", fetch });
+    await client.search("volcano eruption", { limit: 24 });
+    const states: SessionState[] = [];
+    const session = createSearchSession({
+      engine: createEngine(en),
+      semantic: client,
+      debounceMs: 200,
+      onChange: (s) => states.push(s),
+    });
+    session.update("volcano eruption");
+    expect(states).toHaveLength(1);
+    expect(states[0]).toMatchObject({ status: "fused", layer: "api", semanticCached: true });
+    await vi.advanceTimersByTimeAsync(500);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});

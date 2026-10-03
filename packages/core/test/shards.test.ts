@@ -116,3 +116,78 @@ describe("shards per locale", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("hashed files and the base layer", () => {
+  /** Live English index with hashed files and a base index; base files are in f/ as well. */
+  function layeredFetch({ failOnce = new Set<string>() } = {}) {
+    const files: Record<string, unknown> = {
+      "index.json": {
+        ...index,
+        keys: ["co"],
+        files: { co: "f/live-co.json" },
+        base: "f/base-en.json",
+      },
+      "f/live-co.json": shards["co.json"],
+      "f/base-en.json": { ...index, keys: ["th"], files: { th: "base-th.json" } },
+      "f/base-th.json": { key: "th", entries: { "thank you so much": [["🙏", "1F64F", 0.9]] } },
+      "tr/index.json": { ...index, keys: [], files: {}, base: "../f/base-en.json" },
+    };
+    return vi.fn(async (url: string | URL | Request) => {
+      const path = String(url).split("/p/1/")[1] ?? "";
+      if (failOnce.delete(path)) throw new TypeError("network down");
+      const body = files[path];
+      return body ? new Response(JSON.stringify(body)) : new Response("", { status: 404 });
+    });
+  }
+  const paths = (fetch: ReturnType<typeof layeredFetch>) =>
+    fetch.mock.calls.map(([url]) => String(url).split("/p/1/")[1]);
+
+  it("reads the files the index names, then the base layer", async () => {
+    const fetch = layeredFetch();
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch });
+    expect((await provider.search("congrats on the launch"))?.results[0]?.emoji).toBe("🚀");
+    expect((await provider.search("thank you so much"))?.results[0]?.emoji).toBe("🙏");
+    expect(await provider.search("thanks a lot")).toBeUndefined();
+    expect(paths(fetch)).toEqual(["index.json", "f/base-en.json", "f/live-co.json", "f/base-th.json"]);
+  });
+
+  it("resolves a base index named relative to a locale directory", async () => {
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch: layeredFetch() });
+    expect((await provider.search("thank you so much", { locale: "tr" }))?.layer).toBe("shard");
+  });
+
+  it("peeks only at what is loaded, and prefetch loads it", async () => {
+    const fetch = layeredFetch();
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch });
+    expect(provider.peek?.("thank you so much")).toBeUndefined();
+    provider.prefetch?.("thank you");
+    await vi.waitFor(() => expect(paths(fetch)).toContain("f/base-th.json"));
+    await Promise.all(fetch.mock.results.map((r) => r.value));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(provider.peek?.("thank you so much")?.results[0]?.emoji).toBe("🙏");
+    expect(provider.peek?.("thank you so much", { limit: 0 })?.results).toEqual([]);
+    expect(provider.peek?.("thank you!")).toBeUndefined();
+  });
+
+  it("asks again after a network error, but not after a 404", async () => {
+    const fetch = layeredFetch({ failOnce: new Set(["index.json"]) });
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch });
+    expect(await provider.search("congrats on the launch")).toBeUndefined();
+    expect((await provider.search("congrats on the launch"))?.layer).toBe("shard");
+    expect(await provider.search("thanks", { locale: "de" })).toBeUndefined();
+    expect(await provider.search("thanks", { locale: "de" })).toBeUndefined();
+    expect(paths(fetch).filter((p) => p === "index.json")).toHaveLength(2);
+    expect(paths(fetch).filter((p) => p === "de/index.json")).toHaveLength(1);
+  });
+
+  it("gives up on a file that does not arrive in time", async () => {
+    const fetch = vi.fn(
+      (_url: string | URL | Request, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+        }),
+    );
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch, timeoutMs: 5 });
+    expect(await provider.search("congrats on the launch")).toBeUndefined();
+  });
+});

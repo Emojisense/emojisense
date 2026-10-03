@@ -115,6 +115,30 @@ describe("layered search session", () => {
     expect((await run("coffee time", fakeFetch()))?.layer).toBe("api");
   });
 
+  it("loads the index at once and answers from a loaded shard on the next keystroke, with no debounce", async () => {
+    const fetch = fakeFetch();
+    const states: SessionState[] = [];
+    const session = createSearchSession({
+      engine: createEngine(en),
+      semantic: createLayeredSemantic({
+        shardsUrl: "https://cdn.test/p/test",
+        endpoint: "https://api.test",
+        fetch,
+      }),
+      debounceMs: 1000,
+      onChange: (s) => states.push(s),
+    });
+    expect(fetch.mock.calls.map(([input]) => new URL(String(input)).pathname)).toEqual([
+      "/p/test/index.json",
+    ]);
+    session.update("volcano erupti");
+    await vi.advanceTimersByTimeAsync(5);
+    session.update("volcano eruption");
+    expect(states.at(-1)).toMatchObject({ status: "fused", layer: "shard", semanticMs: 0 });
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(apiCalls(fetch)).toHaveLength(0);
+  });
+
   it("keeps the alias results when the key is over its limit", async () => {
     const state = await run("coffee time", fakeFetch({ overLimit: true }));
     expect(state?.status).toBe("alias");

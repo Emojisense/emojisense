@@ -21,6 +21,7 @@ import {
   type Pack,
   relevantNow,
   type SearchSession,
+  type SemanticProvider,
   type SessionState,
   type SessionStatus,
   SKIN_TONES,
@@ -176,6 +177,8 @@ export class EmojisensePickerElement extends Base {
   #session: SearchSession | undefined;
   #packKey: unknown;
   #sessionKey: string | undefined;
+  /** Kept across engine rebuilds (the ext pack, custom emoji), so loaded shards stay loaded. */
+  #semantic: { key: string; provider: SemanticProvider | undefined } | undefined;
   #loading: AbortController | undefined;
   #cancelIdle: (() => void) | undefined;
   #scheduled = false;
@@ -611,14 +614,21 @@ export class EmojisensePickerElement extends Base {
     if (this.#session && key === this.#sessionKey) return;
     this.#session?.dispose();
     this.#sessionKey = key;
+    const semanticKey = [this.shardsUrl, this.endpoint, this.publishableKey, engine.packVersion].join("\n");
+    if (this.#semantic?.key !== semanticKey) {
+      this.#semantic = {
+        key: semanticKey,
+        provider: createLayeredSemantic({
+          shardsUrl: this.shardsUrl || undefined,
+          endpoint: this.endpoint || undefined,
+          key: this.publishableKey || undefined,
+          packVersion: engine.packVersion,
+        }),
+      };
+    }
     this.#session = createSearchSession({
       engine,
-      semantic: createLayeredSemantic({
-        shardsUrl: this.shardsUrl || undefined,
-        endpoint: this.endpoint || undefined,
-        key: this.publishableKey || undefined,
-        packVersion: engine.packVersion,
-      }),
+      semantic: this.#semantic.provider,
       locale: this.locale,
       ...(region ? { region } : {}),
       onChange: (state) => this.#showResults(state),

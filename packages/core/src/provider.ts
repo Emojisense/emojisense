@@ -62,6 +62,16 @@ export const isAutoRegion = (region: string | undefined): boolean => region?.toL
  */
 export interface SemanticProvider {
   search(query: string, options?: SemanticSearchOptions): Promise<SemanticResponse | undefined>;
+  /**
+   * The answer that is already in memory, without I/O: a loaded shard, or a response this client
+   * received before. A session shows it at once, with no debounce.
+   */
+  peek?(query: string, options?: Omit<SemanticSearchOptions, "signal">): SemanticResponse | undefined;
+  /**
+   * Start loading what `peek` needs for this query (a shard index, the query's shard), so it is
+   * there by the next keystroke. An empty query loads the indexes only. Never throws.
+   */
+  prefetch?(query: string, options?: Pick<SemanticSearchOptions, "locale">): void;
 }
 
 /** Try providers in order (cheapest first, e.g. shards then API); the first answer wins. */
@@ -74,6 +84,16 @@ export function chainProviders(...providers: SemanticProvider[]): SemanticProvid
         if (response) return response;
       }
       return undefined;
+    },
+    peek(query, options) {
+      for (const provider of providers) {
+        const response = provider.peek?.(query, options);
+        if (response) return response;
+      }
+      return undefined;
+    },
+    prefetch(query, options) {
+      for (const provider of providers) provider.prefetch?.(query, options);
     },
   };
 }

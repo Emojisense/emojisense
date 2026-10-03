@@ -2,7 +2,13 @@ import { assessConfidence } from "./confidence.js";
 import { applyCulture, type Culture } from "./culture.js";
 import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
 import { shouldUseSemantic as defaultShouldUseSemantic, fuse, RANK_DEPTH } from "./fusion.js";
-import { AUTO_REGION, isAutoRegion, type SemanticLayer, type SemanticProvider } from "./provider.js";
+import {
+  AUTO_REGION,
+  isAutoRegion,
+  type SemanticLayer,
+  type SemanticProvider,
+  type SemanticResponse,
+} from "./provider.js";
 
 export type SessionStatus = "idle" | "alias" | "loading" | "fused" | "error";
 
@@ -62,8 +68,9 @@ export interface SearchSession {
 }
 
 /**
- * Framework-agnostic search controller: alias results on every keystroke, then (debounced,
- * cancellable) semantic results fused in. Stale responses are dropped.
+ * Framework-agnostic search controller: alias results on every keystroke, then semantic results
+ * fused in: at once when a provider has them in memory (a loaded shard), else debounced and
+ * cancellable. Stale responses are dropped.
  */
 export function createSearchSession(options: SearchSessionOptions): SearchSession {
   const {
@@ -82,6 +89,8 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
   let learnedRegion: string | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let inflight: AbortController | undefined;
+  // The shard indexes load while the user starts typing, which also opens the connection.
+  semantic?.prefetch?.("", locale ? { locale } : {});
 
   const cancel = () => {
     if (timer !== undefined) clearTimeout(timer);
@@ -110,6 +119,35 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           : results;
       const wantsSemantic = semantic !== undefined && shouldUseSemantic(alias);
       const aliasOnly = { ...assessConfidence(alias, undefined), alias, aliasMs };
+      const request = {
+        limit: depth,
+        ...(locale ? { locale } : {}),
+        ...(auto ? { region: AUTO_REGION } : {}),
+      };
+      const fused = (response: SemanticResponse, semanticMs: number): SessionState => {
+        // The model that scored the results knows its calibration; older servers send none.
+        const { calibration } = response;
+        return {
+          query,
+          results: present(
+            fuse(alias, response.results, limit, calibration, { popularity: engine.popularity }),
+          ),
+          alias,
+          aliasMs,
+          ...assessConfidence(alias, response.results, calibration),
+          status: "fused",
+          semanticMs,
+          semanticCached: response.cached,
+          ...(response.layer ? { layer: response.layer } : {}),
+        };
+      };
+
+      // A loaded shard (or an answer this session already had) needs no debounce: no request.
+      const peeked = wantsSemantic ? semantic.peek?.(query, request) : undefined;
+      if (peeked) {
+        onChange(fused(peeked, 0));
+        return;
+      }
       onChange({
         query,
         results: present(shown),
@@ -117,18 +155,15 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
         status: alias.tokens.length === 0 ? "idle" : wantsSemantic ? "loading" : "alias",
       });
       if (!wantsSemantic) return;
+      // The query's shard loads during the debounce, so the next keystroke can peek at it.
+      semantic.prefetch?.(query, locale ? { locale } : {});
 
       timer = setTimeout(async () => {
         const controller = new AbortController();
         inflight = controller;
         const started = performance.now();
         try {
-          const response = await semantic.search(query, {
-            limit: depth,
-            signal: controller.signal,
-            ...(locale ? { locale } : {}),
-            ...(auto ? { region: AUTO_REGION } : {}),
-          });
+          const response = await semantic.search(query, { ...request, signal: controller.signal });
           if (controller.signal.aborted) return;
           if (auto && typeof response?.region === "string") learnedRegion ??= response.region;
           if (!response) {
@@ -136,21 +171,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
             onChange({ query, results: present(shown), ...aliasOnly, status: "alias" });
             return;
           }
-          // The model that scored the results knows its calibration; older servers send none.
-          const { calibration } = response;
-          onChange({
-            query,
-            results: present(
-              fuse(alias, response.results, limit, calibration, { popularity: engine.popularity }),
-            ),
-            alias,
-            aliasMs,
-            ...assessConfidence(alias, response.results, calibration),
-            status: "fused",
-            semanticMs: performance.now() - started,
-            semanticCached: response.cached,
-            ...(response.layer ? { layer: response.layer } : {}),
-          });
+          onChange(fused(response, performance.now() - started));
         } catch (error) {
           if (controller.signal.aborted) return;
           onChange({ query, results: present(shown), ...aliasOnly, status: "error", error });

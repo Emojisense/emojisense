@@ -367,47 +367,61 @@ to three decimals. Reference: `semanticBonus` in `packages/data/src/semantic-sco
 
 ## 6. Shards (layer 2: precomputed results)
 
-Frequent queries that the on-device dictionary cannot answer get their semantic results
-precomputed nightly and published as static files:
+Queries that the on-device dictionary cannot answer get their semantic results precomputed and
+published as static files, in two layers per locale:
+
+- **live**: real queries, rebuilt every night from the query counts (ARCHITECTURE.md, "Nightly
+  shard build"),
+- **base**: synthetic queries from our own data, built with the pack (`pnpm --filter
+  @emojisense/data shards --layer base`), so layer 2 answers before any query log exists.
 
 ```
-/p/<packVersion>/index.json            {"format":"emojisense-shards","formatVersion":1,"packVersion":"0.1.0",
-                                        "model":"bge-m3@1024","keys":["a","ab","b", … ,"th","the ", …]}
-/p/<packVersion>/<key>.json            {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
-/p/<packVersion>/<locale>/index.json   the same files for another pack locale, e.g. /p/0.1.0/tr/index.json
-/p/<packVersion>/<locale>/<key>.json
+/p/<packVersion>/index.json            live index, English: {"format":"emojisense-shards","formatVersion":1,
+                                        "packVersion":"0.1.0","model":"embeddinggemma@768",
+                                        "keys":["a","ab", … ,"th","the "],
+                                        "files":{"a":"f/3f9a0c1d2e4b5a69.json", …},"base":"f/b1c2….json"}
+/p/<packVersion>/<locale>/index.json   the live index of another pack locale, e.g. /p/0.1.0/tr/index.json
+                                        ("files":{"do":"../f/….json"}, "base":"../f/….json")
+/p/<packVersion>/f/<hash>.json         a shard file {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
+                                        or a base index (the index shape, no "base" of its own)
 ```
 
 - `keys` are sorted. A query uses the **longest key that is a prefix of the normalized query**.
-  Hot prefixes get longer keys (adaptive split), so each shard stays ≤ ~30 KB gz. File names
-  are `encodeURIComponent(key)`.
+  Hot prefixes get longer keys (adaptive split), so each shard stays ≤ ~30 KB gz.
+- `files` maps each key to its file, as a URL relative to the index. Files are named by their
+  content (the first 16 hex digits of the SHA-256 of the file), so a file never changes: it is
+  served `immutable` for a year, and a file that two nightly builds share is downloaded once.
+- `base` names the base index of the same locale, relative to the live index. Its `files` are
+  relative to the base index. A client asks the live layer, then the base layer; it may load
+  both shards at once. The nightly build leaves out the queries that the base layer holds.
+- **Older clients** (no `files`) read `<key>.json` next to the index, file name
+  `encodeURIComponent(key)`, and know no base layer. The API Worker's `/p/*` route maps that
+  name to the hashed file, so those URLs keep working on the API host.
 - `entries` maps a normalized query (§3) to semantic results `[emoji, hexcode, score]`, best
   first. These are the same results the API returns with `mode=semantic` for that model and
-  locale: the files at `/p/<packVersion>/` hold the `locale=en` answers (the shared vector file
-  only, §5), the files in `/p/<packVersion>/<locale>/` the answers of that locale (the shared
-  vector file and the locale's own).
+  locale: the English files hold the `locale=en` answers (the shared vector file only, §5), the
+  files of `<locale>/` the answers of that locale (the shared vector file and the locale's own).
 - **Locale shards.** A client reads the directory of its search locale: English (and no locale)
   at `/p/<packVersion>/`, every other pack locale at `/p/<packVersion>/<locale>/`, where `<locale>`
   is the language subtag in lowercase (`pt-BR` → `pt`), like the API's `locale`. `en/` is an alias
-  of the English files. A locale without shards answers `404` for its `index.json`, and the client
-  asks the API. Clients from before locale shards read the English files for every locale, as
-  before: they keep working, but their non-English queries go to the API.
-- A query is in a locale's files only when it was searched in that locale (the k-anonymity
+  of the English files on the API host. A locale without shards answers `404` for its
+  `index.json`, and the client asks the API.
+- A live query is in a locale's files only when it was searched in that locale (the k-anonymity
   thresholds hold per locale) and that locale's on-device dictionary does not answer it with
   confidence.
-- A client downloads `index.json` once and each shard at most once per session, then answers
-  locally. A query that is not in its shard goes to the API.
+- A client downloads each index once per session (`index.json` is cached for 1 hour) and each
+  shard file at most once, then answers locally, between keystrokes and without a debounce. A
+  query that is not in its shards goes to the API.
 - Shards are valid only for the `model` they name. A new model or pack version publishes a new
   directory.
 - A client uses a shard only when `embeddingText(query)` equals `normalize(query)` (§3). The API
   embeds the text as typed, accents and punctuation kept, so a query such as "doğum günü" or
   "i'm done!" goes to the API instead of taking the answer of its folded form.
-- The API Worker rebuilds the shards every night from the query counts (ARCHITECTURE.md, "Nightly
-  shard build") and serves them at the same URLs. `index.json` and the key files therefore change
-  under one pack version: they are cached for 1 hour (`index.json`) and 1 day (key files), never
-  `immutable`. Key files of an older build hold valid answers for the same data; a key that is
-  gone answers 404, and the client asks the API.
-- No key is ever `index`: its file would replace `index.json`.
+- **Hosts.** The files are in one R2 bucket, served by the CDN at `cdn.emojisense.com/p/…` (no
+  Worker, free per request) and by the API Worker at `api.emojisense.com/p/…` (the same files,
+  for older clients). Under one pack version the answers can lag a deploy by up to a day: the
+  next nightly build publishes the deployed data's answers.
+- No key is ever `index`: its file name would be `index.json` on the API host.
 
 ## 7. Versioning
 
