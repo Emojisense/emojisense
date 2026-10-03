@@ -795,7 +795,6 @@
     "byMeaning": "coincidencia por significado",
     "matched": "coincidencia con <q>{match}</q>",
     "bestMatch": "mejor coincidencia",
-    "unsure": "Sin una coincidencia clara: prueba otra palabra",
     "idle": "Una película, un sentimiento, un error al escribir, otro idioma: prueba lo que quieras.",
     "try": "Prueba",
     "play": "Reproducir demo",

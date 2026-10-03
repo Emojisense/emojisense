@@ -4,10 +4,10 @@ import type { Messages } from "../i18n/catalogs";
 import type { HeroExample } from "../i18n/examples";
 import { rich, useTranslator } from "../i18n/react";
 import { fullEngine, labelOf, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
-import { honestyOf } from "../lib/search-copy";
 import "./hero-search.css";
 
-const LIMIT = 9;
+/** One row of 12 on wide screens, two rows of 6 on phones (hero-search.css). */
+const LIMIT = 12;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const reducedMotion = () => globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -117,7 +117,6 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   };
 
   const results: SearchResult[] = query.trim() ? (state?.results ?? []) : [];
-  const { guessing } = honestyOf(state, query);
   const current = results[active];
   const label = (r: SearchResult) => labelOf(engine, r.id, locale) ?? r.emoji;
   const matched = current && state?.alias.results.find((r) => r.id === current.id)?.match;
@@ -201,8 +200,6 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
           role="listbox"
           aria-label={t.t("results")}
           aria-busy={loading || undefined}
-          // No tier understood the query: the tiles are guesses, shown dimmed.
-          data-guessing={guessing || undefined}
         >
           {loading &&
             Array.from({ length: LIMIT }, (_, i) => (
@@ -238,9 +235,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
 
       {/* Announced only while the visitor drives: the autoplay would otherwise talk every second. */}
       <p className="hs-why" aria-live={auto ? "off" : "polite"}>
-        {guessing && !auto ? (
-          <span className="hs-unsure">{t.t("unsure")}</span>
-        ) : current ? (
+        {current ? (
           // A new key per answer replaces the line instead of moving its parts (no layout shift).
           <Fragment key={`${current.id}|${current.source}|${matched}|${auto && example}`}>
             <span className="hs-name">{label(current)}</span>
