@@ -2,7 +2,14 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
-import { createEngine, createShardProvider, type Shard, type ShardIndex, shardKeyFor } from "emojisense";
+import {
+  createEngine,
+  createShardProvider,
+  type Shard,
+  type ShardIndex,
+  scoreSemanticRows,
+  shardKeyFor,
+} from "emojisense";
 import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buildShards } from "../src/shards/build.ts";
@@ -12,7 +19,7 @@ import { aggregateQueries, createWorkerGate, parseQueryLog } from "../src/shards
 import { createFakeResolver, createVectorResolver } from "../src/shards/resolvers.ts";
 import { planShards } from "../src/shards/split.ts";
 import { createResultStore } from "../src/shards/store.ts";
-import type { QueryCount, ShardResolver } from "../src/shards/types.ts";
+import { isShardRows, type QueryCount, type ShardResolver } from "../src/shards/types.ts";
 import { catalog, pack } from "./fixture.ts";
 
 const dirs: string[] = [];
@@ -85,16 +92,24 @@ describe("worker gate", () => {
   });
 });
 
+describe("isShardRows", () => {
+  it("accepts model output and refuses version 1 rows, whose scores hold an old ranking policy", () => {
+    expect(isShardRows([["🚀", "1F680", 0.8, 0.01]])).toBe(true);
+    expect(isShardRows([["🚀", "1F680", 0.8]])).toBe(false);
+    expect(isShardRows([])).toBe(false);
+  });
+});
+
 describe("result store", () => {
-  it("packs results and writes the same JSON as JSON.stringify", () => {
+  it("packs model rows and writes the same JSON as JSON.stringify", () => {
     const store = createResultStore();
     store.set("ship it", [
-      ["🚀", "1F680", 0.81234],
-      ["🎉", "1F389", 0.7],
+      ["🚀", "1F680", 0.81234, -0.0204],
+      ["🎉", "1F389", 0.7, 0.05],
     ]);
     expect(store.get("ship it")).toEqual([
-      ["🚀", "1F680", 0.812],
-      ["🎉", "1F389", 0.7],
+      ["🚀", "1F680", 0.812, -0.02],
+      ["🎉", "1F389", 0.7, 0.05],
     ]);
     const shard: Shard = { key: "s", entries: { "ship it": store.get("ship it") ?? [] } };
     expect(JSON.stringify(shard)).toContain(store.entryJson("ship it"));
@@ -179,7 +194,6 @@ describe("shard build", () => {
       reachesWorker: () => true,
       resolver,
       packVersion: "test",
-      resultsPerQuery: 4,
       maxShardBytes: BUDGET,
       shardBytes: gzipBytes,
     });
@@ -205,7 +219,8 @@ describe("shard build", () => {
       const response = await provider.search(q, { limit: 4 });
       expect(response?.layer).toBe("shard");
       expect(response?.model).toBe("fake@0");
-      expect(response?.results.map((r) => [r.emoji, r.id, r.score])).toEqual(built.store.get(q));
+      // The provider ranks the stored model output by the policy, as the API ranks its own.
+      expect(response?.results).toEqual(scoreSemanticRows(built.store.get(q) ?? [], 4));
     }
     expect(await provider.search("the query nobody asked")).toBeUndefined();
     // index.json once, then each shard at most once.
@@ -216,7 +231,7 @@ describe("shard build", () => {
     const dir = tempDir();
     const { built } = await build(dir);
     const index = JSON.parse(readFileSync(join(dir, "index.json"), "utf8")) as ShardIndex;
-    expect(index).toMatchObject({ format: "emojisense-shards", formatVersion: 1, packVersion: "test" });
+    expect(index).toMatchObject({ format: "emojisense-shards", formatVersion: 2, packVersion: "test" });
     expect(index.keys).toEqual([...index.keys].sort());
     const files = readdirSync(dir).filter((f) => f !== "index.json");
     expect(files.sort()).toEqual(index.keys.map((k) => `${encodeURIComponent(k)}.json`).sort());
@@ -239,13 +254,12 @@ describe("shard build", () => {
       reachesWorker: () => true,
       resolver,
       packVersion: "test",
-      resultsPerQuery: 4,
       maxShardBytes: BUDGET,
       shardBytes: gzipBytes,
-      previous: (wanted, store) => loadShardEntries(dir, wanted, 4, store),
+      previous: (wanted, store) => loadShardEntries(dir, wanted, store),
     });
     expect(rebuilt.stats).toMatchObject({ reused: 240, resolved: 1 });
-    expect(resolve).toHaveBeenCalledWith(["brand new query"], 4);
+    expect(resolve).toHaveBeenCalledWith(["brand new query"]);
     expect(readShardIndex(dir)?.model).toBe("fake@0");
   });
 
@@ -255,7 +269,6 @@ describe("shard build", () => {
       reachesWorker: () => true,
       resolver: createFakeResolver(catalog),
       packVersion: "test",
-      resultsPerQuery: 4,
       maxShardBytes: BUDGET * 3,
     });
     expect(built.stats.oversized).toEqual([]);
@@ -274,7 +287,6 @@ describe("shard build", () => {
       reachesWorker: () => true,
       resolver: createFakeResolver(catalog),
       packVersion: "test",
-      resultsPerQuery: 4,
       maxShardBytes: 400,
     });
     // The split itself wants the key "index" here.
@@ -299,7 +311,6 @@ describe("shard build", () => {
       reachesWorker: createWorkerGate([createEngine(pack)]),
       resolver: offline,
       packVersion: "test",
-      resultsPerQuery: 4,
       maxShardBytes: BUDGET,
       shardBytes: gzipBytes,
     });
@@ -317,7 +328,7 @@ describe("vector resolver", () => {
   ].map((r) => l2normalize(Float32Array.from(r)));
   const index = decodeVectors(encodeVectors("@cf/test/model", ids, rows));
 
-  it("ranks like the Worker: truncate, re-normalize, dot product, three decimals", async () => {
+  it("returns the model output like the Worker: truncate, re-normalize, dot product, three decimals", async () => {
     const resolver = createVectorResolver({
       tag: "test@8",
       index,
@@ -328,15 +339,18 @@ describe("vector resolver", () => {
           qs.map((q) => (q === "unknown" ? undefined : Float32Array.from([2, 0.1, 0, 0, 0, 0, 0, 0, 9, 9]))),
       },
     });
-    const results = await resolver.resolve(["ship it", "unknown"], 2);
+    const results = await resolver.resolve(["ship it", "unknown"]);
     expect(resolver.model).toBe("test@8");
     expect(results.has("unknown")).toBe(false);
     const top = results.get("ship it") ?? [];
-    expect(top.map(([emoji, id]) => [emoji, id])).toEqual([
+    expect(top.slice(0, 2).map(([emoji, id]) => [emoji, id])).toEqual([
       ["🚀", "1F680"],
       ["🔥", "1F525"],
     ]);
-    for (const [, , score] of top) expect(Math.round(score * 1000) / 1000).toBe(score);
+    for (const [, , text, glyph] of top) {
+      expect(Math.round(text * 1000) / 1000).toBe(text);
+      expect(glyph).toBe(0);
+    }
   });
 
   it("scores each emoji by its best row over a locale's vector files, as the API does", async () => {
@@ -350,8 +364,13 @@ describe("vector resolver", () => {
       emojiOf: (id) => catalog.find((c) => c.id === id)?.emoji,
       embedder: { embed: async (qs) => qs.map(() => Float32Array.from([1, 0, 0, 0, 0, 0, 0, 0])) },
     });
-    const top = (await resolver.resolve(["ship it"], 2)).get("ship it") ?? [];
-    expect(top.map(([emoji, , score]) => [emoji, score]).sort()).toEqual([
+    const top = (await resolver.resolve(["ship it"])).get("ship it") ?? [];
+    expect(
+      top
+        .slice(0, 2)
+        .map(([emoji, , score]) => [emoji, score])
+        .sort(),
+    ).toEqual([
       ["🎉", 1],
       ["🚀", 1],
     ]);

@@ -1,7 +1,12 @@
 import { decodeVectors, encodeVectors, l2normalize } from "emojisense/vectors";
 import { describe, expect, it } from "vitest";
-import { buildGlyphTexts, glyphBase, type PhraseSource, usagePhrases } from "../src/glyph-documents.ts";
-import { degenerateRows, GLYPH_WEIGHT, glyphBonus, semanticBonus } from "../src/semantic-score.ts";
+import {
+  buildGlyphTexts,
+  degenerateRows,
+  glyphBase,
+  type PhraseSource,
+  usagePhrases,
+} from "../src/glyph-documents.ts";
 import type { BaseEmoji, LocaleEnrichment } from "../src/types.ts";
 
 const block = (lists: Partial<LocaleEnrichment>): LocaleEnrichment => ({
@@ -81,25 +86,6 @@ describe("semantic score", () => {
         rows.map((r) => unit(r)),
       ),
     );
-
-  it("centres the glyph term on the query's mean glyph cosine; an emoji without a row adds 0", () => {
-    const glyph = index(
-      ["A", "B", "B"],
-      [
-        [1, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 0, 0],
-        [0.6, 0.8, 0, 0, 0, 0, 0, 0],
-      ],
-    );
-    const bonus = glyphBonus(glyph, unit([1, 0, 0, 0, 0, 0, 0, 0]));
-    // A: cosine 1, B: best row 0.6; mean 0.8.
-    expect(bonus("A")).toBeCloseTo(GLYPH_WEIGHT * 0.2, 2);
-    expect(bonus("B")).toBeCloseTo(GLYPH_WEIGHT * -0.2, 2);
-    expect(bonus("C")).toBe(0);
-    const total = semanticBonus((id) => (id === "C" ? 1 : 0), glyph, unit([1, 0, 0, 0, 0, 0, 0, 0]));
-    expect(total("C")).toBeCloseTo(0.04);
-    expect(semanticBonus(() => 0.5, undefined, unit([1, 0, 0, 0, 0, 0, 0, 0]))("A")).toBeCloseTo(0.02);
-  });
 
   it("finds rows that one unknown-token vector repeats over many texts", () => {
     const same = [0, 0, 1, 0, 0, 0, 0, 0];

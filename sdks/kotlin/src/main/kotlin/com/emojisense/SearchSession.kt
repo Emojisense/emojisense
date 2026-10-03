@@ -132,7 +132,7 @@ public class SearchSession @JvmOverloads constructor(
             val verdict = Confidence.assessConfidence(alias, response.results, calibration)
             return SessionState(
                 query = query,
-                results = present(query, Fusion.fuse(alias, response.results, limit, calibration, Fusion.Ranking(engine::popularity))),
+                results = present(query, Fusion.fuse(alias, response.results, limit, calibration)),
                 alias = alias,
                 status = SessionStatus.FUSED,
                 aliasMillis = aliasMillis,

@@ -30,8 +30,8 @@ import {
 } from "emojisense";
 import { l2normalize } from "emojisense/vectors";
 import { judge, type QueryOutcome, summarize } from "./metrics.ts";
-import { type EvalQuery, loadQueries } from "./queries.ts";
-import { RANKING, rankingEngine, semanticSearch } from "./ranking.ts";
+import { type EvalQuery, loadQueries, stripVariation } from "./queries.ts";
+import { modelSearch, RANKING, rankingEngine, semanticSearch } from "./ranking.ts";
 import { createRerankFit, type RerankCandidates, rerankCandidates, roundWeights } from "./rerank-fit.ts";
 import { loadVectorLayout } from "./vector-layout.ts";
 
@@ -44,6 +44,8 @@ export const TRAINING_SETS: [suite: string, file: string][] = [
   ["sentences-dev", "sentences-dev.jsonl"],
   ["ranking-dev", "ranking-dev.jsonl"],
 ];
+/** Scored with the trained weights but never trained on: names, titles and brands. */
+const REPORT_ONLY_SETS: [suite: string, file: string][] = [["entities-dev", "entities-dev.jsonl"]];
 const FOLDS = 5;
 const LIMIT = 10;
 
@@ -60,11 +62,13 @@ const { dims } = packConfig.model;
 const layout = loadVectorLayout(packDir, model, dims);
 if (!layout) throw new Error(`no vectors.${model.key}.${dims}*.bin in ${packDir}: run the embed step`);
 
-const queries = TRAINING_SETS.flatMap(([suite, file]) =>
-  loadQueries(join(EVAL_ROOT, "queries", file))
-    .filter((q) => q.answers.length > 0)
-    .map((q) => ({ ...q, suite })),
-);
+const load = (sets: [string, string][], train: boolean) =>
+  sets.flatMap(([suite, file]) =>
+    loadQueries(join(EVAL_ROOT, "queries", file))
+      .filter((q) => q.answers.length > 0)
+      .map((q) => ({ ...q, suite, train })),
+  );
+const queries = [...load(TRAINING_SETS, true), ...load(REPORT_ONLY_SETS, false)];
 const readPack = (name: string): Pack => JSON.parse(readFileSync(join(packDir, `pack.${name}.json`), "utf8"));
 const en = [readPack("en"), readPack("en.ext")];
 const engines = new Map<string, AliasEngine>();
@@ -90,14 +94,16 @@ try {
 }
 
 interface Item extends RerankCandidates {
-  q: EvalQuery & { suite: string };
+  q: EvalQuery & { suite: string; train: boolean };
   alias: AliasSearchOutput;
   semantic: SearchResult[];
   input: RerankInput;
   gate: boolean;
+  /** The model's own top 10 (modelSearch), for fidelity. */
+  model: string[];
 }
 
-const items: Item[] = queries.map((q, i) => {
+const all: Item[] = queries.map((q, i) => {
   const engine = engineFor(q.locale);
   const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
   // The Search API's semantic list (worker/src/semantic.ts) and the client's alias output.
@@ -107,10 +113,20 @@ const items: Item[] = queries.map((q, i) => {
     alias,
     semantic,
     semanticConfidence: semanticConfidence(semantic),
-    popularity: engine.popularity,
   };
-  return { q, alias, semantic, input, gate: shouldUseSemantic(alias), ...rerankCandidates(input, q.answers) };
+  const model = modelSearch(engine, layout, q.locale, query, LIMIT);
+  return {
+    q,
+    alias,
+    semantic,
+    input,
+    model,
+    gate: shouldUseSemantic(alias),
+    ...rerankCandidates(input, q.answers),
+  };
 });
+const items = all.filter((it) => it.q.train);
+const reportOnly = all.filter((it) => !it.q.train);
 
 // ── Listwise softmax on standardized features (Adam, L2; rerank-fit.ts) ──────────────────────
 const train = createRerankFit(items);
@@ -149,10 +165,36 @@ function report(name: string, fused: (it: Item) => string[]) {
     lines.push(`| ${name} | ${mode} | ${cells.join(" | ")} |`);
   }
 }
+/**
+ * Per group: recall, how much of the model's own top 10 the shown top 10 keeps (fidelity, over the
+ * queries that reach the semantic tier) and how often a forbidden emoji is in the top 3.
+ */
+const fidelityLines = [
+  "| Fusion | train R@1 | train R@5 | train fidelity | entities R@1 | entities R@5 | entities fidelity | entities forbid@3 |",
+  "| --- | --: | --: | --: | --: | --: | --: | --: |",
+];
+function fidelityReport(name: string, fused: (it: Item) => string[]) {
+  const group = (list: Item[]) => {
+    const s = summarize(list.map((it) => judge(it.q, fused(it))));
+    const reached = list.filter((it) => it.gate);
+    const kept = reached.reduce((sum, it) => {
+      const model = new Set(it.model.map(stripVariation));
+      return (
+        sum +
+        fused(it)
+          .slice(0, LIMIT)
+          .filter((e) => model.has(stripVariation(e))).length /
+          LIMIT
+      );
+    }, 0);
+    return [s.r1, s.r5, Math.round((kept / (reached.length || 1)) * 1000) / 10, s.forbidRate];
+  };
+  const [r1, r5, fidelity] = group(items);
+  fidelityLines.push(`| ${name} | ${r1} | ${r5} | ${fidelity} | ${group(reportOnly).join(" | ")} |`);
+}
+
 const fuseWith = (it: Item, rerankOn: boolean) =>
-  fuse(it.alias, it.semantic, LIMIT, undefined, { popularity: it.input.popularity, rerank: rerankOn }).map(
-    (r) => r.emoji,
-  );
+  fuse(it.alias, it.semantic, LIMIT, undefined, { rerank: rerankOn }).map((r) => r.emoji);
 report("reciprocal rank", (it) => fuseWith(it, false));
 report(`reranker, ${FOLDS}-fold CV`, (it) => cv.get(it) as string[]);
 report("reranker, RERANK_WEIGHTS in core", (it) => fuseWith(it, true));
@@ -160,4 +202,13 @@ report("reranker, new weights (train = test)", (it) => rerank(it.input, LIMIT, t
 
 console.log(`${items.length} queries, ${rows.length} candidates, ranking variant ${RANKING.name}\n`);
 console.log(lines.join("\n"));
+fidelityReport("model's own order", (it) =>
+  it.gate ? it.model : it.alias.results.slice(0, LIMIT).map((r) => r.emoji),
+);
+fidelityReport("reciprocal rank", (it) => fuseWith(it, false));
+fidelityReport(`reranker, ${FOLDS}-fold CV (entities: all-data weights)`, (it) =>
+  it.q.train ? (cv.get(it) as string[]) : rerank(it.input, LIMIT, trained).map((r) => r.emoji),
+);
+fidelityReport("reranker, RERANK_WEIGHTS in core", (it) => fuseWith(it, true));
+console.log(`\n${fidelityLines.join("\n")}`);
 console.log(`\nnew weights: [${trained.join(", ")}]`);

@@ -112,12 +112,9 @@ export async function runHeldoutSuite(options: {
     );
     modes.push(
       evaluate(`fused ${tag}`, "fused", (q) =>
-        fuseRanked(
-          engineFor(q),
-          alias.get(q.id) as AliasSearchOutput,
-          ranked.get(q.id) as SearchResult[],
-          LIMIT,
-        ).map((r) => r.emoji),
+        fuseRanked(alias.get(q.id) as AliasSearchOutput, ranked.get(q.id) as SearchResult[], LIMIT).map(
+          (r) => r.emoji,
+        ),
       ),
     );
     semantic = ranked;

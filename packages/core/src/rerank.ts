@@ -3,26 +3,24 @@ import type { AliasSearchOutput, SearchResult } from "./engine.js";
 /**
  * Weights of the learned fusion (PACK_FORMAT.md §10), one per `rerankFeatures` value. Trained on
  * the in-house and dev suites (`pnpm --filter @emojisense/eval rerank:train`) for EmbeddingGemma
- * @768 with the popularity prior in the semantic scores. The Swift and Kotlin ports use the same.
+ * @768 with the semantic scores of semantic-policy.ts. No feature is a usage prior: what people
+ * use most never outranks what the model and the dictionary found. The Swift and Kotlin ports use
+ * the same.
  */
-export const RERANK_WEIGHTS: readonly number[] = [
-  -0.3173, 1.715, 1.57, 0.4408, 12.39, -8.606, 3.18, 2.129, 1.067,
-];
+export const RERANK_WEIGHTS: readonly number[] = [-0.334, 1.59, 1.899, 0.3387, 10.67, -7.255, 1.838, 3.632];
 
 export interface RerankInput {
   alias: AliasSearchOutput;
   semantic: readonly SearchResult[];
   /** How sure the semantic tier is, 0–1 (`semanticConfidence`). */
   semanticConfidence: number;
-  /** 0–1 (`AliasEngine.popularity`); 0 for every emoji when absent. */
-  popularity?: ((id: string) => number) | undefined;
 }
 
 /**
  * The features of one candidate: alias present (0/1), alias score, 1 / alias rank, alias score /
  * alias confidence, semantic score (a candidate missing from the semantic list scores 0.02 below
- * its lowest), best semantic score − semantic score, popularity, alias score × alias confidence,
- * semantic score × semantic confidence.
+ * its lowest), best semantic score − semantic score, alias score × alias confidence, semantic
+ * score × semantic confidence.
  */
 export function rerankFeatures(input: RerankInput, id: string): number[] {
   const { alias, semantic, semanticConfidence } = input;
@@ -42,7 +40,6 @@ export function rerankFeatures(input: RerankInput, id: string): number[] {
     rank < 0 ? 0 : aliasScore / alias.confidence,
     score,
     best - score,
-    input.popularity?.(id) ?? 0,
     aliasScore * alias.confidence,
     score * semanticConfidence,
   ];

@@ -1,10 +1,11 @@
 /// The learned fusion of the alias and semantic lists (PACK_FORMAT.md §10), like
-/// `packages/core/src/rerank.ts`: a linear score over nine features per candidate.
+/// `packages/core/src/rerank.ts`: a linear score over eight features per candidate.
 public enum Rerank {
   /// One weight per ``features(_:id:)`` value. The same as `RERANK_WEIGHTS` in packages/core,
-  /// trained for EmbeddingGemma @768 with the popularity prior in the semantic scores.
+  /// trained for EmbeddingGemma @768 with the semantic scores of core semantic-policy.ts. No
+  /// feature is a usage prior.
   public static let weights: [Double] = [
-    -0.3173, 1.715, 1.57, 0.4408, 12.39, -8.606, 3.18, 2.129, 1.067,
+    -0.334, 1.59, 1.899, 0.3387, 10.67, -7.255, 1.838, 3.632,
   ]
 
   public struct Input: Sendable {
@@ -12,24 +13,18 @@ public enum Rerank {
     public var semantic: [SearchResult]
     /// How sure the semantic tier is, 0–1 (``Fusion/semanticConfidence(_:calibration:)``).
     public var semanticConfidence: Double
-    /// 0–1 (``AliasEngine/popularity(_:)``); 0 for every emoji when nil.
-    public var popularity: (@Sendable (String) -> Double)?
 
-    public init(
-      alias: AliasSearchOutput, semantic: [SearchResult], semanticConfidence: Double,
-      popularity: (@Sendable (String) -> Double)? = nil
-    ) {
+    public init(alias: AliasSearchOutput, semantic: [SearchResult], semanticConfidence: Double) {
       self.alias = alias
       self.semantic = semantic
       self.semanticConfidence = semanticConfidence
-      self.popularity = popularity
     }
   }
 
   /// Alias present (0/1), alias score, 1 / alias rank, alias score / alias confidence, semantic
   /// score (a candidate missing from the semantic list scores 0.02 below its lowest), best
-  /// semantic score − semantic score, popularity, alias score × alias confidence, semantic score ×
-  /// semantic confidence.
+  /// semantic score − semantic score, alias score × alias confidence, semantic score × semantic
+  /// confidence.
   public static func features(_ input: Input, id: String) -> [Double] {
     let alias = input.alias
     let rank = alias.results.firstIndex { $0.id == id }
@@ -49,7 +44,6 @@ public enum Rerank {
       rank == nil ? 0 : aliasScore / alias.confidence,
       score,
       best - score,
-      input.popularity?(id) ?? 0,
       aliasScore * alias.confidence,
       score * input.semanticConfidence,
     ]

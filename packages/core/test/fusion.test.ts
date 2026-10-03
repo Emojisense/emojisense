@@ -96,10 +96,10 @@ describe("fuse with rerank: false (confidence-weighted reciprocal rank fusion)",
 
   it("maps the best cosine to 0–1 between the calibration floor and ceiling", () => {
     expect(semanticConfidence([])).toBe(0);
-    expect(semanticConfidence(semantic(0.38))).toBe(0);
-    expect(semanticConfidence(semantic(0.475))).toBeCloseTo(0.5);
+    expect(semanticConfidence(semantic(0.34))).toBeCloseTo(0, 10);
+    expect(semanticConfidence(semantic(0.44))).toBeCloseTo(0.5);
     expect(semanticConfidence(semantic(0.8))).toBe(1);
-    expect(semanticConfidence([r("x", 0.47, "semantic"), r("y", 0.475, "semantic")])).toBeCloseTo(0.5);
+    expect(semanticConfidence([r("x", 0.435, "semantic"), r("y", 0.44, "semantic")])).toBeCloseTo(0.5);
     expect(semanticConfidence(semantic(0.5), { floor: 0.2, ceiling: 0.6 })).toBe(0.75);
   });
 
@@ -156,8 +156,8 @@ describe("fuse with rerank: false (confidence-weighted reciprocal rank fusion)",
   });
 
   it("ranks semantic country flags the alias tier does not hold after the other results", () => {
-    const bhutan = { emoji: "🇧🇹", id: "1F1E7-1F1F9", score: 0.44, source: "semantic" as const };
-    const fused = rrf(alias(0.26, ["😄"]), [bhutan, r("🐰", 0.43, "semantic"), r("🐇", 0.42, "semantic")], 4);
+    const bhutan = { emoji: "🇧🇹", id: "1F1E7-1F1F9", score: 0.4, source: "semantic" as const };
+    const fused = rrf(alias(0.26, ["😄"]), [bhutan, r("🐰", 0.39, "semantic"), r("🐇", 0.38, "semantic")], 4);
     expect(fused.map((x) => x.emoji)).toEqual(["😄", "🐰", "🐇", "🇧🇹"]);
   });
 

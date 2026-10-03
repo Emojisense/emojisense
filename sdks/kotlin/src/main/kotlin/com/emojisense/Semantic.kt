@@ -144,10 +144,29 @@ public class ProviderChain(public val providers: List<SemanticProvider>) : Seman
     }
 }
 
+/**
+ * The ranking policy over the model output of a version 2 shard row, like
+ * `packages/core/src/semantic-policy.ts`: text cosine plus the weighted, centered glyph cosine.
+ * No usage prior bends the model's order.
+ */
+public object SemanticPolicy {
+    /** The same as `GLYPH_WEIGHT` in packages/core. */
+    public const val GLYPH_WEIGHT: Double = 0.25
+
+    /** The policy's score of a row, to three decimals. */
+    @JvmStatic
+    public fun score(text: Double, glyph: Double): Double = Math.round((text + GLYPH_WEIGHT * glyph) * 1000) / 1000.0
+}
+
+/**
+ * A shard entry, best first. A row of four values is model output (`[emoji, id, text, glyph]`),
+ * ranked here by [SemanticPolicy]; a row of three (version 1) holds the score of its build.
+ */
 internal fun JsonArray.decodeShardEntry(): List<SearchResult> = mapNotNull { element ->
     val item = element as? JsonArray ?: return@mapNotNull null
     val emoji = item.getOrNull(0).stringOrNull() ?: return@mapNotNull null
     val id = item.getOrNull(1).stringOrNull() ?: return@mapNotNull null
-    val score = (item.getOrNull(2) as? JsonPrimitive)?.doubleOrNull ?: return@mapNotNull null
-    EmojiResult(emoji, id, score, ResultSource.SEMANTIC)
-}
+    val first = (item.getOrNull(2) as? JsonPrimitive)?.doubleOrNull ?: return@mapNotNull null
+    val glyph = (item.getOrNull(3) as? JsonPrimitive)?.doubleOrNull
+    EmojiResult(emoji, id, if (glyph == null) first else SemanticPolicy.score(first, glyph), ResultSource.SEMANTIC)
+}.sortedByDescending { it.score }

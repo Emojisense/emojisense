@@ -25,4 +25,12 @@ export {
 export { createWorkerGate } from "./queries.ts";
 export type { ShardPlan } from "./split.ts";
 export { createResultStore, type ResultStore } from "./store.ts";
-export type { QueryCount, Shard, ShardIndex, ShardResolver, ShardResult } from "./types.ts";
+export {
+  isShardRows,
+  type QueryCount,
+  SHARD_FORMAT_VERSION,
+  type Shard,
+  type ShardIndex,
+  type ShardResolver,
+  type ShardRow,
+} from "./types.ts";

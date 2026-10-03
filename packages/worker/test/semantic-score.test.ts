@@ -32,12 +32,12 @@ const query = l2normalize(Float32Array.from(unit(0).map((v, d) => v + (unit(1)[d
 const ids = (list: { id: string }[]) => list.map((r) => r.id);
 
 describe("semanticResults (PACK_FORMAT §5, semantic score)", () => {
-  it("adds the popularity prior: a near tie goes to the more used emoji", () => {
+  it("ranks by the model alone: a near tie stays a tie however used either emoji is", () => {
     const plain = semanticResults(createEngine(pack()), [fixtureVectors()], query, 2);
     expect(plain[0]?.score).toBeCloseTo(plain[1]?.score as number, 2);
     const popular = semanticResults(createEngine(pack([0, 100, 0, 0])), [fixtureVectors()], query, 2);
-    expect(ids(popular)).toEqual(["1F30B", "1F996"]);
-    expect(popular[0]?.score).toBeCloseTo((plain.find((r) => r.id === "1F30B")?.score as number) + 0.04, 3);
+    expect(popular.map((r) => r.score)).toEqual(plain.map((r) => r.score));
+    expect(ids(popular)).toEqual(ids(plain));
   });
 
   it("adds the glyph term of the glyph file", () => {

@@ -69,14 +69,14 @@ export interface SemanticCalibration {
 }
 
 /**
- * EmbeddingGemma @768 (the production model). Best cosine on the in-house set: `floor` = 25th
- * percentile of the semantic misses, `ceiling` = median of the hits. Gap, on the reranker's
+ * EmbeddingGemma @768 (the production model), scored by semantic-policy.ts. Best score on the
+ * in-house set: `floor` = 25th percentile of the semantic misses, `ceiling` = median of the hits. Gap, on the reranker's
  * training sets: a top match is right 26% of the time below 0.02 and 94% above 0.10. Another model
  * or dims needs its own values; `pnpm eval` measures floor and ceiling (DECISIONS.md).
  */
 export const DEFAULT_SEMANTIC_CALIBRATION: SemanticCalibration = {
-  floor: 0.39,
-  ceiling: 0.56,
+  floor: 0.35,
+  ceiling: 0.53,
   gapFloor: 0.02,
   gapCeiling: 0.1,
 };
@@ -148,10 +148,8 @@ const ALIAS_BAND = 0.1;
 /** Below this alias confidence the alias tier is unsure (as in `shouldUseSemantic`): no floor. */
 const ALIAS_FLOOR_MIN_CONFIDENCE = 0.6;
 
-/** How `fuse` orders the lists. Default: the learned reranker (rerank.ts) with no popularity. */
+/** How `fuse` orders the lists. Default: the learned reranker (rerank.ts). */
 export interface FuseRanking {
-  /** Emoji popularity 0–1, usually `engine.popularity` (AliasEngine). */
-  popularity?: ((id: string) => number) | undefined;
   /** false = the confidence-weighted reciprocal rank fusion below (the ranking before the reranker). */
   rerank?: boolean;
   /** Learned-fusion weights; default `RERANK_WEIGHTS` (fitted for the production model). */
@@ -161,7 +159,7 @@ export interface FuseRanking {
 /**
  * The learned reranker (rerank.ts) by default: confident alias hits (≥ 0.9) stay on top in alias
  * order, then every other candidate of both lists by a linear score over alias and semantic
- * scores, ranks, match kind, popularity and country flags.
+ * scores, ranks, match kind and country flags.
  *
  * With `rerank: false`, fusion with weights from how sure each tier is. Alias: 0.4 + confidence. Semantic: 1 when its
  * best match is strong, down to 0.4 when it is weak (unknown slang, romanized text, a language
@@ -184,7 +182,6 @@ export function fuse(
       alias,
       semantic: guarded,
       semanticConfidence: confidence,
-      popularity: ranking.popularity,
     };
     return demoteUnsupportedFlags(rerank(input, Infinity, ranking.weights), alias.results, calibration).slice(
       0,

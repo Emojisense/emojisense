@@ -112,12 +112,12 @@ final class SemanticClientTests: XCTestCase {
     XCTAssertNil(try decode(semanticBody).calibration)
     let body = """
       {"results":[],"packVersion":"test","cached":false,
-       "calibration":{"floor":0.39,"ceiling":0.56,"gapFloor":0.02,"gapCeiling":0.1}}
+       "calibration":{"floor":0.35,"ceiling":0.53,"gapFloor":0.02,"gapCeiling":0.1}}
       """
     XCTAssertEqual(try decode(body).calibration, .standard)
     let withoutGap = body.replacingOccurrences(of: #","gapFloor":0.02,"gapCeiling":0.1"#, with: "")
     XCTAssertEqual(
-      try decode(withoutGap).calibration, Fusion.SemanticCalibration(floor: 0.39, ceiling: 0.56))
+      try decode(withoutGap).calibration, Fusion.SemanticCalibration(floor: 0.35, ceiling: 0.53))
   }
 
   // MARK: The search loop of the README (the session tests of client-session.test.ts)
@@ -142,9 +142,8 @@ final class SemanticClientTests: XCTestCase {
     XCTAssertEqual(query?.first { $0.name == "limit" }?.value, "24")
 
     let semantic = try XCTUnwrap(response).results
-    let ranking = Fusion.Ranking(popularity: { [engine] in engine.popularity($0) })
-    let shown = Fusion.fuse(alias: alias, semantic: semantic, limit: limit, ranking: ranking)
-    let deep = Fusion.fuse(alias: alias, semantic: semantic, limit: depth, ranking: ranking)
+    let shown = Fusion.fuse(alias: alias, semantic: semantic, limit: limit)
+    let deep = Fusion.fuse(alias: alias, semantic: semantic, limit: depth)
     XCTAssertGreaterThan(deep.count, limit)
     XCTAssertEqual(shown, Array(deep.prefix(limit)))
   }

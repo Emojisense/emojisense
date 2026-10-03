@@ -28,7 +28,6 @@ describe("published shard layout", () => {
       reachesWorker: () => true,
       resolver: createFakeResolver(catalog),
       packVersion: "t",
-      resultsPerQuery: 3,
       maxShardBytes: 10_000,
     });
     const layer = await hashLayer(built, "tr/");

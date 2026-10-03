@@ -90,7 +90,7 @@ describe("shards and regional stats on Miniflare R2 and D1", () => {
 
   it("publishes, rebuilds idempotently, prunes and serves through the SDK chain", async () => {
     const bucket = env.CDN as R2Bucket;
-    const run = (limits = {}) => runShardBuild(env, catalog, { now: NOW, limits: { results: 4, ...limits } });
+    const run = (limits = {}) => runShardBuild(env, catalog, { now: NOW, limits });
 
     // A budget of one entry per file and one embedding per night: three builds in three runs.
     const first = await run({ maxEmbeddings: 1, maxShardBytes: 50 });

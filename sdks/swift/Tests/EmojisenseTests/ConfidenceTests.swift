@@ -29,7 +29,7 @@ final class ConfidenceTests: XCTestCase {
   // MARK: semanticStrength
 
   func testStrengthIsZeroBelowTheFloorAndOneForAClearTopAtTheCeiling() {
-    XCTAssertEqual(Confidence.semanticStrength(semantic(0.38, 0.01)), 0)
+    XCTAssertEqual(Confidence.semanticStrength(semantic(0.34, 0.01)), 0)
     XCTAssertEqual(Confidence.semanticStrength(semantic(0.6, 0.1)), 1)
   }
 

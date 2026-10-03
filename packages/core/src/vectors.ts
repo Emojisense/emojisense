@@ -2,6 +2,7 @@
  * Emoji vector index, binary format v1 ("ESVEC1"). Normative spec: docs/PACK_FORMAT.md §Vectors.
  * int8 vectors with one float32 scale per row, plus sign bits for a binary shortlist.
  */
+import type { SemanticRow } from "./semantic-policy.js";
 
 const MAGIC = "ESVEC1\0\0";
 const HEADER_BYTES = 32;
@@ -127,10 +128,7 @@ function scoreRows(index: VectorIndex, query: Float32Array): Float32Array {
 }
 
 export interface VectorSearchOptions {
-  /**
-   * Added to an emoji's best cosine before ranking; the match's `score` includes it. The Search
-   * API adds the popularity prior and the glyph term (PACK_FORMAT.md §5, "Semantic score").
-   */
+  /** Added to an emoji's best cosine before ranking; the match's `score` includes it. */
   bonus?: (id: string) => number;
 }
 
@@ -177,4 +175,66 @@ export function searchVectorSets(
   const matches = [...best.values()];
   if (options.bonus) for (const m of matches) m.score += options.bonus(m.id);
   return matches.sort((a, b) => b.score - a.score).slice(0, k);
+}
+
+/**
+ * Per emoji with a glyph row: its best glyph cosine minus the mean over all of them. A lone glyph
+ * embeds near every other lone glyph (cosine ≈ 0.55 to most queries), so the raw cosine would
+ * favour any emoji with a glyph row; centring per query keeps the emoji-specific part.
+ */
+export function glyphScores(glyph: VectorIndex, query: Float32Array): Map<string, number> {
+  const scores = scoreRows(glyph, query);
+  const best = new Map<string, number>();
+  glyph.ids.forEach((id, row) => {
+    const score = scores[row] as number;
+    if (score > (best.get(id) ?? Number.NEGATIVE_INFINITY)) best.set(id, score);
+  });
+  let sum = 0;
+  for (const value of best.values()) sum += value;
+  const mean = best.size ? sum / best.size : 0;
+  for (const [id, value] of best) best.set(id, value - mean);
+  return best;
+}
+
+export interface SemanticRowOptions {
+  /** The glyph vectors of the model; without them every row's glyph value is 0. */
+  glyph?: VectorIndex | undefined;
+  /** The emoji of an id, from the pack. */
+  emojiOf: (id: string) => string;
+  /** Candidates by text cosine. Default 32. */
+  text?: number;
+  /** More candidates by glyph cosine. Default 8. */
+  glyphs?: number;
+}
+
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * The model output of one query (semantic-policy.ts): the best emoji by text cosine plus the best
+ * by glyph cosine, chosen without any ranking policy, in text order. 32 + 8 rows hold a policy
+ * ranking's top 12 for 99.9% of the eval queries, so a later policy can rank them without the
+ * embedding.
+ */
+export function semanticRows(
+  indexes: readonly VectorIndex[],
+  query: Float32Array,
+  options: SemanticRowOptions,
+): SemanticRow[] {
+  const seen = new Set<string>();
+  // One index can hold several rows of an emoji: keep its best.
+  const all = searchVectorSets(indexes, query, Number.POSITIVE_INFINITY).filter(
+    (m) => !seen.has(m.id) && seen.add(m.id),
+  );
+  const glyphs =
+    options.glyph && options.glyph.ids.length > 0 ? glyphScores(options.glyph, query) : undefined;
+  const chosen = all.slice(0, options.text ?? 32);
+  if (glyphs) {
+    const taken = new Set(chosen.map((m) => m.id));
+    const byGlyph = all
+      .filter((m) => !taken.has(m.id) && glyphs.has(m.id))
+      .sort((a, b) => (glyphs.get(b.id) as number) - (glyphs.get(a.id) as number))
+      .slice(0, options.glyphs ?? 8);
+    chosen.push(...byGlyph.sort((a, b) => b.score - a.score));
+  }
+  return chosen.map((m) => [options.emojiOf(m.id), m.id, round3(m.score), round3(glyphs?.get(m.id) ?? 0)]);
 }

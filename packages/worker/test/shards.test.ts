@@ -5,7 +5,7 @@ import {
   resolveFrom,
   type Shard,
   type ShardIndex,
-  type ShardResult,
+  type ShardRow,
 } from "@emojisense/data/shards";
 import { addDays, dayOf } from "@emojisense/platform";
 import { createLayeredSemantic, createSemanticClient, createShardProvider } from "emojisense";
@@ -209,7 +209,7 @@ function published(r2: ReturnType<typeof memoryR2>) {
   const dirOf = (locale: string) => (locale === "en" ? "" : `${locale}/`);
   const index = (locale = "en") => r2.json<ShardIndex>(`p/test/${dirOf(locale)}index.json`);
   /** Every entry of a locale's live files. */
-  const entries = (locale = "en"): Record<string, ShardResult[]> =>
+  const entries = (locale = "en"): Record<string, ShardRow[]> =>
     Object.assign(
       {},
       ...Object.values(index(locale).files ?? {}).map(
@@ -222,13 +222,13 @@ function published(r2: ReturnType<typeof memoryR2>) {
 /** What the base build uploads (build-shards.ts --layer base): one English base shard and the manifest. */
 async function uploadBase(
   r2: ReturnType<typeof memoryR2>,
-  entries: Record<string, ShardResult[]>,
+  entries: Record<string, ShardRow[]>,
   model = "bge-m3@8",
 ) {
   const shard = await contentFile(JSON.stringify({ key: "l", entries }));
   const index: ShardIndex = {
     format: "emojisense-shards",
-    formatVersion: 1,
+    formatVersion: 2,
     packVersion: "test",
     model,
     keys: ["l"],
@@ -263,7 +263,7 @@ describe("nightly shard build", () => {
     ...overrides,
   });
   const run = (limits: Partial<ShardLimits> = {}, overrides: Partial<Env> = {}, now = NOW, from = catalog) =>
-    runShardBuild(env(overrides), from, { now, limits: { results: 4, ...limits } });
+    runShardBuild(env(overrides), from, { now, limits });
   const pointer = () => published(r2).pointer();
   const entries = (locale?: string) => published(r2).entries(locale);
 
@@ -298,7 +298,7 @@ describe("nightly shard build", () => {
       formatVersion: 2,
       previous: null,
       model: "bge-m3@8",
-      results: 4,
+      shardFormat: 2,
       queries: 2,
       window: { from: daysAgo(6), to: daysAgo(1) },
       checkedDay: dayOf(NOW),
@@ -307,7 +307,7 @@ describe("nightly shard build", () => {
     expect(index).toMatchObject({ format: "emojisense-shards", packVersion: "test", model: "bge-m3@8" });
     expect(index.base).toBeUndefined();
     expect(Object.keys(entries()).sort()).toEqual(["extinct reptiles", "lava eruption"]);
-    expect(entries()["lava eruption"]?.[0]).toEqual(["🌋", "1F30B", 1]);
+    expect(entries()["lava eruption"]?.[0]).toEqual(["🌋", "1F30B", 1, 0]);
     // One Workers AI call for both queries, with the text the API embeds.
     expect(ai).toHaveBeenCalledTimes(1);
     expect(ai).toHaveBeenCalledWith("@cf/baai/bge-m3", { text: ["extinct reptiles", "lava eruption"] });
@@ -446,7 +446,7 @@ describe("nightly shard build", () => {
   });
 
   it("names the base layer in the live index and leaves out what the base answers", async () => {
-    const baseIndex = await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9]] });
+    const baseIndex = await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9, 0]] });
     popular(db, "lava eruption");
     popular(db, "extinct reptiles");
 
@@ -461,13 +461,13 @@ describe("nightly shard build", () => {
   });
 
   it("publishes the base layer's index before any query passes the thresholds", async () => {
-    const baseIndex = await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9]] });
+    const baseIndex = await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9, 0]] });
     expect(await run()).toMatchObject({ status: "published", queries: 0 });
     expect(published(r2).index()).toMatchObject({ keys: [], base: baseIndex });
   });
 
   it("ignores a base layer built for another model", async () => {
-    await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9]] }, "other@8");
+    await uploadBase(r2, { "lava eruption": [["🌋", "1F30B", 0.9, 0]] }, "other@8");
     popular(db, "lava eruption");
     expect(await run()).toMatchObject({ inBase: 0, queries: 1 });
     expect(published(r2).index().base).toBeUndefined();
@@ -584,8 +584,7 @@ describe("GET /p/*", () => {
         SHARDS_CRON_ENABLED: "true",
       },
     });
-    const build = (limits: Partial<ShardLimits> = {}) =>
-      runShardBuild(h.env, from, { now: clock, limits: { results: 4, ...limits } });
+    const build = (limits: Partial<ShardLimits> = {}) => runShardBuild(h.env, from, { now: clock, limits });
     const get = (path: string, init?: RequestInit) => h.call(new Request(`${API}${path}`, init));
     return { h, build, get };
   };
@@ -732,7 +731,7 @@ describe("GET /p/*", () => {
 
   it("serves the base layer to the SDK through the live index", async () => {
     const { h, build } = setup();
-    await uploadBase(r2, { "lava flows": [["🌋", "1F30B", 0.9]] });
+    await uploadBase(r2, { "lava flows": [["🌋", "1F30B", 0.9, 0]] });
     await build();
     const fetch = (async (input: string | URL | Request) =>
       h.call(new Request(String(input)))) as typeof globalThis.fetch;

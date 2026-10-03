@@ -4,7 +4,7 @@ import { gzipSync } from "node:zlib";
 import { SHARD_INDEX_FILE, shardFileName, shardJson } from "./json.ts";
 import type { ShardPlan } from "./split.ts";
 import type { ResultStore } from "./store.ts";
-import type { Shard, ShardIndex } from "./types.ts";
+import { isShardRows, type Shard, type ShardIndex } from "./types.ts";
 
 /**
  * The budget is defined at gzip level 6, the usual level of on-the-fly HTTP compression. It is
@@ -44,12 +44,7 @@ export function readShardIndex(dir: string): ShardIndex | undefined {
  * results, and only entries that have that many. The caller checks that the earlier build used
  * the same model and pack version.
  */
-export function loadShardEntries(
-  dir: string,
-  wanted: ReadonlySet<string>,
-  limit: number,
-  store: ResultStore,
-): number {
+export function loadShardEntries(dir: string, wanted: ReadonlySet<string>, store: ResultStore): number {
   const index = readShardIndex(dir);
   if (!index) return 0;
   let loaded = 0;
@@ -58,8 +53,8 @@ export function loadShardEntries(
     if (!existsSync(path)) continue;
     const shard = JSON.parse(readFileSync(path, "utf8")) as Shard;
     for (const [q, results] of Object.entries(shard.entries)) {
-      if (!wanted.has(q) || results.length < limit) continue;
-      store.set(q, results.slice(0, limit));
+      if (!wanted.has(q) || !isShardRows(results)) continue;
+      store.set(q, results);
       loaded++;
     }
   }

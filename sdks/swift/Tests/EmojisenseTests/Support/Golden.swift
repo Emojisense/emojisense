@@ -155,7 +155,6 @@ struct Golden: Decodable, Sendable {
     let q: String
     let alias: Alias
     let semantic: [Semantic]
-    let popularity: [String: Double]
     let reranked: [String]
     let reciprocal: [String]
   }

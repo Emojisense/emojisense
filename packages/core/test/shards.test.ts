@@ -48,6 +48,33 @@ describe("shard provider", () => {
     expect((await provider.search("the office"))?.results[0]?.emoji).toBe("🏢");
   });
 
+  it("ranks the model output of a version 2 shard by the policy, so a policy change needs no rebuild", async () => {
+    const v2 = { ...index, formatVersion: 2 };
+    const rows = {
+      "co.json": {
+        key: "co",
+        entries: {
+          "congrats on the launch": [
+            ["🎉", "1F389", 0.6, 0],
+            ["🚀", "1F680", 0.55, 0.4],
+            ["🎊", "1F38A", 0.5, -0.2],
+          ],
+        },
+      },
+    };
+    const fetch = vi.fn(async (url: string | URL | Request) => {
+      const path = String(url).split("/p/1/")[1] ?? "";
+      const body = path === "index.json" ? v2 : rows[path as "co.json"];
+      return body ? new Response(JSON.stringify(body)) : new Response("", { status: 404 });
+    });
+    const provider = createShardProvider({ baseUrl: "https://x.test/p/1/", fetch });
+    const answer = await provider.search("congrats on the launch", { limit: 2 });
+    expect(answer?.results).toEqual([
+      { emoji: "🚀", id: "1F680", score: 0.65, source: "semantic" },
+      { emoji: "🎉", id: "1F389", score: 0.6, source: "semantic" },
+    ]);
+  });
+
   it("leaves text typed with accents, punctuation or emoji to the API, which embeds it as typed", async () => {
     const fetch = fakeFetch();
     const provider = createShardProvider({ baseUrl: "https://x.test/p/1", fetch });

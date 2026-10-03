@@ -82,7 +82,7 @@ queries.forEach((q: EvalQuery, i) => {
   const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
   const semantic = semanticSearch(engine, layout, q.locale, query, 24);
   const alias = engine.search(q.q, { locale: q.locale, limit: 24 });
-  const fused = top(fuseRanked(engine, alias, semantic, LIMIT));
+  const fused = top(fuseRanked(alias, semantic, LIMIT));
   outcomes.semantic.push(judge(q, top(semantic)));
   outcomes.fused.push(judge(q, fused));
   outcomes.gated.push(judge(q, shouldUseSemantic(alias) ? fused : top(alias.results)));

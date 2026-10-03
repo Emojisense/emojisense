@@ -103,6 +103,12 @@ export {
   type SessionStatus,
 } from "./session.js";
 export {
+  GLYPH_WEIGHT,
+  type SemanticRow,
+  scoreSemanticRows,
+  semanticScore,
+} from "./semantic-policy.js";
+export {
   EMOJI_IMAGE_REFERRER_POLICY,
   EMOJI_SETS,
   type EmojiImageOptions,
@@ -113,6 +119,7 @@ export {
 } from "./sets.js";
 export {
   createShardProvider,
+  type LegacyShardRow,
   type Shard,
   type ShardIndex,
   type ShardProviderOptions,

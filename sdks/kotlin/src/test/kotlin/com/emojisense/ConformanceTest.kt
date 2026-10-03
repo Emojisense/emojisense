@@ -141,7 +141,7 @@ class ConformanceTest {
             )
             val semantic = case.semantic.map { (emoji, id, score) -> EmojiResult(emoji, id, score, ResultSource.SEMANTIC) }
             listOf(true to case.reranked, false to case.reciprocal).mapNotNull { (rerank, expected) ->
-                val ranking = Fusion.Ranking({ id: String -> case.popularity[id] ?: 0.0 }, rerank)
+                val ranking = Fusion.Ranking(rerank)
                 val actual = Fusion.fuse(alias, semantic, 10, ranking = ranking).map { it.id }
                 if (actual == expected) null else "  ${debug(case.q)} rerank $rerank:\n    kotlin $actual\n    ts     $expected"
             }

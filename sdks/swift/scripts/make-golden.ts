@@ -324,8 +324,8 @@ function random(seed: number): () => number {
 /**
  * `fuse` with and without the reranker on each query's real alias output (limit 12) and a
  * stand-in semantic list: some alias ids and random emoji (flags included), descending scores in
- * the API's range, three decimals. Self-contained (lists, the top result's match and field, and
- * popularity values), so a port checks its fusion even where its alias output differs.
+ * the API's range, three decimals. Self-contained (lists and the top result's match and field), so
+ * a port checks its fusion even where its alias output differs.
  */
 function fusionCases(engine: AliasEngine, list: Query[]) {
   return list.map((q) => {
@@ -341,11 +341,7 @@ function fusionCases(engine: AliasEngine, list: Query[]) {
       return row;
     });
     const results = semantic.map(([emoji, id, s]) => ({ emoji, id, score: s, source: "semantic" as const }));
-    const popularity = Object.fromEntries(
-      [...new Set([...alias.results.map((r) => r.id), ...ids])].map((id) => [id, engine.popularity(id)]),
-    );
-    const fused = (rerank: boolean) =>
-      fuse(alias, results, TOP, undefined, { popularity: engine.popularity, rerank }).map((r) => r.id);
+    const fused = (rerank: boolean) => fuse(alias, results, TOP, undefined, { rerank }).map((r) => r.id);
     return {
       q: q.q,
       alias: {
@@ -356,7 +352,6 @@ function fusionCases(engine: AliasEngine, list: Query[]) {
         field: alias.results[0]?.field ?? null,
       },
       semantic,
-      popularity,
       reranked: fused(true),
       reciprocal: fused(false),
     };

@@ -258,7 +258,6 @@ try {
         "fused",
         (q) =>
           fuseRanked(
-            engine,
             aliasOutputs.get(q.id) as AliasSearchOutput,
             semantic.get(q.id) as SearchResult[],
             LIMIT,
@@ -278,7 +277,7 @@ try {
           if (!shouldUseSemantic(alias)) return alias.results.slice(0, LIMIT).map((r) => r.emoji);
           gated++;
           const list = semantic.get(q.id) as SearchResult[];
-          return fuseRanked(engine, alias, list, LIMIT, calibration, shipped).map((r) => r.emoji);
+          return fuseRanked(alias, list, LIMIT, calibration, shipped).map((r) => r.emoji);
         },
         base,
       ),

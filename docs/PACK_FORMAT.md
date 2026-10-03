@@ -78,7 +78,7 @@ A client MUST reject a pack whose `format` differs or whose `formatVersion` it d
 
 **Popularity.** The English core pack has an optional pack-level key `popularity`: one integer
 0–100 per row, in row order, the percentile of how often people use that emoji (0 = unknown). It
-breaks equal alias scores (§4) and is a feature of fusion (§10). Source: Emoji-SP (Ferré et al.
+breaks equal alias scores (§4) and nothing else: it is not part of the meaning search (§5, §10). Source: Emoji-SP (Ferré et al.
 2023, CC BY 4.0), rated frequency of use of 1,031 emoji; a gender or skin-tone variant without
 its own rating takes its family's best (`packages/data/src/popularity.ts`). A client that loads
 other packs MUST take `popularity` from whichever loaded pack has it; packs without the key rank
@@ -352,18 +352,26 @@ embeds to the same vector as every other unknown glyph: such rows are dropped (b
 1,914). Texts: `packages/data/src/glyph-documents.ts`; build: `pnpm --filter @emojisense/data
 embed:glyph`. Readers that know only document files ignore it (its name has no locale).
 
-**Semantic score.** The Search API ranks its semantic list (`mode=semantic`, the semantic half of
-`hybrid`, and the shards of §6) by
+**Semantic score.** The meaning search has two parts.
+
+*Model output* (costs an embedding): per candidate emoji `e`, a row `[emoji, hexcode, text, glyph]`
+where `text` is the best cosine of the query over the document files (above) and `glyph` =
+`g(e)` − the mean of `g` over the emoji with a glyph row (0 without one); `g(e)` is the best cosine
+of the query to `e`'s glyph rows. Centring per query removes the part every lone glyph shares (a
+cosine ≈ 0.55 to most queries). The candidates are the 32 best by `text` plus the 8 best of the
+rest by `glyph`, chosen without any ranking policy (they hold a policy ranking's top 12 for 99.9%
+of the eval queries). Both values have three decimals. Reference: `semanticRows` in
+`emojisense/vectors`.
+
+*Ranking policy* (runs on every read, by the API for its answers and by the client for shards):
 
 ```
-score(e) = max over the document files (above)
-         + 0.04 × popularity(e)                                   popularity: §2, 0–1
-         + 0.25 × (g(e) − mean of g over the emoji with a glyph row)   0 without a glyph row
+score(e) = text(e) + 0.25 × glyph(e)        three decimals; best first, equal scores keep row order
 ```
 
-where `g(e)` is the best cosine of the query to `e`'s glyph rows. Centring per query removes the
-part every lone glyph shares (a cosine ≈ 0.55 to most queries). `score` is what the API returns,
-to three decimals. Reference: `semanticBonus` in `packages/data/src/semantic-score.ts`.
+No usage prior is part of it: what people use most never bends the model's order. `score` is
+what the API returns. Reference: `scoreSemanticRows` in `packages/core/src/semantic-policy.ts`. A
+policy change needs no new embedding and no shard rebuild.
 
 ## 6. Shards (layer 2: precomputed results)
 
@@ -377,13 +385,13 @@ published as static files, in two layers per locale:
   before any query log exists.
 
 ```
-/p/<packVersion>/index.json            live index, English: {"format":"emojisense-shards","formatVersion":1,
+/p/<packVersion>/index.json            live index, English: {"format":"emojisense-shards","formatVersion":2,
                                         "packVersion":"0.1.0","model":"embeddinggemma@768",
                                         "keys":["a","ab", … ,"th","the "],
                                         "files":{"a":"f/3f9a0c1d2e4b5a69.json", …},"base":"f/b1c2….json"}
 /p/<packVersion>/<locale>/index.json   the live index of another pack locale, e.g. /p/0.1.0/tr/index.json
                                         ("files":{"do":"../f/….json"}, "base":"../f/….json")
-/p/<packVersion>/f/<hash>.json         a shard file {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81], …]}}
+/p/<packVersion>/f/<hash>.json         a shard file {"key":"co","entries":{"congrats on the launch":[["🚀","1F680",0.81,0.04], …]}}
                                         or a base index (the index shape, no "base" of its own)
 ```
 
@@ -398,10 +406,14 @@ published as static files, in two layers per locale:
 - **Older clients** (no `files`) read `<key>.json` next to the index, file name
   `encodeURIComponent(key)`, and know no base layer. The API Worker's `/p/*` route maps that
   name to the hashed file, so those URLs keep working on the API host.
-- `entries` maps a normalized query (§3) to semantic results `[emoji, hexcode, score]`, best
-  first. These are the same results the API returns with `mode=semantic` for that model and
-  locale: the English files hold the `locale=en` answers (the shared vector file only, §5), the
-  files of `<locale>/` the answers of that locale (the shared vector file and the locale's own).
+- `entries` maps a normalized query (§3) to its **model output** (§5): rows
+  `[emoji, hexcode, text, glyph]` in `text` order. A client ranks them by the policy of §5 when it
+  reads them, so they give the results the API returns with `mode=semantic` for that model and
+  locale: the English files hold the `locale=en` rows (the shared vector file only, §5), the files
+  of `<locale>/` the rows of that locale (the shared vector file and the locale's own).
+- **Version 1** shards (`formatVersion` 1) hold `[emoji, hexcode, score]`, best first, with the
+  policy of their build already applied. Clients read both versions; an older client reads a
+  version 2 row's `text` as its score. Builds never reuse version 1 rows.
 - **Locale shards.** A client reads the directory of its search locale: English (and no locale)
   at `/p/<packVersion>/`, every other pack locale at `/p/<packVersion>/<locale>/`, where `<locale>`
   is the language subtag in lowercase (`pt-BR` → `pt`), like the API's `locale`. `en/` is an alias
@@ -601,8 +613,8 @@ file whose `until` has passed still works for lasting and yearly entries but mis
 ## 10. Fusion (alias + semantic)
 
 A client that shows alias and semantic results together (a search session, the Search API in
-`mode=hybrid`, the MCP server) merges them with `fuse(alias, semantic, limit, calibration,
-{ popularity })` (`packages/core/src/fusion.ts`, `rerank.ts`; Swift `Fusion.fuse`, Kotlin
+`mode=hybrid`, the MCP server) merges them with `fuse(alias, semantic, limit, calibration)`
+(`packages/core/src/fusion.ts`, `rerank.ts`; Swift `Fusion.fuse`, Kotlin
 `Fusion.fuse`). A port SHOULD give the same order; the golden file checks it on recorded lists.
 
 **Candidates whatever the limit.** The features read the lists (ranks, the lowest semantic
@@ -614,7 +626,7 @@ first (0 for an empty list); `level = clamp((best − floor) / (ceiling − floo
 calibration has `gapFloor` and `gapCeiling` and the list has more than one score: `gap = best −`
 the mean of the next scores (at most 4), and the confidence is `max(level, clamp((gap − gapFloor)
 / (gapCeiling − gapFloor)))`; else `level`. The production model's calibration
-(`DEFAULT_SEMANTIC_CALIBRATION`, EmbeddingGemma @768) is floor 0.39, ceiling 0.56, gapFloor 0.02,
+(`DEFAULT_SEMANTIC_CALIBRATION`, EmbeddingGemma @768) is floor 0.35, ceiling 0.53, gapFloor 0.02,
 gapCeiling 0.1. The Search API sends the calibration of its model with each search answer
 (`calibration`); a client fuses and judges that answer with it, else with its default.
 
@@ -629,15 +641,18 @@ gapCeiling 0.1. The Search API sends the calibration of its model with each sear
 
    | i | Feature | Weight |
    | -: | ------- | -----: |
-   | 0 | 1 when the alias list holds it, else 0 | −0.3173 |
-   | 1 | alias score `a` (0 without) | 1.715 |
-   | 2 | 1 / alias rank (1-based; 0 without) | 1.57 |
-   | 3 | `a` / alias confidence (0 without) | 0.4408 |
-   | 4 | semantic score `s`; without one, the semantic list's lowest score − 0.02 (0 for an empty list) | 12.39 |
-   | 5 | best semantic score (0 or more) − `s` | −8.606 |
-   | 6 | popularity, 0–1 (§2) | 3.18 |
-   | 7 | `a` × alias confidence | 2.129 |
-   | 8 | `s` × semantic confidence (`semanticConfidence`, the calibration of `fuse`) | 1.067 |
+   | 0 | 1 when the alias list holds it, else 0 | −0.334 |
+   | 1 | alias score `a` (0 without) | 1.59 |
+   | 2 | 1 / alias rank (1-based; 0 without) | 1.899 |
+   | 3 | `a` / alias confidence (0 without) | 0.3387 |
+   | 4 | semantic score `s`; without one, the semantic list's lowest score − 0.02 (0 for an empty list) | 10.67 |
+   | 5 | best semantic score (0 or more) − `s` | −7.255 |
+   | 6 | `a` × alias confidence | 1.838 |
+   | 7 | `s` × semantic confidence (`semanticConfidence`, the calibration of `fuse`) | 3.632 |
+
+   No feature is a usage prior (popularity left fusion on 2026-10-04: it replaced the model's
+   specific answers with common faces and hearts, and kept 61% of the model's top 10 against 74%
+   without it).
 
    Sort by score, descending; equal scores keep candidate order.
 4. **Flag guard.** A country flag that the alias list does not hold and whose semantic score is

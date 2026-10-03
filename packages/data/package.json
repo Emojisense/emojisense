@@ -36,7 +36,6 @@
     "./culture-core": "./src/culture/core.ts",
     "./culture/*": "./culture/*",
     "./embeddings": "./src/embeddings.ts",
-    "./semantic-score": "./src/semantic-score.ts",
     "./locales": "./src/locales.ts",
     "./models": "./src/models.ts",
     "./paths": "./src/paths.ts",

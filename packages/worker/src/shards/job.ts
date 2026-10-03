@@ -11,17 +11,17 @@ import {
   relativeTo,
   resolveFrom,
   SHARD_FILES_DIR,
+  SHARD_FORMAT_VERSION,
   type Shard,
   type ShardBaseManifest,
   type ShardIndex,
   type ShardResolver,
-  type ShardResult,
+  type ShardRow,
 } from "@emojisense/data/shards";
 import { dayOf, SHARD_MIN_ACCOUNTS, SHARD_MIN_SEARCHES, SHARD_WINDOW_DAYS } from "@emojisense/platform";
 import { embeddingText, shardKeyFor } from "emojisense";
 import type { VectorIndex } from "emojisense/vectors";
 import {
-  SEARCH_DEFAULT_LIMIT,
   SHARD_FILE_GRACE_MS,
   SHARD_MAX_EMBEDDINGS,
   SHARD_MAX_QUERIES,
@@ -30,7 +30,7 @@ import {
   SHARD_WRITE_CONCURRENCY,
 } from "../config.ts";
 import type { Env } from "../env.ts";
-import { type Catalog, embedTexts, modelTag, semanticResults } from "../semantic.ts";
+import { type Catalog, embedTexts, modelTag, semanticModelRows } from "../semantic.ts";
 import { type Candidate, selectCandidates, selectionWindow } from "./select.ts";
 import {
   baseFiles,
@@ -62,8 +62,6 @@ export interface ShardLimits {
   maxEmbeddings: number;
   /** Raw JSON bytes per shard file. */
   maxShardBytes: number;
-  /** Results per query: the API's default `limit`. */
-  results: number;
   staleDays: number;
 }
 
@@ -74,7 +72,6 @@ export const SHARD_LIMITS: ShardLimits = {
   maxQueries: SHARD_MAX_QUERIES,
   maxEmbeddings: SHARD_MAX_EMBEDDINGS,
   maxShardBytes: SHARD_MAX_RAW_BYTES,
-  results: SEARCH_DEFAULT_LIMIT,
   staleDays: SHARD_STALE_DAYS,
 };
 
@@ -142,8 +139,8 @@ function apiResolver(
 ): ShardResolver {
   return {
     model: modelTag(catalog),
-    async resolve(queries, limit) {
-      const out = new Map<string, ShardResult[]>();
+    async resolve(queries) {
+      const out = new Map<string, ShardRow[]>();
       const chosen = indexes ? queries.filter((q) => allowed.has(q)) : [];
       if (!indexes || chosen.length === 0) return out;
       budget.calls++;
@@ -156,11 +153,7 @@ function apiResolver(
         const engine = catalog.engine();
         chosen.forEach((q, i) => {
           const vector = vectors[i] as Float32Array;
-          const results = semanticResults(engine, indexes, vector, limit, catalog.glyph?.());
-          out.set(
-            q,
-            results.map((r): ShardResult => [r.emoji, r.id, r.score]),
-          );
+          out.set(q, semanticModelRows(engine, indexes, vector, catalog.glyph?.()));
         });
         budget.embedded += chosen.length;
       } catch (error) {
@@ -173,13 +166,13 @@ function apiResolver(
   };
 }
 
-/** Copies the served build's entries of the wanted queries, cut to `limit` results. */
-function reuse(prior: ResultStore, wanted: ReadonlySet<string>, store: ResultStore, limit: number): number {
+/** Copies the served build's entries of the wanted queries. */
+function reuse(prior: ResultStore, wanted: ReadonlySet<string>, store: ResultStore): number {
   let copied = 0;
   for (const q of wanted) {
     const results = prior.get(q);
     if (!results) continue;
-    store.set(q, results.slice(0, limit));
+    store.set(q, results);
     copied++;
   }
   return copied;
@@ -294,7 +287,7 @@ export async function runShardBuild(
     const selection = await selectCandidates(env.DB, window, limits);
 
     const served = await readPointer(bucket, packVersion, contentHash);
-    const reusable = served && served.model === model && served.results >= limits.results;
+    const reusable = served && served.model === model && served.shardFormat === SHARD_FORMAT_VERSION;
     const manifest = await readBaseManifest(bucket, packVersion);
     // A base built for another model holds other answers: it is neither named nor subtracted.
     const base = manifest?.model === model ? manifest : undefined;
@@ -347,10 +340,9 @@ export async function runShardBuild(
           budget,
         ),
         packVersion,
-        resultsPerQuery: limits.results,
         maxShardBytes: limits.maxShardBytes,
         batchSize: catalog.model.maxBatch,
-        previous: (wanted, store) => reuse(plan.prior, wanted, store, limits.results),
+        previous: (wanted, store) => reuse(plan.prior, wanted, store),
       });
       reused += built.stats.reused;
       // English always has its index, even empty: it replaces a served English build.
@@ -413,7 +405,7 @@ export async function runShardBuild(
       formatVersion: 2,
       build,
       model,
-      results: limits.results,
+      shardFormat: SHARD_FORMAT_VERSION,
       queries: counts.queries,
       shards: counts.shards,
       locales: builds,

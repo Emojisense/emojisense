@@ -99,10 +99,10 @@ class FusionTest {
     @Test
     fun `maps the best cosine between the calibration floor and ceiling`() {
         assertEquals(0.0, Fusion.semanticConfidence(emptyList()))
-        assertEquals(0.0, Fusion.semanticConfidence(semanticList(0.38)))
-        assertEquals(0.5, Fusion.semanticConfidence(semanticList(0.475)), 1e-9)
+        assertEquals(0.0, Fusion.semanticConfidence(semanticList(0.34)), 1e-10)
+        assertEquals(0.5, Fusion.semanticConfidence(semanticList(0.44)), 1e-9)
         assertEquals(1.0, Fusion.semanticConfidence(semanticList(0.8)))
-        val unsorted = listOf(result("x", 0.47, ResultSource.SEMANTIC), result("y", 0.475, ResultSource.SEMANTIC))
+        val unsorted = listOf(result("x", 0.435, ResultSource.SEMANTIC), result("y", 0.44, ResultSource.SEMANTIC))
         assertEquals(0.5, Fusion.semanticConfidence(unsorted), 1e-9)
         assertEquals(0.75, Fusion.semanticConfidence(semanticList(0.5), SemanticCalibration(0.2, 0.6)), 1e-9)
     }
@@ -147,8 +147,8 @@ class FusionTest {
 
     @Test
     fun `ranks semantic flags the alias tier does not hold after the other results`() {
-        val flag = EmojiResult("🇧🇹", bhutan, 0.44, ResultSource.SEMANTIC)
-        val semantic = listOf(flag, result("🐰", 0.43, ResultSource.SEMANTIC), result("🐇", 0.42, ResultSource.SEMANTIC))
+        val flag = EmojiResult("🇧🇹", bhutan, 0.4, ResultSource.SEMANTIC)
+        val semantic = listOf(flag, result("🐰", 0.39, ResultSource.SEMANTIC), result("🐇", 0.38, ResultSource.SEMANTIC))
         val fused = Fusion.fuse(aliasOutput(0.26, listOf("😄")), semantic, limit = 4, ranking = rrf)
         assertEquals(listOf("😄", "🐰", "🐇", "🇧🇹"), fused.map { it.emoji })
     }

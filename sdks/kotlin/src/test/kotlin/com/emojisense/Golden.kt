@@ -129,7 +129,6 @@ class Golden private constructor(root: JsonObject) {
         val aliasField: String?,
         /** (emoji, id, score) */
         val semantic: List<Triple<String, String, Double>>,
-        val popularity: Map<String, Double>,
         val reranked: List<String>,
         val reciprocal: List<String>,
     )
@@ -148,7 +147,6 @@ class Golden private constructor(root: JsonObject) {
                 val row = it.jsonArray
                 Triple(row[0].jsonPrimitive.content, row[1].jsonPrimitive.content, row[2].jsonPrimitive.double)
             },
-            popularity = case.getValue("popularity").jsonObject.mapValues { it.value.jsonPrimitive.double },
             reranked = case.getValue("reranked").jsonArray.map { it.jsonPrimitive.content },
             reciprocal = case.getValue("reciprocal").jsonArray.map { it.jsonPrimitive.content },
         )

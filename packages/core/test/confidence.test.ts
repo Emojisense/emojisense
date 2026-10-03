@@ -36,7 +36,7 @@ const semantic = (top: number, gap: number) => [
 
 describe("semanticStrength", () => {
   it("is 0 below the calibration floor and 1 for a clear top at the ceiling", () => {
-    expect(semanticStrength(semantic(0.38, 0.01))).toBe(0);
+    expect(semanticStrength(semantic(0.34, 0.01))).toBe(0);
     expect(semanticStrength(semantic(0.6, 0.1))).toBe(1);
   });
 

@@ -137,9 +137,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
         const { calibration } = response;
         return {
           query,
-          results: present(
-            fuse(alias, response.results, limit, calibration, { popularity: engine.popularity }),
-          ),
+          results: present(fuse(alias, response.results, limit, calibration)),
           alias,
           aliasMs,
           ...assessConfidence(alias, response.results, calibration),

@@ -1,7 +1,7 @@
 /**
  * Embedding models as a drop-in for the semantic tier: each variant (model-variants.ts) embeds the
  * queries its own way and searches its own document vectors (shared + per-locale files) and glyph
- * rows, scored like production (popularity prior + glyph term). Fusion with the alias tier uses
+ * rows, scored like production (the policy over the model output: text cosine + glyph term). Fusion with the alias tier uses
  * the learned reranker: the production weights for the production model, weights fitted for each
  * other variant (`rerank-fit.ts`; 5-fold cross-validated on the training sets, the full fit on
  * entities-dev, the examples and held-out, which it never saw). Semantic calibration per variant
@@ -24,7 +24,6 @@ import { parseArgs } from "node:util";
 import { disposeEmbeddings, embedTexts, runWorkersAI } from "@emojisense/data/embeddings";
 import { type EmbeddingModel, formatDocument, formatQuery } from "@emojisense/data/models";
 import { BUILD_DIR, DATA_ROOT } from "@emojisense/data/paths";
-import { semanticBonus } from "@emojisense/data/semantic-score";
 import { glyphVectorFileName, vectorFileName } from "@emojisense/data/vector-files";
 import {
   type AliasEngine,
@@ -38,9 +37,10 @@ import {
   type RerankInput,
   type SearchResult,
   type SemanticCalibration,
+  scoreSemanticRows,
   semanticConfidence,
 } from "emojisense";
-import { l2normalize, searchVectorSets, type VectorIndex } from "emojisense/vectors";
+import { l2normalize, searchVectorSets, semanticRows, type VectorIndex } from "emojisense/vectors";
 import { EVAL_ROOT } from "./cost-inputs.ts";
 import { loadHeldout } from "./heldout.ts";
 import { HELDOUT_PATH } from "./heldout-run.ts";
@@ -187,10 +187,13 @@ function semanticLists(engine: AliasEngine, layout: VectorLayout, locale: string
       score: m.score,
       source: "semantic" as const,
     }));
-  const bonus = semanticBonus(engine.popularity, layout.glyph, vector);
+  const rows = semanticRows(indexes, vector, {
+    glyph: layout.glyph,
+    emojiOf: (id) => engine.get(id)?.emoji ?? "",
+  });
   return {
     cos: toResults(searchVectorSets(indexes, vector, 24)),
-    sem: toResults(searchVectorSets(indexes, vector, 24, { bonus })),
+    sem: scoreSemanticRows(rows, 24),
   };
 }
 
@@ -255,7 +258,6 @@ async function runVariant(variant: ModelVariant): Promise<VariantRun | string> {
       alias: it.alias,
       semantic: sem,
       semanticConfidence: semanticConfidence(sem, calibration),
-      popularity: engineFor(it.q.locale).popularity,
     };
   };
 
@@ -276,13 +278,11 @@ async function runVariant(variant: ModelVariant): Promise<VariantRun | string> {
   const ranked = new Map<Item, Ranked>();
   for (const it of pool) {
     const { cos, sem } = lists.get(it) as { cos: SearchResult[]; sem: SearchResult[] };
-    const popularity = engineFor(it.q.locale).popularity;
     const refitResults = fuse(it.alias, sem, LIMIT, calibration, {
-      popularity,
       weights: foldWeights.get(it) ?? refitWeights,
     });
     const fusedResults = variant.shipped
-      ? fuse(it.alias, sem, LIMIT, calibration, { popularity, weights })
+      ? fuse(it.alias, sem, LIMIT, calibration, { weights })
       : refitResults;
     ranked.set(it, {
       cos,
@@ -291,7 +291,7 @@ async function runVariant(variant: ModelVariant): Promise<VariantRun | string> {
       lists: {
         cos: emojiOf(cos),
         sem: emojiOf(sem),
-        rrf: emojiOf(fuse(it.alias, sem, LIMIT, calibration, { popularity, rerank: false })),
+        rrf: emojiOf(fuse(it.alias, sem, LIMIT, calibration, { rerank: false })),
         fused: emojiOf(fusedResults),
         refit: emojiOf(refitResults),
       },

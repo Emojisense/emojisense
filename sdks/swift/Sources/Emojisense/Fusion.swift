@@ -87,7 +87,7 @@ public enum Fusion {
     /// in packages/core/src/fusion.ts; another model or dims needs its own (`pnpm eval` measures
     /// floor and ceiling).
     public static let standard = SemanticCalibration(
-      floor: 0.39, ceiling: 0.56, gapFloor: 0.02, gapCeiling: 0.1)
+      floor: 0.35, ceiling: 0.53, gapFloor: 0.02, gapCeiling: 0.1)
   }
 
   /// Candidates each tier brings to fusion, however many results are shown. The reranker's
@@ -153,21 +153,17 @@ public enum Fusion {
   /// How ``fuse(alias:semantic:limit:calibration:ranking:)`` orders the lists, like `FuseRanking`
   /// in packages/core/src/fusion.ts.
   public struct Ranking: Sendable {
-    /// Emoji popularity 0–1, usually ``AliasEngine/popularity(_:)``.
-    public var popularity: (@Sendable (String) -> Double)?
     /// false = the confidence-weighted reciprocal rank fusion (the ranking before the reranker).
     public var rerank: Bool
 
-    public init(popularity: (@Sendable (String) -> Double)? = nil, rerank: Bool = true) {
-      self.popularity = popularity
+    public init(rerank: Bool = true) {
       self.rerank = rerank
     }
   }
 
   /// The learned reranker (``Rerank``) by default: alias hits ≥ 0.9 stay on top in alias order,
   /// then every other candidate of both lists by a linear score over alias and semantic scores,
-  /// ranks, popularity and confidences; semantic country flags the alias tier does not support go
-  /// last. Pass `Ranking(popularity: engine.popularity)`.
+  /// ranks and confidences; semantic country flags the alias tier does not support go last.
   ///
   /// With `rerank: false`, fusion with weights from how sure each tier is. Alias: 0.4 +
   /// confidence. Semantic: 1 when its best match is strong, down to 0.4 when it is weak, so a weak
@@ -184,8 +180,7 @@ public enum Fusion {
     if ranking.rerank {
       let input = Rerank.Input(
         alias: alias, semantic: guarded,
-        semanticConfidence: semanticConfidence(guarded, calibration: calibration),
-        popularity: ranking.popularity)
+        semanticConfidence: semanticConfidence(guarded, calibration: calibration))
       let ranked = Rerank.rerank(input, limit: Int.max)
       return Array(
         demoteUnsupportedFlags(ranked, alias: aliasResults, calibration: calibration)

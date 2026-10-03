@@ -1,11 +1,16 @@
 import type { SearchResult } from "./engine.js";
 import { embeddingText, normalize } from "./normalize.js";
 import type { SemanticProvider, SemanticResponse } from "./provider.js";
+import { type SemanticRow, scoreSemanticRows } from "./semantic-policy.js";
 
-/** `<base>/index.json`: which prefix keys exist (adaptive: hot prefixes get longer keys). */
+/**
+ * `<base>/index.json`: which prefix keys exist (adaptive: hot prefixes get longer keys).
+ * Version 2 shards hold model output (`SemanticRow`), ranked by the client's policy on read;
+ * version 1 shards hold `[emoji, id, score]` with the policy of their build applied.
+ */
 export interface ShardIndex {
   format: "emojisense-shards";
-  formatVersion: 1;
+  formatVersion: 1 | 2;
   packVersion: string;
   /** e.g. "embeddinggemma@256" — results are valid only for this model. */
   model: string;
@@ -23,11 +28,14 @@ export interface ShardIndex {
   base?: string;
 }
 
+/** A row of a version 1 shard: `[emoji, hexcode, score]`. */
+export type LegacyShardRow = [emoji: string, id: string, score: number];
+
 /** `<base>/<key>.json`: precomputed semantic results for frequent normalized queries. */
 export interface Shard {
   key: string;
-  /** normalized query → [emoji, hexcode, score][] */
-  entries: Record<string, [string, string, number][]>;
+  /** normalized query → its rows (`SemanticRow` in version 2, `LegacyShardRow` in version 1) */
+  entries: Record<string, SemanticRow[] | LegacyShardRow[]>;
 }
 
 export interface ShardProviderOptions {
@@ -158,10 +166,17 @@ export function createShardProvider(options: ShardProviderOptions): SemanticProv
     return q === "" || embeddingText(query) !== q ? undefined : q;
   };
 
-  const answer = (index: ShardIndex, entry: [string, string, number][], limit: number): SemanticResponse => ({
-    results: entry
-      .slice(0, limit)
-      .map(([emoji, id, score]): SearchResult => ({ emoji, id, score, source: "semantic" })),
+  const answer = (
+    index: ShardIndex,
+    entry: SemanticRow[] | LegacyShardRow[],
+    limit: number,
+  ): SemanticResponse => ({
+    results:
+      index.formatVersion === 2
+        ? scoreSemanticRows(entry as SemanticRow[], limit)
+        : (entry as LegacyShardRow[])
+            .slice(0, limit)
+            .map(([emoji, id, score]): SearchResult => ({ emoji, id, score, source: "semantic" })),
     packVersion: index.packVersion,
     model: index.model,
     cached: true,

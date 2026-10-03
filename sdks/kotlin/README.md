@@ -155,7 +155,7 @@ fun main() = runBlocking {
     if (Fusion.shouldUseSemantic(alias)) {
         val client = SemanticClient(SemanticClient.Configuration("https://api.emojisense.com", key = "pk_live_…"))
         client.search("feliz cumpleaños", SemanticSearchOptions(locale = "es"))?.let { response ->
-            println(Fusion.fuse(alias, response.results, ranking = Fusion.Ranking(engine::popularity)).map { it.emoji })
+            println(Fusion.fuse(alias, response.results).map { it.emoji })
         }
     }
 }

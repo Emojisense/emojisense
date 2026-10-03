@@ -7,7 +7,7 @@
  *   base.json       manifest: locale → its base index
  *
  *   tsx src/build-base-shards.ts [--locales en,tr] [--min-count 5] [--max-queries 200000]
- *     [--results 24] [--max-kb 30] [--resolver workers-ai|cached|fake] [--no-reuse]
+ *     [--max-kb 30] [--resolver workers-ai|cached|fake] [--no-reuse]
  *
  * Then publish it with upload-shards.ts. The nightly build names each locale's base index in its
  * live index and leaves out the queries the base holds. Each locale is written as soon as it is
@@ -18,14 +18,13 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
-import { createEngine, type Pack } from "emojisense";
+import { createEngine, type Pack, scoreSemanticRows } from "emojisense";
 import { decodeVectors, type VectorIndex } from "emojisense/vectors";
 import { readPackConfig } from "./config.ts";
 import { disposeEmbeddings } from "./embeddings.ts";
 import { LOCALE_CODES } from "./locales.ts";
 import { getModel } from "./models.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
-import { semanticBonus } from "./semantic-score.ts";
 import { bootstrapQueries } from "./shards/bootstrap.ts";
 import { buildShards } from "./shards/build.ts";
 import { curatedRows, loadCuratedQueries } from "./shards/curated.ts";
@@ -43,7 +42,7 @@ import {
 import { aggregateQueries, createWorkerGate } from "./shards/queries.ts";
 import { createFakeResolver, createVectorResolver } from "./shards/resolvers.ts";
 import type { ResultStore } from "./shards/store.ts";
-import type { Shard, ShardIndex, ShardResolver } from "./shards/types.ts";
+import { isShardRows, type Shard, type ShardIndex, type ShardResolver } from "./shards/types.ts";
 import type { BaseEmoji } from "./types.ts";
 import { glyphVectorFileName, vectorFileName } from "./vector-files.ts";
 
@@ -54,7 +53,6 @@ const { values: args } = parseArgs({
     locales: { type: "string" },
     "min-count": { type: "string", default: "5" },
     "max-queries": { type: "string", default: "200000" },
-    results: { type: "string", default: "24" },
     "max-kb": { type: "string", default: "30" },
     resolver: { type: "string", default: "workers-ai" },
     "no-reuse": { type: "boolean", default: false },
@@ -62,7 +60,6 @@ const { values: args } = parseArgs({
 });
 
 const minCount = Number(args["min-count"]);
-const resultsPerQuery = Number(args.results);
 const locales = args.locales ? args.locales.split(",").map((l) => l.trim()) : LOCALE_CODES;
 const unknown = locales.filter((l) => !LOCALE_CODES.includes(l));
 if (unknown.length > 0) {
@@ -115,8 +112,9 @@ function reusePrevious(
   for (const file of Object.values(index?.files ?? {})) {
     const shard = readOut<Shard>(resolveFrom(SHARD_FILES_DIR, file));
     for (const [q, results] of Object.entries(shard?.entries ?? {})) {
-      if (!wanted.has(q) || results.length < resultsPerQuery) continue;
-      store.set(q, results.slice(0, resultsPerQuery));
+      // Version 1 rows hold a ranking policy's scores, not model output: they are resolved again.
+      if (!wanted.has(q) || !isShardRows(results)) continue;
+      store.set(q, results);
       reused++;
     }
   }
@@ -185,8 +183,7 @@ try {
       : createVectorResolver({
           tag: modelTag,
           index: own ? [shared as VectorIndex, own] : (shared as VectorIndex),
-          // The API's semantic score: popularity prior and glyph term (semantic-score.ts).
-          bonus: (query) => semanticBonus(full.popularity, glyph, query),
+          glyph,
           emojiOf: (id) => full.get(id)?.emoji,
           embedder,
         });
@@ -201,7 +198,6 @@ try {
       reachesWorker: createWorkerGate([full, core]),
       resolver,
       packVersion: config.packVersion,
-      resultsPerQuery,
       maxShardBytes: Number(args["max-kb"]) * 1024,
       shardBytes: gzipBytes,
       previous: (wanted, store) => reusePrevious(locale, resolver, wanted, store),
@@ -220,13 +216,12 @@ try {
         `${built.store.size} entries in ${stats.shards} shards` +
         (stats.oversized.length ? ` (⚠ over budget: ${stats.oversized.join(", ")})` : ""),
     );
-    // Curated answers are shown to visitors as they are: list them for review.
+    // The policy's ranking of each curated row, for review (clients then fuse it with the dictionary).
     for (const { query } of curated.filter((c) => c.locale === locale)) {
-      const results = built.store.get(query);
-      const shown = results
-        ? results
-            .slice(0, 12)
-            .map(([glyph]) => glyph)
+      const rows = built.store.get(query);
+      const shown = rows
+        ? scoreSemanticRows(rows, 12)
+            .map((r) => r.emoji)
             .join(" ")
         : "not in shards (the device answers it, or it was not resolved)";
       console.log(`  curated "${query}": ${shown}`);

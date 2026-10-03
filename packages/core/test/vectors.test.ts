@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { GLYPH_WEIGHT, scoreSemanticRows } from "../src/semantic-policy.js";
 import {
   decodeVectors,
   encodeVectors,
+  glyphScores,
   l2normalize,
   searchVectorSets,
   searchVectors,
+  semanticRows,
 } from "../src/vectors.js";
 
 const random = (dims: number, seed: number) => {
@@ -90,5 +93,44 @@ describe("searchVectorSets", () => {
     expect(boosted[0]?.id).toBe("1F680");
     expect(boosted[0]?.score).toBeCloseTo((plain.find((m) => m.id === "1F680")?.score as number) + 2);
     expect(searchVectors(shared, query, 1, { bonus })[0]?.id).toBe("1F680");
+  });
+});
+
+describe("semanticRows (model output)", () => {
+  const unit = (values: number[]) => l2normalize(Float32Array.from([...values, 0, 0, 0, 0]));
+  const ids = ["A", "B", "C", "D"];
+  // Text: A best, then B, C, D. Glyph rows for B and D only; D is closest by glyph.
+  const text = decodeVectors(
+    encodeVectors("m", ids, [
+      unit([1, 0, 0, 0]),
+      unit([0.9, 0.4, 0, 0]),
+      unit([0.5, 0.8, 0, 0]),
+      unit([0, 0, 1, 0]),
+    ]),
+  );
+  const glyph = decodeVectors(encodeVectors("m", ["B", "D"], [unit([0, 1, 0, 0]), unit([1, 0, 0, 0])]));
+  const query = unit([1, 0, 0, 0]);
+  const emojiOf = (id: string) => `e${id}`;
+
+  it("centres glyph cosines per query", () => {
+    const scores = glyphScores(glyph, query);
+    expect(scores.get("D")).toBeCloseTo(0.5, 2);
+    expect(scores.get("B")).toBeCloseTo(-0.5, 2);
+    expect(scores.has("A")).toBe(false);
+  });
+
+  it("keeps the best by text plus the best by glyph, chosen without any ranking policy", () => {
+    const rows = semanticRows([text], query, { glyph, emojiOf, text: 2, glyphs: 1 });
+    expect(rows.map((r) => r[1])).toEqual(["A", "B", "D"]);
+    expect(rows[0]).toEqual(["eA", "A", 1, 0]);
+    expect(rows[2]?.[3]).toBeCloseTo(0.5, 2);
+    expect(semanticRows([text], query, { emojiOf, text: 2 }).map((r) => r[3])).toEqual([0, 0]);
+  });
+
+  it("is ranked by the policy on read: text cosine plus the weighted glyph term", () => {
+    const ranked = scoreSemanticRows(semanticRows([text], query, { glyph, emojiOf }), 4);
+    const b = ranked.find((r) => r.id === "B");
+    expect(b?.score).toBeCloseTo(0.914 + GLYPH_WEIGHT * -0.5, 2);
+    expect(ranked.map((r) => r.score)).toEqual([...ranked.map((r) => r.score)].sort((x, y) => y - x));
   });
 });

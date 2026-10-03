@@ -1,5 +1,5 @@
-import { l2normalize, searchVectorSets, type VectorIndex } from "emojisense/vectors";
-import type { ShardResolver, ShardResult } from "./types.ts";
+import { l2normalize, semanticRows, type VectorIndex } from "emojisense/vectors";
+import type { ShardResolver, ShardRow } from "./types.ts";
 
 /** Returns query vectors in input order; `undefined` where none is available (offline cache miss). */
 export interface QueryEmbedder {
@@ -14,35 +14,30 @@ export interface VectorResolverOptions {
    * for that locale's answers (each emoji scores its best row, as in the API).
    */
   index: VectorIndex | readonly VectorIndex[];
-  /** The score bonus of one query (`semanticBonus` in semantic-score.ts), as the Worker adds it. */
-  bonus?: (query: Float32Array) => (id: string) => number;
+  /** The glyph vectors of the model, as the Worker reads them. */
+  glyph?: VectorIndex | undefined;
   emojiOf(hexcode: string): string | undefined;
   embedder: QueryEmbedder;
 }
 
 /**
- * The Worker's `mode=semantic` path, run in batch: embed, truncate to the index dims,
- * re-normalize, brute-force top-k over the vector files with the score bonus, round scores to
- * three decimals.
+ * The Worker's `mode=semantic` model output, run in batch: embed, truncate to the index dims,
+ * re-normalize, then `semanticRows` over the vector files and the glyph vectors.
  */
 export function createVectorResolver(options: VectorResolverOptions): ShardResolver {
-  const { embedder, emojiOf, bonus } = options;
+  const { embedder, emojiOf, glyph } = options;
   const indexes: readonly VectorIndex[] = Array.isArray(options.index) ? options.index : [options.index];
   const dims = (indexes[0] as VectorIndex).dims;
   return {
     model: options.tag,
-    async resolve(queries, limit) {
+    async resolve(queries) {
       const vectors = await embedder.embed(queries);
-      const out = new Map<string, ShardResult[]>();
+      const out = new Map<string, ShardRow[]>();
       queries.forEach((q, i) => {
         const vector = vectors[i];
         if (!vector || vector.length < dims) return;
         const query = l2normalize(vector.slice(0, dims));
-        const matches = searchVectorSets(indexes, query, limit, bonus ? { bonus: bonus(query) } : {});
-        out.set(
-          q,
-          matches.map((m): ShardResult => [emojiOf(m.id) ?? "", m.id, Math.round(m.score * 1000) / 1000]),
-        );
+        out.set(q, semanticRows(indexes, query, { glyph, emojiOf: (id) => emojiOf(id) ?? "" }));
       });
       return out;
     },
@@ -58,6 +53,9 @@ function hashSeed(text: string): number {
   }
   return h >>> 0;
 }
+
+/** Rows per query of the fake resolver: about what `semanticRows` keeps. */
+const FAKE_ROWS = 36;
 
 /** mulberry32: small deterministic PRNG. */
 function random(seed: number): () => number {
@@ -80,18 +78,18 @@ export function createFakeResolver(
 ): ShardResolver {
   return {
     model: tag,
-    async resolve(queries, limit) {
-      const out = new Map<string, ShardResult[]>();
+    async resolve(queries) {
+      const out = new Map<string, ShardRow[]>();
       for (const q of queries) {
         const next = random(hashSeed(q));
         const picked = new Set<number>();
-        const count = Math.min(limit, catalog.length);
+        const count = Math.min(FAKE_ROWS, catalog.length);
         while (picked.size < count) picked.add(Math.floor(next() * catalog.length));
         let score = 0.6 + next() * 0.3;
-        const results: ShardResult[] = [];
+        const results: ShardRow[] = [];
         for (const i of picked) {
           const entry = catalog[i] as { emoji: string; id: string };
-          results.push([entry.emoji, entry.id, Math.round(score * 1000) / 1000]);
+          results.push([entry.emoji, entry.id, Math.round(score * 1000) / 1000, 0]);
           score -= next() * 0.03;
         }
         out.set(q, results);

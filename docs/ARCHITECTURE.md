@@ -41,17 +41,20 @@ L3  Worker GET /v1/search ─▶ Cache API ─▶ embed query with Workers AI (E
 **Fusion.** The client merges L0 with L2 or L3 results with a learned reranker: confident L0 hits
 (≥ 0.9) stay pinned, so the list does not jump when semantic results arrive, and so does the
 dictionary's answer to number slang (zh "666" → 👍, not 6️⃣); every other result
-of both lists is ordered by a linear score over the L0 score, rank and confidence, the semantic
-score, its gap and confidence, and the emoji's popularity (`packages/core/src/rerank.ts`,
+of both lists is ordered by a linear score over the L0 score, rank and confidence, and the
+semantic score, its gap and confidence (`packages/core/src/rerank.ts`,
 PACK_FORMAT §10; Swift and Kotlin carry the same weights). Semantic country flags that L0 does not
 also hold rank last. The earlier reciprocal rank fusion stays available (`rerank: false`).
 
-**Ranking signals besides text.** The English core pack carries a popularity percentile per
-emoji (Emoji-SP, CC BY 4.0): it breaks equal L0 scores and feeds fusion. The L3 semantic score
-(and so the L2 shards) adds 0.04 × popularity and a glyph term: the query's centred cosine to the
-embedded emoji itself (`vectors.<model>.<dims>.glyph.bin`, bundled in the Worker, ≈ 5 MB in
-memory; `packages/data/src/semantic-score.ts`, PACK_FORMAT §5). The vector code is a server-side
-entry, `emojisense/vectors`, outside the picker bundle.
+**Model output and ranking policy.** L3 computes the model output of a query: per candidate, its
+text cosine and its glyph cosine (the query's centred cosine to the embedded emoji itself,
+`vectors.<model>.<dims>.glyph.bin`, bundled in the Worker, ≈ 5 MB in memory). L2 shards store
+that output as it is. The ranking policy (text + 0.25 × glyph, `packages/core/src/semantic-policy.ts`,
+PACK_FORMAT §5) runs on every read: in the Worker for API answers, in the client for shards. So
+a policy change needs no new embedding and no shard rebuild. No usage prior is part of the
+meaning search: the English core pack's popularity percentile (Emoji-SP, CC BY 4.0) only breaks
+equal L0 scores. The vector code is a server-side entry, `emojisense/vectors`, outside the picker
+bundle.
 
 **Layer coupling.** L2 takes the most frequent queries, so the queries that still reach L3 are
 the long tail. The L3 Cache API hit rate is therefore low. Cost estimates model the layers

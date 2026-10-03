@@ -70,7 +70,7 @@ const evidence: QueryEvidence[] = queries.map((q) => {
   const semantic = run.details.semantic?.get(q.id);
   const vocabulary = vocabularies.get(q.locale) as Set<string>;
   const gateCalled = shouldUseSemantic(alias);
-  const fused = semantic && top(fuseRanked(run.engineFor(q.locale), alias, semantic, LIMIT));
+  const fused = semantic && top(fuseRanked(alias, semantic, LIMIT));
   const labels = new Set(q.answers.map((a) => hexcodeOf.get(stripVariation(a))));
   const cappedForLabel = [q.locale, "en"].some((locale) =>
     [alias.query, ...alias.tokens].some((phrase) =>

@@ -2,13 +2,11 @@
  * The ranking every eval suite uses: what the Search API and the clients do (PACK_FORMAT.md §4,
  * §5, §10). `EMOJISENSE_RANKING` picks another variant, to compare them on the same queries:
  *
- *   shipped (default)  popularity tie-break; semantic score + popularity prior + glyph term (when
- *                      the pack has a glyph vector file); learned fusion
+ *   shipped (default)  popularity breaks equal alias scores only; semantic score = the policy over
+ *                      the model output (core semantic-policy.ts); learned fusion
  *   no-glyph           shipped without the glyph term
- *   prior              popularity tie-break and prior, reciprocal rank fusion (`rerank: false`)
- *   rrf                none of them: the ranking before the popularity prior
+ *   rrf                reciprocal rank fusion, no tie-break, no glyph term
  */
-import { semanticBonus } from "@emojisense/data/semantic-score";
 import {
   type AliasEngine,
   type AliasSearchOutput,
@@ -18,16 +16,15 @@ import {
   type Pack,
   type SearchResult,
   type SemanticCalibration,
+  scoreSemanticRows,
 } from "emojisense";
-import { searchVectorSets } from "emojisense/vectors";
+import { searchVectorSets, semanticRows } from "emojisense/vectors";
 import type { VectorLayout } from "./vector-layout.ts";
 
 export interface RankingVariant {
   name: string;
   /** Equal alias scores ordered by popularity (EngineOptions.popularity). */
   popularity: boolean;
-  /** The popularity prior in semantic scores. */
-  prior: boolean;
   /** The glyph term in semantic scores, when the pack has a glyph vector file. */
   glyph: boolean;
   /** Learned fusion (rerank.ts) instead of reciprocal rank fusion. */
@@ -35,10 +32,9 @@ export interface RankingVariant {
 }
 
 export const RANKING_VARIANTS: Record<string, RankingVariant> = {
-  shipped: { name: "shipped", popularity: true, prior: true, glyph: true, rerank: true },
-  "no-glyph": { name: "no-glyph", popularity: true, prior: true, glyph: false, rerank: true },
-  prior: { name: "prior", popularity: true, prior: true, glyph: false, rerank: false },
-  rrf: { name: "rrf", popularity: false, prior: false, glyph: false, rerank: false },
+  shipped: { name: "shipped", popularity: true, glyph: true, rerank: true },
+  "no-glyph": { name: "no-glyph", popularity: true, glyph: false, rerank: true },
+  rrf: { name: "rrf", popularity: false, glyph: false, rerank: false },
 };
 
 function variantOf(name: string): RankingVariant {
@@ -66,30 +62,37 @@ export function semanticSearch(
   k = 24,
 ): SearchResult[] {
   const glyph = RANKING.glyph ? layout.glyph : undefined;
-  const popularity = (id: string) => (RANKING.prior ? engine.popularity(id) : 0);
-  const bonus = RANKING.prior || glyph ? semanticBonus(popularity, glyph, query) : undefined;
-  return searchVectorSets(layout.indexesFor(locale), query, k, bonus ? { bonus } : {}).map((m) => ({
-    emoji: engine.get(m.id)?.emoji ?? "",
-    id: m.id,
-    score: m.score,
-    source: "semantic" as const,
-  }));
+  const rows = semanticRows(layout.indexesFor(locale), query, {
+    glyph,
+    emojiOf: (id) => engine.get(id)?.emoji ?? "",
+  });
+  return scoreSemanticRows(rows, k);
 }
 
 /**
- * `fuse` as the clients call it: with the engine's popularity. The reranker's weights belong to
- * the production model; another model or dims (`shipped: false`) fuses by reciprocal rank.
+ * The model's own list: best text cosine per emoji, no glyph term and no policy. The reference
+ * for fidelity (how much of it a ranking keeps).
+ */
+export function modelSearch(
+  engine: AliasEngine,
+  layout: VectorLayout,
+  locale: string,
+  query: Float32Array,
+  k = 10,
+): string[] {
+  return searchVectorSets(layout.indexesFor(locale), query, k).map((m) => engine.get(m.id)?.emoji ?? "");
+}
+
+/**
+ * `fuse` as the clients call it. The reranker's weights belong to the production model; another
+ * model or dims (`shipped: false`) fuses by reciprocal rank.
  */
 export function fuseRanked(
-  engine: AliasEngine,
   alias: AliasSearchOutput,
   semantic: readonly SearchResult[],
   limit: number,
   calibration?: SemanticCalibration,
   shipped = true,
 ): SearchResult[] {
-  return fuse(alias, semantic, limit, calibration, {
-    popularity: engine.popularity,
-    rerank: RANKING.rerank && shipped,
-  });
+  return fuse(alias, semantic, limit, calibration, { rerank: RANKING.rerank && shipped });
 }

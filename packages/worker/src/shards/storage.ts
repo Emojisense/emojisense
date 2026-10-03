@@ -3,6 +3,7 @@ import {
   CDN_ROOT,
   cdnVersionDir,
   type HashedLayer,
+  isShardRows,
   type PublishedFile,
   type ResultStore,
   resolveFrom,
@@ -62,8 +63,11 @@ export interface ShardPointer {
   build: string;
   /** e.g. "embeddinggemma@768" */
   model: string;
-  /** Results stored per query. */
-  results: number;
+  /**
+   * 2: the build's shards hold model output (core `SemanticRow`), so its entries can be reused
+   * whatever the ranking policy. Absent in builds whose shards held policy scores.
+   */
+  shardFormat?: number;
   /** Over every locale. */
   queries: number;
   shards: number;
@@ -165,8 +169,9 @@ export async function loadEntries(
   let loaded = 0;
   await forEachLimit(Object.values(files), concurrency, async (path) => {
     const shard = await readPublished<Shard>(bucket, packVersion, path);
-    for (const [q, results] of Object.entries(shard?.entries ?? {})) {
-      store.set(q, results);
+    for (const [q, rows] of Object.entries(shard?.entries ?? {})) {
+      if (!isShardRows(rows)) continue;
+      store.set(q, rows);
       loaded++;
     }
   });

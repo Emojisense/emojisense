@@ -21,6 +21,7 @@ import { disposeEmbeddings, embedTexts } from "./embeddings.ts";
 import {
   buildGlyphTexts,
   DEFAULT_CONTEXTS,
+  degenerateRows,
   GLYPH_KINDS,
   type GlyphKind,
   loadPhraseSource,
@@ -29,7 +30,6 @@ import {
 import { writeManifest } from "./manifest.ts";
 import { formatDocument, getModel } from "./models.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT, ENRICHMENT_DIR } from "./paths.ts";
-import { degenerateRows } from "./semantic-score.ts";
 import type { BaseEmoji } from "./types.ts";
 import { glyphVectorFileName } from "./vector-files.ts";
 

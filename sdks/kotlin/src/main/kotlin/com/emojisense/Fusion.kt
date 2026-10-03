@@ -37,7 +37,7 @@ public data class SemanticCalibration @JvmOverloads constructor(
          * calibration of its model ([SemanticResponse.calibration]).
          */
         @JvmField
-        public val DEFAULT: SemanticCalibration = SemanticCalibration(floor = 0.39, ceiling = 0.56, gapFloor = 0.02, gapCeiling = 0.1)
+        public val DEFAULT: SemanticCalibration = SemanticCalibration(floor = 0.35, ceiling = 0.53, gapFloor = 0.02, gapCeiling = 0.1)
     }
 }
 
@@ -128,19 +128,17 @@ public object Fusion {
 
     /**
      * How [fuse] orders the lists, like `FuseRanking` in packages/core/src/fusion.ts.
-     * [popularity] is usually [AliasEngine.popularity]; `rerank = false` is the confidence-weighted
-     * reciprocal rank fusion (the ranking before the reranker).
+     * `rerank = false` is the confidence-weighted reciprocal rank fusion (the ranking before the
+     * reranker).
      */
     public data class Ranking @JvmOverloads constructor(
-        val popularity: ((String) -> Double)? = null,
         val rerank: Boolean = true,
     )
 
     /**
      * The learned reranker ([Rerank]) by default: alias hits ≥ 0.9 stay on top in alias order, then
-     * every other candidate of both lists by a linear score over alias and semantic scores, ranks,
-     * popularity and confidences; semantic country flags the alias tier does not support go last.
-     * Pass `Ranking(engine::popularity)`.
+     * every other candidate of both lists by a linear score over alias and semantic scores, ranks
+     * and confidences; semantic country flags the alias tier does not support go last.
      *
      * With `rerank = false`, fusion with weights from how sure each tier is. Alias: 0.4 +
      * confidence. Semantic: 1 when its best match is strong, down to 0.4 when it is weak, so a weak
@@ -159,7 +157,7 @@ public object Fusion {
     ): List<SearchResult> {
         val guarded = demoteUnsupportedFlags(semantic, alias.results, calibration)
         if (ranking.rerank) {
-            val input = Rerank.Input(alias, guarded, semanticConfidence(guarded, calibration), ranking.popularity)
+            val input = Rerank.Input(alias, guarded, semanticConfidence(guarded, calibration))
             val ranked = Rerank.rerank(input, Int.MAX_VALUE)
             return demoteUnsupportedFlags(ranked, alias.results, calibration).take(maxOf(0, limit))
         }

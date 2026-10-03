@@ -274,8 +274,7 @@ public final class SearchSession: Sendable {
     let verdict = Confidence.assess(
       alias: update.alias, semantic: response.results, calibration: calibration)
     let fused = Fusion.fuse(
-      alias: update.alias, semantic: response.results, limit: limit, calibration: calibration,
-      ranking: Fusion.Ranking(popularity: { [engine] in engine.popularity($0) }))
+      alias: update.alias, semantic: response.results, limit: limit, calibration: calibration)
     return SessionState(
       query: update.query, results: present(fused, query: update.query), alias: update.alias,
       status: .fused, aliasDuration: update.aliasDuration, semanticDuration: semanticDuration,

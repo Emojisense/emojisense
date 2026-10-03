@@ -102,7 +102,7 @@ use the website's own publishable key, so they are not anonymous.
   "results": [{ "emoji": "🦖", "id": "1F996", "score": 0.82, "source": "alias" }],
   "packVersion": "0.1.0",
   "model": "embeddinggemma@768",
-  "calibration": { "floor": 0.39, "ceiling": 0.56, "gapFloor": 0.02, "gapCeiling": 0.1 },
+  "calibration": { "floor": 0.35, "ceiling": 0.53, "gapFloor": 0.02, "gapCeiling": 0.1 },
   "cached": false,
   "degraded": false,
   "overLimit": false,

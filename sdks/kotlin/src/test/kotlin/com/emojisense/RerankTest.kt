@@ -12,19 +12,18 @@ class RerankTest {
     private fun output(results: List<AliasResult>) =
         AliasSearchOutput<SearchResult>("q", listOf("q"), results, results.firstOrNull()?.score ?: 0.0)
 
-    private fun input(alias: List<AliasResult>, semantic: List<SearchResult>, popularity: ((String) -> Double)? = null) =
-        Rerank.Input(output(alias), semantic, 0.5, popularity)
+    private fun input(alias: List<AliasResult>, semantic: List<SearchResult>) = Rerank.Input(output(alias), semantic, 0.5)
 
     @Test
-    fun `describes a candidate by both lists, its popularity and the confidences`() {
+    fun `describes a candidate by both lists and the confidences, never by usage`() {
         val features = Rerank.features(
             input(
                 listOf(aliasHit("A", 0.8), aliasHit("B", 0.4)),
                 listOf(semanticHit("S", 0.6), semanticHit("B", 0.5)),
-            ) { if (it == "B") 0.7 else 0.0 },
+            ),
             "B",
         )
-        val expected = listOf(1.0, 0.4, 0.5, 0.5, 0.5, 0.1, 0.7, 0.32, 0.25)
+        val expected = listOf(1.0, 0.4, 0.5, 0.5, 0.5, 0.1, 0.32, 0.25)
         assertEquals(Rerank.WEIGHTS.size, features.size)
         features.zip(expected).forEach { (value, want) -> assertEquals(want, value, 1e-9) }
     }
@@ -53,11 +52,9 @@ class RerankTest {
     }
 
     @Test
-    fun `lets popularity decide between otherwise equal candidates`() {
+    fun `keeps the order of otherwise equal candidates`() {
         val alias = listOf(aliasHit("A", 0.5), aliasHit("B", 0.5))
         assertEquals(listOf("A", "B"), Rerank.rerank(input(alias, emptyList()), 2).map { it.id })
-        val popular = Rerank.rerank(input(alias, emptyList()) { if (it == "B") 1.0 else 0.0 }, 2)
-        assertEquals(listOf("B", "A"), popular.map { it.id })
     }
 
     @Test
@@ -79,7 +76,7 @@ class RerankTest {
             ),
             confidence,
         )
-        return Rerank.Input(alias, listOf(semanticHit("6️⃣", 0.586), semanticHit("🕕", 0.466), semanticHit("🐍", 0.436)), 1.0, null)
+        return Rerank.Input(alias, listOf(semanticHit("6️⃣", 0.586), semanticHit("🕕", 0.466), semanticHit("🐍", 0.436)), 1.0)
     }
 
     @Test

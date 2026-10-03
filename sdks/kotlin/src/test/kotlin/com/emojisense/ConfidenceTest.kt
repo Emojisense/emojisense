@@ -29,7 +29,7 @@ class ConfidenceTest {
 
     @Test
     fun `strength is 0 below the calibration floor and 1 for a clear top at the ceiling`() {
-        assertEquals(0.0, Confidence.semanticStrength(semantic(0.38, 0.01)))
+        assertEquals(0.0, Confidence.semanticStrength(semantic(0.34, 0.01)))
         assertEquals(1.0, Confidence.semanticStrength(semantic(0.6, 0.1)))
     }
 

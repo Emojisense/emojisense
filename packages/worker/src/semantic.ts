@@ -1,5 +1,4 @@
 import type { EmbeddingModel } from "@emojisense/data/models";
-import { semanticBonus } from "@emojisense/data/semantic-score";
 import {
   type AliasEngine,
   type AliasSearchOutput,
@@ -7,8 +6,10 @@ import {
   fuse,
   RANK_DEPTH,
   type SearchResult,
+  type SemanticRow,
+  scoreSemanticRows,
 } from "emojisense";
-import { l2normalize, searchVectorSets, type VectorIndex } from "emojisense/vectors";
+import { l2normalize, semanticRows, type VectorIndex } from "emojisense/vectors";
 import type { AiBinding, Env, GeneratedConfig } from "./env.ts";
 import type { LocaleIndexes } from "./locale-vectors.ts";
 
@@ -96,10 +97,20 @@ async function embed(env: Env, catalog: Catalog, text: string): Promise<Float32A
 }
 
 /**
- * The semantic list of the API: each emoji's best row over `indexes`, plus the popularity prior
- * and the glyph term (PACK_FORMAT.md §5, "Semantic score"), scores to three decimals. `engine`
- * holds the English core pack (its `popularity`) and turns ids into emoji.
+ * The model output of a query (PACK_FORMAT.md §5): each candidate's best text cosine over
+ * `indexes` and its centered glyph cosine, chosen without any ranking policy. The nightly shard
+ * build stores these rows; `engine` turns ids into emoji.
  */
+export function semanticModelRows(
+  engine: AliasEngine,
+  indexes: readonly VectorIndex[],
+  vector: Float32Array,
+  glyph?: VectorIndex,
+): SemanticRow[] {
+  return semanticRows(indexes, vector, { glyph, emojiOf: (id) => engine.get(id)?.emoji ?? "" });
+}
+
+/** The semantic list of the API: the model output ranked by the policy (core semantic-policy.ts). */
 export function semanticResults(
   engine: AliasEngine,
   indexes: readonly VectorIndex[],
@@ -107,13 +118,7 @@ export function semanticResults(
   limit: number,
   glyph?: VectorIndex,
 ): SearchResult[] {
-  const bonus = semanticBonus(engine.popularity, glyph, vector);
-  return searchVectorSets(indexes, vector, limit, { bonus }).map((m) => ({
-    emoji: engine.get(m.id)?.emoji ?? "",
-    id: m.id,
-    score: Math.round(m.score * 1000) / 1000,
-    source: "semantic" as const,
-  }));
+  return scoreSemanticRows(semanticModelRows(engine, indexes, vector, glyph), limit);
 }
 
 export interface Embedded {
@@ -220,7 +225,7 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     alias = aliasEngine?.search(aliasQuery, { locale, limit: depth, prefix: options.prefix ?? true });
   }
   let results: SearchResult[];
-  if (alias && semantic) results = fuse(alias, semantic, limit, undefined, { popularity: engine.popularity });
+  if (alias && semantic) results = fuse(alias, semantic, limit);
   else results = (alias?.results ?? semantic ?? []).slice(0, limit);
   return {
     results: results.map(({ emoji, id, score, source }) => ({ emoji, id, score, source })),

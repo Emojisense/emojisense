@@ -224,6 +224,17 @@ class ShardProviderTest {
     }
 
     @Test
+    fun `ranks the model output of a version 2 shard by the policy, so a policy change needs no rebuild`() = runBlocking {
+        val v2 = mapOf(
+            "index.json" to """{"format":"emojisense-shards","formatVersion":2,"packVersion":"t","model":"m@256","keys":["co"]}""",
+            "co.json" to """{"key":"co","entries":{"congrats on the launch":[["🎉","1F389",0.6,0],["🚀","1F680",0.55,0.4],["🎊","1F38A",0.5,-0.2]]}}""",
+        )
+        val provider = ShardProvider("https://x.test/p/1/", StubTransport.files(v2))
+        val answer = provider.search("congrats on the launch", SemanticSearchOptions(limit = 2))
+        assertEquals(listOf("🚀" to 0.65, "🎉" to 0.6), answer?.results?.map { it.emoji to it.score })
+    }
+
+    @Test
     fun `leaves queries with accents or punctuation to the API`() = runBlocking {
         // Shards hold the semantic answers to the folded text; the API embeds the text as typed.
         val transport = StubTransport.files(files)

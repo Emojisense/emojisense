@@ -96,11 +96,11 @@ final class FusionTests: XCTestCase {
 
   func testMapsTheBestCosineBetweenTheCalibrationFloorAndCeiling() {
     XCTAssertEqual(Fusion.semanticConfidence([]), 0)
-    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.38)), 0)
-    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.475)), 0.5, accuracy: 1e-9)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.34)), 0, accuracy: 1e-10)
+    XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.44)), 0.5, accuracy: 1e-9)
     XCTAssertEqual(Fusion.semanticConfidence(semanticList(0.8)), 1)
     XCTAssertEqual(
-      Fusion.semanticConfidence([result("x", 0.47, .semantic), result("y", 0.475, .semantic)]),
+      Fusion.semanticConfidence([result("x", 0.435, .semantic), result("y", 0.44, .semantic)]),
       0.5, accuracy: 1e-9)
     XCTAssertEqual(
       Fusion.semanticConfidence(
@@ -153,8 +153,8 @@ final class FusionTests: XCTestCase {
   }
 
   func testRanksSemanticFlagsTheAliasTierDoesNotHoldAfterTheOtherResults() {
-    let flag = SearchResult(emoji: "🇧🇹", id: bhutan, score: 0.44, source: .semantic)
-    let semantic = [flag, result("🐰", 0.43, .semantic), result("🐇", 0.42, .semantic)]
+    let flag = SearchResult(emoji: "🇧🇹", id: bhutan, score: 0.4, source: .semantic)
+    let semantic = [flag, result("🐰", 0.39, .semantic), result("🐇", 0.38, .semantic)]
     let fused = Fusion.fuse(
       alias: aliasOutput(0.26, ["😄"]), semantic: semantic, limit: 4, ranking: rrf)
     XCTAssertEqual(fused.map(\.emoji), ["😄", "🐰", "🐇", "🇧🇹"])

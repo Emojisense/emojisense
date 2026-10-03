@@ -91,17 +91,11 @@ const rows: Row[] = queries.map((q, i) => {
   const vector = vectorOf(i);
   const engine = apiEngine(q.locale);
   const apiAlias = engine.search(q.q, { locale: q.locale, limit: RANK_DEPTH, culture: false });
-  const apiTop = fuseRanked(
-    engine,
-    apiAlias,
-    semanticSearch(apiEngine("en"), layout, q.locale, vector),
-    LIMIT,
-  );
+  const apiTop = fuseRanked(apiAlias, semanticSearch(apiEngine("en"), layout, q.locale, vector), LIMIT);
   const siteSemantic = semanticSearch(apiEngine("en"), layout, SITE_LOCALE, vector);
   // The session searches RANK_DEPTH candidates and shows LIMIT of them (core session.ts).
   const browser = (engine: AliasEngine) =>
     fuseRanked(
-      engine,
       engine.search(q.q, { locale: SITE_LOCALE, limit: RANK_DEPTH, culture: false }),
       siteSemantic,
       LIMIT,

@@ -37,15 +37,13 @@ const input = (
 const ids = (list: readonly SearchResult[]) => list.map((r) => r.id);
 
 describe("rerankFeatures", () => {
-  it("describes a candidate by both lists, its popularity and the confidences", () => {
+  it("describes a candidate by both lists and the confidences, never by how often it is used", () => {
     const features = rerankFeatures(
-      input([aliasHit("A", 0.8), aliasHit("B", 0.4)], [semanticHit("S", 0.6), semanticHit("B", 0.5)], {
-        popularity: (id) => (id === "B" ? 0.7 : 0),
-      }),
+      input([aliasHit("A", 0.8), aliasHit("B", 0.4)], [semanticHit("S", 0.6), semanticHit("B", 0.5)]),
       "B",
     );
-    // present, score, 1/rank, score/confidence, semantic score, gap, popularity, ×alias conf, ×semantic conf
-    const expected = [1, 0.4, 1 / 2, 0.5, 0.5, 0.1, 0.7, 0.32, 0.25];
+    // present, score, 1/rank, score/confidence, semantic score, gap, ×alias conf, ×semantic conf
+    const expected = [1, 0.4, 1 / 2, 0.5, 0.5, 0.1, 0.32, 0.25];
     features.forEach((value, i) => {
       expect(value).toBeCloseTo(expected[i] as number);
     });
@@ -78,11 +76,9 @@ describe("rerank", () => {
     ]);
   });
 
-  it("lets popularity decide between otherwise equal candidates", () => {
+  it("keeps the order of otherwise equal candidates", () => {
     const alias = [aliasHit("A", 0.5), aliasHit("B", 0.5)];
-    const popular = (id: string) => (id === "B" ? 1 : 0);
     expect(ids(rerank(input(alias, []), 2))).toEqual(["A", "B"]);
-    expect(ids(rerank(input(alias, [], { popularity: popular }), 2))).toEqual(["B", "A"]);
   });
 
   it("uses the weights it is given", () => {
@@ -103,9 +99,8 @@ describe("fuse (the reranker by default)", () => {
   it("matches rerank when no flag is involved", () => {
     const alias = [aliasHit("A", 0.7), aliasHit("B", 0.6)];
     const semantic = [semanticHit("C", 0.62), semanticHit("A", 0.55), semanticHit("D", 0.5)];
-    const popularity = (id: string) => (id === "D" ? 1 : 0.2);
-    expect(ids(fuse(aliasOutput(alias), semantic, 4, undefined, { popularity }))).toEqual(
-      ids(rerank({ alias: aliasOutput(alias), semantic, semanticConfidence: 1, popularity }, 4)),
+    expect(ids(fuse(aliasOutput(alias), semantic, 4))).toEqual(
+      ids(rerank({ alias: aliasOutput(alias), semantic, semanticConfidence: 1 }, 4)),
     );
   });
 });

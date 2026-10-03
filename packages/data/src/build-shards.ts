@@ -4,7 +4,7 @@
  *
  *   tsx src/build-shards.ts --log queries.jsonl        rows: {"q": "...", "n": 12[, "locale": "tr"]}
  *   tsx src/build-shards.ts --bootstrap                synthetic day-one queries (README.md)
- *     [--min-count 5] [--max-queries 1000000] [--results 24] [--max-kb 30]
+ *     [--min-count 5] [--max-queries 1000000] [--max-kb 30]
  *     [--resolver workers-ai|cached|fake] [--model bge-m3] [--dims 1024] [--out DIR] [--no-reuse]
  *
  * --model and --dims default to pack.config.json → model (the production model).
@@ -22,7 +22,6 @@ import { readPackConfig } from "./config.ts";
 import { disposeEmbeddings } from "./embeddings.ts";
 import { getModel } from "./models.ts";
 import { BASE_FILE, BUILD_DIR, DATA_ROOT } from "./paths.ts";
-import { semanticBonus } from "./semantic-score.ts";
 import { bootstrapQueries } from "./shards/bootstrap.ts";
 import { buildShards } from "./shards/build.ts";
 import { cachedEmbedder, workersAiEmbedder } from "./shards/embedders.ts";
@@ -41,7 +40,6 @@ const { values: args } = parseArgs({
     bootstrap: { type: "boolean", default: false },
     "min-count": { type: "string", default: "5" },
     "max-queries": { type: "string", default: "1000000" },
-    results: { type: "string", default: "24" },
     "max-kb": { type: "string", default: "30" },
     resolver: { type: "string", default: "workers-ai" },
     model: { type: "string" },
@@ -56,7 +54,6 @@ if (!args.log && !args.bootstrap) {
   process.exit(2);
 }
 const minCount = Number(args["min-count"]);
-const resultsPerQuery = Number(args.results);
 const config = readPackConfig();
 const packDir = join(DATA_ROOT, "dist", "packs", config.packVersion);
 if (!existsSync(join(packDir, "pack.en.json"))) {
@@ -99,8 +96,7 @@ function createResolver(kind: string): ShardResolver {
   return createVectorResolver({
     tag: `${model.key}@${dims}`,
     index,
-    // The API's semantic score: popularity prior and glyph term (semantic-score.ts).
-    bonus: (query) => semanticBonus(fullEngine.popularity, glyph, query),
+    glyph,
     emojiOf: (id) => fullEngine.get(id)?.emoji,
     embedder: kind === "cached" ? cachedEmbedder(model) : workersAiEmbedder(model),
   });
@@ -121,12 +117,9 @@ try {
     reachesWorker: createWorkerGate(engines),
     resolver,
     packVersion: config.packVersion,
-    resultsPerQuery,
     maxShardBytes: Number(args["max-kb"]) * 1024,
     shardBytes: gzipBytes,
-    ...(reusable
-      ? { previous: (wanted, store) => loadShardEntries(outDir, wanted, resultsPerQuery, store) }
-      : {}),
+    ...(reusable ? { previous: (wanted, store) => loadShardEntries(outDir, wanted, store) } : {}),
     onProgress: (done, total) => {
       if (process.stdout.isTTY)
         process.stdout.write(`\rresolve: ${done}/${total}${done === total ? "\n" : ""}`);

@@ -187,9 +187,8 @@ final class ConformanceTests: XCTestCase {
       let semantic = testCase.semantic.map {
         SearchResult(emoji: $0.emoji, id: $0.id, score: $0.score, source: .semantic)
       }
-      let popularity = testCase.popularity
       for (rerank, expected) in [(true, testCase.reranked), (false, testCase.reciprocal)] {
-        let ranking = Fusion.Ranking(popularity: { popularity[$0] ?? 0 }, rerank: rerank)
+        let ranking = Fusion.Ranking(rerank: rerank)
         let actual = Fusion.fuse(alias: alias, semantic: semantic, limit: 10, ranking: ranking)
           .map(\.id)
         if actual != expected {

@@ -17,21 +17,16 @@ final class RerankTests: XCTestCase {
       query: "q", tokens: ["q"], results: results, confidence: results.first?.score ?? 0)
   }
 
-  private func input(
-    _ alias: [AliasResult], _ semantic: [SearchResult],
-    popularity: (@Sendable (String) -> Double)? = nil
-  ) -> Rerank.Input {
-    Rerank.Input(
-      alias: output(alias), semantic: semantic, semanticConfidence: 0.5, popularity: popularity)
+  private func input(_ alias: [AliasResult], _ semantic: [SearchResult]) -> Rerank.Input {
+    Rerank.Input(alias: output(alias), semantic: semantic, semanticConfidence: 0.5)
   }
 
-  func testDescribesACandidateByBothListsItsPopularityAndTheConfidences() {
+  func testDescribesACandidateByBothListsAndTheConfidencesNeverByUsage() {
     let features = Rerank.features(
       input(
-        [aliasHit("A", 0.8), aliasHit("B", 0.4)], [semanticHit("S", 0.6), semanticHit("B", 0.5)],
-        popularity: { $0 == "B" ? 0.7 : 0 }),
+        [aliasHit("A", 0.8), aliasHit("B", 0.4)], [semanticHit("S", 0.6), semanticHit("B", 0.5)]),
       id: "B")
-    let expected = [1, 0.4, 0.5, 0.5, 0.5, 0.1, 0.7, 0.32, 0.25]
+    let expected = [1, 0.4, 0.5, 0.5, 0.5, 0.1, 0.32, 0.25]
     XCTAssertEqual(features.count, Rerank.weights.count)
     for (value, want) in zip(features, expected) { XCTAssertEqual(value, want, accuracy: 1e-9) }
   }
@@ -58,11 +53,9 @@ final class RerankTests: XCTestCase {
     XCTAssertEqual(out.map(\.id), ["B", "A", "C"])
   }
 
-  func testLetsPopularityDecideBetweenOtherwiseEqualCandidates() {
+  func testKeepsTheOrderOfOtherwiseEqualCandidates() {
     let alias = [aliasHit("A", 0.5), aliasHit("B", 0.5)]
     XCTAssertEqual(Rerank.rerank(input(alias, []), limit: 2).map(\.id), ["A", "B"])
-    let popular = Rerank.rerank(input(alias, [], popularity: { $0 == "B" ? 1 : 0 }), limit: 2)
-    XCTAssertEqual(popular.map(\.id), ["B", "A"])
   }
 
   func testFuseMovesUnsupportedFlagsLast() {
@@ -87,7 +80,7 @@ final class RerankTests: XCTestCase {
     return Rerank.Input(
       alias: alias,
       semantic: [semanticHit("6️⃣", 0.586), semanticHit("🕕", 0.466), semanticHit("🐍", 0.436)],
-      semanticConfidence: 1, popularity: nil)
+      semanticConfidence: 1)
   }
 
   func testKeepsTheDictionaryAnswerFirstForNumberSlang() {

@@ -83,7 +83,7 @@ export async function rankDevSet(
     const alias = engine.search(q.q, { locale: q.locale, limit: 24 });
     const query = l2normalize((vectors[i] as Float32Array).slice(0, dims));
     const semantic = semanticSearch(engine, layout, q.locale, query, 24);
-    const fused = fuseRanked(engine, alias, semantic, LIMIT);
+    const fused = fuseRanked(alias, semantic, LIMIT);
     return {
       q,
       alias,

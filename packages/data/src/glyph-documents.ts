@@ -17,6 +17,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { normalize } from "emojisense";
+import type { VectorIndex } from "emojisense/vectors";
 import { COMBINED_LOCALES } from "./locales.ts";
 import type { BaseEmoji, EnrichmentRecord, LocaleEnrichment, LocaleRecord } from "./types.ts";
 
@@ -139,4 +140,22 @@ export function loadPhraseSource(
     }
   }
   return source;
+}
+
+/** Rows whose vector repeats on ≥ `owners` distinct ids: the model read their texts as unknown tokens. */
+export function degenerateRows(index: VectorIndex, owners = 4): Set<number> {
+  const key = (r: number) =>
+    Array.from(index.data.subarray(r * index.dims, r * index.dims + Math.min(24, index.dims)), (v) =>
+      v.toFixed(3),
+    ).join(",");
+  const byKey = new Map<string, Set<string>>();
+  index.ids.forEach((id, r) => {
+    const k = key(r);
+    byKey.set(k, (byKey.get(k) ?? new Set<string>()).add(id));
+  });
+  const out = new Set<number>();
+  index.ids.forEach((_, r) => {
+    if ((byKey.get(key(r))?.size ?? 0) >= owners) out.add(r);
+  });
+  return out;
 }
