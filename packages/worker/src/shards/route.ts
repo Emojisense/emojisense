@@ -166,7 +166,9 @@ export function createShardRoute(options: ShardRouteOptions) {
     }
     // A client from before hashed files: the live index maps its key to the key's file.
     const key = keyOf(segment);
-    const file = key === undefined ? undefined : stored.index.files?.[key];
+    const files = stored.index.files ?? {};
+    // Own keys only: "constructor" or "__proto__" must not resolve to Object.prototype members.
+    const file = key !== undefined && Object.hasOwn(files, key) ? files[key] : undefined;
     if (file === undefined) return missing();
     const objectKey = versionDir + resolveFrom(liveIndexDir(locale), file);
     return contentFile(request, url, bucket, objectKey, SHARD_KEY_FILE_BROWSER_CACHE, ctx, cache);

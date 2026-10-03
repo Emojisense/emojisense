@@ -650,6 +650,9 @@ describe("GET /p/*", () => {
     expect((await get("/p/test/a/b.json")).status).toBe(404);
     expect((await get("/p/test/f/0123456789abcdef.json")).status).toBe(404);
     expect((await get("/p/test/f/index.json")).status).toBe(404);
+    for (const inherited of ["constructor", "__proto__", "toString", "hasOwnProperty"]) {
+      expect([inherited, (await get(`/p/test/${inherited}.json`)).status]).toEqual([inherited, 404]);
+    }
     expect((await get("/p/test/index.json", { method: "POST" })).status).toBe(405);
   });
 
