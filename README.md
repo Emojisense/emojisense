@@ -3,8 +3,8 @@
 The search brain any emoji picker plugs into. Type "jurassic park" → 🦖, "lgtm" → ✅,
 "greatest of all time" → 🐐, "hallowelen" → 🎃, "kolay gelsin" → 💪.
 
-- **On device first.** A ≈5 KB engine and an alias pack answer each keystroke in well under a
-  frame. It works offline.
+- **On device first.** The engine (about 10 KB gz for alias search, 16 KB gz with every export)
+  and an alias pack answer each keystroke in well under a frame. It works offline.
 - **The edge only when unsure.** Conceptual queries go to a Cloudflare Worker with Workers AI
   embeddings, brute-force over about 1.9k vectors, and caching per data center.
 - **Picker-agnostic.** Framework-free core, React hooks, a Frimousse adapter, and a documented

@@ -20,7 +20,7 @@ npm install @emojisense/web-component
 import "@emojisense/web-component"; // registers <emojisense-picker>
 ```
 
-Without a bundler, load the self-contained build (`dist/emojisense-picker.js`, ≈ 15 KB gz with
+Without a bundler, load the self-contained build (`dist/emojisense-picker.js`, about 22 KB gz with
 the search engine) from your own server or from a CDN that mirrors npm:
 
 ```html

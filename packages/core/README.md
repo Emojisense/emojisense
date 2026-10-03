@@ -4,7 +4,7 @@ The search brain any emoji picker plugs into. Type what you mean and get the emo
 🚀, "jurassic park" → 🦖, "greatest of all time" → 🐐, "kolay gelsin" → 💪.
 
 - **On device first.** The alias engine searches the data packs on every keystroke, in well under
-  a frame, offline. Alias search alone is about 5 KB gz; every export together is about 10 KB gz.
+  a frame, offline. Alias search alone is about 10 KB gz; every export together is about 16 KB gz.
 - **The network only when unsure.** Conceptual queries can go to precomputed shards and then to
   the Emojisense API. Their results are fused in without moving confident alias hits.
 - **No dependencies.** Browsers, Node ≥ 20, Deno, Bun, Cloudflare Workers, browser extensions.
