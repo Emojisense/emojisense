@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "emoji数据来自<emojibase>Emojibase</emojibase>{emojibaseVersion}（MIT）和<cldr>Unicode CLDR</cldr>{cldrVersion}（Unicode许可证第3版）。emoji使用你的系统字体显示。"
   },
+  "consent": {
+    "label": "Cookie 同意",
+    "title": "分析 Cookie",
+    "body": "我们使用 Google Analytics 了解用户如何找到和使用本网站。如果你接受，它会保存 Cookie 以识别重复访问。如果你拒绝，它不会保存任何 Cookie。<privacy>隐私政策</privacy>",
+    "accept": "接受",
+    "decline": "拒绝",
+    "settings": "Cookie 设置"
+  },
   "home": {
     "hero": {
       "kicker": "实时演示 · 在浏览器中运行",

@@ -45,6 +45,8 @@ Copy `.env.example` to `.env`. Every value is public and ends up in the built pa
 | `PUBLIC_PUBLISHABLE_KEY` | `pk_demo` | the site's own key; bind it to the site origin |
 | `PUBLIC_DASHBOARD_URL` | `http://localhost:8790` | "Get a key" links and `POST /api/waitlist` |
 | `PUBLIC_REPO_URL` | `https://github.com/emojisense/emojisense` | source links in the docs |
+| `PUBLIC_CF_WEB_ANALYTICS_TOKEN` | none | Cloudflare Web Analytics beacon (no cookies) |
+| `PUBLIC_GA_MEASUREMENT_ID` | none | Google Analytics 4 with Consent Mode and the cookie banner |
 
 ## Design
 
@@ -52,7 +54,8 @@ Copy `.env.example` to `.env`. Every value is public and ends up in the built pa
 reaction-pill chips and the top answer as a die-cut sticker in a chat-composer search box. One
 celebration: a burst of the answer's own emoji when it settles, never with reduced motion. Docs
 and pricing use the same tokens with calmer layouts. Fonts (Bricolage Grotesque, Hanken Grotesk,
-DM Mono) are self-hosted through Fontsource, so the site makes no third-party requests.
+DM Mono) are self-hosted through Fontsource. The only third-party requests are the two analytics
+tags, and only when their variables are set.
 
 ## Share cards
 

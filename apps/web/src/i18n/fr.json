@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "Données emoji issues d’<emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) et d’<cldr>Unicode CLDR</cldr>{cldrVersion} (licence Unicode v3). Les emoji s’affichent avec la police de votre système."
   },
+  "consent": {
+    "label": "Consentement aux cookies",
+    "title": "Cookies de mesure d’audience",
+    "body": "Nous utilisons Google Analytics pour savoir comment les visiteurs trouvent et utilisent ce site. Si vous acceptez, il dépose des cookies pour reconnaître les visites répétées. Si vous refusez, il ne dépose aucun cookie. <privacy>Politique de confidentialité</privacy>",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "settings": "Paramètres des cookies"
+  },
   "home": {
     "hero": {
       "kicker": "En direct · dans votre navigateur",

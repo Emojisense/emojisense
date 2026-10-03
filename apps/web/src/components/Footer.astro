@@ -1,5 +1,5 @@
 ---
-import { DASHBOARD_URL, REPO_URL } from "../config";
+import { DASHBOARD_URL, GA_MEASUREMENT_ID, REPO_URL } from "../config";
 import { LEGAL_PAGES } from "../content/legal";
 import LanguageSwitcher from "../i18n/LanguageSwitcher.astro";
 import { DEFAULT_LOCALE, isLocalizedPath } from "../i18n/locales";
@@ -139,7 +139,16 @@ const year = new Date().getFullYear();
   </div>
 
   <div class="container footer-bottom">
-    <p>{t("footer.copyright", { year: String(year) })}</p>
+    <p>
+      {t("footer.copyright", { year: String(year) })}
+      {
+        GA_MEASUREMENT_ID && (
+          <button type="button" class="footer-consent" data-consent-open hidden>
+            {t("consent.settings")}
+          </button>
+        )
+      }
+    </p>
     <p>
       {
         parts("footer.credits", {
@@ -344,6 +353,27 @@ const year = new Date().getFullYear();
 
   .footer-bottom a:hover {
     color: var(--ink-2);
+  }
+
+  .footer-consent {
+    margin-inline-start: 1rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+  }
+
+  .footer-consent:hover {
+    color: var(--ink-2);
+  }
+
+  .footer-consent[hidden] {
+    display: none;
   }
 
   @media (min-width: 40rem) {

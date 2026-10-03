@@ -8,7 +8,8 @@
   characters.
 - We never store the message text that is sent for reaction suggestions, or the images that are
   sent for photo to emoji.
-- This website sets no cookies and runs no analytics and no third-party scripts.
+- This website counts visits with Cloudflare Web Analytics, which sets no cookies. Google
+  Analytics sets cookies only after you accept them in the cookie banner.
 - You can delete your dashboard account, and everything in it, at any time.
 - We do not sell personal data, and we do not use it for advertising.
 
@@ -30,16 +31,31 @@ before they launch. The [docs](/docs/changelog/) show what is live.
 
 ### The website
 
-The website is a set of static pages. It sets no cookies. It loads no analytics and no
-third-party scripts, and it serves its fonts itself. We do not keep access logs for the website.
-Our host, Cloudflare, processes your IP address and request data to deliver the pages and to
-protect them from attacks.
+The website is a set of static pages, and it serves its fonts itself. We do not keep access logs
+for the website. Our host, Cloudflare, processes your IP address and request data to deliver the
+pages and to protect them from attacks.
+
+The website uses two analytics tools. Neither one receives the search text that you type: the
+pages remove the query from the address, the referrer and the page title before they report.
+The "page not found" page reports no address (see below).
+
+| Tool | What it records | Cookies | Why | How long |
+| --- | --- | --- | --- | --- |
+| Cloudflare Web Analytics | The page (without the query), the referring site, browser, operating system, device type, country, and page load times | None, and no fingerprinting | To count visits and keep the site fast (legitimate interest) | Up to 6 months |
+| Google Analytics 4 (Google Ireland Limited) | The page, the referring page, browser and device, approximate location, and the time on the page. Google does not log or store IP addresses for Google Analytics 4. | Only after you accept: `_ga` and `_ga_<id>`, which tell repeat visits apart, for up to 2 years | To learn how people find and use the site (your consent) | Event data 2 months, data linked to a cookie 14 months; reports with totals stay longer |
+
+Before you choose, and after you decline, Google Analytics runs in Consent Mode: it sets no
+cookies and sends cookieless pings that Google uses to model visit counts. Google Signals and ad
+features are off, so the data is not used for advertising. The website keeps your choice in your
+browser's local storage (`emojisense:analytics-consent`). To change it, use "Cookie settings" at
+the bottom of every page. When you decline, the website deletes the Google Analytics cookies.
 
 The live demos on the website load the open data packs from our API and send some searches to it,
 the same way that any app that uses Emojisense does. The rules below for searches apply.
 
 On the "page not found" page, the emoji search for the address that you typed runs only in your
-browser. The address is not sent to us.
+browser. The address is not sent to us. Cloudflare Web Analytics does not run on that page, and
+Google Analytics records it as `/404/`, without the address.
 
 ### The waitlist
 
@@ -231,7 +247,8 @@ requires it.
 ## International transfers
 
 Cloudflare operates the Service on its global network, so data can be processed in any country
-where Cloudflare has servers. Clerk is in the United States. Whop: [location and transfer
+where Cloudflare has servers. Clerk is in the United States. Google can process Google Analytics
+data in the United States and other countries. Whop: [location and transfer
 safeguards to be confirmed in legal review]. [Transfer safeguards, for example
 EU Standard Contractual Clauses: to be confirmed in legal review.]
 

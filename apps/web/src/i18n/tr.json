@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "Emoji verileri <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) ve <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode Lisansı v3) kaynaklarından gelir. Emojiler sistem yazı tipinizle gösterilir."
   },
+  "consent": {
+    "label": "Çerez onayı",
+    "title": "Analiz çerezleri",
+    "body": "Ziyaretçilerin bu siteyi nasıl bulup kullandığını anlamak için Google Analytics kullanıyoruz. Kabul ederseniz, tekrar eden ziyaretleri tanımak için çerez kaydeder. Reddederseniz çerez kaydetmez. <privacy>Gizlilik Politikası</privacy>",
+    "accept": "Kabul et",
+    "decline": "Reddet",
+    "settings": "Çerez ayarları"
+  },
   "home": {
     "hero": {
       "kicker": "Canlı · tarayıcınızda çalışır",

@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "ইমোজির ডেটা এসেছে <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) ও <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode License v3) থেকে। ইমোজি আপনার সিস্টেমের ফন্টে দেখানো হয়।"
   },
+  "consent": {
+    "label": "কুকি সম্মতি",
+    "title": "অ্যানালিটিক্স কুকি",
+    "body": "মানুষ কীভাবে এই সাইট খুঁজে পায় ও ব্যবহার করে তা জানতে আমরা Google Analytics ব্যবহার করি। আপনি সম্মতি দিলে, বারবার আসা ভিজিট চিনতে এটি কুকি সংরক্ষণ করে। আপনি প্রত্যাখ্যান করলে, এটি কোনো কুকি সংরক্ষণ করে না। <privacy>গোপনীয়তা নীতি</privacy>",
+    "accept": "গ্রহণ করুন",
+    "decline": "প্রত্যাখ্যান করুন",
+    "settings": "কুকি সেটিংস"
+  },
   "home": {
     "hero": {
       "kicker": "লাইভ · আপনার ব্রাউজারে চলে",

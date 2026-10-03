@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "بيانات الإيموجي من <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) و<cldr>Unicode CLDR</cldr>{cldrVersion} (ترخيص Unicode، الإصدار 3). تُعرض الإيموجي بخط نظامك."
   },
+  "consent": {
+    "label": "الموافقة على ملفات تعريف الارتباط",
+    "title": "ملفات تعريف الارتباط للتحليلات",
+    "body": "نستخدم Google Analytics لنعرف كيف يجد الناس هذا الموقع ويستخدمونه. إذا وافقت، فإنه يحفظ ملفات تعريف الارتباط للتعرّف على الزيارات المتكررة. وإذا رفضت، فلا يحفظ أي ملفات. <privacy>سياسة الخصوصية</privacy>",
+    "accept": "قبول",
+    "decline": "رفض",
+    "settings": "إعدادات ملفات تعريف الارتباط"
+  },
   "home": {
     "hero": {
       "kicker": "مباشر · يعمل في متصفحك",

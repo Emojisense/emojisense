@@ -1,5 +1,5 @@
 ---
-// Self-hosted (no third-party requests). Variable fonts cover every weight with one file each.
+// Self-hosted fonts. Variable fonts cover every weight with one file each.
 import "@fontsource/dm-mono/latin-400.css";
 import "@fontsource/dm-mono/latin-500.css";
 import "@fontsource/dm-mono/latin-ext-400.css";
@@ -7,9 +7,10 @@ import "@fontsource-variable/bricolage-grotesque/opsz.css";
 import "@fontsource-variable/hanken-grotesk/index.css";
 import "../styles/global.css";
 import "../i18n/scripts.css";
+import ConsentBanner from "../components/ConsentBanner.astro";
 import Footer from "../components/Footer.astro";
 import Nav from "../components/Nav.astro";
-import { INDEXABLE, SITE_URL } from "../config";
+import { CF_WEB_ANALYTICS_TOKEN, INDEXABLE, SITE_URL } from "../config";
 import { DEFAULT_LOCALE, isLocalizedPath, LOCALE_INFO, LOCALES, localizePath } from "../i18n/locales";
 import { i18nFor } from "../i18n/page";
 import { shareCardFor } from "../og/registry";
@@ -31,6 +32,7 @@ interface Props {
 }
 
 const { title, description, path, jsonLd } = Astro.props;
+const NOT_FOUND_PATH = "/404/";
 const ogType =
   Astro.props.ogType ?? (/^\/(docs\/.+|legal\/.+|changelog\/)/.test(path) ? "article" : "website");
 const { t, locale } = i18nFor(Astro);
@@ -99,6 +101,17 @@ const alternates = isLocalizedPath(path)
     <meta name="twitter:image" content={shareImageUrl} />
     <meta name="twitter:image:alt" content={shareAlt} />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+    {
+      // Not on the 404 page: its URL is what the visitor typed (privacy policy, "The website").
+      CF_WEB_ANALYTICS_TOKEN && path !== NOT_FOUND_PATH && (
+        <script
+          is:inline
+          type="module"
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({ token: CF_WEB_ANALYTICS_TOKEN })}
+        />
+      )
+    }
   </head>
   <body>
     <a class="skip-link" href="#main">{t("meta.skipLink")}</a>
@@ -107,6 +120,7 @@ const alternates = isLocalizedPath(path)
       <slot />
     </main>
     <Footer path={path} />
+    <ConsentBanner reportPath={path === NOT_FOUND_PATH ? NOT_FOUND_PATH : undefined} />
   </body>
 </html>
 

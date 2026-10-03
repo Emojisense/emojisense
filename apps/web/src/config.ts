@@ -28,3 +28,7 @@ export const STATS_URL = env.PUBLIC_STATS_URL ? trimSlash(env.PUBLIC_STATS_URL) 
 /** Share of visits that report. */
 export const STATS_SAMPLE = Number(env.PUBLIC_STATS_SAMPLE ?? "0.1");
 export const WAITLIST_ENDPOINT = `${DASHBOARD_URL}/api/waitlist`;
+/** Cloudflare Web Analytics site token (cookieless page views); no beacon when unset. */
+export const CF_WEB_ANALYTICS_TOKEN = env.PUBLIC_CF_WEB_ANALYTICS_TOKEN || undefined;
+/** Google Analytics 4 measurement id; no tag and no consent banner when unset. */
+export const GA_MEASUREMENT_ID = env.PUBLIC_GA_MEASUREMENT_ID || undefined;

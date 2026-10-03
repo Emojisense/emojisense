@@ -20,12 +20,16 @@ case "$ENVIRONMENT" in
     INDEXABLE="false"
     CLERK_PUBLISHABLE_KEY="pk_test_ZmVhc2libGUtYmxvd2Zpc2gtOTY4MC5jbGVyay5hY2NvdW50cy5kZXYk"
     PUBLISHABLE_KEY="${PUBLIC_PUBLISHABLE_KEY:-pk_demo}"
+    CF_WEB_ANALYTICS_TOKEN="26d003b7a6ae48e28aee9aafc15edcc6"
+    GA_MEASUREMENT_ID=""
     ;;
   production)
     DOMAIN="emojisense.com"
     INDEXABLE="true"
     CLERK_PUBLISHABLE_KEY="pk_live_Y2xlcmsuZW1vamlzZW5zZS5jb20k"
     PUBLISHABLE_KEY="${PUBLIC_PUBLISHABLE_KEY:?run node scripts/create-site-key.mjs production first}"
+    CF_WEB_ANALYTICS_TOKEN="8969449ab98544e39b14b4731cb7768a"
+    GA_MEASUREMENT_ID="G-GTR83QSBXC"
     ;;
   *)
     echo "Unknown environment \"$ENVIRONMENT\". Use dev or production." >&2
@@ -40,6 +44,7 @@ DASHBOARD_URL="https://app.$DOMAIN"
 PACK_VERSION=$(node -p 'require(process.argv[1]).packVersion' "$ROOT/packages/data/pack.config.json")
 SHARDS_URL="https://cdn.$DOMAIN/p/$PACK_VERSION"
 STATS_URL="https://stats.$DOMAIN"
+# Website analytics (public ids): Cloudflare Web Analytics on both, Google Analytics on production only.
 
 # Internal environments must never be indexed: header on every response, next to robots.txt.
 no_index() {
@@ -102,6 +107,8 @@ PUBLIC_SITE_URL="$SITE_URL" \
   PUBLIC_SHARDS_URL="$SHARDS_URL" \
   PUBLIC_STATS_URL="$STATS_URL" \
   PUBLIC_INDEXABLE="$INDEXABLE" \
+  PUBLIC_CF_WEB_ANALYTICS_TOKEN="$CF_WEB_ANALYTICS_TOKEN" \
+  PUBLIC_GA_MEASUREMENT_ID="$GA_MEASUREMENT_ID" \
   pnpm exec astro build
 [ "$INDEXABLE" = "false" ] && no_index dist
 pnpm exec wrangler deploy --env "$ENVIRONMENT"

@@ -1,0 +1,128 @@
+---
+import { GA_MEASUREMENT_ID } from "../config";
+import { i18nFor } from "../i18n/page";
+
+interface Props {
+  /** The path Google sees instead of the address (the 404 page: what the visitor typed). */
+  reportPath?: string | undefined;
+}
+
+const { reportPath } = Astro.props;
+const { t, parts, href } = i18nFor(Astro);
+---
+
+{
+  GA_MEASUREMENT_ID && (
+    <section
+      class="consent"
+      aria-label={t("consent.label")}
+      data-consent
+      data-measurement-id={GA_MEASUREMENT_ID}
+      data-report-path={reportPath}
+      hidden
+    >
+      <p class="consent-title">{t("consent.title")}</p>
+      <p class="consent-body">
+        {parts("consent.body").map((part) =>
+          part.tag === "privacy" ? <a href={href("/legal/privacy/")}>{part.text}</a> : part.text,
+        )}
+      </p>
+      <div class="consent-actions">
+        <button type="button" class="btn btn-secondary" data-consent-choice="denied">
+          {t("consent.decline")}
+        </button>
+        <button type="button" class="btn btn-primary" data-consent-choice="granted">
+          {t("consent.accept")}
+        </button>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { type Consent, readConsent, startGoogleAnalytics, updateConsent } from "../lib/analytics";
+
+  const banner = document.querySelector<HTMLElement>("[data-consent]");
+  const measurementId = banner?.dataset.measurementId;
+
+  if (banner && measurementId) {
+    const stored = readConsent();
+    startGoogleAnalytics(measurementId, stored, banner.dataset.reportPath);
+    let opener: HTMLElement | undefined;
+
+    const close = () => {
+      banner.hidden = true;
+      opener?.focus();
+      opener = undefined;
+    };
+
+    for (const button of banner.querySelectorAll<HTMLButtonElement>("[data-consent-choice]")) {
+      button.addEventListener("click", () => {
+        updateConsent(button.dataset.consentChoice as Consent);
+        close();
+      });
+    }
+    // The footer's "Cookie settings" opens the banner again, to change the choice.
+    for (const settings of document.querySelectorAll<HTMLButtonElement>("[data-consent-open]")) {
+      settings.hidden = false;
+      settings.addEventListener("click", () => {
+        opener = settings;
+        banner.hidden = false;
+        banner.querySelector("button")?.focus();
+      });
+    }
+    if (!stored) banner.hidden = false;
+  }
+</script>
+
+<style>
+  .consent {
+    position: fixed;
+    inset-inline: var(--gutter);
+    bottom: var(--gutter);
+    z-index: 90;
+    display: grid;
+    gap: 0.75rem;
+    max-width: 26rem;
+    padding: 1.25rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .consent[hidden] {
+    display: none;
+  }
+
+  .consent-title {
+    font-weight: 700;
+  }
+
+  .consent-body {
+    color: var(--ink-2);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .consent-body a {
+    color: var(--ink);
+    text-underline-offset: 0.2em;
+  }
+
+  .consent-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .consent-actions .btn {
+    white-space: normal;
+  }
+
+  @media (min-width: 40rem) {
+    .consent {
+      inset-inline-start: auto;
+    }
+  }
+</style>

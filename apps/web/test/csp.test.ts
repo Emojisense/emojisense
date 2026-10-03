@@ -87,6 +87,29 @@ describe("buildContentSecurityPolicy", () => {
     expect(sameHost).toContain("connect-src 'self' https://api.example.com https://app.example.com;");
   });
 
+  it("allows the analytics tags only when the pages load them", () => {
+    expect(policy).not.toMatch(/cloudflareinsights|google/);
+    const withAnalytics = buildContentSecurityPolicy({
+      apiUrl: "https://api.example.com",
+      dashboardUrl: "https://app.example.com",
+      cloudflareAnalytics: true,
+      googleAnalytics: true,
+      scriptHashes: [hashSource("a")],
+      styleHashes: [],
+    });
+    const find = (name: string) => withAnalytics.split("; ").find((d) => d.startsWith(`${name} `));
+    expect(find("script-src")).toBe(
+      `script-src 'self' https://static.cloudflareinsights.com https://*.googletagmanager.com ${hashSource("a")}`,
+    );
+    expect(find("connect-src")).toBe(
+      "connect-src 'self' https://api.example.com https://app.example.com https://cloudflareinsights.com " +
+        "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+    );
+    expect(find("img-src")).toBe(
+      "img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com",
+    );
+  });
+
   it("allows inline scripts and styles only by hash, sorted and without duplicates", () => {
     expect(directive("script-src")).toBe(
       `script-src 'self' ${[hashSource("a"), hashSource("b")].sort().join(" ")}`,

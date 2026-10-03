@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "Data emoji dari <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) dan <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode License v3). Emoji ditampilkan dengan font sistem Anda."
   },
+  "consent": {
+    "label": "Persetujuan cookie",
+    "title": "Cookie analitik",
+    "body": "Kami memakai Google Analytics untuk mengetahui cara orang menemukan dan memakai situs ini. Jika Anda menerima, Google Analytics menyimpan cookie untuk mengenali kunjungan berulang. Jika Anda menolak, tidak ada cookie yang disimpan. <privacy>Kebijakan Privasi</privacy>",
+    "accept": "Terima",
+    "decline": "Tolak",
+    "settings": "Pengaturan cookie"
+  },
   "home": {
     "hero": {
       "kicker": "Langsung · di browser Anda",

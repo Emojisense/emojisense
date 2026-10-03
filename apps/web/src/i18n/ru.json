@@ -82,6 +82,14 @@
     "copyright": "© {year} Emojisense",
     "credits": "Данные emoji из <emojibase>Emojibase</emojibase>{emojibaseVersion} (MIT) и <cldr>Unicode CLDR</cldr>{cldrVersion} (Unicode License v3). Emoji отображаются системным шрифтом."
   },
+  "consent": {
+    "label": "Согласие на cookie",
+    "title": "Cookie для аналитики",
+    "body": "Мы используем Google Analytics, чтобы понять, как люди находят и используют этот сайт. Если вы согласитесь, он сохранит cookie, чтобы узнавать повторные визиты. Если откажетесь, cookie не сохраняются. <privacy>Политика конфиденциальности</privacy>",
+    "accept": "Принять",
+    "decline": "Отклонить",
+    "settings": "Настройки cookie"
+  },
   "home": {
     "hero": {
       "kicker": "Демо · работает в браузере",

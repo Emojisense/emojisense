@@ -89,9 +89,37 @@ export interface PolicyInput {
   /** PUBLIC_SHARDS_URL and PUBLIC_STATS_URL, when the pages use other hosts for them. */
   shardsUrl?: string | undefined;
   statsUrl?: string | undefined;
+  /** PUBLIC_CF_WEB_ANALYTICS_TOKEN is set: the pages load Cloudflare's beacon. */
+  cloudflareAnalytics?: boolean;
+  /** PUBLIC_GA_MEASUREMENT_ID is set: the pages load gtag.js. */
+  googleAnalytics?: boolean;
   scriptHashes: Iterable<string>;
   styleHashes: Iterable<string>;
 }
+
+interface ThirdPartyHosts {
+  script: string[];
+  connect: string[];
+  img: string[];
+}
+
+/** Cloudflare Web Analytics, manual snippet: the beacon script and where it reports. */
+const CLOUDFLARE_ANALYTICS: ThirdPartyHosts = {
+  script: ["https://static.cloudflareinsights.com"],
+  connect: ["https://cloudflareinsights.com"],
+  img: [],
+};
+
+/** Google Analytics 4 without Google Signals, from Google's tag CSP guide. */
+const GOOGLE_ANALYTICS: ThirdPartyHosts = {
+  script: ["https://*.googletagmanager.com"],
+  connect: [
+    "https://*.google-analytics.com",
+    "https://*.analytics.google.com",
+    "https://*.googletagmanager.com",
+  ],
+  img: ["https://*.google-analytics.com", "https://*.googletagmanager.com"],
+};
 
 /** Sorted and deduplicated, so the same pages always give the same header. */
 function sources(values: Iterable<string>): string {
@@ -105,23 +133,28 @@ export function buildContentSecurityPolicy(input: PolicyInput): string {
     ...(input.shardsUrl ? [originOf(input.shardsUrl, "PUBLIC_SHARDS_URL")] : []),
     ...(input.statsUrl ? [originOf(input.statsUrl, "PUBLIC_STATS_URL")] : []),
   ].filter((origin) => origin !== api);
+  const analytics = [
+    ...(input.cloudflareAnalytics ? [CLOUDFLARE_ANALYTICS] : []),
+    ...(input.googleAnalytics ? [GOOGLE_ANALYTICS] : []),
+  ];
+  const hosts = (kind: keyof ThirdPartyHosts) => analytics.flatMap((tag) => tag[kind]);
   return [
     "default-src 'self'",
     // Bundles and island imports are 'self'. Hashes: Astro's inline scripts (island loaders,
     // small page scripts) and React's inline Suspense helpers inside island HTML.
-    `script-src 'self' ${sources(input.scriptHashes)}`.trimEnd(),
+    ["script-src 'self'", ...hosts("script"), sources(input.scriptHashes)].join(" ").trimEnd(),
     `style-src 'self' ${sources(input.styleHashes)}`.trimEnd(),
     // Style attributes: Shiki tokens in docs code and per-element CSS variables (--i, map
     // positions). They cannot run script, and url() in them still obeys img-src and font-src.
     "style-src-attr 'unsafe-inline'",
     // data: for the CSS icons, blob: for the preview of a photo the visitor picks.
-    "img-src 'self' data: blob:",
+    ["img-src 'self' data: blob:", ...hosts("img")].join(" "),
     // Vite inlines the smallest @fontsource subset as a data: URL.
     "font-src 'self' data:",
     // The API serves the packs, culture files, search, reactions and photo calls. The dashboard
     // takes the waitlist sign-up (fetch, or a plain form post without JavaScript). Shards may
-    // come from the CDN host and search reports go to the stats host.
-    `connect-src 'self' ${[api, dashboard, ...new Set(extra)].join(" ")}`,
+    // come from the CDN host, search reports go to the stats host, and the analytics tags report.
+    `connect-src 'self' ${[api, dashboard, ...new Set(extra), ...hosts("connect")].join(" ")}`,
     `form-action 'self' ${dashboard}`,
     "frame-ancestors 'none'",
     "base-uri 'none'",
@@ -193,6 +226,8 @@ export function cspHeaders(): AstroIntegration {
           dashboardUrl: env.PUBLIC_DASHBOARD_URL ?? DEFAULT_DASHBOARD_URL,
           shardsUrl: env.PUBLIC_SHARDS_URL,
           statsUrl: env.PUBLIC_STATS_URL,
+          cloudflareAnalytics: Boolean(env.PUBLIC_CF_WEB_ANALYTICS_TOKEN),
+          googleAnalytics: Boolean(env.PUBLIC_GA_MEASUREMENT_ID),
           scriptHashes,
           styleHashes,
         });
