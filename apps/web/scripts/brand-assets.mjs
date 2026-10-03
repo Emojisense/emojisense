@@ -190,7 +190,7 @@ function homeCard() {
   return frame({
     headline: ["Everything", "emoji, for", "every app."],
     sub: ["Search that understands slang, films,", "feelings and 11 languages."],
-    footnote: "Search · Reactions · Custom emoji · Hosted sets",
+    footnote: "Search · Reactions · Hosted sets · Analytics",
     card: cardHeader("what people type", "top results") + body,
   });
 }

@@ -71,8 +71,22 @@ describe("custom emoji usage", () => {
 
     expect(await screen.findByRole("button", { name: ":shipit:" })).toBeTruthy();
     expect(
-      screen.getByText(/^Custom emoji are not part of the Free plan\. You can still edit and delete these\./),
+      screen.getByText("Custom emoji are not part of the Free plan. You can still edit and delete these."),
     ).toBeTruthy();
+  });
+
+  it("names no bigger plan at a Solo account's limit, and offers no import: neither is sold yet", async () => {
+    openEmojiPage(
+      { "GET /api/apps/app_1/emoji": { body: { emoji: [emoji("shipit")], used: 500, limit: 500 } } },
+      { ...APP, plan: "solo" },
+    );
+
+    expect(
+      await screen.findByText(
+        "All 500 custom emoji of the Solo plan are in use across the account’s apps. Delete some to add new ones.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Import" })).toBeNull();
   });
 });
 

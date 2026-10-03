@@ -8,7 +8,7 @@ import {
   type Plan,
   type PlanId,
 } from "@emojisense/platform";
-import { formatNumber } from "../format";
+import type { MetricUsage } from "../../shared/contract";
 
 export type Feature =
   | "apps"
@@ -55,9 +55,27 @@ export function hasHigherListedPlan(plan: PlanId): boolean {
   return LISTED_PLAN_IDS.some((id) => isHigherPlan(id, plan));
 }
 
-/** False for a feature whose lowest plan is not on sale: the dashboard does not offer it. */
+/**
+ * Built and running under the PLANS limits, but sold on no plan yet (DECISIONS.md, "Custom emoji
+ * not sold at launch"). Accounts whose plan has them keep using them; nobody is offered them.
+ */
+const UNSOLD_FEATURES: readonly Feature[] = ["custom_emoji", "emoji_import"];
+
+/**
+ * False for a feature no plan on sale offers (its lowest plan is not on sale, or it is not sold
+ * yet): the dashboard does not offer it.
+ */
 export function isFeatureListed(feature: Feature): boolean {
-  return isListedPlan(FEATURE_PLAN[feature]);
+  return !UNSOLD_FEATURES.includes(feature) && isListedPlan(FEATURE_PLAN[feature]);
+}
+
+/** False for the "not included" custom emoji meter while no plan sells them: it would offer them. */
+export function isUsageShown(usage: MetricUsage): boolean {
+  return !(
+    usage.metric === "custom_emoji" &&
+    usage.status === "not_included" &&
+    !isFeatureListed("custom_emoji")
+  );
 }
 
 export interface FeatureCopy {
@@ -69,8 +87,6 @@ export interface FeatureCopy {
   unlistedNote?: string;
 }
 
-const emojiLimit = (id: PlanId) => formatNumber(PLANS[id].limits.custom_emoji);
-
 export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
   apps: {
     emoji: "🧩",
@@ -78,7 +94,7 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
     text: "Your plan’s apps are all in use. Separate apps keep staging and dev traffic out of production’s usage.",
     points: [
       `Up to ${PLANS.pro.maxApps} apps on Pro`,
-      "Own keys, usage and custom emoji per app",
+      "Own keys and usage per app",
       "Environment badges for prod, staging and dev",
     ],
     unlistedNote: "No plan has more apps yet.",
@@ -88,11 +104,10 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
     title: "Bring your own emoji",
     text: "Upload your team’s and your brand’s emoji. Search finds them next to the standard set, on the device and through the API.",
     points: [
-      `${emojiLimit("solo")} custom emoji on Solo, ${emojiLimit("pro")} on Pro`,
       "PNG, GIF, WebP or SVG, up to 256 KB each",
       "Aliases, so “ship it” finds :shipit:",
+      "Searched on the device and through the API",
     ],
-    unlistedNote: "No plan has more custom emoji yet.",
   },
   emoji_import: {
     emoji: "📦",
@@ -103,7 +118,6 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
       "We use the token once and never store it",
       "Aliases of aliases and emoji over your limit are skipped",
     ],
-    unlistedNote: "No plan has more custom emoji yet.",
   },
   hosted_sets: {
     emoji: "🖼️",
@@ -118,11 +132,11 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
   analytics: {
     emoji: "🔭",
     title: "See what people search for",
-    text: "Daily searches, the top queries and the searches that found nothing: your list of emoji to add next.",
+    text: "Daily searches, the top queries and the searches that found nothing.",
     points: [
       `${PLANS.pro.analyticsRetentionDays} days of history on Pro`,
       "No user, IP address or message text is stored",
-      "One click from a missed search to a new custom emoji",
+      "Top searches and missed searches for each app",
     ],
   },
   team: {

@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "Precios",
-      "description": "Precios de Emojisense: la plataforma completa de emoji, gratis para empezar. Búsqueda y sugerencias de reacciones en todos los planes; paga por volumen, emoji personalizados y equipos."
+      "description": "Precios de Emojisense: la plataforma completa de emoji, gratis para empezar. Búsqueda y sugerencias de reacciones en todos los planes; paga por volumen y equipos."
     },
     "waitlist": {
       "title": "Lista de espera",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Precios",
       "title": "Empieza gratis. Paga lo justo al crecer.",
-      "lead": "La búsqueda y las sugerencias de reacciones están en todos los planes. Paga por volumen, emoji personalizados y funciones para equipos."
+      "lead": "La búsqueda y las sugerencias de reacciones están en todos los planes. Paga por volumen y funciones para equipos."
     },
     "faq": {
       "kicker": "Dudas",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "Tus propios emoji personalizados",
+      "tag": "Pronto",
       "body": "Sube un conjunto o impórtalo de Slack y Discord. Aparece en las búsquedas junto a los emoji estándar, con tus propios alias."
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "desde el código fuente",
     "docsSuffix": ": guías",
-    "foot": "¿Tienes emoji personalizados en Slack o Discord? Tráelos con Pro.",
+    "foot": "¿Tienes emoji personalizados en Slack o Discord? La importación llega pronto.",
     "seePlans": "Ver planes",
     "allDocs": "Todas las guías"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "En todos los planes",
       "usage": "Uso",
-      "emoji": "Emoji personalizados y conjuntos",
+      "emoji": "Conjuntos de emoji",
       "teams": "Estadísticas y equipos",
       "soon": "Próximamente"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "Emoji personalizados",
-        "hint": "Un conjunto que aparece en las búsquedas junto a los emoji estándar",
-        "unit": "emoji personalizados"
+        "hint": "Un conjunto que aparece en las búsquedas junto a los emoji estándar"
       },
       "emojiImport": {
         "label": "Importación de Slack y Discord",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "Apps o entornos",
-        "hint": "Claves distintas para desarrollo, pruebas y producción",
+        "hint": "Una por producto, cada una con sus propias claves",
         "unit": {
           "one": "app o entorno",
           "many": "apps o entornos",
@@ -559,7 +559,7 @@
     "hero": {
       "kicker": "Precios",
       "title": "Empieza gratis. <line>Paga lo justo al crecer.</line>",
-      "lead": "La plataforma completa de emoji para cada app. La búsqueda y las sugerencias de reacciones están en todos los planes: paga solo por volumen, emoji personalizados y funciones para equipos.",
+      "lead": "La plataforma completa de emoji para cada app. La búsqueda y las sugerencias de reacciones están en todos los planes: paga solo por volumen y funciones para equipos.",
       "assurances": {
         "card": "Sin tarjeta para el plan gratuito",
         "failure": "Nunca se bloquea al alcanzar un límite",
@@ -569,7 +569,7 @@
     "compare": {
       "kicker": "Comparar planes",
       "title": "Todas las funciones, lado a lado.",
-      "lead": "Todos los planes incluyen la plataforma completa de emoji. Los planes superiores añaden volumen, emoji personalizados y equipos.",
+      "lead": "Todos los planes incluyen la plataforma completa de emoji. Los planes superiores añaden volumen y equipos.",
       "caption": "Funciones y límites de cada plan de Emojisense",
       "included": "Incluido",
       "notIncluded": "No incluido"
@@ -800,7 +800,7 @@
     },
     "money": {
       "title": "Cómo generamos ingresos",
-      "body": "La búsqueda y las sugerencias de reacciones son gratis en todos los planes. Los planes de pago añaden volumen, emoji personalizados, estadísticas y equipos. Sin anuncios, y no vendemos datos. <pricing>Elige un plan</pricing> o <free>empieza gratis</free> hoy."
+      "body": "La búsqueda y las sugerencias de reacciones son gratis en todos los planes. Los planes de pago añaden volumen, estadísticas y equipos. Sin anuncios, y no vendemos datos. <pricing>Elige un plan</pricing> o <free>empieza gratis</free> hoy."
     },
     "now": {
       "title": "En qué punto estamos",
@@ -1036,7 +1036,7 @@
       "timingMeaning": "significado · {ms} ms",
       "timingDevice": "en el dispositivo · {ms} ms",
       "aside": "Emoji personalizados de {workspace}",
-      "importTitle": "Importación de Slack y Discord: plan Pro",
+      "importTitle": "Importación de Slack y Discord: pronto",
       "imported": "Importado de {source}",
       "addedByAdmins": "Añadido por los administradores del espacio de trabajo",
       "set": "Conjunto personalizado",

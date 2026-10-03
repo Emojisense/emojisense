@@ -84,14 +84,6 @@ export interface SoonFeature {
   hint?: string;
 }
 
-/**
- * docs/PRICING.md sells Slack and Discord import with team members, and PLANS has no field for
- * it. It is read through the flag it ships with, so PLANS stays the only source.
- */
-const bundled = {
-  emojiImport: (plan: Plan) => plan.teamMembers,
-};
-
 function textOf(page: PricingLocale, text: FeatureText): { label: string; hint?: string; unit?: unknown } {
   return page.words.features[text];
 }
@@ -163,18 +155,6 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
     id: "emoji",
     features: [
       {
-        key: "custom_emoji",
-        text: "customEmoji",
-        onCard: true,
-        read: (plan, page) => limit(page, plan.limits.custom_emoji, "customEmoji"),
-      },
-      {
-        key: "emoji_import",
-        text: "emojiImport",
-        onCard: true,
-        read: (plan) => ({ value: bundled.emojiImport(plan) }),
-      },
-      {
         key: "hosted_sets",
         text: "hostedSets",
         onCard: true,
@@ -225,26 +205,21 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
 ];
 
 /**
- * Built, but on no plan yet (DECISIONS.md, "Scale hidden at launch"). The API still meters photo
- * classifications under PLANS; the pricing page lists both as "Soon" instead of a limit.
+ * Built, but on no plan yet (DECISIONS.md, "Scale hidden at launch" and "Custom emoji not sold at
+ * launch"). The API still meters photo classifications and custom emoji under PLANS; the pricing
+ * page lists them as "Soon" instead of a limit.
  */
 const SOON_FEATURES: { key: string; text: FeatureText }[] = [
   { key: "image_classifications", text: "photos" },
+  { key: "custom_emoji", text: "customEmoji" },
+  { key: "emoji_import", text: "emojiImport" },
   { key: "tenants", text: "tenants" },
 ];
 
 const FEATURE_SPECS = FEATURE_GROUPS.flatMap((group) => group.features);
 
 /** The short list that summarizes a plan (waitlist page, older cards). Keys are stable. */
-const SUMMARY_KEYS = [
-  "search",
-  "semantic_calls",
-  "custom_emoji",
-  "hosted_sets",
-  "analytics",
-  "apps",
-  "team",
-] as const;
+const SUMMARY_KEYS = ["search", "semantic_calls", "hosted_sets", "analytics", "apps", "team"] as const;
 
 function featureOf(spec: FeatureSpec, plan: Plan, page: PricingLocale): PlanFeature {
   return { key: spec.key, label: textOf(page, spec.text).label, ...spec.read(plan, page) };

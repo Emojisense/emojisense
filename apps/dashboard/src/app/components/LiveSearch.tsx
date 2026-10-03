@@ -231,10 +231,15 @@ export function LiveSearch({ app, createdKey }: LiveSearchProps) {
               🫥
             </span>
             <p>
-              Nothing for “{query}” yet.{" "}
-              <Link to={`${appHref(app.id, "emoji")}?new=${encodeURIComponent(query)}`} className="link">
-                Add it as a custom emoji
-              </Link>
+              Nothing for “{query}” yet.
+              {customAllowed && (
+                <>
+                  {" "}
+                  <Link to={`${appHref(app.id, "emoji")}?new=${encodeURIComponent(query)}`} className="link">
+                    Add it as a custom emoji
+                  </Link>
+                </>
+              )}
             </p>
           </div>
         )}

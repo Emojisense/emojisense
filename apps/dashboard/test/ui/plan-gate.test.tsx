@@ -134,12 +134,45 @@ describe("plan gates", () => {
     expect(within(nav).getByRole("link", { name: "Tenants" })).toBeTruthy();
     expect(within(nav).getByRole("link", { name: "Webhooks" })).toBeTruthy();
   });
+
+  it("hides Custom emoji from a free app; its page says Coming soon, since no plan sells them", async () => {
+    window.history.replaceState(null, "", "/apps/app_1/emoji");
+    stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps": { body: { apps: [APP] } },
+      "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
+      "GET /api/apps/app_1/emoji": planRequired("solo"),
+    });
+    render(<App />);
+
+    const gate = await screen.findByRole("region", { name: "Bring your own emoji" });
+    expect(within(gate).getByText("Coming soon.")).toBeTruthy();
+    expect(within(gate).queryByRole("link")).toBeNull();
+    expect(gate.textContent).not.toContain("$");
+    expect(gate.textContent).not.toMatch(/Solo|Pro/);
+    const nav = screen.getByRole("navigation", { name: "Chat app app" });
+    expect(within(nav).queryByRole("link", { name: /Custom emoji/ })).toBeNull();
+  });
+
+  it("keeps Custom emoji for a Solo app that has them", async () => {
+    const app = { ...APP, plan: "solo" as const };
+    window.history.replaceState(null, "", "/apps/app_1");
+    stubApi({
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS.solo) }) },
+      "GET /api/apps": { body: { apps: [app] } },
+      "GET /api/apps/app_1": { body: { app, keys: [] } },
+    });
+    render(<App />);
+
+    const nav = await screen.findByRole("navigation", { name: "Chat app app" });
+    expect(within(nav).getByRole("link", { name: "Custom emoji" })).toBeTruthy();
+  });
 });
 
 describe("sidebar plan nudge", () => {
   it.each([
-    ["free", "Custom emoji, analytics and a team come with paid plans."],
-    ["solo", "Analytics, Slack import and a team come with Pro."],
+    ["free", "Emoji sets, analytics and a team come with paid plans."],
+    ["solo", "Analytics, more apps and a team come with Pro."],
   ] as const)("invites a %s account to the next plan on sale", async (id, pitch) => {
     window.history.replaceState(null, "", "/apps");
     stubApi({

@@ -14,7 +14,7 @@ import { type ReactNode, useEffect, useId, useState } from "react";
 import { api, type BillingResponse, type BillingSubscription } from "../api";
 import { formatCompact, formatDate, formatPeriod, formatPrice } from "../format";
 import { forgetCheckoutIntent, parseCheckoutIntent } from "../lib/checkoutIntent";
-import { planRank } from "../lib/plans";
+import { isUsageShown, planRank } from "../lib/plans";
 import { checkoutKey, forgetStartedCheckout, startedCheckout, useCheckout } from "../lib/useCheckout";
 import { useResource } from "../lib/useResource";
 import { navigate, useSearchParams } from "../router";
@@ -28,15 +28,14 @@ import { UsageMeter } from "../ui/UsageMeter";
 const count = (value: number, unit: string) =>
   Number.isFinite(value) ? `${formatCompact(value)} ${unit}` : `Unlimited ${unit}`;
 
-/** `withTenants`: only when a shown plan has them, so the cards never point at a plan not on sale. */
+/**
+ * `withTenants`: only when a shown plan has them, so the cards never point at a plan not on sale.
+ * No custom emoji row: they run under the PLANS limits, but no plan sells them yet.
+ */
 function planFeatures(plan: Plan, withTenants: boolean): { text: string; included: boolean }[] {
   const features = [
     { text: `${count(plan.limits.semantic_calls, "AI calls")} a month`, included: true },
     { text: `${count(plan.limits.image_classifications, "photo to emoji calls")} a month`, included: true },
-    {
-      text: plan.limits.custom_emoji > 0 ? count(plan.limits.custom_emoji, "custom emoji") : "Custom emoji",
-      included: plan.limits.custom_emoji > 0,
-    },
     {
       text: Number.isFinite(plan.maxApps)
         ? count(plan.maxApps, plan.maxApps === 1 ? "app" : "apps")
@@ -334,9 +333,11 @@ export function BillingPage() {
             {billing.status === "loading" && <LoadingState label="Loading usage…" rows={3} />}
             {billing.status === "error" && <ErrorState message={billing.message} onRetry={reload} />}
             {billing.status === "ready" &&
-              billing.data.usage.map((usage) => (
-                <UsageMeter key={usage.metric} usage={usage} planName={current.name} compact />
-              ))}
+              billing.data.usage
+                .filter(isUsageShown)
+                .map((usage) => (
+                  <UsageMeter key={usage.metric} usage={usage} planName={current.name} compact />
+                ))}
           </div>
         </section>
 

@@ -14,7 +14,7 @@ import { ImportDialog, type ImportSource } from "../components/emoji/ImportDialo
 import { UploadDialog, type UploadRequest } from "../components/emoji/UploadDialog";
 import { formatNumber } from "../format";
 import { toShortcode } from "../lib/emoji";
-import { FEATURE_PLAN, lowestListedPlanWith, planIncludes } from "../lib/plans";
+import { FEATURE_PLAN, isFeatureListed, lowestListedPlanWith, planIncludes } from "../lib/plans";
 import { useResource } from "../lib/useResource";
 import { navigate, useSearchParams } from "../router";
 import { appHref } from "../routes";
@@ -114,6 +114,8 @@ export function EmojiPage() {
 
   const { emoji, used, limit } = list.data;
   const full = limit !== null && used >= limit;
+  // Import shows where the plan has it, or where a plan on sale sells it (it is not sold yet).
+  const importOffered = planIncludes(app.plan, "emoji_import") || isFeatureListed("emoji_import");
   const counts = emoji.reduce<Record<string, number>>((all, item) => {
     all[item.source] = (all[item.source] ?? 0) + 1;
     return all;
@@ -130,7 +132,7 @@ export function EmojiPage() {
         actions={
           !readOnly && (
             <>
-              <ImportMenu onChoose={setImporting} />
+              {importOffered && <ImportMenu onChoose={setImporting} />}
               <button
                 type="button"
                 className="btn btn-primary"
@@ -189,7 +191,9 @@ export function EmojiPage() {
         {emoji.length === 0 ? (
           <div className="card">
             <EmptyState emoji="🎨" title="No custom emoji yet">
-              Upload your team’s favorites, or import a whole Slack or Discord workspace at once.
+              {importOffered
+                ? "Upload your team’s favorites, or import a whole Slack or Discord workspace at once."
+                : "Upload your team’s favorites."}
             </EmptyState>
           </div>
         ) : visible.length === 0 ? (
@@ -309,8 +313,10 @@ function EmojiUsage({ used, limit, appCount }: { used: number; limit: number | n
 /** Why uploads and imports are off: the account is at (or, after a downgrade, over) its limit. */
 function limitNotice(used: number, limit: number, planId: PlanId): string {
   const plan = PLANS[planId];
-  // Only a plan on sale: on the top one (Pro), the notice names no other plan.
-  const next = lowestListedPlanWith((candidate) => candidate.limits.custom_emoji > Math.max(limit, used));
+  // Only a plan on sale, and only while one sells custom emoji: otherwise the notice names none.
+  const next = isFeatureListed("custom_emoji")
+    ? lowestListedPlanWith((candidate) => candidate.limits.custom_emoji > Math.max(limit, used))
+    : undefined;
   const upgrade = next ? ` ${PLANS[next].name} allows ${formatNumber(PLANS[next].limits.custom_emoji)}.` : "";
   if (limit === 0) {
     return `Custom emoji are not part of the ${plan.name} plan. You can still edit and delete these.${upgrade}`;

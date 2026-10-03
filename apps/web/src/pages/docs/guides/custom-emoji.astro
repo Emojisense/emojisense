@@ -1,9 +1,7 @@
 ---
-import { LISTED_PLAN_IDS, PLAN_IDS, PLANS } from "@emojisense/platform";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
 import { API_HOST } from "../../../components/docs/facts";
-import { formatCount } from "../../../lib/format";
 
 const shape = `type CustomEmoji = {
   id: string;
@@ -39,30 +37,20 @@ const render = `function EmojiCell({ result }: { result: SearchResult }) {
     <span>{result.emoji}</span>
   );
 }`;
-
-const plans = LISTED_PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
 ---
 
 <DocsLayout path="/docs/guides/custom-emoji/">
   <p>Custom emoji are your own images, such as a team logo, a mascot or the party parrot. Emojisense hosts them and searches them next to Unicode emoji. People find each one by its shortcode or by any alias you give it.</p>
 
   <h2 id="limits">Plans</h2>
-  <div class="table-scroll" tabindex="0">
-    <table>
-      <thead><tr><th scope="col">Plan</th><th scope="col">Custom emoji</th><th scope="col">Slack and Discord import</th></tr></thead>
-      <tbody>
-        {plans.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].limits.custom_emoji)}</td><td>{PLAN_IDS.indexOf(id) >= PLAN_IDS.indexOf("pro") ? "Yes" : "—"}</td></tr>)}
-      </tbody>
-    </table>
-  </div>
-  <p>The Free plan has no custom emoji. At the limit, uploads stop. Search keeps working.</p>
+  <p>No plan includes custom emoji or Slack and Discord import yet. Their limits are set when they open on a plan. At a limit, uploads stop. Search keeps working.</p>
 
   <h2 id="add-emoji">Add emoji</h2>
   <p>Upload images in the dashboard, under your app. Each emoji has a shortcode and a list of aliases that search uses.</p>
   <ul>
     <li><strong>Formats:</strong> PNG, GIF, WebP or SVG, at most 256 KB each. SVG files are checked and rejected if they contain scripts, event handlers, <code>javascript:</code> links or external references.</li>
-    <li><strong>Import from Slack</strong> (Pro): paste a Slack user token. Emojisense reads the workspace’s emoji list, downloads the images and never stores the token.</li>
-    <li><strong>Import from Discord</strong> (Pro): give a bot token and a server (guild) id. The token is not stored either.</li>
+    <li><strong>Import from Slack</strong>: paste a Slack user token. Emojisense reads the workspace’s emoji list, downloads the images and never stores the token.</li>
+    <li><strong>Import from Discord</strong>: give a bot token and a server (guild) id. The token is not stored either.</li>
   </ul>
   <p>One import call stores at most 50 new emoji and reports <code>imported</code>, <code>skipped</code> and <code>remaining</code>. The dashboard calls again until nothing remains. Imports skip Slack aliases of other emoji, shortcodes you already have, images that fail the upload checks and anything over your plan’s limit. The full contract is in the <a href="/docs/api/#slack-and-discord-import">HTTP API reference</a>.</p>
   <p>Each emoji has this shape in the dashboard API:</p>

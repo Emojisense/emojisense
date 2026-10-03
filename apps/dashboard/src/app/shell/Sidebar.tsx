@@ -56,7 +56,8 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
               const info = SECTION_INFO[name];
               // App features follow the app's plan, which is its owner's.
               const locked = info.feature && !planIncludes(currentApp.plan, info.feature);
-              // A feature no plan on sale has (tenants, webhooks) shows only to apps that have it.
+              // A feature no plan on sale offers (tenants, webhooks, custom emoji) shows only to
+              // apps that have it.
               if (locked && info.feature && !isFeatureListed(info.feature)) return null;
               const active = route.name === "app" && route.section === name;
               return (
@@ -136,8 +137,8 @@ function LockHint({ feature }: { feature: Feature }) {
 
 /** What the next plan on sale adds, in a line. Pro is the top plan on sale and shows no nudge. */
 const NEXT_PLAN_PITCH: Partial<Record<PlanId, string>> = {
-  free: "Custom emoji, analytics and a team come with paid plans.",
-  solo: "Analytics, Slack import and a team come with Pro.",
+  free: "Emoji sets, analytics and a team come with paid plans.",
+  solo: "Analytics, more apps and a team come with Pro.",
 };
 
 function PlanNudge() {

@@ -74,7 +74,6 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
           <th scope="col">Plan</th>
           <th scope="col">Price</th>
           <th scope="col">AI calls</th>
-          <th scope="col">Custom emoji</th>
           <th scope="col">Apps</th>
         </tr>
       </thead>
@@ -85,7 +84,6 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
               <td>{PLANS[id].name}</td>
               <td>{PLANS[id].priceUsdMonthly === 0 ? "Free" : `$${PLANS[id].priceUsdMonthly} a month`}</td>
               <td>{formatCount(PLANS[id].limits.semantic_calls)}</td>
-              <td>{PLANS[id].limits.custom_emoji > 0 ? formatCount(PLANS[id].limits.custom_emoji) : "—"}</td>
               <td>{formatCount(PLANS[id].maxApps)}</td>
             </tr>
           ))

@@ -37,9 +37,9 @@ describe("usage", () => {
     expect(screen.getByText("8,500 / 10,000")).toBeTruthy();
     expect(screen.getByText(/close to the limit/)).toBeTruthy();
     expect(screen.getByText(/^Limit reached/)).toBeTruthy();
-    expect(screen.getByText("Not included in the Free plan.")).toBeTruthy();
-    // A metric the plan does not include has no meter, only the note.
+    // Custom emoji are not on the plan and no plan sells them yet: no meter and no note.
     expect(screen.queryByRole("meter", { name: "Custom emoji" })).toBeNull();
+    expect(screen.queryByText("Not included in the Free plan.")).toBeNull();
 
     const month = screen.getByLabelText("Month") as HTMLSelectElement;
     expect(

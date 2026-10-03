@@ -2,7 +2,7 @@ import { isListedPlan, isPaidPlan, PLANS, type PlanId } from "@emojisense/platfo
 import { useId } from "react";
 import { formatPrice } from "../format";
 import { checkoutIntentQuery } from "../lib/checkoutIntent";
-import { FEATURE_COPY, FEATURE_PLAN, type Feature } from "../lib/plans";
+import { FEATURE_COPY, FEATURE_PLAN, type Feature, isFeatureListed } from "../lib/plans";
 import { Link } from "../router";
 import { useAppScope } from "../shell/context";
 import { Icon } from "./Icon";
@@ -16,12 +16,13 @@ interface PlanGateProps {
 
 /**
  * Shown when a feature needs a higher plan: a calm invitation that names the plan, never an error.
- * A plan that is not on sale (Scale) gets no price and no upgrade, only a short note.
+ * A plan that is not on sale (Scale), or a feature no plan sells yet (custom emoji), gets no price
+ * and no upgrade, only a short note.
  */
 export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
   const required = PLANS[plan ?? FEATURE_PLAN[feature]];
   const copy = FEATURE_COPY[feature];
-  const listed = isListedPlan(required.id);
+  const listed = isListedPlan(required.id) && isFeatureListed(feature);
   const note = copy.unlistedNote ?? "Coming soon.";
   const { detail } = useAppScope();
   const titleId = useId();

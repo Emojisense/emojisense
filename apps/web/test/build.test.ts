@@ -216,8 +216,9 @@ describe("landing page", () => {
 
 describe("pricing page", () => {
   const doc = () => page("/pricing/");
-  // Photo classifications are metered but not sold yet: the page lists them as "Soon".
-  const SOLD_METRICS = METRICS.filter((metric) => metric !== "image_classifications");
+  // Photo classifications and custom emoji are metered but not sold yet: the page lists them as "Soon".
+  const UNSOLD_METRICS: readonly string[] = ["image_classifications", "custom_emoji"];
+  const SOLD_METRICS = METRICS.filter((metric) => !UNSOLD_METRICS.includes(metric));
 
   it.each(LISTED_PLAN_IDS)("shows the %s price from PLANS", (id) => {
     const card = doc().querySelector(`[data-plan="${id}"]`);
@@ -237,7 +238,9 @@ describe("pricing page", () => {
   // comparison table below lists every feature of every plan, included or not.
   it.each(LISTED_PLAN_IDS)("shows every %s limit from PLANS", (id) => {
     const card = doc().querySelector(`[data-plan="${id}"]`);
-    expect(card?.querySelector('[data-feature="image_classifications"]')).toBeNull();
+    for (const key of [...UNSOLD_METRICS, "emoji_import"]) {
+      expect(card?.querySelector(`[data-feature="${key}"]`), key).toBeNull();
+    }
     for (const metric of SOLD_METRICS) {
       const limit = PLANS[id].limits[metric];
       const row = card?.querySelector(`[data-feature="${metric}"]`);
@@ -260,19 +263,26 @@ describe("pricing page", () => {
     );
     expect(columns).toEqual([...LISTED_PLAN_IDS]);
     const rows = table?.querySelectorAll("tbody tr[data-feature]") ?? [];
-    expect(rows.length).toBeGreaterThanOrEqual(10);
+    expect(rows.length).toBeGreaterThanOrEqual(9);
     for (const row of Array.from(rows)) {
       expect(row.querySelector('th[scope="row"]')).not.toBeNull();
       expect(row.querySelectorAll("td[data-col]")).toHaveLength(LISTED_PLAN_IDS.length);
     }
   });
 
-  it("hides Scale and lists photo to emoji and tenants as coming soon", () => {
+  it("hides Scale and lists photo to emoji, custom emoji, import and tenants as coming soon", () => {
     const pricing = doc();
     expect(pricing.querySelector('[data-plan="scale"]')).toBeNull();
     expect(pricing.querySelector('[data-col="scale"]')).toBeNull();
     expect(pricing.getElementById("compare")?.textContent).not.toContain("Scale");
-    for (const key of ["tenants", "webhooks", "priority_support", "community_support"]) {
+    for (const key of [
+      "custom_emoji",
+      "emoji_import",
+      "tenants",
+      "webhooks",
+      "priority_support",
+      "community_support",
+    ]) {
       expect(pricing.querySelector(`tr[data-feature="${key}"]`), key).toBeNull();
     }
     const soon = Array.from(pricing.querySelectorAll("#compare table tr[data-soon]"), (row) => ({
@@ -282,6 +292,8 @@ describe("pricing page", () => {
     const tags = LISTED_PLAN_IDS.map(() => "Soon");
     expect(soon).toEqual([
       { key: "image_classifications", tags },
+      { key: "custom_emoji", tags },
+      { key: "emoji_import", tags },
       { key: "tenants", tags },
     ]);
   });

@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "Fiyatlar",
-      "description": "Emojisense fiyatları: başlangıcı ücretsiz, eksiksiz emoji platformu. Her planda arama ve tepki önerileri; kullanım miktarı, özel emoji ve ekipler için ödeme yapın."
+      "description": "Emojisense fiyatları: başlangıcı ücretsiz, eksiksiz emoji platformu. Her planda arama ve tepki önerileri; kullanım miktarı ve ekipler için ödeme yapın."
     },
     "waitlist": {
       "title": "Bekleme listesi",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Fiyatlar",
       "title": "Başlangıç ücretsiz. Büyüdükçe adil.",
-      "lead": "Arama ve tepki önerileri her planda var. Kullanım miktarı, özel emoji ve ekip özellikleri için ödeme yapın."
+      "lead": "Arama ve tepki önerileri her planda var. Kullanım miktarı ve ekip özellikleri için ödeme yapın."
     },
     "faq": {
       "kicker": "SSS",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "Kendi özel emojileriniz",
+      "tag": "Yakında",
       "body": "Bir set yükleyin veya Slack ve Discord'dan içe aktarın. Kendi alternatif adlarınızla, standart emojilerin yanında aranır."
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "kaynak koddan",
     "docsSuffix": ": belgeler",
-    "foot": "Slack veya Discord'da özel emojileriniz mi var? Pro ile onları da getirin.",
+    "foot": "Slack veya Discord'da özel emojileriniz mi var? İçe aktarma yakında geliyor.",
     "seePlans": "Planları görün",
     "allDocs": "Tüm belgeler"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "Her planda",
       "usage": "Kullanım",
-      "emoji": "Özel emoji ve setler",
+      "emoji": "Emoji setleri",
       "teams": "Analizler ve ekipler",
       "soon": "Yakında"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "Özel emoji",
-        "hint": "Standart emojilerin yanında aranan tek set",
-        "unit": "özel emoji"
+        "hint": "Standart emojilerin yanında aranan tek set"
       },
       "emojiImport": {
         "label": "Slack ve Discord'dan içe aktarma",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "Uygulamalar veya ortamlar",
-        "hint": "Geliştirme, ön üretim ve üretim için ayrı anahtarlar",
+        "hint": "Ürün başına bir tane; her birinin kendi anahtarları var",
         "unit": {
           "one": "uygulama veya ortam",
           "other": "uygulama veya ortam"
@@ -558,7 +558,7 @@
     "hero": {
       "kicker": "Fiyatlar",
       "title": "Başlangıç ücretsiz. <line>Büyüdükçe adil.</line>",
-      "lead": "Her uygulama için eksiksiz emoji platformu. Arama ve tepki önerileri her planda var. Yalnızca kullanım miktarı, özel emoji ve ekip özellikleri için ödeme yapın.",
+      "lead": "Her uygulama için eksiksiz emoji platformu. Arama ve tepki önerileri her planda var. Yalnızca kullanım miktarı ve ekip özellikleri için ödeme yapın.",
       "assurances": {
         "card": "Ücretsiz planda kart gerekmez",
         "failure": "Limite ulaşınca tamamen durmaz",
@@ -568,7 +568,7 @@
     "compare": {
       "kicker": "Planları karşılaştırın",
       "title": "Tüm özellikler, yan yana.",
-      "lead": "Her plan tüm emoji platformunu sunar. Üst planlar daha fazla kullanım, özel emoji ve ekipler ekler.",
+      "lead": "Her plan tüm emoji platformunu sunar. Üst planlar daha fazla kullanım ve ekipler ekler.",
       "caption": "Her Emojisense planının özellikleri ve limitleri",
       "included": "Dahil",
       "notIncluded": "Dahil değil"
@@ -799,7 +799,7 @@
     },
     "money": {
       "title": "Nasıl gelir elde ediyoruz?",
-      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, özel emoji, analizler ve ekipler ekler. Reklam yok, veri satmıyoruz. Bugün <pricing>bir plan seçin</pricing> veya <free>ücretsiz başlayın</free>."
+      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, analizler ve ekipler ekler. Reklam yok, veri satmıyoruz. Bugün <pricing>bir plan seçin</pricing> veya <free>ücretsiz başlayın</free>."
     },
     "now": {
       "title": "Ne durumdayız?",
@@ -1034,7 +1034,7 @@
       "timingMeaning": "anlam · {ms} ms",
       "timingDevice": "cihazda · {ms} ms",
       "aside": "{workspace} özel emojileri",
-      "importTitle": "Slack ve Discord'dan içe aktarma: Pro planı",
+      "importTitle": "Slack ve Discord'dan içe aktarma: yakında",
       "imported": "{source} üzerinden içe aktarıldı",
       "addedByAdmins": "Çalışma alanı yöneticileri ekledi",
       "set": "Özel set",

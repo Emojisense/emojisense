@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "Harga",
-      "description": "Harga Emojisense: platform emoji lengkap, gratis untuk memulai. Pencarian dan saran reaksi tersedia di setiap paket; bayar untuk volume, emoji khusus, dan tim."
+      "description": "Harga Emojisense: platform emoji lengkap, gratis untuk memulai. Pencarian dan saran reaksi tersedia di setiap paket; bayar untuk volume dan tim."
     },
     "waitlist": {
       "title": "Daftar tunggu",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Harga",
       "title": "Gratis untuk memulai. Terjangkau saat berkembang.",
-      "lead": "Pencarian dan saran reaksi tersedia di setiap paket. Bayar untuk volume, emoji khusus, dan fitur tim."
+      "lead": "Pencarian dan saran reaksi tersedia di setiap paket. Bayar untuk volume dan fitur tim."
     },
     "faq": {
       "kicker": "FAQ",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "Emoji khusus milik Anda",
+      "tag": "Segera",
       "body": "Unggah satu set atau impor dari Slack dan Discord. Emoji khusus dicari bersama emoji standar, dengan alias Anda sendiri."
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "dari kode sumber",
     "docsSuffix": ": dokumentasi",
-    "foot": "Punya emoji khusus di Slack atau Discord? Bawa ke sini dengan Pro.",
+    "foot": "Punya emoji khusus di Slack atau Discord? Impornya segera hadir.",
     "seePlans": "Lihat paket",
     "allDocs": "Semua dokumentasi"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "Di setiap paket",
       "usage": "Penggunaan",
-      "emoji": "Emoji khusus dan set",
+      "emoji": "Set emoji",
       "teams": "Wawasan dan tim",
       "soon": "Segera hadir"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "Emoji khusus",
-        "hint": "Satu set, dicari bersama emoji standar",
-        "unit": "emoji khusus"
+        "hint": "Satu set, dicari bersama emoji standar"
       },
       "emojiImport": {
         "label": "Impor Slack dan Discord",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "Aplikasi atau lingkungan",
-        "hint": "Kunci terpisah untuk pengembangan, staging, dan produksi",
+        "hint": "Satu per produk, masing-masing dengan kunci sendiri",
         "unit": {
           "other": "aplikasi atau lingkungan"
         }
@@ -557,7 +557,7 @@
     "hero": {
       "kicker": "Harga",
       "title": "Gratis untuk memulai. <line>Terjangkau saat berkembang.</line>",
-      "lead": "Platform emoji lengkap untuk setiap aplikasi. Pencarian dan saran reaksi tersedia di setiap paket — bayar hanya untuk volume, emoji khusus, dan fitur tim.",
+      "lead": "Platform emoji lengkap untuk setiap aplikasi. Pencarian dan saran reaksi tersedia di setiap paket — bayar hanya untuk volume dan fitur tim.",
       "assurances": {
         "card": "Tanpa kartu untuk paket gratis",
         "failure": "Layanan tetap berjalan saat batas tercapai",
@@ -567,7 +567,7 @@
     "compare": {
       "kicker": "Bandingkan paket",
       "title": "Bandingkan setiap fitur.",
-      "lead": "Setiap paket mendapat seluruh platform emoji. Paket lebih tinggi menambahkan volume, emoji khusus, dan tim.",
+      "lead": "Setiap paket mendapat seluruh platform emoji. Paket lebih tinggi menambahkan volume dan tim.",
       "caption": "Fitur dan batas setiap paket Emojisense",
       "included": "Termasuk",
       "notIncluded": "Tidak termasuk"
@@ -798,7 +798,7 @@
     },
     "money": {
       "title": "Sumber pendapatan kami",
-      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, emoji khusus, analitik, dan tim. Tanpa iklan, dan kami tidak menjual data. <pricing>Pilih paket</pricing>, atau <free>mulai gratis</free> hari ini."
+      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, analitik, dan tim. Tanpa iklan, dan kami tidak menjual data. <pricing>Pilih paket</pricing>, atau <free>mulai gratis</free> hari ini."
     },
     "now": {
       "title": "Perkembangan saat ini",
@@ -1032,7 +1032,7 @@
       "timingMeaning": "makna · {ms} ms",
       "timingDevice": "di perangkat · {ms} ms",
       "aside": "Emoji khusus {workspace}",
-      "importTitle": "Impor Slack dan Discord: paket Pro",
+      "importTitle": "Impor Slack dan Discord: segera hadir",
       "imported": "Diimpor dari {source}",
       "addedByAdmins": "Ditambahkan admin ruang kerja",
       "set": "Set khusus",

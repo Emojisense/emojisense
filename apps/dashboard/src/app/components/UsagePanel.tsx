@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import type { AppSummary, UsageResponse } from "../../shared/contract";
 import { api, errorMessage } from "../api";
 import { formatPeriod, recentPeriods } from "../format";
+import { isUsageShown } from "../lib/plans";
 import { ErrorState, LoadingState } from "../ui/Feedback";
 import { UsageMeter } from "../ui/UsageMeter";
 
@@ -99,7 +100,7 @@ function UsageReport({ usage }: { usage: UsageResponse }) {
         </div>
       )}
       <div className="meters">
-        {usage.metrics.map((metric) => (
+        {usage.metrics.filter(isUsageShown).map((metric) => (
           <UsageMeter key={metric.metric} usage={metric} planName={usage.plan.name} />
         ))}
       </div>

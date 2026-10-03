@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "Tarifs",
-      "description": "Tarifs Emojisense : la plateforme emoji complète, gratuite au départ. Recherche et suggestions de réactions dans chaque forfait ; payez pour le volume, les emoji personnalisés et les équipes."
+      "description": "Tarifs Emojisense : la plateforme emoji complète, gratuite au départ. Recherche et suggestions de réactions dans chaque forfait ; payez pour le volume et les équipes."
     },
     "waitlist": {
       "title": "Liste d’attente",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Tarifs",
       "title": "Gratuit au départ. Juste quand vous grandissez.",
-      "lead": "Recherche et suggestions de réactions dans chaque forfait. Payez pour le volume, les emoji personnalisés et les fonctions d’équipe."
+      "lead": "Recherche et suggestions de réactions dans chaque forfait. Payez pour le volume et les fonctions d’équipe."
     },
     "faq": {
       "kicker": "FAQ",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "Vos propres emoji personnalisés",
+      "tag": "Bientôt",
       "body": "Importez un jeu depuis un fichier, Slack ou Discord. La recherche le trouve à côté des emoji standard, avec vos propres alias."
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "depuis les sources",
     "docsSuffix": " : docs",
-    "foot": "Des emoji personnalisés dans Slack ou Discord ? Importez-les avec Pro.",
+    "foot": "Des emoji personnalisés dans Slack ou Discord ? L’import arrive bientôt.",
     "seePlans": "Voir les forfaits",
     "allDocs": "Toute la documentation"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "Dans chaque forfait",
       "usage": "Consommation",
-      "emoji": "Emoji personnalisés et jeux",
+      "emoji": "Jeux d’emoji",
       "teams": "Statistiques et équipes",
       "soon": "Bientôt disponible"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "Emoji personnalisés",
-        "hint": "Un jeu, recherché à côté des emoji standard",
-        "unit": "emoji personnalisés"
+        "hint": "Un jeu, recherché à côté des emoji standard"
       },
       "emojiImport": {
         "label": "Import Slack et Discord",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "Applications ou environnements",
-        "hint": "Des clés distinctes pour le développement, la préproduction et la production",
+        "hint": "Une par produit, chacune avec ses propres clés",
         "unit": {
           "one": "application ou environnement",
           "many": "applications ou environnements",
@@ -559,7 +559,7 @@
     "hero": {
       "kicker": "Tarifs",
       "title": "Gratuit au départ. <line>Juste quand vous grandissez.</line>",
-      "lead": "La plateforme emoji complète pour toutes les applications. Recherche et suggestions de réactions dans chaque forfait. Payez seulement pour le volume, les emoji personnalisés et les fonctions d’équipe.",
+      "lead": "La plateforme emoji complète pour toutes les applications. Recherche et suggestions de réactions dans chaque forfait. Payez seulement pour le volume et les fonctions d’équipe.",
       "assurances": {
         "card": "Sans carte pour le forfait gratuit",
         "failure": "Aucun blocage à la limite",
@@ -569,7 +569,7 @@
     "compare": {
       "kicker": "Comparer les offres",
       "title": "Toutes les fonctions, côte à côte.",
-      "lead": "Chaque forfait inclut toute la plateforme emoji. Les forfaits supérieurs ajoutent du volume, des emoji personnalisés et des équipes.",
+      "lead": "Chaque forfait inclut toute la plateforme emoji. Les forfaits supérieurs ajoutent du volume et des équipes.",
       "caption": "Fonctions et limites de chaque forfait Emojisense",
       "included": "Inclus",
       "notIncluded": "Non inclus"
@@ -800,7 +800,7 @@
     },
     "money": {
       "title": "Comment nous gagnons de l’argent",
-      "body": "La recherche et les suggestions de réactions sont gratuites dans chaque forfait. Les forfaits payants ajoutent du volume, les emoji personnalisés, les statistiques et les équipes. Aucune publicité. Nous ne vendons pas les données. <pricing>Choisissez un forfait</pricing> ou <free>commencez gratuitement</free> dès aujourd’hui."
+      "body": "La recherche et les suggestions de réactions sont gratuites dans chaque forfait. Les forfaits payants ajoutent du volume, les statistiques et les équipes. Aucune publicité. Nous ne vendons pas les données. <pricing>Choisissez un forfait</pricing> ou <free>commencez gratuitement</free> dès aujourd’hui."
     },
     "now": {
       "title": "Où nous en sommes",
@@ -1036,7 +1036,7 @@
       "timingMeaning": "sens · {ms} ms",
       "timingDevice": "sur l’appareil · {ms} ms",
       "aside": "Emoji personnalisés de {workspace}",
-      "importTitle": "Import Slack et Discord : forfait Pro",
+      "importTitle": "Import Slack et Discord : bientôt",
       "imported": "Importés depuis {source}",
       "addedByAdmins": "Ajoutés par les administrateurs de l’espace",
       "set": "Jeu personnalisé",

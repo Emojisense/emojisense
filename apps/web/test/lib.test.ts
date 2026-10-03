@@ -54,8 +54,8 @@ describe("planViews", () => {
   });
 
   it("shows a dash, not a zero, for limits a plan does not include", () => {
-    const free = views[0]?.features.find((f) => f.key === "custom_emoji");
-    expect(PLANS.free.limits.custom_emoji).toBe(0);
+    const free = views[0]?.features.find((f) => f.key === "analytics");
+    expect(PLANS.free.analyticsRetentionDays).toBe(0);
     expect(free?.value).toBe(false);
   });
 
@@ -63,20 +63,22 @@ describe("planViews", () => {
     expect(views.map((v) => v.inherits)).toEqual([undefined, "Free", "Solo"]);
     const keys = (id: string) => views.find((v) => v.id === id)?.highlights.map((f) => f.key) ?? [];
     expect(keys("free")).toContain("search");
-    expect(keys("free")).not.toContain("custom_emoji");
-    expect(keys("solo")).toEqual(expect.arrayContaining(["semantic_calls", "custom_emoji", "hosted_sets"]));
+    expect(keys("free")).not.toContain("hosted_sets");
+    expect(keys("solo")).toEqual(expect.arrayContaining(["semantic_calls", "hosted_sets"]));
     expect(keys("solo")).not.toContain("search");
-    expect(keys("pro")).toEqual(expect.arrayContaining(["team", "emoji_import", "analytics"]));
+    expect(keys("pro")).toEqual(expect.arrayContaining(["team", "analytics"]));
     expect(keys("pro")).not.toContain("hosted_sets");
   });
 
-  it("sells no photo classifications, tenants, webhooks or support, and lists photos and tenants as soon", () => {
+  it("sells no photos, custom emoji, import, tenants, webhooks or support; lists four as soon", () => {
     const sold = [
       ...views.flatMap((v) => v.highlights.map((f) => f.key)),
       ...comparisonOf().flatMap((group) => group.rows.map((row) => row.key)),
     ];
     for (const key of [
       "image_classifications",
+      "custom_emoji",
+      "emoji_import",
       "tenants",
       "webhooks",
       "priority_support",
@@ -84,8 +86,18 @@ describe("planViews", () => {
     ]) {
       expect(sold, key).not.toContain(key);
     }
-    expect(soonFeatures().map((f) => f.key)).toEqual(["image_classifications", "tenants"]);
-    expect(soonFeatures().map((f) => f.label)).toEqual(["Photo to emoji", "Tenants"]);
+    expect(soonFeatures().map((f) => f.key)).toEqual([
+      "image_classifications",
+      "custom_emoji",
+      "emoji_import",
+      "tenants",
+    ]);
+    expect(soonFeatures().map((f) => f.label)).toEqual([
+      "Photo to emoji",
+      "Custom emoji",
+      "Slack and Discord import",
+      "Tenants",
+    ]);
   });
 
   it("spreads the yearly price over twelve months", () => {

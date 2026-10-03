@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "定价",
-      "description": "Emojisense定价：完整的emoji平台，免费起步。所有套餐均提供搜索和emoji回应建议；按用量、自定义emoji和团队功能付费。"
+      "description": "Emojisense定价：完整的emoji平台，免费起步。所有套餐均提供搜索和emoji回应建议；按用量和团队功能付费。"
     },
     "waitlist": {
       "title": "候补名单",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "定价",
       "title": "免费起步，按需付费。",
-      "lead": "所有套餐均提供搜索和emoji回应建议。按用量、自定义emoji和团队功能付费。"
+      "lead": "所有套餐均提供搜索和emoji回应建议。按用量和团队功能付费。"
     },
     "faq": {
       "kicker": "常见问题",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "你的自定义emoji",
+      "tag": "即将推出",
       "body": "上传emoji集，或从Slack和Discord导入。它们可与标准emoji一起搜索，支持你自己的别名。"
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "从源码安装",
     "docsSuffix": "：文档",
-    "foot": "在Slack或Discord中有自定义emoji？Pro支持导入。",
+    "foot": "在Slack或Discord中有自定义emoji？导入功能即将推出。",
     "seePlans": "查看套餐",
     "allDocs": "全部文档"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "所有套餐均包含",
       "usage": "用量",
-      "emoji": "自定义emoji与emoji集",
+      "emoji": "emoji集",
       "teams": "数据分析与团队",
       "soon": "即将推出"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "自定义emoji",
-        "hint": "一个emoji集，与标准emoji一起搜索",
-        "unit": "个自定义emoji"
+        "hint": "一个emoji集，与标准emoji一起搜索"
       },
       "emojiImport": {
         "label": "Slack和Discord导入",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "应用或环境",
-        "hint": "为开发、预发布和生产环境分配独立密钥",
+        "hint": "每个产品一个，各有独立的密钥",
         "unit": {
           "other": "个应用或环境"
         }
@@ -557,7 +557,7 @@
     "hero": {
       "kicker": "定价",
       "title": "免费起步。<line>按需付费。</line>",
-      "lead": "适用于每个应用的完整emoji平台。所有套餐均提供搜索和emoji回应建议，只需为用量、自定义emoji和团队功能付费。",
+      "lead": "适用于每个应用的完整emoji平台。所有套餐均提供搜索和emoji回应建议，只需为用量和团队功能付费。",
       "assurances": {
         "card": "免费套餐无需银行卡",
         "failure": "达到限额也不中断服务",
@@ -567,7 +567,7 @@
     "compare": {
       "kicker": "套餐对比",
       "title": "所有功能，一览对比。",
-      "lead": "每个套餐都能使用完整emoji平台。更高档套餐增加用量、自定义emoji和团队功能。",
+      "lead": "每个套餐都能使用完整emoji平台。更高档套餐增加用量和团队功能。",
       "caption": "Emojisense各套餐的功能和限额",
       "included": "包含",
       "notIncluded": "不包含"
@@ -798,7 +798,7 @@
     },
     "money": {
       "title": "收入来源",
-      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、自定义emoji、数据分析和团队功能。没有广告，也不出售数据。现在就<pricing>选择套餐</pricing>，或<free>免费开始</free>。"
+      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、数据分析和团队功能。没有广告，也不出售数据。现在就<pricing>选择套餐</pricing>，或<free>免费开始</free>。"
     },
     "now": {
       "title": "当前进展",
@@ -1032,7 +1032,7 @@
       "timingMeaning": "语义搜索 · {ms} ms",
       "timingDevice": "设备端 · {ms} ms",
       "aside": "{workspace}的自定义emoji",
-      "importTitle": "Slack和Discord导入：Pro套餐",
+      "importTitle": "Slack和Discord导入：即将推出",
       "imported": "从{source}导入",
       "addedByAdmins": "由工作区管理员添加",
       "set": "自定义emoji集",

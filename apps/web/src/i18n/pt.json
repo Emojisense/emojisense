@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "Preços",
-      "description": "Preços do Emojisense: a plataforma completa de emoji, grátis para começar. Busca e sugestões de reações em todos os planos; pague por volume, emoji personalizados e equipes."
+      "description": "Preços do Emojisense: a plataforma completa de emoji, grátis para começar. Busca e sugestões de reações em todos os planos; pague por volume e equipes."
     },
     "waitlist": {
       "title": "Lista de espera",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Preços",
       "title": "Grátis para começar. Justo para crescer.",
-      "lead": "Busca e sugestões de reações estão em todos os planos. Pague por volume, emoji personalizados e recursos para equipes."
+      "lead": "Busca e sugestões de reações estão em todos os planos. Pague por volume e recursos para equipes."
     },
     "faq": {
       "kicker": "FAQ",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "Seus próprios emoji personalizados",
+      "tag": "Em breve",
       "body": "Envie um conjunto ou importe do Slack e do Discord. Ele aparece na busca junto dos emoji padrão, com seus próprios nomes alternativos."
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "pelo código-fonte",
     "docsSuffix": ": docs",
-    "foot": "Emoji personalizados no Slack ou Discord? Traga-os com o Pro.",
+    "foot": "Emoji personalizados no Slack ou Discord? A importação chega em breve.",
     "seePlans": "Ver planos",
     "allDocs": "Todos os docs"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "Em todos os planos",
       "usage": "Uso",
-      "emoji": "Emoji personalizados e conjuntos",
+      "emoji": "Conjuntos de emoji",
       "teams": "Análises e equipes",
       "soon": "Em breve"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "Emoji personalizados",
-        "hint": "Um conjunto, buscado junto dos emoji padrão",
-        "unit": "emoji personalizados"
+        "hint": "Um conjunto, buscado junto dos emoji padrão"
       },
       "emojiImport": {
         "label": "Importação do Slack e Discord",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "Apps ou ambientes",
-        "hint": "Chaves separadas para desenvolvimento, homologação e produção",
+        "hint": "Um por produto, cada um com suas próprias chaves",
         "unit": {
           "one": "app ou ambiente",
           "many": "apps ou ambientes",
@@ -559,7 +559,7 @@
     "hero": {
       "kicker": "Preços",
       "title": "Grátis para começar. <line>Justo para crescer.</line>",
-      "lead": "A plataforma completa de emoji para qualquer app. Busca e sugestões de reações estão em todos os planos — pague só por volume, emoji personalizados e recursos para equipes.",
+      "lead": "A plataforma completa de emoji para qualquer app. Busca e sugestões de reações estão em todos os planos — pague só por volume e recursos para equipes.",
       "assurances": {
         "card": "Plano gratuito sem cartão",
         "failure": "A busca continua ao atingir o limite",
@@ -569,7 +569,7 @@
     "compare": {
       "kicker": "Comparar planos",
       "title": "Todos os recursos, lado a lado.",
-      "lead": "Todos os planos incluem a plataforma inteira de emoji. Planos maiores acrescentam volume, emoji personalizados e equipes.",
+      "lead": "Todos os planos incluem a plataforma inteira de emoji. Planos maiores acrescentam volume e equipes.",
       "caption": "Recursos e limites de cada plano do Emojisense",
       "included": "Incluído",
       "notIncluded": "Não incluído"
@@ -800,7 +800,7 @@
     },
     "money": {
       "title": "Como ganhamos dinheiro",
-      "body": "Busca e sugestões de reações são grátis em todos os planos. Planos pagos acrescentam volume, emoji personalizados, análise de uso e equipes. Sem anúncios, e não vendemos dados. <pricing>Escolha um plano</pricing> ou <free>comece grátis</free> hoje."
+      "body": "Busca e sugestões de reações são grátis em todos os planos. Planos pagos acrescentam volume, análise de uso e equipes. Sem anúncios, e não vendemos dados. <pricing>Escolha um plano</pricing> ou <free>comece grátis</free> hoje."
     },
     "now": {
       "title": "Em que fase estamos",
@@ -1036,7 +1036,7 @@
       "timingMeaning": "significado · {ms} ms",
       "timingDevice": "no dispositivo · {ms} ms",
       "aside": "Emoji personalizados de {workspace}",
-      "importTitle": "Importação do Slack e Discord: plano Pro",
+      "importTitle": "Importação do Slack e Discord: em breve",
       "imported": "Importado de {source}",
       "addedByAdmins": "Adicionado pelos administradores do espaço de trabalho",
       "set": "Conjunto personalizado",

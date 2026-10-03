@@ -11,7 +11,7 @@
     },
     "pricing": {
       "title": "Pricing",
-      "description": "Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume, custom emoji and teams."
+      "description": "Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume and teams."
     },
     "waitlist": {
       "title": "Waitlist",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Pricing",
       "title": "Free to start. Fair when you grow.",
-      "lead": "Search and reaction suggestions are on every plan. Pay for volume, custom emoji and team features."
+      "lead": "Search and reaction suggestions are on every plan. Pay for volume and team features."
     },
     "faq": {
       "kicker": "FAQ",
@@ -210,6 +210,7 @@
     },
     "custom": {
       "title": "Your own custom emoji",
+      "tag": "Soon",
       "body": "Upload a set or import it from Slack and Discord. It is searched next to the standard emoji, with your own aliases."
     },
     "sets": {
@@ -452,7 +453,7 @@
     },
     "fromSource": "from source",
     "docsSuffix": ": docs",
-    "foot": "Custom emoji in Slack or Discord? Bring them along on Pro.",
+    "foot": "Custom emoji in Slack or Discord? Importing them is coming soon.",
     "seePlans": "See plans",
     "allDocs": "All docs"
   },
@@ -487,7 +488,7 @@
     "groups": {
       "core": "On every plan",
       "usage": "Usage",
-      "emoji": "Custom emoji and sets",
+      "emoji": "Emoji sets",
       "teams": "Insights and teams",
       "soon": "Coming soon"
     },
@@ -520,8 +521,7 @@
       },
       "customEmoji": {
         "label": "Custom emoji",
-        "hint": "One set, searched next to the standard emoji",
-        "unit": "custom emoji"
+        "hint": "One set, searched next to the standard emoji"
       },
       "emojiImport": {
         "label": "Slack and Discord import",
@@ -538,7 +538,7 @@
       },
       "apps": {
         "label": "Apps or environments",
-        "hint": "Separate keys for dev, staging and production",
+        "hint": "One per product, each with its own keys",
         "unit": {
           "one": "app or environment",
           "other": "apps or environments"
@@ -558,7 +558,7 @@
     "hero": {
       "kicker": "Pricing",
       "title": "Free to start. <line>Fair when you grow.</line>",
-      "lead": "The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for volume, custom emoji and team features.",
+      "lead": "The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for volume and team features.",
       "assurances": {
         "card": "No card for the free plan",
         "failure": "Never a hard failure at a limit",
@@ -568,7 +568,7 @@
     "compare": {
       "kicker": "Compare plans",
       "title": "Every feature, side by side.",
-      "lead": "Every plan gets the whole emoji platform. Higher plans add volume, custom emoji and teams.",
+      "lead": "Every plan gets the whole emoji platform. Higher plans add volume and teams.",
       "caption": "Features and limits of each Emojisense plan",
       "included": "Included",
       "notIncluded": "Not included"
@@ -799,7 +799,7 @@
     },
     "money": {
       "title": "How we make money",
-      "body": "Search and reaction suggestions are free on every plan. Paid plans add volume, custom emoji, analytics and teams. No ads, and we do not sell data. <pricing>Choose a plan</pricing>, or <free>start free</free> today."
+      "body": "Search and reaction suggestions are free on every plan. Paid plans add volume, analytics and teams. No ads, and we do not sell data. <pricing>Choose a plan</pricing>, or <free>start free</free> today."
     },
     "now": {
       "title": "Where we are",
@@ -1034,7 +1034,7 @@
       "timingMeaning": "meaning · {ms} ms",
       "timingDevice": "on-device · {ms} ms",
       "aside": "{workspace} custom emoji",
-      "importTitle": "Slack and Discord import: Pro plan",
+      "importTitle": "Slack and Discord import: coming soon",
       "imported": "Imported from {source}",
       "addedByAdmins": "Added by workspace admins",
       "set": "Custom set",

@@ -30,13 +30,12 @@ const paid = planViews(DASHBOARD_URL, undefined, pricingLocaleFor(locale)).filte
 
 /**
  * AI calls first, then what the plan adds that the one before lacks (tenants, team members),
- * then custom emoji, then the other raised limits.
+ * then the other raised limits.
  */
 function keyHighlights(highlights: PlanFeature[]): PlanFeature[] {
   const rank = (feature: PlanFeature) => {
     if (feature.key === "semantic_calls") return 0;
-    if (feature.value === true) return 1;
-    return feature.key === "custom_emoji" ? 2 : 3;
+    return feature.value === true ? 1 : 2;
   };
   return [...highlights].sort((a, b) => rank(a) - rank(b)).slice(0, HIGHLIGHTS_SHOWN);
 }
