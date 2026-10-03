@@ -20,7 +20,8 @@ export const ANALYTICS_MAX_KEEP_DAYS = 365;
  * at a time: `WITH RECURSIVE ${QUERY_DAYS} …` binds the first and the last day ('YYYY-MM-DD'), and
  * a join on `q.day = days.day AND q.app_id = ?` seeks the key for each day instead of scanning.
  */
-export const QUERY_DAYS = "days(day) AS (SELECT ? UNION ALL SELECT date(day, '+1 day') FROM days WHERE day < ?)";
+export const QUERY_DAYS =
+  "days(day) AS (SELECT ? UNION ALL SELECT date(day, '+1 day') FROM days WHERE day < ?)";
 
 /**
  * The dashboard names a query only when the app saw it at least this often in the window. Rare
