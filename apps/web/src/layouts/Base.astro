@@ -12,7 +12,8 @@ import Nav from "../components/Nav.astro";
 import { INDEXABLE, SITE_URL } from "../config";
 import { DEFAULT_LOCALE, isLocalizedPath, LOCALE_INFO, LOCALES, localizePath } from "../i18n/locales";
 import { i18nFor } from "../i18n/page";
-import { SHARE_IMAGES, shareImageFor } from "../lib/og";
+import { shareCardFor } from "../og/registry";
+import { HEIGHT as CARD_HEIGHT, WIDTH as CARD_WIDTH } from "../og/svg";
 
 interface Props {
   /** Page title without the site name. Omit on the home page. */
@@ -25,24 +26,21 @@ interface Props {
   path: string;
   /** Structured data (schema.org) for search engines. */
   jsonLd?: Record<string, unknown>;
+  /** Open Graph type. Docs, legal pages and the changelog are articles; the rest is the website. */
+  ogType?: "website" | "article";
 }
 
 const { title, description, path, jsonLd } = Astro.props;
+const ogType =
+  Astro.props.ogType ?? (/^\/(docs\/.+|legal\/.+|changelog\/)/.test(path) ? "article" : "website");
 const { t, locale } = i18nFor(Astro);
 const info = LOCALE_INFO[locale];
 const fullTitle = title ? `${title} · Emojisense` : t("meta.homeTitle");
 const canonical = `${SITE_URL}${localizePath(path, locale)}`;
-const shareImage = shareImageFor(path);
-const shareImageUrl = `${SITE_URL}${shareImage.path}`;
-// The cards themselves are English images; their descriptions follow the page (docs are English).
-const shareAlt =
-  shareImage === SHARE_IMAGES.home
-    ? t("meta.shareAlt.home")
-    : shareImage === SHARE_IMAGES.pricing
-      ? t("meta.shareAlt.pricing")
-      : shareImage === SHARE_IMAGES.integrations
-        ? t("meta.shareAlt.integrations")
-        : shareImage.alt;
+// Each page has its own card in its own language (src/og/registry.ts).
+const shareCard = shareCardFor(path, locale);
+const shareImageUrl = `${SITE_URL}${shareCard.image}`;
+const shareAlt = shareCard.alt;
 // Pages in every language list each other; English-only pages have no alternates.
 const alternates = isLocalizedPath(path)
   ? LOCALES.map((code) => ({
@@ -78,7 +76,7 @@ const alternates = isLocalizedPath(path)
     <link rel="sitemap" href="/sitemap.xml" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content="Emojisense" />
     <meta property="og:locale" content={info.og} />
     {
@@ -92,8 +90,8 @@ const alternates = isLocalizedPath(path)
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={shareImageUrl} />
     <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content={String(shareImage.width)} />
-    <meta property="og:image:height" content={String(shareImage.height)} />
+    <meta property="og:image:width" content={String(CARD_WIDTH)} />
+    <meta property="og:image:height" content={String(CARD_HEIGHT)} />
     <meta property="og:image:alt" content={shareAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />

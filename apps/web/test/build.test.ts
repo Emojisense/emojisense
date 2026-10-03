@@ -48,7 +48,7 @@ const PAGES = [
   "/docs/privacy/",
 ];
 
-/** Made by scripts/brand-assets.mjs and committed under public/. */
+/** Made by scripts/brand-assets.mjs and committed under public/. Share cards: src/og/. */
 const BRAND_ASSETS = [
   "/favicon.svg",
   "/favicon.ico",
@@ -57,10 +57,6 @@ const BRAND_ASSETS = [
   "/icon-512.png",
   "/icon-maskable-512.png",
   "/site.webmanifest",
-  "/og/home.png",
-  "/og/pricing.png",
-  "/og/docs.png",
-  "/og/integrations.png",
 ];
 
 let outDir = "";
@@ -674,27 +670,69 @@ describe("share cards and icons", () => {
     return [png.readUInt32BE(16), png.readUInt32BE(20)];
   }
 
-  it.each(["/og/home.png", "/og/pricing.png", "/og/docs.png", "/og/integrations.png"])(
-    "%s is 1200 × 630",
-    (path) => {
-      expect(pngSize(path)).toEqual([1200, 630]);
-    },
-  );
+  const meta = (path: string, selector: string) =>
+    page(path).querySelector(selector)?.getAttribute("content");
+  const sitemapPaths = () =>
+    [...readFileSync(file("/sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) =>
+      (match[1] ?? "").replace(SITE, ""),
+    );
+
+  it("gives every page in the sitemap a large card of its own, 1200 × 630, with alt text", () => {
+    const owners = new Map<string, string>();
+    const paths = sitemapPaths();
+    expect(paths.length).toBeGreaterThan(80);
+    const card = new RegExp(String.raw`^${SITE}/og/[a-z]{2}/[a-z0-9/-]+-[0-9a-f]{10}\.png$`);
+    for (const path of paths) {
+      const image = meta(path, 'meta[property="og:image"]') ?? "";
+      expect(image, path).toMatch(card);
+      expect(meta(path, 'meta[name="twitter:image"]'), path).toBe(image);
+      expect(meta(path, 'meta[name="twitter:card"]'), path).toBe("summary_large_image");
+      expect(meta(path, 'meta[property="og:image:alt"]')?.length ?? 0, path).toBeGreaterThan(20);
+      expect(pngSize(image.slice(SITE.length)), path).toEqual([1200, 630]);
+      expect(owners.get(image), `${path} reuses the card of ${owners.get(image)}`).toBeUndefined();
+      owners.set(image, path);
+    }
+  });
+
+  it("draws the localized pages' cards in the page's language", () => {
+    for (const locale of LOCALES) {
+      const path = locale === "en" ? "/pricing/" : `/${locale}/pricing/`;
+      expect(meta(path, 'meta[property="og:image"]'), path).toContain(`/og/${locale}/pricing-`);
+    }
+    expect(meta("/es/pricing/", 'meta[property="og:image:alt"]')).toMatch(/^Precios de Emojisense/);
+  });
+
+  it("shares the home card from the 404 page", () => {
+    expect(meta("/404.html", 'meta[property="og:image"]')).toBe(meta("/", 'meta[property="og:image"]'));
+  });
 
   it.each([
-    ["/", "/og/home.png"],
-    ["/pricing/", "/og/pricing.png"],
-    ["/integrations/", "/og/integrations.png"],
-    ["/es/integrations/", "/og/integrations.png"],
-    ["/docs/api/", "/og/docs.png"],
-    ["/legal/privacy/", "/og/home.png"],
-  ])("%s shares %s as a large card with alt text", (path, image) => {
-    const doc = page(path);
-    const meta = (selector: string) => doc.querySelector(selector)?.getAttribute("content");
-    expect(meta('meta[property="og:image"]')).toBe(`${SITE}${image}`);
-    expect(meta('meta[name="twitter:image"]')).toBe(`${SITE}${image}`);
-    expect(meta('meta[name="twitter:card"]')).toBe("summary_large_image");
-    expect(meta('meta[property="og:image:alt"]')?.length).toBeGreaterThan(20);
+    ["/", "website"],
+    ["/docs/", "website"],
+    ["/docs/api/", "article"],
+    ["/legal/terms/", "article"],
+    ["/changelog/", "article"],
+  ])("%s is og:type %s", (path, type) => {
+    expect(meta(path, 'meta[property="og:type"]')).toBe(type);
+  });
+
+  it("describes the organization and the site search on the home page", () => {
+    const data = JSON.parse(
+      page("/").querySelector('script[type="application/ld+json"]')?.textContent ?? "{}",
+    );
+    const types = (data["@graph"] ?? []).map((node: { "@type": string }) => node["@type"]);
+    expect(types).toEqual(["Organization", "WebSite"]);
+    expect(JSON.stringify(data)).toContain(`${SITE}/playground/?q={search_term_string}`);
+  });
+
+  it("marks docs pages as tech articles with their card", () => {
+    const script = page("/docs/api/").querySelector('script[type="application/ld+json"]');
+    const data = JSON.parse(script?.textContent ?? "{}");
+    const article = (data["@graph"] ?? []).find(
+      (node: { "@type": string }) => node["@type"] === "TechArticle",
+    );
+    expect(article?.headline).toBe("HTTP API");
+    expect(article?.image).toBe(meta("/docs/api/", 'meta[property="og:image"]'));
   });
 
   it("lists icons in the manifest that exist, in the sizes they claim", () => {

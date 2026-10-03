@@ -172,6 +172,12 @@
     transform 160ms var(--ease-out);
 }
 
+/* Last in the search controls, at their end edge. */
+.pg-share {
+  min-height: 2.375rem;
+  margin-inline-start: auto;
+}
+
 .pg-button:hover {
   border-color: var(--ink-3);
 }

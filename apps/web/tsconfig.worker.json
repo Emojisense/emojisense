@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["@cloudflare/workers-types"],
+    "noEmit": true
+  },
+  // The Worker and the share-card code it bundles (not og/node.ts or og/registry.ts: build only).
+  "include": [
+    "src/worker",
+    "src/og/cards.ts",
+    "src/og/emoji.ts",
+    "src/og/svg.ts",
+    "src/og/text",
+    "src/og/templates"
+  ]
+}

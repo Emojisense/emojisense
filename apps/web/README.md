@@ -54,6 +54,39 @@ celebration: a burst of the answer's own emoji when it settles, never with reduc
 and pricing use the same tokens with calmer layouts. Fonts (Bricolage Grotesque, Hanken Grotesk,
 DM Mono) are self-hosted through Fontsource, so the site makes no third-party requests.
 
+## Share cards
+
+Every page has its own Open Graph / X card (1200 × 630 PNG), drawn at build time in the page's
+language: `src/og/registry.ts` maps pages to cards, `src/og/templates/` draws them, and
+`src/pages/og/[...card].png.ts` writes `dist/og/<locale>/<page>-<hash>.png`. The hash changes
+with the card, so social networks fetch the new image after a change.
+
+Text is shaped with HarfBuzz and drawn as paths (Arabic, Devanagari and Bengali need it), then
+rasterized with resvg. Fonts: `src/og/fonts/` (`node scripts/og-fonts.mjs`) and the
+@fontsource packages. Emoji art: Noto at the API's pinned commit, cached in
+`node_modules/.cache/og-emoji/`. `test/og.test.ts` renders every card and fails on any text cut
+short.
+
+Shared playground searches are the only dynamic part. The site's Worker (`src/worker/`) runs for
+`/s/*` and `/og/q/*` only; every other request stays a free static asset:
+
+- `/s/?q=…&locale=…` (the playground's "Copy share link") is the playground page with share tags
+  for the query, `noindex`.
+- `/og/q/<version>/<locale>/<query>.png` draws the query and its top emoji from the API (no key,
+  so no model call). One canonical URL per query, the Cache API, then rate limits on renders
+  (`OG_IP_LIMITER` 10 a minute per IP, `OG_LOCATION_LIMITER` 60 a minute per location). A refused
+  or failed render redirects to the playground's static card.
+
+Put a Cloudflare WAF rate-limiting rule in front of both paths, so floods never reach the Worker
+(Security → WAF → Rate limiting rules, one rule per zone):
+
+| Field | Value |
+| ----- | ----- |
+| If incoming requests match | `starts_with(http.request.uri.path, "/s") or starts_with(http.request.uri.path, "/og/q/")` |
+| Characteristics | IP |
+| Requests / period | 30 per 10 seconds |
+| Action / duration | Block for 10 seconds |
+
 ## Layout
 
 | Path | Purpose |

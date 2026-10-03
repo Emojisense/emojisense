@@ -17,6 +17,7 @@ import {
   MODES,
   type Mode,
   type SearchSettings,
+  shareLink,
 } from "./lib/settings";
 import { type CodeSample, searchSnippets } from "./lib/snippets";
 import { ResultDetails } from "./ResultDetails";
@@ -82,6 +83,10 @@ export function SearchInspector(props: SearchInspectorProps) {
     setActive(index);
     const result = results[index];
     if (result) announce(`${label(result)}, ${index + 1} of ${results.length}`);
+  };
+
+  const copyShareLink = async () => {
+    if (await copy(shareLink(settings, window.location.origin), "share")) announce("Share link copied");
   };
 
   const copyEmoji = async (result: SearchResult) => {
@@ -226,6 +231,11 @@ export function SearchInspector(props: SearchInspectorProps) {
             <span className="pg-switch-track" aria-hidden="true" />
             Always ask the edge
           </label>
+        )}
+        {query.trim() && (
+          <button type="button" className="pg-button pg-share" onClick={copyShareLink}>
+            {copied === "share" ? "Link copied" : "Copy share link"}
+          </button>
         )}
       </div>
       <p className="pg-note">{MODE_NOTES[mode]}</p>

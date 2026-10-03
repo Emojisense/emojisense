@@ -62,6 +62,21 @@ The client packs (/v1/pack/<version>/) also carry this third-party data.
    Attribution: "Popularity prior from Emoji-SP (Ferré et al. 2023), CC BY 4.0."
 
 
+SHARE-CARD FONTS
+================
+
+The website's share cards (apps/web/src/og/) are drawn with these fonts. The committed files in
+apps/web/src/og/fonts/ come unmodified from Google Fonts (apps/web/scripts/og-fonts.mjs); the
+@fontsource packages ship the others. The Noto Emoji art on the cards is the hosted "noto" set
+above (2D/png/ and the waved flags of the same commit).
+
+1. Bricolage Grotesque, Hanken Grotesk, DM Mono, Noto Sans, Noto Sans Arabic,
+   Noto Sans Devanagari, Noto Sans Bengali, Noto Sans SC
+   Copyright:   Their authors, as named in each font file's name table.
+   License:     SIL Open Font License 1.1, full text in section C (the same license text). The
+                fonts must never be sold by themselves.
+
+
 LICENSE TEXTS
 =============
 
@@ -689,7 +704,7 @@ limitations under the License.
 
 
 -------------------------------------------------------------------------------
-C. SIL Open Font License 1.1 (Noto Emoji fonts; not shipped by Emojisense)
+C. SIL Open Font License 1.1 (Noto Emoji fonts; also the share-card fonts above)
    Verbatim copy of LICENSE from googlefonts/noto-emoji at the pinned commit.
 -------------------------------------------------------------------------------
 

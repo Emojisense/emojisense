@@ -188,6 +188,15 @@ importers:
       '@fontsource/dm-mono':
         specifier: 5.3.0
         version: 5.3.0
+      '@fontsource/noto-sans':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource/noto-sans-sc':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@resvg/resvg-wasm':
+        specifier: 2.6.2
+        version: 2.6.2
       '@tiptap/core':
         specifier: 3.31.3
         version: 3.31.3(@tiptap/pm@3.31.3)
@@ -203,9 +212,15 @@ importers:
       astro:
         specifier: 7.3.5
         version: 7.3.5(@types/node@24.13.6)(sass@1.105.1)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      bidi-js:
+        specifier: 1.1.0
+        version: 1.1.0
       emojisense:
         specifier: workspace:*
         version: link:../../packages/core
+      harfbuzzjs:
+        specifier: 0.3.6
+        version: 0.3.6
       marked:
         specifier: 18.0.14
         version: 18.0.14
@@ -219,6 +234,9 @@ importers:
       '@astrojs/check':
         specifier: 0.9.10
         version: 0.9.10(@emnapi/runtime@1.11.1)(prettier@3.9.9)(typescript@5.9.3)
+      '@cloudflare/workers-types':
+        specifier: 5.20260924.1
+        version: 5.20260924.1
       '@testing-library/react':
         specifier: 16.3.3
         version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -2311,6 +2329,12 @@ packages:
   '@fontsource/dm-mono@5.3.0':
     resolution: {integrity: sha512-OINjI8C1S/wpchhQxl7njZdMn4+hnDCpQ4YtvvOpKNARo+0J8O1x1IcrChxNjHOhfVv1by8C/FQoy3hXK+C1Ug==}
 
+  '@fontsource/noto-sans-sc@5.3.0':
+    resolution: {integrity: sha512-HeqIlGm0+ohOKxZLuHj1qW6r6avHH0OWdKERAcSDI0RQ+MXrteuLKA+M+5eOA8rYy0MFvOR5AT0fQo2rUkye0Q==}
+
+  '@fontsource/noto-sans@5.3.0':
+    resolution: {integrity: sha512-fBCog2PY7DiVVTEEqtI/Qdinx/knobHYfoGpjFXdfBX5RoJaBp1Prw2G75p0OIsdlMZg3cLo0c+YbIUYOxnQJw==}
+
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
 
@@ -3287,6 +3311,10 @@ packages:
         optional: true
       react-devtools:
         optional: true
+
+  '@resvg/resvg-wasm@2.6.2':
+    resolution: {integrity: sha512-FqALmHI8D4o6lk/LRWDnhw95z5eO+eAa6ORjVg09YRR7BkcM6oPHU9uyC0gtQG5vpFLvgpeU4+zEAz2H8APHNw==}
+    engines: {node: '>= 10'}
 
   '@rolldown/binding-android-arm-eabi@1.2.12':
     resolution: {integrity: sha512-dB/a1214qKfHMXCpgqR4OZT+jS4kTyEXbQGJPqzobt5EwH5rX080pxE37alt3RzvR1bf1Yz/yGqRfrYAxuPw0A==}
@@ -4705,6 +4733,9 @@ packages:
   batch@0.6.1:
     resolution: {integrity: sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==}
 
+  bidi-js@1.1.0:
+    resolution: {integrity: sha512-fX1Onk0tdVPC7obPWB5EbJ1z7NVhLq4m2xZLq2YXBkxzMXIGRpNMU88n0EPgWseKl12J7zXs7qrDxPK4sRs2fg==}
+
   big.js@5.2.2:
     resolution: {integrity: sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==}
 
@@ -5998,6 +6029,9 @@ packages:
   hard-rejection@2.1.0:
     resolution: {integrity: sha512-VIZB+ibDhx7ObhAe7OVtoEbuP4h/MuOTHJ+J8h/eBXotJYl0fBgR72xDFCKgIh22OJZIOVNxBMWuhAr10r8HdA==}
     engines: {node: '>=6'}
+
+  harfbuzzjs@0.3.6:
+    resolution: {integrity: sha512-dzf7y6NS8fiAIvPAL/VKwY8wx2HCzUB0vUfOo6h1J5UilFEEf7iYqFsvgwjHwvM3whbjfOMadNvQekU3KuRnWQ==}
 
   has-bigints@1.1.0:
     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
@@ -10939,6 +10973,8 @@ snapshots:
       '@ckeditor/ckeditor5-utils': 47.6.2
       ckeditor5: 47.6.2
       es-toolkit: 1.39.5
+    transitivePeerDependencies:
+      - supports-color
 
   '@ckeditor/ckeditor5-editor-inline@48.5.2':
     dependencies:
@@ -10996,6 +11032,8 @@ snapshots:
     dependencies:
       '@ckeditor/ckeditor5-utils': 47.6.2
       es-toolkit: 1.39.5
+    transitivePeerDependencies:
+      - supports-color
 
   '@ckeditor/ckeditor5-engine@48.5.2':
     dependencies:
@@ -12201,6 +12239,10 @@ snapshots:
 
   '@fontsource/dm-mono@5.3.0': {}
 
+  '@fontsource/noto-sans-sc@5.3.0': {}
+
+  '@fontsource/noto-sans@5.3.0': {}
+
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:
       '@formatjs/fast-memoize': 2.2.7
@@ -13241,6 +13283,8 @@ snapshots:
       '@types/react': 19.3.0
     transitivePeerDependencies:
       - supports-color
+
+  '@resvg/resvg-wasm@2.6.2': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.12':
     optional: true
@@ -14871,6 +14915,10 @@ snapshots:
   baseline-browser-mapping@2.11.27: {}
 
   batch@0.6.1: {}
+
+  bidi-js@1.1.0:
+    dependencies:
+      require-from-string: 2.0.2
 
   big.js@5.2.2: {}
 
@@ -16522,6 +16570,8 @@ snapshots:
       - utf-8-validate
 
   hard-rejection@2.1.0: {}
+
+  harfbuzzjs@0.3.6: {}
 
   has-bigints@1.1.0: {}
 

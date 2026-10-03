@@ -6,5 +6,6 @@
     "jsxImportSource": "react"
   },
   "include": [".astro/types.d.ts", "src", "test", "astro.config.ts", "vitest.config.ts"],
-  "exclude": ["dist"]
+  // The Worker has its own runtime types (tsconfig.worker.json).
+  "exclude": ["dist", "src/worker"]
 }

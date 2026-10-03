@@ -14,6 +14,7 @@ import { HeroSearch } from "../islands/HeroSearch";
 import { UseCases } from "../islands/UseCases";
 import Base from "../layouts/Base.astro";
 import { comparisons, stats } from "../lib/showcase";
+import { siteJsonLd } from "../lib/structured-data";
 
 const { t, locale, tag, messages } = i18nFor(Astro);
 /** English examples on a translated page are marked, so screen readers read them as English. */
@@ -78,7 +79,7 @@ const kindLabel = (kind: string) => {
 };
 ---
 
-<Base description={t("meta.home.description")} path="/">
+<Base description={t("meta.home.description")} path="/" jsonLd={siteJsonLd(tag)}>
   <section class="hero">
     {/* The hero's packs come from the API: open the connection early. The island fetches the packs
         itself, after the first paint, so they never compete with it (a preload in the HTML did:

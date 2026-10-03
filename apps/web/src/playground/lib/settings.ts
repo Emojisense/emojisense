@@ -103,6 +103,16 @@ export function writeSettings(settings: SearchSettings): string {
   return text ? `?${text}` : "";
 }
 
+/**
+ * A link to share this search: `/s/` serves the playground with a share card of the query (the
+ * site's Worker, src/worker/share.ts). The query is always in it, even when it is the default.
+ */
+export function shareLink(settings: SearchSettings, origin: string): string {
+  const params = new URLSearchParams(writeSettings(settings));
+  params.set("q", settings.query.trim());
+  return `${origin}/s/?${params}`;
+}
+
 export function readTab(hash: string): Tab {
   const name = hash.replace(/^#/, "");
   return (TABS as readonly string[]).includes(name) ? (name as Tab) : "search";
