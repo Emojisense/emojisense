@@ -1,9 +1,9 @@
+import { getPlan } from "@emojisense/platform";
 import { useId } from "react";
 import type { App } from "../api";
 import { appEmoji } from "../lib/identity";
 import { Link } from "../router";
 import { type AppSection, appHref } from "../routes";
-import { EnvBadge } from "../ui/Badges";
 import { Icon } from "../ui/Icon";
 import { usePopover } from "../ui/usePopover";
 import { useApps } from "./context";
@@ -12,6 +12,11 @@ interface AppSwitcherProps {
   current: App | null;
   /** Switching keeps the current section, so Keys → Keys of the other app. */
   section: AppSection;
+}
+
+/** The plan of an own app, or whose team a shared app belongs to. */
+function appMeta(app: App): string {
+  return app.role === "owner" ? `${getPlan(app.plan).name} plan` : `${app.ownerName ?? "A"}’s team`;
 }
 
 export function AppSwitcher({ current, section }: AppSwitcherProps) {
@@ -36,9 +41,7 @@ export function AppSwitcher({ current, section }: AppSwitcherProps) {
         </span>
         <span className="switcher-text">
           <span className="switcher-name">{current?.name ?? "Choose an app"}</span>
-          <span className="switcher-meta">
-            {current ? <EnvBadge environment={current.environment} /> : `${list.length} apps`}
-          </span>
+          <span className="switcher-meta">{current ? appMeta(current) : `${list.length} apps`}</span>
         </span>
         <Icon name="chevrons" className="switcher-chevron" />
       </button>
@@ -59,7 +62,7 @@ export function AppSwitcher({ current, section }: AppSwitcherProps) {
                   </span>
                   <span className="switcher-item-text">
                     <span>{app.name}</span>
-                    <EnvBadge environment={app.environment} />
+                    {app.role !== "owner" && <span className="switcher-meta">{appMeta(app)}</span>}
                   </span>
                 </Link>
               </li>

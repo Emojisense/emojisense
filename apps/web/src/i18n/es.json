@@ -727,12 +727,22 @@
         "unit": "de estadísticas"
       },
       "apps": {
-        "label": "Apps o entornos",
+        "label": "Apps",
         "hint": "Una por producto, cada una con sus propias claves",
         "unit": {
-          "one": "app o entorno",
-          "many": "apps o entornos",
-          "other": "apps o entornos"
+          "one": "app",
+          "many": "apps",
+          "other": "apps"
+        }
+      },
+      "environments": {
+        "label": "Entornos",
+        "hint": "Claves distintas para producción, pruebas y desarrollo",
+        "unit": "entornos",
+        "names": {
+          "prod": "Producción",
+          "staging": "Pruebas",
+          "dev": "Desarrollo"
         }
       },
       "team": {

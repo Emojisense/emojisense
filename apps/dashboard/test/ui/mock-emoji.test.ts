@@ -5,7 +5,7 @@ import { handle } from "../../src/app/mock/handlers";
 import type { CustomEmojiListResponse, EmojiImportResponse, UsageResponse } from "../../src/shared/contract";
 
 const RELAY = "app_relay_prod";
-const STAGING = "app_relay_staging";
+const DESK = "app_relay_desk";
 
 function call(db: ReturnType<typeof createDb>, method: string, path: string, body: unknown = {}) {
   const form = body instanceof FormData ? body : null;
@@ -27,7 +27,7 @@ function upload(shortcode: string, bytes: number) {
 describe("mock mode custom emoji", () => {
   it("lists used and limit for the whole account, like the Worker", async () => {
     const db = createDb("pro");
-    await call(db, "POST", `/api/apps/${STAGING}/emoji`, upload("staging-only", 500));
+    await call(db, "POST", `/api/apps/${DESK}/emoji`, upload("desk-only", 500));
     const { body } = await call(db, "GET", `/api/apps/${RELAY}/emoji`);
     const list = body as CustomEmojiListResponse;
     expect(list.limit).toBe(2_000);

@@ -3,19 +3,21 @@ import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 import type { AppSummary, CreatedKeyResponse, KeySummary } from "../../shared/contract";
 import { ApiError, api, errorMessage } from "../api";
 import { splitOrigins } from "../format";
+import { ENVIRONMENT_INFO, type Environment } from "../lib/environments";
 import { rememberKey } from "../lib/sessionKeys";
 import { Dialog } from "../ui/Dialog";
 import { OriginsField } from "./OriginsField";
 
 interface CreateKeyDialogProps {
   app: AppSummary;
+  environment: Environment;
   open: boolean;
   onClose: () => void;
   onCreated: (key: KeySummary) => void;
 }
 
 /** Two steps: the form, then the one and only view of the full key. */
-export function CreateKeyDialog({ app, open, onClose, onCreated }: CreateKeyDialogProps) {
+export function CreateKeyDialog({ app, environment, open, onClose, onCreated }: CreateKeyDialogProps) {
   const [created, setCreated] = useState<CreatedKeyResponse | null>(null);
   const close = () => {
     setCreated(null);
@@ -25,8 +27,10 @@ export function CreateKeyDialog({ app, open, onClose, onCreated }: CreateKeyDial
   return (
     <Dialog
       open={open}
-      title={created ? "Copy your key now" : "Create an API key"}
-      description={created ? undefined : `For ${app.name} (${app.environment}).`}
+      title={
+        created ? "Copy your key now" : `Create a ${ENVIRONMENT_INFO[environment].label.toLowerCase()} key`
+      }
+      description={created ? undefined : `For ${app.name}. ${ENVIRONMENT_INFO[environment].text}`}
       onClose={close}
       dismissible={created === null}
     >
@@ -35,6 +39,7 @@ export function CreateKeyDialog({ app, open, onClose, onCreated }: CreateKeyDial
       ) : (
         <CreateKeyForm
           app={app}
+          environment={environment}
           onCancel={close}
           onCreated={(result) => {
             rememberKey(result.key.id, result.fullKey);
@@ -49,11 +54,12 @@ export function CreateKeyDialog({ app, open, onClose, onCreated }: CreateKeyDial
 
 interface CreateKeyFormProps {
   app: AppSummary;
+  environment: Environment;
   onCancel: () => void;
   onCreated: (result: CreatedKeyResponse) => void;
 }
 
-function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
+function CreateKeyForm({ app, environment, onCancel, onCreated }: CreateKeyFormProps) {
   const [kind, setKind] = useState<KeyKind>("publishable");
   const [origins, setOrigins] = useState("");
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
@@ -65,7 +71,10 @@ function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
     setBusy(true);
     setError(null);
     try {
-      const input = kind === "publishable" ? { kind, allowedOrigins: splitOrigins(origins) } : { kind };
+      const input =
+        kind === "publishable"
+          ? { kind, environment, allowedOrigins: splitOrigins(origins) }
+          : { kind, environment };
       onCreated(await api.createKey(app.id, input));
     } catch (caught) {
       setError({
@@ -128,7 +137,7 @@ function CreateKeyForm({ app, onCancel, onCreated }: CreateKeyFormProps) {
         <OriginsField
           value={origins}
           onChange={setOrigins}
-          environment={app.environment}
+          environment={environment}
           invalid={error?.field === "allowedOrigins"}
           errorId={error ? errorId : undefined}
         />

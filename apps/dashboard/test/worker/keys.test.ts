@@ -1,12 +1,14 @@
+import type { PlanId } from "@emojisense/platform";
 import { hashKey } from "@emojisense/platform";
 import { describe, expect, it } from "vitest";
 import type { AppDetailResponse, CreatedKeyResponse, KeyResponse } from "../../src/shared/contract";
-import { body, createAppFor, createHarness, NOW } from "./harness";
+import { body, createAppFor, createHarness, NOW, setPlan } from "./harness";
 
-async function setup(environment = "prod") {
+async function setup(plan: PlanId = "free") {
   const h = createHarness();
   const cookie = await h.signIn();
-  const appId = await createAppFor(h, cookie, { environment });
+  setPlan(h, "ada", plan);
+  const appId = await createAppFor(h, cookie);
   const createKey = (input: unknown) => h.call("POST", `/api/apps/${appId}/keys`, { cookie, body: input });
   return { h, cookie, appId, createKey };
 }
@@ -23,6 +25,7 @@ describe("key lifecycle", () => {
       id: expect.any(String),
       appId,
       kind: "publishable",
+      environment: "prod",
       prefix: fullKey.slice(0, 12),
       allowedOrigins: ["https://chat.example.com"],
       createdAt: NOW,
@@ -125,27 +128,70 @@ describe("key lifecycle", () => {
   });
 });
 
+describe("key environments", () => {
+  it.each([
+    ["free", "dev", "solo"],
+    ["free", "staging", "pro"],
+    ["solo", "staging", "pro"],
+  ] as const)("on %s, a %s key needs %s", async (plan, environment, required) => {
+    const { createKey } = await setup(plan);
+    const response = await createKey({ kind: "secret", environment });
+    expect(response.status).toBe(402);
+    expect(await body(response)).toMatchObject({ error: { code: "plan_required", plan: required } });
+  });
+
+  it("counts active keys per environment", async () => {
+    const { h, cookie, appId, createKey } = await setup("pro");
+    for (const environment of ["prod", "staging", "dev", "dev"]) {
+      expect((await createKey({ kind: "secret", environment })).status).toBe(201);
+    }
+    const detail = await body<AppDetailResponse>(await h.call("GET", `/api/apps/${appId}`, { cookie }));
+    expect(detail.app.activeKeyCount).toBe(4);
+    expect(detail.app.activeKeysByEnvironment).toEqual({ prod: 1, staging: 1, dev: 2 });
+    expect(detail.keys.map((key) => key.environment).sort()).toEqual(["dev", "dev", "prod", "staging"]);
+  });
+
+  it("rejects an unknown environment", async () => {
+    const { createKey } = await setup("pro");
+    const response = await createKey({ kind: "secret", environment: "production" });
+    expect(response.status).toBe(400);
+    expect(await body(response)).toMatchObject({ error: { field: "environment" } });
+  });
+});
+
 describe("allowed origins policy", () => {
-  it("requires origins on publishable keys of staging and prod apps", async () => {
+  it("requires origins on publishable prod and staging keys", async () => {
     for (const environment of ["prod", "staging"]) {
-      const { createKey } = await setup(environment);
-      const response = await createKey({ kind: "publishable" });
+      const { createKey } = await setup("pro");
+      const response = await createKey({ kind: "publishable", environment });
       expect(response.status).toBe(400);
       expect(await body(response)).toMatchObject({
         error: {
           code: "invalid_origin",
           field: "allowedOrigins",
-          message: "Add at least one allowed origin. Only keys of dev apps may allow any origin.",
+          message: "Add at least one allowed origin. Only dev keys may allow any origin.",
         },
       });
     }
   });
 
-  it("lets dev apps create publishable keys for any origin", async () => {
-    const { createKey } = await setup("dev");
-    const response = await createKey({ kind: "publishable", allowedOrigins: [] });
+  it("lets dev keys allow any origin", async () => {
+    const { h, cookie, createKey } = await setup("solo");
+    const response = await createKey({ kind: "publishable", environment: "dev", allowedOrigins: [] });
     expect(response.status).toBe(201);
-    expect((await body<CreatedKeyResponse>(response)).key.allowedOrigins).toEqual([]);
+    const { key } = await body<CreatedKeyResponse>(response);
+    expect(key).toMatchObject({ environment: "dev", allowedOrigins: [] });
+
+    const cleared = await h.call("PATCH", `/api/keys/${key.id}`, { cookie, body: { allowedOrigins: [] } });
+    expect(cleared.status).toBe(200);
+  });
+
+  it("keeps origins on a prod key when they are edited", async () => {
+    const { h, cookie, createKey } = await setup();
+    const created = await createKey({ kind: "publishable", allowedOrigins: ["https://a.example.com"] });
+    const { key } = await body<CreatedKeyResponse>(created);
+    const cleared = await h.call("PATCH", `/api/keys/${key.id}`, { cookie, body: { allowedOrigins: [] } });
+    expect(cleared.status).toBe(400);
   });
 
   it("gives secret keys no origins", async () => {

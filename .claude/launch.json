@@ -56,6 +56,24 @@
       ],
       "cwd": "apps/dashboard",
       "port": 8792
+    },
+    {
+      "name": "dashboard-ui",
+      "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--config", "vite.preview.config.ts", "--port", "5179", "--strictPort"],
+      "cwd": "apps/dashboard",
+      "env": {
+        "VITE_CLERK_PUBLISHABLE_KEY": "pk_test_ZmVhc2libGUtYmxvd2Zpc2gtOTY4MC5jbGVyay5hY2NvdW50cy5kZXYk"
+      },
+      "port": 5179
+    },
+    {
+      "name": "dashboard-mock",
+      "runtimeExecutable": "/Users/peker/.nvm/versions/node/v24.5.0/bin/node",
+      "runtimeArgs": ["node_modules/vite/bin/vite.js", "--port", "5183", "--strictPort"],
+      "cwd": "apps/dashboard",
+      "env": { "VITE_MOCK": "1" },
+      "port": 5183
     }
   ]
 }

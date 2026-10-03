@@ -8,16 +8,16 @@ describe("apps", () => {
     const cookie = await h.signIn();
     const response = await h.call("POST", "/api/apps", {
       cookie,
-      body: { name: "  Chat app ", environment: "staging" },
+      body: { name: "  Chat app " },
     });
     expect(response.status).toBe(201);
     const { app } = await body<{ app: AppsResponse["apps"][number] }>(response);
     expect(app).toMatchObject({
       name: "Chat app",
-      environment: "staging",
       plan: "free",
       emojiSet: "native",
       activeKeyCount: 0,
+      activeKeysByEnvironment: { prod: 0, staging: 0, dev: 0 },
       role: "owner",
       ownerName: "ada",
     });
@@ -26,11 +26,15 @@ describe("apps", () => {
     expect(list.apps).toEqual([app]);
   });
 
-  it("defaults the environment to prod", async () => {
+  it("ignores the environment an older client sends: every app has every environment", async () => {
     const h = createHarness();
     const cookie = await h.signIn();
-    const response = await h.call("POST", "/api/apps", { cookie, body: { name: "Bot" } });
-    expect((await body<{ app: { environment: string } }>(response)).app.environment).toBe("prod");
+    const response = await h.call("POST", "/api/apps", {
+      cookie,
+      body: { name: "Bot", environment: "production" },
+    });
+    expect(response.status).toBe(201);
+    expect(await body(response)).not.toHaveProperty("app.environment");
   });
 
   it.each([
@@ -38,7 +42,6 @@ describe("apps", () => {
     [{ name: "   " }, "name"],
     [{ name: "x".repeat(65) }, "name"],
     [{ name: "a\u0007b" }, "name"],
-    [{ name: "Bot", environment: "production" }, "environment"],
   ])("rejects %j", async (input, field) => {
     const h = createHarness();
     const cookie = await h.signIn();
@@ -184,7 +187,7 @@ describe("ownership", () => {
     const h = createHarness();
     const ada = await h.signIn("ada");
     const bob = await h.signIn("bob");
-    const appId = await createAppFor(h, ada, { environment: "dev" });
+    const appId = await createAppFor(h, ada);
     const created = await h.call("POST", `/api/apps/${appId}/keys`, {
       cookie: ada,
       body: { kind: "secret" },

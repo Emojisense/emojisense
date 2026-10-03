@@ -37,9 +37,9 @@ describe("usage", () => {
     expect(screen.getByText("8,500 / 10,000")).toBeTruthy();
     expect(screen.getByText(/close to the limit/)).toBeTruthy();
     expect(screen.getByText(/^Limit reached/)).toBeTruthy();
-    // Custom emoji are not on the plan and no plan sells them yet: no meter and no note.
+    // Custom emoji are not on the plan and no plan sells them yet: no meter and no link to them.
     expect(screen.queryByRole("meter", { name: "Custom emoji" })).toBeNull();
-    expect(screen.queryByText("Not included in the Free plan.")).toBeNull();
+    expect(screen.queryByRole("link", { name: /Custom emoji/ })).toBeNull();
 
     const month = screen.getByLabelText("Month") as HTMLSelectElement;
     expect(
@@ -66,7 +66,9 @@ describe("usage", () => {
     const semantic = await screen.findByRole("meter", { name: "AI calls" });
     expect(semantic.getAttribute("aria-valuetext")).toBe("8,500 of 10,000 (85%)");
     expect(screen.getByText(/^This app: 1,200 of 8,500\. 85% used: close to the limit\./)).toBeTruthy();
-    expect(screen.getByText(/Plan limits count the calls of every app of the account\./)).toBeTruthy();
+    expect(screen.getByText("Every app of the account counts against the Free plan.")).toBeTruthy();
+    // No plan sells photo to emoji yet: no meter until the account uses it.
+    expect(screen.queryByRole("meter", { name: "Image classifications" })).toBeNull();
   });
 
   it("meters custom emoji from the usage route: rows stored by the account, this app's part", async () => {
@@ -84,7 +86,7 @@ describe("usage", () => {
     expect(meter.getAttribute("aria-valuetext")).toBe("120 of 2,000 (6%)");
     expect(screen.getByText(/^This app: 45 of 120\./)).toBeTruthy();
     // Stored emoji are not calls: the month still reads as one without calls.
-    expect(screen.getByRole("heading", { name: "No calls in October 2026" })).toBeTruthy();
+    expect(screen.getByText("No calls in October 2026.")).toBeTruthy();
   });
 
   it("tells the user what to do when nothing was counted yet", async () => {
@@ -95,6 +97,6 @@ describe("usage", () => {
     });
     render(<App />);
 
-    expect(await screen.findByRole("heading", { name: "No calls in October 2026" })).toBeTruthy();
+    expect(await screen.findByText("No calls in October 2026.")).toBeTruthy();
   });
 });

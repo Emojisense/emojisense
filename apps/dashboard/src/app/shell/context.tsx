@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from "react";
 import type { KeySummary } from "../../shared/contract";
 import { type App, api } from "../api";
+import { countActiveKeys } from "../lib/environments";
 import { type Resource, useResource } from "../lib/useResource";
 
 /* All apps, for the switcher and the apps page. */
@@ -94,7 +95,11 @@ export function AppScope({ appId, children }: { appId: string | null; children: 
     (keys: KeySummary[]) =>
       mutate((current) => ({
         keys,
-        app: { ...current.app, activeKeyCount: keys.filter((key) => key.revokedAt === null).length },
+        app: {
+          ...current.app,
+          activeKeyCount: keys.filter((key) => key.revokedAt === null).length,
+          activeKeysByEnvironment: countActiveKeys(keys),
+        },
       })),
     [mutate],
   );

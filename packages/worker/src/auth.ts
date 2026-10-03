@@ -1,7 +1,15 @@
-import { getPlan, hashKey, keyKind, originAllowed, type Plan } from "@emojisense/platform";
+import {
+  getPlan,
+  hashKey,
+  keyKind,
+  lowestPlanWith,
+  originAllowed,
+  type Plan,
+  planHasEnvironment,
+} from "@emojisense/platform";
 import { KEY_CACHE_MAX_ENTRIES, KEY_CACHE_TTL_MS } from "./config.ts";
 import type { Env, RateLimiter } from "./env.ts";
-import { errorResponse } from "./http.ts";
+import { errorResponse, json } from "./http.ts";
 import type { ApiKey, Store } from "./store.ts";
 
 export type Principal =
@@ -188,6 +196,7 @@ export async function identify(
   }
   if (!resolved || resolved.key.revoked) return errorResponse(401, "unknown or revoked key");
   const { key } = resolved;
+  if (key.environment && !planHasEnvironment(key.plan, key.environment)) return pausedKey(key);
   if (key.kind === "secret") {
     if (sentAs === "query") {
       return errorResponse(403, "secret keys must be sent as Authorization: Bearer, never in a URL");
@@ -202,6 +211,21 @@ export async function identify(
 }
 
 const rateLimited = () => errorResponse(429, "rate limited", { "Retry-After": "60" });
+
+/** A dev or staging key after a downgrade: it works again when the plan includes its environment. */
+function pausedKey(key: ApiKey): Response {
+  const environment = key.environment ?? "prod";
+  const required = getPlan(lowestPlanWith((plan) => plan.environments.includes(environment)) ?? "scale");
+  return json(
+    {
+      error: "plan_required",
+      message: `${environment} keys need the ${required.name} plan or higher. Use a prod key, or upgrade the account that owns this app.`,
+      plan: required.id,
+    },
+    402,
+    { "Cache-Control": "no-store" },
+  );
+}
 
 function rateLimitFor(
   env: Env,

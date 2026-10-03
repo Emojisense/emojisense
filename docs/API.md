@@ -22,9 +22,15 @@ Shared contracts: `@emojisense/platform` (D1 schema, plans, key helpers) and
 
 | Key | Where | Sent as | Checks |
 | --- | ----- | ------- | ------ |
-| Publishable `pk_live_…` | browsers, extensions | `?key=` query parameter (no CORS preflight) | `Origin` must match the key's allowed origins (an empty list allows any origin; only `dev` apps may have such keys) |
+| Publishable `pk_live_…` | browsers, extensions | `?key=` query parameter (no CORS preflight) | `Origin` must match the key's allowed origins (an empty list allows any origin; only `dev` keys may have one) |
 | Secret `sk_live_…` | servers only (MCP, bots, tenant writes) | `Authorization: Bearer sk_live_…` | never accepted with an `Origin` header (blocks use from browsers) or in the URL |
 | none (anonymous) | quick tries, local dev | — | stricter rate limit per IP, and no model calls (below) |
+
+Every key belongs to one environment of its app: `prod` (every plan), `dev` (Solo and up) or
+`staging` (Pro and up). The environment does not show in the key. A `dev` or `staging` key whose
+account plan no longer includes its environment answers `402`
+`{ "error": "plan_required", "message", "plan" }`, with the cheapest plan that has it, until the
+plan includes it again. `prod` keys never pause.
 
 The `Origin` check stops misuse from other websites. It does not stop servers, which can forge
 headers, so every caller is also rate limited:
@@ -577,10 +583,10 @@ your own server, use the Search API and the tenants API.
 | `POST /api/auth/logout` | Clears the dev sign-in cookie. Clerk sessions end in the browser. |
 | `GET /api/me` | Account, its own `plan`, `appCount`, `billingStatus`, `teams: [{ ownerId, ownerName, role }]` |
 | `DELETE /api/me` | `{ confirm }` → `{ ok: true, clerkUserDeleted }`. Deletes the account and everything it owns, see below (the account itself) |
-| `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`) / create an app in the own account (`name`, `environment`) |
+| `GET /api/apps`, `POST /api/apps` | List own apps, then team apps (each with `role`, `ownerId`, `ownerName`, `emojiSet`, `activeKeyCount`, `activeKeysByEnvironment`) / create an app in the own account (`{ name }`; an `environment` field from older clients is ignored) |
 | `GET /api/apps/:id` | App + keys (viewer+) |
 | `PATCH /api/apps/:id` | `{ name?, emojiSet? }` (developer+). `emojiSet` other than `native` needs Solo+ |
-| `POST /api/apps/:id/keys` | Create a key (`kind`, `allowedOrigins`). The full key is returned once. (developer+) |
+| `POST /api/apps/:id/keys` | Create a key (`kind`, `environment` = `prod` (default), `staging` or `dev`, `allowedOrigins`). The full key is returned once. An environment the owner's plan does not include is `402 plan_required`. (developer+) |
 | `PATCH /api/keys/:id`, `DELETE /api/keys/:id` | Update origins / revoke (developer+) |
 | `GET /api/apps/:id/usage?period=YYYY-MM` | Per metric: the account's total over all of its apps vs the owner's plan limit (`used`, `limit`, `percent`, `status`), and this app's part (`appUsed`). `custom_emoji` is the emoji stored now, in every period. (viewer+) |
 | `GET /api/apps/:id/analytics?days=7\|30\|90[&country=BR][&locale=pt]` | Search analytics (Pro and Scale, viewer+), see below |

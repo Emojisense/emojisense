@@ -727,12 +727,22 @@
         "unit": "de análise de uso"
       },
       "apps": {
-        "label": "Apps ou ambientes",
+        "label": "Apps",
         "hint": "Um por produto, cada um com suas próprias chaves",
         "unit": {
-          "one": "app ou ambiente",
-          "many": "apps ou ambientes",
-          "other": "apps ou ambientes"
+          "one": "app",
+          "many": "apps",
+          "other": "apps"
+        }
+      },
+      "environments": {
+        "label": "Ambientes",
+        "hint": "Chaves separadas para produção, homologação e desenvolvimento",
+        "unit": "ambientes",
+        "names": {
+          "prod": "Produção",
+          "staging": "Homologação",
+          "dev": "Desenvolvimento"
         }
       },
       "team": {

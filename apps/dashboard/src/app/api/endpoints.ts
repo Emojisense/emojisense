@@ -64,13 +64,13 @@ export const api = {
     request<DeleteAccountResponse>("DELETE", "/api/me", { confirm } satisfies DeleteAccountRequest),
 
   listApps: () => request<AppsResponse>("GET", "/api/apps"),
-  createApp: (input: { name: string; environment: Environment }) =>
+  createApp: (input: { name: string }) =>
     request<AppResponse>("POST", "/api/apps", input).then((data) => data.app),
   getApp: (appId: string) => request<AppDetailResponse>("GET", appPath(appId)),
   updateApp: (appId: string, input: { name?: string; emojiSet?: EmojiSet }) =>
     request<AppResponse>("PATCH", appPath(appId), input).then((data) => data.app),
 
-  createKey: (appId: string, input: { kind: KeyKind; allowedOrigins?: string[] }) =>
+  createKey: (appId: string, input: { kind: KeyKind; environment: Environment; allowedOrigins?: string[] }) =>
     request<CreatedKeyResponse>("POST", `${appPath(appId)}/keys`, input),
   updateKeyOrigins: (keyId: string, allowedOrigins: string[]) =>
     request<KeyResponse>("PATCH", `/api/keys/${segment(keyId)}`, { allowedOrigins }),

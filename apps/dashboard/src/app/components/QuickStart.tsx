@@ -6,7 +6,7 @@ import { sessionKey } from "../lib/sessionKeys";
 import { Link } from "../router";
 import { appHref } from "../routes";
 import { CodeBlock } from "../ui/CodeBlock";
-import { EmptyState } from "../ui/Feedback";
+import { Icon } from "../ui/Icon";
 
 type Tab = "browser" | "react" | "http";
 
@@ -66,9 +66,13 @@ curl "${API_URL}/v1/search?q=ship+it&limit=8" \\
   };
 }
 
-/** The newest active key of a kind: its full value if it was created in this tab, else its prefix. */
+/**
+ * The newest active key of a kind, a prod key before others: its full value if it was created in
+ * this tab, else its prefix.
+ */
 function keyText(keys: KeySummary[], kind: KeySummary["kind"]): { text: string; full: boolean } | null {
-  const key = keys.find((item) => item.kind === kind && item.revokedAt === null);
+  const active = keys.filter((item) => item.kind === kind && item.revokedAt === null);
+  const key = active.find((item) => item.environment === "prod") ?? active[0];
   if (!key) return null;
   const full = sessionKey(key.id);
   return full ? { text: full, full: true } : { text: `${key.prefix}…`, full: false };
@@ -80,28 +84,7 @@ export function QuickStart({ app, keys }: { app: App; keys: KeySummary[] }) {
   const publishable = keyText(keys, "publishable");
   const secret = keyText(keys, "secret");
 
-  if (!publishable && !secret) {
-    return (
-      <section className="card" aria-labelledby={`${baseId}-title`}>
-        <div className="card-head">
-          <h2 id={`${baseId}-title`} className="card-title">
-            Quick start
-          </h2>
-        </div>
-        <EmptyState
-          emoji="🔑"
-          title="No keys yet"
-          action={
-            <Link to={appHref(app.id, "keys")} className="btn btn-primary">
-              Create a key
-            </Link>
-          }
-        >
-          Create a publishable key for browsers, then paste the snippet into your picker.
-        </EmptyState>
-      </section>
-    );
-  }
+  if (!publishable && !secret) return <GetStarted app={app} />;
 
   const code = snippets(publishable?.text ?? "pk_live_…", secret?.text ?? "sk_live_…")[tab];
   const shown = tab === "http" ? secret : publishable;
@@ -158,6 +141,58 @@ export function QuickStart({ app, keys }: { app: App; keys: KeySummary[] }) {
                 : "Create a publishable key for browser calls."}
         </p>
       </div>
+    </section>
+  );
+}
+
+/** Before the first key: what is done and what comes next, one action at a time. */
+function GetStarted({ app }: { app: App }) {
+  const headingId = useId();
+  return (
+    <section className="card" aria-labelledby={headingId}>
+      <div className="card-head">
+        <div>
+          <h2 id={headingId} className="card-title">
+            Get started
+          </h2>
+          <p className="card-sub">Three steps to search by meaning in your app.</p>
+        </div>
+      </div>
+      <ol className="steps card-body">
+        <li className="step" data-state="done">
+          <span className="step-mark" aria-hidden="true">
+            <Icon name="check" className="step-check" />
+          </span>
+          <div className="step-text">
+            <strong>Create the app</strong>
+            <span>
+              {app.name} is ready, with production keys. <span className="visually-hidden">Done.</span>
+            </span>
+          </div>
+        </li>
+        <li className="step" data-state="current">
+          <span className="step-mark" aria-hidden="true">
+            2
+          </span>
+          <div className="step-text">
+            <strong>Create a production key</strong>
+            <span>A publishable key for browsers, or a secret key for servers.</span>
+            <Link to={appHref(app.id, "keys")} className="btn btn-primary btn-sm">
+              <Icon name="plus" />
+              Create a key
+            </Link>
+          </div>
+        </li>
+        <li className="step">
+          <span className="step-mark" aria-hidden="true">
+            3
+          </span>
+          <div className="step-text">
+            <strong>Paste the snippet</strong>
+            <span>The JavaScript, React and HTTP code shows here, with your key in it.</span>
+          </div>
+        </li>
+      </ol>
     </section>
   );
 }

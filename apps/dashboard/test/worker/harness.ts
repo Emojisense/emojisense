@@ -188,11 +188,11 @@ export async function joinTeam(
 export async function createAppFor(
   harness: Harness,
   cookie: string,
-  input: { name?: string; environment?: string } = {},
+  input: { name?: string } = {},
 ): Promise<string> {
   const response = await harness.call("POST", "/api/apps", {
     cookie,
-    body: { name: input.name ?? "Chat app", environment: input.environment ?? "prod" },
+    body: { name: input.name ?? "Chat app" },
   });
   if (response.status !== 201)
     throw new Error(`create app failed: ${response.status} ${await response.text()}`);

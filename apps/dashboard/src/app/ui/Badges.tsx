@@ -1,6 +1,6 @@
 import { getPlan, type KeyKind, type PlanId } from "@emojisense/platform";
-import type { Environment } from "../../shared/contract";
-import type { Role } from "../api";
+import type { App, Role } from "../api";
+import { ENVIRONMENT_INFO, ENVIRONMENTS, type Environment, planHasEnvironment } from "../lib/environments";
 
 const ENV_STYLE: Record<Environment, string> = {
   prod: "badge badge-mono badge-solid",
@@ -11,9 +11,35 @@ const ENV_STYLE: Record<Environment, string> = {
 /** prod is filled, staging outlined, dev dashed: three states without color. */
 export function EnvBadge({ environment }: { environment: Environment }) {
   return (
-    <span className={ENV_STYLE[environment]} title={`${environment} environment`}>
+    <span className={ENV_STYLE[environment]} title={`${ENVIRONMENT_INFO[environment].label} key`}>
       {environment}
     </span>
+  );
+}
+
+/**
+ * The app's three environments in a row: a filled dot has active keys, a hollow one has none yet,
+ * and a faded one is not on the app's plan.
+ */
+export function EnvironmentDots({ app }: { app: App }) {
+  return (
+    <ul className="env-dots" aria-label="Environments">
+      {ENVIRONMENTS.map((environment) => {
+        const count = app.activeKeysByEnvironment[environment];
+        const state = !planHasEnvironment(app.plan, environment) ? "locked" : count > 0 ? "live" : "empty";
+        const label = ENVIRONMENT_INFO[environment].label;
+        const title =
+          state === "locked"
+            ? `${label}: not on this plan`
+            : `${label}: ${count} active key${count === 1 ? "" : "s"}`;
+        return (
+          <li key={environment} data-state={state} title={title}>
+            <span className="visually-hidden">{title}</span>
+            <span aria-hidden="true">{environment}</span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

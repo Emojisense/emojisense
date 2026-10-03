@@ -373,10 +373,11 @@
   gap: 0.25rem;
 }
 
+/* The page starts next to the sidebar; on wide screens the space is on the right, not in between. */
 .content {
-  width: min(100% - 3rem, var(--content-width));
-  margin-inline: auto;
-  padding: 2.25rem 0 5rem;
+  width: 100%;
+  max-width: calc(var(--content-width) + 2 * var(--content-gutter));
+  padding: 2.25rem var(--content-gutter) 5rem;
 }
 
 .content:focus {

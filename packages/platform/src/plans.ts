@@ -17,6 +17,13 @@ export type PlanId = (typeof PLAN_IDS)[number];
  */
 export const LISTED_PLAN_IDS: readonly PlanId[] = ["free", "solo", "pro"];
 
+/**
+ * Every app has these environments; a key belongs to one. Production is on every plan, dev and
+ * staging come with paid plans (DECISIONS.md, "Environments belong to keys"). Order: menus, tabs.
+ */
+export const ENVIRONMENTS = ["prod", "staging", "dev"] as const;
+export type Environment = (typeof ENVIRONMENTS)[number];
+
 export interface Plan {
   id: PlanId;
   name: string;
@@ -27,6 +34,8 @@ export interface Plan {
   hostedEmojiSets: boolean;
   analyticsRetentionDays: number;
   maxApps: number;
+  /** The environments its keys may use. `prod` is always first. */
+  environments: readonly Environment[];
   teamMembers: boolean;
   tenants: boolean;
 }
@@ -40,6 +49,7 @@ export const PLANS: Record<PlanId, Plan> = {
     hostedEmojiSets: false,
     analyticsRetentionDays: 0,
     maxApps: 1,
+    environments: ["prod"],
     teamMembers: false,
     tenants: false,
   },
@@ -52,6 +62,7 @@ export const PLANS: Record<PlanId, Plan> = {
     hostedEmojiSets: true,
     analyticsRetentionDays: 0,
     maxApps: 1,
+    environments: ["prod", "dev"],
     teamMembers: false,
     tenants: false,
   },
@@ -63,6 +74,7 @@ export const PLANS: Record<PlanId, Plan> = {
     hostedEmojiSets: true,
     analyticsRetentionDays: 30,
     maxApps: 3,
+    environments: ["prod", "staging", "dev"],
     teamMembers: true,
     tenants: false,
   },
@@ -74,6 +86,7 @@ export const PLANS: Record<PlanId, Plan> = {
     hostedEmojiSets: true,
     analyticsRetentionDays: 365,
     maxApps: Number.POSITIVE_INFINITY,
+    environments: ["prod", "staging", "dev"],
     teamMembers: true,
     tenants: true,
   },
@@ -93,6 +106,10 @@ export function getPlan(id: string): Plan {
  */
 export function lowestPlanWith(test: (plan: Plan) => boolean): PlanId | undefined {
   return PLAN_IDS.find((id) => test(PLANS[id]));
+}
+
+export function planHasEnvironment(id: PlanId, environment: Environment): boolean {
+  return PLANS[id].environments.includes(environment);
 }
 
 /** True when `a` is a higher plan than `b` (plans are ordered by price in PLAN_IDS). */

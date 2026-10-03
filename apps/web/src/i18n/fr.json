@@ -727,12 +727,22 @@
         "unit": "de statistiques"
       },
       "apps": {
-        "label": "Applications ou environnements",
+        "label": "Applications",
         "hint": "Une par produit, chacune avec ses propres clés",
         "unit": {
-          "one": "application ou environnement",
-          "many": "applications ou environnements",
-          "other": "applications ou environnements"
+          "one": "application",
+          "many": "applications",
+          "other": "applications"
+        }
+      },
+      "environments": {
+        "label": "Environnements",
+        "hint": "Des clés distinctes pour la production, la préproduction et le développement",
+        "unit": "environnements",
+        "names": {
+          "prod": "Production",
+          "staging": "Préproduction",
+          "dev": "Développement"
         }
       },
       "team": {

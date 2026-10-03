@@ -9,12 +9,12 @@ import type {
 import { accessFor, can, type Permission } from "../../src/worker/access";
 import { accountIdOf, body, createAppFor, createHarness, joinTeam, setPlan } from "./harness";
 
-/** ada owns a Pro account with one dev app and one key; bob, carol and dave join her team. */
+/** ada owns a Pro account with one app and one key; bob, carol and dave join her team. */
 async function setup() {
   const h = createHarness();
   const ada = await h.signIn("ada");
   setPlan(h, "ada", "pro");
-  const appId = await createAppFor(h, ada, { name: "Ada chat", environment: "dev" });
+  const appId = await createAppFor(h, ada, { name: "Ada chat" });
   const created = await h.call("POST", `/api/apps/${appId}/keys`, { cookie: ada, body: { kind: "secret" } });
   const keyId = (await body<CreatedKeyResponse>(created)).key.id;
 
@@ -111,7 +111,7 @@ describe("team members on app and key routes", () => {
     );
     const created = await h.call("POST", `/api/apps/${appId}/keys`, {
       cookie,
-      body: { kind: "publishable" },
+      body: { kind: "publishable", environment: "dev" },
     });
     expect(created.status).toBe(201);
     expect((await h.call("DELETE", `/api/keys/${keyId}`, { cookie })).status).toBe(200);

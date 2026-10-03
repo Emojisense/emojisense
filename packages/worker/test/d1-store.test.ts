@@ -28,6 +28,7 @@ describe("D1 store on the platform schema", () => {
       accountId: "acc",
       kind: "publishable",
       plan: "pro",
+      environment: "prod",
       allowedOrigins: ["https://app.example.com"],
       revoked: false,
       hasCustomEmoji: false,

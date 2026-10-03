@@ -41,7 +41,7 @@ export function parseAppName(value: unknown): string {
   return name;
 }
 
-/** Defaults to "prod", the column default in migrations/0001_init.sql. */
+/** A key's environment. Defaults to "prod", the column default in migrations/0010. */
 export function parseEnvironment(value: unknown): Environment {
   if (value === undefined) return "prod";
   if (typeof value === "string" && (ENVIRONMENTS as readonly string[]).includes(value)) {

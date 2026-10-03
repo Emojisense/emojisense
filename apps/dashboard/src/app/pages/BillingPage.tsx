@@ -30,12 +30,11 @@ const count = (value: number, unit: string) =>
 
 /**
  * `withTenants`: only when a shown plan has them, so the cards never point at a plan not on sale.
- * No custom emoji row: they run under the PLANS limits, but no plan sells them yet.
+ * No photo to emoji or custom emoji rows: they run under the PLANS limits, but no plan sells them yet.
  */
 function planFeatures(plan: Plan, withTenants: boolean): { text: string; included: boolean }[] {
   const features = [
     { text: `${count(plan.limits.semantic_calls, "AI calls")} a month`, included: true },
-    { text: `${count(plan.limits.image_classifications, "photo to emoji calls")} a month`, included: true },
     {
       text: Number.isFinite(plan.maxApps)
         ? count(plan.maxApps, plan.maxApps === 1 ? "app" : "apps")

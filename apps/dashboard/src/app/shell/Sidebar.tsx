@@ -1,10 +1,10 @@
-import { PLANS, type PlanId } from "@emojisense/platform";
+import type { PlanId } from "@emojisense/platform";
 import { useId, useState } from "react";
 import type { App } from "../api";
 import { useAdminStatus } from "../lib/admin";
 import { DOCS_URL } from "../lib/config";
 import { initials } from "../lib/identity";
-import { FEATURE_PLAN, type Feature, hasHigherListedPlan, isFeatureListed, planIncludes } from "../lib/plans";
+import { hasHigherListedPlan, isFeatureListed, planIncludes } from "../lib/plans";
 import { Link } from "../router";
 import { APP_SECTIONS, type AppSection, appHref, type Route, SECTION_INFO } from "../routes";
 import { useSession } from "../session";
@@ -54,7 +54,8 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
           <nav className="nav-group" aria-label={`${currentApp.name} app`}>
             {APP_SECTIONS.map((name) => {
               const info = SECTION_INFO[name];
-              // App features follow the app's plan, which is its owner's.
+              // App features follow the app's plan, which is its owner's. Locked ones stay in the
+              // list without a label: the page itself shows a preview and names the plan.
               const locked = info.feature && !planIncludes(currentApp.plan, info.feature);
               // A feature no plan on sale offers (tenants, webhooks, custom emoji) shows only to
               // apps that have it.
@@ -69,7 +70,6 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
                 >
                   <Icon name={info.icon} />
                   {info.label}
-                  {locked && info.feature && <LockHint feature={info.feature} />}
                 </Link>
               );
             })}
@@ -91,7 +91,6 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
             >
               <Icon name={link.icon} />
               {link.label}
-              {link.name === "team" && !planIncludes(me.plan.id, "team") && <LockHint feature="team" />}
             </Link>
           ))}
         </nav>
@@ -123,15 +122,6 @@ function InternalLinks({ route }: { route: Route }) {
         Culture
       </Link>
     </nav>
-  );
-}
-
-function LockHint({ feature }: { feature: Feature }) {
-  const name = PLANS[FEATURE_PLAN[feature]].name;
-  return (
-    <span className="nav-lock" title={`Available on ${name}`}>
-      {name}
-    </span>
   );
 }
 

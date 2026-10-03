@@ -53,7 +53,8 @@
 
   --sidebar-width: 15.5rem;
   --topbar-height: 3.25rem;
-  --content-width: 72rem;
+  --content-width: 80rem;
+  --content-gutter: clamp(1.25rem, 0.5rem + 2.5vw, 3rem);
 }
 
 @media (prefers-color-scheme: dark) {

@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import { BILLING_INTERVALS, BILLING_STATUSES } from "../src/billing.js";
-import { isHigherPlan, lowestPlanWith, PLAN_IDS } from "../src/plans.js";
+import { isHigherPlan, lowestPlanWith, PLAN_IDS, PLANS, planHasEnvironment } from "../src/plans.js";
 import {
   type AccountRow,
   CUSTOM_EMOJI_CONTENT_TYPES,
@@ -332,6 +332,42 @@ describe("migration 0004 (regional statistics)", () => {
   });
 });
 
+describe("migration 0010 (key environments)", () => {
+  it("gives each key its app's environment", () => {
+    const db = new DatabaseSync(":memory:");
+    db.exec("PRAGMA foreign_keys = ON");
+    const files = readdirSync(MIGRATIONS)
+      .filter((name) => name.endsWith(".sql"))
+      .sort();
+    for (const file of files.filter((name) => name < "0010")) {
+      db.exec(readFileSync(new URL(file, MIGRATIONS), "utf8"));
+    }
+    db.exec(`INSERT INTO accounts (id, created_at) VALUES ('a', 0);
+             INSERT INTO apps (id, account_id, name, environment, created_at) VALUES
+               ('p', 'a', 'Prod', 'prod', 0), ('s', 'a', 'Staging', 'staging', 0), ('d', 'a', 'Dev', 'dev', 0);
+             INSERT INTO api_keys (id, app_id, kind, prefix, hash, created_at) VALUES
+               ('kp', 'p', 'publishable', 'pk', 'h1', 0), ('ks', 's', 'secret', 'sk', 'h2', 0),
+               ('kd', 'd', 'publishable', 'pk', 'h3', 0);`);
+    db.exec(readFileSync(new URL("0010_key_environments.sql", MIGRATIONS), "utf8"));
+
+    expect(db.prepare("SELECT id, environment FROM api_keys ORDER BY id").all()).toEqual([
+      { id: "kd", environment: "dev" },
+      { id: "kp", environment: "prod" },
+      { id: "ks", environment: "staging" },
+    ]);
+    expect(() => db.prepare("UPDATE api_keys SET environment = 'test'").run()).toThrow(/CHECK/);
+  });
+
+  it("writes prod for a key created without an environment", () => {
+    const db = migratedDb();
+    db.exec(`INSERT INTO accounts (id, created_at) VALUES ('a', 0);
+             INSERT INTO apps (id, account_id, name, created_at) VALUES ('app', 'a', 'App', 0);
+             INSERT INTO api_keys (id, app_id, kind, prefix, hash, created_at) VALUES
+               ('k', 'app', 'publishable', 'pk', 'h', 0);`);
+    expect(db.prepare("SELECT environment FROM api_keys").get()).toEqual({ environment: "prod" });
+  });
+});
+
 describe("plan helpers", () => {
   it("names the cheapest plan with a feature", () => {
     expect(lowestPlanWith((p) => p.hostedEmojiSets)).toBe("solo");
@@ -339,6 +375,19 @@ describe("plan helpers", () => {
     expect(lowestPlanWith((p) => p.tenants)).toBe("scale");
     expect(lowestPlanWith((p) => p.maxApps > 3)).toBe("scale");
     expect(lowestPlanWith(() => false)).toBeUndefined();
+  });
+
+  it("adds dev on Solo and staging on Pro; prod is on every plan", () => {
+    expect(PLAN_IDS.map((id) => PLANS[id].environments)).toEqual([
+      ["prod"],
+      ["prod", "dev"],
+      ["prod", "staging", "dev"],
+      ["prod", "staging", "dev"],
+    ]);
+    expect(planHasEnvironment("free", "dev")).toBe(false);
+    expect(planHasEnvironment("solo", "dev")).toBe(true);
+    expect(planHasEnvironment("solo", "staging")).toBe(false);
+    expect(lowestPlanWith((p) => p.environments.includes("staging"))).toBe("pro");
   });
 
   it("orders plans by price", () => {

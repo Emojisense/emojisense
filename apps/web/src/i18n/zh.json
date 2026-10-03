@@ -721,10 +721,20 @@
         "unit": "的分析数据"
       },
       "apps": {
-        "label": "应用或环境",
+        "label": "应用",
         "hint": "每个产品一个，各有独立的密钥",
         "unit": {
-          "other": "个应用或环境"
+          "other": "个应用"
+        }
+      },
+      "environments": {
+        "label": "环境",
+        "hint": "为生产、预发布和开发环境分配独立密钥",
+        "unit": "环境",
+        "names": {
+          "prod": "生产",
+          "staging": "预发布",
+          "dev": "开发"
         }
       },
       "team": {

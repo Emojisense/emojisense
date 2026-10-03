@@ -1,8 +1,10 @@
 import {
+  type Environment,
   isHigherPlan,
   isListedPlan,
   LISTED_PLAN_IDS,
   lowestPlanWith,
+  type Metric,
   PLAN_IDS,
   PLANS,
   type Plan,
@@ -12,6 +14,8 @@ import type { MetricUsage } from "../../shared/contract";
 
 export type Feature =
   | "apps"
+  | "dev_keys"
+  | "staging_keys"
   | "custom_emoji"
   | "emoji_import"
   | "hosted_sets"
@@ -32,6 +36,8 @@ const lowestPlan = (has: (plan: Plan) => boolean, fallback: PlanId): PlanId =>
  */
 export const FEATURE_PLAN: Record<Feature, PlanId> = {
   apps: lowestPlan((plan) => plan.maxApps > 1, "pro"),
+  dev_keys: lowestPlan((plan) => plan.environments.includes("dev"), "solo"),
+  staging_keys: lowestPlan((plan) => plan.environments.includes("staging"), "pro"),
   custom_emoji: lowestPlan((plan) => plan.limits.custom_emoji > 0, "solo"),
   emoji_import: "pro",
   hosted_sets: lowestPlan((plan) => plan.hostedEmojiSets, "solo"),
@@ -44,6 +50,13 @@ export const FEATURE_PLAN: Record<Feature, PlanId> = {
 export function planIncludes(plan: PlanId, feature: Feature): boolean {
   return planRank(plan) >= planRank(FEATURE_PLAN[feature]);
 }
+
+/** The plan feature behind an environment's keys; prod is on every plan and has none. */
+export const ENVIRONMENT_FEATURE: Record<Environment, Feature | null> = {
+  prod: null,
+  staging: "staging_keys",
+  dev: "dev_keys",
+};
 
 /** The cheapest plan on sale that passes `test`; `undefined` when none does (Scale is not sold). */
 export function lowestListedPlanWith(test: (plan: Plan) => boolean): PlanId | undefined {
@@ -69,13 +82,19 @@ export function isFeatureListed(feature: Feature): boolean {
   return !UNSOLD_FEATURES.includes(feature) && isListedPlan(FEATURE_PLAN[feature]);
 }
 
-/** False for the "not included" custom emoji meter while no plan sells them: it would offer them. */
+/** Photo to emoji is metered under the PLANS limits but sold on no plan yet ("Soon" on the website). */
+function isMetricListed(metric: Metric): boolean {
+  if (metric === "image_classifications") return false;
+  if (metric === "custom_emoji") return isFeatureListed("custom_emoji");
+  return true;
+}
+
+/**
+ * A meter of a metric no plan sells shows only once the account used it this month, so its limit
+ * is not offered as a plan feature. A "not included" one stays hidden: it would offer the feature.
+ */
 export function isUsageShown(usage: MetricUsage): boolean {
-  return !(
-    usage.metric === "custom_emoji" &&
-    usage.status === "not_included" &&
-    !isFeatureListed("custom_emoji")
-  );
+  return isMetricListed(usage.metric) || (usage.used > 0 && usage.status !== "not_included");
 }
 
 export interface FeatureCopy {
@@ -91,13 +110,33 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
   apps: {
     emoji: "🧩",
     title: "More apps",
-    text: "Your plan’s apps are all in use. Separate apps keep staging and dev traffic out of production’s usage.",
+    text: "Your plan’s apps are all in use. Each app is one product, with its own keys and analytics.",
     points: [
       `Up to ${PLANS.pro.maxApps} apps on Pro`,
-      "Own keys and usage per app",
-      "Environment badges for prod, staging and dev",
+      "Own keys and analytics per app",
+      "Production, staging and development keys in every app",
     ],
     unlistedNote: "No plan has more apps yet.",
+  },
+  dev_keys: {
+    emoji: "🛠️",
+    title: "Development keys",
+    text: "Keys for localhost and preview builds, kept apart from production. Revoke them without touching your live keys.",
+    points: [
+      "Publishable dev keys can allow any origin",
+      "Same emoji set as production",
+      "Calls count against the same monthly limits",
+    ],
+  },
+  staging_keys: {
+    emoji: "🧪",
+    title: "Staging keys",
+    text: "A separate set of keys for QA and release candidates, so a test build never ships a production key.",
+    points: [
+      "Own keys and allowed origins for your staging hosts",
+      "Same emoji set as production",
+      "Calls count against the same monthly limits",
+    ],
   },
   custom_emoji: {
     emoji: "🎨",

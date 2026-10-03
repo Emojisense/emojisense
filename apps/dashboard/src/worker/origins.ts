@@ -110,7 +110,7 @@ export function assertOriginPolicy(
     throw new HttpError(
       400,
       "invalid_origin",
-      "Add at least one allowed origin. Only keys of dev apps may allow any origin.",
+      "Add at least one allowed origin. Only dev keys may allow any origin.",
       FIELD,
     );
   }

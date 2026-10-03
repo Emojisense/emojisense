@@ -453,12 +453,18 @@
 .app-id {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding-left: 0.625rem;
+  gap: 0.5rem;
+  min-width: 0;
+  padding-left: 0.75rem;
   border: 0.0625rem solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--pill);
+  background: var(--bg-soft);
   color: var(--ink-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+}
+
+.app-id-label {
+  color: var(--ink-3);
 }
 
 .app-id .btn {
@@ -495,20 +501,348 @@
 
 .usage-idle {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  align-items: baseline;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
   border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.usage-idle strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* A metric the plan does not include: a way into its preview, not an empty bar. */
+.meter-locked {
+  display: grid;
+  align-content: start;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border: 0.0625rem dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition:
+    border-color 140ms var(--ease-out),
+    background 140ms var(--ease-out);
+}
+
+.meter-locked:hover {
+  border-color: var(--ink-3);
   background: var(--bg-soft);
 }
 
-.usage-idle .emoji {
-  font-size: 1.375rem;
+.meter-locked-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 550;
 }
 
-.usage-idle-title {
-  margin-bottom: 0.125rem;
+.meter-locked-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--ink-3);
+}
+
+/* Environments: each one its own keys */
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.env-cell {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem 1.125rem;
+  transition: background 140ms var(--ease-out);
+}
+
+.env-cell + .env-cell {
+  border-left: 0.0625rem solid var(--line);
+}
+
+.env-cell:hover {
+  background: var(--bg-soft);
+}
+
+.env-cell:last-child {
+  border-radius: 0 0 var(--radius) 0;
+}
+
+.env-cell:first-child {
+  border-radius: 0 0 0 var(--radius);
+}
+
+.env-cell-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.env-cell-emoji {
+  font-size: 1.125rem;
+}
+
+.env-cell-title {
+  flex: 1;
   font: 600 var(--text-base) / 1.3 var(--font-body);
+}
+
+.env-cell-lock {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--ink-3);
+}
+
+.env-cell-text {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.env-cell[data-locked] .env-cell-title,
+.env-cell[data-locked] .env-cell-text,
+.env-cell[data-locked] .env-cell-emoji {
+  opacity: 0.6;
+}
+
+.env-cell-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  margin-top: 0.125rem;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 550;
+  text-decoration: none;
+}
+
+.env-cell-arrow {
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform 160ms var(--ease-out);
+}
+
+.env-cell:hover .env-cell-arrow {
+  transform: translateX(0.125rem);
+}
+
+/* The link covers the cell, so the whole cell opens the environment's keys. */
+.env-cell-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.env-cell-link:focus-visible {
+  outline: none;
+}
+
+.env-cell:focus-within {
+  outline: 0.125rem solid var(--focus);
+  outline-offset: -0.125rem;
+}
+
+@media (max-width: 48rem) {
+  .env-cell + .env-cell {
+    border-top: 0.0625rem solid var(--line);
+    border-left: 0;
+  }
+}
+
+/* Environment dots on app cards */
+.env-dots {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.env-dots li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.375rem;
+  padding: 0 0.4375rem;
+  border-radius: var(--pill);
+  background: var(--bg-soft);
+  color: var(--ink-2);
+  font: 500 var(--text-2xs) / 1 var(--font-mono);
+}
+
+.env-dots li::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border: 0.0625rem solid var(--ink-3);
+  border-radius: 50%;
+}
+
+.env-dots li[data-state="live"]::before {
+  border-color: var(--live);
+  background: var(--live);
+}
+
+.env-dots li[data-state="locked"] {
+  opacity: 0.45;
+}
+
+.env-dots li[data-state="locked"]::before {
+  border-style: dashed;
+}
+
+/* Keys: one tab per environment */
+.env-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  overflow-x: auto;
+}
+
+.env-tab {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 0.875rem;
+  border: 0;
+  border-radius: calc(var(--radius) - 0.25rem);
+  background: none;
+  color: var(--ink-2);
+  font-size: var(--text-base);
+  font-weight: 550;
+  white-space: nowrap;
+  transition:
+    background 140ms var(--ease-out),
+    color 140ms var(--ease-out);
+}
+
+.env-tab:hover {
+  color: var(--ink);
+}
+
+.env-tab[aria-selected="true"] {
+  background: var(--bg);
+  color: var(--ink);
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 0 0 0.0625rem var(--line);
+}
+
+.env-tab[data-locked] .env-tab-emoji {
+  opacity: 0.6;
+}
+
+.env-tab-count {
+  min-width: 1.25rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--pill);
+  background: var(--bg-sunk);
+  color: var(--ink-2);
+  font: 500 var(--text-2xs) / 1.2 var(--font-mono);
+}
+
+.env-tab-lock {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  color: var(--ink-3);
+}
+
+@media (max-width: 40rem) {
+  .env-tabs {
+    gap: 0;
+    scrollbar-width: none;
+  }
+
+  .env-tab {
+    gap: 0.375rem;
+    padding-inline: 0.5rem;
+    font-size: var(--text-sm);
+  }
+
+  .env-tab-emoji {
+    display: none;
+  }
+}
+
+.env-intro {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+/* Get started: done, current, next */
+.steps {
+  display: grid;
+  gap: 1.125rem;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.875rem;
+}
+
+.step-mark {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 0.0625rem solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--ink-3);
+  font: 600 var(--text-xs) / 1 var(--font-mono);
+}
+
+.step-check {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.step[data-state="done"] .step-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.step[data-state="current"] .step-mark {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.step-text {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  padding-top: 0.25rem;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.step-text strong {
+  color: var(--ink);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.step:not([data-state]) .step-text {
+  opacity: 0.7;
+}
+
+.step-text .btn {
+  margin-top: 0.375rem;
 }
 
 /* Live search */
@@ -671,6 +1005,12 @@
 
 .quickstart .card-body {
   padding-top: 1rem;
+}
+
+/* The snippet scrolls inside the card, so it does not tower over the live search beside it. */
+.quickstart .code pre {
+  max-height: 17rem;
+  overflow-y: auto;
 }
 
 /* Keys */
@@ -871,6 +1211,10 @@
   margin-top: -0.375rem;
   color: var(--ink-3);
   font: 400 var(--text-2xs) / 1.2 var(--font-mono);
+}
+
+.emoji-tile-glyph {
+  font-size: 2rem;
 }
 
 .upload-preview {

@@ -284,7 +284,7 @@ describe("Clerk sessions", () => {
     const response = await h.call("POST", "/api/apps", {
       token,
       origin: "https://evil.example",
-      body: { name: "App", environment: "prod" },
+      body: { name: "App" },
     });
     expect(response.status).toBe(403);
   });

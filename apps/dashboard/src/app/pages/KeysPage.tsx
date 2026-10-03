@@ -1,14 +1,31 @@
+import type { PlanId } from "@emojisense/platform";
 import { type ReactNode, useRef, useState } from "react";
 import type { KeySummary } from "../../shared/contract";
+import type { App } from "../api";
 import { CreateKeyDialog } from "../components/CreateKeyDialog";
 import { EditOriginsDialog } from "../components/EditOriginsDialog";
 import { RevokeKeyDialog } from "../components/RevokeKeyDialog";
 import { formatDate, isoDate } from "../format";
+import {
+  countActiveKeys,
+  ENVIRONMENT_INFO,
+  ENVIRONMENTS,
+  type Environment,
+  isEnvironment,
+  isPaused,
+  planHasEnvironment,
+} from "../lib/environments";
+import { ENVIRONMENT_FEATURE, FEATURE_PLAN } from "../lib/plans";
+import { sampleKeys } from "../lib/previewSamples";
+import { navigate, useSearchParams } from "../router";
+import { appHref } from "../routes";
 import { useAppDetail } from "../shell/context";
 import { KindBadge, StatusBadge } from "../ui/Badges";
 import { EmptyState } from "../ui/Feedback";
 import { Icon } from "../ui/Icon";
+import { LockedPreview } from "../ui/LockedPreview";
 import { PageHeader } from "../ui/PageHeader";
+import { PlanGate } from "../ui/PlanGate";
 
 /** Same order as the API: active keys first, newest first. */
 function sortKeys(keys: KeySummary[]): KeySummary[] {
@@ -19,19 +36,29 @@ function sortKeys(keys: KeySummary[]): KeySummary[] {
 
 export function KeysPage() {
   const { app, keys, setKeys, readOnly } = useAppDetail();
+  const params = useSearchParams();
+  const requested = params.get("env");
+  const environment: Environment = isEnvironment(requested) ? requested : "prod";
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<KeySummary | null>(null);
   const [revoking, setRevoking] = useState<KeySummary | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const available = planHasEnvironment(app.plan, environment);
+  const shown = keys.filter((key) => key.environment === environment);
 
   function upsert(key: KeySummary) {
     setKeys(sortKeys([key, ...keys.filter((existing) => existing.id !== key.id)]));
   }
 
-  const createButton = (
+  function select(next: Environment) {
+    const query = next === "prod" ? "" : `?env=${next}`;
+    navigate(`${appHref(app.id, "keys")}${query}`, { replace: true });
+  }
+
+  const createButton = available && (
     <button type="button" className="btn btn-primary" disabled={readOnly} onClick={() => setCreating(true)}>
       <Icon name="plus" />
-      Create key
+      Create {environment} key
     </button>
   );
 
@@ -41,27 +68,58 @@ export function KeysPage() {
         title="API keys"
         documentTitle={`Keys · ${app.name}`}
         lede="Publishable keys go in browsers and extensions. Secret keys stay on your servers."
-        actions={keys.length > 0 && createButton}
+        actions={shown.length > 0 && createButton}
       />
 
       <div className="stack-lg">
-        <section className="card" aria-label="Keys">
-          {keys.length === 0 ? (
-            <EmptyState emoji="🔑" title="No keys yet" action={createButton}>
-              Create a publishable key for browsers and extensions, or a secret key for servers.
-            </EmptyState>
+        <EnvironmentTabs app={app} keys={keys} value={environment} onChange={select} />
+
+        <div id="keys-panel" role="tabpanel" aria-labelledby={`keys-tab-${environment}`} className="stack">
+          {!available && shown.length === 0 ? (
+            <LockedPreview feature={ENVIRONMENT_FEATURE[environment] ?? "dev_keys"}>
+              <section className="card" aria-label="Sample keys">
+                <KeysTable
+                  appName={app.name}
+                  keys={sampleKeys(app.id, environment)}
+                  plan={FEATURE_PLAN[ENVIRONMENT_FEATURE[environment] ?? "dev_keys"]}
+                  readOnly
+                  onEdit={() => undefined}
+                  onRevoke={() => undefined}
+                />
+              </section>
+            </LockedPreview>
           ) : (
-            <div ref={tableRef}>
-              <KeysTable
-                appName={app.name}
-                keys={keys}
-                readOnly={readOnly}
-                onEdit={setEditing}
-                onRevoke={setRevoking}
-              />
-            </div>
+            <>
+              {!available && <PlanGate feature={ENVIRONMENT_FEATURE[environment] ?? "dev_keys"} compact />}
+              <p className="env-intro">
+                <span className="emoji" aria-hidden="true">
+                  {ENVIRONMENT_INFO[environment].emoji}
+                </span>
+                {!available
+                  ? `These ${environment} keys are paused: the API answers 402 until the plan includes ${ENVIRONMENT_INFO[environment].label.toLowerCase()} again. Prod keys keep working.`
+                  : ENVIRONMENT_INFO[environment].text}
+              </p>
+              <section className="card" aria-label={`${ENVIRONMENT_INFO[environment].label} keys`}>
+                {shown.length === 0 ? (
+                  <EmptyState emoji="🔑" title={`No ${environment} keys yet`} action={createButton}>
+                    Create a publishable key for browsers and extensions, or a secret key for servers.
+                  </EmptyState>
+                ) : (
+                  <div ref={tableRef}>
+                    <KeysTable
+                      appName={app.name}
+                      keys={shown}
+                      plan={app.plan}
+                      readOnly={readOnly}
+                      onEdit={setEditing}
+                      onRevoke={setRevoking}
+                    />
+                  </div>
+                )}
+              </section>
+            </>
           )}
-        </section>
+        </div>
 
         <div className="grid-2">
           <KeyKindCard
@@ -87,10 +145,15 @@ export function KeysPage() {
         </div>
       </div>
 
-      <CreateKeyDialog app={app} open={creating} onClose={() => setCreating(false)} onCreated={upsert} />
+      <CreateKeyDialog
+        app={app}
+        environment={environment}
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={upsert}
+      />
       <EditOriginsDialog
         apiKey={editing}
-        environment={app.environment}
         onClose={() => setEditing(null)}
         onSaved={(key) => {
           upsert(key);
@@ -111,6 +174,58 @@ export function KeysPage() {
   );
 }
 
+interface EnvironmentTabsProps {
+  app: App;
+  keys: KeySummary[];
+  value: Environment;
+  onChange: (environment: Environment) => void;
+}
+
+/** Tabs, not a filter: each environment is its own set of keys. Locked ones open a preview. */
+function EnvironmentTabs({ app, keys, value, onChange }: EnvironmentTabsProps) {
+  const counts = countActiveKeys(keys);
+  return (
+    <div className="env-tabs" role="tablist" aria-label="Environment">
+      {ENVIRONMENTS.map((environment, index) => {
+        const locked = !planHasEnvironment(app.plan, environment);
+        const selected = environment === value;
+        return (
+          <button
+            key={environment}
+            id={`keys-tab-${environment}`}
+            type="button"
+            role="tab"
+            className="env-tab"
+            aria-selected={selected}
+            aria-controls="keys-panel"
+            tabIndex={selected ? 0 : -1}
+            data-locked={locked || undefined}
+            onClick={() => onChange(environment)}
+            onKeyDown={(event) => {
+              if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+              const step = event.key === "ArrowRight" ? 1 : ENVIRONMENTS.length - 1;
+              const next = ENVIRONMENTS[(index + step) % ENVIRONMENTS.length];
+              if (!next) return;
+              onChange(next);
+              document.getElementById(`keys-tab-${next}`)?.focus();
+            }}
+          >
+            <span className="emoji env-tab-emoji" aria-hidden="true">
+              {ENVIRONMENT_INFO[environment].emoji}
+            </span>
+            {ENVIRONMENT_INFO[environment].label}
+            {locked ? (
+              <Icon name="lock" className="env-tab-lock" />
+            ) : (
+              <span className="env-tab-count">{counts[environment]}</span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function KeyKindCard({ emoji, title, text }: { emoji: string; title: string; text: ReactNode }) {
   return (
     <div className="card info-card">
@@ -128,12 +243,13 @@ function KeyKindCard({ emoji, title, text }: { emoji: string; title: string; tex
 interface KeysTableProps {
   appName: string;
   keys: KeySummary[];
+  plan: PlanId;
   readOnly: boolean;
   onEdit: (key: KeySummary) => void;
   onRevoke: (key: KeySummary) => void;
 }
 
-function KeysTable({ appName, keys, readOnly, onEdit, onRevoke }: KeysTableProps) {
+function KeysTable({ appName, keys, plan, readOnly, onEdit, onRevoke }: KeysTableProps) {
   return (
     // A focusable region, so keyboard users can scroll the table sideways on small screens.
     // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region needs keyboard access
@@ -152,7 +268,14 @@ function KeysTable({ appName, keys, readOnly, onEdit, onRevoke }: KeysTableProps
         </thead>
         <tbody>
           {keys.map((key) => (
-            <KeyRow key={key.id} apiKey={key} readOnly={readOnly} onEdit={onEdit} onRevoke={onRevoke} />
+            <KeyRow
+              key={key.id}
+              apiKey={key}
+              paused={isPaused(key, plan)}
+              readOnly={readOnly}
+              onEdit={onEdit}
+              onRevoke={onRevoke}
+            />
           ))}
         </tbody>
       </table>
@@ -162,7 +285,7 @@ function KeysTable({ appName, keys, readOnly, onEdit, onRevoke }: KeysTableProps
 
 function OriginsCell({ apiKey }: { apiKey: KeySummary }) {
   if (apiKey.kind === "secret") return <span className="cell-sub">Servers only</span>;
-  if (apiKey.allowedOrigins.length === 0) return <span className="cell-sub">Any origin (dev)</span>;
+  if (apiKey.allowedOrigins.length === 0) return <span className="cell-sub">Any origin</span>;
   return (
     <ul className="origin-list">
       {apiKey.allowedOrigins.map((origin) => (
@@ -176,11 +299,13 @@ function OriginsCell({ apiKey }: { apiKey: KeySummary }) {
 
 function KeyRow({
   apiKey,
+  paused,
   readOnly,
   onEdit,
   onRevoke,
 }: {
   apiKey: KeySummary;
+  paused: boolean;
   readOnly: boolean;
   onEdit: (key: KeySummary) => void;
   onRevoke: (key: KeySummary) => void;
@@ -200,7 +325,9 @@ function KeyRow({
       </td>
       <td>
         <div className="cell-stack">
-          <StatusBadge tone={revoked ? "idle" : "good"}>{revoked ? "Revoked" : "Active"}</StatusBadge>
+          <StatusBadge tone={revoked || paused ? "idle" : "good"}>
+            {revoked ? "Revoked" : paused ? "Paused" : "Active"}
+          </StatusBadge>
           <span className="cell-sub">
             {revoked && apiKey.revokedAt !== null ? (
               <>

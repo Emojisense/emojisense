@@ -21,6 +21,7 @@ import {
   type CustomEmojiListResponse,
   type DeletedTenantResponse,
   type EmojiImportResponse,
+  type Environment,
   isDeleteAccountConfirmed,
   type KeySummary,
   type PlanSummary,
@@ -44,6 +45,7 @@ import type {
   TeamRole,
   WebhookEvent,
 } from "../api";
+import { countActiveKeys, isEnvironment, planHasEnvironment } from "../lib/environments";
 import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
 import { CULTURE_ROUTES } from "./culture";
 import {
@@ -120,6 +122,7 @@ function planSummary(id: PlanId): PlanSummary {
       METRICS.map((metric) => [metric, finite(plan.limits[metric])]),
     ) as PlanSummary["limits"],
     maxApps: finite(plan.maxApps),
+    environments: [...plan.environments],
     hostedEmojiSets: plan.hostedEmojiSets,
     analyticsRetentionDays: plan.analyticsRetentionDays,
     teamMembers: plan.teamMembers,
@@ -139,10 +142,12 @@ function me(db: MockDb): Me {
 }
 
 function appView(db: MockDb, app: MockDb["apps"][number]): App {
+  const keys = db.keys.filter((key) => key.appId === app.id);
   return {
     ...app,
     plan: app.role === "owner" ? db.plan : app.plan,
-    activeKeyCount: db.keys.filter((key) => key.appId === app.id && key.revokedAt === null).length,
+    activeKeyCount: keys.filter((key) => key.revokedAt === null).length,
+    activeKeysByEnvironment: countActiveKeys(keys),
   };
 }
 
@@ -273,7 +278,6 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
       const app: MockDb["apps"][number] = {
         id: newId("app"),
         name,
-        environment: (json.environment as App["environment"]) ?? "prod",
         plan: db.plan,
         createdAt: Date.now(),
         emojiSet: "native",
@@ -335,12 +339,26 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
       const app = findApp(db, params[0]);
       if (!app) return notFound();
       const kind = json.kind === "secret" ? "secret" : "publishable";
+      const requested = typeof json.environment === "string" ? json.environment : null;
+      const environment: Environment = isEnvironment(requested) ? requested : "prod";
+      const plan = appPlan(db, app.id);
+      if (!planHasEnvironment(plan, environment)) {
+        const required = FEATURE_PLAN[environment === "dev" ? "dev_keys" : "staging_keys"];
+        return fail(
+          402,
+          "plan_required",
+          `A ${environment} key needs the ${PLANS[required].name} plan or higher.`,
+          {
+            plan: required,
+          },
+        );
+      }
       const origins = kind === "publishable" ? ((json.allowedOrigins as string[] | undefined) ?? []) : [];
-      if (kind === "publishable" && origins.length === 0 && app.environment !== "dev") {
+      if (kind === "publishable" && origins.length === 0 && environment !== "dev") {
         return fail(
           400,
           "invalid_origin",
-          "Add at least one allowed origin. Only keys of dev apps may allow any origin.",
+          "Add at least one allowed origin. Only dev keys may allow any origin.",
           {
             field: "allowedOrigins",
           },
@@ -351,6 +369,7 @@ const ROUTES: [method: string, pattern: RegExp, handler: Handler][] = [
         id: newId("key"),
         appId: app.id,
         kind,
+        environment,
         prefix: fullKey.slice(0, 12),
         allowedOrigins: origins,
         createdAt: Date.now(),

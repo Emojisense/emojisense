@@ -4,7 +4,13 @@
  * a real chat product; they never reach a production build.
  */
 import { type BillingStatus, METRICS, type Metric, PLANS, type PlanId, periodOf } from "@emojisense/platform";
-import type { AppMetricUsage, BillingSubscription, KeySummary, MetricUsage } from "../../shared/contract";
+import type {
+  AppMetricUsage,
+  BillingSubscription,
+  Environment,
+  KeySummary,
+  MetricUsage,
+} from "../../shared/contract";
 import type {
   AnalyticsDay,
   AnalyticsFilters,
@@ -36,7 +42,7 @@ export interface MockDb {
   /** The Whop subscription of the own plan; the manage link is added when it is served. */
   billing: Omit<BillingSubscription, "manageUrl">;
   me: Omit<Me, "plan" | "appCount" | "billingStatus">;
-  apps: Omit<App, "activeKeyCount">[];
+  apps: Omit<App, "activeKeyCount" | "activeKeysByEnvironment">[];
   keys: KeySummary[];
   emoji: (CustomEmoji & { appId: string })[];
   tenants: (Omit<Tenant, "emojiCount"> & { appId: string })[];
@@ -67,7 +73,7 @@ export function seeded(seed: string): () => number {
 }
 
 const RELAY = "app_relay_prod";
-const STAGING = "app_relay_staging";
+const DESK = "app_relay_desk";
 const LAB = "app_emoji_lab";
 const OWN = { role: "owner", ownerId: "acc_maya", ownerName: "Maya Chen" } as const;
 
@@ -120,6 +126,7 @@ function emojiFrom(seeds: Seed[], appId: string, tenantId: string | null, offset
 function key(
   id: string,
   appId: string,
+  environment: Environment,
   kind: KeySummary["kind"],
   prefix: string,
   allowedOrigins: string[],
@@ -130,6 +137,7 @@ function key(
     id,
     appId,
     kind,
+    environment,
     prefix,
     allowedOrigins,
     createdAt: ago(createdDaysAgo),
@@ -186,16 +194,14 @@ export function createDb(plan: PlanId, billingStatus?: BillingStatus): MockDb {
         ...OWN,
         id: RELAY,
         name: "Relay",
-        environment: "prod",
         plan,
         createdAt: Date.UTC(2026, 2, 14),
         emojiSet: "native",
       },
       {
         ...OWN,
-        id: STAGING,
-        name: "Relay",
-        environment: "staging",
+        id: DESK,
+        name: "Relay Desk",
         plan,
         createdAt: Date.UTC(2026, 5, 2),
         emojiSet: "native",
@@ -203,7 +209,6 @@ export function createDb(plan: PlanId, billingStatus?: BillingStatus): MockDb {
       {
         id: LAB,
         name: "Emoji lab",
-        environment: "dev",
         // A team app runs on its owner's plan, whatever the signed-in account pays for.
         plan: "pro",
         createdAt: Date.UTC(2026, 8, 21),
@@ -217,15 +222,35 @@ export function createDb(plan: PlanId, billingStatus?: BillingStatus): MockDb {
       key(
         "key_relay_pk",
         RELAY,
+        "prod",
         "publishable",
         "pk_live_R3lA",
         ["https://relay.chat", "https://*.relay.chat"],
         182,
       ),
-      key("key_relay_sk", RELAY, "secret", "sk_live_9xQe", [], 120),
-      key("key_relay_old", RELAY, "publishable", "pk_live_Ol7d", ["https://beta.relay.chat"], 201, 150),
-      key("key_staging_pk", STAGING, "publishable", "pk_live_St4g", ["https://staging.relay.chat"], 90),
-      key("key_lab_pk", LAB, "publishable", "pk_live_L4bz", [], 11),
+      key("key_relay_sk", RELAY, "prod", "secret", "sk_live_9xQe", [], 120),
+      key(
+        "key_relay_old",
+        RELAY,
+        "prod",
+        "publishable",
+        "pk_live_Ol7d",
+        ["https://beta.relay.chat"],
+        201,
+        150,
+      ),
+      key(
+        "key_relay_stg",
+        RELAY,
+        "staging",
+        "publishable",
+        "pk_live_St4g",
+        ["https://staging.relay.chat"],
+        90,
+      ),
+      key("key_relay_dev", RELAY, "dev", "publishable", "pk_live_D3vx", [], 30),
+      key("key_desk_pk", DESK, "prod", "publishable", "pk_live_D3sk", ["https://desk.relay.chat"], 60),
+      key("key_lab_pk", LAB, "dev", "publishable", "pk_live_L4bz", [], 11),
     ],
     emoji: [...emojiFrom(APP_WIDE, RELAY, null, 4), ...emojiFrom(BLOOM, RELAY, "ten_bloom", 1)],
     tenants: [
@@ -315,8 +340,8 @@ export function createDb(plan: PlanId, billingStatus?: BillingStatus): MockDb {
       ],
     },
     usageShare: {
-      [RELAY]: { semantic_calls: 0.83, image_classifications: 0.41 },
-      [STAGING]: { semantic_calls: 0.04, image_classifications: 0.01 },
+      [RELAY]: { semantic_calls: 0.83 },
+      [DESK]: { semantic_calls: 0.04 },
       [LAB]: { semantic_calls: 0.002 },
     },
   };
@@ -497,7 +522,7 @@ export function analyticsFor(
   const localeShare = shareOf(LOCALE_SHARES, filters.locale);
   const scale = countryShare * localeShare;
   const random = seeded(`analytics:${appId}`);
-  const base = appId === RELAY ? 1_380 : appId === STAGING ? 64 : 9;
+  const base = appId === RELAY ? 1_380 : appId === DESK ? 64 : 9;
   // 90 days are generated so that a shorter window is the tail of the same series.
   const all: AnalyticsDay[] = Array.from({ length: 90 }, (_, index) => {
     const date = new Date(NOW - (89 - index) * DAY);

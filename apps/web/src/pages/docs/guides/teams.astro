@@ -4,6 +4,10 @@ import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
 import { formatCount } from "../../../lib/format";
 
+const ENVIRONMENT_NAMES = { prod: "Production", staging: "Staging", dev: "Development" } as const;
+const environmentsOf = (id: (typeof LISTED_PLAN_IDS)[number]) =>
+  PLANS[id].environments.map((environment) => ENVIRONMENT_NAMES[environment]).join(", ");
+
 const invite = `POST /api/team/invites
 { "role": "developer", "email": "sam@example.com" }
 
@@ -67,14 +71,14 @@ const accept = `POST /api/invites/<token>/accept
   </div>
 
   <h2 id="environments">Apps and environments</h2>
-  <p>Each app has an environment: <code>dev</code>, <code>staging</code> or <code>prod</code>. Use one app per environment, so each one has its own keys, usage and analytics. Only <code>dev</code> apps may have publishable keys that work from any origin.</p>
+  <p>Create one app per product. Every app has environments, and each key belongs to one of them: <code>prod</code>, <code>staging</code> or <code>dev</code>. Custom emoji, the emoji set and analytics are shared by the environments of an app, so staging shows what production shows. Only <code>dev</code> keys may be publishable keys that work from any origin.</p>
   <div class="table-scroll" tabindex="0">
     <table>
-      <thead><tr><th scope="col">Plan</th><th scope="col">Apps</th><th scope="col">Team members</th></tr></thead>
+      <thead><tr><th scope="col">Plan</th><th scope="col">Apps</th><th scope="col">Environments</th><th scope="col">Team members</th></tr></thead>
       <tbody>
-        {LISTED_PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].maxApps)}</td><td>{PLANS[id].teamMembers ? "Yes" : "—"}</td></tr>)}
+        {LISTED_PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].maxApps)}</td><td>{environmentsOf(id)}</td><td>{PLANS[id].teamMembers ? "Yes" : "—"}</td></tr>)}
       </tbody>
     </table>
   </div>
-  <p>Creating an app past your plan’s limit answers <code>402</code> with <code>plan_required</code>.</p>
+  <p>Creating an app past your plan’s limit, or a key in an environment your plan does not include, answers <code>402</code> with <code>plan_required</code>. After a downgrade, keys of an environment the plan lost answer <code>402</code> until you upgrade again. Production keys never pause.</p>
 </DocsLayout>

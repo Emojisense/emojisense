@@ -9,6 +9,9 @@ export interface AppRecord extends AppRow {
   owner_name: string | null;
   owner_email: string | null;
   active_keys: number;
+  active_prod: number;
+  active_staging: number;
+  active_dev: number;
   /** "owner" when the caller owns the app, the `team_members` role, or null for no membership. */
   role: Role | null;
 }
@@ -17,6 +20,12 @@ const APP_SELECT = `
   SELECT a.id, a.account_id, a.name, a.environment, a.emoji_set, a.created_at,
     o.plan AS owner_plan, o.name AS owner_name, o.email AS owner_email,
     (SELECT COUNT(*) FROM api_keys k WHERE k.app_id = a.id AND k.revoked_at IS NULL) AS active_keys,
+    (SELECT COUNT(*) FROM api_keys k
+      WHERE k.app_id = a.id AND k.revoked_at IS NULL AND k.environment = 'prod') AS active_prod,
+    (SELECT COUNT(*) FROM api_keys k
+      WHERE k.app_id = a.id AND k.revoked_at IS NULL AND k.environment = 'staging') AS active_staging,
+    (SELECT COUNT(*) FROM api_keys k
+      WHERE k.app_id = a.id AND k.revoked_at IS NULL AND k.environment = 'dev') AS active_dev,
     CASE WHEN a.account_id = ? THEN 'owner' ELSE tm.role END AS role
   FROM apps a
   JOIN accounts o ON o.id = a.account_id
@@ -64,11 +73,11 @@ export function toAppSummary(row: AppRecord, role: Role): AppSummary {
   return {
     id: row.id,
     name: row.name,
-    environment: row.environment,
     plan: getPlan(row.owner_plan).id,
     emojiSet: row.emoji_set,
     createdAt: row.created_at,
     activeKeyCount: row.active_keys,
+    activeKeysByEnvironment: { prod: row.active_prod, staging: row.active_staging, dev: row.active_dev },
     role,
     ownerId: row.account_id,
     ownerName: displayName({ name: row.owner_name, email: row.owner_email }),
@@ -89,6 +98,7 @@ export function toKeySummary(row: ApiKeyRow): KeySummary {
     id: row.id,
     appId: row.app_id,
     kind: row.kind,
+    environment: row.environment,
     prefix: row.prefix,
     allowedOrigins: parseOrigins(row.allowed_origins),
     createdAt: row.created_at,

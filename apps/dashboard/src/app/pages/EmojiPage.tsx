@@ -15,14 +15,15 @@ import { UploadDialog, type UploadRequest } from "../components/emoji/UploadDial
 import { formatNumber } from "../format";
 import { toShortcode } from "../lib/emoji";
 import { FEATURE_PLAN, isFeatureListed, lowestListedPlanWith, planIncludes } from "../lib/plans";
+import { SAMPLE_EMOJI } from "../lib/previewSamples";
 import { useResource } from "../lib/useResource";
 import { navigate, useSearchParams } from "../router";
 import { appHref } from "../routes";
 import { useAppDetail } from "../shell/context";
 import { EmptyState, ErrorState, LoadingState } from "../ui/Feedback";
 import { Icon } from "../ui/Icon";
+import { LockedPreview } from "../ui/LockedPreview";
 import { PageHeader } from "../ui/PageHeader";
-import { PlanGate } from "../ui/PlanGate";
 import { Segmented } from "../ui/Segmented";
 import { useToast } from "../ui/Toast";
 import { usePopover } from "../ui/usePopover";
@@ -96,10 +97,12 @@ export function EmojiPage() {
     return (
       <>
         <Header />
-        <PlanGate
+        <LockedPreview
           feature="custom_emoji"
           plan={list.status === "plan" ? list.plan : FEATURE_PLAN.custom_emoji}
-        />
+        >
+          <SampleEmojiGrid />
+        </LockedPreview>
       </>
     );
   }
@@ -263,6 +266,31 @@ export function EmojiPage() {
         onClose={() => setImporting(null)}
       />
     </>
+  );
+}
+
+/** The grid as it looks with emoji in it, for the locked page. */
+function SampleEmojiGrid() {
+  return (
+    <div className="stack">
+      <div className="emoji-usage">
+        <p>
+          <strong>{SAMPLE_EMOJI.length}</strong>
+          <span className="muted"> custom emoji</span>
+        </p>
+      </div>
+      <ul className="emoji-grid">
+        {SAMPLE_EMOJI.map((item) => (
+          <li key={item.shortcode}>
+            <span className="emoji-tile">
+              <span className="emoji-tile-image emoji emoji-tile-glyph">{item.glyph}</span>
+              <span className="emoji-tile-code">:{item.shortcode}:</span>
+              <span className="emoji-tile-tag">{item.tag}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

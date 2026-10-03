@@ -195,6 +195,20 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         },
       },
       {
+        key: "environments",
+        text: "environments",
+        onCard: true,
+        read: (plan, page) => {
+          const names = page.words.features.environments.names;
+          const list = new Intl.ListFormat(page.tag, { style: "long", type: "conjunction" });
+          return {
+            value: list.format(plan.environments.map((environment) => names[environment])),
+            raw: plan.environments.length,
+            unit: unitOf(page, "environments"),
+          };
+        },
+      },
+      {
         key: "team",
         text: "team",
         onCard: true,

@@ -1,5 +1,5 @@
 import { type FormEvent, useId, useState } from "react";
-import type { Environment, KeySummary } from "../../shared/contract";
+import type { KeySummary } from "../../shared/contract";
 import { ApiError, api, errorMessage } from "../api";
 import { splitOrigins } from "../format";
 import { Dialog } from "../ui/Dialog";
@@ -8,29 +8,25 @@ import { OriginsField } from "./OriginsField";
 interface EditOriginsDialogProps {
   /** The key being edited; `null` keeps the dialog closed. */
   apiKey: KeySummary | null;
-  environment: Environment;
   onClose: () => void;
   onSaved: (key: KeySummary) => void;
 }
 
-export function EditOriginsDialog({ apiKey, environment, onClose, onSaved }: EditOriginsDialogProps) {
+export function EditOriginsDialog({ apiKey, onClose, onSaved }: EditOriginsDialogProps) {
   return (
     <Dialog open={apiKey !== null} title="Edit allowed origins" onClose={onClose}>
-      {apiKey && (
-        <EditOriginsForm apiKey={apiKey} environment={environment} onCancel={onClose} onSaved={onSaved} />
-      )}
+      {apiKey && <EditOriginsForm apiKey={apiKey} onCancel={onClose} onSaved={onSaved} />}
     </Dialog>
   );
 }
 
 interface EditOriginsFormProps {
   apiKey: KeySummary;
-  environment: Environment;
   onCancel: () => void;
   onSaved: (key: KeySummary) => void;
 }
 
-function EditOriginsForm({ apiKey, environment, onCancel, onSaved }: EditOriginsFormProps) {
+function EditOriginsForm({ apiKey, onCancel, onSaved }: EditOriginsFormProps) {
   const [origins, setOrigins] = useState(apiKey.allowedOrigins.join("\n"));
   const [error, setError] = useState<{ message: string; field?: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,7 +56,7 @@ function EditOriginsForm({ apiKey, environment, onCancel, onSaved }: EditOrigins
       <OriginsField
         value={origins}
         onChange={setOrigins}
-        environment={environment}
+        environment={apiKey.environment}
         invalid={error?.field === "allowedOrigins"}
         errorId={error ? errorId : undefined}
       />

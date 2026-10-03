@@ -164,6 +164,36 @@ describe("Billing page: Scale is not on sale", () => {
   });
 });
 
+describe("Billing page: features not on sale", () => {
+  const meter = (name: string) => screen.queryByRole("meter", { name });
+
+  it("shows no photo or custom emoji limits on the cards or the meters of a Pro account", async () => {
+    openBilling("/billing", {
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS.pro) }) },
+      "GET /api/billing": { body: billing("pro") },
+    });
+    await loaded();
+    expect(document.body.textContent).not.toMatch(/photo/i);
+    expect(meter("AI calls")).toBeTruthy();
+    expect(meter("Image classifications")).toBeNull();
+    expect(meter("Custom emoji")).toBeNull();
+  });
+
+  it("meters them once the account uses them, so a hidden limit is never a surprise", async () => {
+    const used = billing("pro");
+    used.usage = used.usage.map((usage) =>
+      usage.metric === "semantic_calls" ? usage : { ...usage, used: 10, percent: 0.1 },
+    );
+    openBilling("/billing", {
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS.pro) }) },
+      "GET /api/billing": { body: used },
+    });
+    await loaded();
+    expect(meter("Image classifications")).toBeTruthy();
+    expect(meter("Custom emoji")).toBeTruthy();
+  });
+});
+
 describe("Billing page: a paid subscription", () => {
   it("shows the renewal date, the manage link, switches and the way down to Free", async () => {
     openBilling("/billing", {

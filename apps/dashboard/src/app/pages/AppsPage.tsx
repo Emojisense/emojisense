@@ -8,7 +8,7 @@ import { Link, navigate, useSearchParams } from "../router";
 import { appHref } from "../routes";
 import { useSession } from "../session";
 import { useApps } from "../shell/context";
-import { EnvBadge, roleLabel } from "../ui/Badges";
+import { EnvironmentDots, roleLabel } from "../ui/Badges";
 import { Dialog } from "../ui/Dialog";
 import { ErrorState, LoadingState } from "../ui/Feedback";
 import { Icon } from "../ui/Icon";
@@ -50,7 +50,7 @@ export function AppsPage() {
     <>
       <PageHeader
         title="Apps"
-        lede="Each app has its own keys, custom emoji, analytics and usage."
+        lede="One app per product. Each app has its own keys, custom emoji and analytics."
         actions={
           !empty && (
             <button
@@ -97,7 +97,7 @@ export function AppsPage() {
       <Dialog
         open={creating}
         title="Create an app"
-        description="An app holds the keys and the usage of one product in one environment."
+        description="An app holds the keys, custom emoji and analytics of one product."
         onClose={() => setCreating(false)}
       >
         <CreateAppForm autoFocus onCreated={handleCreated} onCancel={() => setCreating(false)} />
@@ -114,7 +114,7 @@ function AppCard({ app }: { app: App }) {
         <span className="avatar avatar-lg emoji" aria-hidden="true">
           {appEmoji(app.id)}
         </span>
-        <EnvBadge environment={app.environment} />
+        <EnvironmentDots app={app} />
       </div>
       <h3 className="app-card-name">
         <Link to={appHref(app.id)} className="app-card-link">

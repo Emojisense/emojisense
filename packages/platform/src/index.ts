@@ -1,7 +1,6 @@
 export {
   ALL_COUNTRIES,
   ANALYTICS_MAX_KEEP_DAYS,
-  QUERY_DAYS,
   ANALYTICS_MIN_KEEP_DAYS,
   ANALYTICS_MIN_QUERY_SEARCHES,
   ANALYTICS_WINDOWS,
@@ -11,6 +10,7 @@ export {
   dayOf,
   LEGACY_LOCALE,
   lowestPlanWithAnalytics,
+  QUERY_DAYS,
   SHARD_MIN_ACCOUNTS,
   SHARD_MIN_SEARCHES,
   SHARD_WINDOW_DAYS,
@@ -126,6 +126,8 @@ export {
   randomId,
 } from "./keys.js";
 export {
+  ENVIRONMENTS,
+  type Environment,
   getPlan,
   isHigherPlan,
   isListedPlan,
@@ -138,6 +140,7 @@ export {
   type Plan,
   type PlanId,
   periodOf,
+  planHasEnvironment,
 } from "./plans.js";
 export {
   type AppOwner,

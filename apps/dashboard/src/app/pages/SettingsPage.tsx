@@ -2,7 +2,7 @@ import { type FormEvent, useEffect, useId, useState } from "react";
 import { ApiError, type App, api, errorMessage } from "../api";
 import { useAuthAdapter } from "../auth/context";
 import { DeleteAccountDialog } from "../components/DeleteAccountDialog";
-import { ENVIRONMENT_LABELS, formatDate } from "../format";
+import { formatDate } from "../format";
 import { appEmoji, initials } from "../lib/identity";
 import { useSession } from "../session";
 import { lastAppId, useApps } from "../shell/context";
@@ -177,7 +177,7 @@ function AppSettings({ apps }: { apps: App[] }) {
           >
             {apps.map((item) => (
               <option key={item.id} value={item.id}>
-                {appEmoji(item.id)} {item.name} ({item.environment})
+                {appEmoji(item.id)} {item.name}
               </option>
             ))}
           </select>
@@ -220,13 +220,6 @@ function AppSettings({ apps }: { apps: App[] }) {
             <dd className="inline-copy">
               <span className="mono">{app.id}</span>
               <CopyButton value={app.id} label="Copy the app ID" done="App ID copied" />
-            </dd>
-          </div>
-          <div>
-            <dt>Environment</dt>
-            <dd>
-              {ENVIRONMENT_LABELS[app.environment]}{" "}
-              <span className="muted">(fixed when the app is created)</span>
             </dd>
           </div>
           <div>

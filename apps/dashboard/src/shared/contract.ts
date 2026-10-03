@@ -7,6 +7,7 @@ import type {
   BillingStatus,
   CustomEmoji,
   EmojiSet,
+  Environment,
   KeyKind,
   Metric,
   PaidPlanId,
@@ -16,8 +17,7 @@ import type {
   WebhookEventType,
 } from "@emojisense/platform";
 
-export type Environment = "dev" | "staging" | "prod";
-export const ENVIRONMENTS: readonly Environment[] = ["prod", "staging", "dev"];
+export { ENVIRONMENTS, type Environment } from "@emojisense/platform";
 
 /**
  * What the signed-in account may do on an app or team. The owner has no `team_members` row.
@@ -53,6 +53,8 @@ export interface PlanSummary {
   priceUsdMonthly: number;
   limits: Record<Metric, number | null>;
   maxApps: number | null;
+  /** The environments its keys may use; prod is on every plan. */
+  environments: Environment[];
   hostedEmojiSets: boolean;
   /** 0 = no analytics. */
   analyticsRetentionDays: number;
@@ -112,15 +114,17 @@ export function isDeleteAccountConfirmed(email: string | null, typed: unknown): 
   );
 }
 
+/** Every app has every environment; the plan decides which ones its keys may use. */
 export interface AppSummary {
   id: string;
   name: string;
-  environment: Environment;
   /** The owning account's plan. */
   plan: PlanId;
   emojiSet: EmojiSet;
   createdAt: number;
   activeKeyCount: number;
+  /** Active keys per environment; they add up to `activeKeyCount`. */
+  activeKeysByEnvironment: Record<Environment, number>;
   /** The signed-in account's role on this app. */
   role: Role;
   ownerId: string;
@@ -139,6 +143,8 @@ export interface KeySummary {
   id: string;
   appId: string;
   kind: KeyKind;
+  /** A dev or staging key pauses (answers 402) while the owner's plan does not include it. */
+  environment: Environment;
   /** First 12 characters of the key, e.g. "pk_live_AbCd". The full key is never stored. */
   prefix: string;
   allowedOrigins: string[];

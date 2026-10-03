@@ -1,5 +1,4 @@
 import { type Metric, periodOf } from "@emojisense/platform";
-import type { Environment } from "../shared/contract";
 
 // The copy is English, so numbers and dates use English formatting too.
 const numberFormat = new Intl.NumberFormat("en");
@@ -65,12 +64,6 @@ export const METRIC_COPY: Record<Metric, { label: string; hint: string }> = {
   },
   image_classifications: { label: "Image classifications", hint: "Photo to emoji calls." },
   custom_emoji: { label: "Custom emoji", hint: "Custom emoji stored by every app of the account." },
-};
-
-export const ENVIRONMENT_LABELS: Record<Environment, string> = {
-  prod: "Production",
-  staging: "Staging",
-  dev: "Development",
 };
 
 /** Splits a textarea of origins on new lines and commas. The API validates each entry. */

@@ -1,9 +1,12 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import type { AppSummary, UsageResponse } from "../../shared/contract";
 import { api, errorMessage } from "../api";
-import { formatPeriod, recentPeriods } from "../format";
+import { formatPeriod, METRIC_COPY, recentPeriods } from "../format";
 import { isUsageShown } from "../lib/plans";
+import { Link } from "../router";
+import { appHref } from "../routes";
 import { ErrorState, LoadingState } from "../ui/Feedback";
+import { Icon } from "../ui/Icon";
 import { UsageMeter } from "../ui/UsageMeter";
 
 export function UsagePanel({ app }: { app: AppSummary }) {
@@ -43,7 +46,7 @@ export function UsagePanel({ app }: { app: AppSummary }) {
             Usage
           </h2>
           <p className="card-sub">
-            This calendar month (UTC), for every app of the account against the {usage?.plan.name ?? ""} plan.
+            Every app of the account counts against the {usage?.plan.name ?? ""} plan.
           </p>
         </div>
         <div>
@@ -67,42 +70,50 @@ export function UsagePanel({ app }: { app: AppSummary }) {
       <div className="card-body stack">
         {error && <ErrorState message={error} />}
         {!usage && !error && <LoadingState label="Loading usage…" rows={2} />}
-        {usage && <UsageReport usage={usage} />}
+        {usage && <UsageReport usage={usage} appId={app.id} />}
       </div>
       <div className="card-foot">
         <span>
-          Plan limits count the calls of every app of the account. Over a limit, the API answers with{" "}
+          Calendar months in UTC. Over a limit, the API answers{" "}
           <code className="code-inline">overLimit: true</code> and search keeps working on the device.
-          Counters can lag a few minutes.
         </span>
       </div>
     </section>
   );
 }
 
-function UsageReport({ usage }: { usage: UsageResponse }) {
+function UsageReport({ usage, appId }: { usage: UsageResponse; appId: string }) {
   // Custom emoji are stored rows, not calls: stored emoji do not make a month without calls busy.
   const idle = usage.metrics.every((metric) => metric.metric === "custom_emoji" || metric.used === 0);
+  const metrics = usage.metrics.filter(isUsageShown);
   return (
     <>
       {idle && (
-        <div className="usage-idle">
+        <p className="usage-idle">
           <span className="emoji" aria-hidden="true">
             🌱
           </span>
-          <div>
-            <h3 className="usage-idle-title">No calls in {formatPeriod(usage.period)}</h3>
-            <p className="hint">
-              Usage shows up after your app calls the API with one of its keys. On-device and shard results
-              are free and never counted.
-            </p>
-          </div>
-        </div>
+          <span>
+            <strong>No calls in {formatPeriod(usage.period)}.</strong> Usage shows up after your app calls the
+            API with a key. On-device answers are free and never counted.
+          </span>
+        </p>
       )}
       <div className="meters">
-        {usage.metrics.filter(isUsageShown).map((metric) => (
-          <UsageMeter key={metric.metric} usage={metric} planName={usage.plan.name} />
-        ))}
+        {metrics.map((metric) =>
+          metric.status === "not_included" && metric.metric === "custom_emoji" ? (
+            <Link key={metric.metric} to={appHref(appId, "emoji")} className="meter-locked">
+              <span className="meter-label">{METRIC_COPY[metric.metric].label}</span>
+              <span className="meter-locked-text">
+                <Icon name="lock" className="meter-locked-icon" />
+                See what you get
+                <Icon name="arrowRight" className="meter-locked-icon" />
+              </span>
+            </Link>
+          ) : (
+            <UsageMeter key={metric.metric} usage={metric} planName={usage.plan.name} brief />
+          ),
+        )}
       </div>
     </>
   );

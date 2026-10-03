@@ -27,8 +27,8 @@ describe("keys", () => {
     });
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create key" }));
-    const form = await screen.findByRole("dialog", { name: "Create an API key" });
+    fireEvent.click(await screen.findByRole("button", { name: "Create prod key" }));
+    const form = await screen.findByRole("dialog", { name: "Create a production key" });
     fireEvent.change(within(form).getByLabelText("Allowed origins"), {
       target: { value: "https://chat.example.com\n https://*.example.org \n" },
     });
@@ -41,7 +41,11 @@ describe("keys", () => {
     expect(calls).toContainEqual({
       method: "POST",
       path: "/api/apps/app_1/keys",
-      body: { kind: "publishable", allowedOrigins: ["https://chat.example.com", "https://*.example.org"] },
+      body: {
+        kind: "publishable",
+        environment: "prod",
+        allowedOrigins: ["https://chat.example.com", "https://*.example.org"],
+      },
     });
 
     fireEvent.click(within(reveal).getByRole("button", { name: "Copy key" }));
@@ -69,14 +73,17 @@ describe("keys", () => {
     });
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create key" }));
-    const form = await screen.findByRole("dialog", { name: "Create an API key" });
+    fireEvent.click(await screen.findByRole("button", { name: "Create prod key" }));
+    const form = await screen.findByRole("dialog", { name: "Create a production key" });
     fireEvent.click(within(form).getByRole("radio", { name: /Secret key/ }));
     expect(within(form).queryByLabelText("Allowed origins")).toBeNull();
     fireEvent.click(within(form).getByRole("button", { name: "Create key" }));
 
     expect(await screen.findByLabelText("Your new secret key")).toBeTruthy();
-    expect(calls.find((call) => call.method === "POST")?.body).toEqual({ kind: "secret" });
+    expect(calls.find((call) => call.method === "POST")?.body).toEqual({
+      kind: "secret",
+      environment: "prod",
+    });
   });
 
   it("shows the origin error from the API inside the form", async () => {
@@ -89,7 +96,7 @@ describe("keys", () => {
         body: {
           error: {
             code: "invalid_origin",
-            message: "Add at least one allowed origin. Only keys of dev apps may allow any origin.",
+            message: "Add at least one allowed origin. Only dev keys may allow any origin.",
             field: "allowedOrigins",
           },
         },
@@ -97,8 +104,8 @@ describe("keys", () => {
     });
     render(<App />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Create key" }));
-    const form = await screen.findByRole("dialog", { name: "Create an API key" });
+    fireEvent.click(await screen.findByRole("button", { name: "Create prod key" }));
+    const form = await screen.findByRole("dialog", { name: "Create a production key" });
     fireEvent.click(within(form).getByRole("button", { name: "Create key" }));
 
     expect((await within(form).findByRole("alert")).textContent).toContain("Add at least one allowed origin");
@@ -154,5 +161,96 @@ describe("keys", () => {
       path: "/api/keys/key_1",
       body: { allowedOrigins: ["https://new.example.com"] },
     });
+  });
+
+  it("keeps each environment's keys in its own tab", async () => {
+    const devKey = {
+      ...KEY,
+      id: "key_dev",
+      environment: "dev" as const,
+      prefix: "pk_live_D3vx",
+      allowedOrigins: [],
+    };
+    stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps/app_1": {
+        body: { app: { ...APP, plan: "solo", activeKeyCount: 2 }, keys: [KEY, devKey] },
+      },
+      "GET /api/apps/app_1/usage": usageRoute,
+    });
+    render(<App />);
+
+    expect(await screen.findByRole("rowheader", { name: "pk_live_AbCd…" })).toBeTruthy();
+    expect(screen.queryByRole("rowheader", { name: "pk_live_D3vx…" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Development/ }));
+    expect(await screen.findByRole("rowheader", { name: "pk_live_D3vx…" })).toBeTruthy();
+    expect(screen.queryByRole("rowheader", { name: "pk_live_AbCd…" })).toBeNull();
+    expect(window.location.search).toBe("?env=dev");
+    expect(screen.getByText("Any origin")).toBeTruthy();
+  });
+
+  it("sends the tab's environment when a key is created there", async () => {
+    const { calls } = stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps/app_1": { body: { app: { ...APP, plan: "solo" }, keys: [] } },
+      "GET /api/apps/app_1/usage": usageRoute,
+      "POST /api/apps/app_1/keys": {
+        status: 201,
+        body: { key: { ...KEY, environment: "dev", allowedOrigins: [] }, fullKey: FULL_KEY },
+      },
+    });
+    window.history.replaceState(null, "", "/apps/app_1/keys?env=dev");
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create dev key" }));
+    const form = await screen.findByRole("dialog", { name: "Create a development key" });
+    fireEvent.click(within(form).getByRole("button", { name: "Create key" }));
+
+    await screen.findByRole("dialog", { name: "Copy your key now" });
+    expect(calls.find((call) => call.method === "POST")?.body).toEqual({
+      kind: "publishable",
+      environment: "dev",
+      allowedOrigins: [],
+    });
+  });
+
+  it("shows a locked environment as a preview with its plan, and no create button", async () => {
+    stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
+      "GET /api/apps/app_1/usage": usageRoute,
+    });
+    window.history.replaceState(null, "", "/apps/app_1/keys?env=staging");
+    render(<App />);
+
+    expect(await screen.findByRole("heading", { name: "Staging keys" })).toBeTruthy();
+    expect(screen.getByText("Available on Pro and up")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Upgrade to Pro" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Create .* key/ })).toBeNull();
+    // The sample rows are out of reach: hidden from screen readers and inert.
+    expect(screen.queryByRole("rowheader", { name: /pk_live_Stg/ })).toBeNull();
+  });
+
+  it("marks keys of an environment the plan lost as paused", async () => {
+    const devKey = {
+      ...KEY,
+      id: "key_dev",
+      environment: "dev" as const,
+      prefix: "pk_live_D3vx",
+      allowedOrigins: [],
+    };
+    stubApi({
+      "GET /api/me": { body: me() },
+      "GET /api/apps/app_1": { body: { app: { ...APP, activeKeyCount: 1 }, keys: [devKey] } },
+      "GET /api/apps/app_1/usage": usageRoute,
+    });
+    window.history.replaceState(null, "", "/apps/app_1/keys?env=dev");
+    render(<App />);
+
+    const row = await screen.findByRole("row", { name: /pk_live_D3vx…/ });
+    expect(within(row).getByText("Paused", { selector: ".pill" })).toBeTruthy();
+    expect(screen.getByText(/These dev keys are paused/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Upgrade to Solo" })).toBeTruthy();
   });
 });

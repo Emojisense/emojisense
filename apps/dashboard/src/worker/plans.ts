@@ -18,6 +18,7 @@ export function toPlanSummary(plan: Plan): PlanSummary {
       number | null
     >,
     maxApps: finiteOrNull(plan.maxApps),
+    environments: [...plan.environments],
     hostedEmojiSets: plan.hostedEmojiSets,
     analyticsRetentionDays: plan.analyticsRetentionDays,
     teamMembers: plan.teamMembers,

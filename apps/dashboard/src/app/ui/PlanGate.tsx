@@ -12,6 +12,8 @@ interface PlanGateProps {
   /** The plan named by the API's 402 answer; defaults to the lowest plan with the feature. */
   plan?: PlanId;
   compact?: boolean;
+  /** A floating card over a sample of the page (LockedPreview). */
+  overlay?: boolean;
 }
 
 /**
@@ -19,7 +21,7 @@ interface PlanGateProps {
  * A plan that is not on sale (Scale), or a feature no plan sells yet (custom emoji), gets no price
  * and no upgrade, only a short note.
  */
-export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
+export function PlanGate({ feature, plan, compact = false, overlay = false }: PlanGateProps) {
   const required = PLANS[plan ?? FEATURE_PLAN[feature]];
   const copy = FEATURE_COPY[feature];
   const listed = isListedPlan(required.id) && isFeatureListed(feature);
@@ -43,11 +45,54 @@ export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
   ) : (
     <Link
       to={upgradeHref}
-      className={compact ? "btn btn-primary btn-sm" : "btn btn-primary btn-lg btn-block"}
+      className={
+        compact ? "btn btn-primary btn-sm" : overlay ? "btn btn-primary" : "btn btn-primary btn-lg btn-block"
+      }
     >
       Upgrade to {required.name}
     </Link>
   );
+
+  if (overlay) {
+    return (
+      <section className="gate-overlay" aria-labelledby={titleId}>
+        <div className="gate-overlay-head">
+          <span className="gate-emoji emoji" aria-hidden="true">
+            {copy.emoji}
+          </span>
+          <p className="section-label">{listed ? `Available on ${required.name} and up` : note}</p>
+        </div>
+        <h2 id={titleId} className="gate-title">
+          {copy.title}
+        </h2>
+        <p className="gate-text">{copy.text}</p>
+        <ul className="gate-list">
+          {copy.points.map((point) => (
+            <li key={point}>
+              <Icon name="check" />
+              {point}
+            </li>
+          ))}
+        </ul>
+        {listed && (
+          <div className="gate-overlay-foot">
+            <p className="gate-overlay-price">
+              <strong>{formatPrice(required.priceUsdMonthly)}</strong>{" "}
+              <span className="muted">per month</span>
+            </p>
+            <div className="btn-row">
+              {!owner && (
+                <Link to="/billing" className="btn btn-ghost">
+                  Compare plans
+                </Link>
+              )}
+              {upgradeButton}
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
 
   if (compact) {
     return (

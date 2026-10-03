@@ -1,6 +1,6 @@
 import type { BillingInterval, BillingStatus } from "./billing.js";
 import type { KeyKind } from "./keys.js";
-import type { Metric, PlanId } from "./plans.js";
+import type { Environment, Metric, PlanId } from "./plans.js";
 
 /**
  * Row types of migrations/0001_init.sql and migrations/0002_product.sql. The `as const` lists
@@ -90,7 +90,8 @@ export interface AppRow {
   id: string;
   account_id: string;
   name: string;
-  environment: "dev" | "staging" | "prod";
+  /** Legacy since 0010: the environment is on each key. Kept for old rows; new apps write prod. */
+  environment: Environment;
   emoji_set: EmojiSet;
   created_at: number;
 }
@@ -101,6 +102,7 @@ export interface ApiKeyRow {
   kind: KeyKind;
   prefix: string;
   hash: string;
+  environment: Environment;
   /** JSON-encoded string[] */
   allowed_origins: string;
   created_at: number;

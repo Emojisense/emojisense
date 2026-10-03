@@ -721,10 +721,20 @@
         "unit": "analitik"
       },
       "apps": {
-        "label": "Aplikasi atau lingkungan",
+        "label": "Aplikasi",
         "hint": "Satu per produk, masing-masing dengan kunci sendiri",
         "unit": {
-          "other": "aplikasi atau lingkungan"
+          "other": "aplikasi"
+        }
+      },
+      "environments": {
+        "label": "Lingkungan",
+        "hint": "Kunci terpisah untuk produksi, staging, dan pengembangan",
+        "unit": "lingkungan",
+        "names": {
+          "prod": "Produksi",
+          "staging": "Staging",
+          "dev": "Pengembangan"
         }
       },
       "team": {

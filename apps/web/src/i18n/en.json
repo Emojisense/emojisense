@@ -724,11 +724,21 @@
         "unit": "of analytics"
       },
       "apps": {
-        "label": "Apps or environments",
+        "label": "Apps",
         "hint": "One per product, each with its own keys",
         "unit": {
-          "one": "app or environment",
-          "other": "apps or environments"
+          "one": "app",
+          "other": "apps"
+        }
+      },
+      "environments": {
+        "label": "Environments",
+        "hint": "Separate keys for production, staging and development",
+        "unit": "environments",
+        "names": {
+          "prod": "Production",
+          "staging": "Staging",
+          "dev": "Development"
         }
       },
       "team": {

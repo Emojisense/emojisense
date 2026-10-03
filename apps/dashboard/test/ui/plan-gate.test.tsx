@@ -88,18 +88,27 @@ describe("plan gates", () => {
     expect(within(gate).queryByRole("link", { name: /Upgrade/ })).toBeNull();
   });
 
-  it("marks plan features in the sidebar by the app's plan", async () => {
+  it("lists locked features in the sidebar without plan labels; the page names the plan", async () => {
     window.history.replaceState(null, "", "/apps/app_1");
     stubApi({
       "GET /api/me": { body: me() },
       "GET /api/apps": { body: { apps: [APP] } },
       "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
+      "GET /api/apps/app_1/analytics": {
+        status: 402,
+        body: { error: { code: "plan_required", message: "Analytics need Pro.", plan: "pro" } },
+      },
     });
     render(<App />);
 
     const nav = await screen.findByRole("navigation", { name: "Chat app app" });
-    expect(within(nav).getByRole("link", { name: "Analytics Pro" })).toBeTruthy();
-    expect(within(nav).getByRole("link", { name: "Keys" })).toBeTruthy();
+    expect(within(nav).getByRole("link", { name: "Analytics" })).toBeTruthy();
+    expect(document.querySelector(".sidebar .nav-lock")).toBeNull();
+
+    fireEvent.click(within(nav).getByRole("link", { name: "Analytics" }));
+    expect(await screen.findByRole("heading", { name: "See what people search for" })).toBeTruthy();
+    expect(screen.getByText("Available on Pro and up")).toBeTruthy();
+    expect(screen.getByText("Sample data")).toBeTruthy();
   });
 
   it.each([
@@ -151,7 +160,7 @@ describe("plan gates", () => {
     expect(gate.textContent).not.toContain("$");
     expect(gate.textContent).not.toMatch(/Solo|Pro/);
     const nav = screen.getByRole("navigation", { name: "Chat app app" });
-    expect(within(nav).queryByRole("link", { name: /Custom emoji/ })).toBeNull();
+    expect(within(nav).queryByRole("link", { name: "Custom emoji" })).toBeNull();
   });
 
   it("keeps Custom emoji for a Solo app that has them", async () => {

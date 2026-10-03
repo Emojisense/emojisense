@@ -25,8 +25,8 @@ export function OriginsField({ value, onChange, environment, invalid, errorId }:
         <code className="code-inline">https://*.example.com</code>. Use{" "}
         <code className="code-inline">http://</code> only for localhost.{" "}
         {environment === "dev"
-          ? "Leave it empty to allow any origin (dev apps only)."
-          : "Add at least one: only dev apps may allow any origin."}
+          ? "Leave it empty to allow any origin, for localhost and preview builds."
+          : "Add at least one: only dev keys may allow any origin."}
       </p>
       <textarea
         id={id}

@@ -35,14 +35,15 @@ describe("apps page", () => {
         status: 201,
         body: { app: { ...APP, ...(body as object) } },
       }),
-      "GET /api/apps/app_1": { body: { app: { ...APP, environment: "dev" }, keys: [] } },
+      "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
       "GET /api/apps/app_1/usage": ({ url }) => ({ body: usage(url.searchParams.get("period") ?? "") }),
     });
     render(<App />);
 
     expect(await screen.findByRole("heading", { name: "No apps yet" })).toBeTruthy();
     fireEvent.change(screen.getByLabelText("App name"), { target: { value: "Chat app" } });
-    fireEvent.change(screen.getByLabelText("Environment"), { target: { value: "dev" } });
+    // Every app has every environment: the form asks for a name only.
+    expect(screen.queryByLabelText("Environment")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Create app" }));
 
     expect(await screen.findByRole("heading", { level: 1, name: "Chat app" })).toBeTruthy();
@@ -50,9 +51,16 @@ describe("apps page", () => {
     expect(calls).toContainEqual({
       method: "POST",
       path: "/api/apps",
-      body: { name: "Chat app", environment: "dev" },
+      body: { name: "Chat app" },
     });
-    expect(screen.getByRole("heading", { name: "No keys yet" })).toBeTruthy();
+    const steps = screen.getByRole("region", { name: "Get started" });
+    expect(within(steps).getByRole("link", { name: "Create a key" }).getAttribute("href")).toBe(
+      "/apps/app_1/keys",
+    );
+    const environments = screen.getByRole("region", { name: "Environments" });
+    expect(
+      within(environments).getByRole("link", { name: "See what you get for staging" }).getAttribute("href"),
+    ).toBe("/apps/app_1/keys?env=staging");
   });
 
   it("shows a server error next to the form", async () => {

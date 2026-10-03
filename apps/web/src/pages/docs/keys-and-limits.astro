@@ -35,7 +35,7 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
   </div>
   <CodeBlock code={publishable} lang="ts" title="Publishable key" />
   <CodeBlock code={secret} lang="bash" title="Secret key" />
-  <p>Create keys in the <a href={`${DASHBOARD_URL}/`}>dashboard</a>, per app. The full key is shown once. The dashboard stores only a hash of it. Call the API at <code>{API_HOST}</code> over HTTPS: a plain <code>http://</code> request gets <code>403</code>, so a key never travels unencrypted.</p>
+  <p>Create keys in the <a href={`${DASHBOARD_URL}/`}>dashboard</a>, per app and environment: production on every plan, development from Solo and staging from Pro. The full key is shown once. The dashboard stores only a hash of it. Call the API at <code>{API_HOST}</code> over HTTPS: a plain <code>http://</code> request gets <code>403</code>, so a key never travels unencrypted.</p>
   <Callout type="warning" title="Origins are a browser control">
     <p>The <code>Origin</code> check stops other websites from using your publishable key. It cannot stop a server, which can send any header, so every key also has a rate limit. Never put a secret key in a browser, an app bundle or a repository.</p>
   </Callout>
@@ -43,7 +43,7 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
   <h2 id="origins">Allowed origins</h2>
   <ul>
     <li>Add every origin your app runs on, for example <code>https://your.app</code> and <code>http://localhost:5173</code>.</li>
-    <li>An empty list allows any origin. Only apps in the <code>dev</code> environment may have such keys.</li>
+    <li>An empty list allows any origin. Only <code>dev</code> keys may have one, for localhost and preview builds.</li>
     <li>For a Chrome extension, add the extension origin shown on its options page.</li>
   </ul>
 

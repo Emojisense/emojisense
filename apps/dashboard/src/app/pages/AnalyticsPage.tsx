@@ -8,6 +8,7 @@ import { type ReactNode, useId, useRef, useState } from "react";
 import { type AnalyticsFilters, type AnalyticsResponse, api } from "../api";
 import { SearchesChart } from "../components/SearchesChart";
 import { formatNumber } from "../format";
+import { sampleAnalytics } from "../lib/previewSamples";
 import { countryFlag, countryName, localeName } from "../lib/regions";
 import { useResource } from "../lib/useResource";
 import { Link } from "../router";
@@ -15,8 +16,8 @@ import { appHref } from "../routes";
 import { useAppDetail } from "../shell/context";
 import { EmptyState, ErrorState, LoadingState } from "../ui/Feedback";
 import { Icon } from "../ui/Icon";
+import { LockedPreview } from "../ui/LockedPreview";
 import { PageHeader } from "../ui/PageHeader";
-import { PlanGate } from "../ui/PlanGate";
 import { Segmented } from "../ui/Segmented";
 
 const dayLong = new Intl.DateTimeFormat("en", {
@@ -44,6 +45,8 @@ export function AnalyticsPage() {
     `analytics:${app.id}:${range}:${filters.country ?? ""}:${filters.locale ?? ""}`,
     () => api.analytics(app.id, range, filters),
   );
+  // The plan says it before the API does, so a locked page shows its preview at once.
+  const locked = retention === 0 || data.status === "plan";
   // Kept while the next report loads, so the filters do not jump.
   const options = useRef<FilterOptions>({ countries: [], locales: [] });
   if (data.status === "ready") {
@@ -59,7 +62,7 @@ export function AnalyticsPage() {
       documentTitle={`Analytics · ${app.name}`}
       lede="What people search for in this app. Counts only: no user, IP address or message text is kept."
       actions={
-        data.status !== "plan" && (
+        !locked && (
           <Segmented<AnalyticsWindow>
             label="Time range"
             value={range}
@@ -79,11 +82,18 @@ export function AnalyticsPage() {
     />
   );
 
-  if (data.status === "plan") {
+  if (locked) {
     return (
       <>
         {header}
-        <PlanGate feature="analytics" plan={data.plan} />
+        <LockedPreview feature="analytics" plan={data.status === "plan" ? data.plan : undefined}>
+          <AnalyticsReport
+            appId={app.id}
+            data={sampleAnalytics()}
+            filters={NO_FILTERS}
+            onFilter={() => undefined}
+          />
+        </LockedPreview>
       </>
     );
   }

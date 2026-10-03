@@ -2,7 +2,8 @@ import { hashKey } from "@emojisense/platform";
 import { describe, expect, it, vi } from "vitest";
 import { parseDevKeys } from "../src/auth.ts";
 import type { RateLimiter } from "../src/env.ts";
-import { ALLOWED_ORIGIN, harness, KEYS, search, seededStore } from "./fixtures.ts";
+import { createMemoryStore } from "../src/store.ts";
+import { ALLOWED_ORIGIN, apiKey, harness, KEYS, search, seededStore } from "./fixtures.ts";
 
 const withKey = (key: string, origin?: string) =>
   search("rocket", `&key=${key}`, origin ? { headers: { Origin: origin } } : undefined);
@@ -32,6 +33,27 @@ describe("publishable keys", () => {
     const revoked = await h.call(withKey(KEYS.revoked));
     expect(revoked.status).toBe(401);
     expect(await revoked.json()).toEqual({ error: "unknown or revoked key" });
+  });
+});
+
+describe("key environments", () => {
+  const owner = { appId: "app_1", accountId: "acc_1" };
+
+  it("pause a dev or staging key while the plan does not include it, with the plan that does", async () => {
+    const cases = [
+      ["free", "dev", 402, "solo"],
+      ["solo", "staging", 402, "pro"],
+      ["solo", "dev", 200, undefined],
+      ["free", "prod", 200, undefined],
+    ] as const;
+    for (const [plan, environment, status, required] of cases) {
+      const store = createMemoryStore({
+        [await hashKey(KEYS.wildcard)]: apiKey(owner, { plan, environment }),
+      });
+      const response = await harness({ store }).call(withKey(KEYS.wildcard));
+      expect(response.status, `${environment} key on ${plan}`).toBe(status);
+      if (required) expect(await response.json()).toMatchObject({ error: "plan_required", plan: required });
+    }
   });
 });
 

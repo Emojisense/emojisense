@@ -1,4 +1,4 @@
-import type { KeyKind, Metric, PlanId } from "@emojisense/platform";
+import type { Environment, KeyKind, Metric, PlanId } from "@emojisense/platform";
 
 /** An API key joined with the plan of the account that owns its app: all a request needs. */
 export interface ApiKey {
@@ -8,6 +8,11 @@ export interface ApiKey {
   accountId: string;
   kind: KeyKind;
   plan: PlanId;
+  /**
+   * The key's environment (migration 0010). A dev or staging key pauses while the plan does not
+   * include it. Undefined for development and memory keys, which have no row and never pause.
+   */
+  environment?: Environment;
   /** Publishable keys only. Empty = any origin (development keys). */
   allowedOrigins: string[];
   revoked: boolean;
@@ -87,6 +92,7 @@ interface KeyJoinRow {
   app_id: string;
   account_id: string;
   kind: KeyKind;
+  environment: Environment;
   allowed_origins: string;
   revoked_at: number | null;
   plan: PlanId;
@@ -95,7 +101,7 @@ interface KeyJoinRow {
 
 // The plan lives on the account (migration 0002); the legacy apps.plan column is not read.
 const FIND_KEY = `
-  SELECT k.id, k.app_id, a.account_id, k.kind, k.allowed_origins, k.revoked_at, acc.plan,
+  SELECT k.id, k.app_id, a.account_id, k.kind, k.environment, k.allowed_origins, k.revoked_at, acc.plan,
     EXISTS (SELECT 1 FROM custom_emoji c WHERE c.app_id = k.app_id) AS has_custom
   FROM api_keys k
   JOIN apps a ON a.id = k.app_id
@@ -190,6 +196,7 @@ export function createD1Store(db: D1Like, reads: Pick<D1Like, "prepare"> = db): 
         accountId: row.account_id,
         kind: row.kind,
         plan: row.plan,
+        environment: row.environment,
         allowedOrigins: parseOrigins(row.allowed_origins),
         revoked: row.revoked_at !== null,
         hasCustomEmoji: row.has_custom === 1,

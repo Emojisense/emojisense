@@ -2,17 +2,17 @@ import { useId } from "react";
 import type { MetricUsage } from "../../shared/contract";
 import { formatCompact, formatNumber, METRIC_COPY } from "../format";
 
-function meterNote(usage: MetricUsage, planName: string): string {
-  const { hint } = METRIC_COPY[usage.metric];
+function meterNote(usage: MetricUsage, planName: string, brief: boolean): string {
+  const hint = brief ? "" : METRIC_COPY[usage.metric].hint;
   switch (usage.status) {
     case "not_included":
       return `Not included in the ${planName} plan.`;
     case "over_limit":
-      return `Limit reached. The API answers with overLimit: true for every app of the account until next month. ${hint}`;
+      return `Limit reached. The API answers with overLimit: true for every app of the account until next month. ${hint}`.trim();
     case "near_limit":
-      return `${usage.percent}% used: close to the limit. ${hint}`;
+      return `${usage.percent}% used: close to the limit. ${hint}`.trim();
     default:
-      return usage.limit === null ? hint : `${usage.percent}% used. ${hint}`;
+      return usage.limit === null ? hint : `${usage.percent}% used. ${hint}`.trim();
   }
 }
 
@@ -31,11 +31,14 @@ export function UsageMeter({
   usage,
   planName,
   compact = false,
+  brief = false,
 }: {
   /** `appUsed` (one app's part of the account total) adds a "This app" line. */
   usage: MetricUsage & { appUsed?: number };
   planName: string;
   compact?: boolean;
+  /** The note says the share and the state only, without the metric's long explanation. */
+  brief?: boolean;
 }) {
   const labelId = useId();
   const noteId = useId();
@@ -89,7 +92,7 @@ export function UsageMeter({
       )}
       {!compact && (
         <p id={noteId} className="meter-note">
-          {[appShare(usage), meterNote(usage, planName)].filter(Boolean).join(" ")}
+          {[appShare(usage), meterNote(usage, planName, brief)].filter(Boolean).join(" ")}
         </p>
       )}
     </div>

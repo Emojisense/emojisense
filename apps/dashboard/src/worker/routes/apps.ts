@@ -5,7 +5,7 @@ import type { AuthedContext } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
 import { appLimitError, loadAccountPlan, requirePlan } from "../plans";
 import { type AppRecord, effectiveRole, queryApps, toAppSummary, toKeySummary } from "../records";
-import { parseAppName, parseEmojiSet, parseEnvironment } from "../validate";
+import { parseAppName, parseEmojiSet } from "../validate";
 
 /** The account's own apps first, then apps of teams it belongs to; newest first in each group. */
 export async function listApps({ env, account }: AuthedContext): Promise<Response> {
@@ -26,11 +26,13 @@ export async function listApps({ env, account }: AuthedContext): Promise<Respons
   return json(body);
 }
 
-/** Apps are created in the caller's own account, within its plan's `maxApps`. */
+/**
+ * Apps are created in the caller's own account, within its plan's `maxApps`. Every app has every
+ * environment, so an `environment` field from an older client is ignored.
+ */
 export async function createApp({ request, env, deps, account }: AuthedContext): Promise<Response> {
   const body = await readJsonObject(request);
   const name = parseAppName(body.name);
-  const environment = parseEnvironment(body.environment);
   const { plan, appCount } = await loadAccountPlan(env.DB, account.id);
   const id = randomId();
   const now = deps.now();
@@ -39,12 +41,15 @@ export async function createApp({ request, env, deps, account }: AuthedContext):
   // pass the check. Unlimited plans skip it (Infinity cannot be bound as a parameter).
   const insert = Number.isFinite(plan.maxApps)
     ? env.DB.prepare(
-        `INSERT INTO apps (id, account_id, name, environment, created_at)
-         SELECT ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM apps WHERE account_id = ?) < ?`,
-      ).bind(id, account.id, name, environment, now, account.id, plan.maxApps)
-    : env.DB.prepare(
-        "INSERT INTO apps (id, account_id, name, environment, created_at) VALUES (?, ?, ?, ?, ?)",
-      ).bind(id, account.id, name, environment, now);
+        `INSERT INTO apps (id, account_id, name, created_at)
+         SELECT ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM apps WHERE account_id = ?) < ?`,
+      ).bind(id, account.id, name, now, account.id, plan.maxApps)
+    : env.DB.prepare("INSERT INTO apps (id, account_id, name, created_at) VALUES (?, ?, ?, ?)").bind(
+        id,
+        account.id,
+        name,
+        now,
+      );
   const result = await insert.run();
   if (result.meta.changes === 0) throw appLimitError(plan, Math.max(appCount, plan.maxApps));
 
@@ -52,13 +57,16 @@ export async function createApp({ request, env, deps, account }: AuthedContext):
     id,
     account_id: account.id,
     name,
-    environment,
+    environment: "prod",
     emoji_set: "native",
     created_at: now,
     owner_plan: plan.id,
     owner_name: account.name,
     owner_email: account.email,
     active_keys: 0,
+    active_prod: 0,
+    active_staging: 0,
+    active_dev: 0,
     role: "owner",
   };
   const response: AppResponse = { app: toAppSummary(record, "owner") };

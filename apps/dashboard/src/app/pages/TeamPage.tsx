@@ -11,6 +11,7 @@ import {
 } from "../api";
 import { formatDate, formatRelative } from "../format";
 import { initials } from "../lib/identity";
+import { sampleTeam } from "../lib/previewSamples";
 import { useResource } from "../lib/useResource";
 import { useSession } from "../session";
 import { RoleBadge, roleLabel } from "../ui/Badges";
@@ -18,8 +19,8 @@ import { CopyField } from "../ui/Copy";
 import { Dialog } from "../ui/Dialog";
 import { ErrorState, LoadingState } from "../ui/Feedback";
 import { Icon } from "../ui/Icon";
+import { LockedPreview } from "../ui/LockedPreview";
 import { PageHeader } from "../ui/PageHeader";
-import { PlanGate } from "../ui/PlanGate";
 import { Segmented } from "../ui/Segmented";
 import { useToast } from "../ui/Toast";
 
@@ -70,7 +71,18 @@ export function TeamPage() {
             ]}
           />
         )}
-        {team.status === "plan" && <PlanGate feature="team" plan={team.plan} />}
+        {team.status === "plan" && (
+          <LockedPreview feature="team" plan={team.plan}>
+            <Members
+              team={sampleTeam()}
+              owner={undefined}
+              canManage
+              onChange={() => undefined}
+              onRemoved={() => undefined}
+            />
+            <RolesCard />
+          </LockedPreview>
+        )}
         {team.status === "loading" && <LoadingState label="Loading team…" />}
         {team.status === "error" && <ErrorState message={team.message} onRetry={reload} />}
         {team.status === "ready" && (

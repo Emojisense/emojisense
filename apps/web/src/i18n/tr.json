@@ -724,11 +724,21 @@
         "unit": "analiz geçmişi"
       },
       "apps": {
-        "label": "Uygulamalar veya ortamlar",
+        "label": "Uygulamalar",
         "hint": "Ürün başına bir tane; her birinin kendi anahtarları var",
         "unit": {
-          "one": "uygulama veya ortam",
-          "other": "uygulama veya ortam"
+          "one": "uygulama",
+          "other": "uygulama"
+        }
+      },
+      "environments": {
+        "label": "Ortamlar",
+        "hint": "Üretim, ön üretim ve geliştirme için ayrı anahtarlar",
+        "unit": "ortamlar",
+        "names": {
+          "prod": "Üretim",
+          "staging": "Ön üretim",
+          "dev": "Geliştirme"
         }
       },
       "team": {
