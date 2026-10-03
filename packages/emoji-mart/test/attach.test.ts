@@ -62,7 +62,7 @@ describe("attachEmojisense", () => {
 
   it("moves through the results with arrow keys and selects with the pointer", () => {
     const { onEmojiSelect, input, type, press, options } = setup();
-    type("t");
+    type("l");
     expect(options().length).toBeGreaterThan(2);
     press("ArrowDown");
     expect(input.getAttribute("aria-activedescendant")).toBe(options()[2]?.id);

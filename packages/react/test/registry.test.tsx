@@ -32,7 +32,7 @@ describe("registry emoji-picker", () => {
     const onEmojiSelect = vi.fn();
     render(<Picker emojisense={ready} onEmojiSelect={onEmojiSelect} />);
     const input = screen.getByRole("combobox");
-    fireEvent.change(input, { target: { value: "t" } });
+    fireEvent.change(input, { target: { value: "r" } });
     const options = await screen.findAllByRole("option");
     expect(options.length).toBeGreaterThan(1);
     expect(input.getAttribute("aria-activedescendant")).toBe(options[0]?.id);

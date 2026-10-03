@@ -49,7 +49,7 @@ describe("EmojisensePicker", () => {
   it("moves the active option with arrow keys", async () => {
     render(<EmojisensePicker emojisense={emojisense} onEmojiSelect={() => {}} />);
     const input = screen.getByRole("combobox");
-    fireEvent.change(input, { target: { value: "t" } });
+    fireEvent.change(input, { target: { value: "r" } });
     const options = await screen.findAllByRole("option");
     expect(options.length).toBeGreaterThan(1);
     fireEvent.keyDown(input, { key: "ArrowRight" });
