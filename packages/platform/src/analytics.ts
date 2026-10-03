@@ -16,6 +16,13 @@ export const ANALYTICS_MIN_KEEP_DAYS = 7;
 export const ANALYTICS_MAX_KEEP_DAYS = 365;
 
 /**
+ * query_daily's key starts with the day (migration 0009), so the rows of one app are read one day
+ * at a time: `WITH RECURSIVE ${QUERY_DAYS} …` binds the first and the last day ('YYYY-MM-DD'), and
+ * a join on `q.day = days.day AND q.app_id = ?` seeks the key for each day instead of scanning.
+ */
+export const QUERY_DAYS = "days(day) AS (SELECT ? UNION ALL SELECT date(day, '+1 day') FROM days WHERE day < ?)";
+
+/**
  * The dashboard names a query only when the app saw it at least this often in the window. Rare
  * strings can be personal (ARCHITECTURE.md, invariant 4). Day totals count every search.
  */

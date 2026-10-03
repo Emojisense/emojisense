@@ -71,8 +71,8 @@
   },
 
   "d1": {
-    "//": "D1 rows written per search request: its app's query_daily count (src/query-stats.ts). ⚠ 2 = a new row plus its day index; a query repeated within a flush window or a day adds to the same row, so this is high for the head and right for the long tail. 50M rows a month included, then $1.00 / 1M.",
-    "rowsWrittenPerSearchRequest": 2,
+    "//": "D1 rows written per search request: its app's query_daily count (src/query-stats.ts). Since migration 0009 the table is its key (WITHOUT ROWID, no index): a new row or an update is one written row, and a query repeated within an isolate's 10 s flush adds nothing more. So at most 1 per request: right for the long tail, high for the head. 50M rows a month included, then $1.00 / 1M.",
+    "rowsWrittenPerSearchRequest": 1,
     "includedRowsWritten": 50000000,
     "pricePerMRowsWritten": 1
   },

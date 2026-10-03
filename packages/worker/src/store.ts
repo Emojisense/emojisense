@@ -128,7 +128,7 @@ const READ_TOTALS = `
 const ADD_QUERY_COUNT = `
   INSERT INTO query_daily (app_id, day, query, locale, country, searches, misses)
   SELECT a.id, ?, ?, ?, ?, ?, ? FROM apps a WHERE a.id = ?
-  ON CONFLICT (app_id, day, query, locale, country) DO UPDATE SET
+  ON CONFLICT (day, app_id, query, locale, country) DO UPDATE SET
     searches = searches + excluded.searches,
     misses = misses + excluded.misses`;
 

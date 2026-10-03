@@ -6,6 +6,7 @@ import {
   dayOf,
   lowestPlanWithAnalytics,
   PLANS,
+  QUERY_DAYS,
 } from "@emojisense/platform";
 import type {
   AnalyticsCountry,
@@ -55,8 +56,8 @@ function parseFilter(value: string | null, field: "country" | "locale"): string 
 }
 
 /** `AND` clauses of the optional filters; each binds its value twice. */
-const COUNTRY = "AND (? IS NULL OR country = ?)";
-const LOCALE = "AND (? IS NULL OR locale = ?)";
+const COUNTRY = "AND (? IS NULL OR q.country = ?)";
+const LOCALE = "AND (? IS NULL OR q.locale = ?)";
 
 /**
  * Daily totals, top queries and the country and language breakdowns from `query_daily`, which the
@@ -78,41 +79,60 @@ export async function getAnalytics({ url, env, deps, account, params }: AuthedCo
   const window = Math.min(requested, plan.analyticsRetentionDays);
   const to = dayOf(deps.now());
   const from = addDays(to, 1 - window);
-  const range = [app.id, from, to] as const;
   const byCountry = [country, country] as const;
   const byLocale = [locale, locale] as const;
-  const where = `WHERE app_id = ? AND day BETWEEN ? AND ? ${COUNTRY} ${LOCALE}`;
+  /**
+   * The app's rows of the window, seeked one day at a time (query_daily's key starts with the
+   * day, migration 0009); `filters` are the optional country and locale clauses.
+   */
+  const appRows = (columns: string, filters: string, rest: string) =>
+    `WITH RECURSIVE ${QUERY_DAYS}
+     SELECT ${columns} FROM days JOIN query_daily q ON q.day = days.day AND q.app_id = ?
+     WHERE 1 = 1 ${filters} ${rest}`;
+  const range = [from, to, app.id] as const;
   const [totals, topQueries, topMisses, countries, locales] = await Promise.all([
     env.DB.prepare(
-      `SELECT day, SUM(searches) AS searches, SUM(misses) AS misses FROM query_daily ${where} GROUP BY day`,
+      appRows(
+        "q.day AS day, SUM(q.searches) AS searches, SUM(q.misses) AS misses",
+        `${COUNTRY} ${LOCALE}`,
+        "GROUP BY q.day",
+      ),
     )
       .bind(...range, ...byCountry, ...byLocale)
       .all<AnalyticsDay>(),
     env.DB.prepare(
-      `SELECT query, SUM(searches) AS searches FROM query_daily ${where}
-       GROUP BY query HAVING SUM(searches) >= ?
-       ORDER BY SUM(searches) DESC, query LIMIT ?`,
+      appRows(
+        "q.query AS query, SUM(q.searches) AS searches",
+        `${COUNTRY} ${LOCALE}`,
+        "GROUP BY q.query HAVING SUM(q.searches) >= ? ORDER BY SUM(q.searches) DESC, q.query LIMIT ?",
+      ),
     )
       .bind(...range, ...byCountry, ...byLocale, ANALYTICS_MIN_QUERY_SEARCHES, TOP_QUERIES)
       .all<{ query: string; searches: number }>(),
     env.DB.prepare(
-      `SELECT query, SUM(misses) AS misses FROM query_daily ${where}
-       GROUP BY query HAVING SUM(misses) > 0 AND SUM(searches) >= ?
-       ORDER BY SUM(misses) DESC, query LIMIT ?`,
+      appRows(
+        "q.query AS query, SUM(q.misses) AS misses",
+        `${COUNTRY} ${LOCALE}`,
+        "GROUP BY q.query HAVING SUM(q.misses) > 0 AND SUM(q.searches) >= ? ORDER BY SUM(q.misses) DESC, q.query LIMIT ?",
+      ),
     )
       .bind(...range, ...byCountry, ...byLocale, ANALYTICS_MIN_QUERY_SEARCHES, TOP_QUERIES)
       .all<{ query: string; misses: number }>(),
     env.DB.prepare(
-      `SELECT country, SUM(searches) AS searches, SUM(misses) AS misses FROM query_daily
-       WHERE app_id = ? AND day BETWEEN ? AND ? ${LOCALE}
-       GROUP BY country ORDER BY SUM(searches) DESC, country LIMIT ?`,
+      appRows(
+        "q.country AS country, SUM(q.searches) AS searches, SUM(q.misses) AS misses",
+        LOCALE,
+        "GROUP BY q.country ORDER BY SUM(q.searches) DESC, q.country LIMIT ?",
+      ),
     )
       .bind(...range, ...byLocale, TOP_BREAKDOWN)
       .all<AnalyticsCountry>(),
     env.DB.prepare(
-      `SELECT locale, SUM(searches) AS searches, SUM(misses) AS misses FROM query_daily
-       WHERE app_id = ? AND day BETWEEN ? AND ? ${COUNTRY}
-       GROUP BY locale ORDER BY SUM(searches) DESC, locale LIMIT ?`,
+      appRows(
+        "q.locale AS locale, SUM(q.searches) AS searches, SUM(q.misses) AS misses",
+        COUNTRY,
+        "GROUP BY q.locale ORDER BY SUM(q.searches) DESC, q.locale LIMIT ?",
+      ),
     )
       .bind(...range, ...byCountry, TOP_BREAKDOWN)
       .all<AnalyticsLocale>(),

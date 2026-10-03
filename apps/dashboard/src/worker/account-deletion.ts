@@ -7,7 +7,14 @@
  * Its Whop memberships go too, except retired ones and the one that still renews: they stay
  * without the account id until Whop confirms their cancel (whop/memberships.ts).
  */
-import type { AccountRow, EmojiBucket } from "@emojisense/platform";
+import {
+  type AccountRow,
+  ANALYTICS_MAX_KEEP_DAYS,
+  addDays,
+  dayOf,
+  type EmojiBucket,
+  QUERY_DAYS,
+} from "@emojisense/platform";
 import type { D1Database, D1PreparedStatement } from "./d1";
 import { HttpError } from "./http";
 import { deletedAccountMembershipStatements } from "./whop/memberships";
@@ -20,15 +27,8 @@ export const DELETED_CLERK_USER_TTL_MS = 10 * 60 * 1000;
 
 const OWNED_APPS = "SELECT id FROM apps WHERE account_id = ?";
 
-/** Tables keyed by `app_id`. Their rows go before the apps. */
-const APP_TABLES = [
-  "custom_emoji",
-  "tenants",
-  "webhooks",
-  "query_daily",
-  "usage_monthly",
-  "api_keys",
-] as const;
+/** Tables keyed by `app_id`. Their rows go before the apps. query_daily has its own statement. */
+const APP_TABLES = ["custom_emoji", "tenants", "webhooks", "usage_monthly", "api_keys"] as const;
 
 export interface AccountDeletion {
   apps: number;
@@ -49,6 +49,15 @@ function deleteStatements(db: D1Database, account: AccountRow, now: number): D1P
       )
       .bind(id),
     ...APP_TABLES.map((table) => db.prepare(`DELETE FROM ${table} WHERE app_id IN (${OWNED_APPS})`).bind(id)),
+    // query_daily's key starts with the day (migration 0009): seek each day of the longest
+    // retention instead of scanning the table. An older row, if a retention run was missed, has no
+    // app left and goes in the next run.
+    db
+      .prepare(
+        `WITH RECURSIVE ${QUERY_DAYS}
+         DELETE FROM query_daily WHERE (day, app_id) IN (SELECT days.day, a.id FROM days, apps a WHERE a.account_id = ?)`,
+      )
+      .bind(addDays(dayOf(now), -ANALYTICS_MAX_KEEP_DAYS), dayOf(now), id),
     db.prepare("DELETE FROM apps WHERE account_id = ?").bind(id),
     db.prepare("DELETE FROM team_members WHERE owner_id = ? OR member_id = ?").bind(id, id),
     db.prepare("DELETE FROM team_invites WHERE owner_id = ?").bind(id),

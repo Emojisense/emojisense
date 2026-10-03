@@ -31,12 +31,13 @@ export function retentionCutoffs(now: number): RetentionCutoffs {
 
 /**
  * One batch of expired rows. The plan is the account's (`accounts.plan`); rows whose app or
- * account is gone fall to the fallback. `q.day < ?` (the latest cutoff of any plan) lets SQLite
- * use the day index and skip every row that no plan would delete yet.
+ * account is gone fall to the fallback. `q.day < ?` (the latest cutoff of any plan) reads only the
+ * start of the key (it begins with the day) and skips every row that no plan would delete yet.
+ * The table has no rowid (migration 0009): a batch is selected by its key.
  */
 const DELETE_EXPIRED = `
-  DELETE FROM query_daily WHERE rowid IN (
-    SELECT q.rowid FROM query_daily q
+  DELETE FROM query_daily WHERE (day, app_id, query, locale, country) IN (
+    SELECT q.day, q.app_id, q.query, q.locale, q.country FROM query_daily q
     LEFT JOIN apps a ON a.id = q.app_id
     LEFT JOIN accounts acc ON acc.id = a.account_id
     WHERE q.day < ?

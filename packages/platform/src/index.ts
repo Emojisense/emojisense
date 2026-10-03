@@ -1,6 +1,7 @@
 export {
   ALL_COUNTRIES,
   ANALYTICS_MAX_KEEP_DAYS,
+  QUERY_DAYS,
   ANALYTICS_MIN_KEEP_DAYS,
   ANALYTICS_MIN_QUERY_SEARCHES,
   ANALYTICS_WINDOWS,
@@ -127,6 +128,8 @@ export {
 export {
   getPlan,
   isHigherPlan,
+  isListedPlan,
+  LISTED_PLAN_IDS,
   lowestPlanWith,
   METRICS,
   type Metric,
