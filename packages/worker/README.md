@@ -54,8 +54,12 @@ pnpm --filter @emojisense/worker db:migrate             # wrangler d1 migrations
 pnpm --filter @emojisense/worker dev:offline            # http://localhost:8788, no Cloudflare login
 ```
 
-- `dev:offline` has no Workers AI binding, so answers are alias-only with `degraded: true`.
-  `dev` uses Workers AI and needs `wrangler login`.
+- `dev:offline` has no Workers AI binding. With `uv run scripts/local_embed_server.py` running
+  (repo root; first start downloads EmbeddingGemma's fp32 ONNX, ~1.2 GB), search and reactions
+  embed locally (`LOCAL_EMBED_URL`) with the same vectors as Workers AI. Without it, answers are
+  alias-only with `degraded: true`. `dev` uses Workers AI and needs `wrangler login`.
+- `EMOJISENSE_LOCAL_EMBED=1` runs the data and eval scripts (`embed`, `eval:models`, …) on the
+  same local server instead of Workers AI.
 - `sync` defaults to the production model, `--model bge-m3 --dims 1024`. Without
   `--placeholder` it needs `vectors.bge-m3.1024.bin` from the embed step. It bundles that shared
   file and publishes the locale files (`vectors.bge-m3.1024.<locale>.bin`) as static assets; the

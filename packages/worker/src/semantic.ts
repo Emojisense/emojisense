@@ -2,7 +2,7 @@ import type { EmbeddingModel } from "@emojisense/data/models";
 import { semanticBonus } from "@emojisense/data/semantic-score";
 import { type AliasEngine, type AliasSearchOutput, type Culture, fuse, type SearchResult } from "emojisense";
 import { l2normalize, searchVectorSets, type VectorIndex } from "emojisense/vectors";
-import type { Env, GeneratedConfig } from "./env.ts";
+import type { AiBinding, Env, GeneratedConfig } from "./env.ts";
 import type { LocaleIndexes } from "./locale-vectors.ts";
 
 /** The data one Worker build serves: alias engines, emoji vectors and the model that made them. */
@@ -37,6 +37,24 @@ export function indexTag(catalog: Catalog): string {
   return `${catalog.config.packVersion}:${modelTag(catalog)}`;
 }
 
+/** Workers AI, or in local development the embedding server at LOCAL_EMBED_URL (env.ts). */
+export function embeddingBinding(env: Env): AiBinding | undefined {
+  if (env.AI) return env.AI;
+  const url = env.LOCAL_EMBED_URL;
+  if (!url) return undefined;
+  return {
+    run: async (model, input) => {
+      const response = await fetch(`${url}/embed`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model, ...input }),
+      });
+      if (!response.ok) throw new Error(`local embedding server: ${response.status}`);
+      return response.json();
+    },
+  };
+}
+
 /**
  * One Workers AI call for up to `model.maxBatch` texts (already `embeddingText`), in order. The
  * search route sends one text, the nightly shard build (shards/job.ts) a batch: both embed the
@@ -47,11 +65,12 @@ export async function embedTexts(
   catalog: Catalog,
   texts: readonly string[],
 ): Promise<Float32Array[]> {
-  if (!env.AI) throw new Error("AI binding missing");
+  const ai = embeddingBinding(env);
+  if (!ai) throw new Error("AI binding missing");
   const { config, model } = catalog;
   // A replacer function, so "$&" or "$1" in a query is not read as a replacement pattern.
   const inputs = texts.map((text) => config.queryTemplate.replace("{q}", () => text));
-  const output = (await env.AI.run(config.modelId, model.input(inputs, "query"))) as {
+  const output = (await ai.run(config.modelId, model.input(inputs, "query"))) as {
     data?: number[][];
     response?: number[][];
   };

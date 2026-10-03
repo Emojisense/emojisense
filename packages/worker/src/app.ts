@@ -17,7 +17,7 @@ import { Meter, type WaitUntil } from "./meter.ts";
 import { QueryStats } from "./query-stats.ts";
 import { handleReactions } from "./reactions.ts";
 import { handleSearch, searchCacheKey } from "./search.ts";
-import { type Catalog, modelTag } from "./semantic.ts";
+import { type Catalog, embeddingBinding, modelTag } from "./semantic.ts";
 import { authorizeEmojiSets } from "./sets/access.ts";
 import { createEmojiSetsRoute, type EmojiSetsOptions, SETS_PATH_PREFIX } from "./sets/route.ts";
 import { createShardRoute, SHARDS_PATH_PREFIX } from "./shards/route.ts";
@@ -130,7 +130,7 @@ export function createApp(options: AppOptions) {
           ok: true,
           packVersion: catalog.config.packVersion,
           model: modelTag(catalog),
-          semantic: Boolean(env.AI),
+          semantic: Boolean(embeddingBinding(env)),
         });
       }
       // Hosted set images: a key on a plan with sets, not metered, not rate limited per call (a

@@ -12,6 +12,11 @@ export interface AiBinding {
 
 export interface Env {
   AI?: AiBinding;
+  /**
+   * Local development without Workers AI (`dev:offline`): scripts/local_embed_server.py, which
+   * serves the production embedding model with the same vectors. Used only when AI is unbound.
+   */
+  LOCAL_EMBED_URL?: string;
   /** Hosted-service database (packages/platform/migrations): keys, apps, usage. */
   DB?: D1Database;
   SEARCH_LIMITER?: RateLimiter;

@@ -4,6 +4,9 @@
  * Auth, in order:
  *   1. CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID → REST API
  *   2. otherwise wrangler's login, via getPlatformProxy() with a remote AI binding
+ * EMOJISENSE_LOCAL_EMBED=1 sends every embedding call to scripts/local_embed_server.py instead
+ * (no Cloudflare). Its EmbeddingGemma gives the Workers AI vectors, so the cache stays valid.
+ * Model ids "local/…" (eval-only models) always go there.
  * Cache: .cache/embeddings/<model-key>.json  { sha256(text): base64(float32[]) }
  */
 import { createHash } from "node:crypto";
@@ -52,6 +55,25 @@ async function createRunner(): Promise<Runner> {
   });
   return { run: (m, i) => proxy.env.AI.run(m, i), dispose: () => proxy.dispose() };
 }
+
+/** scripts/local_embed_server.py on this machine. */
+const LOCAL_PREFIX = "local/";
+const LOCAL_ONLY = process.env.EMOJISENSE_LOCAL_EMBED === "1";
+const LOCAL_URL = process.env.EMOJISENSE_LOCAL_EMBED_URL ?? "http://127.0.0.1:8765";
+
+const runLocal: Run = async (model, input) => {
+  const response = await fetch(`${LOCAL_URL}/embed`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ model, ...input }),
+  });
+  if (!response.ok)
+    throw new Error(`local embed server ${model}: ${response.status} ${await response.text()}`);
+  return response.json();
+};
+
+const runFor = async (model: string): Promise<Run> =>
+  LOCAL_ONLY || model.startsWith(LOCAL_PREFIX) ? runLocal : (await getRunner()).run;
 
 export async function disposeEmbeddings() {
   const current = runner;
@@ -141,7 +163,7 @@ export async function embedTexts(
     if (options.offline) {
       throw new Error(`${model.key}: ${missing.length} ${kind} embeddings not cached and --offline is set`);
     }
-    const { run } = await getRunner();
+    const run = await runFor(model.id);
     const batchSize = Math.min(options.batchSize ?? model.maxBatch, model.maxBatch);
     const batches: number[][] = [];
     for (let start = 0; start < missing.length; start += batchSize) {
@@ -216,7 +238,7 @@ export function readCachedEmbeddings(
 
 /** Time single-text calls that bypass the cache (round trip from this machine to Workers AI). */
 export async function measureLatency(model: EmbeddingModel, texts: string[]): Promise<number[]> {
-  const { run } = await getRunner();
+  const run = await runFor(model.id);
   const timings: number[] = [];
   for (const text of texts) {
     const started = performance.now();

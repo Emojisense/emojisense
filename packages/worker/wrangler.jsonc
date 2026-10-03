@@ -108,9 +108,12 @@
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
       // ENVIRONMENT=development lets webhooks reach http://localhost receivers.
       // No Workers AI here, so the shard build logs "shards_skipped" (no Workers AI).
+      // LOCAL_EMBED_URL: search and reactions embed with scripts/local_embed_server.py (the
+      // production model, same vectors); without the server they answer alias-only, degraded.
       "vars": {
         "DEV_KEYS": "pk_demo,sk_live_local:pro",
         "ENVIRONMENT": "development",
+        "LOCAL_EMBED_URL": "http://127.0.0.1:8765",
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790",
         "CULTURE_CRON_ENABLED": "true",
