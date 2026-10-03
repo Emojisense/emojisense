@@ -62,8 +62,8 @@ describe("GET /api/billing", () => {
     setPlan(h, "ada", "pro");
     const one = await createAppFor(h, ada, { name: "One" });
     const two = await createAppFor(h, ada, { name: "Two" });
-    addUsage(h, one, "2026-10", "semantic_calls", 2_000_000);
-    addUsage(h, two, "2026-10", "semantic_calls", 500_000);
+    addUsage(h, one, "2026-10", "semantic_calls", 700_000);
+    addUsage(h, two, "2026-10", "semantic_calls", 133_000);
     addUsage(h, two, "2026-09", "semantic_calls", 9_000_000);
     addUsage(h, one, "2026-10", "image_classifications", 10);
     h.db.exec(
@@ -82,11 +82,11 @@ describe("GET /api/billing", () => {
     expect(billing).toMatchObject({
       plan: { id: "pro", name: "Pro", teamMembers: true, analyticsRetentionDays: 30 },
       period: "2026-10",
-      limits: { semantic_calls: 3_000_000, image_classifications: 10_000, custom_emoji: 2_000, apps: 3 },
+      limits: { semantic_calls: 1_000_000, image_classifications: 10_000, custom_emoji: 2_000, apps: 3 },
       appCount: 2,
     });
     expect(billing.usage).toEqual([
-      { metric: "semantic_calls", used: 2_500_000, limit: 3_000_000, percent: 83.3, status: "near_limit" },
+      { metric: "semantic_calls", used: 833_000, limit: 1_000_000, percent: 83.3, status: "near_limit" },
       { metric: "image_classifications", used: 10, limit: 10_000, percent: 0.1, status: "ok" },
       { metric: "custom_emoji", used: 2, limit: 2_000, percent: 0.1, status: "ok" },
     ]);

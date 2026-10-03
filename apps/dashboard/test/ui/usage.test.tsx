@@ -24,17 +24,17 @@ describe("usage", () => {
         return {
           body:
             period === "2026-10"
-              ? usage(period, { semantic_calls: 85_000, image_classifications: 100 })
+              ? usage(period, { semantic_calls: 8_500, image_classifications: 100 })
               : usage(period, { semantic_calls: 1_234 }),
         };
       },
     });
     render(<App />);
 
-    const semantic = await screen.findByRole("meter", { name: "Semantic calls" });
+    const semantic = await screen.findByRole("meter", { name: "AI calls" });
     expect(semantic.getAttribute("aria-valuenow")).toBe("85");
-    expect(semantic.getAttribute("aria-valuetext")).toBe("85,000 of 100,000 (85%)");
-    expect(screen.getByText("85,000 / 100,000")).toBeTruthy();
+    expect(semantic.getAttribute("aria-valuetext")).toBe("8,500 of 10,000 (85%)");
+    expect(screen.getByText("8,500 / 10,000")).toBeTruthy();
     expect(screen.getByText(/close to the limit/)).toBeTruthy();
     expect(screen.getByText(/^Limit reached/)).toBeTruthy();
     expect(screen.getByText("Not included in the Free plan.")).toBeTruthy();
@@ -49,7 +49,7 @@ describe("usage", () => {
     ).toEqual(["October 2026", "September 2026", "August 2026"]);
     fireEvent.change(month, { target: { value: "2026-09" } });
 
-    expect(await screen.findByText("1,234 / 100,000")).toBeTruthy();
+    expect(await screen.findByText("1,234 / 10,000")).toBeTruthy();
     expect(calls.map((call) => call.path)).toContain("/api/apps/app_1/usage?period=2026-09");
   });
 
@@ -58,14 +58,14 @@ describe("usage", () => {
       "GET /api/me": { body: me() },
       "GET /api/apps/app_1": { body: { app: APP, keys: [] } },
       "GET /api/apps/app_1/usage": {
-        body: usage("2026-10", { semantic_calls: 85_000 }, { semantic_calls: 12_000 }),
+        body: usage("2026-10", { semantic_calls: 8_500 }, { semantic_calls: 1_200 }),
       },
     });
     render(<App />);
 
-    const semantic = await screen.findByRole("meter", { name: "Semantic calls" });
-    expect(semantic.getAttribute("aria-valuetext")).toBe("85,000 of 100,000 (85%)");
-    expect(screen.getByText(/^This app: 12,000 of 85,000\. 85% used: close to the limit\./)).toBeTruthy();
+    const semantic = await screen.findByRole("meter", { name: "AI calls" });
+    expect(semantic.getAttribute("aria-valuetext")).toBe("8,500 of 10,000 (85%)");
+    expect(screen.getByText(/^This app: 1,200 of 8,500\. 85% used: close to the limit\./)).toBeTruthy();
     expect(screen.getByText(/Plan limits count the calls of every app of the account\./)).toBeTruthy();
   });
 

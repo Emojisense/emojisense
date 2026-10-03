@@ -60,8 +60,8 @@ export function recentPeriods(since: number, now: number, max = 12): string[] {
 
 export const METRIC_COPY: Record<Metric, { label: string; hint: string }> = {
   semantic_calls: {
-    label: "Semantic calls",
-    hint: "Search and reaction calls that reached the API, edge-cached answers included.",
+    label: "AI calls",
+    hint: "Searches and reaction suggestions that reached the API, edge-cached answers included. On-device and shard answers are not counted.",
   },
   image_classifications: { label: "Image classifications", hint: "Photo to emoji calls." },
   custom_emoji: { label: "Custom emoji", hint: "Custom emoji stored by every app of the account." },

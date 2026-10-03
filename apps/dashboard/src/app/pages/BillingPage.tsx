@@ -28,7 +28,7 @@ const count = (value: number, unit: string) =>
 
 function planFeatures(plan: Plan): { text: string; included: boolean }[] {
   return [
-    { text: `${count(plan.limits.semantic_calls, "semantic calls")} a month`, included: true },
+    { text: `${count(plan.limits.semantic_calls, "AI calls")} a month`, included: true },
     { text: `${count(plan.limits.image_classifications, "photo to emoji calls")} a month`, included: true },
     {
       text: plan.limits.custom_emoji > 0 ? count(plan.limits.custom_emoji, "custom emoji") : "Custom emoji",

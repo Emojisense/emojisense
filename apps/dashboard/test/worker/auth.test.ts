@@ -68,7 +68,7 @@ describe("dev sign-in", () => {
     const cookie = await h.signIn("ada");
     const me = await body<MeResponse>(await h.call("GET", "/api/me", { cookie }));
     expect(me.account).toMatchObject({ name: "ada", email: "ada@dev.localhost", signIn: "dev" });
-    expect(me.plan).toMatchObject({ id: "free", maxApps: 1, limits: { semantic_calls: 100_000 } });
+    expect(me.plan).toMatchObject({ id: "free", maxApps: 1, limits: { semantic_calls: 10_000 } });
     expect(me.appCount).toBe(0);
     expect(me.billingStatus).toBe("none");
   });

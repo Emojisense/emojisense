@@ -47,7 +47,7 @@ describe("GET /api/apps/:id/usage", () => {
 
   it("reports the current UTC month by default, with zeros for missing metrics", async () => {
     const { appId, insert, usage } = await setup();
-    insert("2026-10", "semantic_calls", 85_000);
+    insert("2026-10", "semantic_calls", 8_500);
     insert("2026-09", "semantic_calls", 1);
     insert("2026-10", "image_classifications", 100);
 
@@ -60,9 +60,9 @@ describe("GET /api/apps/:id/usage", () => {
       metrics: [
         {
           metric: "semantic_calls",
-          used: 85_000,
-          appUsed: 85_000,
-          limit: 100_000,
+          used: 8_500,
+          appUsed: 8_500,
+          limit: 10_000,
           percent: 85,
           status: "near_limit",
         },
@@ -85,8 +85,8 @@ describe("GET /api/apps/:id/usage", () => {
     addApp("app_sibling", accountIdOf(h, "ada"));
     h.db.exec("INSERT INTO accounts (id, plan, created_at) VALUES ('acc_other', 'pro', 0)");
     addApp("app_stranger", "acc_other");
-    insert("2026-10", "semantic_calls", 1_000_000);
-    insertFor("app_sibling", "2026-10", "semantic_calls", 1_400_000);
+    insert("2026-10", "semantic_calls", 300_000);
+    insertFor("app_sibling", "2026-10", "semantic_calls", 500_000);
     insertFor("app_sibling", "2026-10", "image_classifications", 10_000);
     insertFor("app_stranger", "2026-10", "semantic_calls", 5_000_000);
 
@@ -94,9 +94,9 @@ describe("GET /api/apps/:id/usage", () => {
     expect(report.metrics).toEqual([
       {
         metric: "semantic_calls",
-        used: 2_400_000,
-        appUsed: 1_000_000,
-        limit: 3_000_000,
+        used: 800_000,
+        appUsed: 300_000,
+        limit: 1_000_000,
         percent: 80,
         status: "near_limit",
       },
@@ -115,12 +115,12 @@ describe("GET /api/apps/:id/usage", () => {
   it("reads the requested period and the owning account's plan limits", async () => {
     const { h, insert, usage } = await setup();
     h.db.exec("UPDATE accounts SET plan = 'pro'");
-    insert("2026-09", "semantic_calls", 300_000);
+    insert("2026-09", "semantic_calls", 100_000);
 
     const report = await body<UsageResponse>(await usage("?period=2026-09"));
     expect(report.period).toBe("2026-09");
     expect(report.plan.name).toBe("Pro");
-    expect(report.metrics[0]).toMatchObject({ used: 300_000, limit: 3_000_000, percent: 10, status: "ok" });
+    expect(report.metrics[0]).toMatchObject({ used: 100_000, limit: 1_000_000, percent: 10, status: "ok" });
   });
 
   it.each([
