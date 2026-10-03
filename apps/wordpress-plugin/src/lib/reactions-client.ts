@@ -11,17 +11,32 @@ export interface ReactionTarget {
   id: number;
 }
 
+/** The counts, and the reactions the server's receipt cookie lists for this browser. */
+export interface ReactionState {
+  reactions: Reaction[];
+  mine?: string[];
+}
+
 export interface ReactionsApi {
   /** Counts and a fresh nonce (GET /emojisense/v1/reactions/:type/:id). */
   load(target: ReactionTarget): Promise<{ reactions: Reaction[]; nonce: string }>;
   /** POST /emojisense/v1/reactions/:type/:id. Rejects with a ReactionError. */
-  react(target: ReactionTarget, emoji: string, action: "add" | "remove", nonce: string): Promise<Reaction[]>;
+  react(
+    target: ReactionTarget,
+    emoji: string,
+    action: "add" | "remove",
+    nonce: string,
+  ): Promise<ReactionState>;
 }
 
 export class ReactionError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
+    /** The server's message for the visitor. */
+    readonly text?: string,
+    /** When the server refused the change (409): the state to catch up with. */
+    readonly state?: ReactionState,
   ) {
     super(code);
   }
@@ -36,10 +51,18 @@ export function createReactionsApi(
   const parse = async (response: Response) => {
     const body = (await response.json().catch(() => ({}))) as {
       reactions?: Reaction[];
+      mine?: string[];
       nonce?: string;
       code?: string;
+      message?: string;
+      data?: { reactions?: Reaction[]; mine?: string[] };
     };
-    if (!response.ok) throw new ReactionError(response.status, body.code ?? "error");
+    if (!response.ok) {
+      const state = body.data?.mine
+        ? { reactions: body.data.reactions ?? [], mine: body.data.mine }
+        : undefined;
+      throw new ReactionError(response.status, body.code ?? "error", body.message, state);
+    }
     return body;
   };
   const api: ReactionsApi = {
@@ -48,6 +71,7 @@ export function createReactionsApi(
       return { reactions: body.reactions ?? [], nonce: body.nonce ?? "" };
     },
     async react(target, emoji, action, nonce) {
+      // "same-origin" sends the receipt cookie that lets this browser take its reactions back.
       const body = await parse(
         await fetchImpl(url(target), {
           method: "POST",
@@ -56,7 +80,7 @@ export function createReactionsApi(
           body: JSON.stringify({ emoji, action }),
         }),
       );
-      return body.reactions ?? [];
+      return { reactions: body.reactions ?? [], mine: body.mine };
     },
   };
   return api;
@@ -109,6 +133,15 @@ export function mountReactionBar(root: HTMLElement, options: ReactionBarOptions)
     const mine = store.get(target.id, target.type);
     for (const [emoji, button] of buttons) button.setAttribute("aria-pressed", String(mine.has(emoji)));
   };
+  // The server's receipt wins over local memory: another tab, cleared cookies, older reactions.
+  const remember = (mine: readonly string[]) => {
+    const stored = store.get(target.id, target.type);
+    for (const emoji of buttons.keys()) {
+      const on = mine.includes(emoji);
+      if (stored.has(emoji) !== on) store.toggle(target.id, emoji, on, target.type);
+    }
+    showPressed();
+  };
 
   const refresh = async () => {
     const { reactions, nonce: fresh } = await api.load(target);
@@ -128,25 +161,30 @@ export function mountReactionBar(root: HTMLElement, options: ReactionBarOptions)
     buttons.get(emoji)?.setAttribute("aria-pressed", String(on));
     const send = () => api.react(target, emoji, on ? "add" : "remove", nonce);
     try {
-      let reactions: Reaction[];
+      let result: ReactionState;
       try {
-        reactions = await send();
+        result = await send();
       } catch (error) {
         // The nonce may be older than the cached page allows: get a fresh one, once.
         if (!(error instanceof ReactionError) || error.status !== 403) throw error;
         nonce = (await api.load(target)).nonce;
-        reactions = await send();
+        result = await send();
       }
-      store.toggle(target.id, emoji, on, target.type);
-      showCounts(reactions);
+      if (result.mine) remember(result.mine);
+      else store.toggle(target.id, emoji, on, target.type);
+      showCounts(result.reactions);
     } catch (error) {
       setCount(emoji, before);
       buttons.get(emoji)?.setAttribute("aria-pressed", String(!on));
-      const limited = error instanceof ReactionError && error.status === 429;
-      say(
-        (limited ? strings.limited : strings.failed) ??
-          (limited ? "Too many reactions. Wait a minute." : "Try again."),
-      );
+      if (error instanceof ReactionError && error.state) {
+        showCounts(error.state.reactions);
+        remember(error.state.mine ?? []);
+        say(error.text ?? "");
+      } else if (error instanceof ReactionError && error.status === 429) {
+        say(error.text ?? strings.limited ?? "Too many reactions. Wait a minute.");
+      } else {
+        say(strings.failed ?? "Try again.");
+      }
     } finally {
       busy = false;
     }

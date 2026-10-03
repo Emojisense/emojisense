@@ -97,16 +97,25 @@ function renderBar(id = 42, type = "post") {
   return document.querySelector<HTMLElement>(".emojisense-reactions") as HTMLElement;
 }
 
-function fakeApi(start: Reaction[]) {
+/** A server that keeps the counts and this browser's receipt. */
+function fakeApi(start: Reaction[], given: string[] = []) {
   const counts = new Map(start.map((reaction) => [reaction.emoji, reaction.count]));
   const list = () => [...counts].map(([emoji, count]) => ({ emoji, count }));
+  const mine = new Set(given);
   let nonce = "n1";
   const api = {
     load: vi.fn(async () => ({ reactions: list(), nonce })),
     react: vi.fn(async (_target: ReactionTarget, emoji: string, action: "add" | "remove", sent: string) => {
       if (sent !== nonce) throw new ReactionError(403, "emojisense_bad_nonce");
-      counts.set(emoji, Math.max(0, (counts.get(emoji) ?? 0) + (action === "add" ? 1 : -1)));
-      return list();
+      const add = action === "add";
+      if (add === mine.has(emoji)) {
+        const code = add ? "emojisense_already_reacted" : "emojisense_not_reacted";
+        throw new ReactionError(409, code, "Refused.", { reactions: list(), mine: [...mine] });
+      }
+      counts.set(emoji, Math.max(0, (counts.get(emoji) ?? 0) + (add ? 1 : -1)));
+      if (add) mine.add(emoji);
+      else mine.delete(emoji);
+      return { reactions: list(), mine: [...mine] };
     }),
     rotateNonce: () => {
       nonce = "n2";
@@ -168,6 +177,38 @@ describe("mountReactionBar", () => {
     expect(count(root, "1F44D")).toBe("2");
   });
 
+  it("follows the server's receipt when it refuses a change", async () => {
+    const root = renderBar();
+    const store = createReactedStore(memoryStorage());
+    // This browser remembers ❤️, but the server has no receipt for it; 👍 came from another tab.
+    store.toggle(42, "❤️", true);
+    const api = fakeApi(
+      [
+        { emoji: "👍", count: 3 },
+        { emoji: "❤️", count: 2 },
+      ],
+      ["👍"],
+    );
+    const bar = mountReactionBar(root, { api, store, locale: "en" });
+    await bar.refresh();
+    const status = () => root.querySelector(".emojisense-reactions__status")?.textContent;
+
+    await bar.toggle("❤️");
+    expect(api.react).toHaveBeenLastCalledWith({ type: "post", id: 42 }, "❤️", "remove", "n1");
+    expect(count(root, "2764-FE0F")).toBe("2");
+    expect(button(root, "2764-FE0F").getAttribute("aria-pressed")).toBe("false");
+    expect(button(root, "1F44D").getAttribute("aria-pressed")).toBe("true");
+    expect([...store.get(42)]).toEqual(["👍"]);
+    expect(status()).toBe("Refused.");
+
+    // Now the bar and the server agree: the next click takes 👍 back.
+    await bar.toggle("👍");
+    expect(api.react).toHaveBeenLastCalledWith({ type: "post", id: 42 }, "👍", "remove", "n1");
+    expect(count(root, "1F44D")).toBe("2");
+    expect(store.get(42).size).toBe(0);
+    expect(status()).toBe("");
+  });
+
   it("rolls back and explains a rate limit", async () => {
     const root = renderBar();
     const api: ReactionsApi = {
@@ -194,7 +235,7 @@ describe("mountReactionBar", () => {
       load: async () => {
         throw new ReactionError(500, "error");
       },
-      react: async () => [],
+      react: async () => ({ reactions: [] }),
     };
     const bar = mountReactionBar(root, { api, store: createReactedStore(memoryStorage()) });
     await expect(bar.refresh()).rejects.toThrow();
@@ -231,5 +272,37 @@ describe("createReactionsApi", () => {
       "https://site.test/wp-json/emojisense/v1/reactions/post/3",
     ]);
     expect(new Headers(calls[1]?.[1]?.headers).get("X-Emojisense-Nonce")).toBe("n");
+    // The receipt cookie goes with the request.
+    expect(calls[1]?.[1]?.credentials).toBe("same-origin");
+  });
+
+  it("reads this browser's reactions, and the state in a refusal", async () => {
+    const answers = [
+      new Response(JSON.stringify({ reactions: [{ emoji: "👍", count: 2 }], mine: ["👍"] })),
+      new Response(
+        JSON.stringify({
+          code: "emojisense_not_reacted",
+          message: "This reaction can no longer be taken back.",
+          data: { status: 409, reactions: [{ emoji: "👍", count: 2 }], mine: [] },
+        }),
+        { status: 409 },
+      ),
+    ];
+    const fetchImpl = (async () => answers.shift() as Response) as typeof fetch;
+    const api = createReactionsApi("https://site.test/wp-json/emojisense/v1/reactions/", fetchImpl);
+    expect(await api.react({ type: "post", id: 3 }, "👍", "add", "n")).toEqual({
+      reactions: [{ emoji: "👍", count: 2 }],
+      mine: ["👍"],
+    });
+    const refusal = await api
+      .react({ type: "post", id: 3 }, "👍", "remove", "n")
+      .catch((error: unknown) => error);
+    expect(refusal).toBeInstanceOf(ReactionError);
+    expect(refusal).toMatchObject({
+      status: 409,
+      code: "emojisense_not_reacted",
+      text: "This reaction can no longer be taken back.",
+      state: { reactions: [{ emoji: "👍", count: 2 }], mine: [] },
+    });
   });
 });

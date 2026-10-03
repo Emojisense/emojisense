@@ -9,8 +9,11 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Visitors react without an account. The plugin stores only counts per emoji. Abuse is limited by
- * a nonce and a rate limit keyed by a salted hash of the IP address that expires within minutes.
+ * Visitors react without an account. The plugin stores only counts per emoji. A signed cookie
+ * (the receipt) lists the reactions a browser added, so a browser can take back only its own.
+ * Per client (an IPv4 address or an IPv6 /64, as a keyed hash) the site keeps a rate limit for a
+ * minute and, for a day, the reactions the client gave to each object: they cap its reactions
+ * there and bound what it can take back, also when a script replays an old receipt.
  */
 class Emojisense_Reactions {
 
@@ -36,6 +39,24 @@ class Emojisense_Reactions {
 
 	/** Default rate limit window, in seconds. */
 	const RATE_WINDOW = 60;
+
+	/** Default cap: reactions one client may have on one object. */
+	const OBJECT_LIMIT = 30;
+
+	/** How long the site remembers a client's reactions on an object after its last change. */
+	const OBJECT_WINDOW = DAY_IN_SECONDS;
+
+	/** Cookie with the reactions this browser added, signed by the site. */
+	const RECEIPT_COOKIE = 'emojisense_receipt';
+
+	/** Largest encoded receipt, in bytes (browsers drop cookies over 4 KB); the oldest objects drop out. */
+	const RECEIPT_BYTES = 3500;
+
+	/** Default limit of reaction suggestions per user per window: each one spends API quota. */
+	const SUGGEST_LIMIT = 20;
+
+	/** Default suggestion limit window, in seconds. */
+	const SUGGEST_WINDOW = HOUR_IN_SECONDS;
 
 	/**
 	 * Whether the page already has the reactions script configuration.
@@ -219,7 +240,9 @@ class Emojisense_Reactions {
 	}
 
 	/**
-	 * Reacting needs the nonce from the GET answer (or the page) on top of the read rules.
+	 * Reacting needs the nonce from the GET answer (or the page) on top of the read rules. The
+	 * nonce is the same for every logged-out visitor: the receipt and the limits in rest_react()
+	 * stop abuse.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return true|WP_Error
@@ -248,7 +271,8 @@ class Emojisense_Reactions {
 
 	/**
 	 * GET: the reactions with their counts, and a fresh nonce (pages may be cached for longer
-	 * than a nonce lives).
+	 * than a nonce lives). The answer is the same for every logged-out visitor, so shared caches
+	 * may keep it for a few seconds; browsers ask again, so a visitor sees their own reaction.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response
@@ -264,12 +288,13 @@ class Emojisense_Reactions {
 				'nonce'     => wp_create_nonce( self::NONCE_ACTION ),
 			)
 		);
-		$response->header( 'Cache-Control', 'no-store' );
+		$response->header( 'Cache-Control', is_user_logged_in() ? 'no-store' : 'public, max-age=0, s-maxage=10' );
 		return $response;
 	}
 
 	/**
-	 * POST: add or take back one reaction.
+	 * POST: add or take back one reaction. A browser adds each emoji once and takes back only
+	 * what its receipt lists and the site still remembers from its client.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return WP_REST_Response|WP_Error
@@ -278,37 +303,117 @@ class Emojisense_Reactions {
 		$type   = (string) $request['type'];
 		$id     = (int) $request['id'];
 		$emoji  = (string) $request['emoji'];
+		$add    = 'remove' !== $request['action'];
 		$target = self::target( $type );
 		if ( ! $target || ! in_array( $emoji, $target->reaction_set( $id ), true ) ) {
 			return new WP_Error( 'emojisense_unknown_reaction', __( 'This reaction is not offered here.', 'emojisense' ), array( 'status' => 400 ) );
 		}
 		$retry_after = self::consume_rate_limit();
 		if ( $retry_after > 0 ) {
-			// The shape of a REST error, with a Retry-After header that WP_Error cannot carry.
-			return new WP_REST_Response(
-				array(
-					'code'    => 'emojisense_rate_limited',
-					'message' => __( 'Too many reactions. Wait a minute and try again.', 'emojisense' ),
-					'data'    => array( 'status' => 429 ),
-				),
+			return self::error_response(
+				'emojisense_rate_limited',
+				__( 'Too many reactions. Wait a minute and try again.', 'emojisense' ),
 				429,
-				array(
-					'Retry-After'   => (string) $retry_after,
-					'Cache-Control' => 'no-store',
-				)
+				array( 'Retry-After' => (string) $retry_after )
 			);
 		}
 
-		self::change_count( $id, $emoji, 'remove' === $request['action'] ? -1 : 1, $type );
+		$object  = $type . ':' . $id;
+		$memory  = 'emojisense_ro_' . self::client_key( $object );
+		$given   = self::given( $memory );
+		$receipt = self::read_receipt();
+		$mine    = isset( $receipt[ $object ] ) ? $receipt[ $object ] : array();
+		$listed  = in_array( $emoji, $mine, true );
+		if ( $add && $listed ) {
+			return self::refused( 'emojisense_already_reacted', __( 'You already gave this reaction.', 'emojisense' ), $id, $type, $mine );
+		}
+		if ( ! $add && ( ! $listed || empty( $given[ $emoji ] ) ) ) {
+			if ( $listed ) {
+				// The site no longer remembers it from this client (another network, more than a
+				// day ago, or a replayed receipt): the reaction stays counted.
+				$mine               = array_values( array_diff( $mine, array( $emoji ) ) );
+				$receipt[ $object ] = $mine;
+				self::send_receipt( $receipt );
+			}
+			return self::refused( 'emojisense_not_reacted', __( 'This reaction can no longer be taken back.', 'emojisense' ), $id, $type, $mine );
+		}
+		if ( $add && array_sum( $given ) >= self::object_limit() ) {
+			return self::error_response(
+				'emojisense_reaction_cap',
+				__( 'Too many reactions from your network here. Try again tomorrow.', 'emojisense' ),
+				429,
+				array( 'Retry-After' => (string) self::OBJECT_WINDOW )
+			);
+		}
+
+		$delta           = $add ? 1 : -1;
+		$given[ $emoji ] = ( isset( $given[ $emoji ] ) ? $given[ $emoji ] : 0 ) + $delta;
+		self::remember_given( $memory, $given );
+		self::change_count( $id, $emoji, $delta, $type );
+
+		$mine = $add ? array_merge( $mine, array( $emoji ) ) : array_values( array_diff( $mine, array( $emoji ) ) );
+		// The object moves to the end: the receipt keeps the most recent ones.
+		unset( $receipt[ $object ] );
+		$receipt[ $object ] = $mine;
+		self::send_receipt( $receipt );
+
 		$response = new WP_REST_Response(
 			array(
 				'type'      => $type,
 				'id'        => $id,
 				'reactions' => self::reactions_with_counts( $id, $type ),
+				'mine'      => $mine,
 			)
 		);
 		$response->header( 'Cache-Control', 'no-store' );
 		return $response;
+	}
+
+	/**
+	 * A refused change, with the counts and this browser's reactions so that the bar catches up
+	 * (another tab, cleared cookies, a reaction from before receipts).
+	 *
+	 * @param string   $code    Error code.
+	 * @param string   $message Message for the visitor.
+	 * @param int      $id      Object ID.
+	 * @param string   $type    REST type of the object.
+	 * @param string[] $mine    The emoji this browser gave to the object.
+	 * @return WP_REST_Response
+	 */
+	private static function refused( $code, $message, $id, $type, $mine ) {
+		return self::error_response(
+			$code,
+			$message,
+			409,
+			array(),
+			array(
+				'reactions' => self::reactions_with_counts( $id, $type ),
+				'mine'      => array_values( $mine ),
+			)
+		);
+	}
+
+	/**
+	 * The shape of a REST error, with headers (Retry-After, the receipt) that WP_Error cannot
+	 * carry. Errors are never cached.
+	 *
+	 * @param string               $code    Error code.
+	 * @param string               $message Message for the visitor.
+	 * @param int                  $status  HTTP status.
+	 * @param array<string,string> $headers Extra headers.
+	 * @param array<string,mixed>  $data    Extra error data.
+	 * @return WP_REST_Response
+	 */
+	private static function error_response( $code, $message, $status, $headers = array(), $data = array() ) {
+		return new WP_REST_Response(
+			array(
+				'code'    => $code,
+				'message' => $message,
+				'data'    => array_merge( array( 'status' => $status ), $data ),
+			),
+			$status,
+			array_merge( array( 'Cache-Control' => 'no-store' ), $headers )
+		);
 	}
 
 	/**
@@ -318,6 +423,15 @@ class Emojisense_Reactions {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function rest_suggest( $request ) {
+		$retry_after = self::consume_suggest_limit();
+		if ( $retry_after > 0 ) {
+			return self::error_response(
+				'emojisense_suggest_limited',
+				__( 'Too many suggestion requests. Try again later.', 'emojisense' ),
+				429,
+				array( 'Retry-After' => (string) $retry_after )
+			);
+		}
 		$post_id = (int) $request['post_id'];
 		$text    = (string) $request['text'];
 		if ( '' === trim( $text ) ) {
@@ -438,20 +552,52 @@ class Emojisense_Reactions {
 	 */
 	public static function consume_rate_limit() {
 		/**
-		 * Filters the reaction rate limit per client.
+		 * Filters the reaction rate limit per client (an IPv4 address or an IPv6 /64).
 		 *
 		 * @param array{limit: int, window: int} $rate Reactions allowed per window of seconds.
 		 */
-		$rate   = apply_filters(
+		$rate = apply_filters(
 			'emojisense_reaction_rate_limit',
 			array(
 				'limit'  => self::RATE_LIMIT,
 				'window' => self::RATE_WINDOW,
 			)
 		);
-		$limit  = max( 1, (int) $rate['limit'] );
-		$window = max( 1, (int) $rate['window'] );
-		$key    = 'emojisense_rl_' . self::client_hash();
+		return self::consume( 'emojisense_rl_' . self::client_key(), $rate['limit'], $rate['window'] );
+	}
+
+	/**
+	 * Counts one suggestion request against the user's limit.
+	 *
+	 * @return int 0 when allowed, else the seconds until the window ends.
+	 */
+	private static function consume_suggest_limit() {
+		/**
+		 * Filters how many reaction suggestions one user may ask the API for per window.
+		 *
+		 * @param array{limit: int, window: int} $rate Requests allowed per window of seconds.
+		 */
+		$rate = apply_filters(
+			'emojisense_suggest_rate_limit',
+			array(
+				'limit'  => self::SUGGEST_LIMIT,
+				'window' => self::SUGGEST_WINDOW,
+			)
+		);
+		return self::consume( 'emojisense_sl_' . get_current_user_id(), $rate['limit'], $rate['window'] );
+	}
+
+	/**
+	 * Counts one request against a budget that a transient keeps.
+	 *
+	 * @param string $key    Transient name.
+	 * @param int    $limit  Requests allowed per window.
+	 * @param int    $window Window, in seconds.
+	 * @return int 0 when allowed, else the seconds until the window ends.
+	 */
+	private static function consume( $key, $limit, $window ) {
+		$limit  = max( 1, (int) $limit );
+		$window = max( 1, (int) $window );
 		$now    = time();
 		$entry  = get_transient( $key );
 		if ( ! is_array( $entry ) || ! isset( $entry['count'], $entry['reset'] ) || $entry['reset'] <= $now ) {
@@ -469,21 +615,158 @@ class Emojisense_Reactions {
 	}
 
 	/**
-	 * A keyed hash of the client's IP address. The IP address itself is never stored; the hash
-	 * lives only as long as the rate limit window.
+	 * How many reactions one client may have on one object.
+	 *
+	 * @return int
+	 */
+	private static function object_limit() {
+		/**
+		 * Filters how many reactions one client (an IPv4 address or an IPv6 /64) may have on one
+		 * object. Visitors behind one address, such as an office network, share the cap.
+		 *
+		 * @param int $limit Reactions per object, remembered for a day after the client's last change.
+		 */
+		return max( 1, (int) apply_filters( 'emojisense_reaction_object_limit', self::OBJECT_LIMIT ) );
+	}
+
+	/**
+	 * The reactions the client gave to one object, as counts per emoji (visitors can share an
+	 * address).
+	 *
+	 * @param string $memory Transient name.
+	 * @return array<string,int>
+	 */
+	private static function given( $memory ) {
+		$given = get_transient( $memory );
+		return is_array( $given ) ? array_filter( array_map( 'intval', $given ) ) : array();
+	}
+
+	/**
+	 * Stores the reactions the client gave to one object, for a day after this change.
+	 *
+	 * @param string            $memory Transient name.
+	 * @param array<string,int> $given  Counts per emoji.
+	 */
+	private static function remember_given( $memory, $given ) {
+		$given = array_filter( $given );
+		if ( $given ) {
+			set_transient( $memory, $given, self::OBJECT_WINDOW );
+		} else {
+			delete_transient( $memory );
+		}
+	}
+
+	/**
+	 * A keyed hash of the client and a context. The IP address itself is never stored.
+	 *
+	 * @param string $context What the hash is for, e.g. an object ("post:12").
+	 * @return string
+	 */
+	private static function client_key( $context = '' ) {
+		return substr( hash_hmac( 'sha256', self::client_network() . '|' . $context, wp_salt( 'nonce' ) ), 0, 32 );
+	}
+
+	/**
+	 * The client for the limits: an IPv4 address, or the /64 network of an IPv6 address (one
+	 * IPv6 subscriber usually has a whole /64).
 	 *
 	 * @return string
 	 */
-	private static function client_hash() {
+	private static function client_network() {
 		$ip = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
 		/**
-		 * Filters the client address used for the reaction rate limit, for sites behind a
-		 * proxy that sets a trusted header.
+		 * Filters the visitor's IP address for the reaction limits.
+		 *
+		 * Behind a CDN or a reverse proxy, REMOTE_ADDR is the proxy, so all visitors share one
+		 * rate limit and one cap per object. Return the visitor's address from the header that
+		 * your proxy sets (such as CF-Connecting-IP or X-Real-IP), but only when REMOTE_ADDR is
+		 * your proxy: visitors can send any header.
 		 *
 		 * @param string $ip REMOTE_ADDR.
 		 */
 		$ip = (string) apply_filters( 'emojisense_client_ip', $ip );
-		return substr( hash_hmac( 'sha256', $ip, wp_salt( 'nonce' ) ), 0, 32 );
+		if ( ! filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			return $ip;
+		}
+		$packed = (string) inet_pton( $ip );
+		// An IPv4-mapped address (::ffff:192.0.2.1) is the IPv4 address.
+		if ( 0 === strpos( $packed, str_repeat( "\0", 10 ) . "\xff\xff" ) ) {
+			return (string) inet_ntop( substr( $packed, 12 ) );
+		}
+		return inet_ntop( substr( $packed, 0, 8 ) . str_repeat( "\0", 8 ) ) . '/64';
+	}
+
+	/**
+	 * The reactions this browser added, from its receipt cookie. A receipt without a valid
+	 * signature counts as none.
+	 *
+	 * @return array<string, string[]> Emoji per object ("post:12"), the oldest object first.
+	 */
+	private static function read_receipt() {
+		$cookie = isset( $_COOKIE[ self::RECEIPT_COOKIE ] ) ? sanitize_text_field( wp_unslash( $_COOKIE[ self::RECEIPT_COOKIE ] ) ) : '';
+		$parts  = explode( '.', $cookie );
+		if ( 2 !== count( $parts ) || ! hash_equals( self::sign_receipt( $parts[0] ), $parts[1] ) ) {
+			return array();
+		}
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- base64url keeps the JSON cookie-safe.
+		$decoded = json_decode( (string) base64_decode( strtr( $parts[0], '-_', '+/' ), true ), true );
+		$receipt = array();
+		foreach ( is_array( $decoded ) ? $decoded : array() as $object => $emoji ) {
+			if ( is_string( $object ) && is_array( $emoji ) ) {
+				$receipt[ $object ] = array_values( array_filter( $emoji, 'is_string' ) );
+			}
+		}
+		return $receipt;
+	}
+
+	/**
+	 * Sends the receipt cookie: HttpOnly, SameSite=Lax, Secure on HTTPS, and only for the
+	 * reactions routes. The oldest objects drop out until it fits; an empty receipt clears it.
+	 *
+	 * @param array<string, string[]> $receipt Emoji per object, the oldest object first.
+	 */
+	private static function send_receipt( $receipt ) {
+		$receipt = array_filter( $receipt );
+		$value   = '';
+		$expires = time() - YEAR_IN_SECONDS;
+		while ( $receipt ) {
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- base64url keeps the JSON cookie-safe.
+			$payload = rtrim( strtr( base64_encode( (string) wp_json_encode( $receipt, JSON_UNESCAPED_UNICODE ) ), '+/', '-_' ), '=' );
+			if ( strlen( $payload ) <= self::RECEIPT_BYTES ) {
+				$value   = $payload . '.' . self::sign_receipt( $payload );
+				$expires = time() + YEAR_IN_SECONDS;
+				break;
+			}
+			array_shift( $receipt );
+		}
+		$path    = wp_parse_url( rest_url( self::REST_NAMESPACE . '/reactions/' ), PHP_URL_PATH );
+		$options = array(
+			'expires'  => $expires,
+			'path'     => $path ? $path : '/',
+			'secure'   => is_ssl(),
+			'httponly' => true,
+			'samesite' => 'Lax',
+		);
+		/**
+		 * Fires before the reaction receipt cookie is sent.
+		 *
+		 * @param string              $value   Signed receipt; empty when the cookie is cleared.
+		 * @param array<string,mixed> $options setcookie() options.
+		 */
+		do_action( 'emojisense_set_receipt_cookie', $value, $options );
+		if ( ! headers_sent() ) {
+			setcookie( self::RECEIPT_COOKIE, $value, $options );
+		}
+	}
+
+	/**
+	 * The signature of a receipt.
+	 *
+	 * @param string $payload Encoded receipt.
+	 * @return string
+	 */
+	private static function sign_receipt( $payload ) {
+		return hash_hmac( 'sha256', 'emojisense_receipt|' . $payload, wp_salt( 'auth' ) );
 	}
 
 	/**

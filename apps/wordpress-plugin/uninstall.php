@@ -1,7 +1,7 @@
 <?php
 /**
  * Deleting the plugin removes its settings, the reactions of every post and activity item, and its
- * scheduled jobs. Rate-limit transients expire on their own within minutes.
+ * scheduled jobs. Rate-limit transients expire on their own within a day.
  *
  * @package Emojisense
  */
