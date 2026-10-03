@@ -102,8 +102,9 @@
     transform 200ms var(--spring);
 }
 
+/* Only a new tile fades in. An emoji that replaces another swaps at once, so the row keeps up with typing. */
 .hs-tile .emoji {
-  animation: hs-in 380ms var(--spring) both;
+  animation: hs-in 140ms var(--ease-out);
 }
 
 .hs-tile:hover {
@@ -240,7 +241,6 @@
 @keyframes hs-in {
   from {
     opacity: 0;
-    transform: translateY(0.5rem) scale(0.6);
   }
 }
 

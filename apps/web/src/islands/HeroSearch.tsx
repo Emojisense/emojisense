@@ -94,10 +94,8 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
           await wait(55 + Math.random() * 70);
         }
         await wait(2200);
-        for (let n = chars.length - 1; n >= 0 && !cancelled; n--) {
-          setQuery(chars.slice(0, n).join(""));
-          await wait(22);
-        }
+        // Cleared at once: erasing letter by letter replays a result set per letter.
+        if (!cancelled) setQuery("");
         await wait(260);
         if (!cancelled) exampleRef.current = (i + 1) % examples.length;
       }
@@ -211,10 +209,11 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
               // biome-ignore lint/suspicious/noArrayIndexKey: static placeholders that never reorder.
               <span key={i} className="hs-tile hs-skeleton" aria-hidden="true" />
             ))}
-          {/* Tiles keep their place and only their emoji is replaced, so new results never shift the layout. */}
+          {/* Tiles keep their place and only their emoji is replaced, so new results never shift the layout.
+              The emoji is not keyed: it swaps in place on each keystroke, at the engine's speed. */}
           {results.map((r, i) => (
             <button
-              // biome-ignore lint/suspicious/noArrayIndexKey: one tile per slot; the emoji inside is keyed by id.
+              // biome-ignore lint/suspicious/noArrayIndexKey: one tile per slot; only a new slot fades in.
               key={i}
               id={`${id}-${i}`}
               type="button"
@@ -230,9 +229,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
                 takeOver(query);
               }}
             >
-              <span key={r.id} className="emoji" style={{ animationDelay: `${i * 22}ms` }}>
-                {r.emoji}
-              </span>
+              <span className="emoji">{r.emoji}</span>
             </button>
           ))}
         </div>
