@@ -27,8 +27,16 @@ export interface EmojisenseConfig {
   engine?: AliasEngine;
   /** Pack locale. Default: the editor's content language ("pt-br" → "pt"). English always loads. */
   locale?: string;
-  /** Culture files of the pack version, e.g. "https://api.emojisense.com/v1/culture/0.1.0". */
-  cultureUrl?: string;
+  /**
+   * Culture files of the pack version, e.g. "https://api.emojisense.com/v1/culture/0.1.0".
+   * Default: the culture directory next to `packUrl`. `false`: no culture layer.
+   */
+  cultureUrl?: string | false;
+  /**
+   * Region for regional culture entries. Default: the device's region (its language, else its
+   * time zone). `""`: none. `"auto"`: the API's view of the caller's country (needs `endpoint`).
+   */
+  region?: string;
   /** The Emojisense API, for search by meaning when the dictionary is unsure. Off without it. */
   endpoint?: string;
   /** Publishable key (`pk_…`). Never a secret key: this runs in the browser. */
@@ -169,10 +177,13 @@ export class EmojisenseMention extends Plugin {
 
   #useEngine(engine: AliasEngine) {
     if (engine === this.#engine || this.editor.state === "destroyed") return;
-    const { semantic, endpoint, publishableKey, limit } = this.#config;
+    const { semantic, endpoint, publishableKey, limit, region = "device" } = this.#config;
     const { packVersion } = engine;
     if (!semantic && this.#semantic?.packVersion !== packVersion) {
-      this.#semantic = { packVersion, provider: createApiSemantic({ endpoint, key: publishableKey, packVersion }) };
+      this.#semantic = {
+        packVersion,
+        provider: createApiSemantic({ endpoint, key: publishableKey, packVersion }),
+      };
     }
     this.#engine = engine;
     this.#source?.dispose();
@@ -183,7 +194,7 @@ export class EmojisenseMention extends Plugin {
       limit: limit ?? DEFAULT_LIMIT,
       minQueryLength: 2,
       includeCustom: false,
-      region: "device",
+      region,
     });
   }
 

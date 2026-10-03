@@ -51,6 +51,7 @@ Without React hooks for the data: `engine={createEngine(await loadPacks({ baseUr
 | `engine` | — | `AliasEngine` or `undefined` |
 | `semantic` | — | `SemanticProvider` (for example `createSemanticClient`, or `chainProviders(shards, api)`) |
 | `locale` | first pack | Preferred locale for ranking and labels |
+| `region` | the device's | Region for regional culture entries of the engine's culture file: the device's (its language, else its time zone), `""` for none, or an ISO code such as `"JP"` |
 | `limit` | `8` | Menu size |
 | `debounceMs` | `200` | Delay before a semantic request |
 | `skinTone` | `"none"` | Applied to the shown and inserted emoji |

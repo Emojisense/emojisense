@@ -121,6 +121,34 @@ describe("registerEmojisense", () => {
     }
   });
 
+  it("loads the culture file next to the packs, unless emojisense_culture_url is off", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      urls.push(String(input));
+      const { en } = await import("./fixture.js");
+      return String(input).includes("/culture/")
+        ? new Response("missing", { status: 404 })
+        : new Response(JSON.stringify(en));
+    });
+    try {
+      const on = fakeTinyMce({ emojisense_pack_url: "https://on.test/v1/pack/0.1.0" });
+      on.fire("init");
+      on.fire("focus");
+      await vi.waitFor(() => expect(urls).toContain("https://on.test/v1/culture/0.1.0/culture.en.json"));
+      const off = fakeTinyMce({
+        emojisense_pack_url: "https://off.test/v1/pack/0.1.0",
+        emojisense_culture_url: "off",
+      });
+      off.fire("init");
+      off.fire("focus");
+      await vi.waitFor(() => expect(urls).toContain("https://off.test/v1/pack/0.1.0/pack.en.json"));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(urls.some((url) => url.startsWith("https://off.test/v1/culture/"))).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("loads the packs when the editor gets the focus, not on init", async () => {
     const urls: string[] = [];
     vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {

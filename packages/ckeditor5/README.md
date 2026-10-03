@@ -49,7 +49,8 @@ one keeps `:` and the console shows `emojisense-marker-conflict`.
 | `packUrl` | — | Base URL of a pack version. Set it or `engine`. The packs load when the editor first gets the focus, and a `:` typed before they arrive gets its list as soon as they do. Editors with the same packs on one page share one download. |
 | `engine` | — | A ready `AliasEngine` instead of `packUrl` |
 | `locale` | the content language | `"pt-br"` becomes `"pt"`. English always loads too. |
-| `cultureUrl` | — | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0` |
+| `cultureUrl` | next to `packUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Emoji for the place and the time join after the top result. `false`: off |
+| `region` | the device's | Region for regional culture entries: the device's (its language, else its time zone), `""` for none, or an ISO code such as `"JP"` |
 | `endpoint` | — | The Emojisense API. Without it, search stays on the device. |
 | `publishableKey` | — | A `pk_…` key. Never put a secret key in a browser. |
 | `semantic` | — | A `SemanticProvider` instead of `endpoint` |

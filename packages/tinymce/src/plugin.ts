@@ -23,8 +23,16 @@ export interface EmojisenseEditorOptions {
   emojisense_engine?: AliasEngine;
   /** Pack locale. Default: the editor's `language` ("tr_TR" → "tr"), else English. */
   emojisense_locale?: string;
-  /** Culture files of the pack version, e.g. "https://api.emojisense.com/v1/culture/0.1.0". */
+  /**
+   * Culture files of the pack version, e.g. "https://api.emojisense.com/v1/culture/0.1.0".
+   * Default: the culture directory next to `emojisense_pack_url`. `"off"`: no culture layer.
+   */
   emojisense_culture_url?: string;
+  /**
+   * Region for regional culture entries. Default `"device"`: the device's region (its language,
+   * else its time zone). `""`: none. `"auto"`: the API's view of the caller's country.
+   */
+  emojisense_region?: string;
   /** The Emojisense API, for search by meaning when the dictionary is unsure. Off without it. */
   emojisense_endpoint?: string;
   /** Publishable key (`pk_…`) for the API. Never a secret key: this runs in the browser. */
@@ -38,6 +46,10 @@ export interface EmojisenseEditorOptions {
   /** Take over the `:` menu of the emoticons plugin when it is loaded. Default true. */
   emojisense_replace_emoticons?: boolean;
 }
+
+/** `""` = the culture directory next to the packs (the loader's default), `"off"` = none. */
+const cultureUrlOption = (value = ""): string | false | undefined =>
+  value.toLowerCase() === "off" ? false : value || undefined;
 
 /** Register the `emojisense` plugin with this TinyMCE (7 or 8). */
 export function registerEmojisense(tinymce: TinyMCE): void {
@@ -53,6 +65,7 @@ function registerOptions(editor: Editor) {
   register("emojisense_engine", { processor: "object" });
   register("emojisense_locale", { processor: "string", default: "" });
   register("emojisense_culture_url", { processor: "string", default: "" });
+  register("emojisense_region", { processor: "string", default: "device" });
   register("emojisense_endpoint", { processor: "string", default: "" });
   register("emojisense_publishable_key", { processor: "string", default: "" });
   register("emojisense_semantic", { processor: "object" });
@@ -113,7 +126,7 @@ function setUp(editor: Editor) {
       limit,
       minQueryLength: 2,
       includeCustom: false,
-      region: "device",
+      region: option(editor, "emojisense_region"),
     });
     // A menu that opened while the packs loaded shows its results now.
     if (editor.queryCommandState("mceAutoCompleterInRange")) editor.execCommand("mceAutocompleterReload");
@@ -127,7 +140,7 @@ function setUp(editor: Editor) {
       const loader = createEngineLoader({
         packUrl,
         locale,
-        cultureUrl: option(editor, "emojisense_culture_url") || undefined,
+        cultureUrl: cultureUrlOption(option(editor, "emojisense_culture_url")),
       });
       stopLoader?.();
       stopLoader = loader.subscribe(useEngine);

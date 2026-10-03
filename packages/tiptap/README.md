@@ -80,6 +80,7 @@ const editor = useEditor({
 | `engine` | — | An `EngineLoader` (loads on focus), an `AliasEngine`, or a getter. A getter's menu stays closed while it returns `undefined`. |
 | `semantic` | — | `SemanticProvider` (for example `createSemanticClient`, or `chainProviders(shards, api)`), or a getter |
 | `locale` | first pack | Preferred locale for ranking and labels |
+| `region` | the device's | Region for regional culture entries of the engine's culture file: the device's (its language, else its time zone), `""` for none, or an ISO code such as `"JP"` |
 | `limit` | `8` | Menu size |
 | `debounceMs` | `200` | Delay before a semantic request |
 | `skinTone` | `"none"` | `SkinTone`, or a getter that follows a user preference |

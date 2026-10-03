@@ -29,6 +29,12 @@ export interface EmojiAutocompleteOptions {
   semantic: Dynamic<SemanticProvider | undefined>;
   /** Preferred locale for ranking and labels. Default: the engine's first pack. */
   locale: string | undefined;
+  /**
+   * Region for regional culture entries (the engine's culture file). Default: the device's region
+   * (its language, else its time zone). `""`: none. `"auto"`: the API's view of the caller's
+   * country (needs a semantic provider with an endpoint).
+   */
+  region: string | undefined;
   /** Menu size. Default 8. */
   limit: number;
   /** Delay before a semantic request. Default 200 ms. */
@@ -76,6 +82,7 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
       engine: undefined,
       semantic: undefined,
       locale: undefined,
+      region: undefined,
       limit: DEFAULT_LIMIT,
       debounceMs: 200,
       skinTone: "none",
@@ -184,22 +191,23 @@ function createSourceCache(
     current = undefined;
   };
   const searchWith = (engine: AliasEngine, query: string): EmojiSuggestion[] => {
-      const semantic = resolve(options.semantic);
-      if (current?.engine !== engine || current.semantic !== semantic) {
-        dispose();
-        current = {
+    const semantic = resolve(options.semantic);
+    if (current?.engine !== engine || current.semantic !== semantic) {
+      dispose();
+      current = {
+        engine,
+        semantic,
+        source: createSuggestionSource({
           engine,
           semantic,
-          source: createSuggestionSource({
-            engine,
-            semantic,
-            locale: options.locale,
-            limit: options.limit,
-            debounceMs: options.debounceMs,
-            onLateResults,
-          }),
-        };
-      }
+          locale: options.locale,
+          region: options.region,
+          limit: options.limit,
+          debounceMs: options.debounceMs,
+          onLateResults,
+        }),
+      };
+    }
     return current.source.search(query);
   };
   return {

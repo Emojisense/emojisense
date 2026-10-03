@@ -33,6 +33,12 @@ export interface EmojiAutocompletePluginProps {
   semantic?: SemanticProvider | undefined;
   /** Preferred locale for ranking and labels. Default: the engine's first pack. */
   locale?: string;
+  /**
+   * Region for regional culture entries (the engine's culture file). Default: the device's region
+   * (its language, else its time zone). `""`: none. `"auto"`: the API's view of the caller's
+   * country (needs a semantic provider with an endpoint).
+   */
+  region?: string;
   /** Menu size. Default 8. */
   limit?: number;
   /** Delay before a semantic request. Default 200 ms. */
@@ -78,6 +84,7 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
     engine,
     semantic,
     locale,
+    region,
     limit,
     debounceMs,
     skinTone = "none",
@@ -100,12 +107,13 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
         engine,
         semantic,
         locale,
+        region,
         limit,
         debounceMs,
         onLateResults: (query, suggestions) =>
           setResults((current) => (current.query === query ? { query, suggestions } : current)),
       }),
-    [engine, semantic, locale, limit, debounceMs],
+    [engine, semantic, locale, region, limit, debounceMs],
   );
   useEffect(() => () => source?.dispose(), [source]);
 
