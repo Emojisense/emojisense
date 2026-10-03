@@ -28,6 +28,7 @@
     "release:check": "node scripts/release-check.mjs",
     "release:version": "changeset version",
     "release:publish": "node scripts/release-check.mjs --build --strict && changeset publish",
+    "release:stage": "node scripts/release-check.mjs --build --strict && node scripts/stage-release.mjs",
     "package:chrome": "pnpm --filter @emojisense/chrome-extension package",
     "package:raycast": "pnpm --filter emojisense-search store-export"
   },

@@ -1,16 +1,18 @@
 name: release
 
-# Publishes the public npm packages. Manual only: the owner starts it from the Actions tab after
-# `pnpm release:version` is merged into main. It holds no npm token: each package must trust this
-# workflow first (npm trusted publishing, RELEASING.md), and npm then records "GitHub Actions" as
-# the publisher instead of a person. The first release of a new package is published from a
-# workstation, because npm can trust a workflow only for an existing package. npm adds provenance by
-# itself once this repository is public; a private repository cannot have it.
+# Stages the public npm packages; a person approves each staged version with 2FA before it goes
+# live (npmjs.com → Staged Packages, or `npm stage approve <id>`). Manual only: the owner starts it
+# from the Actions tab after `pnpm release:version` is merged into main. It holds no npm token: each
+# package trusts this workflow for `npm stage publish` only (npm trusted publishing, RELEASING.md),
+# and npm records "GitHub Actions" as the publisher instead of a person. The first release of a new
+# package is published from a workstation, because npm can trust a workflow only for an existing
+# package. npm adds provenance by itself once this repository is public; a private repository
+# cannot have it.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write # push the release tags that `changeset publish` creates
+  contents: write # push the tags of the staged versions
   id-token: write # OIDC token for npm trusted publishing
 
 concurrency:
@@ -18,7 +20,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish:
+  stage:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # No environment: GitHub Free has none for private repositories. When the repository is public,
@@ -33,11 +35,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           registry-url: https://registry.npmjs.org
-      - name: npm must be 11.5.1 or later for trusted publishing
-        run: node -e 'const [a,b,c]=process.argv[1].split(".").map(Number); process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$(npm --version)"
+      - name: npm 11.21 (`npm stage` needs 11.19 or later)
+        run: npm install --global npm@11.21.0
       - name: Install
         run: pnpm install --frozen-lockfile
-      - name: Check and publish (clean build, typecheck, tests, README samples, tarball checks)
-        run: pnpm release:publish
-      - name: Push the release tags
+      - name: Check and stage (clean build, typecheck, tests, README samples, tarball checks)
+        run: pnpm release:stage
+      - name: Push the tags of the staged versions
         run: git push origin --tags
