@@ -1,71 +1,18 @@
-import {
-  type AliasEngine,
-  createSearchSession,
-  deviceRegion,
-  type ResultSource,
-  type SearchResult,
-  type SemanticProvider,
-} from "emojisense";
+import type { AliasEngine, SemanticProvider } from "emojisense";
+import { allowContext, createSuggestionSource, type EmojiSuggestion, TRIGGER } from "emojisense/autocomplete";
 
-/** The character that starts an emoji search in the editor. */
-export const TRIGGER = ":";
+export { allowContext, TRIGGER };
+
 /** Shorter queries show nothing: ":)" and ":D" stay emoticons. */
 export const MIN_QUERY_LENGTH = 2;
 export const MAX_OPTIONS = 8;
 
-/** One row of the autocomplete list. */
-export interface CompletionItem {
-  emoji: string;
-  id: string;
-  /** Emoji name in the configured locale (English when the locale has none). */
-  label: string;
-  source: ResultSource;
-  /** Culture results: why the emoji fits ("Halloween"). */
-  context?: string;
-}
-
-const OPENERS = /[\s([{"'“‘«]$/u;
-const WORD_START = /^[\p{L}\p{N}_]/u;
-
-/**
- * The colon starts a search only at the start of the text or after a space or an opening
- * bracket or quote, and not right before a word: "12:30", "https://" and "a:b" stay text.
- */
-export function allowContext(before: string, after: string): boolean {
-  if (before !== "" && !OPENERS.test(before)) return false;
-  return !WORD_START.test(after);
-}
+/** One row of the autocomplete list. Culture rows carry `context`: why the emoji fits. */
+export type CompletionItem = EmojiSuggestion;
 
 /** Whether a query is long enough to search. */
 export function isSearchable(query: string): boolean {
   return Array.from(query.trim()).length >= MIN_QUERY_LENGTH;
-}
-
-/** Search results as list rows: one row per emoji, named in the locale. */
-export function toItems(
-  results: readonly SearchResult[],
-  engine: AliasEngine,
-  locale: string,
-  limit = MAX_OPTIONS,
-): CompletionItem[] {
-  const items: CompletionItem[] = [];
-  const seen = new Set<string>();
-  for (const result of results) {
-    // Custom emoji (":party_parrot:") are images; the editors insert text only.
-    if (result.source === "custom" || seen.has(result.emoji)) continue;
-    seen.add(result.emoji);
-    const labels = engine.get(result.id)?.labels ?? {};
-    const context = (result as { context?: unknown }).context;
-    items.push({
-      emoji: result.emoji,
-      id: result.id,
-      label: labels[locale] ?? labels.en ?? "",
-      source: result.source,
-      ...(typeof context === "string" && context ? { context } : {}),
-    });
-    if (items.length >= limit) break;
-  }
-  return items;
 }
 
 export interface ItemSearchOptions {
@@ -86,27 +33,25 @@ export interface ItemSearch {
 /**
  * Alias results on every keystroke (synchronous), then, when the dictionary is unsure and search
  * by meaning is on, the API's results fused in. Culture results come from the engine's culture file.
+ * Custom emoji are images, and the editors insert text only, so they are left out.
  */
 export function createItemSearch(options: ItemSearchOptions): ItemSearch {
   const { engine, locale, semantic, limit = MAX_OPTIONS, debounceMs = 250, onItems } = options;
-  const region = deviceRegion();
-  const session = createSearchSession({
+  const source = createSuggestionSource({
     engine,
     locale,
-    limit: limit * 2,
+    semantic,
+    limit,
     debounceMs,
-    ...(semantic ? { semantic } : {}),
-    ...(region ? { region } : {}),
-    onChange: (state) => onItems(toItems(state.results, engine, locale, limit), state.query),
+    minQueryLength: MIN_QUERY_LENGTH,
+    includeCustom: false,
+    region: "device",
+    onLateResults: (query, items) => onItems(items, query),
   });
   return {
     update(query) {
-      if (isSearchable(query)) session.update(query.trim());
-      else {
-        session.update("");
-        onItems([], query);
-      }
+      onItems(source.search(query.trim()), query);
     },
-    dispose: () => session.dispose(),
+    dispose: () => source.dispose(),
   };
 }

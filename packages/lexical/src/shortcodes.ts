@@ -1,5 +1,5 @@
+import { SHORTCODE_BEFORE_CARET } from "emojisense/autocomplete";
 import { $getSelection, $isRangeSelection, type LexicalEditor, TextNode } from "lexical";
-import { SHORTCODE_BEFORE_CARET } from "./source.js";
 
 /**
  * Replace `:name:` with its emoji when the closing colon is typed. A node transform is Lexical's

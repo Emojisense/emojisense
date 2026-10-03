@@ -1,7 +1,7 @@
 import { MenuOption } from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import type { EmojiSuggestion } from "emojisense/autocomplete";
 import { useLayoutEffect, useRef } from "react";
 import { scrollOptionIntoView } from "./scroll.js";
-import type { EmojiSuggestion } from "./source.js";
 
 /** A menu row for Lexical's typeahead. `key` is the emoji's hexcode. */
 export class EmojiOption extends MenuOption {

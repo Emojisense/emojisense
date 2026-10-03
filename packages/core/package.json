@@ -42,6 +42,10 @@
       "types": "./dist/engine-index.d.ts",
       "default": "./dist/engine-index.js"
     },
+    "./autocomplete": {
+      "types": "./dist/autocomplete.d.ts",
+      "default": "./dist/autocomplete.js"
+    },
     "./stats": {
       "types": "./dist/stats.d.ts",
       "default": "./dist/stats.js"

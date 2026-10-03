@@ -7,6 +7,12 @@ import {
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { type AliasEngine, applySkinTone, type SemanticProvider, type SkinTone } from "emojisense";
 import {
+  createSuggestionSource,
+  type EmojiSuggestion,
+  findShortcode,
+  type SuggestionSource,
+} from "emojisense/autocomplete";
+import {
   $addUpdateTag,
   $getSelection,
   $isRangeSelection,
@@ -19,12 +25,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { EmojiMenu, EmojiOption } from "./menu.js";
 import { registerShortcodeTransform } from "./shortcodes.js";
-import {
-  createSuggestionSource,
-  type EmojiSuggestion,
-  findShortcode,
-  type SuggestionSource,
-} from "./source.js";
 
 export interface EmojiAutocompletePluginProps {
   /** Ranks the menu. The plugin stays inactive while it is `undefined` (packs still loading). */

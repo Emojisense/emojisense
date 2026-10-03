@@ -110,6 +110,35 @@ To fuse by hand: `shouldUseSemantic(aliasOutput)` tells you when to ask, and
 does not cover its words (a name such as "kendrick lamar") and the semantic list is flat or low
 (`assessConfidence`). Show the results as guesses then.
 
+## `:` autocomplete for any editor
+
+`emojisense/autocomplete` holds the editor-independent part of a `:` autocomplete: where the query
+starts, what the menu shows, and when semantic results replace it. The Tiptap, Lexical, CKEditor 5
+and TinyMCE adapters use it. Use it for your own editor:
+
+```ts
+import { createEngine, loadPacks } from "emojisense";
+import { createSuggestionSource, findTrigger } from "emojisense/autocomplete";
+
+const engine = createEngine(await loadPacks({ baseUrl: "https://api.emojisense.com/v1/pack/0.1.0" }));
+const source = createSuggestionSource({ engine, locale: "en", minQueryLength: 2 });
+
+const match = findTrigger("Ready to :ship it", ""); // { query: "ship it", start: 9 }
+if (match) {
+  const suggestions = await source.resolve(match.query);
+  // [{ emoji: "🚀", id: "1F680", label: "rocket", source: "alias" }, …]
+}
+```
+
+| Export | Purpose |
+| ------ | ------- |
+| `findTrigger(before, after)` | The `:query` that ends at the caret. Not in `12:30`, `https://` or `a:b`. Up to 4 words. |
+| `createSuggestionSource` | `search(query)`: alias rows now, fused rows later through `onLateResults`. `resolve(query)`: one promise per query, for editors that take one. |
+| `findShortcode(engine, code)` | An exact `:name:` match, for completing `:fire:` to 🔥 |
+| `allowContext`, `SHORTCODE_BEFORE_CARET` | The context rule and the shortcode pattern on their own |
+| `createEngineLoader({ packUrl, locale })` | Core packs on first use, extension packs when the browser is idle. English alone when the locale has no pack. |
+| `createApiSemantic({ endpoint, key, packVersion })` | The API host's free shards, then the metered API. `undefined` without an endpoint. |
+
 ## More
 
 ```ts
@@ -154,6 +183,7 @@ createEngine([...packs, custom]).search("party parrot");
 | `applySkinTone`, `SKIN_TONES`, `emojiImageUrl`, `EMOJI_SETS`, `groupLabel` | Rendering helpers |
 | `normalize`, `tokenize`, `baseId`, `hexcodeOf` | Text and id helpers |
 | `encodeVectors`, `decodeVectors`, `searchVectors`, `searchVectorSets` from `emojisense/vectors` | The emoji vector file format, for semantic search without the API (a separate entry, not in the picker bundle) |
+| `createSuggestionSource`, `findTrigger`, `findShortcode` from `emojisense/autocomplete` | The `:` autocomplete logic of the editor adapters (see above) |
 
 The full reference is at [emojisense.com/docs/sdk](https://emojisense.com/docs/sdk/).
 

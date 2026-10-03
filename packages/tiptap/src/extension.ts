@@ -2,7 +2,6 @@ import { type Editor, Extension, InputRule, type Range } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import { Suggestion } from "@tiptap/suggestion";
 import { type AliasEngine, applySkinTone, type SemanticProvider, type SkinTone } from "emojisense";
-import { createEmojiMenu, type EmojiSuggestionProps, type EmojiSuggestionRenderer } from "./menu.js";
 import {
   createSuggestionSource,
   DEFAULT_LIMIT,
@@ -10,7 +9,8 @@ import {
   findShortcode,
   SHORTCODE_BEFORE_CARET,
   type SuggestionSource,
-} from "./source.js";
+} from "emojisense/autocomplete";
+import { createEmojiMenu, type EmojiSuggestionProps, type EmojiSuggestionRenderer } from "./menu.js";
 
 /** A value, or a getter for values that change after the editor is created. */
 export type Dynamic<T> = T | (() => T);

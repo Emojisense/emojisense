@@ -1,6 +1,6 @@
 import type { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion";
+import type { EmojiSuggestion } from "emojisense/autocomplete";
 import { scrollOptionIntoView } from "./scroll.js";
-import type { EmojiSuggestion } from "./source.js";
 
 export type EmojiSuggestionProps = SuggestionProps<EmojiSuggestion, EmojiSuggestion>;
 

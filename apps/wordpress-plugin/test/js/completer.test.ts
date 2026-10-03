@@ -1,4 +1,4 @@
-import { type Culture, createEngine, type SemanticProvider } from "emojisense";
+import { type Culture, createEngine, type Pack, type SemanticProvider } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   allowContext,
@@ -6,7 +6,6 @@ import {
   createItemSearch,
   isSearchable,
   MAX_OPTIONS,
-  toItems,
 } from "../../src/lib/completer.js";
 import { pack, readCulture } from "./fixtures.js";
 
@@ -133,17 +132,25 @@ describe("createItemSearch", () => {
   });
 });
 
-describe("toItems", () => {
-  it("drops custom emoji and duplicates", () => {
-    const items = toItems(
-      [
-        { emoji: "🍕", id: "1F355", score: 1, source: "alias" },
-        { emoji: "🍕", id: "1F355", score: 0.5, source: "semantic" },
-        { emoji: ":parrot:", id: "C-parrot", score: 0.9, source: "custom" },
-      ],
-      engine,
-      "en",
-    );
-    expect(items.map((item) => item.emoji)).toEqual(["🍕"]);
+describe("custom emoji", () => {
+  it("are left out: the editors insert text only", () => {
+    const custom = {
+      ...pack("en"),
+      locale: "und",
+      part: "custom" as const,
+      groups: ["custom"],
+      emoji: [[":pizza_cat:", "C-1", 0, 0, 0, "pizza_cat", "pizza cat", "", "pizza", "", ""]],
+      images: { "C-1": "https://example.com/pizza_cat.png" },
+    } as Pack;
+    let items: CompletionItem[] = [];
+    createItemSearch({
+      engine: createEngine([pack("en"), custom]),
+      locale: "en",
+      onItems: (next) => {
+        items = next;
+      },
+    }).update("pizza");
+    expect(items[0]?.emoji).toBe("🍕");
+    expect(items.some((item) => item.source === "custom")).toBe(false);
   });
 });

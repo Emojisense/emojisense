@@ -1,4 +1,11 @@
 export {
+  createSuggestionSource,
+  type EmojiSuggestion,
+  findShortcode,
+  type SuggestionSource,
+  type SuggestionSourceOptions,
+} from "emojisense/autocomplete";
+export {
   type Dynamic,
   EmojiAutocomplete,
   type EmojiAutocompleteOptions,
@@ -10,10 +17,3 @@ export {
   type EmojiSuggestionProps,
   type EmojiSuggestionRenderer,
 } from "./menu.js";
-export {
-  createSuggestionSource,
-  type EmojiSuggestion,
-  findShortcode,
-  type SuggestionSource,
-  type SuggestionSourceOptions,
-} from "./source.js";
