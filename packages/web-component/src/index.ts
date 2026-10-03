@@ -1,6 +1,7 @@
 import { createEngineLoader } from "emojisense/autocomplete";
 import { EmojisensePickerElement } from "./element.js";
 
+export { userLocales } from "emojisense/autocomplete";
 export {
   type EmojiSelectDetail,
   type EmojiSelectEvent,
@@ -28,11 +29,16 @@ export function defineEmojisensePicker(tagName = "emojisense-picker"): void {
 
 /**
  * Start loading the packs before a picker is on the page, e.g. when the pointer moves onto or focus
- * enters the button that opens it. A picker with the same `pack-url` and `locale` then uses this
- * download and index.
+ * enters the button that opens it. A picker with the same `pack-url`, `locale` and `locales` then
+ * uses this download and index.
  */
-export function preloadEmojisense(options: { packUrl: string; locale?: string }): void {
-  createEngineLoader({ packUrl: options.packUrl, locale: options.locale, cultureUrl: false }).preload();
+export function preloadEmojisense(options: {
+  packUrl: string;
+  locale?: string;
+  locales?: readonly string[];
+}): void {
+  const { packUrl, locale, locales } = options;
+  createEngineLoader({ packUrl, locale, locales, cultureUrl: false }).preload();
 }
 
 defineEmojisensePicker();

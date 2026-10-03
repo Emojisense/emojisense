@@ -1,5 +1,5 @@
 import { type KeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { fullEngine, useEngine } from "../lib/engine-client";
+import { showcaseEngine, useEngine } from "../lib/engine-client";
 import { type HealthState, useHealth, useOnline } from "./hooks";
 import { createTracedSemantic } from "./lib/edge";
 import {
@@ -30,14 +30,15 @@ const isTyping = (target: EventTarget | null) =>
   (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
 
 const loadAllLanguages = () => {
-  fullEngine().catch(() => {});
+  showcaseEngine().catch(() => {});
 };
 
 /** The Emojisense playground: search, reactions and photo, live, with timings and code. */
 export default function Playground() {
   // English answers at once. Indexing every language is seconds of main-thread work on a phone,
   // so it starts on an idle desktop, on the visitor's first touch, or for a non-English locale.
-  const { engine, ready } = useEngine({ upgrade: "idle" });
+  // Each search matches the chosen locale only, as an app that loads that language would.
+  const { engine, ready } = useEngine({ upgrade: "idle", scope: "all" });
   const online = useOnline();
   const health = useHealth(online);
   const traced = useMemo(() => createTracedSemantic(), []);

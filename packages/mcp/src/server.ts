@@ -17,7 +17,8 @@ const { version } = JSON.parse(readFileSync(new URL("../package.json", import.me
 const INSTRUCTIONS =
   "Emoji tools. search_emoji finds emoji for keywords, slang or names (e.g. 'lgtm', 'jurassic park'). " +
   "emoji_for_text picks emoji to add to a sentence the user writes. suggest_reactions picks emoji a " +
-  "reader would react with. Results are ranked best first; `match` explains why an emoji matched.";
+  "reader would react with. Results are ranked best first; `match` explains why an emoji matched. " +
+  "Set `locale` to the language of the user's words: a call searches that language and English only.";
 
 const suggestionSchema = z.object({
   emoji: z.string(),
@@ -40,7 +41,10 @@ export function createServer(deps: ToolDeps): McpServer {
   const locale = z
     .enum(locales)
     .optional()
-    .describe(`Language of the input and of the labels. Default "${locales[0]}".`);
+    .describe(
+      "Language of the input and of the labels. Only this language and English are searched. " +
+        `Default "${locales[0]}".`,
+    );
   const limit = (fallback: number, max: number) =>
     z.number().int().min(1).max(max).optional().describe(`Number of emoji to return. Default ${fallback}.`);
   const annotations = { readOnlyHint: true, idempotentHint: true, openWorldHint: deps.api !== undefined };
@@ -51,7 +55,8 @@ export function createServer(deps: ToolDeps): McpServer {
       title: "Search emoji",
       description:
         "Find emoji for a short query: a keyword, slang, a name or a concept (e.g. 'ship it', " +
-        "'greatest of all time', 'kolay gelsin'). Works offline; misspellings are tolerated.",
+        "'greatest of all time', or 'kolay gelsin' with locale 'tr'). Works offline; misspellings " +
+        "are tolerated.",
       inputSchema: z.object({
         query: z.string().min(1).max(200).describe("What the emoji should mean, in a few words"),
         locale,

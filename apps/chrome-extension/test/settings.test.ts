@@ -5,6 +5,7 @@ import {
   DEFAULT_SETTINGS,
   parseSettings,
   resolveLocale,
+  searchLanguages,
   semanticConfig,
 } from "../src/shared/settings";
 import { pasteShortcut } from "../src/shared/strings";
@@ -36,6 +37,24 @@ describe("settings", () => {
     expect(resolveLocale("auto", "en-GB")).toBe("en");
     expect(resolveLocale("auto", "de")).toBe("en");
     expect(resolveLocale("tr", "en-US")).toBe("tr");
+  });
+
+  it("searches the browser languages that have a pack, and English", () => {
+    expect(searchLanguages("auto", ["en-US"])).toEqual({ locale: "en", locales: ["en"] });
+    expect(searchLanguages("auto", ["es-ES", "de-DE", "en-US"])).toEqual({
+      locale: "es",
+      locales: ["es", "en"],
+    });
+    expect(searchLanguages("auto", ["pt-BR", "tr-TR"])).toEqual({
+      locale: "pt",
+      locales: ["pt", "tr", "en"],
+    });
+    expect(searchLanguages("auto", ["de-DE"])).toEqual({ locale: "en", locales: ["en"] });
+  });
+
+  it("prefers the chosen picker language and searches it too", () => {
+    expect(searchLanguages("tr", ["en-GB"])).toEqual({ locale: "tr", locales: ["tr", "en"] });
+    expect(searchLanguages("en", ["es-ES"])).toEqual({ locale: "en", locales: ["en", "es"] });
   });
 
   it("accepts HTTPS endpoints and normalizes them", () => {

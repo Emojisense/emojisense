@@ -40,7 +40,9 @@ const {
   fuse,
   isActiveOn,
   normalize,
+  PACK_LOCALES,
   semanticStrength,
+  userLocales,
 } = core;
 const cultureData: typeof import("../../../packages/data/src/culture/index.ts") = await import(
   pathToFileURL(join(REPO_ROOT, "packages/data/src/culture/index.ts")).href
@@ -63,6 +65,8 @@ interface Query {
   id: string;
   q: string;
   locale: string;
+  /** The user's languages (`AliasSearchOptions.locales`). Default: every loaded pack. */
+  locales?: string[];
 }
 const readQueries = (file: string): Query[] =>
   readFileSync(join(REPO_ROOT, "packages/eval/queries", file), "utf8")
@@ -121,6 +125,28 @@ const GUARD_QUERIES: Query[] = [
   ["bad bunny", "en"],
   ["drake", "en"],
 ].map(([q, locale], i) => ({ id: `guard-${i + 1}`, q: q as string, locale: locale as string }));
+/**
+ * Queries in the user's languages only (`AliasSearchOptions.locales`), with every locale loaded:
+ * the guard queries in their locale and English, and words of languages the user does not have.
+ */
+const USER_LANGUAGE_QUERIES: Query[] = [
+  ...GUARD_QUERIES.map((q) => ({
+    ...q,
+    id: `user-${q.id}`,
+    locales: userLocales({ languages: [q.locale] }),
+  })),
+  ...(
+    [
+      ["bolo", "en", ["en", "tr"]],
+      ["gato", "tr", ["tr", "en"]],
+      ["kedi", "en", ["en", "tr"]],
+      ["feliz cumpleaños", "en", ["en", "tr"]],
+      ["joyeux anniversaire", "es", ["es", "en"]],
+      ["生日快乐", "en", ["en", "fr"]],
+      ["thumbsup", "tr", ["tr"]],
+    ] as [string, string, string[]][]
+  ).map(([q, locale, locales], i) => ({ id: `user-${i + 1}`, q, locale, locales })),
+];
 /** Number slang: `fuse` keeps the dictionary's whole-query answer first (core/src/rerank.ts). */
 const SLANG_QUERIES: Query[] = [
   ["666", "zh"],
@@ -274,12 +300,17 @@ type Ranked = [id: string, score: number];
 
 function searchCases(engine: AliasEngine, list: Query[] = queries) {
   return list.map((q) => {
-    const out = engine.search(q.q, { locale: q.locale, limit: TOP });
+    const out = engine.search(q.q, {
+      locale: q.locale,
+      limit: TOP,
+      ...(q.locales ? { locales: q.locales } : {}),
+    });
     const best = out.results[0];
     return {
       id: q.id,
       q: q.q,
       locale: q.locale,
+      ...(q.locales ? { locales: q.locales } : {}),
       query: out.query,
       confidence: out.confidence,
       coverage: out.coverage,
@@ -443,6 +474,8 @@ const golden = {
   unicode: process.versions.unicode,
   packVersion,
   packSha256: Object.fromEntries(packFiles.map((file) => [file, sha256(packBytes.get(file) as Buffer)])),
+  /** The languages with a published pack (`PACK_LOCALES`): the SDKs' lists must equal it. */
+  packLocales: [...PACK_LOCALES],
   normalization: {
     cases: NORMALIZATION_INPUTS.map((input) => [input, normalize(input)]),
     sweep: { blockSize: SWEEP_BLOCK, ranges: SWEEP_RANGES, hashes: sweepHashes() },
@@ -465,6 +498,11 @@ const golden = {
       cases: searchCases(engine, list),
     })),
     { name: "all locales", packs: allFiles, cases: searchCases(allEngine, GUARD_QUERIES) },
+    {
+      name: "all locales, user's languages",
+      packs: allFiles,
+      cases: searchCases(allEngine, USER_LANGUAGE_QUERIES),
+    },
   ],
   keystrokes: { packs: fullFiles, cases: keystrokeCases(fullEngine) },
   /** `fuse` with (reranked) and without (reciprocal) the reranker; PACK_FORMAT.md §10. */
@@ -603,7 +641,8 @@ execFileSync(join(THIS_REPO, "node_modules/.bin/biome"), ["format", "--write", O
 console.log(
   `make-golden: ${queries.length} queries × 2 configs, ${sentences.length} sentences in ` +
     `${sentenceLocales.length} locales, ${entities.length} entities in ${entityLocales.length} locales, ` +
-    `${GUARD_QUERIES.length} guard queries with every locale, ${golden.confidence.length} confidence cases, ` +
+    `${GUARD_QUERIES.length} guard queries with every locale, ` +
+    `${USER_LANGUAGE_QUERIES.length} queries in the user's languages, ${golden.confidence.length} confidence cases, ` +
     `${keystrokeCount} keystrokes, ` +
     `${NORMALIZATION_INPUTS.length} normalization cases, ${golden.normalization.sweep.hashes.length} sweep blocks → ${OUTPUT}; ` +
     `${cultureGolden.cases.length} culture cases → ${CULTURE_OUTPUT}`,

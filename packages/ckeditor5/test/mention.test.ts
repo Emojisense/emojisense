@@ -1,7 +1,8 @@
 import { ClassicEditor, type EditorConfig, Emoji, Essentials, Paragraph, version } from "ckeditor5";
+import { createEngine } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojisenseMention } from "../src/index.js";
-import { en, engine, stubSemantic } from "./fixture.js";
+import { en, engine, pt, stubSemantic } from "./fixture.js";
 
 const editors: ClassicEditor[] = [];
 
@@ -100,6 +101,34 @@ describe(`EmojisenseMention (CKEditor ${version})`, () => {
     await type(editor, ":pizza");
     await vi.waitFor(() => expect(items()[0]).toBe("🍕 pizza"));
     expect(urls).toContain("https://packs.test/0.1.0/pack.tr.json");
+  });
+
+  it("loads only the packs of the user's languages", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      urls.push(String(input));
+      if (String(input).includes("culture")) return new Response("", { status: 404 });
+      return new Response(JSON.stringify(String(input).includes(".tr.") ? { ...en, locale: "tr" } : en));
+    });
+    const editor = await createEditor({
+      emojisense: { packUrl: "https://langs.test/0.1.0", locales: ["tr", "en"] },
+    });
+    await type(editor, ":pizza");
+    await vi.waitFor(() => expect(items()[0]).toBe("🍕 pizza"));
+    const packs = urls.filter((url) => /\/pack\.\w+\.json$/.test(url));
+    expect(packs).toEqual(["https://langs.test/0.1.0/pack.en.json", "https://langs.test/0.1.0/pack.tr.json"]);
+  });
+
+  it("matches only phrases of the user's languages", async () => {
+    const editor = await createEditor({
+      emojisense: { engine: createEngine([en, pt]), locales: ["tr", "en"] },
+    });
+    await type(editor, ":foguete");
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(items()).toEqual([]);
+    const everyPack = await createEditor({ emojisense: { engine: createEngine([en, pt]) } });
+    await type(everyPack, ":foguete");
+    await vi.waitFor(() => expect(items()[0]).toMatch(/^🚀/));
   });
 
   it("loads the packs when the editor gets the focus, not with the page", async () => {

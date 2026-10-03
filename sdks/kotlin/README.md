@@ -8,6 +8,7 @@ It gives the same results as the TypeScript engine and the Swift SDK.
 | Tier 0 | `AliasEngine` | Offline alias search over the packs (PACK_FORMAT.md §4). Runs on every keystroke. |
 | Normalization | `Normalizer` | PACK_FORMAT.md §3 for queries and labels, and `embeddingText` for the semantic tier. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes core, ext and custom packs. Verifies `sha256` against the manifest. |
+| Languages | `PackLocales` | The user's languages that have a pack (`userLocales`), as `core/src/locales.ts`. |
 | Culture layer | `CultureLayer`, `Culture` | `applyCulture`, regional senses, triggers in a message (`matchCultureInText`), `relevantNow`, the device's region (PACK_FORMAT.md §9). |
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6): content-named files (`files`) and a base layer (`base`). Answers between keystrokes. |
 | Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic` with an LRU cache. Over the plan limit it still gets the edge's cached answers. |
@@ -41,21 +42,25 @@ For local development, publish to Maven Local (`./gradlew publishToMavenLocal`) 
 class SearchViewModel : ViewModel() {
     private val api = "https://api.emojisense.com"
     private val loader = PackLoader("$api/v1/pack/0.1.0")
+
+    /** The device's languages that have a pack, with English: ["tr-TR", "en-US", "de"] → ["tr", "en"]. */
+    private val locales = PackLocales.userLocales()
     private var session: SearchSession? = null
     val results = MutableStateFlow<List<SearchResult>>(emptyList())
 
     init {
         viewModelScope.launch {
-            // 1. Core packs first (English is always first), then the extension parts when idle.
+            // 1. Core packs of the user's languages first (English is always first), then the
+            //    extension parts when idle.
             val manifest = loader.loadManifest()
-            val core = loader.loadPacks(listOf("en", "tr"), manifest = manifest)
+            val core = loader.loadPacks(locales, manifest = manifest)
             // 2. The culture file next to the packs (".../v1/culture/0.1.0"). Without it, search works as before.
             val culture = CultureLayer.cultureUrlFor(loader.baseUrl)?.let { url ->
-                runCatching { CultureLayer.loadCulture(url, "tr") }.getOrNull()
+                runCatching { CultureLayer.loadCulture(url, locales[0]) }.getOrNull()
             }
             var engine = withContext(Dispatchers.Default) { AliasEngine(core, culture = culture) }
             startSession(engine)
-            val ext = loader.loadPacks(listOf("en", "tr"), PackPart.EXT, manifest)
+            val ext = loader.loadPacks(locales, PackPart.EXT, manifest)
             engine = withContext(Dispatchers.Default) { AliasEngine(core, ext, culture = culture) }
             startSession(engine)
         }
@@ -70,7 +75,9 @@ class SearchViewModel : ViewModel() {
                 ShardProvider("https://cdn.emojisense.com/p/0.1.0"),
                 SemanticClient(SemanticClient.Configuration(api, key = "pk_live_…", packVersion = engine.packVersion)),
             ),
-            locale = "tr",
+            locale = locales[0],
+            // Only phrases of the user's languages match. English always counts.
+            locales = locales,
             // No region: the device's region. "" for none, "auto" for the region the API finds.
             onChange = { state -> results.value = state.results },
         )
@@ -140,16 +147,51 @@ Notes:
   it (`AliasSearchOutput.coverage` below 0.85) and the semantic list is flat or low. Show the
   results as guesses.
 
+## Search in the user's languages
+
+Search only in the user's own languages. A user of English and Turkish must never get a match
+from a Portuguese alias that another part of the app loaded. English is always searched: it
+carries the shortcodes. This is a port of `packages/core/src/locales.ts` and of the `locales`
+option of `core/src/engine.ts`.
+
+1. Get the user's languages: `PackLocales.userLocales()`. It reads the device's languages
+   (`PackLocales.deviceLanguages()`: `LocaleList.getDefault()` on Android 7+, else
+   `Locale.getDefault()`), keeps the languages that have a pack (`PackLocales.ALL`), and adds
+   English at the end. On a server, pass the user's languages:
+   `PackLocales.userLocales(listOf("es-MX", "en"))`. The device's languages there are the server's.
+2. Load their packs: `loader.loadPacks(locales)`. English loads first and must load. A language
+   without a pack, or a file that fails, is left out. The user still gets English.
+3. Search in them: `AliasSearchOptions(locale = locales[0], locales = locales)` or
+   `SearchSession(…, locale = locales[0], locales = locales, …)`.
+
+| Function | Input | Result |
+| -------- | ----- | ------ |
+| `PackLocales.userLocales(languages)` | `["tr-TR", "en-US", "de", "tr"]` | `["tr", "en"]` |
+| `PackLocales.userLocales(languages)` | `["zh-Hant-TW", "in"]` | `["zh", "id", "en"]` ("in" is the old code of Indonesian that Java and Android report) |
+| `PackLocales.userLocales(languages)` | `[]` | `["en"]` |
+| `PackLocales.packLocaleOf(tag)` | `"pt-BR"`, `"de-DE"` | `"pt"`, `null` |
+
+Rules of `locales` (the same as the reference):
+
+- Only phrases of the listed locales match. Words of other loaded packs are not completed, not
+  corrected and not matched.
+- English (the primary pack), the preferred `locale` and custom packs always count, also when the
+  list does not name them.
+- `null` (the default) searches every loaded pack, as before. Use it, for example, for a demo that
+  loads all languages on purpose.
+
 ## Quick start: server (JVM)
 
 ```kotlin
 fun main() = runBlocking {
     val loader = PackLoader("https://api.emojisense.com/v1/pack/0.1.0")
-    val core = loader.loadPacks(listOf("en", "es"))
-    val ext = loader.loadPacks(listOf("en", "es"), PackPart.EXT)
+    // The user's languages, for example from the Accept-Language header: ["es", "en"].
+    val locales = PackLocales.userLocales(listOf("es-MX", "en"))
+    val core = loader.loadPacks(locales)
+    val ext = loader.loadPacks(locales, PackPart.EXT)
     val engine = AliasEngine(core, ext)
 
-    val alias = engine.canonicalSearch("feliz cumpleaños", AliasSearchOptions(locale = "es"))
+    val alias = engine.canonicalSearch("feliz cumpleaños", AliasSearchOptions(locale = locales[0], locales = locales))
     println(alias.results.map { "${it.emoji} ${it.score} ${it.match}" })
 
     if (Fusion.shouldUseSemantic(alias)) {
@@ -192,12 +234,14 @@ tell you to regenerate it. CI regenerates the golden files for each commit and t
 | Sentences with function words, en + zh, ru, id, es, fr, pt, ar, hi or bn (core + ext): same top-5 ids / same top-10 ids and scores | 369 queries | 100% / 100% |
 | Entities (names, titles, brands, memes, holidays), en or en + es, fr, ru, zh, hi, ar, bn, pt, id or tr (core + ext), every other one: same top-5 ids / same top-10 ids and scores | 132 queries | 100% / 100% |
 | Guard queries with all 22 packs (prefix completions into other locales' words, short typos, unknown names): same top-5 ids / same top-10 ids and scores | 28 queries | 100% / 100% |
-| Coverage (`AliasSearchOutput.coverage`) of every search case above | 963 queries | 100% |
+| The user's languages only (`AliasSearchOptions.locales`), all 22 packs: the guard queries in their locale and English, and words of languages the user does not have: same top-5 ids / same top-10 ids and scores | 35 queries | 100% / 100% |
+| Coverage (`AliasSearchOutput.coverage`) of every search case above | 998 queries | 100% |
 | Keystrokes (every prefix of 44 queries, 63 sentences and 10 guard queries): same top-5 ids and scores | 1,452 | 100% |
 | Fusion (`Fusion.fuse`) on recorded lists, with and without the reranker (55 queries and 2 number-slang queries): same top-10 ids | 57 × 2 | 100% |
 | Unsure verdict (`Confidence.assessConfidence`), generated inputs: same confidence and `unsure` | 44 cases | 100% |
 | Semantic strength (`Confidence.semanticStrength`): within 1e-12 (all bit-identical). The other 5 cases record no semantic list | 39 cases | 100% |
 | Function-word lists (`FunctionWords.kt`, generated by `sdks/swift/scripts/make-function-words.ts`) equal the reference | 11 locales | 100% |
+| Pack locales (`PackLocales.ALL`) equal the reference (`PACK_LOCALES`) | 11 locales | 100% |
 | Culture layer on the English culture file (`culture-golden.json`), en core + ext: searches and messages (`text`) in and out of each entry's regions and windows, prefixes: same ids, sources, culture ids and scores | 186 cases | 100% |
 
 Measured with JDK 21 (macOS, arm64), Node 24.5.0, pack 0.1.0. The unit tests port the TypeScript and

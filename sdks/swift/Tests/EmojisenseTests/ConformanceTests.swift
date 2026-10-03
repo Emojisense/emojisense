@@ -97,7 +97,8 @@ final class ConformanceTests: XCTestCase {
       var detailDifferences: [String] = []
       var coverageDifferences: [String] = []
       for testCase in config.cases {
-        let options = AliasSearchOptions(limit: 10, locale: testCase.locale)
+        let options = AliasSearchOptions(
+          limit: 10, locale: testCase.locale, locales: testCase.locales)
         let output = engine.search(testCase.q, options: options)
         let actual = output.results.map(Golden.Ranked.init)
         if actual.prefix(5).map(\.id) != testCase.top.prefix(5).map(\.id) {
@@ -254,6 +255,13 @@ final class ConformanceTests: XCTestCase {
       "function-word lists", agreed: expected.count - differences.count, of: expected.count,
       differences)
     XCTAssertEqual(differences, [])
+  }
+
+  // MARK: Pack locales
+
+  /// ``PackLocales/all`` is the reference list of the languages with a published pack.
+  func testPackLocalesMatchTheReference() throws {
+    XCTAssertEqual(PackLocales.all.sorted(), try Self.golden.get().packLocales.sorted())
   }
 
   // MARK: Helpers

@@ -1,8 +1,9 @@
 import { getEmojiDataFromNative, init, SearchIndex } from "emoji-mart";
+import { createEngine } from "emojisense";
 import { beforeAll, describe, expect, it } from "vitest";
 import { toSelection } from "../src/map.js";
 import { overrideSearchIndex, type SearchIndexLike } from "../src/search.js";
-import { emojiMartData, engine } from "./fixture.js";
+import { emojiMartData, en, engine, pt } from "./fixture.js";
 
 // Contract tests against the real emoji-mart 5 module. `init` runs once per test file and
 // marks the emoji its picker lists; "goat" is excluded like a picker's `exceptEmojis` would.
@@ -35,6 +36,21 @@ describe("overrideSearchIndex", () => {
     expect(ids(await SearchIndex.search("ship it"))?.[0]).toBe("rocket");
     restore();
     expect(ids(await SearchIndex.search("jurassic park"))).toEqual([]);
+  });
+
+  it("matches only phrases of the user's languages", async () => {
+    const multilingual = createEngine([en, pt]);
+    const restore = overrideSearchIndex(searchIndex, {
+      data: emojiMartData,
+      engine: multilingual,
+      locales: ["tr", "en"],
+    });
+    try {
+      expect(ids(await SearchIndex.search("foguete"))).toEqual([]);
+      expect(ids(await SearchIndex.search("ship it"))?.[0]).toBe("rocket");
+    } finally {
+      restore();
+    }
   });
 
   it("leaves emoji lookups to emoji-mart and hides emoji its picker does not list", async () => {

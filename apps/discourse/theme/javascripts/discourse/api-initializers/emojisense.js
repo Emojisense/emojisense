@@ -5,7 +5,7 @@ import { emojiUrlFor } from "discourse/lib/text";
 import I18n, { i18n } from "discourse-i18n";
 import { isSkinTonableEmoji } from "pretty-text/emoji";
 import { replacements, translations } from "pretty-text/emoji/data";
-import { createEmojisense, findEmojiQuery, mergeCodes, packLocale } from "../lib/emojisense";
+import { createEmojisense, findEmojiQuery, mergeCodes, packLocale, userLocales } from "../lib/emojisense";
 
 const AUTOCOMPLETE_LIMIT = 5;
 const PICKER_LIMIT = 48;
@@ -58,6 +58,8 @@ export default apiInitializer((api) => {
   const sense = createEmojisense({
     files: dataFiles(),
     locale: settings.search_locale === "auto" ? packLocale(I18n.currentLocale()) : settings.search_locale,
+    // The languages of the user's browser are searched too, whatever the setting, as in WordPress.
+    locales: userLocales(),
     culture: settings.culture,
     customEmoji: PreloadStore.get("customEmoji") || [],
     data: { replacements, isSkinTonable: isSkinTonableEmoji },

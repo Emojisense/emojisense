@@ -190,7 +190,7 @@ msgid "Site language (%s)"
 msgstr ""
 
 #: includes/class-emojisense-admin.php:269
-msgid "Search always understands English. This language is searched too, and its emoji names are shown."
+msgid "Search always understands English and the languages of each person’s browser. This language is searched too, and its emoji names are shown."
 msgstr ""
 
 #: includes/class-emojisense-admin.php:277

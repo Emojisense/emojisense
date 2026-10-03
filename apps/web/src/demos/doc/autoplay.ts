@@ -68,7 +68,7 @@ function newLine(view: EditorView) {
 
 /** The menu was dismissed (a click elsewhere on the page): take the engine's pick directly. */
 function insertWithoutMenu(view: EditorView, line: ScriptLine, engine: AliasEngine | undefined) {
-  const results = engine?.search(line.query, { limit: 8, locale: "en" }).results ?? [];
+  const results = engine?.search(line.query, { limit: 8, locale: "en", locales: ["en"] }).results ?? [];
   const emoji = results.find((result) => result.id === line.target)?.emoji ?? results[0]?.emoji ?? line.emoji;
   quietly(view, (v) => {
     const to = v.state.selection.head;

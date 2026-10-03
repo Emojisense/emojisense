@@ -3,8 +3,9 @@
  *   tsx scripts/build.ts           one build
  *   tsx scripts/build.ts --watch   rebuild the scripts on change (static files: run again)
  *
- * The en + tr data packs are copied from packages/data/dist, so the extension needs no network
- * for search and every site shares the one copy inside the extension. Fonts are copied from the
+ * The core and ext packs of every pack language (PACK_LOCALES) are copied from packages/data/dist,
+ * so each user's languages work without network and every site shares the one copy inside the
+ * extension. The service worker indexes only the user's languages. Fonts are copied from the
  * pinned @fontsource packages: the Web Store does not allow remote resources, and none are needed.
  */
 import { copyFile, mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
@@ -13,12 +14,13 @@ import { fileURLToPath } from "node:url";
 import { type BuildOptions, build, context, type Plugin } from "esbuild";
 import { createManifest, ICON_SIZES } from "../src/manifest.ts";
 import { PICKER_FONTS } from "../src/shared/fonts.ts";
+import { packFiles } from "../src/shared/packs.ts";
 import { renderIcon } from "./icons.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DIST = join(ROOT, "dist");
 const DATA = join(ROOT, "../../packages/data");
-const PACK_FILES = ["manifest.json", "pack.en.json", "pack.en.ext.json", "pack.tr.json", "pack.tr.ext.json"];
+const PACK_FILES = packFiles();
 /** Package → font files in dist/fonts. The options page uses all of them, the picker PICKER_FONTS. */
 const FONT_PACKAGES: Record<string, { license: string; files: string[] }> = {
   "@fontsource-variable/hanken-grotesk": {
@@ -90,8 +92,20 @@ async function copyStatic(): Promise<void> {
     packVersion: string;
   };
   const packSource = join(DATA, "dist/packs", packVersion);
-  if (!(await exists(join(packSource, "pack.en.json")))) {
+  if (!(await exists(join(packSource, "manifest.json")))) {
     throw new Error(`Data packs not found in ${packSource}. Run \`pnpm data:build\` first.`);
+  }
+  // The pack manifest lists what the data build made; a language added there must ship here too.
+  const { files: built } = JSON.parse(await readFile(join(packSource, "manifest.json"), "utf8")) as {
+    files: Record<string, unknown>;
+  };
+  const packs = Object.keys(built).filter((file) => /^pack\..+\.json$/.test(file));
+  const missing = PACK_FILES.filter((file) => file !== "manifest.json" && !packs.includes(file));
+  const unknown = packs.filter((file) => !PACK_FILES.includes(file));
+  if (missing.length > 0 || unknown.length > 0) {
+    throw new Error(
+      `Packs differ from PACK_LOCALES: missing ${missing.join(", ") || "none"}; unknown ${unknown.join(", ") || "none"}`,
+    );
   }
   await mkdir(join(DIST, "packs"), { recursive: true });
   for (const file of PACK_FILES) await copyFile(join(packSource, file), join(DIST, "packs", file));
@@ -119,9 +133,12 @@ async function copyStatic(): Promise<void> {
 
 async function report(): Promise<void> {
   const rows: [string, number][] = [];
-  for (const file of ["background.js", "content.js", "options.js", ...PACK_FILES.map((f) => `packs/${f}`)]) {
+  for (const file of ["background.js", "content.js", "options.js"]) {
     rows.push([file, (await stat(join(DIST, file))).size]);
   }
+  let packBytes = 0;
+  for (const file of PACK_FILES) packBytes += (await stat(join(DIST, "packs", file))).size;
+  rows.push([`packs/ (${PACK_FILES.length} files)`, packBytes]);
   for (const [file, bytes] of rows)
     console.log(`  ${file.padEnd(24)} ${(bytes / 1024).toFixed(1).padStart(8)} KB`);
 }

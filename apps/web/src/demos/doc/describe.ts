@@ -39,8 +39,18 @@ export function describeEmoji(
   return { label, code, why };
 }
 
-/** Alias matches for a query, by emoji id, to explain each row. */
-export function matchesFor(engine: AliasEngine, query: string, locale = "en"): Map<string, AliasResult> {
-  const { results } = engine.search(query, { limit: 24, locale, culture: false });
+/** Alias matches for a query in the user's languages, by emoji id, to explain each row. */
+export function matchesFor(
+  engine: AliasEngine,
+  query: string,
+  locale = "en",
+  locales?: readonly string[],
+): Map<string, AliasResult> {
+  const { results } = engine.search(query, {
+    limit: 24,
+    locale,
+    culture: false,
+    ...(locales ? { locales } : {}),
+  });
   return new Map(results.map((result) => [result.id, result]));
 }

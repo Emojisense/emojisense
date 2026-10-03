@@ -1,7 +1,8 @@
+import { createEngine } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { attachEmojisense } from "../src/attach.js";
 import { createEmojiMartSearch } from "../src/search.js";
-import { emojiMartData, engine } from "./fixture.js";
+import { emojiMartData, en, engine, pt } from "./fixture.js";
 
 afterEach(() => document.body.replaceChildren());
 
@@ -115,5 +116,18 @@ describe("createEmojiMartSearch", () => {
     expect(emojis.map((e: { id: string }) => e.id)).toEqual(["rocket"]);
     expect(state.layer).toBe("api");
     search.dispose();
+  });
+
+  it("matches only phrases of the user's languages", () => {
+    const multilingual = createEngine([en, pt]);
+    const found = (locales?: readonly string[]) => {
+      const onResults = vi.fn();
+      const search = createEmojiMartSearch({ data: emojiMartData, engine: multilingual, locales, onResults });
+      search.update("foguete");
+      search.dispose();
+      return onResults.mock.calls[0]?.[0].map((e: { id: string }) => e.id);
+    };
+    expect(found(["tr", "en"])).toEqual([]);
+    expect(found()).toEqual(["rocket"]);
   });
 });

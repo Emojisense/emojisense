@@ -52,7 +52,7 @@ const goat = shown("greatest of all time", { part: "full", locale: "en", prefix:
       </tbody>
     </table>
   </div>
-  <p><code>locale</code> is one of the bundled languages: <code>{LOCALES.join(", ")}</code> (default <code>en</code>). Every tool returns a short text and the same data as structured content. Each result has a <code>source</code>: <code>alias</code> (offline), <code>semantic</code> (API) or <code>default</code> (a generic reaction such as 👍, or 👀 for a question, that fills a short list). Offline reaction suggestions prefer the emoji people react with, the <code>COMMON_REACTIONS</code> list that the hosted API uses too.</p>
+  <p><code>locale</code> is one of the bundled languages: <code>{LOCALES.join(", ")}</code> (default <code>en</code>). A call searches that language and English only, so a Spanish query never matches a Portuguese alias. Every tool returns a short text and the same data as structured content. Each result has a <code>source</code>: <code>alias</code> (offline), <code>semantic</code> (API) or <code>default</code> (a generic reaction such as 👍, or 👀 for a question, that fills a short list). Offline reaction suggestions prefer the emoji people react with, the <code>COMMON_REACTIONS</code> list that the hosted API uses too.</p>
 
   <h2 id="configure">Configure your client</h2>
   <p>Most MCP clients read a JSON file with an <code>mcpServers</code> object. Some call it <code>servers</code> and want <code>"type": "stdio"</code> on each entry.</p>

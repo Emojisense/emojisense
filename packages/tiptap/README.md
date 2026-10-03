@@ -73,6 +73,28 @@ const editor = useEditor({
 });
 ```
 
+### The user's languages
+
+`userLocales()` reads `navigator.languages` and keeps the languages that have a pack, most
+preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`. Give the list
+to the loader (only their packs load) and to the extension (the menu matches only their phrases):
+
+```ts
+import { userLocales } from "emojisense";
+
+const locales = userLocales();
+const packUrl = "https://api.emojisense.com/v1/pack/0.1.0";
+EmojiAutocomplete.configure({
+  engine: createEngineLoader({ packUrl, locale: locales[0], locales }),
+  locale: locales[0],
+  locales,
+});
+```
+
+A user of English and Turkish then never gets a match from a Portuguese alias. English always
+counts: it carries the shortcodes. Without `locales`, the menu matches every pack of the engine.
+With `@emojisense/react`, pass `locales` to `useEmojisense` and to the extension.
+
 ## Options
 
 | Option | Default | Notes |
@@ -80,6 +102,7 @@ const editor = useEditor({
 | `engine` | — | An `EngineLoader` (loads on focus), an `AliasEngine`, or a getter. A getter's menu stays closed while it returns `undefined`. |
 | `semantic` | — | `SemanticProvider` (for example `createSemanticClient`, or `chainProviders(shards, api)`), or a getter |
 | `locale` | first pack | Preferred locale for ranking and labels |
+| `locales` | every pack | All the user's languages: the menu matches only their phrases. See [The user's languages](#the-users-languages). |
 | `region` | the device's | Region for regional culture entries of the engine's culture file: the device's (its language, else its time zone), `""` for none, or an ISO code such as `"JP"` |
 | `limit` | `8` | Menu size |
 | `debounceMs` | `200` | Delay before a semantic request |

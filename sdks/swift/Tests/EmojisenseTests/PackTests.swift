@@ -54,6 +54,34 @@ final class PackTests: XCTestCase {
     XCTAssertEqual(packs.map(\.locale), ["en", "tr"])
   }
 
+  func testLeavesOutALocaleWithoutAPackAndLoadsEachLocaleOnce() async throws {
+    let transport = StubTransport(files: [
+      "pack.en.json": String(decoding: packJSON(), as: UTF8.self)
+    ])
+    let loader = PackLoader(
+      baseURL: URL(string: "https://x.test/v1/pack/0.1.0")!, transport: transport)
+    let packs = try await loader.loadPacks(locales: ["de", "en", "de"])
+    XCTAssertEqual(packs.map(\.locale), ["en"])
+    let files = await transport.requests.map(\.lastPathComponent).sorted()
+    XCTAssertEqual(files, ["pack.de.json", "pack.en.json"])
+  }
+
+  func testFailsWhenEnglishDoesNotLoad() async throws {
+    let english = String(decoding: packJSON(), as: UTF8.self)
+    let turkish = english.replacingOccurrences(of: #""locale":"en""#, with: #""locale":"tr""#)
+    let loader = PackLoader(
+      baseURL: URL(string: "https://x.test/v1/pack/0.1.0")!,
+      transport: StubTransport(files: ["pack.tr.json": turkish]))
+    do {
+      _ = try await loader.loadPacks(locales: ["tr"])
+      XCTFail("expected an HTTP error")
+    } catch {
+      XCTAssertEqual(
+        error as? EmojisenseError,
+        .httpStatus(404, url: URL(string: "https://x.test/v1/pack/0.1.0/pack.en.json")!))
+    }
+  }
+
   func testRejectsAFileThatDoesNotMatchTheManifest() async throws {
     let manifest = """
       {"format":"emojisense-manifest","formatVersion":1,"packVersion":"0.1.0","emojiVersion":"17.0",

@@ -16,6 +16,8 @@ const DEFAULT_SCORE = 0.3;
 
 export interface ReactionOptions {
   locale?: string;
+  /** Only phrases of these locales match (`AliasSearchOptions.locales`). Default: every loaded pack. */
+  locales?: readonly string[];
   limit?: number;
 }
 
@@ -25,8 +27,12 @@ export function suggestReactionsOffline(
   text: string,
   options: ReactionOptions = {},
 ): EmojiSuggestion[] {
-  const { locale, limit = 6 } = options;
-  const ranked = matchText(engine, text, { limit: 40, ...(locale ? { locale } : {}) })
+  const { locale, locales, limit = 6 } = options;
+  const ranked = matchText(engine, text, {
+    limit: 40,
+    ...(locale ? { locale } : {}),
+    ...(locales ? { locales } : {}),
+  })
     .map((match) => ({ match, score: Math.min(1, match.score * reactionFactor(engine, match)) }))
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)

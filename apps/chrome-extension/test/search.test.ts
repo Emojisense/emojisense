@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createSearchService, type SearchPort, type SearchServiceDeps } from "../src/background/search";
 import type { ServerMessage } from "../src/shared/messages";
 import { DEFAULT_SETTINGS, type Settings } from "../src/shared/settings";
-import { en, flush, tr } from "./fixture";
+import { bundledPacks, en, flush, tr } from "./fixture";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -32,11 +32,12 @@ function fakePort() {
 
 function service(settings: Partial<Settings> = {}, overrides: Partial<SearchServiceDeps> = {}) {
   const deps: SearchServiceDeps = {
-    loadPacks: vi.fn(async () => [en, tr]),
+    loadPacks: vi.fn(bundledPacks),
     readSettings: async () => ({ ...DEFAULT_SETTINGS, ...settings }),
     readRecents: async () => ["1F996"],
     recordPick: vi.fn(async () => undefined),
     uiLanguage: () => "en-US",
+    browserLanguages: () => ["en-US"],
     fetch: vi.fn(async () => new Response("{}", { status: 500 })),
     debounceMs: 10,
     ...overrides,
@@ -76,6 +77,67 @@ describe("search service (service worker)", () => {
     });
   });
 
+  describe("the user's languages", () => {
+    async function run(settings: Partial<Settings>, browserLanguages: string[], query: string) {
+      const { search, deps } = service(settings, { browserLanguages: () => browserLanguages });
+      const client = fakePort();
+      search.attach(client.port);
+      client.send({ type: "query", query });
+      await flush();
+      expect(client.last()).toMatchObject({ type: "results", query });
+      const message = client.last();
+      const items = message?.type === "results" ? message.items : [];
+      const loaded = vi.mocked(deps.loadPacks).mock.calls.map(([locales]) => [...locales].sort());
+      return { emojis: emojis(message), items, loaded };
+    }
+
+    it("indexes the browser languages that have a pack, and English", async () => {
+      const { loaded } = await run({}, ["es-ES", "de-DE", "en-US"], "rocket");
+      expect(loaded).toEqual([["en", "es"]]);
+    });
+
+    it("gives a Spanish browser Spanish matches, ranking and labels", async () => {
+      const { items } = await run({}, ["es-ES", "en"], "cohete");
+      expect(items).toMatchObject([{ emoji: "🚀", label: "cohete" }]);
+    });
+
+    it("never loads or matches a language the user does not read", async () => {
+      const { emojis: found, loaded } = await run({}, ["en-US", "tr-TR"], "saudade");
+      expect(loaded).toEqual([["en", "tr"]]);
+      expect(found).toBe("");
+      expect((await run({}, ["pt-BR"], "saudade")).emojis).toBe("❤️");
+    });
+
+    it("always searches the chosen picker language", async () => {
+      // "tamam" (okay) is a Turkish keyword of 👍.
+      expect((await run({}, ["en-US"], "tamam")).emojis).toBe("");
+      expect((await run({ locale: "tr" }, ["en-US"], "tamam")).emojis).toBe("👍️");
+    });
+
+    it("rebuilds the index only when the set of languages changes", async () => {
+      let locale: Settings["locale"] = "en";
+      let browser = ["en-US", "tr"];
+      const { search, deps } = service(
+        {},
+        {
+          readSettings: async () => ({ ...DEFAULT_SETTINGS, locale }),
+          browserLanguages: () => browser,
+        },
+      );
+      const first = await search.warm();
+      // Another preferred language, the same packs: the index stays.
+      locale = "tr";
+      expect(await search.warm()).toBe(first);
+      browser = ["es"];
+      locale = "auto";
+      expect(await search.warm()).not.toBe(first);
+      expect(vi.mocked(deps.loadPacks).mock.calls.map(([locales]) => [...locales].sort())).toEqual([
+        ["en", "tr"],
+        ["en", "es"],
+      ]);
+    });
+  });
+
   it("applies the skin tone setting", async () => {
     const { search } = service({ skinTone: "medium" });
     const client = fakePort();
@@ -92,6 +154,8 @@ describe("search service (service worker)", () => {
     const client = fakePort();
     search.attach(client.port);
     client.send({ type: "query", query: "dino" });
+    // The packs are requested once the settings name the languages.
+    await flush();
     client.send({ type: "query", query: "rocket" });
     release([en, tr]);
     await flush();
@@ -188,7 +252,10 @@ describe("search service (service worker)", () => {
   });
 
   it("reports when the packs cannot load, and retries on the next open", async () => {
-    const loadPacks = vi.fn().mockRejectedValueOnce(new Error("missing pack")).mockResolvedValue([en, tr]);
+    const loadPacks = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("missing pack"))
+      .mockImplementation(bundledPacks);
     const { search } = service({}, { loadPacks });
     const client = fakePort();
     search.attach(client.port);

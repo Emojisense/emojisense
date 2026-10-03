@@ -68,6 +68,17 @@ describe("searchEmoji", () => {
     expect(structured.results[0]).toMatchObject({ emoji: "🎂", label: "doğum günü pastası" });
   });
 
+  it("searches English and the requested locale only", async () => {
+    const ids = async (locale?: string) =>
+      (await searchEmoji({ engine }, { query: "careca nato", locale })).structured.results.map((r) => r.id);
+    expect(await ids()).not.toContain("1F468-200D-1F9B2");
+    expect(await ids("tr")).not.toContain("1F468-200D-1F9B2");
+    expect((await ids("pt"))[0]).toBe("1F468-200D-1F9B2");
+    // English carries the shortcodes and most aliases; it counts for every locale.
+    const { structured } = await searchEmoji({ engine }, { query: "jurassic park", locale: "tr" });
+    expect(structured.results[0]?.emoji).toBe("🦖");
+  });
+
   it("says so when nothing matches", async () => {
     const { text, structured } = await searchEmoji({ engine }, { query: "qqqqq" });
     expect(structured.results).toEqual([]);
@@ -91,6 +102,15 @@ describe("emojiForText", () => {
     expect(structured).toMatchObject({ semantic: true, suggestion: "deploy went fine 🚀" });
   });
 
+  it("matches the text in English and the requested locale only", async () => {
+    const ids = async (locale?: string) =>
+      (await emojiForText({ engine }, { text: "o bebê é careca nato", locale })).structured.results.map(
+        (r) => r.id,
+      );
+    expect(await ids()).not.toContain("1F468-200D-1F9B2");
+    expect(await ids("pt")).toContain("1F468-200D-1F9B2");
+  });
+
   it("returns the text unchanged when nothing matched", async () => {
     const { text, structured } = await emojiForText({ engine }, { text: "qqq zzz" });
     expect(structured).toEqual({ suggestion: "qqq zzz", semantic: false, results: [] });
@@ -103,6 +123,15 @@ describe("suggestReactions", () => {
     const { text, structured } = await suggestReactions({ engine }, { text: "we launched!", limit: 2 });
     expect(structured.results.map((r) => r.emoji)).toEqual(["🎉", "👍"]);
     expect(text).toBe("🎉 party popper, 👍 thumbs up");
+  });
+
+  it("reacts to phrases of English and the requested locale only", async () => {
+    const ids = async (locale?: string) =>
+      (await suggestReactions({ engine }, { text: "careca nato", locale })).structured.results.map(
+        (r) => r.id,
+      );
+    expect(await ids()).not.toContain("1F468-200D-1F9B2");
+    expect(await ids("pt")).toContain("1F468-200D-1F9B2");
   });
 
   it("puts API results before generic fillers", async () => {

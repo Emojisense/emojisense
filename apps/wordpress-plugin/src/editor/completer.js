@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "@wordpress/element";
 import { allowContext, createItemSearch, MAX_OPTIONS, TRIGGER } from "../lib/completer";
+import { searchLocales } from "../lib/config";
 import { semanticProvider } from "../lib/engine";
 
 /**
@@ -11,6 +12,7 @@ import { semanticProvider } from "../lib/engine";
  * @param {import("../lib/config").ClientConfig} config
  */
 function createUseItems(loader, config) {
+  const locales = searchLocales(config);
   return function useItems(filterValue) {
     const [engine, setEngine] = useState(loader.current);
     const [items, setItems] = useState([]);
@@ -28,6 +30,7 @@ function createUseItems(loader, config) {
       return createItemSearch({
         engine,
         locale: config.locale,
+        locales,
         semantic: semanticProvider(config, engine.packVersion),
         limit: MAX_OPTIONS,
         onItems: (next) => setItems((previous) => (sameItems(previous, next) ? previous : next)),

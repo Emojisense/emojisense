@@ -22,6 +22,8 @@ export interface DocEditorOptions {
   words: DemoMessages["doc"];
   /** Engine locale of the page: ranks the `:` menu and names its rows. */
   locale: string;
+  /** The visitor's languages: only their phrases match. */
+  locales: readonly string[];
   engine: () => AliasEngine | undefined;
   semantic: () => SemanticProvider | undefined;
   /** Show the "type :" hint on the last line from the start. */
@@ -60,6 +62,7 @@ export function createDocEditor(options: DocEditorOptions): DocEditor {
         engine: options.engine,
         semantic: options.semantic,
         locale,
+        locales: options.locales,
         limit: 6,
         render: menu.render,
       }),

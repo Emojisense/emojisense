@@ -125,11 +125,14 @@ function storeReadme(): string {
   return `# Emojisense
 
 Search emoji by meaning, slang and intent. Type what you mean ("ship it", "lgtm", "greatest of all
-time", "kolay gelsin") and get ranked emoji. Each row shows why it matched: the alias phrase, the
-shortcode, or "similar meaning" for a semantic result.
+time", or "kolay gelsin" in Turkish) and get ranked emoji. Each row shows why it matched: the alias
+phrase, the shortcode, or "similar meaning" for a semantic result.
 
 Search runs on your Mac or PC with the open-source [Emojisense](https://emojisense.com) engine and
 the data packs of 11 languages inside the extension. It needs no network and no account.
+
+Search covers only your languages: English, the languages of your system and the Preferred
+Language. A word in a language you do not use never brings up an unrelated emoji.
 
 | Key | Action |
 | --- | ------ |
@@ -141,7 +144,7 @@ the data packs of 11 languages inside the extension. It needs no network and no 
 
 | Preference | Default | Meaning |
 | ---------- | ------- | ------- |
-| Language | English | Labels and ranking. Every bundled language is always searched. |
+| Preferred Language | System Language | Labels and ranking. System Language is your first system language that has a pack, else English. Another choice is searched too. |
 | Primary Action | Paste | What \`↵\` does. |
 | API URL | empty | Optional. With a URL, unsure queries also get semantic results from the Emojisense API. |
 | API Key | empty | Optional. A key from the [Emojisense dashboard](https://app.emojisense.com). |

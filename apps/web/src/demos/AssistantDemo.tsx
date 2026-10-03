@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDemoI18n } from "../i18n/demos";
-import { fullEngine } from "../lib/engine-client";
+import { showcaseEngine } from "../lib/engine-client";
 import { ConfigPanel } from "./assistant/ConfigPanel";
 import { AssistantMark, SendArrow } from "./assistant/icons";
 import type { EmojiSuggestion } from "./assistant/mcp";
@@ -65,7 +65,7 @@ export default function AssistantDemo() {
 
   // Start loading the full engine now (shared with the other demos), so the first call is quick.
   useEffect(() => {
-    fullEngine().catch(() => {});
+    showcaseEngine().catch(() => {});
   }, []);
 
   // Play the first prompt once the chat is on screen: typed into the composer, then sent.

@@ -18,7 +18,7 @@ import {
   useState,
 } from "react";
 import { useDemoI18n } from "../../i18n/demos";
-import { labelOf, pageLocale, sharedSemantic } from "../../lib/engine-client";
+import { labelOf, pageLocale, sharedSemantic, visitorLocales } from "../../lib/engine-client";
 import { describeEmoji } from "./describe";
 
 const COLUMNS = 8;
@@ -133,6 +133,7 @@ function IconSearch({ engine, onPick, onClose }: IconSearchProps) {
       engine,
       ...(semantic ? { semantic } : {}),
       locale,
+      locales: visitorLocales(),
       limit: RESULT_LIMIT,
       debounceMs: 180,
       onChange: setState,

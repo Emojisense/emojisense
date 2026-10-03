@@ -4,11 +4,11 @@ import { BulletList, ListItem, TaskItem, TaskList } from "@tiptap/extension-list
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import { TextSelection } from "@tiptap/pm/state";
-import type { AliasEngine } from "emojisense";
+import { type AliasEngine, createEngine } from "emojisense";
 import { createEngineLoader } from "emojisense/autocomplete";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojiAutocomplete, type EmojiAutocompleteOptions } from "../src/index.js";
-import { en, engine, stubSemantic } from "./fixture.js";
+import { en, engine, pt, stubSemantic, tr } from "./fixture.js";
 
 let editor: Editor | undefined;
 
@@ -342,6 +342,19 @@ describe("EmojiAutocomplete (Tiptap)", () => {
     expect(menu()).toBeNull();
     answer();
     await vi.waitFor(() => expect(shown()[0]).toBe("🔥"));
+  });
+
+  it("matches only phrases of the user's languages", async () => {
+    const multilingual = createEngine([en, tr, pt]);
+    const ed = createEditor({ engine: multilingual, locales: ["tr", "en"] });
+    await type(ed, ":foguete");
+    expect(menu()).toBeNull();
+    await type(ed, " :roket");
+    expect(shown()[0]).toBe("🚀");
+    ed.destroy();
+    const everyPack = createEditor({ engine: multilingual });
+    await type(everyPack, ":foguete");
+    expect(shown()[0]).toBe("🚀");
   });
 
   it("accepts a custom renderer with Tiptap's suggestion contract", async () => {

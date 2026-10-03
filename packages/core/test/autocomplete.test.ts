@@ -231,6 +231,13 @@ describe("findShortcode", () => {
     expect(findShortcode(engine, code)?.emoji).toBe(emoji);
   });
 
+  it("resolves a name only in the user's languages", () => {
+    const tr: Pack = { ...en, locale: "tr", emoji: [row("🔥", "1F525", "ateş", {})] };
+    const both = createEngine([en, tr]);
+    expect(findShortcode(both, "ateş", "en")?.emoji).toBe("🔥");
+    expect(findShortcode(both, "ateş", "en", ["en"])).toBeUndefined();
+  });
+
   it.each(["jurassic", "tre", "dino", "fier", "", "!!"])(
     "ignores :%s: (no exact shortcode or name)",
     (code) => {

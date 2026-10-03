@@ -120,6 +120,7 @@ defineEmojisensePicker("my-emoji-picker");`;
         <tr><td><code>endpoint</code></td><td><code>endpoint</code></td><td>—</td><td>The API (layer 3). Omit it and <code>shards-url</code> for fully offline search.</td></tr>
         <tr><td><code>key</code>, <code>publishable-key</code></td><td><code>publishableKey</code></td><td>—</td><td>Publishable key. Use <code>publishable-key</code> in Vue and React, which reserve <code>key</code>.</td></tr>
         <tr><td><code>locale</code></td><td><code>locale</code></td><td><code>en</code></td><td>Another locale loads that pack next to English.</td></tr>
+        <tr><td><code>locales</code></td><td><code>locales</code></td><td><code>locale</code></td><td>The user’s languages, <code>locales="tr en"</code>: their packs load and only their phrases match. English always counts.</td></tr>
         <tr><td><code>columns</code></td><td><code>columns</code></td><td><code>9</code></td><td>Emoji per row (1–24)</td></tr>
         <tr><td><code>skin-tone</code></td><td><code>skinTone</code></td><td><code>none</code></td><td><code>none</code>, <code>light</code>, <code>medium-light</code>, <code>medium</code>, <code>medium-dark</code>, <code>dark</code></td></tr>
         <tr><td><code>emoji-set</code></td><td><code>emojiSet</code></td><td><code>native</code></td><td><code>native</code> draws the system font. <code>twemoji</code>, <code>noto</code> and <code>fluent</code> draw images of a <a href="/docs/guides/emoji-sets/">hosted set</a> and need <code>endpoint</code>.</td></tr>

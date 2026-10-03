@@ -4,7 +4,7 @@ export interface LoadPacksOptions {
   /** Base URL of a pack version, e.g. "https://api.emojisense.com/v1/pack/0.1.0". */
   baseUrl: string;
   /** Locales to load. English is always loaded first: it carries shortcodes. */
-  locales?: string[];
+  locales?: readonly string[];
   /** "core" (default) = first-render packs; "ext" = the idle-time extension packs. */
   part?: "core" | "ext";
   fetch?: typeof fetch;
@@ -34,26 +34,34 @@ async function viaCrossOriginStorage(sha256: string): Promise<Pack | undefined> 
   }
 }
 
+/** English first, then the other locales once each: English carries the shortcodes. */
+export function packOrder(locales: readonly string[]): string[] {
+  return ["en", ...new Set(locales.filter((l) => l !== "en"))];
+}
+
+/** One locale pack file, fetched and validated. */
+export async function loadPack(
+  options: Omit<LoadPacksOptions, "locales"> & { locale: string },
+): Promise<Pack> {
+  const { baseUrl, locale, signal, part = "core" } = options;
+  const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
+  const file = part === "ext" ? `pack.${locale}.ext.json` : `pack.${locale}.json`;
+  const hash = options.crossOriginStorage?.hashes[file];
+  const shared = hash ? await viaCrossOriginStorage(hash) : undefined;
+  let pack: unknown = shared;
+  if (!pack) {
+    const response = await doFetch(`${baseUrl.replace(/\/+$/, "")}/${file}`, { signal: signal ?? null });
+    if (!response.ok) throw new Error(`emojisense: ${file} failed with HTTP ${response.status}`);
+    pack = await response.json();
+  }
+  assertPack(pack);
+  return pack;
+}
+
 /** Fetch and validate locale packs. Files are immutable, so the HTTP cache does the rest. */
 export async function loadPacks(options: LoadPacksOptions): Promise<Pack[]> {
-  const { baseUrl, locales = ["en"], signal, part = "core" } = options;
-  const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
-  const ordered = ["en", ...locales.filter((l) => l !== "en")];
-  return Promise.all(
-    ordered.map(async (locale) => {
-      const file = part === "ext" ? `pack.${locale}.ext.json` : `pack.${locale}.json`;
-      const hash = options.crossOriginStorage?.hashes[file];
-      const shared = hash ? await viaCrossOriginStorage(hash) : undefined;
-      let pack: unknown = shared;
-      if (!pack) {
-        const response = await doFetch(`${baseUrl.replace(/\/+$/, "")}/${file}`, { signal: signal ?? null });
-        if (!response.ok) throw new Error(`emojisense: ${file} failed with HTTP ${response.status}`);
-        pack = await response.json();
-      }
-      assertPack(pack);
-      return pack;
-    }),
-  );
+  const { locales = ["en"], ...rest } = options;
+  return Promise.all(packOrder(locales).map((locale) => loadPack({ ...rest, locale })));
 }
 
 export interface LoadCustomPackOptions {

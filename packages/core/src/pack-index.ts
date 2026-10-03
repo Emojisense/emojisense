@@ -1,6 +1,6 @@
 import { msSinceSearch } from "./activity.js";
 import { type AliasEngine, createEngine } from "./engine.js";
-import { loadPacks } from "./loader.js";
+import { loadPack, packOrder } from "./loader.js";
 import type { Pack } from "./pack.js";
 
 /** The locale packs and their index, before culture and extra packs are added. */
@@ -19,8 +19,11 @@ export interface PackIndex {
 
 export interface PackIndexOptions {
   packUrl: string;
-  /** English always loads too, and alone when the locale has no pack. */
-  locale: string;
+  /**
+   * The user's languages ("tr", "en"). English always loads too; a locale without a pack is left
+   * out, so a site language Emojisense does not cover still gets English.
+   */
+  locales: readonly string[];
   /** Load the extension packs (more aliases and typos) after the core packs. */
   extended: boolean;
   fetch?: typeof fetch | undefined;
@@ -55,8 +58,8 @@ export function whenQuiet(task: () => void): void {
 const indexes = new WeakMap<typeof fetch, Map<string, PackIndex>>();
 
 /**
- * One download and one index per pack URL, locale and fetch function, shared by every loader on
- * the page: a second picker, or a picker that opens again, is ready at once.
+ * One download and one index per pack URL, set of locales and fetch function, shared by every
+ * loader on the page: a second picker, or a picker that opens again, is ready at once.
  */
 export function sharedPackIndex(options: PackIndexOptions): PackIndex {
   const fetchKey = options.fetch ?? globalThis.fetch;
@@ -65,7 +68,8 @@ export function sharedPackIndex(options: PackIndexOptions): PackIndex {
     byKey = new Map();
     indexes.set(fetchKey, byKey);
   }
-  const key = [options.packUrl.replace(/\/+$/, ""), options.locale, options.extended].join("\n");
+  const locales = packOrder(options.locales).sort().join(",");
+  const key = [options.packUrl.replace(/\/+$/, ""), locales, options.extended].join("\n");
   let index = byKey.get(key);
   if (!index) {
     index = createPackIndex(options);
@@ -75,7 +79,7 @@ export function sharedPackIndex(options: PackIndexOptions): PackIndex {
 }
 
 function createPackIndex(options: PackIndexOptions): PackIndex {
-  const { packUrl, locale, extended } = options;
+  const { packUrl, extended } = options;
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const listeners = new Set<(state: PackIndexState) => void>();
   let state: PackIndexState | undefined;
@@ -87,29 +91,32 @@ function createPackIndex(options: PackIndexOptions): PackIndex {
     return state;
   };
 
-  const corePacks = async (): Promise<{ packs: Pack[]; locales: string[] }> => {
-    try {
-      return {
-        packs: await loadPacks({ baseUrl: packUrl, locales: [locale], fetch: doFetch }),
-        locales: [locale],
-      };
-    } catch (error) {
-      if (locale === "en") throw error;
-      // A locale without a pack (a site language Emojisense does not cover) still gets English.
-      return { packs: await loadPacks({ baseUrl: packUrl, fetch: doFetch }), locales: ["en"] };
-    }
+  /**
+   * The packs of `locales` that loaded, English first. English must load; a locale without a
+   * pack (a site language Emojisense does not cover) is left out.
+   */
+  const packsOf = async (locales: readonly string[], part: "core" | "ext"): Promise<Pack[]> => {
+    const settled = await Promise.allSettled(
+      locales.map((locale) => loadPack({ baseUrl: packUrl, locale, part, fetch: doFetch })),
+    );
+    if (part === "core" && settled[0]?.status === "rejected") throw settled[0].reason;
+    return settled.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
   };
 
   const start = async (): Promise<PackIndexState> => {
-    const { packs: core, locales } = await corePacks();
+    const core = await packsOf(packOrder(options.locales), "core");
     const first = publish(core);
     if (extended) {
       options.whenIdle(() => {
-        loadPacks({ baseUrl: packUrl, locales, fetch: doFetch, part: "ext" }).then(
-          (ext) => options.whenQuiet(() => publish([...core, ...ext])),
-          () => {
-            // Optional upgrade: the core packs keep working.
+        packsOf(
+          core.map((pack) => pack.locale),
+          "ext",
+        ).then(
+          (ext) => {
+            // Optional upgrade: without extension packs the core packs keep working.
+            if (ext.length > 0) options.whenQuiet(() => publish([...core, ...ext]));
           },
+          () => {},
         );
       });
     }

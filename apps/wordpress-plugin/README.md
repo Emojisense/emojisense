@@ -47,6 +47,7 @@ The zip holds `emojisense.php`, `uninstall.php`, `readme.txt`, `includes/`, `bui
 | Topic | Decision |
 | ----- | -------- |
 | Search data | The packs ship in the plugin and load from the site, so search needs no API, no key and no network. The core pack loads first; the extension pack (more aliases) when the browser is idle. |
+| Languages | The "Language" setting is the site language (`auto`: `get_locale()`). The browser adds the person's own languages (`navigator.languages`) that have a pack, and English (`searchLocales` in `src/lib/config.ts`). Only those packs load and match; the site language ranks first and names the emoji. |
 | Completer | `useItems` instead of `options`: the default filter of `@wordpress/components` keeps only options whose keywords contain the typed text, which drops meaning results (`:ship it` → 🚀). `:` opens it only at the start of text or after a space or an opening bracket, not in `12:30` or `https://`; one-character queries (`:)`, `:D`) stay emoticons. |
 | API | One switch, off by default. Meaning search, suggestions and hosted sets are separate options under it. The browser gets the API address and key only with meaning search on. |
 | Keys | Publishable keys only (`pk_live_`/`pk_test_`); secret keys are refused with advice. Server calls send the site origin, so the key's allowed origins work for both. |
@@ -80,15 +81,15 @@ node scripts/wporg-assets.mjs                           # icons, banners, screen
 
 | Test | Covers |
 | ---- | ------ |
-| `test/js/completer.test.ts` | `:` contexts, short queries, `:pizza` → 🍕, phrases, locale names, culture after the top result, API fusion only when unsure |
-| `test/js/engine.test.ts` | Packs load from the site (core, then extension), once, retry after failure, no culture file; API client gets key and pack version; picker attributes stay offline without the API |
+| `test/js/completer.test.ts` | `:` contexts, short queries, `:pizza` → 🍕, phrases, locale names, only the searched languages match, culture after the top result, API fusion only when unsure |
+| `test/js/engine.test.ts` | Site language first, then the browser's languages; packs load from the site (core, then extension), only of those languages, once, retry after failure, no culture file; API client gets key and pack version; picker attributes stay offline without the API |
 | `test/js/reactions.test.ts` | Reaction lists, code points, number formats, local memory, the bar: counts, toggles, expired nonce, rate limit, API down |
 | `test/js/popover.test.ts` | Picker dialog: offline attributes, select, Escape and outside click, dark pages, caret insert |
 | `test/php/test-settings.php` | Defaults send nothing; sanitization of keys, address, choices, emoji lists; idempotence; locale mapping |
 | `test/php/test-reactions.php` | REST read and write, nonce, hidden posts, rate limit with `Retry-After`, no personal data stored, suggestions (permissions, key, Origin, errors, WP-Cron), markup, meta in the REST API |
 | `test/php/test-plugin.php` | Code points, hosted set rendering, TinyMCE button, privacy text, uninstall |
 | `scripts/e2e.mjs` | The release zip in WordPress Playground: `:pizza` → 🍕, `:ship it` → 🚀, toolbar picker, sidebar panel, settings save and secret key refusal, reactions on the front end, comment picker and `:` menu, TinyMCE button. `E2E_FORUMS=1`: bbPress topic and reply bars, a reply reaction, `:ship it` in the reply form, a BuddyPress activity bar and reaction, `:pizza` in the post form |
-| `test/js/fields.test.ts` | Button and `:` menu on the configured fields only, packs on first focus, fields that appear later, `observeMatches` |
+| `test/js/fields.test.ts` | Button and `:` menu on the configured fields only, packs on first focus, the browser's languages, fields that appear later, `observeMatches` |
 | `test/php/test-targets.php` | Typed routes with a memory target, unknown types, markup, field selectors, forum settings without the forum plugins, activity visibility |
 
 ## Publish to WordPress.org (owner)

@@ -12,7 +12,7 @@ import {
   type SkinTone,
 } from "emojisense";
 import { type ClientMessage, isClientMessage, type PickerItem, type ServerMessage } from "../shared/messages";
-import { resolveLocale, type Settings, semanticConfig } from "../shared/settings";
+import { type SearchLanguages, type Settings, searchLanguages, semanticConfig } from "../shared/settings";
 import { recentsToShow } from "./recents";
 
 /** Eight columns × five rows. */
@@ -26,17 +26,20 @@ export interface SearchPort {
 }
 
 export interface SearchServiceDeps {
-  loadPacks(): Promise<Pack[]>;
+  /** The bundled packs of these locales: core parts first (English first), then the ext parts. */
+  loadPacks(locales: readonly string[]): Promise<Pack[]>;
   readSettings(): Promise<Settings>;
   readRecents(): Promise<string[]>;
   recordPick(id: string): Promise<void>;
   uiLanguage(): string;
+  /** The browser's preferred languages, most preferred first (`navigator.languages`). */
+  browserLanguages(): readonly string[];
   fetch?: typeof fetch;
   debounceMs?: number;
 }
 
 export interface SearchService {
-  /** Load the packs and build the index (once per worker lifetime). */
+  /** Load the packs of the user's languages and build the index (again only when they change). */
   warm(): Promise<AliasEngine>;
   /** Serve one open picker over its port. */
   attach(port: SearchPort): void;
@@ -49,24 +52,36 @@ interface PortContext {
 }
 
 /**
- * Search runs in the service worker, not in each page: one index (≈ 25 MB, ≈ 150 ms to build)
- * serves every tab, and the bundled packs are read from the extension, not exposed to sites.
+ * Search runs in the service worker, not in each page: one index (≈ 25 MB for English and Turkish,
+ * ≈ 150 ms to build) serves every tab, and the bundled packs are read from the extension, not
+ * exposed to sites. Every pack language ships, but the index holds only the user's languages.
  * The index is a cache: when Chrome stops the idle worker it is rebuilt on the next open.
  */
 export function createSearchService(deps: SearchServiceDeps): SearchService {
-  let engine: Promise<AliasEngine> | undefined;
+  let engine: { key: string; building: Promise<AliasEngine> } | undefined;
   // Reused across pickers so the client's response cache and over-limit pause carry over.
   const clients = new Map<string, SemanticProvider>();
 
-  function warm(): Promise<AliasEngine> {
-    if (!engine) {
-      const building = deps.loadPacks().then((packs) => createEngine(packs));
-      engine = building;
-      building.catch(() => {
-        if (engine === building) engine = undefined;
+  function languagesFor(settings: Settings): SearchLanguages {
+    // The UI language comes last: it is one of the user's languages, but rarely the one to prefer.
+    return searchLanguages(settings.locale, [...deps.browserLanguages(), deps.uiLanguage()]);
+  }
+
+  /** The index of these locales. A new set (a settings change) replaces the old index. */
+  function engineFor(locales: readonly string[]): Promise<AliasEngine> {
+    const key = [...locales].sort().join(",");
+    if (engine?.key !== key) {
+      const current = { key, building: deps.loadPacks(locales).then((packs) => createEngine(packs)) };
+      engine = current;
+      current.building.catch(() => {
+        if (engine === current) engine = undefined;
       });
     }
-    return engine;
+    return engine.building;
+  }
+
+  async function warm(): Promise<AliasEngine> {
+    return engineFor(languagesFor(await deps.readSettings()).locales);
   }
 
   function semanticFor(settings: Settings, packVersion: string): SemanticProvider | undefined {
@@ -144,14 +159,18 @@ export function createSearchService(deps: SearchServiceDeps): SearchService {
       session?.dispose();
     });
 
-    Promise.all([warm(), deps.readSettings()]).then(
-      ([ready, settings]) => {
+    const ready = deps.readSettings().then(async (settings) => {
+      const { locale, locales } = languagesFor(settings);
+      return { settings, locale, engine: await engineFor(locales) };
+    });
+    ready.then(
+      ({ settings, locale, engine: loaded }) => {
         if (!connected) return;
-        const locale = resolveLocale(settings.locale, deps.uiLanguage());
-        const semantic = semanticFor(settings, ready.packVersion);
-        context = { engine: ready, locale, tone: settings.skinTone };
+        const semantic = semanticFor(settings, loaded.packVersion);
+        context = { engine: loaded, locale, tone: settings.skinTone };
+        // The index holds only the user's languages, so every loaded phrase may match.
         session = createSearchSession({
-          engine: ready,
+          engine: loaded,
           locale,
           limit: RESULT_LIMIT,
           onChange: onState,

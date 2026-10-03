@@ -10,29 +10,41 @@ import {
   showToast,
   Toast,
 } from "@raycast/api";
-import { useEffect, useMemo } from "react";
+import type { PackLocale } from "emojisense";
+import { useCallback, useEffect, useMemo } from "react";
 import { type EmojiItem, toEmojiItem } from "./lib/format";
-import { getEngine } from "./lib/packs";
+import { chooseLanguages, SYSTEM_LANGUAGE, systemLanguages } from "./lib/languages";
+import { bundledLocales, getEngine } from "./lib/packs";
 import { createApiProvider } from "./lib/semantic";
-import { useEmojiSearch } from "./lib/use-emoji-search";
+import { type LoadedEngine, useEmojiSearch } from "./lib/use-emoji-search";
 
 /** Mirrors the `preferences` in package.json. */
 interface SearchPreferences {
-  locale?: "en" | "tr";
+  locale?: typeof SYSTEM_LANGUAGE | PackLocale;
   primaryAction?: "paste" | "copy";
   apiUrl?: string;
   apiKey?: string;
 }
 
-const loadEngine = () => getEngine(join(environment.assetsPath, "packs"));
+/** The engine with the packs of the user's languages only, and the language to prefer. */
+function loadEngine(preference: string): LoadedEngine {
+  const dir = join(environment.assetsPath, "packs");
+  const { locale, locales } = chooseLanguages(preference, systemLanguages(), bundledLocales(dir));
+  return { engine: getEngine(dir, locales), locale };
+}
 
 export default function SearchEmoji() {
-  const { locale = "en", primaryAction = "paste", apiUrl, apiKey } = getPreferenceValues<SearchPreferences>();
+  const {
+    locale: preference = SYSTEM_LANGUAGE,
+    primaryAction = "paste",
+    apiUrl,
+    apiKey,
+  } = getPreferenceValues<SearchPreferences>();
   const api = useMemo(() => createApiProvider({ apiUrl, apiKey }), [apiUrl, apiKey]);
-  const { engine, state, error, isLoading, search } = useEmojiSearch({
-    loadEngine,
+  const load = useCallback(() => loadEngine(preference), [preference]);
+  const { loaded, state, error, isLoading, search } = useEmojiSearch({
+    loadEngine: load,
     semantic: api.provider,
-    locale,
   });
 
   useEffect(() => {
@@ -43,8 +55,10 @@ export default function SearchEmoji() {
 
   // An API result for an id these packs do not know has nothing to show; drop it.
   const items =
-    engine && state
-      ? state.results.map((result) => toEmojiItem(engine, result, locale)).filter((item) => item.emoji)
+    loaded && state
+      ? state.results
+          .map((result) => toEmojiItem(loaded.engine, result, loaded.locale))
+          .filter((item) => item.emoji)
       : [];
 
   return (
@@ -64,7 +78,7 @@ export default function SearchEmoji() {
         <List.EmptyView
           icon="🔎"
           title={state?.query.trim() ? "No emoji found" : "Type what you mean"}
-          description="Words, slang or intent work: “jurassic park”, “lgtm”, “kolay gelsin”."
+          description="Words, slang or intent work: “jurassic park”, “lgtm”, “to the moon”."
         />
       )}
       {items.map((item) => (

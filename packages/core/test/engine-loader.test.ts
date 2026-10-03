@@ -38,6 +38,26 @@ function packFetch(files: Record<string, Pack | Culture>) {
 }
 
 describe("createEngineLoader", () => {
+  it("loads all the user's languages, and no others", async () => {
+    const fr: Pack = { ...en, locale: "fr" };
+    const { fetchImpl, requests } = packFetch({ "pack.en.json": en, "pack.tr.json": tr, "pack.fr.json": fr });
+    const loader = createEngineLoader({
+      packUrl: "https://languages.test/0.1.0",
+      locale: "tr",
+      locales: ["tr", "fr", "de"],
+      extended: false,
+      cultureUrl: false,
+      fetch: fetchImpl,
+    });
+    expect((await loader.load()).locales).toEqual(["en", "tr", "fr"]);
+    expect(requests.map((url) => url.split("/").pop())).toEqual([
+      "pack.en.json",
+      "pack.tr.json",
+      "pack.fr.json",
+      "pack.de.json",
+    ]);
+  });
+
   it("loads English and the locale, then the extension packs when idle", async () => {
     const { fetchImpl, requests } = packFetch({
       "pack.en.json": en,

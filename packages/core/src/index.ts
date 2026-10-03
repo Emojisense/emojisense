@@ -65,6 +65,13 @@ export { groupLabel } from "./groups.js";
 export { baseId, hexcodeOf } from "./ids.js";
 export { createLayeredSemantic, type LayeredSemanticOptions } from "./layered.js";
 export { type LoadCustomPackOptions, type LoadPacksOptions, loadCustomPack, loadPacks } from "./loader.js";
+export {
+  PACK_LOCALES,
+  type PackLocale,
+  packLocaleOf,
+  type UserLocalesOptions,
+  userLocales,
+} from "./locales.js";
 export { embeddingText, MAX_QUERY_LENGTH, normalize, tokenize } from "./normalize.js";
 export {
   assertPack,
@@ -96,18 +103,18 @@ export {
   rerankFeatures,
 } from "./rerank.js";
 export {
+  GLYPH_WEIGHT,
+  type SemanticRow,
+  scoreSemanticRows,
+  semanticScore,
+} from "./semantic-policy.js";
+export {
   createSearchSession,
   type SearchSession,
   type SearchSessionOptions,
   type SessionState,
   type SessionStatus,
 } from "./session.js";
-export {
-  GLYPH_WEIGHT,
-  type SemanticRow,
-  scoreSemanticRows,
-  semanticScore,
-} from "./semantic-policy.js";
 export {
   EMOJI_IMAGE_REFERRER_POLICY,
   EMOJI_SETS,

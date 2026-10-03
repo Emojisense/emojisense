@@ -36,5 +36,8 @@ export const en: Pack = {
 
 export const engine = createEngine(en);
 
+/** A language the tests' user does not speak: "foguete" is only Portuguese. */
+export const pt: Pack = { ...en, locale: "pt", emoji: [row("🚀", "1F680", "foguete", "espaço")] };
+
 /** Real emoji-mart data. emoji-mart's `init` mutates it, so tests that call `init` share it. */
 export const emojiMartData = data as unknown as EmojiMartData;

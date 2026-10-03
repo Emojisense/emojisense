@@ -59,6 +59,7 @@ Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integr
 | `stats-sample` | — | `0.1` | Share of sessions that report. |
 | `key`, `publishable-key` | `publishableKey` | — | Publishable key for the API. Use `publishable-key` in Vue and React, which reserve `key`. |
 | `locale` | `locale` | `en` | `tr` loads the Turkish pack next to English. |
+| `locales` | `locales` | — | All the user's languages, e.g. `locales="tr en"`. See "The user's languages" below. |
 | `columns` | `columns` | `9` | Emoji per row (1–24). |
 | `skin-tone` | `skinTone` | `none` | `none`, `light`, `medium-light`, `medium`, `medium-dark`, `dark` |
 | `emoji-set` | `emojiSet` | `native` | `native` draws the system font. `twemoji`, `noto` and `fluent` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg?key={key}" alt="{emoji}" loading="lazy">` and need `endpoint` and a `key` whose plan includes hosted sets (Solo and up). A set may not draw every emoji (Fluent has no country flags); then the native emoji takes its place. Credit the set in your app (see NOTICE). |
@@ -72,10 +73,28 @@ Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integr
 | — | `query` | `""` | Read or set the search text |
 | — | `status`, `engine` | — | `idle`, `loading`, `ready` or `error`; the alias engine once ready |
 
+**The user's languages:** by default a picker loads and searches `locale` and English. To follow
+the user, set all their languages. `userLocales()` reads `navigator.languages` and keeps the
+languages that have a pack, most preferred first, always with English: `["tr-TR", "en-US", "de"]`
+→ `["tr", "en"]`.
+
+```js
+import { userLocales } from "@emojisense/web-component";
+
+const locales = userLocales();
+picker.locale = locales[0];
+picker.locales = locales; // or the attribute: locales="tr en"
+```
+
+Only the packs of these languages load, and search matches only their phrases. A user of English
+and Turkish never gets a match from a Portuguese alias. English always counts: it carries the
+shortcodes.
+
 **When the packs load:** a picker starts loading when it is added to the page. Add it when your
-popover opens to load on open. Pickers with the same `pack-url` and `locale` share one download
-and one index, so a picker that opens again is ready at once. To start a little earlier, preload
-when the pointer moves onto or focus enters your emoji button:
+popover opens to load on open. Pickers with the same `pack-url` and languages (`locale`,
+`locales`) share one download and one index, so a picker that opens again is ready at once. To
+start a little earlier, preload when the pointer moves onto or focus enters your emoji button
+(pass the picker's `locale` and `locales` too):
 
 ```js
 import { preloadEmojisense } from "@emojisense/web-component";

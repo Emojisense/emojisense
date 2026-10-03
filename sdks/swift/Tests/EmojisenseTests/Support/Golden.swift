@@ -44,6 +44,8 @@ struct Golden: Decodable, Sendable {
     let id: String
     let q: String
     let locale: String
+    /// The user's languages (`AliasSearchOptions.locales`). `nil`: every loaded pack.
+    let locales: [String]?
     let query: String
     let confidence: Double
     /// `AliasSearchOutput.coverage`, rounded to 3 decimals by the reference.
@@ -117,6 +119,8 @@ struct Golden: Decodable, Sendable {
   let unicode: String
   let packVersion: String
   let packSha256: [String: String]
+  /// The languages with a published pack (`PACK_LOCALES` of core/src/locales.ts).
+  let packLocales: [String]
   let normalization: Normalization
   let embeddingText: EmbeddingText
   /// The reference function-word lists per locale (PACK_FORMAT.md §4).

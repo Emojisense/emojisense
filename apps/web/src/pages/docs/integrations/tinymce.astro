@@ -75,6 +75,7 @@ editor.ui.registry.addAutocompleter("emoji", createAutocompleter({
         <tr><td><code>emojisense_pack_url</code></td><td>—</td><td>Base URL of a pack version. Set it or <code>emojisense_engine</code>.</td></tr>
         <tr><td><code>emojisense_engine</code></td><td>—</td><td>A ready engine instead of a pack URL</td></tr>
         <tr><td><code>emojisense_locale</code></td><td>the editor’s <code>language</code></td><td><code>tr_TR</code> becomes <code>tr</code>. English always loads too.</td></tr>
+        <tr><td><code>emojisense_locales</code></td><td><code>[emojisense_locale]</code></td><td>The user’s languages, <code>["tr", "en"]</code> or <code>"tr en"</code>: their packs load and only their phrases match.</td></tr>
         <tr><td><code>emojisense_culture_url</code></td><td>next to the packs</td><td>Culture files, for cultural and seasonal emoji after the best match. <code>"off"</code> turns them off.</td></tr>
         <tr><td><code>emojisense_region</code></td><td><code>"device"</code></td><td>Region for regional culture entries: the device’s (its language, else its time zone), <code>""</code> for none, or an ISO code such as <code>"JP"</code></td></tr>
         <tr><td><code>emojisense_endpoint</code></td><td>—</td><td>The Emojisense API. Without it, search stays on the device.</td></tr>

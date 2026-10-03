@@ -9,7 +9,7 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { $createTableNodeWithDimensions, TableCellNode, TableNode, TableRowNode } from "@lexical/table";
 import { act, fireEvent, render, waitFor } from "@testing-library/react";
-import type { AliasEngine } from "emojisense";
+import { type AliasEngine, createEngine } from "emojisense";
 import {
   $createTextNode,
   $getRoot,
@@ -22,7 +22,7 @@ import {
 import { createRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojiAutocompletePlugin, type EmojiAutocompletePluginProps } from "../src/index.js";
-import { engine, stubSemantic } from "./fixture.js";
+import { en, engine, pt, stubSemantic, tr } from "./fixture.js";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -323,6 +323,19 @@ describe("EmojiAutocompletePlugin (Lexical)", () => {
     view.rerender(<Editor editorRef={editorRef} engine={engine} />);
     // The query typed while the packs loaded opens its menu when they arrive.
     await waitFor(() => expect(shown()[0]).toBe("🔥"));
+  });
+
+  it("matches only phrases of the user's languages", async () => {
+    const multilingual = createEngine([en, tr, pt]);
+    const theirs = setup({ engine: multilingual, locales: ["tr", "en"] });
+    await type(theirs.editor, ":foguete");
+    expect(options()).toHaveLength(0);
+    await type(theirs.editor, " :roket");
+    expect(shown()[0]).toBe("🚀");
+    theirs.unmount();
+    const everyPack = setup({ engine: multilingual });
+    await type(everyPack.editor, ":foguete");
+    expect(shown()[0]).toBe("🚀");
   });
 
   describe("menuContainer", () => {

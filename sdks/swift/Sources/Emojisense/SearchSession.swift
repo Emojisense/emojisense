@@ -75,6 +75,7 @@ public final class SearchSession: Sendable {
   private let engine: AliasEngine
   private let semantic: (any SemanticProvider)?
   private let locale: String?
+  private let locales: [String]?
   private let limit: Int
   private let debounce: Duration
   private let shouldUseSemantic: @Sendable (AliasSearchOutput) -> Bool
@@ -113,6 +114,8 @@ public final class SearchSession: Sendable {
   /// - Parameters:
   ///   - semantic: `nil` for alias-only (fully offline) search. Use ``ProviderChain`` (shards,
   ///     then API) for layers.
+  ///   - locales: The user's languages (``AliasSearchOptions/locales``): only phrases of these
+  ///     loaded locales match. English and `locale` always count. `nil`: every loaded pack.
   ///   - debounce: Delay before a semantic request, after the last keystroke.
   ///   - region: ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". `nil` (or
   ///     "device"): the device's region, from its locale or else its time zone
@@ -123,24 +126,24 @@ public final class SearchSession: Sendable {
   ///     update, so a long-lived session follows the day.
   public convenience init(
     engine: AliasEngine, semantic: (any SemanticProvider)? = nil, locale: String? = nil,
-    limit: Int = 24, debounce: Duration = .milliseconds(200),
+    locales: [String]? = nil, limit: Int = 24, debounce: Duration = .milliseconds(200),
     shouldUseSemantic: @escaping @Sendable (AliasSearchOutput) -> Bool = Fusion
       .shouldUseSemantic,
     region: String? = nil, now: @escaping @Sendable () -> Date = { Date() },
     onChange: @escaping @Sendable (SessionState) -> Void
   ) {
     self.init(
-      engine: engine, semantic: semantic, locale: locale, limit: limit, debounce: debounce,
-      shouldUseSemantic: shouldUseSemantic, culture: engine.culture, region: region, now: now,
-      onChange: onChange)
+      engine: engine, semantic: semantic, locale: locale, locales: locales, limit: limit,
+      debounce: debounce, shouldUseSemantic: shouldUseSemantic, culture: engine.culture,
+      region: region, now: now, onChange: onChange)
   }
 
   /// A session with another culture file, or with none (`culture: nil`, for reproducible
   /// ranking). The other parameters are those of
-  /// ``init(engine:semantic:locale:limit:debounce:shouldUseSemantic:region:now:onChange:)``.
+  /// ``init(engine:semantic:locale:locales:limit:debounce:shouldUseSemantic:region:now:onChange:)``.
   public init(
     engine: AliasEngine, semantic: (any SemanticProvider)? = nil, locale: String? = nil,
-    limit: Int = 24, debounce: Duration = .milliseconds(200),
+    locales: [String]? = nil, limit: Int = 24, debounce: Duration = .milliseconds(200),
     shouldUseSemantic: @escaping @Sendable (AliasSearchOutput) -> Bool = Fusion
       .shouldUseSemantic,
     culture: Culture?, region: String? = nil, now: @escaping @Sendable () -> Date = { Date() },
@@ -149,6 +152,7 @@ public final class SearchSession: Sendable {
     self.engine = engine
     self.semantic = semantic
     self.locale = locale
+    self.locales = locales
     self.limit = limit
     self.debounce = debounce
     self.shouldUseSemantic = shouldUseSemantic
@@ -181,7 +185,7 @@ public final class SearchSession: Sendable {
     let clock = ContinuousClock()
     let started = clock.now
     let alias = engine.canonicalSearch(
-      query, options: AliasSearchOptions(limit: depth, locale: locale))
+      query, options: AliasSearchOptions(limit: depth, locale: locale, locales: locales))
     let update = Update(
       query: query, alias: alias, aliasDuration: started.duration(to: clock.now),
       shown: alias.results.prefix(max(0, limit)).map(\.searchResult))

@@ -31,6 +31,7 @@ export const en: Pack = {
     row("🚀", "1F680", "rocket", { keyword: "space", alias: "ship it", low: "to the moon" }),
     row("🦖", "1F996", "T-Rex", { keyword: "dinosaur", alias: "jurassic park", typo: "dinasour" }),
     row("🎂", "1F382", "birthday cake", { keyword: "birthday" }),
+    row("👨‍🦲", "1F468-200D-1F9B2", "man: bald", { keyword: "bald" }),
   ],
 };
 
@@ -38,6 +39,13 @@ export const tr: Pack = {
   ...en,
   locale: "tr",
   emoji: [row("🎂", "1F382", "doğum günü pastası", { alias: "iyi ki dogdun" })],
+};
+
+/** "careca nato" (born bald) once ranked 👨‍🦲 first for "nato" on an English page. */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("👨‍🦲", "1F468-200D-1F9B2", "homem: careca", { alias: "careca nato" })],
 };
 
 export const engine = createEngine([en, tr]);

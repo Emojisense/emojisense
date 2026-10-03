@@ -37,6 +37,24 @@ export const tr: Pack = {
   ],
 };
 
+export const es: Pack = {
+  ...en,
+  locale: "es",
+  emoji: [row("🚀", "1F680", "cohete", "espacio", "despegue")],
+};
+
+/** "saudade" exists only in Portuguese. */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("❤️", "2764", "coração vermelho", "amor", "saudade")],
+};
+
+/** A stand-in for the bundled packs: the packs of these locales, core order (English first). */
+export async function bundledPacks(locales: readonly string[]): Promise<Pack[]> {
+  return [en, es, pt, tr].filter((pack) => locales.includes(pack.locale));
+}
+
 export function item(
   emoji: string,
   id: string,
@@ -69,7 +87,7 @@ export function removeExecCommand(doc: Document): void {
 
 /** Let pending promise callbacks run. */
 export async function flush(): Promise<void> {
-  for (let i = 0; i < 5; i++) await Promise.resolve();
+  for (let i = 0; i < 10; i++) await Promise.resolve();
 }
 
 export function key(target: EventTarget, keyName: string, init: KeyboardEventInit = {}): KeyboardEvent {

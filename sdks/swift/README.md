@@ -8,6 +8,7 @@ same results as the TypeScript engine.
 | Tier 0 | `AliasEngine` | Offline alias search over the packs (PACK_FORMAT.md §4). Runs on every keystroke. |
 | Normalization | `Normalizer` | PACK_FORMAT.md §3, for queries and labels. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes `pack.<locale>.json` and `pack.<locale>.ext.json`. Verifies `sha256`. |
+| Languages | `PackLocales` | The user's languages that have a pack (`userLocales`), as `core/src/locales.ts`. |
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards on the CDN (§6): a live layer, then a base layer. A loaded shard answers `peek` between keystrokes. |
 | Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic&culture=0`, with an LRU cache that answers `peek`. Over the limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Pinned reciprocal rank fusion, as in `core/src/fusion.ts`. |
@@ -44,25 +45,29 @@ documentation. See [RELEASING.md](../../RELEASING.md).
 ```swift
 import Emojisense
 
-// 1. Load the core packs (English is always first). You can also bundle the files and use
-//    `try Pack(jsonData: data)`.
+// 1. The user's languages that have a pack, most preferred first, always with English:
+//    Locale.preferredLanguages ["tr-TR", "en-US", "de"] → ["tr", "en"].
+let locales = PackLocales.userLocales()
+
+// 2. Load the core packs of these languages (English is always first). You can also bundle the
+//    files and use `try Pack(jsonData: data)`.
 let packURL = URL(string: "https://api.emojisense.com/v1/pack/0.1.0")!
 let loader = PackLoader(baseURL: packURL)
 let manifest = try await loader.loadManifest()
-let core = try await loader.loadPacks(locales: ["en", "tr"], manifest: manifest)
+let core = try await loader.loadPacks(locales: locales, manifest: manifest)
 
-// 2. Load the culture file next to the packs (`.../v1/culture/0.1.0`). Without it, search has
+// 3. Load the culture file next to the packs (`.../v1/culture/0.1.0`). Without it, search has
 //    no culture layer and works as before, so a failed load is not an error.
 let culture = try? await CultureLayer.loadCulture(
-  baseURL: CultureLayer.cultureURL(forPackURL: packURL)!, locale: "tr")
+  baseURL: CultureLayer.cultureURL(forPackURL: packURL)!, locale: locales[0])
 var engine = try AliasEngine(core: core, culture: culture)
 
-// 3. When the device is idle, load the extension parts and rebuild the index. Make a new
+// 4. When the device is idle, load the extension parts and rebuild the index. Make a new
 //    session for the new engine.
-let extensions = try await loader.loadPacks(locales: ["en", "tr"], part: .ext, manifest: manifest)
+let extensions = try await loader.loadPacks(locales: locales, part: .ext, manifest: manifest)
 engine = try AliasEngine(core: core, extensions: extensions, culture: culture)
 
-// 4. Semantic layers: static shards first (free files on the CDN), then the API.
+// 5. Semantic layers: static shards first (free files on the CDN), then the API.
 let semantic = ProviderChain([
   ShardProvider(baseURL: URL(string: "https://cdn.emojisense.com/p/0.1.0")!),
   SemanticClient(
@@ -71,10 +76,11 @@ let semantic = ProviderChain([
       packVersion: engine.packVersion)),
 ])
 
-// 5. The session loads the shard indexes at once. Call `update` on every keystroke. `show` is
-//    your UI.
-let session = SearchSession(engine: engine, semantic: semantic, locale: "tr", limit: 12) {
-  state in
+// 6. The session loads the shard indexes at once. Call `update` on every keystroke. `show` is
+//    your UI. `locales`: only phrases of the user's languages match.
+let session = SearchSession(
+  engine: engine, semantic: semantic, locale: locales[0], locales: locales, limit: 12
+) { state in
   Task { @MainActor in
     // `state.unsure`: no tier understood the query. Show the results as guesses.
     show(state.results, unsure: state.unsure)
@@ -126,6 +132,37 @@ Notes:
 - Inject an `HTTPTransport` to add headers, logging or a stub for tests.
 - `AliasSearchOutput.coverage` is the largest share of the query that one phrase matches with
   whole tokens. Below `Confidence.wholeCoverage` (0.85) the dictionary does not explain the query.
+
+## Search in the user's languages
+
+Search only in the user's own languages. A user of English and Turkish must never get a match
+from a Portuguese alias that another part of the app loaded. English is always searched: it
+carries the shortcodes. This is a port of `packages/core/src/locales.ts` and of the `locales`
+option of `core/src/engine.ts`.
+
+1. Get the user's languages: `PackLocales.userLocales()`. It reads `Locale.preferredLanguages`,
+   keeps the languages that have a pack (`PackLocales.all`), and adds English at the end.
+   Pass `languages:` to use other tags, for example in tests or for another user.
+2. Load their packs: `loader.loadPacks(locales: locales)`. English loads first and must load.
+   A language without a pack, or a file that fails, is left out. The user still gets English.
+3. Search in them: `AliasSearchOptions(locale: locales[0], locales: locales)` or
+   `SearchSession(engine:…, locale: locales[0], locales: locales, …)`.
+
+| Function | Input | Result |
+| -------- | ----- | ------ |
+| `PackLocales.userLocales(languages:)` | `["tr-TR", "en-US", "de", "tr"]` | `["tr", "en"]` |
+| `PackLocales.userLocales(languages:)` | `["zh-Hant-TW", "in"]` | `["zh", "id", "en"]` ("in" is the old code of Indonesian) |
+| `PackLocales.userLocales(languages:)` | `[]` | `["en"]` |
+| `PackLocales.packLocale(of:)` | `"pt-BR"`, `"de-DE"` | `"pt"`, `nil` |
+
+Rules of `locales` (the same as the reference):
+
+- Only phrases of the listed locales match. Words of other loaded packs are not completed, not
+  corrected and not matched.
+- English (the primary pack) and the preferred `locale` always count, also when the list does
+  not name them.
+- `nil` (the default) searches every loaded pack, as before. Use it, for example, for a demo that
+  loads all languages on purpose.
 
 ## Culture
 
@@ -208,11 +245,13 @@ packs differ from the ones in `golden.json` (sha256), the tests fail and tell yo
 | Sentences with function words, en + zh, ru, id, es, fr, pt, ar, hi or bn (core + ext): same top-5 ids / same top-10 ids and scores | 369 queries | 100% / 100% |
 | Entities (names, titles, brands, memes, holidays), en alone or en + es, fr, ru, zh, hi, ar, bn, pt, id or tr (core + ext), every other one: same top-5 ids / same top-10 ids and scores | 132 queries | 100% / 100% |
 | Partial-match guard queries, all 22 packs of 11 locales in one engine: same top-5 ids / same top-10 ids and scores | 28 queries | 100% / 100% |
-| Coverage (`AliasSearchOutput.coverage`) of every search query above: same value (required 100%) | 963 queries | 100% |
+| The user's languages only (`AliasSearchOptions.locales`), all 22 packs: the guard queries in their locale and English, and words of languages the user does not have: same top-5 ids / same top-10 ids and scores | 35 queries | 100% / 100% |
+| Coverage (`AliasSearchOutput.coverage`) of every search query above: same value (required 100%) | 998 queries | 100% |
 | Keystrokes (every prefix of 44 queries, 63 sentences and 10 guard queries): same top-5 ids and scores | 1,452 | 100% |
 | Fusion (`Fusion.fuse`) on recorded lists, with and without the reranker (55 queries and 2 number-slang queries): same top-10 ids | 57 × 2 | 100% |
 | Confidence cases (`Confidence.assess`, `semanticStrength`): same confidence and unsure (required 100%); strength within 1e-12 (39 cases with a semantic list; largest difference 0) | 44 cases | 100% |
 | Function-word lists (`FunctionWords.swift`) equal the reference | 11 locales | 100% |
+| Pack locales (`PackLocales.all`) equal the reference (`PACK_LOCALES`) | 11 locales | 100% |
 | Culture layer (`culture-golden.json`: one English culture file, every entry's first trigger in and out of its region and window, as a prefix, with a trailing space and in a message, plus fixed queries): `engine.search` and `applyCulture(text: true)` give the same ids, sources, culture ids and scores | 186 cases | 100% |
 
 Measured on macOS 26 (arm64), Swift 6.4, Node 24.5.0, pack 0.1.0.

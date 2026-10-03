@@ -66,6 +66,12 @@ public class SearchSession @JvmOverloads constructor(
     /** Null for alias-only (fully offline) search. Use [ProviderChain] (shards, then API) for layers. */
     private val semantic: SemanticProvider? = null,
     private val locale: String? = null,
+    /**
+     * The user's languages ([AliasSearchOptions.locales], e.g. [PackLocales.userLocales]): only
+     * phrases of these loaded locales match. English, [locale] and custom packs always count. Null:
+     * every loaded pack.
+     */
+    private val locales: List<String>? = null,
     private val limit: Int = 24,
     /** Delay before a semantic request, after the last keystroke. */
     private val debounceMillis: Long = 200,
@@ -105,7 +111,7 @@ public class SearchSession @JvmOverloads constructor(
         // Fusion sees the same candidates whatever the limit (RANK_DEPTH); the results are cut to it.
         val depth = maxOf(limit, Fusion.RANK_DEPTH)
         val started = System.nanoTime()
-        val alias = engine.canonicalSearch(query, AliasSearchOptions(limit = depth, locale = locale))
+        val alias = engine.canonicalSearch(query, AliasSearchOptions(limit = depth, locale = locale, locales = locales))
         val aliasMillis = (System.nanoTime() - started) / 1_000_000.0
         val shown = alias.results.take(maxOf(0, limit))
         val wantsSemantic = semantic != null && shouldUseSemantic(alias)

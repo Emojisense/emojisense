@@ -49,10 +49,10 @@ export async function searchEmoji(
   input: SearchEmojiInput,
 ): Promise<ToolOutput<SearchEmojiOutput>> {
   const { engine, api } = deps;
-  const locale = input.locale ?? defaultLocale(engine);
+  const { locale, locales } = languagesOf(engine, input);
   const limit = input.limit ?? DEFAULT_LIMITS.search;
   // The model sends finished queries, so the last word is not a prefix and may get typo correction.
-  const alias = engine.search(input.query, { limit, locale, prefix: false });
+  const alias = engine.search(input.query, { limit, locale, locales, prefix: false });
   // Same rule as the client SDK: only unsure or conceptual queries reach the (metered) API.
   const semantic =
     api && shouldUseSemantic(alias) ? await api.search(input.query, { locale, limit }) : undefined;
@@ -67,9 +67,9 @@ export async function emojiForText(
   input: TextInput,
 ): Promise<ToolOutput<EmojiForTextOutput>> {
   const { engine, api } = deps;
-  const locale = input.locale ?? defaultLocale(engine);
+  const { locale, locales } = languagesOf(engine, input);
   const limit = input.limit ?? DEFAULT_LIMITS.forText;
-  const local = matchText(engine, input.text, { locale, limit: Math.max(limit, 10) });
+  const local = matchText(engine, input.text, { locale, locales, limit: Math.max(limit, 10) });
   // Message text goes to suggest-reactions, never to search: the search endpoint logs query text.
   const semantic = api ? await api.suggestReactions(input.text, { locale, limit }) : undefined;
   const merged: SearchResult[] = semantic ? fuseLocal(local, semantic, limit) : local.slice(0, limit);
@@ -87,9 +87,9 @@ export async function suggestReactions(
   input: TextInput,
 ): Promise<ToolOutput<SuggestReactionsOutput>> {
   const { engine, api } = deps;
-  const locale = input.locale ?? defaultLocale(engine);
+  const { locale, locales } = languagesOf(engine, input);
   const limit = input.limit ?? DEFAULT_LIMITS.reactions;
-  const local = suggestReactionsOffline(engine, input.text, { locale, limit });
+  const local = suggestReactionsOffline(engine, input.text, { locale, locales, limit });
   const semantic = api ? await api.suggestReactions(input.text, { locale, limit }) : undefined;
 
   let results = local;
@@ -118,8 +118,14 @@ function isMatched(result: EmojiSuggestion): result is EmojiSuggestion & SearchR
   return result.source !== "default";
 }
 
-function defaultLocale(engine: AliasEngine): string {
-  return engine.locales[0] ?? "en";
+/**
+ * The input's language and the languages a call searches: that one and English (the primary pack,
+ * with the shortcodes). The server bundles every pack, but a Spanish query must never match a
+ * Portuguese alias. Without a locale, the input is in the primary pack's language (English).
+ */
+function languagesOf(engine: AliasEngine, input: { locale?: string | undefined }) {
+  const locale = input.locale ?? engine.locales[0] ?? "en";
+  return { locale, locales: [locale] };
 }
 
 /** "🦖 T-Rex — jurassic park": the emoji, its name, and why it matched. */

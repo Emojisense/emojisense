@@ -27,6 +27,8 @@ class Golden private constructor(root: JsonObject) {
         val id: String,
         val q: String,
         val locale: String,
+        /** The user's languages ([AliasSearchOptions.locales]). Null: every loaded pack. */
+        val locales: List<String>?,
         val query: String,
         val confidence: Double,
         val coverage: Double,
@@ -56,6 +58,9 @@ class Golden private constructor(root: JsonObject) {
     val unicode: String = root.text("unicode")
     val packVersion: String = root.text("packVersion")
     val packSha256: Map<String, String> = root.getValue("packSha256").jsonObject.mapValues { it.value.jsonPrimitive.content }
+
+    /** The languages with a published pack (`PACK_LOCALES` of core/src/locales.ts). */
+    val packLocales: List<String> = root.getValue("packLocales").jsonArray.map { it.jsonPrimitive.content }
     val normalizationCases: List<Pair<String, String>> = pairs(root.getValue("normalization").jsonObject.getValue("cases").jsonArray)
     val sweepBlockSize: Int = root.getValue("normalization").jsonObject.getValue("sweep").jsonObject.getValue("blockSize").jsonPrimitive.int
     val sweepRanges: List<Pair<Int, Int>> = root.getValue("normalization").jsonObject.getValue("sweep").jsonObject
@@ -74,6 +79,7 @@ class Golden private constructor(root: JsonObject) {
                     id = case.text("id"),
                     q = case.text("q"),
                     locale = case.text("locale"),
+                    locales = (case["locales"] as? JsonArray)?.map { it.jsonPrimitive.content },
                     query = case.text("query"),
                     confidence = case.getValue("confidence").jsonPrimitive.double,
                     coverage = case.getValue("coverage").jsonPrimitive.double,

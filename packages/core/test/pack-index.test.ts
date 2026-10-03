@@ -27,14 +27,14 @@ afterEach(() => {
 describe("sharedPackIndex", () => {
   it("gives every caller with the same packs one download and one index", async () => {
     const { fetchImpl, requests } = packFetch({ "pack.en.json": en, "pack.tr.json": tr });
-    const options = { locale: "tr", extended: false, fetch: fetchImpl, whenIdle: now, whenQuiet: now };
+    const options = { locales: ["tr"], extended: false, fetch: fetchImpl, whenIdle: now, whenQuiet: now };
     const first = sharedPackIndex({ ...options, packUrl: "https://packs.test/0.1.0" });
     const second = sharedPackIndex({ ...options, packUrl: "https://packs.test/0.1.0/" });
     expect(second).toBe(first);
     const [a, b] = await Promise.all([first.load(), second.load()]);
     expect(b).toBe(a);
     expect(requests).toHaveLength(2);
-    expect(sharedPackIndex({ ...options, packUrl: "https://packs.test/0.1.0", locale: "en" })).not.toBe(
+    expect(sharedPackIndex({ ...options, packUrl: "https://packs.test/0.1.0", locales: ["en"] })).not.toBe(
       first,
     );
   });
@@ -47,7 +47,7 @@ describe("sharedPackIndex", () => {
     let quiet: (() => void) | undefined;
     const index = sharedPackIndex({
       packUrl: "https://ext.test/0.1.0",
-      locale: "en",
+      locales: ["en"],
       extended: true,
       fetch: fetchImpl,
       whenIdle: now,
@@ -64,6 +64,32 @@ describe("sharedPackIndex", () => {
     expect(index.current()?.packs.map((pack) => pack.part ?? "core")).toEqual(["core", "ext"]);
   });
 
+  it("loads each of the user's languages once, whatever their order, and leaves out one without a pack", async () => {
+    const fr: Pack = { ...en, locale: "fr" };
+    const { fetchImpl, requests } = packFetch({
+      "pack.en.json": en,
+      "pack.tr.json": tr,
+      "pack.fr.json": fr,
+      "pack.en.ext.json": { ...en, part: "ext" },
+      "pack.tr.ext.json": { ...tr, part: "ext" },
+    });
+    const options = { packUrl: "https://many.test/0.1.0", extended: true, fetch: fetchImpl, whenIdle: now };
+    const index = sharedPackIndex({ ...options, locales: ["tr", "de", "en", "tr"], whenQuiet: now });
+    expect(sharedPackIndex({ ...options, locales: ["en", "de", "tr"], whenQuiet: now })).toBe(index);
+    const upgraded = new Promise<void>((resolve) =>
+      index.subscribe((state) => state.packs.length > 2 && resolve()),
+    );
+    expect((await index.load()).engine.locales).toEqual(["en", "tr"]);
+    await upgraded;
+    expect(index.current()?.packs.map((pack) => `${pack.locale}.${pack.part ?? "core"}`)).toEqual([
+      "en.core",
+      "tr.core",
+      "en.ext",
+      "tr.ext",
+    ]);
+    expect(requests.filter((url) => url.endsWith("pack.fr.json"))).toEqual([]);
+  });
+
   it("falls back to English, and retries after a failed load", async () => {
     let fail = true;
     const { fetchImpl } = packFetch({ "pack.en.json": en });
@@ -71,7 +97,7 @@ describe("sharedPackIndex", () => {
       fail ? new Response("down", { status: 503 }) : fetchImpl(input)) as typeof fetch;
     const index = sharedPackIndex({
       packUrl: "https://flaky.test/0.1.0",
-      locale: "xx",
+      locales: ["xx"],
       extended: false,
       fetch: flaky,
       whenIdle: now,

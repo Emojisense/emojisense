@@ -18,6 +18,8 @@ struct AliasIndex: Sendable {
   let packVersion: String
   /// Locale → bit mask of the packs of that locale (core and ext count as one locale).
   let localeMasks: [String: Int]
+  /// Bit mask of every pack.
+  let everyPackMask: Int
 
   /// Sorted vocabulary; a token id is a position in it.
   let vocabulary: [UTF16Text]
@@ -42,6 +44,13 @@ struct AliasIndex: Sendable {
 
   var phraseCount: Int { phraseText.count }
 
+  /// The packs whose phrases a search may match: the `searched` locales, plus the primary locale
+  /// (English: it carries the shortcodes) and `preferred`. `nil`: every pack.
+  func searchedMask(preferred: String, searched: [String]?) -> Int {
+    guard let searched else { return everyPackMask }
+    return ([primaryLocale, preferred] + searched).reduce(0) { $0 | (localeMasks[$1] ?? 0) }
+  }
+
   init(packs: [Pack], popularity usePopularity: Bool = true) throws {
     guard let primary = packs.first else { throw EmojisenseError.noPacks }
     primaryLocale = primary.locale
@@ -55,6 +64,7 @@ struct AliasIndex: Sendable {
     }
     self.locales = locales
     self.localeMasks = localeMasks
+    everyPackMask = packs.indices.reduce(0) { $0 | 1 << $1 }
 
     var entries: [EmojiEntry] = []
     var entryIndexById: [String: Int] = [:]

@@ -4,7 +4,7 @@ import {
   createEngineLoader as createPackLoader,
   type EngineLoader,
 } from "emojisense/autocomplete";
-import type { ClientConfig } from "./config.js";
+import { type ClientConfig, searchLocales } from "./config.js";
 
 export type { EngineLoader };
 
@@ -15,12 +15,16 @@ export interface EngineLoaderOptions {
   whenIdle?: (task: () => void) => void;
 }
 
-/** The packs of this site, loaded once on first use (core packs, then the extension when idle). */
+/**
+ * The packs of the site language and the browser's languages, loaded once on first use (core
+ * packs, then the extension when idle).
+ */
 export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
   const { config } = options;
   return createPackLoader({
     packUrl: config.packUrl,
     locale: config.locale,
+    locales: searchLocales(config),
     // "" is the admin's "off": the loader's default would load the file next to the packs.
     cultureUrl: config.cultureUrl || false,
     ...(options.fetch ? { fetch: options.fetch } : {}),

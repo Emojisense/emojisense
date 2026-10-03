@@ -1,9 +1,11 @@
-import { SKIN_TONES, type SkinTone } from "emojisense";
+import { SKIN_TONES, type SkinTone, userLocales } from "emojisense";
+import { BUNDLED_LOCALES } from "./packs";
 
 /** chrome.storage.local key. Settings stay on this device: nothing here needs to sync. */
 export const SETTINGS_KEY = "settings";
 
 export type LocalePreference = "auto" | "en" | "tr";
+/** Languages of the picker text. Emoji labels come from the packs, in every pack language. */
 export type UiLocale = "en" | "tr";
 
 export interface SemanticSettings {
@@ -48,9 +50,28 @@ export function parseSettings(raw: unknown): Settings {
   };
 }
 
+/** The language of the picker text: the setting, else Chrome's UI language, else English. */
 export function resolveLocale(preference: LocalePreference, uiLanguage: string): UiLocale {
   if (preference !== "auto") return preference;
   return uiLanguage.toLowerCase().startsWith("tr") ? "tr" : "en";
+}
+
+export interface SearchLanguages {
+  /** Ranking and emoji labels. */
+  locale: string;
+  /** The packs to index: no other language is searched. */
+  locales: string[];
+}
+
+/**
+ * The user's languages that have a pack, and English (it carries the shortcodes). A chosen language
+ * comes first; with "auto", the first browser language is preferred, so a Spanish user gets Spanish
+ * ranking and labels. A user of English and Turkish never gets a match from a Portuguese alias.
+ */
+export function searchLanguages(preference: LocalePreference, languages: readonly string[]): SearchLanguages {
+  const chosen = preference === "auto" ? [] : [preference];
+  const locales = userLocales({ languages: [...chosen, ...languages], supported: BUNDLED_LOCALES });
+  return { locale: locales[0] ?? "en", locales };
 }
 
 export type Check = { ok: true; value: string } | { ok: false; error: string };

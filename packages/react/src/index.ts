@@ -1,3 +1,4 @@
+export { userLocales } from "emojisense";
 export { EmojiGlyph, type EmojiGlyphProps } from "./glyph.js";
 export {
   type EmojiSearchState,

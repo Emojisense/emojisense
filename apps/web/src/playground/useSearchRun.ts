@@ -94,6 +94,7 @@ export function useSearchRun({ engine, online, traced, settings }: Inputs): Sear
       engine,
       ...(online ? { semantic: traced.provider } : {}),
       locale,
+      locales: [locale],
       limit,
       debounceMs: DEBOUNCE_MS,
       ...(alwaysEdge ? { shouldUseSemantic: askAlways } : {}),
@@ -108,7 +109,7 @@ export function useSearchRun({ engine, online, traced, settings }: Inputs): Sear
   useEffect(() => {
     if (!engine || mode !== "alias") return;
     const started = performance.now();
-    const alias = engine.search(query, { limit, locale, culture: false });
+    const alias = engine.search(query, { limit, locale, locales: [locale], culture: false });
     const deviceMs = performance.now() - started;
     setRun({ query, results: alias.results, alias, deviceMs, edge: { kind: "off" } });
   }, [engine, mode, query, limit, locale]);

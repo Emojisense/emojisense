@@ -266,7 +266,7 @@ class Emojisense_Admin {
 		printf(
 			'<p class="description" id="%s-description">%s</p>',
 			esc_attr( self::id( 'locale' ) ),
-			esc_html__( 'Search always understands English. This language is searched too, and its emoji names are shown.', 'emojisense' )
+			esc_html__( 'Search always understands English and the languages of each person’s browser. This language is searched too, and its emoji names are shown.', 'emojisense' )
 		);
 	}
 

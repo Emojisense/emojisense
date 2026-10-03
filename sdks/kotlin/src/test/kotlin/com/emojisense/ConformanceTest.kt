@@ -80,7 +80,7 @@ class ConformanceTest {
             val details = mutableListOf<String>()
             val coverage = mutableListOf<String>()
             for (case in config.cases) {
-                val output = engine.canonicalSearch(case.q, AliasSearchOptions(limit = 10, locale = case.locale))
+                val output = engine.canonicalSearch(case.q, AliasSearchOptions(limit = 10, locale = case.locale, locales = case.locales))
                 val actual = output.results.map { Golden.Ranked(it.id, it.score) }
                 if (actual.take(5).map { it.id } != case.top.take(5).map { it.id }) {
                     topFive.add("  ${case.id} ${debug(case.q)}:\n    kotlin ${actual.take(5)}\n    ts     ${case.top.take(5)}")
@@ -224,6 +224,12 @@ class ConformanceTest {
             .map { "  $it: regenerate with sdks/swift/scripts/make-function-words.ts" }
         report("function-word lists", golden.functionWords.size, differences)
         assertEquals(emptyList(), differences)
+    }
+
+    /** [PackLocales.ALL] is the reference list of the languages with a published pack. */
+    @Test
+    fun `pack locales match the reference`() {
+        assertEquals(golden.packLocales.sorted(), PackLocales.ALL.sorted())
     }
 
     private fun fnv1a(hash: Int, unit: Int): Int = (hash xor unit) * FNV_PRIME

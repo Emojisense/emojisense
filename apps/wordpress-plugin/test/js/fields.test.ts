@@ -16,6 +16,7 @@ afterEach(() => {
   stop?.();
   stop = undefined;
   document.body.replaceChildren();
+  vi.restoreAllMocks();
 });
 
 function type(field: HTMLTextAreaElement, text: string) {
@@ -58,6 +59,18 @@ describe("setUpFields", () => {
     await vi.waitFor(() => expect(menuRows()[0]).toBe("🍕pizza"));
     field.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
     expect(field.value).toBe("Lunch? 🍕");
+  });
+
+  it("completes in the languages of the browser too", async () => {
+    vi.spyOn(navigator, "languages", "get").mockReturnValue(["pt-BR", "en-US"]);
+    document.body.innerHTML = `<textarea id="bbp_topic_content"></textarea>`;
+    const { fetchImpl, requests } = packFetch();
+    stop = setUpFields(document, config(["#bbp_topic_content"]), { fetch: fetchImpl, whenIdle: () => {} });
+    const field = document.querySelector<HTMLTextAreaElement>("#bbp_topic_content") as HTMLTextAreaElement;
+    field.focus();
+    type(field, ":foguete");
+    await vi.waitFor(() => expect(menuRows()[0]?.startsWith("🚀")).toBe(true));
+    expect(requests.map((url) => url.split("/").pop())).toEqual(["pack.en.json", "pack.pt.json"]);
   });
 
   it("starts the pack download when the pointer moves onto the emoji button", async () => {

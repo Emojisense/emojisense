@@ -1,12 +1,24 @@
 import type { AliasEngine } from "emojisense";
-import { describe, expect, it } from "vitest";
-import { pickerAttributes, readConfig } from "../../src/lib/config.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { pickerAttributes, readConfig, searchLocales } from "../../src/lib/config.js";
 import { createEngineLoader, semanticProvider } from "../../src/lib/engine.js";
 import { packFetch } from "./fixtures.js";
 
 const base = readConfig({
   packUrl: "https://site.test/wp-content/plugins/emojisense/packs/0.1.0",
   locale: "tr",
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe("searchLocales", () => {
+  it("puts the site language first, then the browser's languages that have a pack, and English", () => {
+    expect(searchLocales(base, ["pt-BR", "de-DE", "en-US"])).toEqual(["tr", "pt", "en"]);
+    expect(searchLocales({ ...base, locale: "en" }, ["tr-TR"])).toEqual(["en", "tr"]);
+    expect(searchLocales(base, [])).toEqual(["tr", "en"]);
+  });
 });
 
 describe("createEngineLoader", () => {
@@ -28,6 +40,19 @@ describe("createEngineLoader", () => {
     expect(requests.map((url) => url.split("/").pop())).toContain("pack.tr.ext.json");
     expect(seen).toHaveLength(2);
     expect(loader.current()).toBe(seen[1]);
+  });
+
+  it("loads the packs of the browser's languages next to the site language, and no others", async () => {
+    vi.spyOn(navigator, "languages", "get").mockReturnValue(["pt-BR", "en-US"]);
+    const { fetchImpl, requests } = packFetch();
+    const loader = createEngineLoader({ config: base, fetch: fetchImpl, whenIdle: () => {} });
+    const engine = await loader.load();
+    expect(engine.locales).toEqual(["en", "tr", "pt"]);
+    expect(requests.map((url) => url.split("/").pop())).toEqual([
+      "pack.en.json",
+      "pack.tr.json",
+      "pack.pt.json",
+    ]);
   });
 
   it("loads once for many callers", async () => {
@@ -107,6 +132,7 @@ describe("pickerAttributes", () => {
     expect(attributes).toEqual({
       "pack-url": base.packUrl,
       locale: "tr",
+      locales: "tr en",
       "emoji-set": "native",
       "culture-url": "off",
       placeholder: "Search",

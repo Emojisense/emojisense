@@ -18,6 +18,8 @@ export function isSearchable(query: string): boolean {
 export interface ItemSearchOptions {
   engine: AliasEngine;
   locale: string;
+  /** Only phrases of these languages match (`searchLocales`). Default: every pack of the engine. */
+  locales?: readonly string[] | undefined;
   semantic?: SemanticProvider | undefined;
   limit?: number;
   /** Delay before an API request. Default 250 ms. */
@@ -36,10 +38,11 @@ export interface ItemSearch {
  * Custom emoji are images, and the editors insert text only, so they are left out.
  */
 export function createItemSearch(options: ItemSearchOptions): ItemSearch {
-  const { engine, locale, semantic, limit = MAX_OPTIONS, debounceMs = 250, onItems } = options;
+  const { engine, locale, locales, semantic, limit = MAX_OPTIONS, debounceMs = 250, onItems } = options;
   const source = createSuggestionSource({
     engine,
     locale,
+    locales,
     semantic,
     limit,
     debounceMs,

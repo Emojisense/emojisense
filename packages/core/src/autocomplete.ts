@@ -15,6 +15,7 @@ export {
   type EngineLoader,
   type EngineLoaderOptions,
 } from "./engine-loader.js";
+export { PACK_LOCALES, packLocaleOf, userLocales } from "./locales.js";
 
 /** The character that starts an emoji search. */
 export const TRIGGER = ":";
@@ -48,6 +49,8 @@ export interface SuggestionSourceOptions {
   /** Omit for alias-only (offline) suggestions. */
   semantic?: SemanticProvider | undefined;
   locale?: string | undefined;
+  /** The user's languages: only phrases of these loaded locales match (`AliasSearchOptions.locales`). */
+  locales?: readonly string[] | undefined;
   /** Default 8. */
   limit?: number | undefined;
   /** Delay before a semantic request. Default 200 ms (core default). */
@@ -128,6 +131,7 @@ export function createSuggestionSource(options: SuggestionSourceOptions): Sugges
   const session = createSearchSession({
     engine,
     locale,
+    ...(options.locales ? { locales: options.locales } : {}),
     // Room for the rows that toSuggestionList drops (duplicates, custom emoji).
     limit: limit * 2,
     ...(semantic ? { semantic } : {}),
@@ -186,12 +190,14 @@ export function createSuggestionSource(options: SuggestionSourceOptions): Sugges
 
 /**
  * Resolve a completed `:name:` the way chat apps do: only an exact shortcode or emoji name
- * counts ("fire", "+1", "sweat_smile"), never a fuzzy or partial match.
+ * counts ("fire", "+1", "sweat_smile"), never a fuzzy or partial match. `locales` are the user's
+ * languages, as in `engine.search`.
  */
 export function findShortcode(
   engine: AliasEngine,
   code: string,
   locale?: string,
+  locales?: readonly string[],
 ): EmojiSuggestion | undefined {
   const normalized = normalize(code);
   if (normalized === "") return undefined;
@@ -199,6 +205,7 @@ export function findShortcode(
     prefix: false,
     limit: DEFAULT_LIMIT,
     ...(locale ? { locale } : {}),
+    ...(locales ? { locales } : {}),
   });
   const hit = results.find(
     (result) => (result.field === "shortcode" || result.field === "name") && result.match === normalized,

@@ -1,11 +1,17 @@
 # Emojisense for Raycast
 
 One command, **Search Emoji**. Type what you mean ("ship it", "lgtm", "greatest of all time",
-"kolay gelsin") and get ranked emoji. Each row shows the emoji, its name and why it matched: the
-alias phrase, the shortcode or "similar meaning" for a semantic result.
+"kolay gelsin" with Turkish on your Mac) and get ranked emoji. Each row shows the emoji, its name
+and why it matched: the alias phrase, the shortcode or "similar meaning" for a semantic result.
 
 Search runs on your machine with the Emojisense engine and the data packs that ship in the
 extension's `assets/` folder. It needs no network and no account.
+
+Search covers only your languages: English (it has the shortcodes), the languages of your Mac
+(System Settings → General → Language & Region) and the Preferred Language. The extension loads
+only the packs of these languages, so a Portuguese alias never matches for a user of English and
+Turkish, and the index is smaller. It reads the Mac's list with `defaults read -g AppleLanguages`.
+On Windows, or when that command fails, it uses the system locale.
 
 | Key | Action |
 | --- | ------ |
@@ -17,7 +23,7 @@ extension's `assets/` folder. It needs no network and no account.
 
 | Preference | Default | Meaning |
 | ---------- | ------- | ------- |
-| Language | English | Labels and ranking. Every bundled language is always searched. |
+| Preferred Language | System Language | Labels and ranking. System Language is the first language of your Mac that has a pack, else English. Another choice is searched too. |
 | Primary Action | Paste | What `↵` does. |
 | API URL | empty | Optional. With a URL, unsure queries also get semantic results from the Emojisense API. Must be `https://` (or `http://localhost`). |
 | API Key | empty | Optional. A secret key (`sk_live_…`) is sent as `Authorization: Bearer`. A publishable key (`pk_live_…`) is sent as `?key=`. |
@@ -28,7 +34,7 @@ When the API fails, times out (4 s) or reports `overLimit`, the list keeps the o
 
 ```bash
 pnpm install && pnpm data:build                  # once, from the repository root
-pnpm --filter emojisense-search test             # format + API wrapper + pack loading (no network)
+pnpm --filter emojisense-search test             # format + API wrapper + languages + pack loading (no network)
 pnpm --filter emojisense-search typecheck
 pnpm --filter emojisense-search build            # copy packs to assets/packs, then `ray build` to dist/
 pnpm --filter emojisense-search dev              # `ray develop`: needs the Raycast app
@@ -43,7 +49,8 @@ in development mode and rebuilds on save.
 | `src/lib/use-emoji-search.ts` | React hook around the core search session (debounce, fusion, stale responses) |
 | `src/lib/format.ts` | Result → list row: label, "why it matched", match kind |
 | `src/lib/semantic.ts` | Optional API provider from the preferences: key handling, timeout |
-| `src/lib/packs.ts` | Loads `assets/packs/` and caches the engine |
+| `src/lib/languages.ts` | The user's languages: the Mac's list, the preference, the packs to load |
+| `src/lib/packs.ts` | Loads the packs of these languages from `assets/packs/` and caches the engine |
 | `scripts/bundle-packs.mts` | Copies the current pack version from `packages/data/dist/packs/`, with the data license notices |
 | `scripts/store-export.mts` | Writes the standalone Store project to `release/raycast/emojisense/` |
 
@@ -57,7 +64,8 @@ repository root) writes that project to `release/raycast/emojisense/`:
 - `name` is `emojisense` (here it is `emojisense-search`, because the monorepo already has a package
   called `emojisense`). `author` comes from `RAYCAST_AUTHOR`.
 - `emojisense` comes from npm at the version of `packages/core`, so publish the npm packages first.
-- `assets/packs/` holds the packs of all 11 languages (14 MB) and their license notices.
+- `assets/packs/` holds the packs of all 11 languages (14 MB) and their license notices. The
+  extension loads only the packs of the user's languages from it.
 - The Raycast ESLint config, a Prettier config, the standard scripts and `CHANGELOG.md` are added.
   Tests and build scripts stay here.
 

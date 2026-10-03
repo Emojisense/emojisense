@@ -30,6 +30,12 @@ export interface EmojiAutocompleteOptions {
   /** Preferred locale for ranking and labels. Default: the engine's first pack. */
   locale: string | undefined;
   /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"]: the menu matches only their
+   * phrases (English always counts). Pass the same list to the loader, so only their packs load.
+   * Default: every pack of the engine.
+   */
+  locales: readonly string[] | undefined;
+  /**
    * Region for regional culture entries (the engine's culture file). Default: the device's region
    * (its language, else its time zone). `""`: none. `"auto"`: the API's view of the caller's
    * country (needs a semantic provider with an endpoint).
@@ -82,6 +88,7 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
       engine: undefined,
       semantic: undefined,
       locale: undefined,
+      locales: undefined,
       region: undefined,
       limit: DEFAULT_LIMIT,
       debounceMs: 200,
@@ -164,7 +171,8 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
         handler: ({ state, range, match }) => {
           const engine = engineOf(options.engine);
           const code = match[1];
-          const hit = engine && code ? findShortcode(engine, code, options.locale) : undefined;
+          const hit =
+            engine && code ? findShortcode(engine, code, options.locale, options.locales) : undefined;
           if (!hit) return null;
           // `range` covers ":name"; the closing ":" being typed is never inserted.
           state.tr.insertText(applySkinTone(hit.emoji, resolve(options.skinTone)), range.from, range.to);
@@ -201,6 +209,7 @@ function createSourceCache(
           engine,
           semantic,
           locale: options.locale,
+          locales: options.locales,
           region: options.region,
           limit: options.limit,
           debounceMs: options.debounceMs,

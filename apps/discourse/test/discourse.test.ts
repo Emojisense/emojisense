@@ -38,8 +38,8 @@ const suggestion = (emoji: string, source: EmojiSuggestion["source"] = "alias"):
   source,
 });
 
-/** Serves the data files by URL: "https://site.test/assets/<file>". */
-function assetFetch() {
+/** Serves the data files of `locales` by URL: "https://site.test/assets/<file>". */
+function assetFetch(locales = ["en", "tr"]) {
   const requests: string[] = [];
   const fetchImpl = (async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -53,7 +53,7 @@ function assetFetch() {
     }
   }) as typeof fetch;
   const files = Object.fromEntries(
-    ["en", "tr"].flatMap((locale) =>
+    locales.flatMap((locale) =>
       [`pack.${locale}.json`, `pack.${locale}.ext.json`, `culture.${locale}.json`].map((file) => [
         file,
         `https://site.test/assets/${file}`,
@@ -173,6 +173,53 @@ describe("createEmojisense", () => {
     await vi.waitFor(() => expect(sense.isReady()).toBe(true));
     expect(await sense.search("roket", { limit: 5, use: "autocomplete" })).toContain("rocket");
     expect((await sense.search("party parrot", { limit: 5, use: "autocomplete" }))?.[0]).toBe("party_parrot");
+  });
+
+  it("searches the user's other languages too, and only theirs", async () => {
+    const { fetchImpl, requests, files } = assetFetch(["en", "tr", "pt"]);
+    const sense = createEmojisense({
+      files,
+      locale: "tr",
+      locales: ["en-US", "de"],
+      culture: false,
+      data,
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    sense.load();
+    await vi.waitFor(() => expect(sense.isReady()).toBe(true));
+    expect(await sense.search("roket", { limit: 5, use: "autocomplete" })).toContain("rocket");
+    expect(await sense.search("foguete", { limit: 5, use: "autocomplete" })).not.toContain("rocket");
+    expect(requests.some((url) => url.includes("pack.pt"))).toBe(false);
+
+    const portuguese = createEmojisense({
+      files,
+      locale: "tr",
+      locales: ["pt-BR"],
+      culture: false,
+      data,
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    portuguese.load();
+    await vi.waitFor(() => expect(portuguese.isReady()).toBe(true));
+    expect(await portuguese.search("foguete", { limit: 5, use: "autocomplete" })).toContain("rocket");
+  });
+
+  it("leaves out the user's languages that the theme does not ship", async () => {
+    const { fetchImpl, files } = assetFetch(["en", "tr"]);
+    const sense = createEmojisense({
+      files,
+      locale: "en",
+      locales: ["pt-BR", "tr-TR"],
+      culture: false,
+      data,
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    sense.load();
+    await vi.waitFor(() => expect(sense.isReady()).toBe(true));
+    expect(await sense.search("roket", { limit: 5, use: "autocomplete" })).toContain("rocket");
   });
 
   it("uses English when the site's language has no pack file", async () => {

@@ -1,6 +1,6 @@
 import type { AliasResult } from "emojisense";
 import { useEffect, useId, useMemo, useState } from "react";
-import { fullEngine, useEngine } from "../lib/engine-client";
+import { fullEngine, pageLocale, useEngine, visitorLocales } from "../lib/engine-client";
 import { FALLBACK_QUERY, MAX_QUERY_LENGTH, queryFromPath } from "../lib/not-found";
 import "./not-found.css";
 
@@ -77,7 +77,12 @@ export function NotFoundSearch() {
   const search = useMemo(() => {
     if (!engine || !query.trim()) return { results: [] as AliasResult[], ms: undefined };
     const start = performance.now();
-    const { results } = engine.search(query, { limit: LIMIT, culture: false });
+    const { results } = engine.search(query, {
+      limit: LIMIT,
+      culture: false,
+      locale: pageLocale(),
+      locales: visitorLocales(),
+    });
     return { results, ms: performance.now() - start };
   }, [engine, query]);
 

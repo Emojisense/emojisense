@@ -49,6 +49,13 @@ export interface AliasSearchOptions extends CultureScope {
   limit?: number;
   /** Preferred locale. Matches that exist only in other loaded packs get a small penalty. */
   locale?: string;
+  /**
+   * The user's languages: only phrases of these loaded locales match ("tr", "en"). English (the
+   * primary pack: it carries the shortcodes), the preferred `locale` and custom packs always
+   * count. Default: every loaded pack. A user of English and Turkish then never gets a match
+   * from a Portuguese alias that a multilingual page loaded (PACK_FORMAT.md §4).
+   */
+  locales?: readonly string[];
   /** Treat the last token as a prefix while the user is still typing. Default true. */
   prefix?: boolean;
   /** `false` = canonical ranking only, even when the engine has a culture file (reproducible). */
@@ -446,6 +453,15 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     if (isCustomPack(p)) customMask |= 1 << i;
     else preferredMasks.set(p.locale, (preferredMasks.get(p.locale) ?? 0) | (1 << i));
   });
+  const everyPack = packs.reduce((mask, _, i) => mask | (1 << i), 0);
+
+  /** Packs whose phrases a search may match: `locales`, plus English, the preferred locale and custom packs. */
+  function searchedMaskFor(preferred: string, searched: readonly string[] | undefined): number {
+    if (!searched) return everyPack;
+    let mask = customMask;
+    for (const locale of [primary.locale, preferred, ...searched]) mask |= preferredMasks.get(locale) ?? 0;
+    return mask;
+  }
 
   assignLabels(packs, entries, indexById);
   const entryPopularity = new Uint8Array(entries.length);
@@ -514,12 +530,14 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   /**
    * Vocabulary tokens a query token may stand for, with a match quality in (0, 1]. `partial`
    * gets the prefix completions into words that no preferred-locale pack has: they match with
-   * less quality and never count as whole-token coverage.
+   * less quality and never count as whole-token coverage. Words that only unsearched packs have
+   * are not candidates.
    */
   function expand(
     token: string,
     asPrefix: boolean,
     preferredMask: number,
+    searchedMask: number,
     partial: Set<number>,
   ): Map<number, number> {
     const candidates = new Map<number, number>();
@@ -527,7 +545,8 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       if (quality > (candidates.get(id) ?? 0)) candidates.set(id, quality);
     };
     const preferredToken = (id: number) => ((tokenLocaleMask[id] as number) & preferredMask) !== 0;
-    const exact = idOf(token);
+    const searchedToken = (id: number) => ((tokenLocaleMask[id] as number) & searchedMask) !== 0;
+    const exact = searchedIdOf(token, searchedMask);
     if (exact !== undefined) add(exact, 1);
 
     let prefixMatches = 0;
@@ -537,7 +556,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       for (let i = start; i < vocab.length && i < start + MAX_PREFIX_EXPANSION; i++) {
         const candidate = vocab[i] as string;
         if (!candidate.startsWith(token)) break;
-        if (candidate.length > token.length) {
+        if (candidate.length > token.length && searchedToken(i)) {
           const quality = (0.6 + (0.35 * token.length) / candidate.length) * completion;
           if (preferredToken(i)) add(i, quality);
           else {
@@ -553,7 +572,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     if (exact === undefined && prefixMatches === 0) {
       // "upp" → "up", "happpy" → "happy": a repeated final letter is the most common slip.
       const squeezed = token.replace(/(.)\1+$/, "$1");
-      const squeezedId = squeezed !== token ? idOf(squeezed) : undefined;
+      const squeezedId = squeezed !== token ? searchedIdOf(squeezed, searchedMask) : undefined;
       if (squeezedId !== undefined) add(squeezedId, 0.85);
 
       const maxEdits = maxEditsFor(token.length);
@@ -561,7 +580,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       for (let length = token.length - maxEdits; length <= token.length + maxEdits; length++) {
         for (const id of tokensByLength.get(length) ?? []) {
           const candidate = vocab[id] as string;
-          if (!plausibleTypo(token, candidate)) continue;
+          if (!searchedToken(id) || !plausibleTypo(token, candidate)) continue;
           // A short token is a typo only of a preferred-locale word, and never of a word it
           // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
           if (short && (token.startsWith(candidate) || !preferredToken(id))) continue;
@@ -571,6 +590,12 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       }
     }
     return candidates;
+  }
+
+  /** The vocabulary id of `token` when a searched pack has it. */
+  function searchedIdOf(token: string, searchedMask: number): number | undefined {
+    const id = idOf(token);
+    return id !== undefined && ((tokenLocaleMask[id] as number) & searchedMask) !== 0 ? id : undefined;
   }
 
   /** Does a longer vocabulary token start with `prefix`? */
@@ -625,8 +650,8 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   }
 
   /** The vocabulary token equal to `token`, if any: a function word next to content words matches only itself. */
-  function exactly(token: string): Map<number, number> {
-    const id = idOf(token);
+  function exactly(token: string, searchedMask: number): Map<number, number> {
+    const id = searchedIdOf(token, searchedMask);
     return new Map(id === undefined ? [] : [[id, 1]]);
   }
 
@@ -727,7 +752,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
   }
 
   function searchAsTyped(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
-    const { limit = 24, locale, prefix = true } = options;
+    const { limit = 24, locale, locales, prefix = true } = options;
     const normalized = normalize(query);
     const lastIsPrefix = prefix && !/\s$/.test(query);
     const functionWords = functionWordsFor(locale ?? primary.locale);
@@ -735,6 +760,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     if (tokens.length === 0) return { query: normalized, tokens, results: [], confidence: 0, coverage: 0 };
 
     const preferredMask = (preferredMasks.get(locale ?? primary.locale) ?? 1) | customMask;
+    const searchedMask = searchedMaskFor(locale ?? primary.locale, locales);
     const isPreferred = (phrase: number) => ((phraseLocaleMask[phrase] as number) & preferredMask) !== 0;
     const n = tokens.length;
     const isFunctionWord = tokens.map((token) => functionWords.has(token));
@@ -751,8 +777,8 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       const partial = new Set<number>();
       const candidates =
         hasContentWord && isFunctionWord[i]
-          ? exactly(token)
-          : expand(token, lastIsPrefix && i === n - 1, preferredMask, partial);
+          ? exactly(token, searchedMask)
+          : expand(token, lastIsPrefix && i === n - 1, preferredMask, searchedMask, partial);
       // A function word the vocabulary lacks is not an unknown word of the query.
       if (candidates.size === 0 && !isFunctionWord[i]) unknownTokens++;
       const bit = 1 << i;
@@ -766,6 +792,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
         const whole = !partial.has(id);
         for (let k = postingStart[id] as number; k < (postingStart[id + 1] as number); k++) {
           const phrase = postings[k] as number;
+          if (((phraseLocaleMask[phrase] as number) & searchedMask) === 0) continue;
           const base = phrase * MAX_QUERY_TOKENS;
           if (phraseStamp[phrase] !== generation) {
             phraseStamp[phrase] = generation;

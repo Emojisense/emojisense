@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fullEngine } from "../../lib/engine-client";
+import { showcaseEngine } from "../../lib/engine-client";
 import { browserApi } from "./browser-api";
 import { runTool, type ToolRun } from "./mcp";
 import type { ReplyBlock, Scenario } from "./scenarios";
@@ -88,7 +88,7 @@ export function useConversation() {
       const started = performance.now();
       let run: ToolRun;
       try {
-        run = await runTool(await fullEngine(), scenario.call, semantic ? browserApi() : undefined);
+        run = await runTool(await showcaseEngine(), scenario.call, semantic ? browserApi() : undefined);
       } catch {
         patch(key, () => ({ phase: "failed", open: true }));
         return;

@@ -24,6 +24,12 @@ export interface EmojisenseEditorOptions {
   /** Pack locale. Default: the editor's `language` ("tr_TR" → "tr"), else English. */
   emojisense_locale?: string;
   /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"], or a string: "tr en". Only
+   * their packs load, and search matches only their phrases (English always counts). Default:
+   * `emojisense_locale` and English.
+   */
+  emojisense_locales?: readonly string[] | string;
+  /**
    * Culture files of the pack version, e.g. "https://api.emojisense.com/v1/culture/0.1.0".
    * Default: the culture directory next to `emojisense_pack_url`. `"off"`: no culture layer.
    */
@@ -47,6 +53,17 @@ export interface EmojisenseEditorOptions {
   emojisense_replace_emoticons?: boolean;
 }
 
+/** `["tr", "en"]`, `"tr en"` or `"tr,en"` → ["tr", "en"], like TinyMCE's own list options. */
+function localesProcessor(
+  value: unknown,
+): { valid: true; value: string[] } | { valid: false; message: string } {
+  if (typeof value === "string") return { valid: true, value: value.split(/[\s,]+/).filter(Boolean) };
+  if (Array.isArray(value) && value.every((locale) => typeof locale === "string")) {
+    return { valid: true, value: [...value] };
+  }
+  return { valid: false, message: 'emojisense_locales must be a list of locales, e.g. ["tr", "en"].' };
+}
+
 /** `""` = the culture directory next to the packs (the loader's default), `"off"` = none. */
 const cultureUrlOption = (value = ""): string | false | undefined =>
   value.toLowerCase() === "off" ? false : value || undefined;
@@ -64,6 +81,7 @@ function registerOptions(editor: Editor) {
   register("emojisense_pack_url", { processor: "string", default: "" });
   register("emojisense_engine", { processor: "object" });
   register("emojisense_locale", { processor: "string", default: "" });
+  register("emojisense_locales", { processor: localesProcessor, default: [] });
   register("emojisense_culture_url", { processor: "string", default: "" });
   register("emojisense_region", { processor: "string", default: "device" });
   register("emojisense_endpoint", { processor: "string", default: "" });
@@ -86,9 +104,16 @@ function editorLocale(editor: Editor): string {
   return option(editor, "emojisense_locale") || language.split(/[-_]/)[0]?.toLowerCase() || "en";
 }
 
+/** The user's languages; undefined without them, so search matches every loaded pack. */
+function editorLocales(editor: Editor): string[] | undefined {
+  const locales = editor.options.get<string[]>("emojisense_locales");
+  return locales?.length ? locales : undefined;
+}
+
 function setUp(editor: Editor) {
   registerOptions(editor);
   const locale = editorLocale(editor);
+  const locales = editorLocales(editor);
   const limit = option(editor, "emojisense_limit") ?? DEFAULT_LIMIT;
   const packUrl = option(editor, "emojisense_pack_url");
   let engine: AliasEngine | undefined;
@@ -123,6 +148,7 @@ function setUp(editor: Editor) {
       engine: next,
       semantic: semanticFor(next.packVersion),
       locale,
+      locales,
       limit,
       minQueryLength: 2,
       includeCustom: false,
@@ -140,6 +166,7 @@ function setUp(editor: Editor) {
       const loader = createEngineLoader({
         packUrl,
         locale,
+        locales,
         cultureUrl: cultureUrlOption(option(editor, "emojisense_culture_url")),
       });
       stopLoader?.();

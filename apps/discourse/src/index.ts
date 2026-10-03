@@ -8,6 +8,7 @@ import {
   createEngineLoader,
   createSuggestionSource,
   type SuggestionSource,
+  userLocales,
 } from "emojisense/autocomplete";
 import { customEmojiPack, type DiscourseCustomEmoji } from "./custom.js";
 import { type DiscourseEmojiData, toDiscourseCodes } from "./shortcodes.js";
@@ -15,6 +16,7 @@ import { type DiscourseEmojiData, toDiscourseCodes } from "./shortcodes.js";
 export { customEmojiPack, type DiscourseCustomEmoji } from "./custom.js";
 export { type DiscourseEmojiData, mergeCodes, toDiscourseCodes } from "./shortcodes.js";
 export { findEmojiQuery } from "./trigger.js";
+export { userLocales };
 
 /** The pack locales the theme ships. */
 export const LOCALES = ["en", "zh", "hi", "es", "ar", "fr", "bn", "pt", "ru", "id", "tr"] as const;
@@ -25,7 +27,14 @@ const FILE_BASE = "emojisense://files";
 export interface EmojisenseDiscourseOptions {
   /** Data files by name ("pack.en.json", "pack.en.ext.json", "culture.en.json") → URL. */
   files: Readonly<Record<string, string>>;
+  /** The preferred pack locale: it ranks first, names the emoji and picks the culture file. */
   locale: string;
+  /**
+   * The user's other languages, e.g. `userLocales()` (their browser's): their packs load and
+   * match too, when the theme ships them in `files`. English always does. Default: none, so
+   * `locale` and English.
+   */
+  locales?: readonly string[];
   /** Load the culture file of the locale. Default true. */
   culture?: boolean;
   /** The Emojisense API, for search by meaning when the dictionary is unsure. Off without it. */
@@ -66,6 +75,10 @@ export function packLocale(discourseLocale: string): string {
 
 export function createEmojisense(options: EmojisenseDiscourseOptions): EmojisenseDiscourse {
   const { files, locale, data } = options;
+  // Only languages with a pack among the theme's assets: the loader never asks for the others.
+  const shipped = LOCALES.filter((pack) => files[`pack.${pack}.json`]);
+  const locales =
+    options.locales && userLocales({ languages: [locale, ...options.locales], supported: shipped });
   const baseFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   // Theme assets have their own URLs: map the file names the loader asks for to them.
   const fileFetch = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -78,6 +91,7 @@ export function createEmojisense(options: EmojisenseDiscourseOptions): Emojisens
   const loader = createEngineLoader({
     packUrl: FILE_BASE,
     locale,
+    locales,
     cultureUrl: options.culture === false ? false : FILE_BASE,
     extraPacks: custom ? [custom] : [],
     fetch: fileFetch,
@@ -109,6 +123,7 @@ export function createEmojisense(options: EmojisenseDiscourseOptions): Emojisens
         engine: current,
         semantic: semanticFor(current.packVersion),
         locale,
+        locales,
         limit: use === "picker" ? 48 : 12,
         region: "device",
       });

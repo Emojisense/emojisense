@@ -28,6 +28,11 @@ export interface EmojisenseConfig {
   /** Pack locale. Default: the editor's content language ("pt-br" → "pt"). English always loads. */
   locale?: string;
   /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"]: only their packs load, and
+   * search matches only their phrases (English always counts). Default: `locale` and English.
+   */
+  locales?: readonly string[];
+  /**
    * Culture files of the pack version, e.g. "https://api.emojisense.com/v1/culture/0.1.0".
    * Default: the culture directory next to `packUrl`. `false`: no culture layer.
    */
@@ -164,7 +169,12 @@ export class EmojisenseMention extends Plugin {
       return;
     }
     // Editors with the same packs on one page share one download and one index.
-    const loader = createEngineLoader({ packUrl, locale: this.#locale(), cultureUrl });
+    const loader = createEngineLoader({
+      packUrl,
+      locale: this.#locale(),
+      locales: this.#config.locales,
+      cultureUrl,
+    });
     this.#stopLoader?.();
     this.#stopLoader = loader.subscribe((next) => this.#useEngine(next));
     try {
@@ -177,7 +187,7 @@ export class EmojisenseMention extends Plugin {
 
   #useEngine(engine: AliasEngine) {
     if (engine === this.#engine || this.editor.state === "destroyed") return;
-    const { semantic, endpoint, publishableKey, limit, region = "device" } = this.#config;
+    const { semantic, endpoint, publishableKey, limit, region = "device", locales } = this.#config;
     const { packVersion } = engine;
     if (!semantic && this.#semantic?.packVersion !== packVersion) {
       this.#semantic = {
@@ -191,6 +201,7 @@ export class EmojisenseMention extends Plugin {
       engine,
       semantic: semantic ?? this.#semantic?.provider,
       locale: this.#locale(),
+      locales,
       limit: limit ?? DEFAULT_LIMIT,
       minQueryLength: 2,
       includeCustom: false,

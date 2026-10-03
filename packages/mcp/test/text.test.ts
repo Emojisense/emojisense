@@ -33,6 +33,12 @@ describe("matchText", () => {
     expect(ids("the server is on fire again")[0]).toBe("🔥");
   });
 
+  it("matches every loaded pack unless locales are given", () => {
+    const bald = "1F468-200D-1F9B2";
+    expect(matchText(engine, "careca nato").map((m) => m.id)).toContain(bald);
+    expect(matchText(engine, "careca nato", { locales: ["en"] }).map((m) => m.id)).not.toContain(bald);
+  });
+
   it("drops aliases whose words the text does not contain", () => {
     // "shipped" partly matches "order shipped", but the text never says "order".
     expect(ids("we shipped it")).not.toContain("🚚");

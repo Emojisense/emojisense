@@ -90,7 +90,12 @@ export function ReactionsLab({ engine, online, codeTab, onCodeTab, announce }: R
   const device = useMemo(() => {
     if (!engine || !sent) return undefined;
     const startedAt = performance.now();
-    const { results } = engine.search(sent.text, { limit: sent.limit, locale: sent.locale, prefix: false });
+    const { results } = engine.search(sent.text, {
+      limit: sent.limit,
+      locale: sent.locale,
+      locales: [sent.locale],
+      prefix: false,
+    });
     return { results, ms: performance.now() - startedAt };
   }, [engine, sent]);
 

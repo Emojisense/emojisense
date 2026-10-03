@@ -66,6 +66,7 @@ In production, pin exact versions in both URLs and add `integrity` attributes. W
 | `emojisense_pack_url` | — | Base URL of a pack version. Set it or `emojisense_engine`. The packs load when the editor first gets the focus, and an open `:` menu shows its results when they arrive. Editors with the same packs on one page share one download. |
 | `emojisense_engine` | — | A ready `AliasEngine` instead of `emojisense_pack_url` |
 | `emojisense_locale` | the editor's `language` | `"tr_TR"` becomes `"tr"`. English always loads too. |
+| `emojisense_locales` | `emojisense_locale` and English | All the user's languages: `["tr", "en"]` or `"tr en"`. Only their packs load, and search matches only their phrases. See below. |
 | `emojisense_culture_url` | next to the packs | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Emoji for the place and the time join after the top result. `"off"`: off |
 | `emojisense_region` | `"device"` | Region for regional culture entries: the device's (its language, else its time zone), `""` for none, or an ISO code such as `"JP"` |
 | `emojisense_endpoint` | — | The Emojisense API. Without it, search stays on the device. |
@@ -74,6 +75,26 @@ In production, pin exact versions in both URLs and add `integrity` attributes. W
 | `emojisense_skin_tone` | — | `light`, `medium-light`, `medium`, `medium-dark` or `dark` |
 | `emojisense_limit` | `8` | Menu size |
 | `emojisense_replace_emoticons` | `true` | Take over the emoticons plugin's `:` menu. With `false`, both menus merge into one list. |
+
+### The user's languages
+
+`userLocales()` reads `navigator.languages` and keeps the languages that have a pack, most
+preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
+
+```ts
+import { userLocales } from "emojisense";
+
+const locales = userLocales();
+await tinymce.init({
+  // …
+  emojisense_locale: locales[0],
+  emojisense_locales: locales,
+});
+```
+
+A user of English and Turkish then never gets a match from a Portuguese alias. English always
+counts: it carries the shortcodes. Without `emojisense_locales`, the editor loads and searches
+`emojisense_locale` and English, as before.
 
 ## Behaviour
 

@@ -1,7 +1,14 @@
 import type { AliasEngine } from "emojisense";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDemoI18n } from "../i18n/demos";
-import { firstEngine, fullEngine, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
+import {
+  firstEngine,
+  fullEngine,
+  pageLocale,
+  sharedSemantic,
+  useEngine,
+  visitorLocales,
+} from "../lib/engine-client";
 import { useAutoplayControl } from "./autoplay-control";
 import { DEFAULT_ICON, docCopy, documentHtml, TEAMMATE } from "./doc/content";
 import { IconPicker } from "./doc/IconPicker";
@@ -192,6 +199,7 @@ export default function DocDemo() {
         copy,
         words: messages.doc,
         locale: pageLocale(),
+        locales: visitorLocales(),
         content: documentHtml(copy, reduced),
         engine: () => engineRef.current,
         semantic: sharedSemantic,

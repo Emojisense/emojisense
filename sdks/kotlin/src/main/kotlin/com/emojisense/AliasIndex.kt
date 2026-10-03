@@ -16,6 +16,9 @@ internal class AliasIndex(packs: List<Pack>, usePopularity: Boolean = true) {
 
     /** Bit mask of the custom packs: their phrases are preferred for every locale. */
     val customMask: Int
+
+    /** Bit mask of every pack. */
+    val everyPackMask: Int
     val entries: List<EmojiEntry>
     val indexById: Map<String, Int>
 
@@ -59,6 +62,7 @@ internal class AliasIndex(packs: List<Pack>, usePopularity: Boolean = true) {
         }
         preferredMasks = masks
         customMask = custom
+        everyPackMask = packs.indices.fold(0) { mask, packIndex -> mask or (1 shl packIndex) }
 
         // Entries: the primary pack's rows, then the rows of the custom packs.
         val sources = mutableListOf<Pair<Pack, PackRow>>()
@@ -173,6 +177,17 @@ internal class AliasIndex(packs: List<Pack>, usePopularity: Boolean = true) {
     }
 
     val phraseCount: Int get() = phraseText.size
+
+    /**
+     * The packs whose phrases a search may match: the [searched] locales, plus the primary locale
+     * (English: it carries the shortcodes), [preferred] and the custom packs. Null: every pack.
+     */
+    fun searchedMask(preferred: String, searched: List<String>?): Int {
+        if (searched == null) return everyPackMask
+        var mask = customMask
+        for (locale in listOf(primary.locale, preferred) + searched) mask = mask or (preferredMasks[locale] ?: 0)
+        return mask
+    }
 
     private fun entryOf(pack: Pack, row: PackRow, labels: Map<String, String>): EmojiEntry {
         val entry = EmojiEntry(

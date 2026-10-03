@@ -33,9 +33,20 @@ export const tr: Pack = {
   ],
 };
 
+/** A language the tests' user does not speak: "foguete" is only Portuguese. */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("🚀", "1F680", "foguete", "espaço")],
+};
+
 export function packFetch() {
-  return async (url: string | URL | Request) =>
-    new Response(JSON.stringify(String(url).endsWith("pack.tr.json") ? tr : en));
+  return async (url: string | URL | Request) => {
+    const u = String(url);
+    return new Response(
+      JSON.stringify(u.endsWith("pack.tr.json") ? tr : u.endsWith("pack.pt.json") ? pt : en),
+    );
+  };
 }
 
 export const enExt: Pack = {

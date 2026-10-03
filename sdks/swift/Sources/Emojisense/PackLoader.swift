@@ -63,27 +63,42 @@ public struct PackLoader: Sendable {
     try JSONDecoder().decode(Manifest.self, from: try await download("manifest.json"))
   }
 
-  /// Loads one part of the given locales, English first (it carries the shortcodes).
+  /// Loads one part of the given locales, English first (it carries the shortcodes), each locale
+  /// once. English must load. Another locale is optional: when its file fails (a language
+  /// without a pack, or a download error) it is left out, so the user still gets English. The
+  /// locales of the result tell what loaded.
   /// - Parameter manifest: When given, each file must match its `sha256`.
   public func loadPacks(
     locales: [String] = ["en"], part: Pack.Part = .core, manifest: Manifest? = nil
   ) async throws -> [Pack] {
-    let ordered = ["en"] + locales.filter { $0 != "en" }
-    return try await withThrowingTaskGroup(of: (Int, Pack).self) { group in
+    let ordered = Self.packOrder(locales)
+    return try await withThrowingTaskGroup(of: (Int, Pack?).self) { group in
       for (position, locale) in ordered.enumerated() {
         let file = Self.fileName(locale: locale, part: part)
         group.addTask {
-          let data = try await download(file)
-          if let expected = manifest?.files[file]?.sha256 {
-            try Self.verify(data, sha256: expected, file: file)
+          do {
+            let data = try await download(file)
+            if let expected = manifest?.files[file]?.sha256 {
+              try Self.verify(data, sha256: expected, file: file)
+            }
+            return (position, try Pack(jsonData: data))
+          } catch {
+            if position == 0 || Task.isCancelled { throw error }
+            return (position, nil)
           }
-          return (position, try Pack(jsonData: data))
         }
       }
       var packs = [Pack?](repeating: nil, count: ordered.count)
       for try await (position, pack) in group { packs[position] = pack }
       return packs.compactMap { $0 }
     }
+  }
+
+  /// English first, then the other locales once each: English carries the shortcodes.
+  static func packOrder(_ locales: [String]) -> [String] {
+    var ordered = ["en"]
+    for locale in locales where !ordered.contains(locale) { ordered.append(locale) }
+    return ordered
   }
 
   public static func fileName(locale: String, part: Pack.Part) -> String {

@@ -43,6 +43,8 @@ export interface SearchSessionOptions {
   /** Omit for alias-only (fully offline) search. Use chainProviders(shards, api) for layers. */
   semantic?: SemanticProvider;
   locale?: string;
+  /** The user's languages: only phrases of these loaded locales match (`AliasSearchOptions.locales`). */
+  locales?: readonly string[];
   limit?: number;
   /** Delay before a semantic request, after the last keystroke. Default 200 ms. */
   debounceMs?: number;
@@ -81,6 +83,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
     engine,
     semantic,
     locale,
+    locales,
     limit = 24,
     debounceMs = 200,
     shouldUseSemantic = defaultShouldUseSemantic,
@@ -112,7 +115,12 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
       // Fusion sees the same candidates whatever the limit (RANK_DEPTH); the results are cut to it.
       const depth = Math.max(limit, RANK_DEPTH);
       const aliasStarted = performance.now();
-      const alias = engine.search(query, { limit: depth, culture: false, ...(locale ? { locale } : {}) });
+      const alias = engine.search(query, {
+        limit: depth,
+        culture: false,
+        ...(locale ? { locale } : {}),
+        ...(locales ? { locales } : {}),
+      });
       const aliasMs = performance.now() - aliasStarted;
       const shown = alias.results.slice(0, limit);
       const present = (results: SearchResult[]): SearchResult[] =>

@@ -29,6 +29,11 @@ export interface EmojisenseOptions {
   /** UI locale. "tr" loads the Turkish pack next to English. */
   locale?: string;
   /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"]: only their packs load, and
+   * search matches only their phrases (English always counts). Default: `locale` and English.
+   */
+  locales?: readonly string[];
+  /**
    * Precomputed results (layer 2), e.g. "https://cdn.emojisense.com/p/0.1.0". Free static files,
    * asked before the API.
    */
@@ -88,6 +93,8 @@ export interface Emojisense {
   /** The app's custom emoji once loaded (`customEmoji: true`); part of `engine`. */
   customPack?: Pack;
   locale: string;
+  /** The languages search matches (the `locales` option). Undefined: every loaded pack. */
+  locales?: readonly string[];
   status: "loading" | "ready" | "error";
   /** True once the extension packs are in the engine. */
   extended: boolean;
@@ -106,22 +113,32 @@ export interface Emojisense {
   error?: unknown;
 }
 
-type LoaderOptions = Pick<EmojisenseOptions, "packBaseUrl" | "locale" | "extended" | "cultureUrl">;
+type LoaderOptions = Pick<
+  EmojisenseOptions,
+  "packBaseUrl" | "locale" | "locales" | "extended" | "cultureUrl"
+>;
 
 const NO_PACKS: readonly Pack[] = [];
 
 /**
  * The pack loader for these options. Every hook, picker and `preloadEmojisense` call with the same
- * `packBaseUrl`, `locale` and `extended` shares one download and one index, so a picker that mounts
- * again is ready on its first render.
+ * `packBaseUrl`, languages and `extended` shares one download and one index, so a picker that
+ * mounts again is ready on its first render.
  */
 function packLoader({
   packBaseUrl,
   locale = "en",
+  locales,
   extended = true,
   cultureUrl,
 }: LoaderOptions): EngineLoader {
-  return createEngineLoader({ packUrl: packBaseUrl, locale, extended, cultureUrl });
+  return createEngineLoader({ packUrl: packBaseUrl, locale, locales, extended, cultureUrl });
+}
+
+/** The same array while the languages stay the same: `locales: userLocales()` is new on each render. */
+function useStableLocales(locales: readonly string[] | undefined): readonly string[] | undefined {
+  const key = locales?.join(",");
+  return useMemo(() => key?.split(",").filter(Boolean), [key]);
 }
 
 /**
@@ -152,6 +169,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     statsUrl,
     statsSample,
   } = options;
+  const locales = useStableLocales(options.locales);
   const [customPack, setCustomPack] = useState<Pack>();
 
   useEffect(() => {
@@ -175,8 +193,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
   }, [customEmoji, endpoint, publishableKey, tenant]);
 
   const loader = useMemo(
-    () => packLoader({ packBaseUrl, locale, extended, cultureUrl }),
-    [packBaseUrl, locale, extended, cultureUrl],
+    () => packLoader({ packBaseUrl, locale, locales, extended, cultureUrl }),
+    [packBaseUrl, locale, locales, extended, cultureUrl],
   );
   // The loader's engine carries the culture file once it is there (`engine.culture`).
   const localeEngine = useSyncExternalStore(loader.subscribe, loader.current, loader.current);
@@ -233,6 +251,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     packs,
     ...(customPack ? { customPack } : {}),
     locale,
+    ...(locales ? { locales } : {}),
     status: error !== undefined ? "error" : engine ? "ready" : "loading",
     extended: packs.some((pack) => pack.part === "ext"),
     emojiSet,
@@ -289,10 +308,11 @@ const LOADING: EmojiSearchState = { ...IDLE, status: "loading" };
  */
 export function useEmojiSearch(
   query: string,
-  emojisense: Pick<Emojisense, "engine" | "semantic" | "locale" | "region" | "stats">,
+  emojisense: Pick<Emojisense, "engine" | "semantic" | "locale" | "locales" | "region" | "stats">,
   options: UseEmojiSearchOptions = {},
 ): EmojiSearchState {
   const { engine, semantic, locale, region, stats } = emojisense;
+  const locales = useStableLocales(emojisense.locales);
   const { limit = 24, debounceMs = 200, culture = true } = options;
   // Read through a ref: a new clock function on each render must not start a new session.
   const nowRef = useRef(options.now);
@@ -306,6 +326,7 @@ export function useEmojiSearch(
       engine,
       ...(semantic ? { semantic } : {}),
       locale,
+      ...(locales ? { locales } : {}),
       limit,
       debounceMs,
       ...(culture ? {} : { culture: false as const }),
@@ -330,7 +351,7 @@ export function useEmojiSearch(
       session.dispose();
       sessionRef.current = undefined;
     };
-  }, [engine, semantic, locale, region, stats, limit, debounceMs, culture]);
+  }, [engine, semantic, locale, locales, region, stats, limit, debounceMs, culture]);
 
   useEffect(() => {
     if (!engine) return;

@@ -34,6 +34,12 @@ export interface EmojiAutocompletePluginProps {
   /** Preferred locale for ranking and labels. Default: the engine's first pack. */
   locale?: string;
   /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"]: the menu matches only their
+   * phrases (English always counts). Load only their packs too (`locales` of `useEmojisense` or
+   * `createEngineLoader`). Default: every pack of the engine.
+   */
+  locales?: readonly string[];
+  /**
    * Region for regional culture entries (the engine's culture file). Default: the device's region
    * (its language, else its time zone). `""`: none. `"auto"`: the API's view of the caller's
    * country (needs a semantic provider with an endpoint).
@@ -99,6 +105,9 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
   } = props;
   const [editor] = useLexicalComposerContext();
   const [results, setResults] = useState(NO_RESULTS);
+  // A new array with the same languages (`locales={userLocales()}`) must not start a new source.
+  const localesKey = props.locales?.join(",");
+  const locales = useMemo(() => localesKey?.split(",").filter(Boolean), [localesKey]);
 
   const source = useMemo(
     () =>
@@ -107,13 +116,14 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
         engine,
         semantic,
         locale,
+        locales,
         region,
         limit,
         debounceMs,
         onLateResults: (query, suggestions) =>
           setResults((current) => (current.query === query ? { query, suggestions } : current)),
       }),
-    [engine, semantic, locale, region, limit, debounceMs],
+    [engine, semantic, locale, locales, region, limit, debounceMs],
   );
   useEffect(() => () => source?.dispose(), [source]);
 
@@ -201,10 +211,10 @@ export function EmojiAutocompletePlugin(props: EmojiAutocompletePluginProps) {
   useEffect(() => {
     if (!shortcodes || !engine) return;
     return registerShortcodeTransform(editor, (code) => {
-      const hit = findShortcode(engine, code, locale);
+      const hit = findShortcode(engine, code, locale, locales);
       return hit && applySkinTone(hit.emoji, skinTone);
     });
-  }, [editor, engine, locale, shortcodes, skinTone]);
+  }, [editor, engine, locale, locales, shortcodes, skinTone]);
 
   const renderDefaultMenu = useCallback<MenuRenderFn<EmojiOption>>(
     (anchor, itemProps) =>

@@ -37,6 +37,24 @@ const engine = createEngine(packs);
 const semantic = createLayeredSemantic({ shardsUrl: `${base}/p/0.1.0`, endpoint: base, key: "pk_live_…" });
 ```
 
+### The user's languages
+
+By default the engine searches every pack it has. To follow the user, load and search only their
+languages. `userLocales()` reads `navigator.languages` and keeps the languages that have a pack,
+most preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
+
+```ts
+import { userLocales } from "emojisense";
+
+const locales = userLocales();
+const engine = createEngine(await loadPacks({ baseUrl: `${base}/v1/pack/0.1.0`, locales }));
+// then pass `locale: locales[0]` and `locales` to attachEmojisense, createEmojiMartSearch or
+// overrideSearchIndex
+```
+
+With `locales`, search matches only phrases of these packs. A user of English and Turkish never
+gets a match from a Portuguese alias. English always counts: it carries the shortcodes.
+
 ## `attachEmojisense`
 
 ```ts

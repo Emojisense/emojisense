@@ -28,7 +28,7 @@ It works on self-hosted sites and on Discourse-hosted plans that allow theme com
 
 | Setting | Default | Notes |
 | ------- | ------- | ----- |
-| `search_locale` | `auto` | The interface language of each user; English when Emojisense has no data for it |
+| `search_locale` | `auto` | `auto`: the interface language of each user (English when Emojisense has no data for it). A fixed value: that language. The languages of each user's browser and English are searched too. Only those packs load and match: a user of English and Turkish never gets a match from a Portuguese alias. |
 | `culture` | on | Cultural and seasonal emoji after the best match |
 | `api_enabled` | off | Ask the Emojisense API when the dictionary is unsure |
 | `publishable_key` | — | `pk_live_…` with the site's address in its allowed origins. Theme settings are public: never a secret key. |

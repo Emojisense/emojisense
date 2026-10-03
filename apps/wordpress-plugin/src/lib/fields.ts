@@ -2,7 +2,7 @@ import { attachEmojiAutocomplete, type TextareaAutocomplete } from "@emojisense/
 import { createSuggestionSource, type SuggestionSource } from "emojisense/autocomplete";
 import { openPickerPopover, type PickerPopover } from "../shared/popover.js";
 import { MAX_OPTIONS, MIN_QUERY_LENGTH } from "./completer.js";
-import type { ClientConfig } from "./config.js";
+import { type ClientConfig, searchLocales } from "./config.js";
 import { createEngineLoader, semanticProvider } from "./engine.js";
 import { observeMatches } from "./observe.js";
 import { insertAtCaret } from "./text.js";
@@ -35,6 +35,7 @@ export function setUpFields(doc: Document, config: FieldsConfig, options: Fields
     ...(options.whenIdle ? { whenIdle: options.whenIdle } : {}),
   });
   const autocompletes = new Map<Field, TextareaAutocomplete>();
+  const locales = searchLocales(config);
   let source: SuggestionSource | undefined;
 
   loader.subscribe((engine) => {
@@ -42,6 +43,7 @@ export function setUpFields(doc: Document, config: FieldsConfig, options: Fields
     source = createSuggestionSource({
       engine,
       locale: config.locale,
+      locales,
       semantic: semanticProvider(config, engine.packVersion, options.fetch),
       limit: MAX_OPTIONS,
       debounceMs: 250,

@@ -132,7 +132,8 @@ class Emojisense_Settings {
 	}
 
 	/**
-	 * The pack locale: the setting, or the site language when it is "auto".
+	 * The pack locale: the setting, or the site language when it is "auto". Search in the browser
+	 * prefers it, and also covers the person's browser languages that have a pack, and English.
 	 *
 	 * @return string
 	 */

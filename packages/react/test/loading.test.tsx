@@ -43,6 +43,37 @@ describe("pack loading on one page", () => {
     expect(requests()).toHaveLength(2);
   });
 
+  it("loads only the user's languages, and keeps one loader while they stay the same", async () => {
+    const requests = countingFetch();
+    const { result, rerender } = renderHook(() =>
+      useEmojisense({ ...options, locale: "en", locales: ["tr", "en"] }),
+    );
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+    const { engine, locales } = result.current;
+    expect(locales).toEqual(["tr", "en"]);
+    rerender();
+    expect(result.current.engine).toBe(engine);
+    expect(result.current.locales).toBe(locales);
+    expect(requests()).toEqual([
+      "https://x.test/v1/pack/test/pack.en.json",
+      "https://x.test/v1/pack/test/pack.tr.json",
+    ]);
+  });
+
+  it("matches only phrases of the user's languages", async () => {
+    countingFetch();
+    const { result } = renderHook(() => {
+      const sense = useEmojisense({ ...options, locale: "en", locales: ["en", "tr", "pt"] });
+      return {
+        all: useEmojiSearch("foguete", sense),
+        theirs: useEmojiSearch("foguete", { ...sense, locales: ["tr", "en"] }),
+      };
+    });
+    await waitFor(() => expect(result.current.all.results[0]?.emoji).toBe("🚀"));
+    expect(result.current.theirs.status).toBe("alias");
+    expect(result.current.theirs.results).toEqual([]);
+  });
+
   it("reports a query typed before the packs arrived as loading, then answers it", async () => {
     countingFetch();
     const { result } = renderHook(() => {

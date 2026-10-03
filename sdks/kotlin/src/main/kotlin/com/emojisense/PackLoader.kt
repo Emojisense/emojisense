@@ -1,5 +1,6 @@
 package com.emojisense
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -65,8 +66,10 @@ public class PackLoader @JvmOverloads constructor(
     public suspend fun loadManifest(): Manifest = Manifest.fromJson(download(MANIFEST).decodeToString())
 
     /**
-     * Loads one part of the given locales, English first (it carries the shortcodes), in parallel.
-     * With a [manifest], each file must match its `sha256`.
+     * Loads one part of the given locales, English first (it carries the shortcodes), each locale once,
+     * in parallel. With a [manifest], each file must match its `sha256`. English must load. Another
+     * locale is optional: when its file fails (a language without a pack, or a download error) it is
+     * left out, so the user still gets English. The locales of the result tell what loaded.
      */
     @JvmOverloads
     public suspend fun loadPacks(
@@ -74,15 +77,24 @@ public class PackLoader @JvmOverloads constructor(
         part: PackPart = PackPart.CORE,
         manifest: Manifest? = null,
     ): List<Pack> = coroutineScope {
-        val ordered = listOf("en") + locales.filter { it != "en" }
-        ordered.map { locale ->
+        packOrder(locales).mapIndexed { position, locale ->
             async {
-                val file = fileName(locale, part)
-                val bytes = download(file)
-                manifest?.files?.get(file)?.sha256?.let { verify(bytes, it, file) }
-                Pack.fromJson(bytes)
+                try {
+                    loadPack(fileName(locale, part), manifest)
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    if (position == 0) throw error
+                    null
+                }
             }
-        }.awaitAll()
+        }.awaitAll().filterNotNull()
+    }
+
+    private suspend fun loadPack(file: String, manifest: Manifest?): Pack {
+        val bytes = download(file)
+        manifest?.files?.get(file)?.sha256?.let { verify(bytes, it, file) }
+        return Pack.fromJson(bytes)
     }
 
     private suspend fun download(file: String): ByteArray {
@@ -98,6 +110,9 @@ public class PackLoader @JvmOverloads constructor(
         @JvmStatic
         public fun fileName(locale: String, part: PackPart): String =
             if (part == PackPart.EXT) "pack.$locale.ext.json" else "pack.$locale.json"
+
+        /** English first, then the other locales once each: English carries the shortcodes. */
+        internal fun packOrder(locales: List<String>): List<String> = (listOf("en") + locales).distinct()
 
         /**
          * Fetches the app's custom emoji as a pack (`GET /v1/custom-pack`). Pass it to [AliasEngine]

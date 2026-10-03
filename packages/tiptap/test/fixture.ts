@@ -55,6 +55,13 @@ export const tr: Pack = {
 
 export const engine = createEngine(en);
 
+/** A language the tests' user does not speak: "foguete" is only Portuguese. */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("🚀", "1F680", "foguete", { keyword: "espaço" })],
+};
+
 /** A semantic layer that knows one concept the alias pack does not. */
 export function stubSemantic(): SemanticProvider & { calls: string[] } {
   const calls: string[] = [];

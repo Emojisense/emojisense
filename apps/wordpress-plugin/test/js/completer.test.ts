@@ -30,6 +30,29 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe("createItemSearch locales", () => {
+  it("matches only phrases of the searched languages", () => {
+    const multilingual = createEngine([pack("en"), pack("tr"), pack("pt")]);
+    const found = (locales?: string[]) => {
+      let last: CompletionItem[] = [];
+      const session = createItemSearch({
+        engine: multilingual,
+        locale: "tr",
+        locales,
+        debounceMs: 0,
+        onItems: (items) => {
+          last = items;
+        },
+      });
+      session.update("foguete");
+      session.dispose();
+      return last.map((item) => item.emoji);
+    };
+    expect(found(["tr", "en"])).not.toContain("🚀");
+    expect(found()[0]).toBe("🚀");
+  });
+});
+
 describe("allowContext", () => {
   it.each([
     ["", "", true],

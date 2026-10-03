@@ -110,6 +110,7 @@ const UPGRADED_PROPERTIES = [
   "statsUrl",
   "publishableKey",
   "locale",
+  "locales",
   "columns",
   "skinTone",
   "emojiSet",
@@ -132,7 +133,7 @@ const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as ty
  * every keystroke, then shard or API results fused in when the dictionary is unsure.
  *
  * Attributes: `pack-url`, `shards-url`, `endpoint`, `key` (alias `publishable-key`), `locale`,
- * `columns`, `skin-tone`, `emoji-set`, `placeholder`, `custom-emoji` (load the key's custom
+ * `locales`, `columns`, `skin-tone`, `emoji-set`, `placeholder`, `custom-emoji` (load the key's custom
  * emoji from `endpoint`), `tenant`, `culture-url`, `region`, `show-relevant-now`, `stats-url`
  * (report how searches end and what is picked, emojisense/stats) and `stats-sample`. Custom emoji
  * are drawn as images. Event: `emoji-select` with `{ emoji, label, id }`, plus `imageUrl` and
@@ -146,6 +147,7 @@ export class EmojisensePickerElement extends Base {
     "key",
     "publishable-key",
     "locale",
+    "locales",
     "columns",
     "skin-tone",
     "emoji-set",
@@ -185,7 +187,7 @@ export class EmojisensePickerElement extends Base {
   #stats: { key: string; reporter: StatsReporter } | undefined;
   /** Kept across engine rebuilds (the ext pack, custom emoji), so loaded shards stay loaded. */
   #semantic: { key: string; provider: SemanticProvider | undefined } | undefined;
-  /** The shared pack loader of `pack-url` and `locale`, while connected. */
+  /** The shared pack loader of `pack-url` and the languages, while connected. */
   #loader: EngineLoader | undefined;
   #stopLoader: (() => void) | undefined;
   #scheduled = false;
@@ -277,6 +279,20 @@ export class EmojisensePickerElement extends Base {
   }
   set locale(value: string) {
     this.setAttribute("locale", value);
+  }
+
+  /**
+   * `locales="tr en"`: all the user's languages, e.g. `userLocales()`. Only their packs load, and
+   * search matches only their phrases (English always counts). Empty (default): `locale` and
+   * English.
+   */
+  get locales(): string[] {
+    return (this.getAttribute("locales") ?? "").split(/[\s,]+/).filter(Boolean);
+  }
+  set locales(value: readonly string[] | string | null | undefined) {
+    const list = typeof value === "string" ? value : (value ?? []).join(" ");
+    if (list.trim()) this.setAttribute("locales", list);
+    else this.removeAttribute("locales");
   }
 
   get columns(): number {
@@ -478,13 +494,13 @@ export class EmojisensePickerElement extends Base {
   #configure() {
     this.#configureCustomEmoji();
     this.#configureCulture();
-    const packKey = this.#packs ?? `${this.packUrl}\n${this.locale}`;
+    const packKey = this.#packs ?? [this.packUrl, this.locale, ...this.locales].join("\n");
     if (packKey !== this.#packKey) {
       this.#packKey = packKey;
       if (this.#packs) {
         this.#stopLoading();
         this.#usePacks({ packs: this.#packs }, true);
-      } else if (this.packUrl) this.#load(this.packUrl, this.locale);
+      } else if (this.packUrl) this.#load(this.packUrl, this.locale, this.#searchedLocales());
       else this.#reset();
       return;
     }
@@ -559,14 +575,20 @@ export class EmojisensePickerElement extends Base {
     this.#search(this.#input.value);
   }
 
+  /** The `locales` attribute; undefined without it, so search matches every loaded pack. */
+  #searchedLocales(): string[] | undefined {
+    const locales = this.locales;
+    return locales.length > 0 ? locales : undefined;
+  }
+
   /**
    * The packs come from the page's shared loader: every picker with the same `pack-url` and
-   * `locale` shares one download and one index, so a picker that opens again is ready at once.
+   * languages shares one download and one index, so a picker that opens again is ready at once.
    */
-  #load(packUrl: string, locale: string) {
+  #load(packUrl: string, locale: string, locales: string[] | undefined) {
     this.#stopLoading();
     // The element loads its culture file itself (`culture-url`, or the `culture` property).
-    const loader = createEngineLoader({ packUrl, locale, cultureUrl: false });
+    const loader = createEngineLoader({ packUrl, locale, locales, cultureUrl: false });
     this.#loader = loader;
     const use = (renderBrowse: boolean) => {
       const engine = loader.current();
@@ -663,7 +685,15 @@ export class EmojisensePickerElement extends Base {
     if (!engine) return;
     this.#connectStats();
     const region = this.#region();
-    const key = [this.shardsUrl, this.endpoint, this.publishableKey, this.locale, region].join("\n");
+    const locales = this.#searchedLocales();
+    const key = [
+      this.shardsUrl,
+      this.endpoint,
+      this.publishableKey,
+      this.locale,
+      locales?.join(" "),
+      region,
+    ].join("\n");
     if (this.#session && key === this.#sessionKey) return;
     this.#session?.dispose();
     this.#sessionKey = key;
@@ -683,6 +713,7 @@ export class EmojisensePickerElement extends Base {
       engine,
       semantic: this.#semantic.provider,
       locale: this.locale,
+      ...(locales ? { locales } : {}),
       // The region is resolved here; "" tells the session not to use the device's region.
       region: region ?? "",
       now: () => this.#now(),

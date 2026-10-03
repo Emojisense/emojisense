@@ -2,7 +2,7 @@ en:
   theme_metadata:
     description: "Find emoji by meaning in the composer, in chat and in the emoji picker: :ship it → 🚀, :mind blown → 🤯. Works offline with data files that come with the component."
     settings:
-      search_locale: "The language of the emoji search. “auto” uses the language of each user's interface (English when Emojisense has no data for it). English always works too."
+      search_locale: "The language of the emoji search. “auto” uses the language of each user's interface (English when Emojisense has no data for it). The languages of each user's browser and English are always searched too."
       culture: "Add cultural and seasonal emoji after the best match, for example ⚽ after 🐐 for “goat”."
       api_enabled: "Ask the Emojisense API for emoji with a similar meaning when the built-in dictionary is unsure. Off: no search text leaves your users' browsers."
       publishable_key: "A publishable key (pk_live_…) from app.emojisense.com, with this site's address in its allowed origins. Theme settings are public: never put a secret key (sk_…) here."

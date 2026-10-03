@@ -105,7 +105,7 @@ Tarballs (2026-10-02, packed by `pnpm release:check`):
 
 ```bash
 pnpm data:build          # if packages/data/dist is missing
-pnpm package:chrome      # → release/chrome/emojisense-chrome-0.1.0.zip (909 KB, 29 files)
+pnpm package:chrome      # → release/chrome/emojisense-chrome-0.1.0.zip (4519 KB, 47 files)
 ```
 
 The check in `apps/chrome-extension/scripts/package.ts` fails on any permission other than the four
@@ -144,11 +144,12 @@ code, a missing icon, source maps or remote script loads. The version comes from
 >
 > Put the caret in a text field, press Ctrl+Shift+Space (⌘⇧Space on a Mac) or click the toolbar
 > button, and type what you mean: "ship it" gives 🚀, "jurassic park" gives 🦖, "greatest of all
-> time" gives 🐐, "kolay gelsin" gives 💪. Press Enter, and the emoji goes in at the caret.
+> time" gives 🐐, "kolay gelsin" (Turkish) gives 💪. Press Enter, and the emoji goes in at the caret.
 >
 > • Search by meaning, slang, names and shortcodes. Small typos are fine.
-> • English and Turkish. Search runs on your computer: the engine and its dictionary are inside
->   the extension.
+> • 11 languages: English, Spanish, Chinese, Hindi, Arabic, French, Bengali, Portuguese, Russian,
+>   Indonesian and Turkish. Search runs on your computer, in the languages of your browser: the
+>   engine and its dictionaries are inside the extension.
 > • Works in text fields and rich editors: mail composers, comment boxes, chat apps. Where an app
 >   does not accept inserted text (Google Docs, canvas apps), Emojisense copies the emoji and tells
 >   you to paste.
@@ -219,7 +220,7 @@ pass; only the placeholder author fails `ray lint` (`author` must be a Raycast u
 | Categories, title, command title | Title Case, `<verb> <noun>` | "Emojisense", "Search Emoji", Productivity + Communication |
 | `@raycast/api` | The latest version at submission | 2.5.1 pinned; bump it in `apps/raycast/package.json` before export if the review asks |
 | Localization | US English UI only | The UI is English. The Language preference changes emoji labels (data), not the UI; mention it in the pull request |
-| Size | No fixed limit; the Store repository reviews large assets | `assets/packs` holds all 11 languages (14 MB raw), because the extension searches every bundled language. **Owner decision:** to ship only English and Turkish (2 MB, the two label languages), filter the files in `apps/raycast/scripts/bundle-packs.mts` |
+| Size | No fixed limit; the Store repository reviews large assets | `assets/packs` holds all 11 languages (14 MB raw). The extension loads only the Mac's languages and English, and the Preferred Language preference offers all 11, so every pack is needed. Fewer packs means fewer languages: filter the files in `apps/raycast/scripts/bundle-packs.mts` and the preference options together |
 
 **Store text:** title "Emojisense", description "Search emoji by meaning, slang and intent: "ship
 it" → 🚀, "lgtm" → 👍. Works offline." (from `apps/raycast/package.json`). The export's README is the

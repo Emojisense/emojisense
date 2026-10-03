@@ -1,7 +1,8 @@
+import { createEngine } from "emojisense";
 import type { Editor, TinyMCE, Ui } from "tinymce";
 import { describe, expect, it, vi } from "vitest";
 import { PLUGIN_NAME, registerEmojisense } from "../src/plugin.js";
-import { engine, stubSemantic } from "./fixture.js";
+import { en, engine, pt, stubSemantic } from "./fixture.js";
 
 type Spec = Ui.InlineContent.AutocompleterSpec;
 
@@ -9,15 +10,22 @@ type Spec = Ui.InlineContent.AutocompleterSpec;
 function fakeTinyMce(settings: Record<string, unknown>, plugins: string[] = []) {
   const handlers: Record<string, (() => void)[]> = {};
   const autocompleters: Record<string, Spec> = {};
-  const defaults: Record<string, unknown> = {};
+  const specs: Record<string, { default?: unknown; processor?: unknown }> = {};
   const commands: string[] = [];
   const editor = {
     removed: false,
     options: {
-      register: (name: string, spec: { default?: unknown }) => {
-        defaults[name] = spec.default;
+      register: (name: string, spec: { default?: unknown; processor?: unknown }) => {
+        specs[name] = spec;
       },
-      get: (name: string) => (name in settings ? settings[name] : defaults[name]),
+      // Like TinyMCE: a function processor turns the setting into the value, or rejects it.
+      get: (name: string) => {
+        const spec = specs[name];
+        if (!(name in settings)) return spec?.default;
+        if (typeof spec?.processor !== "function") return settings[name];
+        const result = spec.processor(settings[name]) as { valid: boolean; value?: unknown };
+        return result.valid ? result.value : spec.default;
+      },
     },
     on: (event: string, handler: () => void) => {
       handlers[event] = [...(handlers[event] ?? []), handler];
@@ -119,6 +127,43 @@ describe("registerEmojisense", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it("loads only the packs of the languages in emojisense_locales", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      urls.push(String(input));
+      return new Response(JSON.stringify(String(input).includes(".tr.") ? { ...en, locale: "tr" } : en));
+    });
+    try {
+      const { autocompleters, fire } = fakeTinyMce({
+        emojisense_pack_url: "https://langs.test/0.1.0",
+        emojisense_locales: "tr en",
+      });
+      fire("init");
+      await vi.waitFor(async () => {
+        const items = await autocompleters.emojisense?.fetch("pizza", 8, {});
+        expect(items?.[0]).toMatchObject({ value: "🍕" });
+      });
+      expect(urls.filter((url) => /\/pack\.\w+\.json$/.test(url))).toEqual([
+        "https://langs.test/0.1.0/pack.en.json",
+        "https://langs.test/0.1.0/pack.tr.json",
+      ]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("matches only phrases of the languages in emojisense_locales", async () => {
+    const multilingual = createEngine([en, pt]);
+    const theirs = fakeTinyMce({ emojisense_engine: multilingual, emojisense_locales: ["tr", "en"] });
+    theirs.fire("init");
+    await expect(theirs.autocompleters.emojisense?.fetch("foguete", 8, {})).resolves.toEqual([]);
+    const all = fakeTinyMce({ emojisense_engine: multilingual });
+    all.fire("init");
+    await expect(all.autocompleters.emojisense?.fetch("foguete", 8, {})).resolves.toMatchObject([
+      { value: "🚀" },
+    ]);
   });
 
   it("loads the culture file next to the packs, unless emojisense_culture_url is off", async () => {

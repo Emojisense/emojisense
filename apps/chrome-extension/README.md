@@ -1,15 +1,23 @@
 # Emojisense for Chrome
 
 An emoji picker for any text field. Put the caret in a field, press **Ctrl+Shift+Space**
-(**⌘⇧Space** on macOS), type what you mean ("ship it", "jurassic park", "kolay gelsin"), press
-Enter. Search runs on the device with the English and Turkish packs inside the extension.
+(**⌘⇧Space** on macOS), type what you mean ("ship it", "jurassic park", or "kolay gelsin" in
+Turkish), press Enter. Search runs on the device with the packs of all 11 languages inside the
+extension; nothing is downloaded.
+
+Search covers only the user's languages: Chrome's preferred languages (`navigator.languages`) and
+UI language that have a pack, the Language setting, and English (it has the shortcodes). The
+service worker indexes only those packs, and builds the index again only when that set changes. A
+user of English and Turkish never gets a match from a Portuguese alias. With "Same as the browser",
+the first of these languages sets the ranking and the emoji labels, so a Spanish browser gets
+Spanish labels. The picker text is English or Turkish (English for every other language).
 
 ```
  shortcut / toolbar click                 service worker                       page
  ───────────────────────▶  activeTab ──▶  inject content.js (all frames) ──▶  probe: where is the caret?
                                           toggle in that frame           ──▶  picker (shadow DOM, top layer)
                                                                                  │ port: query / picked
-                           alias index (en + tr packs, built once)  ◀───────────┘
+                           alias index (the user's packs only)      ◀───────────┘
                            optional: semantic API (off by default)
                                                                                  ▼
                                                                          insert at the caret, or copy
@@ -111,7 +119,8 @@ npx biome check apps/chrome-extension
 | `test/controller.test.ts` | Open → search → insert → focus return; copy mode; Google Docs; reconnect; page theme; font wait |
 | `test/theme.test.ts` | Light or dark from the page around the field |
 | `test/fonts.test.ts` | Font messages, the worker's font source, FontFace registration in the page |
-| `test/search.test.ts` | Service worker search: recents, skin tone, semantic API only when configured |
+| `test/search.test.ts` | Service worker search: the user's languages only, recents, skin tone, semantic API only when configured |
+| `test/packs.test.ts` | Every pack language ships, core and ext |
 | `test/background.test.ts` | Frame choice, injection fallback, recents, message validation, manifest permissions |
 | `test/content.test.ts` | Target capture, clipboard, Docs paste experiment, placement |
 | `test/options.test.ts` | Options page validation, saving, labels, shortcut keycaps |
@@ -121,8 +130,8 @@ npx biome check apps/chrome-extension
 | `src/background/` | Service worker: commands, injection, search over a port, picker fonts |
 | `src/content/` | Content script: target capture, insertion, picker, toast, page theme, fonts |
 | `src/options/` | Options page (and its `@font-face` rules) |
-| `src/shared/` | Settings, messages, strings (en, tr), frame choice, design tokens, font list |
-| `scripts/build.ts` | esbuild bundles, manifest, packs, fonts, licenses, icons |
+| `src/shared/` | Settings and search languages, bundled packs, messages, strings (en, tr), frame choice, design tokens, font list |
+| `scripts/build.ts` | esbuild bundles, manifest, the packs of every language (fails when the data build has other languages), fonts, licenses, icons |
 
 ### Checked in a real browser
 

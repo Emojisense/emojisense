@@ -29,6 +29,7 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | ------ | ------ |
 | `packBaseUrl` | Pack version directory. The core pack renders first. The extension pack downloads when the browser is idle, and its index is built in a pause in typing (`extended: false` turns it off). |
 | `locale` | `"tr"` loads the Turkish pack next to English. |
+| `locales` | All the user's languages, e.g. `userLocales()`. See [The user's languages](#the-users-languages). |
 | `shardsUrl` | Precomputed results. Omit it when no shards are deployed. |
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
 | `statsUrl`, `statsSample` | Report how searches end and which results are picked (`POST /v1/events`), from a share of sessions (default 0.1). Off when omitted. `EmojisensePicker` reports its picks; with your own UI call `sense.stats?.pick(query, id)`. |
@@ -36,13 +37,30 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. Default: the device's region: the region of the browser's language (`navigator.language` `"pt-BR"` → `"BR"`), else the region of its time zone (`"ja"` in `Asia/Tokyo` → `"JP"`, from the culture file). It is read on the device and never sent. `""` turns regional entries off. `"auto"`: the API reports the region of the request's country (`region=auto`, needs `endpoint`); searches use it after the first API answer, and `useRelevantNow` shows entries for every region only. |
 | `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg?key={publishableKey}" alt="{emoji}" loading="lazy">` and need `endpoint` and a `publishableKey` whose plan includes hosted sets (Solo and up). When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |
 
+### The user's languages
+
+By default the hooks load and search `locale` and English. To follow the user, pass all their
+languages. `userLocales()` reads `navigator.languages` and keeps the languages that have a pack,
+most preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
+
+```tsx
+import { userLocales, useEmojisense } from "@emojisense/react";
+
+const locales = userLocales();
+const sense = useEmojisense({ packBaseUrl, locale: locales[0], locales });
+```
+
+Only the packs of these languages load, and search matches only their phrases. A user of English
+and Turkish never gets a match from a Portuguese alias. English always counts: it carries the
+shortcodes. A new array with the same languages on each render keeps the same packs and session.
+
 ### When the packs load
 
 The packs load when the component that calls `useEmojisense` mounts. To load them when the
 picker opens, call the hook inside the picker's popover. All hooks with the same `packBaseUrl`,
-`locale` and `extended` share one download and one index. A picker that opens again is ready on
-its first render. To start a little earlier, preload when the pointer moves onto or focus enters
-the button that opens the picker:
+languages (`locale`, `locales`) and `extended` share one download and one index. A picker that
+opens again is ready on its first render. To start a little earlier, preload when the pointer
+moves onto or focus enters the button that opens the picker (with the same options):
 
 ```tsx
 import { preloadEmojisense } from "@emojisense/react";

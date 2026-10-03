@@ -35,13 +35,53 @@
       "name": "locale",
       "type": "dropdown",
       "required": false,
-      "title": "Language",
-      "description": "Language for labels and for ranking. Both languages are always searched.",
-      "default": "en",
+      "title": "Preferred Language",
+      "description": "Labels and ranking. Search covers only this language, your system languages and English.",
+      "default": "system",
       "data": [
+        {
+          "title": "System Language",
+          "value": "system"
+        },
         {
           "title": "English",
           "value": "en"
+        },
+        {
+          "title": "中文",
+          "value": "zh"
+        },
+        {
+          "title": "हिन्दी",
+          "value": "hi"
+        },
+        {
+          "title": "Español",
+          "value": "es"
+        },
+        {
+          "title": "العربية",
+          "value": "ar"
+        },
+        {
+          "title": "Français",
+          "value": "fr"
+        },
+        {
+          "title": "বাংলা",
+          "value": "bn"
+        },
+        {
+          "title": "Português",
+          "value": "pt"
+        },
+        {
+          "title": "Русский",
+          "value": "ru"
+        },
+        {
+          "title": "Bahasa Indonesia",
+          "value": "id"
         },
         {
           "title": "Türkçe",

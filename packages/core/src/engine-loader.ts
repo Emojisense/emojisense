@@ -8,8 +8,13 @@ import type { SemanticProvider } from "./provider.js";
 export interface EngineLoaderOptions {
   /** Base URL of a pack version, e.g. "https://api.emojisense.com/v1/pack/0.1.0". */
   packUrl: string;
-  /** Pack locale ("tr"). English always loads too, and alone when the locale has no pack. */
+  /** Pack locale ("tr"), preferred in search. English always loads too, and alone when the locale has no pack. */
   locale?: string | undefined;
+  /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en", "fr"]: their packs load next to
+   * `locale`'s, and no others. Default: `locale` only.
+   */
+  locales?: readonly string[] | undefined;
   /**
    * Culture files of the pack version. Default: the culture directory next to `packUrl`
    * (".../v1/pack/0.1.0" → ".../v1/culture/0.1.0"). `false`: no culture layer. A failed load
@@ -29,7 +34,7 @@ export interface EngineLoaderOptions {
 
 /**
  * Loads the packs on first use: the core packs, then the extension packs (more aliases and
- * typos). Loaders with the same `packUrl`, `locale`, `extended` and `fetch` share one download and
+ * typos). Loaders with the same `packUrl`, languages, `extended` and `fetch` share one download and
  * one index, so a second editor or a picker that opens again gets its engine at once. The culture
  * file never delays the first engine: it is added when it arrives. Listeners hear about each
  * engine.
@@ -67,7 +72,7 @@ export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const index = sharedPackIndex({
     packUrl,
-    locale,
+    locales: [locale, ...(options.locales ?? [])],
     extended,
     fetch: options.fetch,
     whenIdle: options.whenIdle ?? defaultWhenIdle,

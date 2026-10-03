@@ -1,7 +1,8 @@
 /**
  * Copy the current pack version from packages/data into assets/packs/, with the data license
  * notices. Raycast ships the assets folder with the extension, so search works offline with no
- * download.
+ * download. Every language ships; at run time the extension loads only the user's languages
+ * (src/lib/languages.ts).
  *
  *   tsx scripts/bundle-packs.mts
  */

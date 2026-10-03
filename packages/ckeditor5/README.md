@@ -49,6 +49,7 @@ one keeps `:` and the console shows `emojisense-marker-conflict`.
 | `packUrl` | — | Base URL of a pack version. Set it or `engine`. The packs load when the editor first gets the focus, and a `:` typed before they arrive gets its list as soon as they do. Editors with the same packs on one page share one download. |
 | `engine` | — | A ready `AliasEngine` instead of `packUrl` |
 | `locale` | the content language | `"pt-br"` becomes `"pt"`. English always loads too. |
+| `locales` | `locale` and English | All the user's languages. Only their packs load, and search matches only their phrases. See below. |
 | `cultureUrl` | next to `packUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Emoji for the place and the time join after the top result. `false`: off |
 | `region` | the device's | Region for regional culture entries: the device's (its language, else its time zone), `""` for none, or an ISO code such as `"JP"` |
 | `endpoint` | — | The Emojisense API. Without it, search stays on the device. |
@@ -56,6 +57,25 @@ one keeps `:` and the console shows `emojisense-marker-conflict`.
 | `semantic` | — | A `SemanticProvider` instead of `endpoint` |
 | `skinTone` | — | `light`, `medium-light`, `medium`, `medium-dark` or `dark` |
 | `limit` | `8` | List size |
+
+### The user's languages
+
+`userLocales()` reads `navigator.languages` and keeps the languages that have a pack, most
+preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
+
+```ts
+import { userLocales } from "emojisense";
+
+const locales = userLocales();
+await ClassicEditor.create({
+  // …
+  emojisense: { packUrl: "https://api.emojisense.com/v1/pack/0.1.0", locale: locales[0], locales },
+});
+```
+
+A user of English and Turkish then never gets a match from a Portuguese alias. English always
+counts: it carries the shortcodes. Without `locales`, the editor loads and searches `locale` and
+English, as before.
 
 ## Behaviour
 

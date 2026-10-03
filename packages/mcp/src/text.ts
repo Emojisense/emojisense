@@ -46,6 +46,8 @@ export interface TextMatch extends AliasResult {
 
 export interface TextMatchOptions {
   locale?: string;
+  /** Only phrases of these locales match (`AliasSearchOptions.locales`). Default: every loaded pack. */
+  locales?: readonly string[];
   limit?: number;
 }
 
@@ -101,7 +103,7 @@ function phraseFactor(engine: AliasEngine, result: AliasResult): number {
  * loss" make this work offline without a model.
  */
 export function matchText(engine: AliasEngine, text: string, options: TextMatchOptions = {}): TextMatch[] {
-  const { locale, limit = 10 } = options;
+  const { locale, locales, limit = 10 } = options;
   const tokens = textTokens(text);
   const words = new Set(tokens);
   const best = new Map<string, { match: TextMatch; score: number; phrases: Set<string> }>();
@@ -112,6 +114,7 @@ export function matchText(engine: AliasEngine, text: string, options: TextMatchO
       culture: false,
       limit: PER_WINDOW,
       ...(locale ? { locale } : {}),
+      ...(locales ? { locales } : {}),
     });
     for (const result of results) {
       const coverage = phraseCoverage(result.match, words);

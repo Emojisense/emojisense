@@ -13,10 +13,12 @@ import { chromeInjector, openPicker } from "./inject";
 import { parseRecents, pushRecent, RECENTS_KEY } from "./recents";
 import { createSearchService } from "./search";
 
-/** Packs ship inside the extension (copied at build time), so every site uses one download. */
-async function loadBundledPacks() {
+/**
+ * Packs ship inside the extension (copied at build time), so search needs no network and every site
+ * uses the one copy. Only the packs of the user's languages are read.
+ */
+async function loadBundledPacks(locales: readonly string[]) {
   const baseUrl = chrome.runtime.getURL("packs");
-  const locales = ["en", "tr"];
   // Index order matters (PACK_FORMAT.md): core parts first, English first, then the ext parts.
   const [core, ext] = await Promise.all([
     loadPacks({ baseUrl, locales }),
@@ -37,6 +39,8 @@ const search = createSearchService({
     await chrome.storage.local.set({ [RECENTS_KEY]: pushRecent(await readRecents(), id) });
   },
   uiLanguage: () => chrome.i18n.getUILanguage(),
+  // The Accept-Language list from Chrome's settings, also readable in a service worker.
+  browserLanguages: () => navigator.languages,
 });
 
 /** The picker's fonts, read from the package (content scripts cannot read packaged files). */

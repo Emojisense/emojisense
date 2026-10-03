@@ -37,6 +37,13 @@ export const en: Pack = {
 
 export const engine = createEngine(en);
 
+/** A language the tests' user does not speak: "foguete" is only Portuguese. */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("🚀", "1F680", "foguete", { keyword: "espaço" })],
+};
+
 /** Knows "blastoff" → 🚀 after `delayMs`. */
 export function stubSemantic(delayMs = 0): SemanticProvider & { calls: string[] } {
   const calls: string[] = [];

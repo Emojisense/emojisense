@@ -33,7 +33,8 @@ interface AliasEngine {
 
 interface AliasSearchOptions {
   limit?: number; // default 24
-  locale?: string;
+  locale?: string; // preferred language: ranking, labels
+  locales?: readonly string[]; // the user's languages: only their phrases match; default every loaded pack
   prefix?: boolean; // default true
   culture?: boolean; // false = canonical ranking only
   region?: string; // default: the device's region; "" = none; or ISO 3166-1 alpha-2, "JP"
@@ -96,7 +97,7 @@ interface EmojiEntry {
 
 const loader = `function loadPacks(options: {
   baseUrl: string; // "${PACK_URL}"
-  locales?: string[]; // default ["en"]; English always loads first
+  locales?: readonly string[]; // default ["en"]; English always loads first
   part?: "core" | "ext"; // default "core"
   fetch?: typeof fetch;
   signal?: AbortSignal;
@@ -109,12 +110,19 @@ function loadCustomPack(options: {
   tenant?: string; // your customer's external id (tenants, coming soon)
   fetch?: typeof fetch;
   signal?: AbortSignal;
-}): Promise<Pack>;`;
+}): Promise<Pack>;
+
+// The user's languages that have a pack, most preferred first, always with English.
+userLocales(); // navigator.languages ["tr-TR", "en-US", "de"] → ["tr", "en"]
+userLocales({ languages: ["pt-BR"] }); // ["pt", "en"]
+packLocaleOf("zh-Hans"); // "zh"; undefined for a language without a pack
+PACK_LOCALES; // ["en", "zh", "hi", "es", "ar", "fr", "bn", "pt", "ru", "id", "tr"]`;
 
 const session = `function createSearchSession(options: {
   engine: AliasEngine;
   semantic?: SemanticProvider; // omit for fully offline search
   locale?: string;
+  locales?: readonly string[]; // the user's languages, as in engine.search
   limit?: number; // default 24
   debounceMs?: number; // default 200
   shouldUseSemantic?: (alias: AliasSearchOutput) => boolean;
@@ -211,6 +219,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
   <ul>
     <li><code>limit</code> defaults to 24. <code>prefix</code> (default <code>true</code>) treats the last word as a prefix while someone types. Pass <code>false</code> for complete queries.</li>
     <li><code>locale</code> prefers phrases from that language’s pack when ranking.</li>
+    <li><code>locales</code> are the user’s languages: only phrases of those loaded packs match. English (it carries the shortcodes), <code>locale</code> and custom packs always count. Without it, every loaded pack matches, so a page that loads Portuguese for a demo would give a visitor of English and Turkish a Portuguese alias’s match.</li>
     <li><code>minCoverage</code> (default 0.34) is the share of a multi-word query a phrase must cover.</li>
     <li><code>culture</code>, <code>region</code>, <code>now</code> and <code>day</code> control the <a href="#culture">culture layer</a>. Without a culture file they change nothing.</li>
   </ul>
@@ -220,7 +229,7 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
 
   <h2 id="loading">Loading packs</h2>
   <h3 id="load-packs">loadPacks</h3>
-  <p>Fetches and validates the packs of one pack version. The files are immutable, so the browser’s HTTP cache does the rest.</p>
+  <p>Fetches and validates the packs of one pack version. The files are immutable, so the browser’s HTTP cache does the rest. Load only the user’s languages: <code>loadPacks({"{ baseUrl, locales: userLocales() }"})</code>. It keeps the download small and the matches in languages the user reads.</p>
   <CodeBlock code={loader} lang="ts" />
   <p><code>loadCustomPack</code> fetches your custom emoji as a pack (<code>part: "custom"</code>, checked with <code>isCustomPack</code>); pass it to <code>createEngine</code> with the other packs. Custom rows use ids that start with <code>CUSTOM_ID_PREFIX</code>, and their results carry <code>imageUrl</code> and <code>shortcode</code>.</p>
   <p><code>assertPack(value)</code> validates a pack you load yourself, for example from your app bundle. <code>PACK_FORMAT</code>, <code>PACK_FORMAT_VERSION</code>, <code>FIELDS</code>, <code>DEFAULT_WEIGHTS</code> and <code>ROW_INDEX</code> describe the format. See <a href="/docs/pack-format/">Pack format</a>.</p>

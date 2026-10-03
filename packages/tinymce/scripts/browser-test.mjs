@@ -59,6 +59,7 @@ const page = (tinymce) => `<!doctype html><meta charset="utf-8">
     license_key: "gpl",
     plugins: "emojisense emoticons",
     emojisense_pack_url: "/packs",
+    emojisense_locales: "tr en",
     setup: (editor) => editor.on("init", () => { window.ready = true; }),
   });
 </script>`;
@@ -122,6 +123,8 @@ try {
     checks.push([":ship it lists 🚀 first", /rocket/i.test(ship.labels[0] ?? "")]);
     const content = await tab.evaluate(() => tinymce.activeEditor.getContent());
     checks.push(["inserts 🍕 and 🚀", content.includes("🍕") && content.includes("🚀")]);
+    const locales = await tab.evaluate(() => tinymce.activeEditor.options.get("emojisense_locales"));
+    checks.push(['emojisense_locales "tr en" is ["tr", "en"]', JSON.stringify(locales) === '["tr","en"]']);
     checks.push(["no page errors", errors.length === 0]);
     for (const [name, ok] of checks) {
       failed ||= !ok;

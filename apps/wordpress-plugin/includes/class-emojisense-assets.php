@@ -89,6 +89,7 @@ class Emojisense_Assets {
 		$culture  = (bool) Emojisense_Settings::value( 'culture' );
 		$config   = array(
 			'packUrl'    => EMOJISENSE_URL . 'packs/' . EMOJISENSE_PACK_VERSION,
+			// The site language. The browser adds its own languages (searchLocales in src/lib/config.ts).
 			'locale'     => $locale,
 			'cultureUrl' => '',
 			'endpoint'   => '',

@@ -14,6 +14,11 @@ export interface EmojiMartSearchOptions {
   /** Semantic layers, e.g. `createLayeredSemantic({ shardsUrl, endpoint })`. Omit for on-device only. */
   semantic?: SemanticProvider;
   locale?: string;
+  /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"]: only phrases of these loaded
+   * packs match (English always counts). Default: every pack of the engine.
+   */
+  locales?: readonly string[];
   /** Default 90, emoji-mart's own `maxResults`. */
   limit?: number;
   debounceMs?: number;
@@ -30,12 +35,22 @@ const EMOJI_MART_MAX_RESULTS = 90;
 
 /** An Emojisense search session whose results are emoji-mart emoji objects. */
 export function createEmojiMartSearch(options: EmojiMartSearchOptions): EmojiMartSearch {
-  const { data, engine, semantic, locale, limit = EMOJI_MART_MAX_RESULTS, debounceMs, onResults } = options;
+  const {
+    data,
+    engine,
+    semantic,
+    locale,
+    locales,
+    limit = EMOJI_MART_MAX_RESULTS,
+    debounceMs,
+    onResults,
+  } = options;
   const index = createEmojiMartIndex(data);
   return createSearchSession({
     engine,
     semantic,
     locale,
+    locales,
     limit,
     debounceMs,
     onChange: (state) => onResults(toEmojiMart(state.results, index), state),
@@ -51,6 +66,11 @@ export interface OverrideSearchIndexOptions {
   data: EmojiMartData;
   engine: AliasEngine;
   locale?: string;
+  /**
+   * All the user's languages, e.g. `userLocales()` → ["tr", "en"]: only phrases of these loaded
+   * packs match (English always counts). Default: every pack of the engine.
+   */
+  locales?: readonly string[];
 }
 
 /**
@@ -64,7 +84,7 @@ export interface OverrideSearchIndexOptions {
  * emoji-mart's search. Returns a function that restores the original.
  */
 export function overrideSearchIndex(searchIndex: SearchIndexLike, options: OverrideSearchIndexOptions) {
-  const { data, engine, locale } = options;
+  const { data, engine, locale, locales } = options;
   const index = createEmojiMartIndex(data);
   const original = searchIndex.search;
   searchIndex.search = async function search(value, searchOptions = {}) {
@@ -72,7 +92,11 @@ export function overrideSearchIndex(searchIndex: SearchIndexLike, options: Overr
       return original.call(this, value, searchOptions);
     }
     const limit = searchOptions.maxResults ?? EMOJI_MART_MAX_RESULTS;
-    const { results } = engine.search(value, { limit, ...(locale ? { locale } : {}) });
+    const { results } = engine.search(value, {
+      limit,
+      ...(locale ? { locale } : {}),
+      ...(locales ? { locales } : {}),
+    });
     return toEmojiMart(results, index);
   };
   return () => {

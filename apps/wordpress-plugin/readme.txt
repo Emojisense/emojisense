@@ -30,7 +30,7 @@ Emojisense finds emoji by meaning, slang and intent, not only by their official 
 * Reaction suggestions from the post text.
 * Hosted emoji sets (Twemoji, Noto, Fluent) so every visitor sees the same emoji. Hosted sets need a publishable key on the Solo plan or higher.
 
-**11 languages.** English, Chinese, Hindi, Spanish, Arabic, French, Bengali, Portuguese, Russian, Indonesian and Turkish. The plugin uses your site language, and always understands English too.
+**11 languages.** English, Chinese, Hindi, Spanish, Arabic, French, Bengali, Portuguese, Russian, Indonesian and Turkish. The plugin uses your site language and the languages of each person's browser, and always understands English too.
 
 **Culture layer.** Cultural and seasonal emoji join the results after the best match, for example ⚽ after 🐐 for "goat", or 🎃 for "halloween" in late October. You can turn it off.
 

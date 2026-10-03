@@ -6,6 +6,12 @@ public struct AliasSearchOptions: Sendable {
   /// Preferred locale. Matches that exist only in other loaded packs get a small penalty. Also
   /// the label locale of culture results.
   public var locale: String?
+  /// The user's languages: only phrases of these loaded locales match (["tr", "en"],
+  /// ``PackLocales/userLocales(languages:supported:)``). English (the primary pack: it carries
+  /// the shortcodes) and the preferred `locale` always count. `nil` (default): every loaded pack.
+  /// A user of English and Turkish then never gets a match from a Portuguese alias that is loaded
+  /// too (PACK_FORMAT.md §4).
+  public var locales: [String]?
   /// Treat the last token as a prefix while the user is still typing. Default true.
   public var prefix: Bool
   /// `false`: the canonical ranking only, even when the engine has a culture file
@@ -21,11 +27,12 @@ public struct AliasSearchOptions: Sendable {
   public var day: String?
 
   public init(
-    limit: Int = 24, locale: String? = nil, prefix: Bool = true, culture: Bool = true,
-    region: String? = nil, now: Date? = nil, day: String? = nil
+    limit: Int = 24, locale: String? = nil, locales: [String]? = nil, prefix: Bool = true,
+    culture: Bool = true, region: String? = nil, now: Date? = nil, day: String? = nil
   ) {
     self.limit = limit
     self.locale = locale
+    self.locales = locales
     self.prefix = prefix
     self.culture = culture
     self.region = region
@@ -200,6 +207,8 @@ public final class AliasEngine: @unchecked Sendable {
   ) -> (ranked: [RankedEmoji], wholeCoverage: Double) {
     let tokenCount = tokens.count
     let preferredMask = index.localeMasks[options.locale ?? index.primaryLocale] ?? 1
+    let searchedMask = index.searchedMask(
+      preferred: options.locale ?? index.primaryLocale, searched: options.locales)
     let isPreferred = { (phrase: Int32) in
       self.index.phraseLocaleMask[Int(phrase)] & preferredMask != 0
     }
@@ -216,7 +225,9 @@ public final class AliasEngine: @unchecked Sendable {
       let asPrefix = lastIsPrefix && position == tokenCount - 1
       let candidates =
         hasContentWord && isFunctionWord[position]
-        ? exactly(token) : expand(token, asPrefix: asPrefix, preferredMask: preferredMask)
+        ? exactly(token, searchedMask: searchedMask)
+        : expand(
+          token, asPrefix: asPrefix, preferredMask: preferredMask, searchedMask: searchedMask)
       // A function word the vocabulary lacks is not an unknown word of the query.
       if candidates.isEmpty && !isFunctionWord[position] { unknownTokens += 1 }
       var bestQuality = 0.0
@@ -230,9 +241,10 @@ public final class AliasEngine: @unchecked Sendable {
         }
         let whole = !candidates.isPartial[candidate]
         for posting in Int(index.postingStart[Int(id)])..<Int(index.postingStart[Int(id) + 1]) {
+          let phrase = Int(index.postings[posting])
+          if index.phraseLocaleMask[phrase] & searchedMask == 0 { continue }
           scratch.record(
-            quality: quality, phrase: Int(index.postings[posting]), token: position,
-            tokenCount: tokenCount, whole: whole)
+            quality: quality, phrase: phrase, token: position, tokenCount: tokenCount, whole: whole)
         }
       }
       weights.append(
@@ -423,10 +435,19 @@ public final class AliasEngine: @unchecked Sendable {
 
   /// The vocabulary token equal to `token`, if any: a function word next to content words
   /// matches only itself.
-  private func exactly(_ token: String) -> CandidateList {
+  private func exactly(_ token: String, searchedMask: Int) -> CandidateList {
     var candidates = CandidateList()
-    if let id = index.tokenIds[UTF16Text(token.utf16)] { candidates.add(id, quality: 1) }
+    if let id = searchedId(of: UTF16Text(token.utf16), searchedMask: searchedMask) {
+      candidates.add(id, quality: 1)
+    }
     return candidates
+  }
+
+  /// The vocabulary id of `token` when a searched pack has it.
+  private func searchedId(of token: UTF16Text, searchedMask: Int) -> Int32? {
+    guard let id = index.tokenIds[token], index.tokenLocaleMask[Int(id)] & searchedMask != 0
+    else { return nil }
+    return id
   }
 
   /// Does a longer vocabulary token start with `prefix`?
@@ -474,14 +495,20 @@ public final class AliasEngine: @unchecked Sendable {
   /// Vocabulary tokens a query token may stand for, with a match quality in (0, 1], in the order
   /// the reference engine finds them (the order breaks ties for the token weight). A prefix
   /// completion into a word that no preferred-locale pack has is a partial match: it matches with
-  /// less quality and never counts as whole-token coverage.
-  private func expand(_ token: String, asPrefix: Bool, preferredMask: Int) -> CandidateList {
+  /// less quality and never counts as whole-token coverage. Words that only unsearched packs have
+  /// are not candidates.
+  private func expand(_ token: String, asPrefix: Bool, preferredMask: Int, searchedMask: Int)
+    -> CandidateList
+  {
     var candidates = CandidateList()
     let isPreferredToken = { (id: Int32) in
       self.index.tokenLocaleMask[Int(id)] & preferredMask != 0
     }
+    let isSearchedToken = { (id: Int32) in
+      self.index.tokenLocaleMask[Int(id)] & searchedMask != 0
+    }
     let units = UTF16Text(token.utf16)
-    let exact = index.tokenIds[units]
+    let exact = searchedId(of: units, searchedMask: searchedMask)
     if let exact { candidates.add(exact, quality: 1) }
 
     var prefixMatches = 0
@@ -492,7 +519,7 @@ public final class AliasEngine: @unchecked Sendable {
       while position < index.vocabulary.count && position < start + Scoring.maxPrefixExpansion {
         let candidate = index.vocabulary[position]
         if !candidate.starts(with: units) { break }
-        if candidate.count > units.count {
+        if candidate.count > units.count && isSearchedToken(Int32(position)) {
           let id = Int32(position)
           let quality =
             (0.6 + (0.35 * Double(units.count)) / Double(candidate.count)) * completion
@@ -509,7 +536,9 @@ public final class AliasEngine: @unchecked Sendable {
 
     // While a word is still being typed and it already completes to real words, it is not a typo.
     guard exact == nil && prefixMatches == 0 else { return candidates }
-    if let squeezed = Fuzzy.squeezingRepeatedEnding(units), let id = index.tokenIds[squeezed] {
+    if let squeezed = Fuzzy.squeezingRepeatedEnding(units),
+      let id = searchedId(of: squeezed, searchedMask: searchedMask)
+    {
       candidates.add(id, quality: 0.85)
     }
     let maxEdits = Fuzzy.maxEdits(forLength: units.count)
@@ -519,7 +548,7 @@ public final class AliasEngine: @unchecked Sendable {
     for length in (units.count - maxEdits)...(units.count + maxEdits) {
       for id in index.tokenIdsByLength[length] ?? [] {
         let candidate = index.vocabulary[Int(id)]
-        guard Fuzzy.isPlausibleTypo(units, candidate) else { continue }
+        guard isSearchedToken(id), Fuzzy.isPlausibleTypo(units, candidate) else { continue }
         // A short token is a typo only of a preferred-locale word, and never of a word it
         // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
         if short && (units.starts(with: candidate) || !isPreferredToken(id)) { continue }

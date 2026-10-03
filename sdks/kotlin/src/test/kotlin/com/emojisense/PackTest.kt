@@ -49,6 +49,22 @@ class PackTest {
     }
 
     @Test
+    fun `leaves out a locale without a pack and loads each locale once`() = runBlocking {
+        val transport = StubTransport.files(mapOf("pack.en.json" to packJson()))
+        val packs = PackLoader("https://x.test/v1/pack/0.1.0", transport).loadPacks(listOf("de", "en", "de"))
+        assertEquals(listOf("en"), packs.map { it.locale })
+        assertEquals(listOf("pack.de.json", "pack.en.json"), transport.requests.map { it.substringAfterLast('/') }.sorted())
+    }
+
+    @Test
+    fun `fails when English does not load`() = runBlocking {
+        val turkish = packJson().replace("\"locale\":\"en\"", "\"locale\":\"tr\"")
+        val loader = PackLoader("https://x.test/v1/pack/0.1.0", StubTransport.files(mapOf("pack.tr.json" to turkish)))
+        val error = assertFailsWith<EmojisenseException.HttpStatus> { loader.loadPacks(listOf("tr")) }
+        assertEquals(404, error.status)
+    }
+
+    @Test
     fun `rejects a file that does not match the manifest`() = runBlocking {
         val manifest = """{"format":"emojisense-manifest","formatVersion":1,"packVersion":"0.1.0","emojiVersion":"17.0",
             "emojiCount":1,"files":{"pack.en.json":{"sha256":"00","bytes":1,"gzipBytes":1,"locale":"en"}}}"""

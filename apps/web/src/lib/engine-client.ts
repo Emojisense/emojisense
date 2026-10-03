@@ -1,10 +1,12 @@
 /**
  * One engine for every live demo on a page. The first engine is the English core plus the core
  * pack of the page's language (from `<html lang>`), so the first keystroke is answered at once in
- * the visitor's language. The other languages are heavy (all 22 packs are several MB, and indexing
- * them is seconds of main-thread work on a phone), so they load only when something asks: a demo,
- * a visitor who starts typing, or an idle page on a desktop with a fast connection. Every pack file
- * is fetched once and the full engine is built once, shared by all islands.
+ * the visitor's language. The full engine adds the visitor's other languages (the browser's) and
+ * the extension packs, and loads only when something asks: a demo, a visitor who starts typing, or
+ * an idle page on a desktop with a fast connection. Every language (22 packs, several MB, seconds
+ * of indexing on a phone) loads only for the showcases that need it: the playground and the
+ * assistant demo. Every pack file is fetched once and each engine is built once, shared by all
+ * islands. Searches match the visitor's languages only (`visitorLocales`), whatever is loaded.
  */
 import {
   type AliasEngine,
@@ -13,6 +15,7 @@ import {
   createLayeredSemantic,
   type Pack,
   type SemanticProvider,
+  userLocales,
 } from "emojisense";
 import { createStatsReporter, type StatsReporter } from "emojisense/stats";
 import { useEffect, useState } from "react";
@@ -25,14 +28,22 @@ const QUIET_MS = 800;
 const IDLE_TIMEOUT_MS = 5000;
 
 type Part = "core" | "ext";
+/** "visitor": the visitor's languages (`fullEngine`). "all": every language (`showcaseEngine`). */
+export type EngineScope = "visitor" | "all";
 type FullEngineListener = (engine: Promise<AliasEngine>) => void;
 
 const files = new Map<string, Promise<Pack>>();
-const fullEngineListeners = new Set<FullEngineListener>();
+const fullEngineListeners: Record<EngineScope, Set<FullEngineListener>> = {
+  visitor: new Set(),
+  all: new Set(),
+};
+const fullEngines: Partial<Record<EngineScope, Promise<AliasEngine>>> = {};
+/** Languages an island shows besides the visitor's (the hero's examples): their core packs join the full engine. */
+const requested = new Set<DemoLocale>();
 let first: Promise<AliasEngine> | undefined;
-let everything: Promise<AliasEngine> | undefined;
+let visitor: DemoLocale[] | undefined;
 let semantic: SemanticProvider | undefined;
-let idleUpgradeScheduled = false;
+const idleUpgradeScheduled = new Set<EngineScope>();
 
 export function packUrl(locale: string, part: Part = "core"): string {
   return `${PACK_BASE_URL}/pack.${locale}${part === "ext" ? ".ext" : ""}.json`;
@@ -101,6 +112,29 @@ export function labelOf(
   return labels?.[locale] ?? labels?.en;
 }
 
+/**
+ * The visitor's languages that have a pack: the page's first, then the browser's, always English.
+ * Search only these: a visitor of English and Turkish never gets a Portuguese alias's match.
+ */
+export function visitorLocales(): DemoLocale[] {
+  visitor ??= userLocales({
+    languages: [globalThis.document?.documentElement.lang ?? "", ...(globalThis.navigator?.languages ?? [])],
+    supported: DEMO_LOCALES,
+  }) as DemoLocale[];
+  return visitor;
+}
+
+/**
+ * Adds the core packs of `locales` to the full engine, for an island that shows searches in them
+ * (the hero's examples). Ask on mount: the full engine reads the list when it starts loading.
+ */
+export function requestLanguages(locales: readonly string[]): void {
+  for (const locale of locales) {
+    const known = DEMO_LOCALES.find((demo) => demo === locale);
+    if (known) requested.add(known);
+  }
+}
+
 /** English core plus the page language's core pack: small, fast, and in the visitor's language. */
 export function firstEngine(): Promise<AliasEngine> {
   if (!first) {
@@ -113,22 +147,40 @@ export function firstEngine(): Promise<AliasEngine> {
   return first;
 }
 
-/** Every language, core and extension packs. A pack that fails to load is skipped. */
+/**
+ * The visitor's languages, core and extension packs, plus the core packs of the languages islands
+ * requested (`requestLanguages`). A pack that fails to load is skipped.
+ */
 export function fullEngine(): Promise<AliasEngine> {
-  if (!everything) {
-    everything = buildFullEngine();
-    for (const listener of fullEngineListeners) listener(everything);
-    fullEngineListeners.clear();
-  }
-  return everything;
+  return startEngine("visitor");
 }
 
-async function buildFullEngine(): Promise<AliasEngine> {
+/** Every language, core and extension packs: for the showcases (the playground, the assistant demo). */
+export function showcaseEngine(): Promise<AliasEngine> {
+  return startEngine("all");
+}
+
+function startEngine(scope: EngineScope): Promise<AliasEngine> {
+  let engine = fullEngines[scope];
+  if (!engine) {
+    engine = buildEngine(scope);
+    fullEngines[scope] = engine;
+    for (const listener of fullEngineListeners[scope]) listener(engine);
+    fullEngineListeners[scope].clear();
+  }
+  return engine;
+}
+
+async function buildEngine(scope: EngineScope): Promise<AliasEngine> {
   await firstEngine();
-  // Core packs first: the first pack is the primary one (English core, with shortcodes).
-  const wanted = (["core", "ext"] as const).flatMap((part) =>
-    DEMO_LOCALES.map((locale) => loadPack(locale, part)),
-  );
+  const extended = scope === "all" ? [...DEMO_LOCALES] : visitorLocales();
+  const core = [...new Set([...extended, ...requested])];
+  // Core packs first, English first: the first pack is the primary one (with shortcodes).
+  const ordered = (locales: readonly DemoLocale[]) => ["en", ...locales.filter((locale) => locale !== "en")];
+  const wanted = [
+    ...ordered(core).map((locale) => loadPack(locale, "core")),
+    ...ordered(extended).map((locale) => loadPack(locale, "ext")),
+  ];
   const settled = await Promise.allSettled(wanted);
   const packs = settled.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
   await quietFor(QUIET_MS);
@@ -137,13 +189,14 @@ async function buildFullEngine(): Promise<AliasEngine> {
 }
 
 /** Calls `listener` with the full engine's promise as soon as anything starts loading it. */
-function whenFullEngineStarts(listener: FullEngineListener): () => void {
-  if (everything) {
-    listener(everything);
+function whenFullEngineStarts(scope: EngineScope, listener: FullEngineListener): () => void {
+  const engine = fullEngines[scope];
+  if (engine) {
+    listener(engine);
     return () => {};
   }
-  fullEngineListeners.add(listener);
-  return () => fullEngineListeners.delete(listener);
+  fullEngineListeners[scope].add(listener);
+  return () => fullEngineListeners[scope].delete(listener);
 }
 
 interface NetworkInformation {
@@ -155,15 +208,15 @@ interface NetworkInformation {
  * Starts the full engine after the page has loaded and gone idle, on desktop-class devices with a
  * fast, unmetered network. Phones index the packs for seconds, so there they wait to be asked.
  */
-function loadFullEngineWhenIdle(): void {
-  if (idleUpgradeScheduled) return;
-  idleUpgradeScheduled = true;
+function loadFullEngineWhenIdle(scope: EngineScope): void {
+  if (idleUpgradeScheduled.has(scope)) return;
+  idleUpgradeScheduled.add(scope);
   const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
   if (connection?.saveData || /2g|3g/.test(connection?.effectiveType ?? "")) return;
   if (!matchMedia("(pointer: fine)").matches) return;
   const start = () => {
     idle(IDLE_TIMEOUT_MS)
-      .then(() => fullEngine())
+      .then(() => startEngine(scope))
       .catch(() => {});
   };
   if (document.readyState === "complete") start();
@@ -195,14 +248,16 @@ export type EngineState = { engine?: AliasEngine; ready: "loading" | "english" |
 
 export interface UseEngineOptions {
   /**
-   * When to load every language. "now" (default) starts at once. "idle" waits for a page that has
+   * When to load the full engine. "now" (default) starts at once. "idle" waits for a page that has
    * loaded and gone idle, or for any other island (or `fullEngine()`) to ask for it first.
    */
   upgrade?: "now" | "idle";
+  /** "visitor" (default): the visitor's languages. "all": every language, for the showcases. */
+  scope?: EngineScope;
 }
 
-/** The first engine at once, then the full multilingual engine when it is ready. */
-export function useEngine({ upgrade = "now" }: UseEngineOptions = {}): EngineState {
+/** The first engine at once, then the full engine when it is ready. */
+export function useEngine({ upgrade = "now", scope = "visitor" }: UseEngineOptions = {}): EngineState {
   const [state, setState] = useState<EngineState>({ ready: "loading" });
   useEffect(() => {
     let live = true;
@@ -213,15 +268,15 @@ export function useEngine({ upgrade = "now" }: UseEngineOptions = {}): EngineSta
       full.then((engine) => live && setState({ engine, ready: "all" })).catch(() => {});
     };
     let unsubscribe = () => {};
-    if (upgrade === "now") onFullEngine(fullEngine());
+    if (upgrade === "now") onFullEngine(startEngine(scope));
     else {
-      unsubscribe = whenFullEngineStarts(onFullEngine);
-      loadFullEngineWhenIdle();
+      unsubscribe = whenFullEngineStarts(scope, onFullEngine);
+      loadFullEngineWhenIdle(scope);
     }
     return () => {
       live = false;
       unsubscribe();
     };
-  }, [upgrade]);
+  }, [upgrade, scope]);
   return state;
 }

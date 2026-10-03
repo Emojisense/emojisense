@@ -50,6 +50,19 @@ describe("<emojisense-picker> pack loading", () => {
     expect(coreRequests()).toHaveLength(1);
   });
 
+  it("preloads the packs of the user's languages for a picker with the same locales", async () => {
+    const requests = () =>
+      fetch.mock.calls.map(([url]) => String(url)).filter((url) => url.includes("/pack."));
+    preloadEmojisense({ packUrl: PACK_URL, locales: ["tr", "en"] });
+    await vi.waitFor(() => expect(requests()).toHaveLength(2));
+    const element = picker();
+    element.setAttribute("locales", "en tr");
+    document.body.append(element);
+    await vi.waitFor(() => expect(element.status).toBe("ready"));
+    expect(requests().slice(0, 2)).toEqual([`${PACK_URL}/pack.en.json`, `${PACK_URL}/pack.tr.json`]);
+    expect(requests().filter((url) => url.endsWith("/pack.tr.json"))).toHaveLength(1);
+  });
+
   it("loads again when it reconnects after a failure", async () => {
     vi.stubGlobal("fetch", serve({ packs: false }));
     const element = picker();

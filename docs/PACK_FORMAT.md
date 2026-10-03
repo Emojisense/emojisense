@@ -245,6 +245,14 @@ The **preferred locale** is the query's locale, or the locale of the first loade
 query has none. A phrase is in a preferred-locale pack when any pack of that locale (core or ext)
 contains it for this emoji.
 
+**Searched locales.** A query may name the user's languages (`locales`). Then only the packs of
+those locales are searched: a word that only other packs have is no candidate (no exact, prefix
+or typo match into it), and the phrases of other packs are skipped. The first pack (English: it
+carries the shortcodes), the packs of the preferred locale and custom packs are always searched.
+Without `locales`, every loaded pack is searched. IDF stays over all loaded packs. Added
+2026-10-03: a page that loaded every language for its demos gave a visitor of English and
+Turkish 👨‍🦲 for en "nato", by the Portuguese alias "careca nato".
+
 **Emoji score.** The best phrase score, plus 0.02 for every other matching phrase that is in a
 preferred-locale pack (at most +0.06), capped at 1. Phrases of other locales never add this
 bonus, so many loaded languages that share a loanword ("halloween") cannot lift every emoji to

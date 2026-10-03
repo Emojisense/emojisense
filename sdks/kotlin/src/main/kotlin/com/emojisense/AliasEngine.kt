@@ -6,6 +6,14 @@ public data class AliasSearchOptions @JvmOverloads constructor(
     val limit: Int = 24,
     /** Preferred locale. Matches that exist only in other loaded packs get a small penalty. */
     val locale: String? = null,
+    /**
+     * The user's languages: only phrases of these loaded locales match (["tr", "en"],
+     * [PackLocales.userLocales]). English (the primary pack: it carries the shortcodes), the
+     * preferred [locale] and custom packs always count. Null (default): every loaded pack. A user of
+     * English and Turkish then never gets a match from a Portuguese alias that is loaded too
+     * (PACK_FORMAT.md §4).
+     */
+    val locales: List<String>? = null,
     /** Treat the last token as a prefix while the user is still typing. */
     val prefix: Boolean = true,
     /** `false` = the canonical ranking only, even when the engine has a culture file (reproducible). */
@@ -206,16 +214,23 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         val tokens = queryTokens(normalized, lastIsPrefix, functionWords)
         if (tokens.isEmpty()) return AliasSearchOutput(normalized, tokens, emptyList(), 0.0, 0.0)
         val (results, wholeCoverage) = synchronized(this) {
-            val ranking = rank(tokens, lastIsPrefix, functionWords, options.locale)
+            val ranking = rank(tokens, lastIsPrefix, functionWords, options.locale, options.locales)
             ranking.scored.take(maxOf(0, options.limit)).map { result(it, options.locale) } to ranking.wholeCoverage
         }
         return AliasSearchOutput(normalized, tokens, results, results.firstOrNull()?.score ?: 0.0, roundScore(wholeCoverage))
     }
 
     /** Scores every phrase the query touches and keeps the best phrase per emoji. Caller holds the lock. */
-    private fun rank(tokens: List<String>, lastIsPrefix: Boolean, functionWords: Set<String>, locale: String?): Ranking {
+    private fun rank(
+        tokens: List<String>,
+        lastIsPrefix: Boolean,
+        functionWords: Set<String>,
+        locale: String?,
+        locales: List<String>?,
+    ): Ranking {
         val count = tokens.size
         val preferredMask = (index.preferredMasks[locale ?: index.primary.locale] ?: 1) or index.customMask
+        val searchedMask = index.searchedMask(locale ?: index.primary.locale, locales)
         fun isPreferred(phrase: Int) = (index.phraseLocaleMask[phrase] and preferredMask) != 0
         startSearch()
 
@@ -230,9 +245,9 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         tokens.forEachIndexed { position, token ->
             val partial = HashSet<Int>()
             val candidates = if (hasContentWord && isFunctionWord[position]) {
-                exactly(token)
+                exactly(token, searchedMask)
             } else {
-                expand(token, lastIsPrefix && position == count - 1, preferredMask, partial)
+                expand(token, lastIsPrefix && position == count - 1, preferredMask, searchedMask, partial)
             }
             // A function word the vocabulary lacks is not an unknown word of the query.
             if (candidates.isEmpty() && !isFunctionWord[position]) unknownTokens++
@@ -247,6 +262,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
                 val whole = id !in partial
                 for (posting in index.postingStart[id] until index.postingStart[id + 1]) {
                     val phrase = index.postings[posting]
+                    if ((index.phraseLocaleMask[phrase] and searchedMask) == 0) continue
                     val base = phrase * MAX_QUERY_TOKENS
                     if (phraseStamp[phrase] != generation) {
                         phraseStamp[phrase] = generation
@@ -449,7 +465,12 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
     }
 
     /** The vocabulary token equal to [token], if any: a function word next to content words matches only itself. */
-    private fun exactly(token: String): Map<Int, Double> = index.tokenIds[token]?.let { mapOf(it to 1.0) } ?: emptyMap()
+    private fun exactly(token: String, searchedMask: Int): Map<Int, Double> =
+        searchedIdOf(token, searchedMask)?.let { mapOf(it to 1.0) } ?: emptyMap()
+
+    /** The vocabulary id of [token] when a searched pack has it. */
+    private fun searchedIdOf(token: String, searchedMask: Int): Int? =
+        index.tokenIds[token]?.takeIf { (index.tokenLocaleMask[it] and searchedMask) != 0 }
 
     /** Does a longer vocabulary token start with `prefix`? */
     private fun completes(prefix: String): Boolean = index.vocabulary.getOrNull(lowerBound(prefix))?.startsWith(prefix) ?: false
@@ -491,15 +512,23 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
      * Vocabulary tokens a query token may stand for, with a match quality in (0, 1], in the order
      * the reference engine finds them (the order breaks ties for the token weight). [partial] gets
      * the prefix completions into words that no preferred-locale pack has: they match with less
-     * quality and never count as whole-token coverage.
+     * quality and never count as whole-token coverage. Words that only unsearched packs have are not
+     * candidates.
      */
-    private fun expand(token: String, asPrefix: Boolean, preferredMask: Int, partial: MutableSet<Int>): Map<Int, Double> {
+    private fun expand(
+        token: String,
+        asPrefix: Boolean,
+        preferredMask: Int,
+        searchedMask: Int,
+        partial: MutableSet<Int>,
+    ): Map<Int, Double> {
         val candidates = LinkedHashMap<Int, Double>()
         fun add(id: Int, quality: Double) {
             if (quality > (candidates[id] ?: 0.0)) candidates[id] = quality
         }
         fun isPreferredToken(id: Int) = (index.tokenLocaleMask[id] and preferredMask) != 0
-        val exact = index.tokenIds[token]
+        fun isSearchedToken(id: Int) = (index.tokenLocaleMask[id] and searchedMask) != 0
+        val exact = searchedIdOf(token, searchedMask)
         if (exact != null) add(exact, 1.0)
 
         var prefixMatches = 0
@@ -510,7 +539,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
             while (position < index.vocabulary.size && position < start + MAX_PREFIX_EXPANSION) {
                 val candidate = index.vocabulary[position]
                 if (!candidate.startsWith(token)) break
-                if (candidate.length > token.length) {
+                if (candidate.length > token.length && isSearchedToken(position)) {
                     val quality = (0.6 + (0.35 * token.length) / candidate.length) * completion
                     if (isPreferredToken(position)) {
                         add(position, quality)
@@ -527,7 +556,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         // While a word is still being typed and it already completes to real words, it is not a typo.
         if (exact != null || prefixMatches > 0) return candidates
         // "upp" → "up", "happpy" → "happy": a repeated final letter is the most common slip.
-        Fuzzy.squeezeRepeatedEnding(token)?.let { squeezed -> index.tokenIds[squeezed]?.let { add(it, 0.85) } }
+        Fuzzy.squeezeRepeatedEnding(token)?.let { squeezed -> searchedIdOf(squeezed, searchedMask)?.let { add(it, 0.85) } }
         val maxEdits = Fuzzy.maxEdits(token.length)
         // With no edits allowed only an exact match could qualify, and there is none.
         if (maxEdits == 0) return candidates
@@ -535,7 +564,7 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
         for (length in token.length - maxEdits..token.length + maxEdits) {
             for (id in index.tokenIdsByLength[length] ?: continue) {
                 val candidate = index.vocabulary[id]
-                if (!Fuzzy.isPlausibleTypo(token, candidate)) continue
+                if (!isSearchedToken(id) || !Fuzzy.isPlausibleTypo(token, candidate)) continue
                 // A short token is a typo only of a preferred-locale word, and never of a word it
                 // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
                 if (short && (token.startsWith(candidate) || !isPreferredToken(id))) continue

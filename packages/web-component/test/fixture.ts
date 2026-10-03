@@ -46,6 +46,13 @@ export const tr: Pack = {
   ],
 };
 
+/** A language the tests' user does not speak: "foguete" is only Portuguese. */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("🚀", "1F680", 3, "foguete", "espaço")],
+};
+
 const enExt: Pack = {
   ...en,
   part: "ext",
@@ -129,6 +136,8 @@ export function serve({ packs = true } = {}) {
     "/v1/pack/test/pack.tr.json": tr,
     "/v1/pack/test/pack.en.ext.json": enExt,
     "/v1/pack/test/pack.tr.ext.json": { ...tr, part: "ext", emoji: [] },
+    "/v1/pack/test/pack.pt.json": pt,
+    "/v1/pack/test/pack.pt.ext.json": { ...pt, part: "ext", emoji: [] },
     "/p/test/index.json": shardIndex,
     "/p/test/sp.json": shard,
     "/v1/search": apiBody,

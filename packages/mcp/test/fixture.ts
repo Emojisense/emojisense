@@ -58,6 +58,7 @@ export const en: Pack = {
     row("🆕", "1F195", "objects", "NEW button", { keyword: "new" }),
     row("🇵🇷", "1F1F5-1F1F7", "flags", "flag: Puerto Rico", { keyword: "pr" }),
     row("🦖", "1F996", "animals-nature", "T-Rex", { keyword: "dinosaur", alias: "jurassic park" }),
+    row("👨‍🦲", "1F468-200D-1F9B2", "people-body", "man: bald", { keyword: "bald" }),
   ],
 };
 
@@ -67,4 +68,11 @@ export const tr: Pack = {
   emoji: [row("🎂", "1F382", "objects", "doğum günü pastası", { alias: "iyi ki dogdun" })],
 };
 
-export const engine = createEngine([en, tr]);
+/** "careca nato" (born bald) once ranked 👨‍🦲 first for an English "nato". */
+export const pt: Pack = {
+  ...en,
+  locale: "pt",
+  emoji: [row("👨‍🦲", "1F468-200D-1F9B2", "people-body", "homem: careca", { alias: "careca nato" })],
+};
+
+export const engine = createEngine([en, tr, pt]);

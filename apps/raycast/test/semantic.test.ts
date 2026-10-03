@@ -38,7 +38,8 @@ describe("createApiProvider", () => {
 
     expect(response?.results[0]?.emoji).toBe("🚀");
     const [call] = calls;
-    expect(call?.url).toBe("https://api.test/v1/search?q=ship+it&locale=en&limit=5&mode=semantic");
+    // culture=0: the session applies the culture layer on the device, after fusion.
+    expect(call?.url).toBe("https://api.test/v1/search?q=ship+it&locale=en&limit=5&mode=semantic&culture=0");
     expect(call?.headers.get("Authorization")).toBe("Bearer sk_live_secret");
   });
 

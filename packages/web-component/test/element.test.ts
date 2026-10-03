@@ -1,7 +1,7 @@
 import type { Culture } from "emojisense";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineEmojisensePicker, type EmojiSelectDetail, EmojisensePickerElement } from "../src/index.js";
-import { CULTURE_URL, culture, en, PACK_URL, serve } from "./fixture.js";
+import { CULTURE_URL, culture, en, PACK_URL, pt, serve, tr } from "./fixture.js";
 
 let fetch: ReturnType<typeof serve>;
 
@@ -266,6 +266,41 @@ describe("<emojisense-picker>", () => {
     expect(picker instanceof EmojisensePickerElement).toBe(true);
     expect($$(picker, "#browse [role=option]")).toHaveLength(en.emoji.length);
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("<emojisense-picker> user's languages", () => {
+  const packRequests = () =>
+    fetch.mock.calls.map(([url]) => String(url)).filter((url) => /\/pack\.\w+\.json$/.test(url));
+
+  it("loads and searches only the languages of the locales attribute", async () => {
+    const picker = await mount({ locales: "tr en" });
+    expect(picker.locales).toEqual(["tr", "en"]);
+    expect(packRequests()).toEqual([`${PACK_URL}/pack.en.json`, `${PACK_URL}/pack.tr.json`]);
+    type(picker, "roket");
+    expect(results(picker)[0]?.textContent).toBe("🚀");
+  });
+
+  it("matches only phrases of the user's languages, and every pack without the attribute", async () => {
+    const picker = document.createElement("emojisense-picker");
+    picker.packs = [en, tr, pt];
+    picker.locales = ["tr", "en"];
+    document.body.append(picker);
+    await vi.waitFor(() => expect(picker.status).toBe("ready"));
+    type(picker, "foguete");
+    expect(results(picker)).toHaveLength(0);
+    picker.locales = undefined;
+    await vi.waitFor(() => expect(results(picker)[0]?.textContent).toBe("🚀"));
+  });
+
+  it("reflects the property to the attribute, from a list or a string", () => {
+    const picker = document.createElement("emojisense-picker");
+    picker.locales = ["tr", "en"];
+    expect(picker.getAttribute("locales")).toBe("tr en");
+    picker.locales = "pt, en";
+    expect(picker.locales).toEqual(["pt", "en"]);
+    picker.locales = [];
+    expect(picker.hasAttribute("locales")).toBe(false);
   });
 });
 
