@@ -31,6 +31,8 @@ export interface Env {
    */
   FIRST_PARTY_ORIGINS?: string;
   EVENTS?: AnalyticsDataset;
+  /** Client reports of POST /v1/events (src/events.ts): outcome counts and picks per app. */
+  STATS?: AnalyticsDataset;
   /** Static assets (public/): the published packs, read for locales outside the bundle. */
   ASSETS?: { fetch(input: string): Promise<Response> };
   /** Comma-separated `key` or `key:plan` entries accepted without a database row (auth.ts). */

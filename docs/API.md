@@ -426,6 +426,31 @@ on the device (`loadCustomPack` in `emojisense`). Not metered.
 - Development keys (`DEV_KEYS`) get an empty pack. When the database cannot be read, the answer
   is an empty pack with `Cache-Control: no-store`.
 
+## `POST /v1/events`
+
+A client's report of how its searches ended and which emoji people picked: one per page view,
+from a sample of sessions (`emojisense/stats`, web component `stats-url`, React `statsUrl`).
+Free, not metered, no key needed (`?key=pk_…` files it under the key's app; publishable keys keep
+their allowed origins). Answers `204`. Also on `https://stats.emojisense.com`
+(`stats.emojisense.dev`), a host that takes this route only, so the reports can move to another
+backend with no client update.
+
+```json
+{ "v": 1, "sample": 0.1, "locale": "pt-BR",
+  "counts": { "device": 41, "memory": 6, "shard": 3, "api": 2, "none": 1, "error": 0, "cancelled": 9 },
+  "picks": [["bom dia", "2600"]] }
+```
+
+| Field | Meaning |
+| ----- | ------- |
+| `sample` | the share of sessions that report (0–1); each report counts `1 / sample` times |
+| `counts` | keystrokes by how their search ended: on the device, from memory (a loaded shard or an answer seen before), a shard file, the API, no layer answering, an error, or replaced by the next keystroke while it waited |
+| `picks` | up to 50 `[normalized query, hexcode]` pairs of search results that were chosen |
+
+Sent as `text/plain` (`navigator.sendBeacon`), so no CORS preflight. At most 16 KB; a body that
+is not a report answers `400`. Pick text goes through the shard privacy filter; text it refuses
+is dropped and the emoji kept.
+
 ## `GET /v1/health`
 
 `{ "ok": true, "packVersion": "0.1.0", "model": "bge-m3@1024", "semantic": true }`. No key, not
@@ -888,6 +913,7 @@ What the hosted service collects, and for how long:
 | Per app, UTC day, normalized search query (≤ 64 chars), locale and country: number of searches and of misses. The country is `request.cf.country` (ISO 3166-1 alpha-2, derived from the IP address at Cloudflare's edge; `XX` when unknown). Only keyed `/v1/search` calls. | D1 `query_daily` | Pro: 30 days. Scale: 365 days. Free and Solo: 7 days (not shown; an upgrade then shows the last week). A daily cron deletes older rows. |
 | Normalized search query text (≤ 64 chars) of every search that reached the Worker, with cache status, latency and scores. No app. | Analytics Engine | Analytics Engine retention (3 months) |
 | Public shard files: normalized query text and its emoji results, for queries over the shard thresholds (below), plus synthetic queries from our own data (the base layer). No app, account, day or count. | R2 `emojisense-cdn`, CDN and edge cache | Rebuilt nightly. A file that no build names any more is deleted a day after the build that dropped it. Shard files are named by content and cached by browsers and the CDN for up to a year; a dropped query stays in such copies until they expire, but no index names it. |
+| Client reports (`POST /v1/events`, opt-in in the SDK, a sample of sessions): per app, counts of how searches ended and `[normalized query ≤ 64 chars, hexcode]` pairs of picked results. No IP, key, device or user id. | Analytics Engine | Analytics Engine retention (3 months) |
 | Regional trends: normalized query text, locale, country (or `*`), score, searches and accounts, for queries over the trend thresholds (below). No app, account or user. Not served by any route. | D1 `trends_daily` | 90 days (`TRENDS_KEEP_DAYS`). The daily cron deletes older rows. |
 | Monthly call counts per app and metric | D1 `usage_monthly` | until the account is deleted (apps have no delete route) |
 | Tenants: your `externalId` and optional `name` per customer | D1 `tenants` | until you delete the tenant or the account |

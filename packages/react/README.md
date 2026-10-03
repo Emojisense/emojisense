@@ -18,7 +18,7 @@ import { useEmojiSearch, useEmojisense } from "@emojisense/react";
 
 const sense = useEmojisense({
   packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
-  shardsUrl: "https://api.emojisense.com/p/0.1.0", // layer 2: free static files, asked first
+  shardsUrl: "https://cdn.emojisense.com/p/0.1.0", // layer 2: free static files, asked first
   endpoint: "https://api.emojisense.com", // layer 3: metered API, asked on a shard miss
   publishableKey: "pk_live_…",
 });
@@ -31,6 +31,7 @@ const { results, status, layer } = useEmojiSearch(query, sense);
 | `locale` | `"tr"` loads the Turkish pack next to English. |
 | `shardsUrl` | Precomputed results. Omit it when no shards are deployed. |
 | `endpoint`, `publishableKey` | Semantic API. Omit `shardsUrl` and `endpoint` for fully offline search. |
+| `statsUrl`, `statsSample` | Report how searches end and which results are picked (`POST /v1/events`), from a share of sessions (default 0.1). Off when omitted. `EmojisensePicker` reports its picks; with your own UI call `sense.stats?.pick(query, id)`. |
 | `cultureUrl` | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0`. Editorial emoji for the culture and the moment join the results after the top result, never above it (`source: "culture"`, with `context` and `cultureId`). A failed load is ignored. |
 | `region` | ISO 3166-1 code such as `"BR"`. Regional culture entries apply only with a matching region. Default: the region of the browser's language (`navigator.language` `"pt-BR"` → `"BR"`; none without a region subtag). It is read on the device and never sent. `""` turns regional entries off. `"auto"`: the API reports the region of the request's country (`region=auto`, needs `endpoint`); searches use it after the first API answer, and `useRelevantNow` shows entries for every region only. |
 | `emojiSet` | How the pickers draw emoji. `"native"` (default) uses the system font. `"twemoji"`, `"noto"` and `"fluent"` draw `<img src="{endpoint}/v1/sets/{set}/{hexcode}.svg?key={publishableKey}" alt="{emoji}" loading="lazy">` and need `endpoint` and a `publishableKey` whose plan includes hosted sets (Solo and up). When a set has no image for an emoji (e.g. Fluent has no country flags), the native emoji takes its place. Credit the set in your app (see NOTICE). |

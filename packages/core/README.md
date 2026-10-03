@@ -91,11 +91,17 @@ session.update("a dinosaur from a movie");
 | 3. API | `createSemanticClient({ endpoint, key })` | Metered, see [pricing](https://emojisense.com/pricing/) |
 
 `createLayeredSemantic({ shardsUrl, endpoint, key })` chains layers 2 and 3, cheapest first.
+A shard that is already loaded answers between keystrokes, with no debounce and no request.
 Shards are per locale: a search with `locale: "tr"` reads `<shardsUrl>/tr/…`, English reads
 `<shardsUrl>/…` as before, and a locale without shards goes to the API.
 `chainProviders(...providers)` chains any providers: a provider returns `undefined` when it has no
 answer, and the next one gets the query. Over its plan limit, the API still answers from its shared
 cache and never fails hard.
+
+**Search reports.** `createStatsReporter({ endpoint, key })` from `emojisense/stats` counts how
+searches end (`observe(state)` in the session's `onChange`) and which results are picked
+(`pick(query, id)`), and sends one small report per page view from 1 in 10 sessions
+(`POST /v1/events`). Off unless you create it.
 
 To fuse by hand: `shouldUseSemantic(aliasOutput)` tells you when to ask, and
 `fuse(aliasOutput, semanticResults)` merges the two lists.

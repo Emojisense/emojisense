@@ -21,6 +21,7 @@ import {
   type SessionState,
   type SessionStatus,
 } from "emojisense";
+import { createStatsReporter, type StatsReporter } from "emojisense/stats";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface EmojisenseOptions {
@@ -29,7 +30,7 @@ export interface EmojisenseOptions {
   /** UI locale. "tr" loads the Turkish pack next to English. */
   locale?: string;
   /**
-   * Precomputed results (layer 2), e.g. "https://api.emojisense.com/p/0.1.0". Free static files,
+   * Precomputed results (layer 2), e.g. "https://cdn.emojisense.com/p/0.1.0". Free static files,
    * asked before the API.
    */
   shardsUrl?: string;
@@ -65,6 +66,13 @@ export interface EmojisenseOptions {
    * search; the relevant-now shelf then shows entries for every region only.
    */
   region?: string;
+  /**
+   * Where to report how searches end and which emoji are picked (`POST /v1/events`), e.g.
+   * "https://stats.emojisense.com". Off when omitted. Counts and picks only (emojisense/stats).
+   */
+  statsUrl?: string;
+  /** Share of sessions that report, 0–1. Default 0.1. */
+  statsSample?: number;
 }
 
 export interface Emojisense {
@@ -89,6 +97,8 @@ export interface Emojisense {
   culture?: Culture;
   /** The region for culture entries: the `region` option, else the browser's region. */
   region?: string;
+  /** With `statsUrl`: report picks with `stats.pick(query, id)`; `useEmojiSearch` counts searches. */
+  stats?: StatsReporter;
   error?: unknown;
 }
 
@@ -106,6 +116,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     tenant,
     cultureUrl,
     region = deviceRegion(),
+    statsUrl,
+    statsSample,
   } = options;
   const [state, setState] = useState<{ packs: Pack[]; extended: boolean; error?: unknown }>({
     packs: [],
@@ -193,6 +205,20 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     [shardsUrl, endpoint, publishableKey, packVersion],
   );
 
+  const stats = useMemo(
+    () =>
+      statsUrl
+        ? createStatsReporter({
+            endpoint: statsUrl,
+            ...(publishableKey ? { key: publishableKey } : {}),
+            ...(statsSample === undefined ? {} : { sampleRate: statsSample }),
+            locale,
+          })
+        : undefined,
+    [statsUrl, publishableKey, statsSample, locale],
+  );
+  useEffect(() => () => stats?.dispose(), [stats]);
+
   return {
     engine,
     semantic,
@@ -206,6 +232,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     ...(publishableKey ? { publishableKey } : {}),
     ...(culture ? { culture } : {}),
     ...(region ? { region } : {}),
+    ...(stats ? { stats } : {}),
     ...(state.error ? { error: state.error } : {}),
   };
 }
@@ -251,10 +278,10 @@ const IDLE: EmojiSearchState = {
  */
 export function useEmojiSearch(
   query: string,
-  emojisense: Pick<Emojisense, "engine" | "semantic" | "locale" | "region">,
+  emojisense: Pick<Emojisense, "engine" | "semantic" | "locale" | "region" | "stats">,
   options: UseEmojiSearchOptions = {},
 ): EmojiSearchState {
-  const { engine, semantic, locale, region } = emojisense;
+  const { engine, semantic, locale, region, stats } = emojisense;
   const { limit = 24, debounceMs = 200, culture = true } = options;
   const [state, setState] = useState<EmojiSearchState>(IDLE);
   const sessionRef = useRef<ReturnType<typeof createSearchSession> | undefined>(undefined);
@@ -269,7 +296,8 @@ export function useEmojiSearch(
       debounceMs,
       ...(culture ? {} : { culture: false as const }),
       ...(region ? { region } : {}),
-      onChange: (s) =>
+      onChange: (s) => {
+        stats?.observe(s);
         setState({
           results: s.results,
           status: s.status,
@@ -278,14 +306,15 @@ export function useEmojiSearch(
           semanticMs: s.semanticMs,
           semanticCached: s.semanticCached,
           layer: layerOf(s),
-        }),
+        });
+      },
     });
     sessionRef.current = session;
     return () => {
       session.dispose();
       sessionRef.current = undefined;
     };
-  }, [engine, semantic, locale, region, limit, debounceMs, culture]);
+  }, [engine, semantic, locale, region, stats, limit, debounceMs, culture]);
 
   useEffect(() => {
     if (!engine) return;

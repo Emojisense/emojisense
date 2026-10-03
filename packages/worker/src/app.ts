@@ -11,6 +11,7 @@ import { CustomEmojiIndex } from "./custom.ts";
 import { CUSTOM_IMAGE_PATH, handleCustomImage, handleCustomPack } from "./custom-routes.ts";
 import type { CustomEmojiReader } from "./custom-store.ts";
 import type { Env } from "./env.ts";
+import { handleEvents } from "./events.ts";
 import { corsHeaders, errorResponse, json, refusesPlainHttp } from "./http.ts";
 import { handleClassifyImage } from "./image.ts";
 import { Meter, type WaitUntil } from "./meter.ts";
@@ -57,7 +58,11 @@ const ROUTES: Record<string, Route> = {
   "/v1/suggest-reactions": { method: "POST", handle: handleReactions },
   "/v1/classify-image": { method: "POST", handle: handleClassifyImage },
   "/v1/custom-pack": { method: "GET", handle: handleCustomPack },
+  "/v1/events": { method: "POST", handle: handleEvents },
 };
+
+/** Hosts that only take client reports (stats.emojisense.*): a separate name, so they can move. */
+const STATS_HOST = /^stats\./;
 
 /**
  * The API Worker. Key cache and usage counters live as long as the isolate, so they are built
@@ -123,6 +128,8 @@ export function createApp(options: AppOptions) {
         return errorResponse(403, `use https://${url.host}: plain http would send keys and text unencrypted`);
       }
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+      if (STATS_HOST.test(url.hostname) && url.pathname !== "/v1/events")
+        return errorResponse(404, "not found");
 
       if (url.pathname === "/v1/health") {
         if (request.method !== "GET") return errorResponse(405, "method not allowed", { Allow: "GET" });

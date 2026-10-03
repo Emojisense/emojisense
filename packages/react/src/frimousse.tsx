@@ -52,13 +52,18 @@ export interface EmojiSelection {
   shortcode?: string;
 }
 
+/** The result each search selection came from, for stats; the selection itself stays as documented. */
+const resultIds = new WeakMap<EmojiSelection, string>();
+
 function selectionOf(result: SearchResult, skinTone: SkinTone, label: string): EmojiSelection {
-  return {
+  const selection = {
     emoji: applySkinTone(result.emoji, skinTone),
     label,
     ...(result.imageUrl ? { imageUrl: result.imageUrl } : {}),
     ...(result.shortcode ? { shortcode: result.shortcode } : {}),
   };
+  resultIds.set(selection, result.id);
+  return selection;
 }
 
 /**
@@ -289,6 +294,17 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
   const { emojiSet, endpoint, publishableKey } = emojisense;
   const glyph = useMemo(() => ({ emojiSet, endpoint, publishableKey }), [emojiSet, endpoint, publishableKey]);
 
+  const { stats } = emojisense;
+  /** A search result picked: reported with its query (`statsUrl`), then passed on. */
+  const selectResult = useCallback(
+    (selection: EmojiSelection) => {
+      const id = resultIds.get(selection);
+      if (id) stats?.pick(query, id);
+      onEmojiSelect(selection);
+    },
+    [stats, query, onEmojiSelect],
+  );
+
   const labelOf = useCallback(
     (r: SearchResult) => {
       const labels = emojisense.engine?.get(r.id)?.labels;
@@ -319,14 +335,14 @@ export function EmojisensePicker(props: EmojisensePickerProps) {
         setActiveIndex={setActiveIndex}
         columns={columns}
         listboxId={listboxId}
-        onSelect={onEmojiSelect}
+        onSelect={selectResult}
         labelOf={labelOf}
       />
       <EmojiPicker.Viewport>
         {searching ? (
           <EmojisenseResults
             results={results}
-            onSelect={onEmojiSelect}
+            onSelect={selectResult}
             labelOf={labelOf}
             activeIndex={activeIndex}
             onActiveIndexChange={setActiveIndex}

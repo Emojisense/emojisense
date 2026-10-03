@@ -125,6 +125,14 @@ record no IP address, key, app or user id with it. These records go to Cloudflar
 Analytics Engine, which keeps them for three months. We use a search text to improve search for
 everyone only after it has been searched at least 5 times, because rare texts can be personal.
 
+An app can turn on search reports (`stats-url` in the SDK). Then a share of its sessions, by
+default 1 in 10, sends one report per page view: how many searches ended on the device, from
+precomputed files or from the API, and which search results were chosen, as the normalized search
+text (at most 64 characters) and the emoji. We record the app with it, but no IP address, key,
+device or user id. Text that looks personal (emails, links, phone numbers, ids) is dropped and only
+the emoji is kept. The reports go to Cloudflare Workers Analytics Engine, which keeps them for three
+months. For this data, our customer is the controller.
+
 Search results are cached on Cloudflare's network for up to 7 days. The cache key holds only the
 normalized search text, the language, the number of results, the mode and the index version.
 

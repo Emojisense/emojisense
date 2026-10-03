@@ -129,3 +129,8 @@ export const CUSTOM_PACK_CACHE_SECONDS = 60;
 export const CUSTOM_PACK_CACHE_VERSION = "1";
 /** `tenant=` is the app owner's own customer id. */
 export const MAX_TENANT_LENGTH = 128;
+
+/** POST /v1/events: the largest report accepted (50 picks of 64 characters fit in ~6 KB)… */
+export const EVENTS_MAX_BYTES = 16 * 1024;
+/** …and the most picks in one (emojisense/stats sends at most 50). */
+export const EVENTS_MAX_PICKS = 50;

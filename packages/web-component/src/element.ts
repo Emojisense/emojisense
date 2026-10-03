@@ -27,6 +27,7 @@ import {
   SKIN_TONES,
   type SkinTone,
 } from "emojisense";
+import { createStatsReporter, type StatsReporter } from "emojisense/stats";
 import { type GridLayout, isGridKey, layoutRows, moveActive } from "./grid.js";
 import { styles } from "./styles.js";
 
@@ -106,6 +107,7 @@ const UPGRADED_PROPERTIES = [
   "packUrl",
   "shardsUrl",
   "endpoint",
+  "statsUrl",
   "publishableKey",
   "locale",
   "columns",
@@ -131,7 +133,8 @@ const Base = (typeof HTMLElement === "undefined" ? class {} : HTMLElement) as ty
  *
  * Attributes: `pack-url`, `shards-url`, `endpoint`, `key` (alias `publishable-key`), `locale`,
  * `columns`, `skin-tone`, `emoji-set`, `placeholder`, `custom-emoji` (load the key's custom
- * emoji from `endpoint`), `tenant`, `culture-url`, `region` and `show-relevant-now`. Custom emoji
+ * emoji from `endpoint`), `tenant`, `culture-url`, `region`, `show-relevant-now`, `stats-url`
+ * (report how searches end and what is picked, emojisense/stats) and `stats-sample`. Custom emoji
  * are drawn as images. Event: `emoji-select` with `{ emoji, label, id }`, plus `imageUrl` and
  * `shortcode` for a custom emoji.
  */
@@ -152,6 +155,8 @@ export class EmojisensePickerElement extends Base {
     "culture-url",
     "region",
     "show-relevant-now",
+    "stats-url",
+    "stats-sample",
   ];
 
   readonly #shadow: ShadowRoot;
@@ -177,6 +182,7 @@ export class EmojisensePickerElement extends Base {
   #session: SearchSession | undefined;
   #packKey: unknown;
   #sessionKey: string | undefined;
+  #stats: { key: string; reporter: StatsReporter } | undefined;
   /** Kept across engine rebuilds (the ext pack, custom emoji), so loaded shards stay loaded. */
   #semantic: { key: string; provider: SemanticProvider | undefined } | undefined;
   #loading: AbortController | undefined;
@@ -244,6 +250,13 @@ export class EmojisensePickerElement extends Base {
 
   get endpoint(): string {
     return this.getAttribute("endpoint") ?? "";
+  }
+  /** Where reports go (`POST /v1/events`), e.g. "https://stats.emojisense.com". Empty: none. */
+  get statsUrl(): string {
+    return this.getAttribute("stats-url") ?? "";
+  }
+  set statsUrl(value: string) {
+    this.setAttribute("stats-url", value);
   }
   set endpoint(value: string) {
     this.setAttribute("endpoint", value);
@@ -407,6 +420,8 @@ export class EmojisensePickerElement extends Base {
     }
     this.#session?.dispose();
     this.#session = undefined;
+    this.#stats?.reporter.dispose();
+    this.#stats = undefined;
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
@@ -609,6 +624,7 @@ export class EmojisensePickerElement extends Base {
   #connectSession() {
     const engine = this.#engine;
     if (!engine) return;
+    this.#connectStats();
     const region = this.#region();
     const key = [this.shardsUrl, this.endpoint, this.publishableKey, this.locale, region].join("\n");
     if (this.#session && key === this.#sessionKey) return;
@@ -631,9 +647,31 @@ export class EmojisensePickerElement extends Base {
       semantic: this.#semantic.provider,
       locale: this.locale,
       ...(region ? { region } : {}),
-      onChange: (state) => this.#showResults(state),
+      onChange: (state) => {
+        this.#showResults(state);
+        this.#stats?.reporter.observe(state);
+      },
     });
     this.#search(this.#input.value);
+  }
+
+  /** A reporter for `stats-url`; a new one when the URL, key, sample or locale change. */
+  #connectStats() {
+    const sample = Number(this.getAttribute("stats-sample") ?? "0.1");
+    const key = [this.statsUrl, this.publishableKey, sample, this.locale].join("\n");
+    if (key === this.#stats?.key) return;
+    this.#stats?.reporter.dispose();
+    this.#stats = this.statsUrl
+      ? {
+          key,
+          reporter: createStatsReporter({
+            endpoint: this.statsUrl,
+            ...(this.publishableKey ? { key: this.publishableKey } : {}),
+            sampleRate: Number.isFinite(sample) ? sample : 0.1,
+            locale: this.locale,
+          }),
+        }
+      : undefined;
   }
 
   #search(query: string) {
@@ -883,6 +921,7 @@ export class EmojisensePickerElement extends Base {
       ...(item.imageUrl ? { imageUrl: item.imageUrl } : {}),
       ...(item.shortcode ? { shortcode: item.shortcode } : {}),
     };
+    if (this.#input.value.trim() !== "") this.#stats?.reporter.pick(this.#input.value, item.id);
     this.dispatchEvent(new CustomEvent("emoji-select", { detail, bubbles: true, composed: true }));
   }
 

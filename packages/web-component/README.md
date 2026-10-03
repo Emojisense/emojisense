@@ -34,7 +34,7 @@ Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integr
 ```html
 <emojisense-picker
   pack-url="https://api.emojisense.com/v1/pack/0.1.0"
-  shards-url="https://api.emojisense.com/p/0.1.0"
+  shards-url="https://cdn.emojisense.com/p/0.1.0"
   endpoint="https://api.emojisense.com"
   key="pk_live_…"
   locale="en"
@@ -55,6 +55,8 @@ Pin an exact version from a CDN, and add an `integrity` hash (Subresource Integr
 | `pack-url` | `packUrl` | — | Pack version directory. The core pack renders first. The extension pack loads when the browser is idle. |
 | `shards-url` | `shardsUrl` | — | Precomputed results (layer 2). Free static files, asked before the API. |
 | `endpoint` | `endpoint` | — | Semantic API (layer 3). Omit `shards-url` and `endpoint` for fully offline search. |
+| `stats-url` | `statsUrl` | — | Report how searches end and which results are picked (`POST /v1/events`), e.g. `https://stats.emojisense.com`. Off when omitted. |
+| `stats-sample` | — | `0.1` | Share of sessions that report. |
 | `key`, `publishable-key` | `publishableKey` | — | Publishable key for the API. Use `publishable-key` in Vue and React, which reserve `key`. |
 | `locale` | `locale` | `en` | `tr` loads the Turkish pack next to English. |
 | `columns` | `columns` | `9` | Emoji per row (1–24). |

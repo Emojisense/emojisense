@@ -214,6 +214,23 @@ describe("<emojisense-picker>", () => {
     expect(fetch.mock.calls.some(([url]) => String(url).includes("/v1/search"))).toBe(false);
   });
 
+  it("reports how searches end and what is picked when stats-url is set", async () => {
+    const beacons: [string, string][] = [];
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      sendBeacon: (url: string, body: string) => beacons.push([url, body]) > 0,
+    });
+    const picker = await mount({ "stats-url": "https://stats.test", "stats-sample": "1", key: "pk_test_1" });
+    type(picker, "rocket");
+    press(picker, "ArrowDown");
+    press(picker, "Enter");
+    picker.remove();
+    expect(beacons).toHaveLength(1);
+    const [url, body] = beacons[0] as [string, string];
+    expect(url).toBe("https://stats.test/v1/events?key=pk_test_1");
+    expect(JSON.parse(body)).toMatchObject({ counts: { device: 1 }, picks: [["rocket", "1F680"]] });
+  });
+
   it("sends the publishable key to the API", async () => {
     const picker = await mount({ endpoint: "https://api.test", key: "pk_test_1" });
     type(picker, "tiny horned animal");

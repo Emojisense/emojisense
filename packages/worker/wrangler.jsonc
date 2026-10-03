@@ -56,7 +56,10 @@
     { "name": "SITE_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
     { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
   ],
-  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
+  "analytics_engine_datasets": [
+    { "binding": "EVENTS", "dataset": "emojisense_search" },
+    { "binding": "STATS", "dataset": "emojisense_events" }
+  ],
   // Daily, 03:17 UTC: write the regional trends (src/trends.ts), then delete query_daily rows past
   // their plan's retention, waitlist rows older than 12 months and trends older than 90 days
   // (src/retention.ts). Daily, 04:23 UTC: build the layer-2 shards from
@@ -109,7 +112,10 @@
         { "name": "SITE_LIMITER", "namespace_id": "1003", "simple": { "limit": 60, "period": 60 } },
         { "name": "KEY_MISS_LIMITER", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
       ],
-      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
+      "analytics_engine_datasets": [
+        { "binding": "EVENTS", "dataset": "emojisense_search" },
+        { "binding": "STATS", "dataset": "emojisense_events" }
+      ],
       // ENVIRONMENT=development lets webhooks reach http://localhost receivers.
       // No Workers AI here, so the shard build logs "shards_skipped" (no Workers AI).
       // LOCAL_EMBED_URL: search and reactions embed with scripts/local_embed_server.py (the
@@ -136,7 +142,12 @@
         "logs": { "enabled": true, "invocation_logs": true },
         "traces": { "enabled": true, "head_sampling_rate": 1 }
       },
-      "routes": [{ "pattern": "api.emojisense.dev", "custom_domain": true }],
+      // stats.emojisense.dev takes POST /v1/events only (src/events.ts): its own name, so the
+      // reports can move to another backend without a client update.
+      "routes": [
+        { "pattern": "api.emojisense.dev", "custom_domain": true },
+        { "pattern": "stats.emojisense.dev", "custom_domain": true }
+      ],
       "workers_dev": false,
       "preview_urls": false,
       "ai": { "binding": "AI" },
@@ -159,7 +170,10 @@
         { "name": "SITE_LIMITER", "namespace_id": "1103", "simple": { "limit": 60, "period": 60 } },
         { "name": "KEY_MISS_LIMITER", "namespace_id": "1104", "simple": { "limit": 60, "period": 60 } }
       ],
-      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search_dev" }],
+      "analytics_engine_datasets": [
+        { "binding": "EVENTS", "dataset": "emojisense_search_dev" },
+        { "binding": "STATS", "dataset": "emojisense_events_dev" }
+      ],
       "vars": {
         "DEV_KEYS": "pk_demo",
         "ENVIRONMENT": "staging",
@@ -172,7 +186,10 @@
     // Production at api.emojisense.com (`pnpm deploy:production`). No dev keys: every key is a
     // database row with its own origins and plan.
     "production": {
-      "routes": [{ "pattern": "api.emojisense.com", "custom_domain": true }],
+      "routes": [
+        { "pattern": "api.emojisense.com", "custom_domain": true },
+        { "pattern": "stats.emojisense.com", "custom_domain": true }
+      ],
       "workers_dev": false,
       "preview_urls": false,
       "ai": { "binding": "AI" },
@@ -195,7 +212,10 @@
         { "name": "SITE_LIMITER", "namespace_id": "1203", "simple": { "limit": 60, "period": 60 } },
         { "name": "KEY_MISS_LIMITER", "namespace_id": "1204", "simple": { "limit": 60, "period": 60 } }
       ],
-      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "emojisense_search" }],
+      "analytics_engine_datasets": [
+        { "binding": "EVENTS", "dataset": "emojisense_search" },
+        { "binding": "STATS", "dataset": "emojisense_events" }
+      ],
       "vars": {
         "DEV_KEYS": "",
         "ENVIRONMENT": "production",
