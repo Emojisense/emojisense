@@ -6,7 +6,7 @@ import {
   createEngine,
   createLayeredSemantic,
   createSearchSession,
-  deviceRegion,
+  cultureUrlFor,
   EMOJI_IMAGE_REFERRER_POLICY,
   type EmojiEntry,
   type EmojiSet,
@@ -19,6 +19,7 @@ import {
   localDay,
   type Pack,
   relevantNow,
+  resolveRegion,
   type SearchSession,
   type SemanticProvider,
   type SessionState,
@@ -195,6 +196,7 @@ export class EmojisensePickerElement extends Base {
   #cultureLoading: AbortController | undefined;
   /** What the browse view's "relevant now" row was drawn for. */
   #shelfKey = "";
+  #now: () => Date | number = Date.now;
 
   constructor() {
     super();
@@ -331,7 +333,8 @@ export class EmojisensePickerElement extends Base {
 
   /**
    * Culture files directory, e.g. "https://api.emojisense.com/v1/culture/0.1.0". Culture results
-   * join after the top result; without it the ranking is the canonical one.
+   * join after the top result, never above it. Default: the culture directory next to `pack-url`
+   * (".../v1/pack/0.1.0" → ".../v1/culture/0.1.0"). `culture-url="off"`: the canonical ranking.
    */
   get cultureUrl(): string {
     return this.getAttribute("culture-url") ?? "";
@@ -342,8 +345,9 @@ export class EmojisensePickerElement extends Base {
 
   /**
    * ISO 3166-1 alpha-2 region (e.g. "BR") for regional culture entries. Without the attribute,
-   * the picker uses the region of the browser's language (`navigator.language` "pt-BR" → "BR"),
-   * on the device only. `region=""` turns regional entries off. `region="auto"` asks the API for
+   * the picker uses the device's region: the region of the browser's language
+   * (`navigator.language` "pt-BR" → "BR"), else of its time zone ("Asia/Tokyo" → "JP", from the
+   * culture file), on the device only. `region=""` turns regional entries off. `region="auto"` asks the API for
    * the region of the request's country (needs `endpoint`); search results use it after the
    * first API answer, and the relevant-now row shows entries for every region only.
    */
@@ -360,6 +364,16 @@ export class EmojisensePickerElement extends Base {
   }
   set showRelevantNow(value: boolean) {
     this.toggleAttribute("show-relevant-now", value);
+  }
+
+  /** The clock that culture windows are checked against (its local day). Default: `Date.now`. */
+  get now(): () => Date | number {
+    return this.#now;
+  }
+  set now(value: (() => Date | number) | undefined) {
+    this.#now = value ?? Date.now;
+    this.#sessionKey = undefined;
+    this.#schedule();
   }
 
   /** A culture file to use instead of fetching `culture-url` (bundled or offline apps). */
@@ -478,30 +492,42 @@ export class EmojisensePickerElement extends Base {
     if (this.#engine && this.#currentShelfKey() !== this.#shelfKey) this.#refreshBrowse();
   }
 
+  /** `culture-url`, else the culture directory next to `pack-url`; none with "off". */
+  #cultureBaseUrl(): string | undefined {
+    const url = this.cultureUrl;
+    if (url.toLowerCase() === "off") return undefined;
+    return url || cultureUrlFor(this.packUrl);
+  }
+
   /** Load the culture file when `culture-url` or `locale` change. It is optional: errors are ignored. */
   #configureCulture() {
-    const key = this.#cultureOverride ?? (this.cultureUrl ? `${this.cultureUrl}\n${this.locale}` : "");
+    const baseUrl = this.#cultureBaseUrl();
+    const key = this.#cultureOverride ?? (baseUrl ? `${baseUrl}\n${this.locale}` : "");
     if (key === this.#cultureKey) return;
     this.#cultureKey = key;
     this.#cultureLoading?.abort();
     this.#cultureLoading = undefined;
-    if (this.#cultureOverride || !this.cultureUrl) {
+    if (this.#cultureOverride || !baseUrl) {
       this.#useCulture(this.#cultureOverride);
       return;
     }
     const controller = new AbortController();
     this.#cultureLoading = controller;
-    loadCulture({ baseUrl: this.cultureUrl, locale: this.locale, signal: controller.signal }).then(
-      (culture) => {
-        if (controller.signal.aborted) return;
-        this.#cultureLoading = undefined;
-        this.#useCulture(culture);
-      },
-      () => {
-        // The culture layer only adds results; search works the same without it.
-        if (!controller.signal.aborted) this.#useCulture(undefined);
-      },
-    );
+    const load = (locale: string) => loadCulture({ baseUrl, locale, signal: controller.signal });
+    // A locale without a culture file (its packs fell back to English) takes the English file.
+    load(this.locale)
+      .catch((error: unknown) => (this.locale === "en" ? Promise.reject(error) : load("en")))
+      .then(
+        (culture) => {
+          if (controller.signal.aborted) return;
+          this.#cultureLoading = undefined;
+          this.#useCulture(culture);
+        },
+        () => {
+          // The culture layer only adds results; search works the same without it.
+          if (!controller.signal.aborted) this.#useCulture(undefined);
+        },
+      );
   }
 
   #useCulture(culture: Culture | undefined) {
@@ -516,16 +542,15 @@ export class EmojisensePickerElement extends Base {
   #currentShelfKey(): string {
     if (!this.showRelevantNow || !this.#culture) return "";
     const { locale, from } = this.#culture;
-    return [locale, from, localDay(), this.#region(), this.columns].join("|");
+    return [locale, from, localDay(this.#now()), this.#region(), this.columns].join("|");
   }
 
   /**
-   * The `region` attribute, else the region of the browser's language. A region code is never
-   * sent anywhere; "auto" is sent to the API, which answers with the caller's region.
+   * The `region` attribute, else the device's region (language, else time zone). A region code is
+   * never sent anywhere; "auto" is sent to the API, which answers with the caller's region.
    */
   #region(): string | undefined {
-    const region = this.getAttribute("region");
-    return region === null ? deviceRegion() : region || undefined;
+    return resolveRegion(this.getAttribute("region") ?? undefined, this.#culture);
   }
 
   /** Redraw the browse view and keep showing the results of a query being typed. */
@@ -660,6 +685,7 @@ export class EmojisensePickerElement extends Base {
       locale: this.locale,
       // The region is resolved here; "" tells the session not to use the device's region.
       region: region ?? "",
+      now: () => this.#now(),
       onChange: (state) => {
         this.#showResults(state);
         this.#stats?.reporter.observe(state);
@@ -725,6 +751,7 @@ export class EmojisensePickerElement extends Base {
       const region = isAutoRegion(this.#region()) ? undefined : this.#region();
       const shelf = relevantNow(this.#culture, {
         limit: this.columns,
+        day: localDay(this.#now()),
         ...(region ? { region } : {}),
       }).flatMap(({ hexcode, context }) => {
         const entry = engine.get(hexcode);

@@ -282,10 +282,18 @@ describe("<emojisense-picker> culture layer", () => {
     expect(results(picker)[1]?.getAttribute("aria-description")).toBe("A test association");
   });
 
-  it("keeps the canonical ranking without a culture file, and when it cannot load", async () => {
-    const plain = await mount();
+  it("loads the culture file next to pack-url by default", async () => {
+    const picker = await mount();
+    await vi.waitFor(() => expect(picker.culture?.locale).toBe("en"));
+    expect(fetch.mock.calls.map(([url]) => String(url))).toContain(`${CULTURE_URL}/culture.en.json`);
+  });
+
+  it("keeps the canonical ranking with culture-url=off, and when the file cannot load", async () => {
+    const plain = await mount({ "culture-url": "off" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
     type(plain, "goat");
     expect(results(plain).map((o) => o.textContent)).toEqual(["🐐"]);
+    expect(fetch.mock.calls.map(([url]) => String(url)).some((url) => url.includes("/culture/"))).toBe(false);
     const missing = await mount({ "culture-url": "https://cdn.test/v1/culture/none" });
     await new Promise((resolve) => setTimeout(resolve, 20));
     type(missing, "goat");
@@ -328,6 +336,25 @@ describe("<emojisense-picker> culture layer", () => {
     }
   });
 
+  it("checks culture windows against the now property", async () => {
+    const [, association] = culture.entries;
+    const october = {
+      ...culture,
+      entries: [{ ...association, kind: "seasonal", when: { from: "10-15", to: "10-31", recurs: "yearly" } }],
+    } as Culture;
+    const picker = await mount({ "culture-url": "off" });
+    picker.now = () => new Date(2026, 9, 1, 12);
+    picker.culture = october;
+    await vi.waitFor(() => expect(picker.culture).toBe(october));
+    type(picker, "goat");
+    expect(results(picker).map((o) => o.textContent)).toEqual(["🐐"]);
+    picker.now = () => new Date(2026, 9, 20, 12);
+    await vi.waitFor(() => {
+      type(picker, "goat");
+      expect(results(picker).map((o) => o.textContent)).toEqual(["🐐", "🚀"]);
+    });
+  });
+
   it("uses a culture file set as a property", async () => {
     const picker = await mount();
     picker.culture = culture as Culture;
@@ -359,7 +386,8 @@ describe("<emojisense-picker> culture region", () => {
   const speak = (language: string) => vi.spyOn(navigator, "language", "get").mockReturnValue(language);
 
   async function goat(attributes: Record<string, string> = {}) {
-    const picker = await mount(attributes);
+    // Only the regional file: the default file next to pack-url would also add 🚀.
+    const picker = await mount({ "culture-url": "off", ...attributes });
     picker.culture = regional;
     let found: (string | null)[] = [];
     await vi.waitFor(() => {
@@ -375,9 +403,20 @@ describe("<emojisense-picker> culture region", () => {
     expect(await goat()).toEqual(["🐐", "👋", "🚀"]);
   });
 
-  it("has no region when the browser's language has no region subtag", async () => {
+  it("has no region when neither the browser's language nor the time zone gives one", async () => {
     speak("pt");
     expect(await goat()).toEqual(["🐐", "🚀"]);
+  });
+
+  it("takes the region of the time zone when the language has none", async () => {
+    speak("pt");
+    const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const picker = await mount();
+    picker.culture = { ...regional, zones: { [zone]: "BR" } };
+    await vi.waitFor(() => {
+      type(picker, "goat");
+      expect(results(picker).map((o) => o.textContent)).toEqual(["🐐", "👋", "🚀"]);
+    });
   });
 
   it('prefers the region attribute, and region="" turns regional entries off', async () => {
