@@ -1,6 +1,6 @@
 {
   "name": "@emojisense/tiptap",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Tiptap extension: `:` emoji autocomplete ranked by Emojisense.",
   "keywords": [
     "emoji",

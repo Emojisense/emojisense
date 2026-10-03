@@ -1,6 +1,6 @@
 {
   "name": "@emojisense/emoji-mart",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Emojisense ranking for emoji-mart 5: map results to emoji-mart ids and drive its picker from an external search input.",
   "keywords": [
     "emoji",

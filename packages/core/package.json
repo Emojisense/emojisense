@@ -1,6 +1,6 @@
 {
   "name": "emojisense",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "The search brain any emoji picker plugs into: offline alias search + optional semantic fallback.",
   "keywords": [
     "emoji",

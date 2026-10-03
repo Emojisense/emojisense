@@ -1,6 +1,6 @@
 {
   "name": "@emojisense/mcp",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "MCP server for emoji search, emoji for a sentence and reaction suggestions. Offline by default.",
   "keywords": [
     "mcp",

@@ -1,6 +1,6 @@
 {
   "name": "@emojisense/web-component",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "<emojisense-picker>: a framework-free emoji picker custom element with Emojisense search.",
   "keywords": [
     "emoji",

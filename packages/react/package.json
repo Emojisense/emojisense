@@ -1,6 +1,6 @@
 {
   "name": "@emojisense/react",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React hooks for Emojisense and an adapter for the Frimousse emoji picker.",
   "keywords": [
     "emoji",

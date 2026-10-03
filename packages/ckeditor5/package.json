@@ -1,6 +1,6 @@
 {
   "name": "@emojisense/ckeditor5",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "CKEditor 5 plugin: `:` emoji autocomplete ranked by Emojisense.",
   "keywords": [
     "emoji",
