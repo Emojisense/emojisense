@@ -30,6 +30,7 @@ function fakeTinyMce(settings: Record<string, unknown>, plugins: string[] = []) 
       },
     },
     hasPlugin: (name: string) => plugins.includes(name),
+    hasFocus: () => false,
     queryCommandState: () => false,
     execCommand: (name: string) => commands.push(name),
     selection: { setRng: vi.fn() },
@@ -115,6 +116,25 @@ describe("registerEmojisense", () => {
         "https://packs.test/0.1.0/pack.en.json",
         "https://packs.test/0.1.0/pack.tr.json",
       ]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("loads the packs when the editor gets the focus, not on init", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      urls.push(String(input));
+      const { en } = await import("./fixture.js");
+      return new Response(JSON.stringify(en));
+    });
+    try {
+      const { fire } = fakeTinyMce({ emojisense_pack_url: "https://focus.test/0.1.0" });
+      fire("init");
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(urls).toEqual([]);
+      fire("focus");
+      await vi.waitFor(() => expect(urls).toContain("https://focus.test/0.1.0/pack.en.json"));
     } finally {
       vi.unstubAllGlobals();
     }

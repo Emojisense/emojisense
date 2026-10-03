@@ -23,22 +23,25 @@ import { EmojiAutocomplete } from "@emojisense/tiptap";
 import "@emojisense/tiptap/styles.css"; // optional default look
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
-import { createEngine, createSemanticClient, loadPacks } from "emojisense";
-
-const engine = createEngine(await loadPacks({ baseUrl: "https://api.emojisense.com/v1/pack/0.1.0" }));
+import { createSemanticClient } from "emojisense";
+import { createEngineLoader } from "emojisense/autocomplete";
 
 new Editor({
   element: document.querySelector("#editor")!,
   extensions: [
     StarterKit,
     EmojiAutocomplete.configure({
-      engine,
+      engine: createEngineLoader({ packUrl: "https://api.emojisense.com/v1/pack/0.1.0" }),
       semantic: createSemanticClient({ endpoint: "https://api.emojisense.com" }), // optional
       skinTone: "medium", // optional
     }),
   ],
 });
 ```
+
+With a loader, the packs load when the editor first gets the focus, not with the page. A `:`
+typed before they arrive gets its menu as soon as they do. Editors with the same packs on one
+page share one download and one index. A ready `AliasEngine` works too.
 
 ### With React and `@emojisense/react`
 
@@ -74,7 +77,7 @@ const editor = useEditor({
 
 | Option | Default | Notes |
 | ------ | ------- | ----- |
-| `engine` | — | `AliasEngine`, or a getter. The menu stays closed while it is `undefined`. |
+| `engine` | — | An `EngineLoader` (loads on focus), an `AliasEngine`, or a getter. A getter's menu stays closed while it returns `undefined`. |
 | `semantic` | — | `SemanticProvider` (for example `createSemanticClient`, or `chainProviders(shards, api)`), or a getter |
 | `locale` | first pack | Preferred locale for ranking and labels |
 | `limit` | `8` | Menu size |

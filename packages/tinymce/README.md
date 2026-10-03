@@ -63,7 +63,7 @@ In production, pin exact versions in both URLs and add `integrity` attributes. W
 
 | Option | Default | Notes |
 | ------ | ------- | ----- |
-| `emojisense_pack_url` | — | Base URL of a pack version. Set it or `emojisense_engine`. |
+| `emojisense_pack_url` | — | Base URL of a pack version. Set it or `emojisense_engine`. The packs load when the editor first gets the focus, and an open `:` menu shows its results when they arrive. Editors with the same packs on one page share one download. |
 | `emojisense_engine` | — | A ready `AliasEngine` instead of `emojisense_pack_url` |
 | `emojisense_locale` | the editor's `language` | `"tr_TR"` becomes `"tr"`. English always loads too. |
 | `emojisense_culture_url` | — | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0` |

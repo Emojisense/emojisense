@@ -7,7 +7,8 @@ import { TextSelection } from "@tiptap/pm/state";
 import type { AliasEngine } from "emojisense";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { EmojiAutocomplete, type EmojiAutocompleteOptions } from "../src/index.js";
-import { engine, stubSemantic } from "./fixture.js";
+import { createEngineLoader } from "emojisense/autocomplete";
+import { en, engine, stubSemantic } from "./fixture.js";
 
 let editor: Editor | undefined;
 
@@ -318,6 +319,29 @@ describe("EmojiAutocomplete (Tiptap)", () => {
     await type(ed, "s ");
     await type(ed, ":fire");
     expect(shown()[0]).toBe("🔥");
+  });
+
+  it("takes a loader: loads on focus, and opens the menu of a : typed before the packs arrived", async () => {
+    let answer: () => void = () => {};
+    const fetch = vi.fn(async () => {
+      await new Promise<void>((resolve) => {
+        answer = resolve;
+      });
+      return new Response(JSON.stringify(en));
+    });
+    const loader = createEngineLoader({
+      packUrl: "https://packs.test/0.1.0",
+      cultureUrl: false,
+      extended: false,
+      fetch: fetch as unknown as typeof globalThis.fetch,
+    });
+    const ed = createEditor({ engine: loader });
+    ed.commands.focus();
+    await vi.waitFor(() => expect(fetch).toHaveBeenCalledOnce());
+    await type(ed, ":fire");
+    expect(menu()).toBeNull();
+    answer();
+    await vi.waitFor(() => expect(shown()[0]).toBe("🔥"));
   });
 
   it("accepts a custom renderer with Tiptap's suggestion contract", async () => {

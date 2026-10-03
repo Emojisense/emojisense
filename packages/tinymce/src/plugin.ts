@@ -77,22 +77,38 @@ function setUp(editor: Editor) {
   registerOptions(editor);
   const locale = editorLocale(editor);
   const limit = option(editor, "emojisense_limit") ?? DEFAULT_LIMIT;
+  const packUrl = option(editor, "emojisense_pack_url");
   let engine: AliasEngine | undefined;
   let source: SuggestionSource | undefined;
+  /** Kept across engines (core, then the extension packs), so loaded shards stay loaded. */
+  let semantic: { packVersion: string; provider: SemanticProvider | undefined } | undefined;
+  /** Settles when the first engine is in use, or the packs failed. */
+  let ready: Promise<void> | undefined;
+  let stopLoader: (() => void) | undefined;
+
+  const semanticFor = (packVersion: string): SemanticProvider | undefined => {
+    const given = option(editor, "emojisense_semantic");
+    if (given) return given;
+    if (semantic?.packVersion !== packVersion) {
+      semantic = {
+        packVersion,
+        provider: createApiSemantic({
+          endpoint: option(editor, "emojisense_endpoint"),
+          key: option(editor, "emojisense_publishable_key"),
+          packVersion,
+        }),
+      };
+    }
+    return semantic.provider;
+  };
 
   const useEngine = (next: AliasEngine) => {
+    if (next === engine || editor.removed) return;
     source?.dispose();
     engine = next;
-    const semantic =
-      option(editor, "emojisense_semantic") ??
-      createApiSemantic({
-        endpoint: option(editor, "emojisense_endpoint"),
-        key: option(editor, "emojisense_publishable_key"),
-        packVersion: next.packVersion,
-      });
     source = createSuggestionSource({
       engine: next,
-      semantic,
+      semantic: semanticFor(next.packVersion),
       locale,
       limit,
       minQueryLength: 2,
@@ -103,25 +119,26 @@ function setUp(editor: Editor) {
     if (editor.queryCommandState("mceAutoCompleterInRange")) editor.execCommand("mceAutocompleterReload");
   };
 
-  const loadEngine = () => {
-    const given = option(editor, "emojisense_engine");
-    if (given) return useEngine(given);
-    const packUrl = option(editor, "emojisense_pack_url");
-    if (!packUrl) {
-      console.warn("emojisense: set emojisense_pack_url or emojisense_engine. See", DOCS_URL);
-      return;
-    }
-    const loader = createEngineLoader({
-      packUrl,
-      locale,
-      cultureUrl: option(editor, "emojisense_culture_url") || undefined,
-    });
-    loader.subscribe((next) => {
-      if (!editor.removed) useEngine(next);
-    });
-    loader.load().catch((error: unknown) => {
-      console.warn("emojisense: the packs did not load; the : menu stays off.", error);
-    });
+  /** Loads the packs once. A failed load is tried again on the next focus or `:`. */
+  const loadEngine = (): Promise<void> => {
+    ready ??= (async () => {
+      if (!packUrl) return;
+      // Editors with the same packs on one page share one download and one index.
+      const loader = createEngineLoader({
+        packUrl,
+        locale,
+        cultureUrl: option(editor, "emojisense_culture_url") || undefined,
+      });
+      stopLoader?.();
+      stopLoader = loader.subscribe(useEngine);
+      try {
+        useEngine(await loader.load());
+      } catch (error) {
+        ready = undefined;
+        console.warn("emojisense: the packs did not load; the : menu stays off.", error);
+      }
+    })();
+    return ready;
   };
 
   editor.on("init", () => {
@@ -132,7 +149,10 @@ function setUp(editor: Editor) {
       // would otherwise merge its substring matches into this one.
       takeOver ? "emoticons" : PLUGIN_NAME,
       createAutocompleter({
-        source: () => (engine ? source : undefined),
+        source: () => {
+          if (!engine) void loadEngine();
+          return engine ? source : undefined;
+        },
         skinTone: () => option(editor, "emojisense_skin_tone") || undefined,
         limit,
         insert: (range, emoji) => {
@@ -141,10 +161,19 @@ function setUp(editor: Editor) {
         },
       }),
     );
-    loadEngine();
+    const given = option(editor, "emojisense_engine");
+    if (given) return useEngine(given);
+    if (!packUrl) {
+      console.warn("emojisense: set emojisense_pack_url or emojisense_engine. See", DOCS_URL);
+      return;
+    }
+    // The packs load when someone starts writing, not with the page.
+    editor.on("focus", () => void loadEngine());
+    if (editor.hasFocus()) void loadEngine();
   });
 
   editor.on("remove", () => {
+    stopLoader?.();
     source?.dispose();
     source = undefined;
   });

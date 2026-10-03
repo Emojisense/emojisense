@@ -321,8 +321,8 @@ describe("EmojiAutocompletePlugin (Lexical)", () => {
     await type(editor, ":fire");
     expect(options()).toHaveLength(0);
     view.rerender(<Editor editorRef={editorRef} engine={engine} />);
-    await type(editor, "s :fire");
-    expect(shown()[0]).toBe("🔥");
+    // The query typed while the packs loaded opens its menu when they arrive.
+    await waitFor(() => expect(shown()[0]).toBe("🔥"));
   });
 
   describe("menuContainer", () => {

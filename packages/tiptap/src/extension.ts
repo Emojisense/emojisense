@@ -6,6 +6,7 @@ import {
   createSuggestionSource,
   DEFAULT_LIMIT,
   type EmojiSuggestion,
+  type EngineLoader,
   findShortcode,
   SHORTCODE_BEFORE_CARET,
   type SuggestionSource,
@@ -17,11 +18,13 @@ export type Dynamic<T> = T | (() => T);
 
 export interface EmojiAutocompleteOptions {
   /**
-   * Ranks the menu. Pass a getter (`() => sense.engine`) to create the editor before the packs
-   * have loaded, or to pick up the idle-loaded extension packs; the menu stays closed while the
-   * getter returns `undefined`.
+   * Ranks the menu. Pass a loader (`createEngineLoader` from `emojisense/autocomplete`) to load the
+   * packs when the editor first gets the focus: a `:` typed before they arrive gets its menu as
+   * soon as they do. Or pass a getter (`() => sense.engine`) to create the editor before the packs
+   * have loaded; the menu stays closed while the getter returns `undefined`. Both pick up the
+   * extension packs.
    */
-  engine: Dynamic<AliasEngine | undefined>;
+  engine: Dynamic<AliasEngine | undefined> | EngineLoader;
   /** Semantic results, debounced and fused into the open menu. Omit for alias-only. */
   semantic: Dynamic<SemanticProvider | undefined>;
   /** Preferred locale for ranking and labels. Default: the engine's first pack. */
@@ -89,6 +92,12 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
     return { dispose: undefined };
   },
 
+  onFocus() {
+    // The packs load when someone starts writing, not with the page.
+    const { engine } = this.options;
+    if (isLoader(engine)) engine.preload();
+  },
+
   addProseMirrorPlugins() {
     const options = this.options;
     const renderer = options.render();
@@ -111,7 +120,12 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
         allowedPrefixes: [" ", "("],
         minQueryLength: options.minQueryLength,
         decorationClass: "emojisense-query",
-        items: ({ query }) => withSkinTone(sources.search(query), options.skinTone),
+        items: ({ query }) => {
+          const found = sources.search(query);
+          return Array.isArray(found)
+            ? withSkinTone(found, options.skinTone)
+            : found.then((suggestions) => withSkinTone(suggestions, options.skinTone));
+        },
         command: ({ editor, range, props }) => insertEmoji(editor, range, props.emoji),
         render: () => ({
           onBeforeStart: (props) => renderer.onBeforeStart?.(inContainer(props)),
@@ -141,7 +155,7 @@ export const EmojiAutocomplete = Extension.create<EmojiAutocompleteOptions, Emoj
       new InputRule({
         find: SHORTCODE_BEFORE_CARET,
         handler: ({ state, range, match }) => {
-          const engine = resolve(options.engine);
+          const engine = engineOf(options.engine);
           const code = match[1];
           const hit = engine && code ? findShortcode(engine, code, options.locale) : undefined;
           if (!hit) return null;
@@ -169,10 +183,7 @@ function createSourceCache(
     current?.source.dispose();
     current = undefined;
   };
-  return {
-    search(query: string): EmojiSuggestion[] {
-      const engine = resolve(options.engine);
-      if (!engine) return [];
+  const searchWith = (engine: AliasEngine, query: string): EmojiSuggestion[] => {
       const semantic = resolve(options.semantic);
       if (current?.engine !== engine || current.semantic !== semantic) {
         dispose();
@@ -189,7 +200,19 @@ function createSourceCache(
           }),
         };
       }
-      return current.source.search(query);
+    return current.source.search(query);
+  };
+  return {
+    search(query: string): EmojiSuggestion[] | Promise<EmojiSuggestion[]> {
+      const engine = engineOf(options.engine);
+      if (engine) return searchWith(engine, query);
+      const loader = options.engine;
+      if (!isLoader(loader)) return [];
+      // A ":" typed before the packs arrived gets its menu as soon as they do.
+      return loader.load().then(
+        (loaded) => searchWith(engineOf(loader) ?? loaded, query),
+        () => [],
+      );
     },
     dispose,
   };
@@ -241,6 +264,14 @@ function withSkinTone(suggestions: EmojiSuggestion[], tone: Dynamic<SkinTone>): 
     ...suggestion,
     emoji: applySkinTone(suggestion.emoji, skinTone),
   }));
+}
+
+function isLoader(value: EmojiAutocompleteOptions["engine"]): value is EngineLoader {
+  return typeof value === "object" && value !== null && "load" in value && "subscribe" in value;
+}
+
+function engineOf(value: EmojiAutocompleteOptions["engine"]): AliasEngine | undefined {
+  return isLoader(value) ? value.current() : resolve(value);
 }
 
 function resolve<T>(value: Dynamic<T>): T {

@@ -86,23 +86,33 @@ describe(`EmojisenseMention (CKEditor ${version})`, () => {
     expect(semantic.calls).toContain("blastoff");
   });
 
-  it("loads the packs from packUrl in the content language", async () => {
+  it("loads the packs from packUrl in the content language for a : typed before they arrive", async () => {
     const urls: string[] = [];
     vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
       urls.push(String(input));
+      if (String(input).includes("culture")) return new Response("", { status: 404 });
       return new Response(JSON.stringify(String(input).includes(".tr.") ? { ...en, locale: "tr" } : en));
     });
-    try {
-      const editor = await createEditor({
-        language: { content: "tr" },
-        emojisense: { packUrl: "https://packs.test/0.1.0" },
-      });
-      await vi.waitFor(() => expect(urls).toContain("https://packs.test/0.1.0/pack.tr.json"));
-      await type(editor, ":pizza");
-      await vi.waitFor(() => expect(items()[0]).toBe("🍕 pizza"));
-    } finally {
-      vi.unstubAllGlobals();
-    }
+    const editor = await createEditor({
+      language: { content: "tr" },
+      emojisense: { packUrl: "https://packs.test/0.1.0" },
+    });
+    await type(editor, ":pizza");
+    await vi.waitFor(() => expect(items()[0]).toBe("🍕 pizza"));
+    expect(urls).toContain("https://packs.test/0.1.0/pack.tr.json");
+  });
+
+  it("loads the packs when the editor gets the focus, not with the page", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (input: RequestInfo | URL) => {
+      urls.push(String(input));
+      return new Response(JSON.stringify(en));
+    });
+    const editor = await createEditor({ emojisense: { packUrl: "https://focus.test/0.1.0" } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(urls).toEqual([]);
+    editor.editing.view.document.isFocused = true;
+    await vi.waitFor(() => expect(urls).toContain("https://focus.test/0.1.0/pack.en.json"));
   });
 
   it("leaves : to the official EmojiMention when both are loaded, with a warning", async () => {

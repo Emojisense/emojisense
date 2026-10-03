@@ -67,7 +67,13 @@ export class EmojisenseMention extends Plugin {
   }
 
   #config: EmojisenseConfig;
+  #engine: AliasEngine | undefined;
   #source: SuggestionSource | undefined;
+  /** Kept across engines (core, then the extension packs), so loaded shards stay loaded. */
+  #semantic: { packVersion: string; provider: SemanticProvider | undefined } | undefined;
+  /** Settles when the first engine is in use, or the packs failed. */
+  #ready: Promise<void> | undefined;
+  #stopLoader: (() => void) | undefined;
   #feedAdded = false;
 
   constructor(editor: Editor) {
@@ -107,10 +113,24 @@ export class EmojisenseMention extends Plugin {
       },
       { priority: "high" },
     );
-    this.#loadEngine();
+    if (this.#config.engine) {
+      this.#useEngine(this.#config.engine);
+      return;
+    }
+    // The packs load when someone starts writing, not with the page.
+    const viewDocument = editor.editing.view.document;
+    if (viewDocument.isFocused) void this.#load();
+    else {
+      this.listenTo(viewDocument, "change:isFocused", (event, _name, focused) => {
+        if (!focused) return;
+        event.off();
+        void this.#load();
+      });
+    }
   }
 
   override destroy(): void {
+    this.#stopLoader?.();
     this.#source?.dispose();
     this.#source = undefined;
     super.destroy();
@@ -121,31 +141,44 @@ export class EmojisenseMention extends Plugin {
     return this.#config.locale || language.split(/[-_]/)[0]?.toLowerCase() || "en";
   }
 
-  #loadEngine() {
-    const { engine, packUrl, cultureUrl } = this.#config;
-    if (engine) return this.#useEngine(engine);
+  /** Loads the packs once. A failed load is tried again on the next `:`. */
+  #load(): Promise<void> {
+    this.#ready ??= this.#startLoading();
+    return this.#ready;
+  }
+
+  async #startLoading(): Promise<void> {
+    const { packUrl, cultureUrl } = this.#config;
     if (!packUrl) {
       logWarning("emojisense-no-packs", {
         hint: "Set config.emojisense.packUrl or config.emojisense.engine.",
       });
       return;
     }
+    // Editors with the same packs on one page share one download and one index.
     const loader = createEngineLoader({ packUrl, locale: this.#locale(), cultureUrl });
-    loader.subscribe((next) => {
-      if (this.editor.state !== "destroyed") this.#useEngine(next);
-    });
-    loader.load().catch((error: unknown) => {
+    this.#stopLoader?.();
+    this.#stopLoader = loader.subscribe((next) => this.#useEngine(next));
+    try {
+      this.#useEngine(await loader.load());
+    } catch (error) {
+      this.#ready = undefined;
       logWarning("emojisense-packs-failed", { error });
-    });
+    }
   }
 
   #useEngine(engine: AliasEngine) {
+    if (engine === this.#engine || this.editor.state === "destroyed") return;
     const { semantic, endpoint, publishableKey, limit } = this.#config;
+    const { packVersion } = engine;
+    if (!semantic && this.#semantic?.packVersion !== packVersion) {
+      this.#semantic = { packVersion, provider: createApiSemantic({ endpoint, key: publishableKey, packVersion }) };
+    }
+    this.#engine = engine;
     this.#source?.dispose();
     this.#source = createSuggestionSource({
       engine,
-      semantic:
-        semantic ?? createApiSemantic({ endpoint, key: publishableKey, packVersion: engine.packVersion }),
+      semantic: semantic ?? this.#semantic?.provider,
       locale: this.#locale(),
       limit: limit ?? DEFAULT_LIMIT,
       minQueryLength: 2,
@@ -156,7 +189,10 @@ export class EmojisenseMention extends Plugin {
 
   async #feed(query: string): Promise<EmojiMentionItem[]> {
     // Mention matches the rest of the line after ":", so a sentence ends the search.
-    if (!this.#source || !findTrigger(`${TRIGGER}${query}`)) return [];
+    if (!findTrigger(`${TRIGGER}${query}`)) return [];
+    // A ":" typed before the packs arrived gets its list as soon as they do.
+    if (!this.#source) await this.#load();
+    if (!this.#source) return [];
     const suggestions = await this.#source.resolve(query);
     return suggestions.map((suggestion) => toItem(suggestion, this.#config.skinTone));
   }

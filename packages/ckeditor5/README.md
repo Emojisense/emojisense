@@ -46,7 +46,7 @@ one keeps `:` and the console shows `emojisense-marker-conflict`.
 
 | Option | Default | Notes |
 | ------ | ------- | ----- |
-| `packUrl` | — | Base URL of a pack version. Set it or `engine`. |
+| `packUrl` | — | Base URL of a pack version. Set it or `engine`. The packs load when the editor first gets the focus, and a `:` typed before they arrive gets its list as soon as they do. Editors with the same packs on one page share one download. |
 | `engine` | — | A ready `AliasEngine` instead of `packUrl` |
 | `locale` | the content language | `"pt-br"` becomes `"pt"`. English always loads too. |
 | `cultureUrl` | — | Culture files, e.g. `https://api.emojisense.com/v1/culture/0.1.0` |
