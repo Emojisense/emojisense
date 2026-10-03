@@ -3,6 +3,7 @@ export {
   type EmojiSearchState,
   type Emojisense,
   type EmojisenseOptions,
+  preloadEmojisense,
   type UseEmojiSearchOptions,
   type UseRelevantNowOptions,
   useEmojiSearch,
