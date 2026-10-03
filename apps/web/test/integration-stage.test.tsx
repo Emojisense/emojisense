@@ -19,13 +19,12 @@ const pack = (name: string) => JSON.parse(readFileSync(join(PACK_DIR, `pack.${na
 const packs = built ? [pack("en"), pack("en.ext")] : [];
 const engine = built ? createEngine(packs) : undefined;
 
-// The real engine on the built packs, without network: no meaning search, English only.
+// The real engine on the built packs, without network: no meaning search, English pages.
 vi.mock("../src/lib/engine-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../src/lib/engine-client")>()),
   useEngine: () => ({ engine, ready: "all" }),
   sharedSemantic: () => undefined,
   pageLocale: () => "en",
-  visitorLocales: () => ["en"],
 }));
 
 // The React tab's `useEmojisense`, ready with the same engine.

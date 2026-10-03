@@ -1,6 +1,6 @@
 import { type AliasEngine, createSearchSession, type SearchResult, type SessionState } from "emojisense";
 import { useEffect, useMemo, useState } from "react";
-import { pageLocale, sharedSemantic, visitorLocales } from "../../lib/engine-client";
+import { pageLocale, sharedSemantic } from "../../lib/engine-client";
 
 export interface QuerySearch {
   results: SearchResult[];
@@ -18,7 +18,6 @@ export function useQuerySearch(engine: AliasEngine | undefined, query: string, l
       engine,
       ...(semantic ? { semantic } : {}),
       locale: pageLocale(),
-      locales: visitorLocales(),
       limit,
       debounceMs: 180,
       onChange: setSession,
