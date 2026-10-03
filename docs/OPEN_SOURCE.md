@@ -1,7 +1,8 @@
 # Open-source strategy
 
 Open core. Everything a developer needs to search emoji, on-device or self-hosted, is MIT. The
-hosted service adds freshness and operations. The miss-mining pipeline stays closed: it is the moat.
+hosted service adds freshness and operations. The miss-mining code is open too: the moat is the
+query data it runs on and the daily run, not the code.
 
 ## What is open, what is closed
 
@@ -11,8 +12,9 @@ hosted service adds freshness and operations. The miss-mining pipeline stays clo
 | Data pack: aliases, descriptions, packs, vectors | MIT data + upstream attribution (Emojibase MIT, Unicode CLDR License v3) | refreshed **quarterly** in open source |
 | Eval harness + labelled queries | MIT | published on GitHub and Hugging Face; contributions welcome |
 | Worker (search API) and dashboard | MIT | self-hosters run them on their own Cloudflare account (FSL was considered; MIT wins for adoption) |
-| Miss mining + live alias updates | **closed** | the hosted service gets **daily** alias updates |
-| Billing integration | closed | |
+| Miss mining (`packages/eval/src/mine.ts`) | MIT | reads aggregated misses (n ≥ 5) from the operator's own Analytics Engine; no query data is in the repo |
+| Live alias updates | hosted only | the hosted service gets **daily** alias updates from its own query data |
+| Billing integration (Whop) | MIT | API keys and plan IDs come from the environment |
 
 **Hosted value:** zero ops, daily alias freshness, image classification, custom emoji hosting
 with auto-description, analytics, hosted emoji sets.
@@ -41,9 +43,10 @@ Self-hosters call the same models under each model's own license.
 
 ## Repository hygiene before the first public push
 
-1. Move `packages/eval/src/mine.ts` (miss mining) to the private repo `emojisense-cloud`. It is in
-   this repo's history, so **start the public repo from a fresh history**, or rewrite history to
-   remove it.
+1. Done 2026-10-03: `DECISIONS.md`, `TASKS.md` and `docs/PRICING.md` stay local and were removed
+   from the whole history (`git filter-repo --invert-paths`). `mine.ts` and billing stay open:
+   neither holds secrets or user data. Never commit `packages/data/enrichment/mined.json` without a
+   review: its aliases are real user queries.
 2. Add `CONTRIBUTING.md`, a self-host guide (Worker + dashboard on your own account, D1
    migrations, Workers AI model choice) and `NOTICE`.
 3. No secrets in the repo: `.dev.vars` and `.env*` are gitignored; examples only.
