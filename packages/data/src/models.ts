@@ -72,6 +72,29 @@ export const MODELS: EmbeddingModel[] = [
           }
         : { documents: texts },
   },
+  // Off-the-shelf small models Workers AI does not host, embedded on this machine by
+  // scripts/local_embed_server.py (eval experiments only; embeddings.ts routes "local/").
+  ...(
+    [
+      ["granite-97m-r2", 384, "{q}", "{title}. {text}"],
+      ["bekko-a8m", 384, "{q}", "{title}. {text}"],
+      ["bekko-a25m", 384, "{q}", "{title}. {text}"],
+      ["e5-small", 384, "query: {q}", "passage: {title}. {text}"],
+      ["potion-multi", 256, "{q}", "{title}. {text}"],
+    ] as const
+  ).map(
+    ([key, nativeDims, queryTemplate, documentTemplate]): EmbeddingModel => ({
+      key,
+      id: `local/${key}`,
+      nativeDims,
+      mrl: false,
+      multilingual: true,
+      maxBatch: 64,
+      queryTemplate,
+      documentTemplate,
+      input: (texts) => ({ texts }),
+    }),
+  ),
 ];
 
 export function getModel(key: string): EmbeddingModel {

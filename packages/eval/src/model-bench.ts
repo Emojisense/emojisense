@@ -72,6 +72,10 @@ const { values: args } = parseArgs({
     "doc-tokens": { type: "string", default: "0" },
     heldout: { type: "string", default: "" },
     concurrency: { type: "string", default: "4" },
+    /** JSONL of unlabeled queries ({"q", "locale"}, a pack locale): ranked like the examples, top 5s in the JSON. */
+    extra: { type: "string" },
+    /** Directory for models.md and models.json (default: reports/). */
+    out: { type: "string" },
   },
 });
 
@@ -151,6 +155,15 @@ const items: Item[] = Object.entries(FILES).flatMap(([set, file]) =>
 const examples: Item[] = EXAMPLES.map((q, i) =>
   toItem("examples", { id: `example-${i}`, q, locale: "en", cat: "example", answers: [] }),
 );
+const extras: Item[] = args.extra
+  ? readFileSync(args.extra, "utf8")
+      .split("\n")
+      .filter(Boolean)
+      .map((line, i) => {
+        const { q, locale } = JSON.parse(line) as Pick<EvalQuery, "q" | "locale">;
+        return toItem("extra", { id: `extra-${i}`, q, locale, cat: "extra", answers: [] });
+      })
+  : [];
 const heldout: Item[] = heldoutVariants.size
   ? loadHeldout(HELDOUT_PATH).map((q) => toItem("held-out", q))
   : [];
@@ -217,7 +230,7 @@ const fileBytes = (name: string) => {
 async function runVariant(variant: ModelVariant): Promise<VariantRun | string> {
   const layout = loadVectorLayout(packDir, variant.documents, variant.dims);
   if (!layout) return `no ${vectorFileName(variant.documents.key, variant.dims)} in ${packDir}`;
-  const pool = [...items, ...examples, ...(heldoutVariants.has(variant.name) ? heldout : [])];
+  const pool = [...items, ...examples, ...extras, ...(heldoutVariants.has(variant.name) ? heldout : [])];
   const vectors = await embedQueries(variant, pool);
   const lists = new Map<Item, { cos: SearchResult[]; sem: SearchResult[] }>();
   pool.forEach((it, i) => {
@@ -596,7 +609,34 @@ for (const run of runs) {
   };
 }
 
+if (extras.length) {
+  const show = (r: SearchResult & { match?: string }) =>
+    `${r.emoji} ${r.score.toFixed(3)}${r.match ? ` "${r.match}"` : ""}`;
+  json.extra = extras.map((it) => ({
+    q: it.q.q,
+    locale: it.q.locale,
+    alias: {
+      confidence: it.alias.confidence,
+      coverage: it.alias.coverage,
+      top: it.alias.results.slice(0, 6).map(show),
+    },
+    semantic: Object.fromEntries(
+      runs.map((run) => [run.variant.name, ((run.ranked.get(it) as Ranked).sem ?? []).slice(0, 6).map(show)]),
+    ),
+    variants: Object.fromEntries(
+      runs.map((run) => {
+        const ranked = run.ranked.get(it) as Ranked;
+        return [
+          run.variant.name,
+          { fused: ranked.lists.fused.slice(0, 5), sem: ranked.lists.sem.slice(0, 5), unsure: ranked.unsure },
+        ];
+      }),
+    ),
+  }));
+}
+
 const report = lines.join("\n");
-writeFileSync(join(EVAL_ROOT, "reports", "models.md"), `${report}\n`);
-writeFileSync(join(EVAL_ROOT, "reports", "models.json"), `${JSON.stringify(json, null, 1)}\n`);
+const outDir = args.out ?? join(EVAL_ROOT, "reports");
+writeFileSync(join(outDir, "models.md"), `${report}\n`);
+writeFileSync(join(outDir, "models.json"), `${JSON.stringify(json, null, 1)}\n`);
 console.log(report);

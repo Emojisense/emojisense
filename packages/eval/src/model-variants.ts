@@ -52,6 +52,16 @@ export const VARIANTS: Record<string, VariantDefinition> = {
     documents: "qwen3",
     note: "instruction: word or phrase typed into an emoji search → emoji",
   },
+  ...Object.fromEntries(
+    ["granite-97m-r2", "bekko-a8m", "bekko-a25m", "e5-small", "potion-multi"].map((key) => [
+      key,
+      {
+        query: getModel(key),
+        documents: key,
+        note: "off-the-shelf, embedded locally (scripts/local_embed_server.py)",
+      },
+    ]),
+  ),
 };
 
 export interface ModelVariant {

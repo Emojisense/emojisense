@@ -35,6 +35,8 @@ import { glyphVectorFileName } from "./vector-files.ts";
 
 const { values: args } = parseArgs({
   args: process.argv.slice(2).filter((a) => a !== "--"),
+  // `--no-template` turns off pack.config.json's `glyph.template` for another model.
+  allowNegative: true,
   options: {
     model: { type: "string" },
     dims: { type: "string" },
