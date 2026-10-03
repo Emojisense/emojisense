@@ -304,7 +304,7 @@
   "edge": {
     "kicker": "Edge global",
     "title": "Cepat di Lagos, Lima, dan Lahore.",
-    "titleCity": "Cepat di\n{city}.",
+    "titleCities": "Cepat di {first},\n{second}, dan {third}.",
     "cities": {
       "Los Angeles": "Los Angeles",
       "New York": "New York",
@@ -329,8 +329,8 @@
     "caption": "Pencarian nyata dan emoji yang dihasilkan mesin kami. Peta ini adalah ilustrasi; titik menunjukkan kota besar, bukan lokasi pusat data yang tepat.",
     "stats": {
       "cities": "kota di jaringan Cloudflare. 95% pengguna internet berada dalam jarak akses 50 ms dari salah satunya.",
-      "device": "untuk jawaban di perangkat, pada setiap ketukan. p95 terukur: 0,4 ms.",
-      "ai": "untuk pencarian makna AI di edge. p50 terukur: 52 ms.",
+      "device": "untuk jawaban di perangkat, pada setiap ketukan. p50 terukur: 0,1 ms.",
+      "ai": "untuk pencarian makna AI di edge. p50 terukur: 170 ms.",
       "zero": "server, wilayah, atau GPU yang perlu Anda siapkan. Cara kerjanya sama di mana saja."
     }
   },
@@ -356,7 +356,7 @@
       },
       "ai": {
         "title": "Pencarian makna AI",
-        "body": "Ungkapan baru dipahami berdasarkan makna, di edge, dalam sekitar 50 ms."
+        "body": "Ungkapan baru dipahami berdasarkan makna, di edge, dalam sekitar 170 ms."
       }
     },
     "answers": "✓ menjawab",

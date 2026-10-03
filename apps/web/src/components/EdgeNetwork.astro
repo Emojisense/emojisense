@@ -17,24 +17,27 @@ const bubbles = cityBubbles.flatMap((b, i) => {
 });
 
 /*
- * The title names one city at a time, the city of the bubble that pops on the map. Each language
- * writes the city with its own grammar ("in Paris", "Paris'te") and puts it on a line of its own
- * with "\n", so the title never rewraps. That whole line turns, punctuation included.
+ * The title names three map cities, and each of the three turns to another city on its own. Each
+ * language writes a city with its own grammar ("à Paris", "Paris'te") and breaks the title into
+ * lines with "\n", so it never rewraps; the script shrinks a line that is too wide.
  */
 const cityNames: Record<string, string> = messages.edge.cities;
-const SLOT = "\u{E000}";
-const titleLines = t("edge.titleCity", { city: SLOT })
+const reelCities = bubbles.map((b) => cityNames[b.city] ?? b.city);
+const SLOTS = { first: "\u{E000}", second: "\u{E001}", third: "\u{E002}" };
+const slotOf = Object.values(SLOTS);
+const titleLines = t("edge.titleCities", SLOTS)
   .split("\n")
   .map((line) =>
-    line.includes(SLOT)
-      ? { reel: bubbles.map((b) => line.replace(SLOT, cityNames[b.city] ?? b.city)) }
-      : { text: line },
+    line
+      .split(/([\u{E000}-\u{E002}])/u)
+      .filter(Boolean)
+      .map((part) => (slotOf.includes(part) ? { slot: slotOf.indexOf(part) } : { text: part })),
   );
 
 const stats = [
   { value: "300+", label: t("edge.stats.cities") },
   { value: "< 1 ms", label: t("edge.stats.device") },
-  { value: "≈ 50 ms", label: t("edge.stats.ai") },
+  { value: "≈ 170 ms", label: t("edge.stats.ai") },
   { value: "0", label: t("edge.stats.zero") },
 ];
 ---
@@ -49,18 +52,21 @@ const stats = [
           {
             titleLines.map((line) => (
               <span class="title-line">
-                {line.reel ? (
-                  <span class="reel" data-reel>
-                    {line.reel.map((city) => (
-                      <span class="reel-city">{city}</span>
-                    ))}
-                  </span>
-                ) : (
-                  line.text
+                {line.map((part) =>
+                  part.slot === undefined ? (
+                    part.text
+                  ) : (
+                    <span class="reel" data-reel={part.slot}>
+                      {reelCities.map((city) => (
+                        <span class="reel-city">{city}</span>
+                      ))}
+                    </span>
+                  ),
                 )}
               </span>
             ))
           }
+          <span class="title-ruler" data-title-ruler></span>
         </span>
       </h2>
       <p class="lead">{t("edge.lead")}</p>
@@ -113,63 +119,105 @@ const stats = [
 </section>
 
 <script>
-  /** The bubble timing in the CSS below: one bubble pops every 2.4 s, the first 0.6 s early. */
-  const SLOT_MS = 2400;
-  const LEAD_MS = 600;
+  /** Every 1.3 s one of the three title cities turns, never the same one twice in a row. */
+  const SWITCH_MS = 1300;
 
   interface Reel {
     play(): void;
     stop(): void;
   }
 
+  const random = (n: number) => Math.floor(Math.random() * n);
+
+  /** The width of an element in em of its own font size, so it holds at any font size. */
+  const widthEm = (el: Element) =>
+    el.getBoundingClientRect().width / Number.parseFloat(getComputedStyle(el).fontSize);
+
   /**
-   * Turns the title to the city of each bubble as it pops. It reads the time from the first
-   * bubble's CSS animation, so the title and the map stay together after a pause or a hidden tab.
+   * Turns the three cities of the title, one at a time, to other map cities. A new city must fit its
+   * line at full size; when none does (a narrow phone), the line shrinks to fit.
    */
-  function createReel(section: Element, map: Element): Reel | undefined {
+  function createReel(section: Element): Reel | undefined {
     const still = section.querySelector("[data-title-still]");
     const live = section.querySelector<HTMLElement>("[data-title-reel]");
-    const reel = section.querySelector<HTMLElement>("[data-reel]");
-    const bubble = map.querySelector(".bubble");
-    if (!still || !live || !reel || !bubble) return undefined;
-    const line = reel.parentElement ?? reel;
-    const cities = [...reel.children] as HTMLElement[];
-    let shown = -1;
-    let timer = 0;
+    const ruler = section.querySelector<HTMLElement>("[data-title-ruler]");
+    const reels = [...section.querySelectorAll<HTMLElement>("[data-reel]")].sort(
+      (a, b) => Number(a.dataset.reel) - Number(b.dataset.reel),
+    );
+    if (!still || !live || !ruler || reels.length === 0) return undefined;
 
     still.classList.add("visually-hidden");
     live.hidden = false;
 
-    /** Paused, the bubbles have no animation and the clock reads 0: the first city. */
-    const clock = () => Number(bubble.getAnimations()[0]?.currentTime ?? 0) + LEAD_MS;
+    const lines = [...live.querySelectorAll<HTMLElement>(".title-line")];
+    const lineOf = reels.map((reel) => lines.indexOf(reel.closest(".title-line") as HTMLElement));
+    const cities = reels.map((reel) => [...reel.children] as HTMLElement[]);
+    // Every reel holds the same cities, so one reel gives the widths of all.
+    const cityEm = (cities[0] ?? []).map(widthEm);
+    const wordsEm = lines.map((line) => {
+      ruler.textContent = [...line.childNodes]
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent)
+        .join("");
+      return widthEm(ruler);
+    });
+    const shown = reels.map(() => -1);
+    let last = -1;
+    let timer = 0;
 
-    const show = (index: number) => {
-      if (index === shown) return;
-      cities.forEach((city, i) => {
-        if (i === index) city.dataset.state = "in";
-        else if (i === shown) city.dataset.state = "out";
-        else delete city.dataset.state;
+    const room = () => live.clientWidth / Number.parseFloat(getComputedStyle(live).fontSize);
+    const lineEm = (line: number, choice: number[]) =>
+      choice.reduce((sum, city, slot) => (lineOf[slot] === line ? sum + (cityEm[city] ?? 0) : sum), wordsEm[line] ?? 0);
+
+    // A tab that opened in the background can have no width yet: keep the full size until it has.
+    const fit = () => {
+      const space = room();
+      if (!(space > 0)) return;
+      lines.forEach((line, i) => {
+        line.style.fontSize = `${Math.min(1, space / lineEm(i, shown))}em`;
       });
-      // In em of the reel, so the width follows the font size. A long name on a narrow phone shrinks.
-      const em = Number.parseFloat(getComputedStyle(reel).fontSize);
-      const width = (cities[index]?.getBoundingClientRect().width ?? 0) / em;
-      const parentEm = Number.parseFloat(getComputedStyle(line).fontSize);
-      reel.style.fontSize = `${Math.min(1, line.clientWidth / (width * parentEm))}em`;
-      reel.style.width = `${width}em`;
-      shown = index;
     };
 
-    function tick() {
-      window.clearTimeout(timer);
-      const now = clock();
-      show(Math.floor(now / SLOT_MS) % cities.length);
-      timer = window.setTimeout(tick, SLOT_MS - (now % SLOT_MS) + 20);
-    }
+    const pick = (slot: number) => {
+      const free = cityEm.map((_, i) => i).filter((city) => !shown.includes(city));
+      const space = room();
+      const fits = free.filter(
+        (city) => !(space > 0) || lineEm(lineOf[slot] ?? 0, shown.map((c, i) => (i === slot ? city : c))) <= space,
+      );
+      if (fits.length > 0) return fits[random(fits.length)] ?? 0;
+      return free.reduce((a, b) => ((cityEm[b] ?? 0) < (cityEm[a] ?? 0) ? b : a));
+    };
 
-    show(Math.floor(clock() / SLOT_MS) % cities.length);
+    const show = (slot: number, city: number) => {
+      const before = shown[slot];
+      cities[slot]?.forEach((el, i) => {
+        if (i === city) el.dataset.state = "in";
+        else if (i === before) el.dataset.state = "out";
+        else delete el.dataset.state;
+      });
+      shown[slot] = city;
+      const reel = reels[slot];
+      if (reel) reel.style.width = `${cityEm[city] ?? 0}em`;
+      fit();
+    };
+
+    const tick = () => {
+      if (document.hidden) return;
+      const others = reels.map((_, i) => i).filter((i) => i !== last);
+      const slot = others[random(others.length)] ?? 0;
+      last = slot;
+      show(slot, pick(slot));
+    };
+
+    reels.forEach((_, slot) => show(slot, pick(slot)));
+    window.addEventListener("resize", fit, { passive: true });
+    document.addEventListener("visibilitychange", fit);
     return {
-      play: tick,
-      stop: () => window.clearTimeout(timer),
+      play: () => {
+        window.clearInterval(timer);
+        timer = window.setInterval(tick, SWITCH_MS);
+      },
+      stop: () => window.clearInterval(timer),
     };
   }
 
@@ -184,7 +232,7 @@ const stats = [
     let reel: Reel | undefined;
     if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       void document.fonts.ready.then(() => {
-        reel = createReel(section, map);
+        reel = createReel(section);
         if (!map.hasAttribute("data-paused")) reel?.play();
       });
     }
@@ -234,8 +282,26 @@ const stats = [
     color: var(--edge-ink-2);
   }
 
+  .title-reel {
+    display: block;
+    position: relative;
+  }
+
+  /* The script sets the font size of a line that would be too wide. */
   .title-line {
     display: block;
+    white-space: nowrap;
+    transition: font-size 500ms var(--ease-out);
+  }
+
+  /* Measures the words around the cities, spaces kept. */
+  .title-ruler {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    visibility: hidden;
+    white-space: pre;
+    pointer-events: none;
   }
 
   /* All cities share one grid cell; the script sets the width of the one on show. */
@@ -244,9 +310,7 @@ const stats = [
     padding-block: 0.2em;
     margin-block: -0.2em;
     clip-path: inset(0);
-    transition:
-      width 600ms var(--ease-out),
-      font-size 600ms var(--ease-out);
+    transition: width 500ms var(--ease-out);
   }
 
   .reel-city {
@@ -261,15 +325,15 @@ const stats = [
     opacity: 1;
     transform: none;
     transition:
-      transform 600ms cubic-bezier(0.34, 1.4, 0.64, 1),
-      opacity 300ms;
+      transform 500ms cubic-bezier(0.34, 1.4, 0.64, 1),
+      opacity 250ms;
   }
 
   .reel-city[data-state="out"] {
     transform: translateY(-100%);
     transition:
-      transform 450ms cubic-bezier(0.5, 0, 0.75, 0),
-      opacity 250ms;
+      transform 350ms cubic-bezier(0.5, 0, 0.75, 0),
+      opacity 200ms;
   }
 
   .map {

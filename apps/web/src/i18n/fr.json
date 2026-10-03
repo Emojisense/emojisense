@@ -304,7 +304,7 @@
   "edge": {
     "kicker": "En périphérie",
     "title": "Rapide à Lagos, Lima et Lahore.",
-    "titleCity": "Rapide\n{city}.",
+    "titleCities": "Rapide {first},\n{second} et {third}.",
     "cities": {
       "Los Angeles": "à Los Angeles",
       "New York": "à New York",
@@ -329,8 +329,8 @@
     "caption": "De vraies recherches et les emoji que notre moteur renvoie. La carte est une illustration. Les points indiquent de grandes villes, pas l’emplacement exact des centres de données.",
     "stats": {
       "cities": "villes du réseau Cloudflare. 95 % des internautes sont à moins de 50 ms de l’une d’elles.",
-      "device": "pour les réponses sur l’appareil, à chaque frappe. p95 mesuré : 0,4 ms.",
-      "ai": "pour une recherche par sens avec l’IA en périphérie. p50 mesuré : 52 ms.",
+      "device": "pour les réponses sur l’appareil, à chaque frappe. p50 mesuré : 0,1 ms.",
+      "ai": "pour une recherche par sens avec l’IA en périphérie. p50 mesuré : 170 ms.",
       "zero": "serveurs, régions ou GPU à configurer. Le fonctionnement est le même partout."
     }
   },
@@ -356,7 +356,7 @@
       },
       "ai": {
         "title": "Recherche par sens avec l’IA",
-        "body": "Les formulations inédites sont comprises par leur sens, en périphérie, en environ 50 ms."
+        "body": "Les formulations inédites sont comprises par leur sens, en périphérie, en environ 170 ms."
       }
     },
     "answers": "✓ répond",

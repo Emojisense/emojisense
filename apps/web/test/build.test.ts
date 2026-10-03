@@ -201,8 +201,9 @@ describe("landing page", () => {
     const doc = page("/");
     expect(doc.getElementById("edge")?.textContent).toContain("300+");
     expect(doc.querySelectorAll("#edge .bubble").length).toBeGreaterThanOrEqual(8);
+    expect(doc.querySelectorAll("#edge [data-reel]")).toHaveLength(3);
     expect(doc.querySelectorAll("#edge .reel-city")).toHaveLength(
-      doc.querySelectorAll("#edge .bubble").length,
+      3 * doc.querySelectorAll("#edge .bubble").length,
     );
     expect(doc.getElementById("edge-title")?.querySelector("[data-title-still]")?.textContent).toBe(
       "Fast in Lagos, Lima and Lahore.",

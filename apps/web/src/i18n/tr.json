@@ -304,7 +304,7 @@
   "edge": {
     "kicker": "Küresel uç ağ",
     "title": "Lagos, Lima ve Lahor'da hızlı.",
-    "titleCity": "{city}\nhızlı.",
+    "titleCities": "{first}, {second}\nve {third} hızlı.",
     "cities": {
       "Los Angeles": "Los Angeles'ta",
       "New York": "New York'ta",
@@ -329,8 +329,8 @@
     "caption": "Gerçek aramalar ve motorumuzun döndürdüğü emojiler. Harita temsili olarak çizilmiştir. Noktalar, veri merkezlerinin tam konumlarını değil, büyük şehirleri gösterir.",
     "stats": {
       "cities": "şehir Cloudflare ağında. İnternet kullanıcılarının %95'i bunlardan birine 50 ms mesafede.",
-      "device": "her tuşa basıldığında cihazdaki yanıtlar için. Ölçülen p95: 0,4 ms.",
-      "ai": "uç ağda yapay zekâ ile anlama göre arama için. Ölçülen p50: 52 ms.",
+      "device": "her tuşa basıldığında cihazdaki yanıtlar için. Ölçülen p50: 0,1 ms.",
+      "ai": "uç ağda yapay zekâ ile anlama göre arama için. Ölçülen p50: 170 ms.",
       "zero": "kurmanız gereken sunucu, bölge veya GPU. Her yerde aynı şekilde çalışır."
     }
   },
@@ -356,7 +356,7 @@
       },
       "ai": {
         "title": "Yapay zekâ ile anlama göre arama",
-        "body": "Yepyeni ifadeler uç ağda, anlamlarına göre yaklaşık 50 ms içinde anlaşılır."
+        "body": "Yepyeni ifadeler uç ağda, anlamlarına göre yaklaşık 170 ms içinde anlaşılır."
       }
     },
     "answers": "✓ yanıtlar",

@@ -304,7 +304,7 @@
   "edge": {
     "kicker": "Global edge",
     "title": "Fast in Lagos, Lima and Lahore.",
-    "titleCity": "Fast in\n{city}.",
+    "titleCities": "Fast in {first},\n{second} and {third}.",
     "cities": {
       "Los Angeles": "Los Angeles",
       "New York": "New York",
@@ -329,8 +329,8 @@
     "caption": "Real searches and the emoji our engine returns for them. The map is an illustration; dots show large cities, not exact data centers.",
     "stats": {
       "cities": "cities on Cloudflare's network. 95% of internet users are within 50 ms of one.",
-      "device": "for answers on the device, at every keystroke. Measured p95: 0.4 ms.",
-      "ai": "for an AI meaning search inside the edge. Measured p50: 52 ms.",
+      "device": "for answers on the device, at every keystroke. Measured p50: 0.1 ms.",
+      "ai": "for an AI meaning search inside the edge. Measured p50: 170 ms.",
       "zero": "servers, regions or GPUs for you to set up. It works the same everywhere."
     }
   },
@@ -356,7 +356,7 @@
       },
       "ai": {
         "title": "AI meaning search",
-        "body": "Brand-new phrasing is understood by meaning, at the edge, in about 50 ms."
+        "body": "Brand-new phrasing is understood by meaning, at the edge, in about 170 ms."
       }
     },
     "answers": "✓ answers",

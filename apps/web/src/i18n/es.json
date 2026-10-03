@@ -304,7 +304,7 @@
   "edge": {
     "kicker": "Red perimetral",
     "title": "Rápido en Lagos, Lima y Lahore.",
-    "titleCity": "Rápido en\n{city}.",
+    "titleCities": "Rápido en {first},\n{second} y {third}.",
     "cities": {
       "Los Angeles": "Los Ángeles",
       "New York": "Nueva York",
@@ -329,8 +329,8 @@
     "caption": "Búsquedas reales y los emoji que devuelve nuestro motor. El mapa es ilustrativo; los puntos muestran grandes ciudades, no centros de datos exactos.",
     "stats": {
       "cities": "ciudades en la red de Cloudflare. El 95 % de los usuarios de internet está a menos de 50 ms de una.",
-      "device": "para respuestas en el dispositivo, con cada pulsación. p95 medido: 0,4 ms.",
-      "ai": "para una búsqueda por significado con IA en la red perimetral. p50 medido: 52 ms.",
+      "device": "para respuestas en el dispositivo, con cada pulsación. p50 medido: 0,1 ms.",
+      "ai": "para una búsqueda por significado con IA en la red perimetral. p50 medido: 170 ms.",
       "zero": "servidores, regiones o GPU que tengas que configurar. Funciona igual en todas partes."
     }
   },
@@ -356,7 +356,7 @@
       },
       "ai": {
         "title": "Búsqueda por significado con IA",
-        "body": "Las expresiones nuevas se entienden por su significado, en la red perimetral, en unos 50 ms."
+        "body": "Las expresiones nuevas se entienden por su significado, en la red perimetral, en unos 170 ms."
       }
     },
     "answers": "✓ responde",

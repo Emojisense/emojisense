@@ -73,7 +73,7 @@ const { results, confidence } = engine.search("jurassic park");
   <p>The table is computed when this page is built, with the English core pack. With the extension pack loaded, the engine knows more phrases and asks the edge less often.</p>
 
   <h2 id="edge-meaning-search">Edge meaning search</h2>
-  <p>The API is a Cloudflare Worker in more than 300 cities, at <code>{API_HOST}</code> (HTTPS only). For a meaning search it embeds the query with Workers AI (<code>bge-m3</code>, 1,024 dimensions) and compares it with the vectors of every emoji. Each emoji has a vector of its English description, bundled into the Worker, and one of its description in the query’s language, loaded on that language’s first query. The emoji’s best match counts. The comparison takes a few milliseconds. The model call takes about 50 ms inside the Worker at the median.</p>
+  <p>The API is a Cloudflare Worker in more than 300 cities, at <code>{API_HOST}</code> (HTTPS only). For a meaning search it embeds the query with Workers AI (<code>EmbeddingGemma-300m</code>, 768 dimensions) and compares it with the vectors of every emoji. Each emoji has a vector of its English description, bundled into the Worker, and one of its description in the query’s language, loaded on that language’s first query. The emoji’s best match counts. The comparison takes a few milliseconds. The model call takes about 170 ms inside the Worker at the median.</p>
   <p>The query and the emoji are always embedded by the same model at the same size. The pack manifest pins both, and the Worker refuses a mismatch.</p>
 
   <h2 id="fusion">How results merge</h2>

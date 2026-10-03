@@ -304,7 +304,7 @@
   "edge": {
     "kicker": "Borda global",
     "title": "Rápido em Lagos, Lima e Lahore.",
-    "titleCity": "Rápido\n{city}.",
+    "titleCities": "Rápido {first},\n{second} e {third}.",
     "cities": {
       "Los Angeles": "em Los Angeles",
       "New York": "em Nova York",
@@ -329,8 +329,8 @@
     "caption": "Buscas reais e os emoji que nosso motor retorna. O mapa é uma ilustração; os pontos mostram grandes cidades, não a localização exata dos centros de dados.",
     "stats": {
       "cities": "cidades na rede da Cloudflare. 95% dos usuários da internet estão a até 50 ms de uma delas.",
-      "device": "para respostas no dispositivo, a cada tecla. p95 medido: 0,4 ms.",
-      "ai": "para uma busca por significado com IA na borda. p50 medido: 52 ms.",
+      "device": "para respostas no dispositivo, a cada tecla. p50 medido: 0,1 ms.",
+      "ai": "para uma busca por significado com IA na borda. p50 medido: 170 ms.",
       "zero": "servidores, regiões ou GPUs para você configurar. Funciona da mesma forma em todo lugar."
     }
   },
@@ -356,7 +356,7 @@
       },
       "ai": {
         "title": "Busca por significado com IA",
-        "body": "Expressões inéditas são entendidas pelo significado, na borda, em cerca de 50 ms."
+        "body": "Expressões inéditas são entendidas pelo significado, na borda, em cerca de 170 ms."
       }
     },
     "answers": "✓ responde",
