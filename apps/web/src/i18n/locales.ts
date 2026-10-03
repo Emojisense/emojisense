@@ -35,7 +35,7 @@ export const LOCALE_INFO: Record<Locale, LocaleInfo> = {
 export const PREFIXED_LOCALES = LOCALES.filter((locale) => locale !== DEFAULT_LOCALE);
 
 /** Pages that exist in every locale, as English paths. */
-export const LOCALIZED_PAGES = ["/", "/pricing/", "/waitlist/", "/about/"] as const;
+export const LOCALIZED_PAGES = ["/", "/pricing/", "/integrations/", "/waitlist/", "/about/"] as const;
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);

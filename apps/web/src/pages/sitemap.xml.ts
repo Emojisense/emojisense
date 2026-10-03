@@ -11,6 +11,7 @@ import { DOCS_PAGES } from "../lib/docs-nav";
 const SITEMAP_PATHS = [
   "/",
   "/pricing/",
+  "/integrations/",
   "/playground/",
   "/about/",
   "/changelog/",

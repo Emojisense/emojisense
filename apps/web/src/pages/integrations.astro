@@ -1,0 +1,258 @@
+---
+import Catalog from "../components/integrations/Catalog.astro";
+import PageHero from "../components/PageHero.astro";
+import { DASHBOARD_URL, SITE_URL } from "../config";
+import { SKINS, type SkinId } from "../demos/stage/skins";
+import { LOCALE_INFO, localizePath } from "../i18n/locales";
+import { i18nFor } from "../i18n/page";
+import { IntegrationStage } from "../islands/IntegrationStage";
+import Base from "../layouts/Base.astro";
+import { INTEGRATIONS } from "../lib/integrations";
+import { stats } from "../lib/showcase";
+
+const { t, plural, tag, locale, messages } = i18nFor(Astro);
+/** The docs are in English; a translated page says so on its links. */
+const englishOnly = locale === "en" ? undefined : "en";
+const url = `${SITE_URL}${localizePath("/integrations/", locale)}`;
+const number = new Intl.NumberFormat(tag);
+
+const names = Object.fromEntries(
+  SKINS.map((skin) => [skin.id, t(`integrations.items.${skin.key}.name`)]),
+) as Record<SkinId, string>;
+const statusLabels = {
+  available: t("integrations.status.available"),
+  soon: t("integrations.status.soon"),
+};
+
+const facts = [
+  { count: INTEGRATIONS.length, unit: "integrations.units.integrations" },
+  { count: stats.languages, unit: "integrations.units.languages" },
+  { count: 1, unit: "integrations.units.engines" },
+] as const;
+
+const promises = [
+  { id: "same", emoji: "🎯" },
+  { id: "fast", emoji: "⚡" },
+  { id: "languages", emoji: "🌍" },
+] as const;
+
+const request = `mailto:support@emojisense.com?subject=${encodeURIComponent(t("integrations.page.request.subject"))}`;
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: t("meta.integrations.title"),
+  description: t("meta.integrations.description"),
+  url,
+  inLanguage: LOCALE_INFO[locale].tag,
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: INTEGRATIONS.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: t(`integrations.items.${item.key}.name`),
+      url: `${url}#${item.slug}`,
+    })),
+  },
+};
+---
+
+<Base
+  title={t("meta.integrations.title")}
+  description={t("meta.integrations.description")}
+  path="/integrations/"
+  jsonLd={jsonLd}
+>
+  <PageHero eyebrow={t("integrations.page.eyebrow")} emoji="🔌" title={t("integrations.page.title")}>
+    <p>{t("integrations.page.lead", { languages: stats.languages })}</p>
+  </PageHero>
+
+  <div class="container hero-more">
+    <ul class="facts">
+      {
+        facts.map((fact) => (
+          <li>
+            <strong>{number.format(fact.count)}</strong> {plural(fact.unit, fact.count)}
+          </li>
+        ))
+      }
+    </ul>
+    <div class="ctas">
+      <a class="btn btn-primary btn-lg" href={`${DASHBOARD_URL}/`}>{t("integrations.page.ctaKey")}</a>
+      <a class="btn btn-secondary btn-lg" href="#live">{t("integrations.page.ctaLive")}</a>
+    </div>
+  </div>
+
+  <section id="live" class="section section-soft" aria-labelledby="live-title">
+    <div class="container">
+      <div class="section-head center">
+        <p class="kicker"><span class="live-dot" aria-hidden="true"></span> {t("integrations.page.live.kicker")}</p>
+        <h2 id="live-title">{t("integrations.page.live.title")}</h2>
+        <p class="lead">{t("integrations.page.live.lead")}</p>
+      </div>
+      <IntegrationStage
+        client:visible
+        messages={messages.integrations.stage}
+        names={names}
+        statusLabels={statusLabels}
+        lang={tag}
+        docsLang={englishOnly}
+      />
+    </div>
+  </section>
+
+  <section id="catalog" class="section" aria-labelledby="catalog-title">
+    <div class="container">
+      <div class="section-head">
+        <p class="kicker">{t("integrations.page.catalog.kicker")}</p>
+        <h2 id="catalog-title">{t("integrations.page.catalog.title")}</h2>
+        <p class="lead">{t("integrations.page.catalog.lead")}</p>
+      </div>
+      <Catalog />
+    </div>
+  </section>
+
+  <section id="one-engine" class="section section-soft" aria-labelledby="engine-title">
+    <div class="container">
+      <div class="section-head center">
+        <p class="kicker">{t("integrations.page.promises.kicker")}</p>
+        <h2 id="engine-title">{t("integrations.page.promises.title")}</h2>
+      </div>
+      <ul class="promises">
+        {
+          promises.map((promise) => (
+            <li class="promise">
+              <span class="promise-emoji emoji" aria-hidden="true">
+                {promise.emoji}
+              </span>
+              <h3>{t(`integrations.page.promises.${promise.id}.title`)}</h3>
+              <p>{t(`integrations.page.promises.${promise.id}.text`, { languages: stats.languages })}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section id="request" class="section request" aria-labelledby="request-title">
+    <div class="container request-inner">
+      <p class="request-emoji emoji" aria-hidden="true">🧩</p>
+      <h2 id="request-title">{t("integrations.page.request.title")}</h2>
+      <p class="request-text">{t("integrations.page.request.text")}</p>
+      <div class="ctas">
+        <a class="btn btn-primary btn-lg" href={request}>{t("integrations.page.request.cta")}</a>
+        <a class="btn btn-secondary btn-lg" href="/docs/integrations/http/" hreflang={englishOnly}>
+          {t("integrations.page.request.api")}
+        </a>
+      </div>
+      <p class="request-foot">{t("integrations.foot")}</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero-more {
+    display: grid;
+    justify-items: center;
+    gap: 1.75rem;
+    padding-bottom: clamp(3rem, 7vw, 5rem);
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.75rem;
+    margin: 0;
+    padding: 0;
+    color: var(--ink-2);
+    list-style: none;
+  }
+
+  .facts strong {
+    color: var(--ink);
+    font: 700 1.5rem / 1 var(--font-display);
+    letter-spacing: -0.03em;
+  }
+
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .live-dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background: var(--live);
+    box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--live) 22%, transparent);
+  }
+
+  .promises {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .promise {
+    padding: 1.5rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+  }
+
+  .promise-emoji {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 1.25rem;
+    border-radius: var(--radius);
+    background: var(--bg-soft);
+    font-size: 1.5rem;
+  }
+
+  .promise h3 {
+    font-size: 1.25rem;
+  }
+
+  .promise p {
+    margin-top: 0.5rem;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+
+  .request-inner {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .request-emoji {
+    font-size: 3.5rem;
+  }
+
+  .request h2 {
+    margin-top: 1rem;
+    font-size: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
+  }
+
+  .request-text {
+    max-width: 34rem;
+    margin: 1rem 0 2rem;
+    color: var(--ink-2);
+    font-size: 1.125rem;
+  }
+
+  .request-foot {
+    margin-top: 1.75rem;
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+  }
+</style>

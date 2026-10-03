@@ -4,7 +4,8 @@
     "skipLink": "Aller au contenu",
     "shareAlt": {
       "home": "Emojisense : tout pour les emoji, dans toutes les applications. Des recherches comme “jurassic park” et “feliz cumpleaños” et leurs meilleurs résultats emoji.",
-      "pricing": "Tarifs Emojisense : gratuits au départ, justes quand vous grandissez. Forfaits Free, Solo et Pro avec leurs prix mensuels."
+      "pricing": "Tarifs Emojisense : gratuits au départ, justes quand vous grandissez. Forfaits Free, Solo et Pro avec leurs prix mensuels.",
+      "integrations": "Intégrations Emojisense : un moteur pour chaque endroit où l’on écrit. Des recherches dans un sélecteur React, Tiptap, Discourse, Raycast et un assistant IA, avec leurs meilleurs résultats emoji."
     },
     "home": {
       "description": "La plateforme emoji pour toutes les applications : recherche qui comprend l’argot et 11 langues, suggestions de réactions, photo en emoji, emoji personnalisés, jeux d’emoji hébergés et statistiques. Forfait gratuit, cœur open source."
@@ -20,6 +21,10 @@
     "about": {
       "title": "À propos",
       "description": "Pourquoi Emojisense existe, comment il fonctionne, comment il gagne de l’argent et où il en est aujourd’hui."
+    },
+    "integrations": {
+      "title": "Intégrations",
+      "description": "Emojisense pour Tiptap, Lexical, CKEditor 5, TinyMCE, React, Vue, Discourse, WordPress, Chrome, Raycast, Swift, MCP et une simple HTTP API. Un seul moteur, les mêmes résultats partout."
     }
   },
   "nav": {
@@ -451,11 +456,196 @@
         "blurb": "Toute l’API dans un seul Worker sur votre propre compte Cloudflare."
       }
     },
-    "fromSource": "depuis les sources",
-    "docsSuffix": " : docs",
     "foot": "Des emoji personnalisés dans Slack ou Discord ? L’import arrive bientôt.",
-    "seePlans": "Voir les forfaits",
-    "allDocs": "Toute la documentation"
+    "units": {
+      "integrations": {
+        "one": "intégration",
+        "many": "intégrations",
+        "other": "intégrations"
+      },
+      "languages": {
+        "one": "langue",
+        "many": "langues",
+        "other": "langues"
+      },
+      "engines": {
+        "one": "moteur",
+        "many": "moteurs",
+        "other": "moteurs"
+      }
+    },
+    "hub": {
+      "core": "Un seul moteur",
+      "coreNote": "Mêmes résultats partout",
+      "cta": "Voir toutes les intégrations"
+    },
+    "status": {
+      "available": "Disponible",
+      "soon": "Bientôt disponible"
+    },
+    "page": {
+      "eyebrow": "Intégrations",
+      "title": "Un seul moteur d’emoji. Partout où l’on écrit.",
+      "lead": "Éditeurs, forums, chat, lanceurs, assistants IA et votre propre application. Chacun reçoit une recherche qui comprend l’argot, les films, les émotions et {languages} langues.",
+      "ctaKey": "Obtenir la clé API gratuite",
+      "ctaLive": "Essayer en direct",
+      "live": {
+        "kicker": "Démo en direct",
+        "title": "Même moteur. Mêmes résultats. Dans chaque outil.",
+        "lead": "Choisissez un outil et regardez-le fonctionner, puis tapez vos propres mots. Chaque résultat vient du vrai moteur, qui fonctionne dans votre navigateur."
+      },
+      "catalog": {
+        "kicker": "Toutes les intégrations",
+        "title": "Choisissez vos outils.",
+        "lead": "Des packages prêts à intégrer pour les frameworks et les éditeurs, des applications là où vous travaillez déjà, et une API pour tout le reste.",
+        "filter": "Afficher les intégrations",
+        "all": "Toutes"
+      },
+      "card": {
+        "install": "Installation",
+        "docs": "Lire les docs",
+        "changelog": "Suivre les modifications"
+      },
+      "soon": {
+        "npm": "Bientôt sur npm.",
+        "swift": "Bientôt disponible en package Swift.",
+        "chrome": "Bientôt sur le Chrome Web Store.",
+        "raycast": "Bientôt sur le Raycast Store.",
+        "wordpress": "Bientôt dans le répertoire des extensions WordPress.",
+        "discourse": "Bientôt disponible en composant de thème Discourse.",
+        "source": "Bientôt disponible avec la publication des sources."
+      },
+      "promises": {
+        "kicker": "Un seul moteur",
+        "title": "Conçu une fois. Identique partout.",
+        "same": {
+          "title": "Les mêmes résultats partout",
+          "text": "Votre éditeur, votre forum et votre lanceur classent les emoji de la même façon. Ils partagent un seul moteur et un seul pack de données."
+        },
+        "fast": {
+          "title": "Rapide sur l’appareil",
+          "text": "La recherche fonctionne dans le navigateur ou l’application, sans attendre le réseau. La recherche par sens passe en périphérie quand le dictionnaire n’est pas sûr."
+        },
+        "languages": {
+          "title": "Les langues de vos utilisateurs",
+          "text": "Cherchez dans {languages} langues. Chacun obtient des résultats dans les langues qu’il utilise, et dans aucune autre."
+        }
+      },
+      "request": {
+        "title": "Votre outil n’est pas encore là ?",
+        "text": "Appelez la HTTP API depuis n’importe quel langage, ou dites-nous où vos utilisateurs écrivent. Les demandes décident de ce que nous créerons ensuite.",
+        "cta": "Demander une intégration",
+        "api": "Lire les docs de la HTTP API",
+        "subject": "Demande d’intégration"
+      }
+    },
+    "stage": {
+      "tabs": "Outils à essayer",
+      "stop": "Arrêter la démo",
+      "caption": "Résultats en direct du vrai moteur. La fenêtre est une illustration.",
+      "docs": "Lire les docs",
+      "results": "Suggestions d’emoji",
+      "loading": "Chargement des emoji…",
+      "searching": "Recherche par sens…",
+      "noResults": "Aucun emoji trouvé. Essayez d’autres mots.",
+      "byMeaning": "par sens",
+      "onDevice": "{ms} ms sur l’appareil",
+      "meaning": "{ms} ms par sens",
+      "meaningPending": "Requête par sens…",
+      "colonPlaceholder": "Tapez « : » et quelques mots",
+      "pickerPlaceholder": "Écrivez ici, puis appuyez sur {keys}",
+      "pasted": "{emoji} collé",
+      "skins": {
+        "react": {
+          "pitch": "Le sélecteur Frimousse pour React, avec une recherche qui comprend l’argot, les films, les émotions et les fautes de frappe. Parcourez comme d’habitude, ou tapez pour obtenir des résultats classés.",
+          "channel": "general",
+          "line": "La tarte aux pommes de mamie :",
+          "label": "Message",
+          "placeholder": "Message dans #general",
+          "search": "Chercher des emoji…",
+          "empty": "Aucun emoji trouvé"
+        },
+        "tiptap": {
+          "pitch": "Tapez deux-points dans n’importe quel éditeur Tiptap. Les mots courants fonctionnent, pas seulement les shortcodes.",
+          "space": "Marketing",
+          "title": "Plan de lancement",
+          "line": "On lance vendredi",
+          "label": "Texte du document"
+        },
+        "ckeditor5": {
+          "pitch": "Des suggestions après deux-points sur le plugin Mention de CKEditor 5, avec une recherche qui comprend les gens.",
+          "style": "Paragraphe",
+          "title": "Déjeuner d’équipe",
+          "line": "Le déjeuner est offert aujourd’hui",
+          "label": "Texte de l’éditeur"
+        },
+        "tinymce": {
+          "pitch": "Autocomplétion après deux-points pour TinyMCE 7 et 8. Elle remplace le menu des émoticônes.",
+          "title": "Newsletter",
+          "words": "42 mots",
+          "line": "Vendredi, on fête nos dix ans",
+          "label": "Texte de l’éditeur"
+        },
+        "discourse": {
+          "pitch": "Un composant de thème pour l’éditeur, le chat et le sélecteur d’emoji de votre forum.",
+          "topic": "La version 2.0 est sortie",
+          "ago": "2 h",
+          "post": "Nous avons refait l’éditeur de zéro. Dites-nous ce que vous en pensez !",
+          "replyTo": "Répondre à maya",
+          "reply": "Répondre",
+          "line": "C’est dingue",
+          "label": "Texte de la réponse"
+        },
+        "wordpress": {
+          "pitch": "La recherche d’emoji dans l’éditeur de blocs, les commentaires, les réactions, bbPress et BuddyPress. Fonctionne hors ligne.",
+          "category": "Culture",
+          "post": "Comment nous sommes passés à la semaine de quatre jours",
+          "excerpt": "Six mois plus tard : ce qui a changé pour l’équipe, et ce que nous referions.",
+          "comment": "Laisser un commentaire",
+          "submit": "Publier le commentaire",
+          "line": "Ça a beaucoup aidé notre équipe",
+          "label": "Commentaire"
+        },
+        "chrome": {
+          "pitch": "Un sélecteur d’emoji pour tous les champs de texte du web. Appuyez sur le raccourci, tapez ce que vous voulez dire, appuyez sur Entrée.",
+          "url": "mail.example.com",
+          "window": "Nouveau message",
+          "to": "À",
+          "toValue": "team@example.com",
+          "subject": "Objet",
+          "subjectValue": "Je serai en retard",
+          "line": "Je quitte le bureau",
+          "label": "Message",
+          "open": "Ouvrir le sélecteur d’emoji",
+          "picker": "Sélecteur d’emoji",
+          "search": "Chercher des emoji"
+        },
+        "raycast": {
+          "pitch": "Cherchez des emoji par sens depuis votre lanceur. Il fonctionne sur votre Mac, même hors ligne.",
+          "placeholder": "Chercher des emoji par sens",
+          "command": "Rechercher un emoji",
+          "results": "Résultats",
+          "hint": "Tapez ce que vous voulez dire",
+          "paste": "Coller",
+          "actions": "Actions"
+        },
+        "mcp": {
+          "pitch": "Un serveur MCP donne à Claude et aux autres assistants IA la recherche d’emoji et des suggestions de réactions.",
+          "title": "Assistant IA",
+          "server": "emojisense MCP",
+          "empty": "Demandez un emoji.",
+          "ask": "Trouvez un emoji pour notre annonce de lancement",
+          "label": "Message à l’assistant",
+          "placeholder": "Demandez un emoji",
+          "send": "Envoyer",
+          "calling": "Appel en cours",
+          "done": "Terminé",
+          "reply": "{emoji} convient le mieux. {second} fonctionne aussi.",
+          "replyOne": "{emoji} convient le mieux.",
+          "none": "Je n’ai trouvé aucun emoji pour cela. Essayez d’autres mots."
+        }
+      }
+    }
   },
   "plans": {
     "blurbs": {

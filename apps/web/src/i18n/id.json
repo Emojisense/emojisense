@@ -4,7 +4,8 @@
     "skipLink": "Langsung ke konten",
     "shareAlt": {
       "home": "Emojisense: semua kebutuhan emoji, untuk setiap aplikasi. Pencarian seperti “jurassic park” dan “feliz cumpleaños” beserta hasil emoji teratasnya.",
-      "pricing": "Harga Emojisense: gratis untuk memulai, terjangkau saat berkembang. Paket Free, Solo, dan Pro beserta harga bulanannya."
+      "pricing": "Harga Emojisense: gratis untuk memulai, terjangkau saat berkembang. Paket Free, Solo, dan Pro beserta harga bulanannya.",
+      "integrations": "Integrasi Emojisense: satu mesin untuk setiap tempat orang mengetik. Pencarian di pemilih React, Tiptap, Discourse, Raycast, dan asisten AI, dengan hasil emoji teratasnya."
     },
     "home": {
       "description": "Platform emoji untuk setiap aplikasi: pencarian yang memahami bahasa gaul dan 11 bahasa, saran reaksi, foto ke emoji, emoji khusus, set emoji yang dihosting, dan analitik. Paket Free, inti sumber terbuka."
@@ -20,6 +21,10 @@
     "about": {
       "title": "Tentang",
       "description": "Alasan Emojisense dibuat, cara kerjanya, sumber pendapatannya, dan perkembangannya saat ini."
+    },
+    "integrations": {
+      "title": "Integrasi",
+      "description": "Emojisense untuk Tiptap, Lexical, CKEditor 5, TinyMCE, React, Vue, Discourse, WordPress, Chrome, Raycast, Swift, MCP, dan HTTP API biasa. Satu mesin, hasil yang sama di mana saja."
     }
   },
   "nav": {
@@ -451,11 +456,190 @@
         "blurb": "Seluruh API dalam satu Worker di akun Cloudflare Anda sendiri."
       }
     },
-    "fromSource": "dari kode sumber",
-    "docsSuffix": ": dokumentasi",
     "foot": "Punya emoji khusus di Slack atau Discord? Impornya segera hadir.",
-    "seePlans": "Lihat paket",
-    "allDocs": "Semua dokumentasi"
+    "units": {
+      "integrations": {
+        "other": "integrasi"
+      },
+      "languages": {
+        "other": "bahasa"
+      },
+      "engines": {
+        "other": "mesin"
+      }
+    },
+    "hub": {
+      "core": "Satu mesin",
+      "coreNote": "Hasil sama di mana saja",
+      "cta": "Jelajahi semua integrasi"
+    },
+    "status": {
+      "available": "Tersedia",
+      "soon": "Segera hadir"
+    },
+    "page": {
+      "eyebrow": "Integrasi",
+      "title": "Satu mesin emoji. Di mana pun orang mengetik.",
+      "lead": "Editor, forum, obrolan, peluncur aplikasi, asisten AI, dan aplikasi Anda sendiri. Semuanya mendapat pencarian yang memahami bahasa gaul, film, perasaan, dan {languages} bahasa.",
+      "ctaKey": "Dapatkan kunci API gratis",
+      "ctaLive": "Coba langsung",
+      "live": {
+        "kicker": "Demo langsung",
+        "title": "Mesin sama. Hasil sama. Di setiap alat.",
+        "lead": "Pilih alat dan lihat cara kerjanya, lalu ketik kata-kata Anda sendiri. Setiap hasil berasal dari mesin nyata yang berjalan di browser Anda."
+      },
+      "catalog": {
+        "kicker": "Semua integrasi",
+        "title": "Pilih teknologi Anda.",
+        "lead": "Paket siap pasang untuk framework dan editor, aplikasi untuk tempat Anda biasa bekerja, dan API untuk semua kebutuhan lainnya.",
+        "filter": "Tampilkan integrasi",
+        "all": "Semua"
+      },
+      "card": {
+        "install": "Pemasangan",
+        "docs": "Baca dokumentasi",
+        "changelog": "Ikuti catatan perubahan"
+      },
+      "soon": {
+        "npm": "Segera hadir di npm.",
+        "swift": "Segera hadir sebagai paket Swift.",
+        "chrome": "Segera hadir di Chrome Web Store.",
+        "raycast": "Segera hadir di Raycast Store.",
+        "wordpress": "Segera hadir di direktori plugin WordPress.",
+        "discourse": "Segera hadir sebagai komponen tema Discourse.",
+        "source": "Segera hadir bersama rilis kode sumber."
+      },
+      "promises": {
+        "kicker": "Satu mesin",
+        "title": "Dibuat sekali. Sama di mana saja.",
+        "same": {
+          "title": "Hasil yang sama di mana saja",
+          "text": "Editor, forum, dan peluncur aplikasi Anda mengurutkan emoji dengan cara yang sama. Semuanya memakai satu mesin dan satu paket data."
+        },
+        "fast": {
+          "title": "Cepat di perangkat",
+          "text": "Pencarian berjalan di browser atau aplikasi, tanpa menunggu jaringan. Pencarian makna berjalan di edge saat kamus belum yakin."
+        },
+        "languages": {
+          "title": "Bahasa pengguna Anda",
+          "text": "Cari dalam {languages} bahasa. Orang hanya mendapat hasil dalam bahasa yang mereka gunakan."
+        }
+      },
+      "request": {
+        "title": "Alat Anda belum ada di sini?",
+        "text": "Panggil HTTP API dari bahasa apa pun, atau beri tahu kami tempat pengguna Anda mengetik. Permintaan menentukan apa yang kami bangun berikutnya.",
+        "cta": "Minta integrasi",
+        "api": "Baca dokumentasi HTTP API",
+        "subject": "Permintaan integrasi"
+      }
+    },
+    "stage": {
+      "tabs": "Alat untuk dicoba",
+      "stop": "Hentikan demo",
+      "caption": "Hasil langsung dari mesin nyata. Jendelanya hanya ilustrasi.",
+      "docs": "Baca dokumentasi",
+      "results": "Saran emoji",
+      "loading": "Memuat emoji…",
+      "searching": "Mencari berdasarkan makna…",
+      "noResults": "Emoji tidak ditemukan. Coba kata lain.",
+      "byMeaning": "berdasarkan makna",
+      "onDevice": "{ms} ms di perangkat",
+      "meaning": "{ms} ms berdasarkan makna",
+      "meaningPending": "Menanyakan makna…",
+      "colonPlaceholder": "Ketik : dan beberapa kata",
+      "pickerPlaceholder": "Tulis di sini, lalu tekan {keys}",
+      "pasted": "{emoji} ditempel",
+      "skins": {
+        "react": {
+          "pitch": "Pemilih Frimousse untuk React, dengan pencarian yang memahami slang, film, perasaan, dan salah ketik. Jelajahi seperti biasa; ketik untuk hasil yang berperingkat.",
+          "channel": "general",
+          "line": "Pai apel buatan nenek:",
+          "label": "Pesan",
+          "placeholder": "Pesan ke #general",
+          "search": "Cari emoji…",
+          "empty": "Emoji tidak ditemukan"
+        },
+        "tiptap": {
+          "pitch": "Ketik titik dua di editor Tiptap mana pun. Kata biasa juga bisa, bukan hanya kode pendek.",
+          "space": "Pemasaran",
+          "title": "Rencana peluncuran",
+          "line": "Kita rilis hari Jumat",
+          "label": "Teks dokumen"
+        },
+        "ckeditor5": {
+          "pitch": "Saran titik dua di plugin Mention CKEditor 5, dengan pencarian yang memahami orang.",
+          "style": "Paragraf",
+          "title": "Makan siang tim",
+          "line": "Makan siang hari ini kami traktir",
+          "label": "Teks editor"
+        },
+        "tinymce": {
+          "pitch": "Pelengkapan otomatis titik dua untuk TinyMCE 7 dan 8, menggantikan menu emotikon.",
+          "title": "Buletin",
+          "words": "42 kata",
+          "line": "Jumat ini ulang tahun kami yang kesepuluh",
+          "label": "Teks editor"
+        },
+        "discourse": {
+          "pitch": "Komponen tema untuk editor, obrolan, dan pemilih emoji di forum Anda.",
+          "topic": "Versi 2.0 sudah rilis",
+          "ago": "2 j",
+          "post": "Kami membangun ulang editor dari nol. Beri tahu kami pendapat Anda!",
+          "replyTo": "Balas maya",
+          "reply": "Balas",
+          "line": "Ini gila banget",
+          "label": "Teks balasan"
+        },
+        "wordpress": {
+          "pitch": "Pencarian emoji di editor blok, komentar, reaksi, bbPress, dan BuddyPress. Bekerja luring.",
+          "category": "Budaya",
+          "post": "Cara kami beralih ke empat hari kerja seminggu",
+          "excerpt": "Enam bulan berjalan: apa yang berubah bagi tim, dan apa yang akan kami lakukan lagi.",
+          "comment": "Tulis komentar",
+          "submit": "Kirim komentar",
+          "line": "Ini sangat membantu tim kami",
+          "label": "Komentar"
+        },
+        "chrome": {
+          "pitch": "Pemilih emoji untuk setiap kolom teks di web. Tekan pintasan, ketik maksud Anda, lalu tekan Enter.",
+          "url": "mail.example.com",
+          "window": "Pesan baru",
+          "to": "Kepada",
+          "toValue": "team@example.com",
+          "subject": "Subjek",
+          "subjectValue": "Saya agak terlambat",
+          "line": "Berangkat dari kantor sekarang",
+          "label": "Pesan",
+          "open": "Buka pemilih emoji",
+          "picker": "Pemilih emoji",
+          "search": "Cari emoji"
+        },
+        "raycast": {
+          "pitch": "Cari emoji berdasarkan makna dari peluncur aplikasi Anda. Berjalan di Mac Anda dan bekerja luring.",
+          "placeholder": "Cari emoji berdasarkan makna",
+          "command": "Cari Emoji",
+          "results": "Hasil",
+          "hint": "Ketik maksud Anda",
+          "paste": "Tempel",
+          "actions": "Tindakan"
+        },
+        "mcp": {
+          "pitch": "Server MCP memberi Claude dan asisten AI lainnya pencarian emoji dan saran reaksi.",
+          "title": "Asisten AI",
+          "server": "emojisense MCP",
+          "empty": "Minta emoji.",
+          "ask": "Carikan emoji untuk postingan peluncuran kita",
+          "label": "Pesan untuk asisten",
+          "placeholder": "Minta emoji",
+          "send": "Kirim",
+          "calling": "Memanggil",
+          "done": "Selesai",
+          "reply": "{emoji} paling cocok. {second} juga bisa.",
+          "replyOne": "{emoji} paling cocok.",
+          "none": "Saya tidak menemukan emoji untuk itu. Coba kata lain."
+        }
+      }
+    }
   },
   "plans": {
     "blurbs": {

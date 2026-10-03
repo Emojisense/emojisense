@@ -4,7 +4,8 @@
     "skipLink": "跳转到正文",
     "shareAlt": {
       "home": "Emojisense：每个应用所需的emoji功能。展示“jurassic park”和“feliz cumpleaños”等搜索及其排名靠前的emoji结果。",
-      "pricing": "Emojisense定价：免费起步，按需付费。展示Free、Solo和Pro套餐及其月费。"
+      "pricing": "Emojisense定价：免费起步，按需付费。展示Free、Solo和Pro套餐及其月费。",
+      "integrations": "Emojisense集成：一个引擎，覆盖人们打字的每个地方。React选择器、Tiptap、Discourse、Raycast和AI助手中的搜索，以及它们排名最前的emoji结果。"
     },
     "home": {
       "description": "适用于每个应用的emoji平台：搜索理解俚语和11种语言，提供emoji回应建议、照片转emoji、自定义emoji、托管emoji集和数据分析。提供Free套餐，核心开源。"
@@ -20,6 +21,10 @@
     "about": {
       "title": "关于",
       "description": "了解Emojisense的初衷、工作原理、收入来源和当前进展。"
+    },
+    "integrations": {
+      "title": "集成",
+      "description": "Emojisense支持Tiptap、Lexical、CKEditor 5、TinyMCE、React、Vue、Discourse、WordPress、Chrome、Raycast、Swift、MCP，以及简单的HTTP API。一个引擎，处处结果一致。"
     }
   },
   "nav": {
@@ -451,11 +456,190 @@
         "blurb": "完整API以一个Worker运行在你自己的Cloudflare账户中。"
       }
     },
-    "fromSource": "从源码安装",
-    "docsSuffix": "：文档",
     "foot": "在Slack或Discord中有自定义emoji？导入功能即将推出。",
-    "seePlans": "查看套餐",
-    "allDocs": "全部文档"
+    "units": {
+      "integrations": {
+        "other": "个集成"
+      },
+      "languages": {
+        "other": "种语言"
+      },
+      "engines": {
+        "other": "个引擎"
+      }
+    },
+    "hub": {
+      "core": "一个引擎",
+      "coreNote": "处处结果一致",
+      "cta": "查看全部集成"
+    },
+    "status": {
+      "available": "可用",
+      "soon": "即将推出"
+    },
+    "page": {
+      "eyebrow": "集成",
+      "title": "一个emoji引擎，覆盖每个输入场景。",
+      "lead": "编辑器、论坛、聊天、启动器、AI助手，以及你自己的应用。每一处都能用上理解俚语、电影、情感和{languages}种语言的搜索。",
+      "ctaKey": "获取免费API密钥",
+      "ctaLive": "在线试用",
+      "live": {
+        "kicker": "实时演示",
+        "title": "同一个引擎，同样的结果，适用于每个工具。",
+        "lead": "选择一个工具，看看它如何工作，再输入你自己的词语。每个结果都来自在你浏览器中运行的真实引擎。"
+      },
+      "catalog": {
+        "kicker": "全部集成",
+        "title": "选择你的技术栈。",
+        "lead": "框架和编辑器有即插即用的包，常用的工作工具有现成的应用，其他场景可以用API。",
+        "filter": "显示集成",
+        "all": "全部"
+      },
+      "card": {
+        "install": "安装",
+        "docs": "阅读文档",
+        "changelog": "关注更新日志"
+      },
+      "soon": {
+        "npm": "即将在npm上发布。",
+        "swift": "即将以Swift包形式推出。",
+        "chrome": "即将上架Chrome Web Store。",
+        "raycast": "即将上架Raycast Store。",
+        "wordpress": "即将上架WordPress插件目录。",
+        "discourse": "即将以Discourse主题组件形式推出。",
+        "source": "即将随源码一同发布。"
+      },
+      "promises": {
+        "kicker": "一个引擎",
+        "title": "一次构建，处处一致。",
+        "same": {
+          "title": "处处结果一致",
+          "text": "你的编辑器、论坛和启动器用同样的方式为emoji排序。它们共用一个引擎和一个数据包。"
+        },
+        "fast": {
+          "title": "在设备上快速运行",
+          "text": "搜索在浏览器或应用中运行，无需等待网络。词典无法确定时，由边缘进行语义搜索。"
+        },
+        "languages": {
+          "title": "你的用户所用的语言",
+          "text": "支持{languages}种语言的搜索。用户只会得到自己所用语言的匹配结果，不会混入其他语言。"
+        }
+      },
+      "request": {
+        "title": "还没有你用的工具？",
+        "text": "用任意语言调用HTTP API，或告诉我们你的用户在哪里输入。我们根据大家的需求决定下一步开发什么。",
+        "cta": "提交集成需求",
+        "api": "阅读HTTP API文档",
+        "subject": "集成需求"
+      }
+    },
+    "stage": {
+      "tabs": "可试用的工具",
+      "stop": "停止演示",
+      "caption": "实时结果来自真实引擎。窗口仅作示意。",
+      "docs": "阅读文档",
+      "results": "emoji建议",
+      "loading": "正在加载emoji…",
+      "searching": "正在按含义搜索…",
+      "noResults": "未找到emoji。试试其他词语。",
+      "byMeaning": "按含义匹配",
+      "onDevice": "设备端{ms} ms",
+      "meaning": "语义搜索{ms} ms",
+      "meaningPending": "语义搜索中…",
+      "colonPlaceholder": "输入“:”和几个词",
+      "pickerPlaceholder": "在这里输入，然后按{keys}",
+      "pasted": "已粘贴{emoji}",
+      "skins": {
+        "react": {
+          "pitch": "面向React的Frimousse选择器，搜索能理解俚语、电影、情绪和错别字。照常浏览；输入后即得排序结果。",
+          "channel": "general",
+          "line": "奶奶做的苹果派：",
+          "label": "消息",
+          "placeholder": "发送消息到 #general",
+          "search": "搜索emoji…",
+          "empty": "没有找到emoji"
+        },
+        "tiptap": {
+          "pitch": "在任意Tiptap编辑器中输入冒号。普通词语也能用，不只是短代码。",
+          "space": "市场营销",
+          "title": "发布计划",
+          "line": "我们周五上线",
+          "label": "文档正文"
+        },
+        "ckeditor5": {
+          "pitch": "基于CKEditor 5 Mention插件的冒号自动补全，搭配理解用户表达的搜索。",
+          "style": "段落",
+          "title": "团队午餐",
+          "line": "今天午餐我们请客",
+          "label": "编辑器正文"
+        },
+        "tinymce": {
+          "pitch": "TinyMCE 7和8的冒号自动补全，取代表情符号菜单。",
+          "title": "简报",
+          "words": "42字",
+          "line": "周五是我们的十周年",
+          "label": "编辑器正文"
+        },
+        "discourse": {
+          "pitch": "一个主题组件，覆盖论坛的编辑器、聊天和emoji选择器。",
+          "topic": "2.0版本已发布",
+          "ago": "2小时",
+          "post": "我们从零重写了编辑器。告诉我们你的想法！",
+          "replyTo": "回复maya",
+          "reply": "回复",
+          "line": "这也太酷了",
+          "label": "回复内容"
+        },
+        "wordpress": {
+          "pitch": "在区块编辑器、评论、回应、bbPress和BuddyPress中搜索emoji。可离线使用。",
+          "category": "文化",
+          "post": "我们如何改为四天工作制",
+          "excerpt": "六个月过去了：团队有哪些变化，哪些做法值得再来一次。",
+          "comment": "留下评论",
+          "submit": "发表评论",
+          "line": "这对我们团队帮助很大",
+          "label": "评论"
+        },
+        "chrome": {
+          "pitch": "为网页上的每个文本框提供emoji选择器。按下快捷键，输入你想表达的意思，再按Enter。",
+          "url": "mail.example.com",
+          "window": "新邮件",
+          "to": "收件人",
+          "toValue": "team@example.com",
+          "subject": "主题",
+          "subjectValue": "我会晚到",
+          "line": "刚从办公室出发",
+          "label": "邮件正文",
+          "open": "打开emoji选择器",
+          "picker": "emoji选择器",
+          "search": "搜索emoji"
+        },
+        "raycast": {
+          "pitch": "从启动器按含义搜索emoji。在你的Mac上运行，支持离线使用。",
+          "placeholder": "按含义搜索emoji",
+          "command": "搜索emoji",
+          "results": "结果",
+          "hint": "输入你想表达的意思",
+          "paste": "粘贴",
+          "actions": "操作"
+        },
+        "mcp": {
+          "pitch": "MCP服务器为Claude和其他AI助手提供emoji搜索和emoji回应建议。",
+          "title": "AI助手",
+          "server": "emojisense MCP",
+          "empty": "向助手要一个emoji。",
+          "ask": "为我们的发布帖找一个emoji",
+          "label": "发给助手的消息",
+          "placeholder": "向助手要emoji",
+          "send": "发送",
+          "calling": "正在调用",
+          "done": "已完成",
+          "reply": "{emoji}最合适。{second}也可以。",
+          "replyOne": "{emoji}最合适。",
+          "none": "没有找到合适的emoji。试试其他词语。"
+        }
+      }
+    }
   },
   "plans": {
     "blurbs": {

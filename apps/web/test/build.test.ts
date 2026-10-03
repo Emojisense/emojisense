@@ -35,6 +35,7 @@ const LEGAL = ["/legal/terms/", "/legal/privacy/", "/legal/acceptable-use/", "/l
 const PAGES = [
   "/",
   "/pricing/",
+  "/integrations/",
   "/waitlist/",
   "/about/",
   "/changelog/",
@@ -59,6 +60,7 @@ const BRAND_ASSETS = [
   "/og/home.png",
   "/og/pricing.png",
   "/og/docs.png",
+  "/og/integrations.png",
 ];
 
 let outDir = "";
@@ -175,11 +177,20 @@ describe("landing page", () => {
 
   it("has every main section", () => {
     const doc = page("/");
-    for (const id of ["use-cases", "features", "edge", "network", "developers", "pricing", "faq"]) {
+    for (const id of [
+      "use-cases",
+      "features",
+      "edge",
+      "network",
+      "integrations",
+      "developers",
+      "pricing",
+      "faq",
+    ]) {
       expect(doc.getElementById(id), id).not.toBeNull();
     }
     const text = doc.body.textContent ?? "";
-    for (const name of ["React", "Frimousse", "Tiptap", "Lexical", "Swift", "Chrome", "Raycast", "MCP"]) {
+    for (const name of ["React", "Tiptap", "Lexical", "Swift", "Chrome", "Raycast", "MCP"]) {
       expect(text).toContain(name);
     }
     expect(doc.querySelectorAll("#faq details").length).toBeGreaterThanOrEqual(5);
@@ -386,8 +397,46 @@ describe("waitlist page", () => {
   });
 });
 
+describe("integrations", () => {
+  it("shows brands on the landing page, each linking to its card, without install commands", () => {
+    const hub = page("/").getElementById("integrations");
+    expect(hub?.querySelectorAll("code, .copycmd")).toHaveLength(0);
+    const links = Array.from(hub?.querySelectorAll("a.hub-tile") ?? [], (a) => a.getAttribute("href") ?? "");
+    expect(links.length).toBeGreaterThanOrEqual(16);
+    const cards = page("/integrations/");
+    for (const link of links) {
+      expect(link, link).toMatch(/^\/integrations\/#[a-z0-9-]+$/);
+      expect(cards.getElementById(link.split("#")[1] ?? "")?.classList.contains("cat-card"), link).toBe(true);
+    }
+    expect(hub?.querySelector('a.btn[href="/integrations/"]')).not.toBeNull();
+  });
+
+  it("puts the live stage, a card per integration and a filter on /integrations/", () => {
+    const doc = page("/integrations/");
+    expect(doc.querySelector('astro-island[component-url*="IntegrationStage"]')).not.toBeNull();
+    const cards = doc.querySelectorAll(".cat-card");
+    expect(cards.length).toBe(16);
+    expect(doc.querySelectorAll('.cat-filter input[type="radio"]')).toHaveLength(5);
+    // Only what can be installed today shows a command; the rest says where it will ship.
+    for (const card of Array.from(cards)) {
+      const available = card.querySelector('.cat-badge[data-status="available"]') !== null;
+      expect(card.querySelector(".cat-install astro-island") !== null, card.id).toBe(available);
+      expect(card.querySelector(".cat-soon") !== null, card.id).toBe(!available);
+      expect(card.querySelector("a.cat-docs")?.getAttribute("href"), card.id).toMatch(/^\/docs\//);
+    }
+    expect(doc.querySelector('.nav-main a[href="/integrations/"]')?.getAttribute("aria-current")).toBe(
+      "page",
+    );
+  });
+
+  it("keeps ids unique on /integrations/", () => {
+    const ids = Array.from(page("/integrations/").querySelectorAll("[id]"), (el) => el.id);
+    expect(ids.length).toBe(new Set(ids).size);
+  });
+});
+
 describe("languages", () => {
-  const TRANSLATED = ["/", "/pricing/", "/waitlist/", "/about/"];
+  const TRANSLATED = ["/", "/pricing/", "/integrations/", "/waitlist/", "/about/"];
   const OTHER = LOCALES.filter((locale) => locale !== "en");
   const localized = (path: string, locale: string) => (locale === "en" ? path : `/${locale}${path}`);
   const everyVersion = OTHER.flatMap((locale) => TRANSLATED.map((path) => [locale, path] as const));
@@ -460,6 +509,7 @@ describe("languages", () => {
     const doc = page("/fr/");
     const nav = Array.from(doc.querySelectorAll(".nav-main a"), (a) => a.getAttribute("href"));
     expect(nav).toContain("/fr/pricing/");
+    expect(nav).toContain("/fr/integrations/");
     expect(nav).toContain("/docs/");
     expect(doc.querySelector('.nav-main a[href="/docs/"]')?.getAttribute("hreflang")).toBe("en");
     // Paid plans open the dashboard's checkout, which is not translated.
@@ -624,13 +674,18 @@ describe("share cards and icons", () => {
     return [png.readUInt32BE(16), png.readUInt32BE(20)];
   }
 
-  it.each(["/og/home.png", "/og/pricing.png", "/og/docs.png"])("%s is 1200 × 630", (path) => {
-    expect(pngSize(path)).toEqual([1200, 630]);
-  });
+  it.each(["/og/home.png", "/og/pricing.png", "/og/docs.png", "/og/integrations.png"])(
+    "%s is 1200 × 630",
+    (path) => {
+      expect(pngSize(path)).toEqual([1200, 630]);
+    },
+  );
 
   it.each([
     ["/", "/og/home.png"],
     ["/pricing/", "/og/pricing.png"],
+    ["/integrations/", "/og/integrations.png"],
+    ["/es/integrations/", "/og/integrations.png"],
     ["/docs/api/", "/og/docs.png"],
     ["/legal/privacy/", "/og/home.png"],
   ])("%s shares %s as a large card with alt text", (path, image) => {

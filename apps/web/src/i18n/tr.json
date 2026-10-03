@@ -4,7 +4,8 @@
     "skipLink": "İçeriğe geç",
     "shareAlt": {
       "home": "Emojisense: her uygulama için emojiye dair her şey. “jurassic park” ve “feliz cumpleaños” gibi aramalar ve ilk sıradaki emoji sonuçları.",
-      "pricing": "Emojisense fiyatları: başlangıç ücretsiz, büyüdükçe adil. Free, Solo ve Pro planları ve aylık fiyatları."
+      "pricing": "Emojisense fiyatları: başlangıç ücretsiz, büyüdükçe adil. Free, Solo ve Pro planları ve aylık fiyatları.",
+      "integrations": "Emojisense entegrasyonları: insanların yazdığı her yer için tek motor. React seçici, Tiptap, Discourse, Raycast ve bir yapay zekâ asistanında aramalar ve en iyi emoji sonuçları."
     },
     "home": {
       "description": "Her uygulama için emoji platformu: argoyu ve 11 dili anlayan arama, tepki önerileri, fotoğraftan emoji, özel emoji, barındırılan emoji setleri ve analizler. Free planı, açık kaynaklı çekirdek."
@@ -20,6 +21,10 @@
     "about": {
       "title": "Hakkımızda",
       "description": "Emojisense neden var, nasıl çalışıyor, nasıl gelir elde ediyor ve bugün ne durumda?"
+    },
+    "integrations": {
+      "title": "Entegrasyonlar",
+      "description": "Tiptap, Lexical, CKEditor 5, TinyMCE, React, Vue, Discourse, WordPress, Chrome, Raycast, Swift, MCP ve sade bir HTTP API için Emojisense. Tek motor, her yerde aynı sonuçlar."
     }
   },
   "nav": {
@@ -451,11 +456,193 @@
         "blurb": "Tüm API, kendi Cloudflare hesabınızda tek Worker olarak çalışır."
       }
     },
-    "fromSource": "kaynak koddan",
-    "docsSuffix": ": belgeler",
     "foot": "Slack veya Discord'da özel emojileriniz mi var? İçe aktarma yakında geliyor.",
-    "seePlans": "Planları görün",
-    "allDocs": "Tüm belgeler"
+    "units": {
+      "integrations": {
+        "one": "entegrasyon",
+        "other": "entegrasyon"
+      },
+      "languages": {
+        "one": "dil",
+        "other": "dil"
+      },
+      "engines": {
+        "one": "motor",
+        "other": "motor"
+      }
+    },
+    "hub": {
+      "core": "Tek motor",
+      "coreNote": "Her yerde aynı sonuçlar",
+      "cta": "Tüm entegrasyonları keşfedin"
+    },
+    "status": {
+      "available": "Kullanılabilir",
+      "soon": "Yakında"
+    },
+    "page": {
+      "eyebrow": "Entegrasyonlar",
+      "title": "Tek emoji motoru. İnsanların yazdığı her yerde.",
+      "lead": "Editörler, forumlar, sohbet, başlatıcılar, yapay zekâ asistanları ve kendi uygulamanız. Hepsi argoyu, filmleri, duyguları ve {languages} dili anlayan bir aramaya kavuşur.",
+      "ctaKey": "Ücretsiz API anahtarı alın",
+      "ctaLive": "Canlı deneyin",
+      "live": {
+        "kicker": "Canlı demo",
+        "title": "Aynı motor. Aynı sonuçlar. Her araçta.",
+        "lead": "Bir araç seçip çalışmasını izleyin, ardından kendi sözcüklerinizi yazın. Her sonuç, tarayıcınızda çalışan gerçek motordan gelir."
+      },
+      "catalog": {
+        "kicker": "Tüm entegrasyonlar",
+        "title": "Altyapınızı seçin.",
+        "lead": "Geliştirme çatıları ve editörler için doğrudan eklenebilen paketler, zaten çalıştığınız yerler için uygulamalar ve geri kalan her şey için bir API.",
+        "filter": "Gösterilecek entegrasyonlar",
+        "all": "Tümü"
+      },
+      "card": {
+        "install": "Kurulum",
+        "docs": "Belgeleri okuyun",
+        "changelog": "Değişiklik günlüğünü takip edin"
+      },
+      "soon": {
+        "npm": "Yakında npm'de.",
+        "swift": "Yakında Swift paketi olarak.",
+        "chrome": "Yakında Chrome Web Store'da.",
+        "raycast": "Yakında Raycast Store'da.",
+        "wordpress": "Yakında WordPress eklenti dizininde.",
+        "discourse": "Yakında Discourse tema bileşeni olarak.",
+        "source": "Yakında, kaynak kodun yayınlanmasıyla birlikte."
+      },
+      "promises": {
+        "kicker": "Tek motor",
+        "title": "Bir kez geliştirildi. Her yerde aynı.",
+        "same": {
+          "title": "Her yerde aynı sonuçlar",
+          "text": "Editörünüz, forumunuz ve başlatıcınız emojileri aynı şekilde sıralar. Hepsi tek bir motoru ve tek bir veri paketini paylaşır."
+        },
+        "fast": {
+          "title": "Cihazda hızlı",
+          "text": "Arama, ağı beklemeden tarayıcıda veya uygulamada çalışır. Sözlük emin olmadığında anlama göre arama uç ağda çalışır."
+        },
+        "languages": {
+          "title": "Kullanıcılarınızın dilleri",
+          "text": "{languages} dilde arayın. İnsanlar eşleşmeleri yalnızca kendi kullandıkları dillerde alır."
+        }
+      },
+      "request": {
+        "title": "Aracınız henüz burada yok mu?",
+        "text": "HTTP API'yi herhangi bir dilden çağırın veya kullanıcılarınızın nerede yazdığını bize söyleyin. Sırada ne geliştireceğimize talepler karar verir.",
+        "cta": "Entegrasyon talep edin",
+        "api": "HTTP API belgelerini okuyun",
+        "subject": "Entegrasyon talebi"
+      }
+    },
+    "stage": {
+      "tabs": "Denenecek araçlar",
+      "stop": "Demoyu durdurun",
+      "caption": "Gerçek motordan canlı sonuçlar. Pencere yalnızca bir görseldir.",
+      "docs": "Belgeleri okuyun",
+      "results": "Emoji önerileri",
+      "loading": "Emojiler yükleniyor…",
+      "searching": "Anlama göre aranıyor…",
+      "noResults": "Emoji bulunamadı. Başka sözcükler deneyin.",
+      "byMeaning": "anlama göre",
+      "onDevice": "Cihazda {ms} ms",
+      "meaning": "Anlama göre {ms} ms",
+      "meaningPending": "Anlama göre soruluyor…",
+      "colonPlaceholder": "İki nokta (:) ve birkaç sözcük yazın",
+      "pickerPlaceholder": "Buraya yazın, ardından {keys} tuşlarına basın",
+      "pasted": "{emoji} yapıştırıldı",
+      "skins": {
+        "react": {
+          "pitch": "React için Frimousse seçici; argoyu, filmleri, duyguları ve yazım hatalarını anlayan aramayla. Her zamanki gibi göz atın, yazınca sıralı sonuçlar alın.",
+          "channel": "general",
+          "line": "Anneannemin elmalı turtası:",
+          "label": "Mesaj",
+          "placeholder": "#general kanalına mesaj",
+          "search": "Emoji arayın…",
+          "empty": "Emoji bulunamadı"
+        },
+        "tiptap": {
+          "pitch": "Herhangi bir Tiptap editöründe iki nokta yazın. Yalnızca kısa kodlar değil, sade sözcükler de çalışır.",
+          "space": "Pazarlama",
+          "title": "Yayın planı",
+          "line": "Cuma günü yayına çıkıyoruz",
+          "label": "Belge metni"
+        },
+        "ckeditor5": {
+          "pitch": "CKEditor 5 Mention eklentisinde iki noktayla açılan öneriler ve insanları anlayan arama.",
+          "style": "Paragraf",
+          "title": "Ekip yemeği",
+          "line": "Bugün öğle yemeği bizden",
+          "label": "Editör metni"
+        },
+        "tinymce": {
+          "pitch": "TinyMCE 7 ve 8 için iki noktayla otomatik tamamlama. İfade menüsünün yerini alır.",
+          "title": "Bülten",
+          "words": "42 sözcük",
+          "line": "Cuma günü onuncu yaş günümüz",
+          "label": "Editör metni"
+        },
+        "discourse": {
+          "pitch": "Forumunuzun yazı düzenleyicisi, sohbeti ve emoji seçicisi için bir tema bileşeni.",
+          "topic": "Sürüm 2.0 çıktı",
+          "ago": "2 sa",
+          "post": "Düzenleyiciyi sıfırdan yeniden geliştirdik. Ne düşündüğünüzü bize yazın!",
+          "replyTo": "maya'ya yanıt",
+          "reply": "Yanıtlayın",
+          "line": "Bu çılgınca",
+          "label": "Yanıt metni"
+        },
+        "wordpress": {
+          "pitch": "Blok düzenleyicide, yorumlarda, tepkilerde, bbPress ve BuddyPress'te emoji arama. Çevrimdışı çalışır.",
+          "category": "Kültür",
+          "post": "Dört günlük çalışma haftasına nasıl geçtik",
+          "excerpt": "Altı ay sonra: ekip için neler değişti ve neleri yine yapardık?",
+          "comment": "Yorum bırakın",
+          "submit": "Yorumu gönderin",
+          "line": "Bu, ekibimize çok yardımcı oldu",
+          "label": "Yorum"
+        },
+        "chrome": {
+          "pitch": "Web'deki her metin alanı için bir emoji seçici. Kısayola basın, ne demek istediğinizi yazın, Enter'a basın.",
+          "url": "mail.example.com",
+          "window": "Yeni mesaj",
+          "to": "Kime",
+          "toValue": "team@example.com",
+          "subject": "Konu",
+          "subjectValue": "Biraz gecikeceğim",
+          "line": "Ofisten şimdi çıkıyorum",
+          "label": "Mesaj",
+          "open": "Emoji seçiciyi açın",
+          "picker": "Emoji seçici",
+          "search": "Emoji arayın"
+        },
+        "raycast": {
+          "pitch": "Başlatıcınızdan anlama göre emoji arayın. Mac'inizde çalışır ve çevrimdışı da kullanılabilir.",
+          "placeholder": "Anlama göre emoji arayın",
+          "command": "Emoji Ara",
+          "results": "Sonuçlar",
+          "hint": "Ne demek istediğinizi yazın",
+          "paste": "Yapıştırın",
+          "actions": "Eylemler"
+        },
+        "mcp": {
+          "pitch": "Bir MCP sunucusu, Claude'a ve diğer yapay zekâ asistanlarına emoji arama ve tepki önerileri sunar.",
+          "title": "Yapay zekâ asistanı",
+          "server": "emojisense MCP",
+          "empty": "Bir emoji isteyin.",
+          "ask": "Lansman duyurumuz için bir emoji bul",
+          "label": "Asistana mesaj",
+          "placeholder": "Bir emoji isteyin",
+          "send": "Gönderin",
+          "calling": "Çağırıyor",
+          "done": "Tamamlandı",
+          "reply": "En uygunu {emoji}. Bir diğer seçenek: {second}.",
+          "replyOne": "En uygunu {emoji}.",
+          "none": "Bunun için emoji bulamadım. Başka sözcükler deneyin."
+        }
+      }
+    }
   },
   "plans": {
     "blurbs": {

@@ -40,7 +40,9 @@ const shareAlt =
     ? t("meta.shareAlt.home")
     : shareImage === SHARE_IMAGES.pricing
       ? t("meta.shareAlt.pricing")
-      : shareImage.alt;
+      : shareImage === SHARE_IMAGES.integrations
+        ? t("meta.shareAlt.integrations")
+        : shareImage.alt;
 // Pages in every language list each other; English-only pages have no alternates.
 const alternates = isLocalizedPath(path)
   ? LOCALES.map((code) => ({

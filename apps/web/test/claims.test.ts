@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { PACK_VERSION } from "../src/config";
 import fixtures from "../src/demos/meaning-fixtures.json";
 import { MEANING_QUERIES } from "../src/demos/meaning-queries";
+import { SKINS } from "../src/demos/stage/skins";
 import en from "../src/i18n/en.json";
 import { DEMO_LOCALES } from "../src/lib/engine-client";
 import { cityBubbles, comparisons, languages, stats } from "../src/lib/showcase";
@@ -75,6 +76,25 @@ describe.skipIf(!built)("demo meaning queries", () => {
       expect(answer?.slice(0, 3)).toContain(target);
     },
   );
+});
+
+describe.skipIf(!built)("integration stage", () => {
+  const pack = (name: string) =>
+    JSON.parse(
+      readFileSync(
+        join(process.cwd(), "../../packages/data/dist/packs", PACK_VERSION, `pack.${name}.json`),
+        "utf8",
+      ),
+    ) as Pack;
+  // English is always searched, and the stage's queries are English like the shortcodes.
+  const english = createEngine([pack("en"), pack("en.ext")]);
+  const bare = (emoji: string) => emoji.replaceAll("\uFE0F", "");
+
+  it.each(SKINS)("$id: the dictionary ranks $emoji in its top 3 for “$query”", ({ query, target, emoji }) => {
+    const ids = english.search(query, { locale: "en", limit: 3 }).results.map((result) => result.id);
+    expect(ids).toContain(target);
+    expect(bare(english.get(target)?.emoji ?? "")).toBe(bare(emoji));
+  });
 });
 
 describe("world map", () => {

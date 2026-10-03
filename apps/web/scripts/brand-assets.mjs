@@ -5,7 +5,7 @@
  *
  *   EMOJI_FONT=/path/to/NotoColorEmoji.ttf node scripts/brand-assets.mjs
  *
- * Output: og/home.png, og/pricing.png, og/docs.png (1200 × 630), favicon.ico (16, 32, 48),
+ * Output: og/home.png, og/pricing.png, og/docs.png, og/integrations.png (1200 × 630), favicon.ico (16, 32, 48),
  * apple-touch-icon.png (180), icon-192.png, icon-512.png, icon-maskable-512.png.
  *
  * - Emoji are drawn with Noto Color Emoji (SIL OFL 1.1, https://fonts.google.com/noto/specimen/Noto+Color+Emoji),
@@ -25,6 +25,7 @@ import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import { createEngine } from "emojisense";
 import { PLAN_COPY } from "../src/components/pricing/plan-copy.ts";
 import { formatCount, formatUsd } from "../src/lib/format.ts";
+import { INTEGRATIONS } from "../src/lib/integrations.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const PUBLIC = join(ROOT, "public");
@@ -152,7 +153,7 @@ function cardHeader(left, right) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// The three share cards
+// The share cards
 // ---------------------------------------------------------------------------------------------
 
 function homeCard() {
@@ -283,6 +284,47 @@ function docsCard() {
     sub: ["React, web component, Swift, editors,", "MCP and a plain HTTP API."],
     footnote: "Docs · Quickstart · HTTP API · Self-host",
     card: cardHeader("quickstart.ts", "") + code + tiles + note,
+  });
+}
+
+function integrationsCard() {
+  // The queries the live stage on /integrations/ plays, each in the tool it plays in.
+  const rows = [
+    { tool: "React picker", typed: "jurassic park", query: "jurassic park" },
+    { tool: "Tiptap", typed: ":ship it", query: "ship it" },
+    { tool: "Discourse", typed: ":mind blown", query: "mind blown" },
+    { tool: "Raycast", typed: "celebrate", query: "celebrate" },
+    { tool: "MCP", typed: "launch day", query: "launch day" },
+  ];
+  const rowHeight = 84;
+  const body = rows
+    .map((row, i) => {
+      const y = CARD.y + 72 + i * rowHeight;
+      const results = top(row.query, "en");
+      const tiles = results
+        .map((glyph, j) =>
+          tile(CARD.x + CARD.width - 32 - (results.length - j) * 62 + 6, y + 14, glyph, {
+            fill: j === 0 ? BG_SUNK : BG_SOFT,
+          }),
+        )
+        .join("");
+      const divider =
+        i < rows.length - 1
+          ? `<line x1="${CARD.x + 32}" x2="${CARD.x + CARD.width - 32}" y1="${y + rowHeight}" y2="${y + rowHeight}" stroke="${LINE}" stroke-width="1.5"/>`
+          : "";
+      return [
+        text(CARD.x + 32, y + 40, row.typed, { size: 24, family: font.mono }),
+        text(CARD.x + 32, y + 66, row.tool, { size: 16, family: font.mono, fill: INK_3 }),
+        tiles,
+        divider,
+      ].join("");
+    })
+    .join("");
+  return frame({
+    headline: ["One engine.", "Every place", "people type."],
+    sub: ["Editors, forums, launchers, AI", "assistants and your own app."],
+    footnote: `${INTEGRATIONS.length} integrations · ${LOCALES.length} languages · one engine`,
+    card: cardHeader("where people type", "top results") + body,
   });
 }
 
@@ -450,7 +492,12 @@ async function icon(size, { fullBleed = false } = {}) {
 async function main() {
   await mkdir(join(PUBLIC, "og"), { recursive: true });
 
-  const cards = { home: homeCard(), pricing: pricingCard(), docs: docsCard() };
+  const cards = {
+    home: homeCard(),
+    pricing: pricingCard(),
+    docs: docsCard(),
+    integrations: integrationsCard(),
+  };
   for (const [name, svg] of Object.entries(cards)) {
     const png = await screenshot(page(svg), { width: 1200, height: 630 });
     await writeFile(join(PUBLIC, "og", `${name}.png`), png);

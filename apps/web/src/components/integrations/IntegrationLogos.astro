@@ -1,0 +1,61 @@
+---
+/** The marks of one integration, in `currentColor`. Decorative: the name is always next to them. */
+import type { Integration } from "../../lib/integrations";
+import { LOGO_VIEWBOX, LOGOS } from "../../lib/logos";
+
+interface Props {
+  integration: Integration;
+  /** Only the first mark (the hub's tiles have room for one). */
+  first?: boolean;
+}
+
+const { integration, first = false } = Astro.props;
+const names = first ? integration.logos.slice(0, 1) : integration.logos;
+---
+
+<span class="logos" aria-hidden="true">
+  {integration.mark && <span class="logos-mark">{integration.mark}</span>}
+  {
+    names.map((name) => {
+      const logo = LOGOS[name];
+      return logo.kind === "icon" ? (
+        <svg class="logos-icon" viewBox={logo.viewBox ?? LOGO_VIEWBOX} focusable="false">
+          <path d={logo.path} />
+        </svg>
+      ) : (
+        <span class="logos-word">{logo.label}</span>
+      );
+    })
+  }
+</span>
+
+<style>
+  .logos {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .logos-icon {
+    width: 1.25em;
+    height: 1.25em;
+    fill: currentColor;
+  }
+
+  /* Brands without an open-licensed mark: the name, set as a wordmark. */
+  .logos-word {
+    font: 750 1.125em / 1 var(--font-body);
+    letter-spacing: -0.035em;
+    white-space: nowrap;
+  }
+
+  .logos-mark {
+    padding: 0.25em 0.4375em;
+    border: 0.0625rem solid currentColor;
+    border-radius: 0.375rem;
+    font: 500 0.6875em / 1 var(--font-mono);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+</style>

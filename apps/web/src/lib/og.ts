@@ -22,6 +22,11 @@ export const SHARE_IMAGES = {
     alt: "Emojisense pricing: free to start, fair when you grow. Free, Solo and Pro plans with their monthly prices.",
     ...SIZE,
   },
+  integrations: {
+    path: "/og/integrations.png",
+    alt: "Emojisense integrations: one engine, every place people type. Searches in a React picker, Tiptap, Discourse, Raycast and an AI assistant, with their top emoji results.",
+    ...SIZE,
+  },
   docs: {
     path: "/og/docs.png",
     alt: "Emojisense docs: add emoji search in minutes, with a short code sample and its results.",
@@ -29,9 +34,10 @@ export const SHARE_IMAGES = {
   },
 } satisfies Record<string, ShareImage>;
 
-/** Pricing and docs pages get their own card; every other page shares the home card. */
+/** Pricing, integrations and docs pages get their own card; every other page shares the home card. */
 export function shareImageFor(path: string): ShareImage {
   if (path.startsWith("/pricing")) return SHARE_IMAGES.pricing;
+  if (path.startsWith("/integrations")) return SHARE_IMAGES.integrations;
   if (path.startsWith("/docs")) return SHARE_IMAGES.docs;
   return SHARE_IMAGES.home;
 }

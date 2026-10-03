@@ -1,0 +1,327 @@
+---
+/**
+ * Every integration as a card, with a filter by group. The filter is a radio group read by CSS
+ * (`:has()`), so it works without JavaScript; a browser without `:has()` shows every card.
+ */
+import { i18nFor } from "../../i18n/page";
+import { wrapTag } from "../../i18n/translate";
+import { CopyCommand } from "../../islands/CopyCommand";
+import { GROUPS, INTEGRATIONS, type IntegrationKey, integrationsIn } from "../../lib/integrations";
+import IntegrationLogos from "./IntegrationLogos.astro";
+
+const { t, html, tag, locale, messages } = i18nFor(Astro);
+const number = new Intl.NumberFormat(tag);
+/** The docs and the changelog are in English; a translated page says so on its links. */
+const englishOnly = locale === "en" ? undefined : "en";
+
+const filters = [
+  { id: "all", label: t("integrations.page.catalog.all"), count: INTEGRATIONS.length },
+  ...GROUPS.map((group) => ({
+    id: group,
+    label: t(`integrations.groups.${group}`),
+    count: integrationsIn(group).length,
+  })),
+];
+
+/** One line of trusted HTML: the catalog text is escaped, `<code>` and `<emoji>` become markup. */
+const blurb = (key: IntegrationKey) =>
+  html(`integrations.items.${key}.blurb`, {}, { code: wrapTag("code"), emoji: wrapTag("span", "emoji") });
+---
+
+<div class="cat">
+  <fieldset class="cat-filter">
+    <legend class="visually-hidden">{t("integrations.page.catalog.filter")}</legend>
+    {
+      filters.map((filter) => (
+        <label class="cat-chip">
+          <input class="visually-hidden" type="radio" name="cat-filter" value={filter.id} checked={filter.id === "all"} />
+          {filter.label}
+          <span class="cat-count">{number.format(filter.count)}</span>
+        </label>
+      ))
+    }
+  </fieldset>
+
+  <ul class="cat-grid">
+    {
+      INTEGRATIONS.map((item) => {
+        const name = t(`integrations.items.${item.key}.name`);
+        return (
+          <li class="cat-card" id={item.slug} data-group={item.group}>
+            <div class="cat-top">
+              <IntegrationLogos integration={item} />
+              <span class="cat-badge" data-status={item.status}>
+                {t(`integrations.status.${item.status}`)}
+              </span>
+            </div>
+            <h3 class="cat-name">{name}</h3>
+            <p class="cat-blurb" set:html={blurb(item.key)} />
+            <div class="cat-foot">
+              <details class="cat-install">
+                <summary>{t("integrations.page.card.install")}</summary>
+                <div class="cat-install-body">
+                  {item.status === "available" && item.command ? (
+                    <CopyCommand
+                      client:visible
+                      command={item.command}
+                      prompt={item.prompt}
+                      messages={messages.copyCommand}
+                      lang={tag}
+                    />
+                  ) : (
+                    <p class="cat-soon">
+                      {t(`integrations.page.soon.${item.channel ?? "source"}`)}{" "}
+                      <a href="/changelog/" hreflang={englishOnly}>
+                        {t("integrations.page.card.changelog")}
+                      </a>
+                    </p>
+                  )}
+                </div>
+              </details>
+              <a class="cat-docs" href={item.docs} hreflang={englishOnly}>
+                {t("integrations.page.card.docs")}
+                <span class="visually-hidden">: {name}</span>
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M3.5 8h9M8.5 4l4 4-4 4" />
+                </svg>
+              </a>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+</div>
+
+<style>
+  .cat-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 1.75rem;
+    padding: 0;
+    border: 0;
+  }
+
+  .cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0.5rem 1rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    background: var(--bg);
+    color: var(--ink-2);
+    font: 600 0.9375rem / 1 var(--font-body);
+    cursor: pointer;
+    transition:
+      background 160ms,
+      border-color 160ms,
+      color 160ms;
+  }
+
+  .cat-chip:hover {
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
+
+  .cat-chip:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .cat-chip:has(input:focus-visible) {
+    outline: 0.1875rem solid var(--focus);
+    outline-offset: 0.1875rem;
+  }
+
+  .cat-count {
+    color: inherit;
+    font: 400 0.75rem / 1 var(--font-mono);
+    opacity: 0.7;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cat:has(input[value="frameworks"]:checked) .cat-card:not([data-group="frameworks"]),
+  .cat:has(input[value="editors"]:checked) .cat-card:not([data-group="editors"]),
+  .cat:has(input[value="native"]:checked) .cat-card:not([data-group="native"]),
+  .cat:has(input[value="servers"]:checked) .cat-card:not([data-group="servers"]) {
+    display: none;
+  }
+
+  .cat-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
+    color: var(--ink-2);
+    scroll-margin-top: 6rem;
+    transition:
+      border-color 200ms,
+      box-shadow 240ms var(--ease-out);
+  }
+
+  .cat-card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+  }
+
+  /* The card a link from the landing page points to. */
+  .cat-card:target {
+    border-color: var(--ink-3);
+    box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--focus) 22%, transparent);
+  }
+
+  .cat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 1.75rem;
+    margin-bottom: 1rem;
+    color: var(--ink-2);
+  }
+
+  .cat-card:hover .cat-top {
+    color: var(--ink);
+  }
+
+  .cat-badge {
+    flex: none;
+    padding: 0.3125rem 0.625rem;
+    border: 0.0625rem solid var(--line);
+    border-radius: var(--pill);
+    color: var(--ink-3);
+    font: 500 0.6875rem / 1 var(--font-mono);
+    white-space: nowrap;
+  }
+
+  .cat-badge[data-status="available"] {
+    border-color: transparent;
+    background: var(--mint);
+    color: var(--good);
+  }
+
+  .cat-name {
+    font-size: 1.1875rem;
+    line-height: 1.2;
+  }
+
+  .cat-blurb {
+    margin: 0.375rem 0 1.25rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+
+  .cat-blurb :global(code) {
+    color: var(--ink);
+    font-size: 0.875em;
+  }
+
+  .cat-blurb :global(.emoji) {
+    font-size: 1.125em;
+    vertical-align: -0.0625em;
+  }
+
+  .cat-foot {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 0.0625rem solid var(--line);
+  }
+
+  .cat-install summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--ink-2);
+    font: 500 0.8125rem / 1.5 var(--font-mono);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .cat-install summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .cat-install summary::before {
+    content: "+";
+    display: inline-block;
+    width: 0.75rem;
+    color: var(--ink-3);
+    transition: rotate 200ms var(--ease-out);
+  }
+
+  .cat-install[open] summary::before {
+    rotate: 45deg;
+  }
+
+  .cat-install summary:hover {
+    color: var(--ink);
+  }
+
+  .cat-install-body {
+    margin-top: 0.625rem;
+  }
+
+  .cat-soon {
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-soft);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .cat-soon a {
+    color: var(--ink);
+    font-weight: 600;
+    text-underline-offset: 0.2em;
+  }
+
+  .cat-docs {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    justify-self: start;
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+  }
+
+  .cat-docs svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: translate 240ms var(--spring);
+  }
+
+  .cat-docs:hover svg {
+    translate: 0.1875rem 0;
+  }
+
+  .cat-docs svg:dir(rtl) {
+    scale: -1 1;
+  }
+
+  .cat-docs:hover svg:dir(rtl) {
+    translate: -0.1875rem 0;
+  }
+</style>

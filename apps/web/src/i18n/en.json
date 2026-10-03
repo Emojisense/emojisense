@@ -4,7 +4,8 @@
     "skipLink": "Skip to content",
     "shareAlt": {
       "home": "Emojisense: everything emoji, for every app. Searches such as “jurassic park” and “feliz cumpleaños” with their top emoji results.",
-      "pricing": "Emojisense pricing: free to start, fair when you grow. Free, Solo and Pro plans with their monthly prices."
+      "pricing": "Emojisense pricing: free to start, fair when you grow. Free, Solo and Pro plans with their monthly prices.",
+      "integrations": "Emojisense integrations: one engine, every place people type. Searches in a React picker, Tiptap, Discourse, Raycast and an AI assistant, with their top emoji results."
     },
     "home": {
       "description": "The emoji platform for every app: search that understands slang and 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets and analytics. Free plan, open-source core."
@@ -20,6 +21,10 @@
     "about": {
       "title": "About",
       "description": "Why Emojisense exists, how it works, how it makes money, and where it is today."
+    },
+    "integrations": {
+      "title": "Integrations",
+      "description": "Emojisense for Tiptap, Lexical, CKEditor 5, TinyMCE, React, Vue, Discourse, WordPress, Chrome, Raycast, Swift, MCP and a plain HTTP API. One engine, the same results everywhere."
     }
   },
   "nav": {
@@ -451,11 +456,193 @@
         "blurb": "The whole API as one Worker on your own Cloudflare account."
       }
     },
-    "fromSource": "from source",
-    "docsSuffix": ": docs",
     "foot": "Custom emoji in Slack or Discord? Importing them is coming soon.",
-    "seePlans": "See plans",
-    "allDocs": "All docs"
+    "units": {
+      "integrations": {
+        "one": "integration",
+        "other": "integrations"
+      },
+      "languages": {
+        "one": "language",
+        "other": "languages"
+      },
+      "engines": {
+        "one": "engine",
+        "other": "engines"
+      }
+    },
+    "hub": {
+      "core": "One engine",
+      "coreNote": "Same results everywhere",
+      "cta": "Explore all integrations"
+    },
+    "status": {
+      "available": "Available",
+      "soon": "Coming soon"
+    },
+    "page": {
+      "eyebrow": "Integrations",
+      "title": "One emoji engine. Every place people type.",
+      "lead": "Editors, forums, chat, launchers, AI assistants and your own app. Each one gets search that understands slang, films, feelings and {languages} languages.",
+      "ctaKey": "Get a free API key",
+      "ctaLive": "Try it live",
+      "live": {
+        "kicker": "Live demo",
+        "title": "Same engine. Same results. Every tool.",
+        "lead": "Pick a tool and watch it work, then type your own words. Every result comes from the real engine, running in your browser."
+      },
+      "catalog": {
+        "kicker": "All integrations",
+        "title": "Pick your stack.",
+        "lead": "Drop-in packages for frameworks and editors, apps for the places you already work, and an API for everything else.",
+        "filter": "Show integrations",
+        "all": "All"
+      },
+      "card": {
+        "install": "Install",
+        "docs": "Read the docs",
+        "changelog": "Follow the changelog"
+      },
+      "soon": {
+        "npm": "Coming soon to npm.",
+        "swift": "Coming soon as a Swift package.",
+        "chrome": "Coming soon to the Chrome Web Store.",
+        "raycast": "Coming soon to the Raycast Store.",
+        "wordpress": "Coming soon to the WordPress plugin directory.",
+        "discourse": "Coming soon as a Discourse theme component.",
+        "source": "Coming soon with the source release."
+      },
+      "promises": {
+        "kicker": "One engine",
+        "title": "Built once. The same everywhere.",
+        "same": {
+          "title": "The same results everywhere",
+          "text": "Your editor, your forum and your launcher rank emoji the same way. They share one engine and one data pack."
+        },
+        "fast": {
+          "title": "Fast on the device",
+          "text": "Search runs in the browser or the app, with no network wait. Meaning search runs at the edge when the dictionary is not sure."
+        },
+        "languages": {
+          "title": "Your users' languages",
+          "text": "Search in {languages} languages. People get matches in the languages they use, and in no others."
+        }
+      },
+      "request": {
+        "title": "Your tool is not here yet?",
+        "text": "Call the HTTP API from any language, or tell us where your users type. Requests decide what we build next.",
+        "cta": "Request an integration",
+        "api": "Read the HTTP API docs",
+        "subject": "Integration request"
+      }
+    },
+    "stage": {
+      "tabs": "Tools to try",
+      "stop": "Stop demo",
+      "caption": "Live results from the real engine. The window is an illustration.",
+      "docs": "Read the docs",
+      "results": "Emoji suggestions",
+      "loading": "Loading emoji…",
+      "searching": "Searching by meaning…",
+      "noResults": "No emoji found. Try other words.",
+      "byMeaning": "by meaning",
+      "onDevice": "{ms} ms on device",
+      "meaning": "{ms} ms by meaning",
+      "meaningPending": "Asking by meaning…",
+      "colonPlaceholder": "Type : and a few words",
+      "pickerPlaceholder": "Write here, then press {keys}",
+      "pasted": "{emoji} pasted",
+      "skins": {
+        "react": {
+          "pitch": "The Frimousse picker for React, with search that understands slang, films, feelings and typos. Browse as usual; type to get ranked results.",
+          "channel": "general",
+          "line": "Grandma's apple pie is the",
+          "label": "Message",
+          "placeholder": "Message #general",
+          "search": "Search emoji…",
+          "empty": "No emoji found"
+        },
+        "tiptap": {
+          "pitch": "Type a colon in any Tiptap editor. Plain words work, not only shortcodes.",
+          "space": "Marketing",
+          "title": "Launch plan",
+          "line": "We go live on Friday",
+          "label": "Document text"
+        },
+        "ckeditor5": {
+          "pitch": "A colon feed on the CKEditor 5 Mention plugin, with search that understands people.",
+          "style": "Paragraph",
+          "title": "Team lunch",
+          "line": "Lunch is on us today",
+          "label": "Editor text"
+        },
+        "tinymce": {
+          "pitch": "Colon autocomplete for TinyMCE 7 and 8. It takes the place of the emoticons menu.",
+          "title": "Newsletter",
+          "words": "42 words",
+          "line": "Friday is our tenth birthday",
+          "label": "Editor text"
+        },
+        "discourse": {
+          "pitch": "A theme component for the composer, chat and emoji picker of your forum.",
+          "topic": "Version 2.0 is out",
+          "ago": "2h",
+          "post": "We rebuilt the editor from scratch. Tell us what you think!",
+          "replyTo": "Reply to maya",
+          "reply": "Reply",
+          "line": "This is wild",
+          "label": "Reply text"
+        },
+        "wordpress": {
+          "pitch": "Emoji search in the block editor, comments, reactions, bbPress and BuddyPress. It works offline.",
+          "category": "Culture",
+          "post": "How we moved to a four-day week",
+          "excerpt": "Six months in: what changed for the team, and what we would do again.",
+          "comment": "Leave a comment",
+          "submit": "Post comment",
+          "line": "This helped our team a lot",
+          "label": "Comment"
+        },
+        "chrome": {
+          "pitch": "An emoji picker for every text field on the web. Press the shortcut, type what you mean, press Enter.",
+          "url": "mail.example.com",
+          "window": "New message",
+          "to": "To",
+          "toValue": "team@example.com",
+          "subject": "Subject",
+          "subjectValue": "Running late",
+          "line": "Leaving the office now",
+          "label": "Message",
+          "open": "Open the emoji picker",
+          "picker": "Emoji picker",
+          "search": "Search emoji"
+        },
+        "raycast": {
+          "pitch": "Search emoji by meaning from your launcher. It runs on your Mac and works offline.",
+          "placeholder": "Search emoji by meaning",
+          "command": "Search Emoji",
+          "results": "Results",
+          "hint": "Type what you mean",
+          "paste": "Paste",
+          "actions": "Actions"
+        },
+        "mcp": {
+          "pitch": "An MCP server gives Claude and other AI assistants emoji search and reaction suggestions.",
+          "title": "AI assistant",
+          "server": "emojisense MCP",
+          "empty": "Ask for an emoji.",
+          "ask": "Find an emoji for our launch post",
+          "label": "Message to the assistant",
+          "placeholder": "Ask for an emoji",
+          "send": "Send",
+          "calling": "Calling",
+          "done": "Done",
+          "reply": "{emoji} fits best. {second} works too.",
+          "replyOne": "{emoji} fits best.",
+          "none": "I found no emoji for that. Try other words."
+        }
+      }
+    }
   },
   "plans": {
     "blurbs": {
