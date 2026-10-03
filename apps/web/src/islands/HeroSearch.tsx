@@ -50,6 +50,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   const [auto, setAuto] = useState(true);
   const [paused, setPaused] = useState(false);
   const [example, setExample] = useState(0);
+  const [copied, setCopied] = useState<{ query: string; id: string }>();
   const inputRef = useRef<HTMLInputElement>(null);
   const exampleRef = useRef(0);
   /** Only the visitor's own typing is reported, never the autoplay. */
@@ -89,6 +90,12 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
     setActive(0);
   }, [session, query]);
   useEffect(() => () => session?.dispose(), [session]);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(undefined), 1600);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   // Types the examples until the visitor takes over. Under reduced motion it shows the first one.
   // Examples in a language the first engine lacks join once those packs are loaded, so none shows
@@ -141,6 +148,23 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
   const current = results[active];
   const label = (r: SearchResult) => labelOf(engine, r.id, locale) ?? r.emoji;
   const matched = current && state?.alias.results.find((r) => r.id === current.id)?.match;
+  // A new query or another highlighted tile replaces the "copied" line.
+  const justCopied = copied?.query === query && copied.id === current?.id;
+  const copy = async (r: SearchResult) => {
+    try {
+      await navigator.clipboard.writeText(r.emoji);
+      setCopied({ query, id: r.id });
+    } catch {
+      // Clipboard access can be refused; the emoji stays visible to copy by hand.
+    }
+  };
+  /** Why the highlighted emoji is here, or that it was just copied. */
+  const reason = (r: SearchResult) => {
+    if (justCopied) return t.t("copied");
+    if (r.source === "semantic") return t.t("byMeaning");
+    if (matched) return rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched });
+    return t.t("bestMatch");
+  };
   const loading = !engine && ready !== "failed";
   const shown = examples[example];
   // A query in another language is named by its language ("Spanish"); the rest by what it shows.
@@ -156,19 +180,25 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
       event.preventDefault();
       const signed = rtl && (event.key === "ArrowRight" || event.key === "ArrowLeft") ? -move : move;
       setActive((i) => (i + signed + results.length) % results.length);
+    } else if (event.key === "Enter" && current) {
+      event.preventDefault();
+      copy(current);
     } else if (event.key === "Escape") {
       setQuery("");
     }
   };
 
+  // The edge did not answer (no network, a timeout, a rejected key): only the device's results show.
+  const edgeDown = Boolean(query.trim()) && state?.status === "error";
   const timing = (() => {
     if (!state || !query.trim()) return undefined;
     if (state.status === "fused" && state.semanticMs !== undefined) {
-      return state.semanticCached
-        ? t.t("edgeCache")
-        : t.t("edgeAi", { ms: formatMs(state.semanticMs, lang) });
+      // The time to the answer: a shard already in memory answers with no request (semanticMs 0).
+      const ms = formatMs(state.aliasMs + state.semanticMs, lang);
+      return state.semanticCached ? t.t("edgeCache", { ms }) : t.t("edgeAi", { ms });
     }
-    return t.t("onDevice", { ms: formatMs(state.aliasMs, lang) });
+    const ms = formatMs(state.aliasMs, lang);
+    return edgeDown ? t.t("edgeDown", { ms }) : t.t("onDevice", { ms });
   })();
 
   return (
@@ -216,7 +246,7 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
         <span className="hs-timing">
           {timing ? (
             <>
-              <span className="hs-dot" aria-hidden="true" />
+              <span className="hs-dot" data-down={edgeDown || undefined} aria-hidden="true" />
               {timing}
             </>
           ) : ready === "failed" ? (
@@ -256,29 +286,28 @@ export function HeroSearch({ messages, lang, examples }: HeroSearchProps) {
               onClick={() => {
                 setActive(i);
                 takeOver(query);
+                copy(r);
               }}
             >
               <span className="emoji">{r.emoji}</span>
             </button>
           ))}
         </div>
-        {engine && query.trim() && results.length === 0 && <p className="hs-empty">{t.t("empty")}</p>}
+        {engine && query.trim() && results.length === 0 && (
+          <p className="hs-empty">{t.t(edgeDown ? "emptyEdgeDown" : "empty")}</p>
+        )}
       </div>
 
       {/* Announced only while the visitor drives: the autoplay would otherwise talk every second. */}
       <p className="hs-why" aria-live={auto ? "off" : "polite"}>
         {current ? (
           // A new key per answer replaces the line instead of moving its parts (no layout shift).
-          <Fragment key={`${current.id}|${current.source}|${matched}|${auto && example}`}>
+          <Fragment key={`${current.id}|${current.source}|${matched}|${auto && example}|${justCopied}`}>
             <span className="hs-name">{label(current)}</span>
             <span className="hs-sep" aria-hidden="true">
               ·
             </span>
-            {current.source === "semantic"
-              ? t.t("byMeaning")
-              : matched
-                ? rich(t.raw("matched"), { q: (text) => <q dir="auto">{text}</q> }, { match: matched })
-                : t.t("bestMatch")}
+            {reason(current)}
             {auto && <span className="hs-kind">{kindOf(shown)}</span>}
           </Fragment>
         ) : (

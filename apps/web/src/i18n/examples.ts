@@ -19,6 +19,10 @@ export type ExampleKind =
   | "greeting"
   | "wish"
   | "thanks"
+  | "brand"
+  | "nickname"
+  | "concept"
+  | "place"
   | "athlete";
 
 export interface HeroExample {
@@ -110,26 +114,32 @@ const NATIVE: Record<Exclude<Locale, "en">, Candidate[]> = {
   ],
 };
 
-/** The English page's examples, as they always were. `lang` marks the non-English ones. */
+/**
+ * The English page's examples. `lang` marks the non-English ones. The first one is answered on the
+ * device, as it is the only one shown under reduced motion. Names whose emoji share no word with
+ * them (macintosh, area 51) show the meaning search.
+ */
 const ENGLISH_PAGE: HeroExample[] = [
   { query: "jurassic park", kind: "film" },
-  { query: "greatest of all time", kind: "meaning" },
-  { query: "hallowelen", kind: "typo" },
+  { query: "macintosh", kind: "brand" },
+  { query: "big apple", kind: "nickname" },
   { query: "feliz cumpleaños", kind: "wish", lang: "es" },
   { query: "mbappe", kind: "athlete" },
-  { query: "i'm exhausted", kind: "feeling" },
+  { query: "photosynthesis", kind: "concept" },
+  { query: "hallowelen", kind: "typo" },
   { query: "生日快乐", kind: "wish", lang: "zh" },
-  { query: "congrats on the launch", kind: "intent" },
+  { query: "area 51", kind: "place" },
+  { query: "i'm exhausted", kind: "feeling" },
   { query: "kolay gelsin", kind: "intent", lang: "tr" },
-  { query: "break a leg", kind: "idiom" },
+  { query: "greatest of all time", kind: "meaning" },
 ];
 
 /** English searches that every translated page shows after its own. */
 const ENGLISH_EXTRAS: HeroExample[] = [
   { query: "jurassic park", kind: "film", lang: "en" },
+  { query: "macintosh", kind: "brand", lang: "en" },
   { query: "greatest of all time", kind: "meaning", lang: "en" },
   { query: "hallowelen", kind: "typo", lang: "en" },
-  { query: "break a leg", kind: "idiom", lang: "en" },
 ];
 
 const NATIVE_SHOWN = 3;

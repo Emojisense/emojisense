@@ -1016,13 +1016,16 @@
     "byMeaning": "matched by meaning",
     "matched": "matched <q>{match}</q>",
     "bestMatch": "best match",
+    "copied": "copied to the clipboard",
     "idle": "A film, a feeling, a typo, another language — try anything.",
     "try": "Try",
     "play": "Play demo",
     "pause": "Pause demo",
-    "edgeCache": "edge cache",
+    "edgeCache": "{ms} · edge cache",
     "edgeAi": "{ms} · edge AI",
     "onDevice": "{ms} · on your device",
+    "edgeDown": "{ms} · edge unreachable",
+    "emptyEdgeDown": "Meaning search is unreachable right now. Dictionary words still match.",
     "kinds": {
       "film": "a film",
       "meaning": "a meaning",
@@ -1033,6 +1036,10 @@
       "greeting": "a greeting",
       "wish": "a wish",
       "thanks": "thanks",
+      "brand": "a brand",
+      "nickname": "a nickname",
+      "concept": "a concept",
+      "place": "a place",
       "athlete": "an athlete"
     }
   },

@@ -1012,13 +1012,16 @@
     "byMeaning": "按含义匹配",
     "matched": "匹配到<q>{match}</q>",
     "bestMatch": "最佳匹配",
+    "copied": "已复制到剪贴板",
     "idle": "电影、感受、错别字或其他语言，都可以试试。",
     "try": "试试",
     "play": "播放演示",
     "pause": "暂停演示",
-    "edgeCache": "边缘缓存",
+    "edgeCache": "{ms} · 边缘缓存",
     "edgeAi": "{ms} · 边缘AI",
     "onDevice": "{ms} · 设备端",
+    "edgeDown": "{ms} · 边缘不可用",
+    "emptyEdgeDown": "按含义搜索暂时不可用。词典中的词仍可匹配。",
     "kinds": {
       "film": "电影",
       "meaning": "含义",
@@ -1029,6 +1032,10 @@
       "greeting": "问候",
       "wish": "祝愿",
       "thanks": "感谢",
+      "brand": "品牌",
+      "nickname": "别称",
+      "concept": "概念",
+      "place": "地点",
       "athlete": "运动员"
     }
   },

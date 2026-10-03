@@ -1020,13 +1020,16 @@
     "byMeaning": "coincidencia por significado",
     "matched": "coincidencia con <q>{match}</q>",
     "bestMatch": "mejor coincidencia",
+    "copied": "copiado al portapapeles",
     "idle": "Una película, un sentimiento, un error al escribir, otro idioma: prueba lo que quieras.",
     "try": "Prueba",
     "play": "Reproducir demo",
     "pause": "Pausar demo",
-    "edgeCache": "caché en la red perimetral",
+    "edgeCache": "{ms} · caché en la red perimetral",
     "edgeAi": "{ms} · IA en la red perimetral",
     "onDevice": "{ms} · en tu dispositivo",
+    "edgeDown": "{ms} · red perimetral no disponible",
+    "emptyEdgeDown": "La búsqueda por significado no está disponible ahora. Las palabras del diccionario siguen funcionando.",
     "kinds": {
       "film": "una película",
       "meaning": "un significado",
@@ -1037,6 +1040,10 @@
       "greeting": "un saludo",
       "wish": "un deseo",
       "thanks": "gracias",
+      "brand": "una marca",
+      "nickname": "un apodo",
+      "concept": "un concepto",
+      "place": "un lugar",
       "athlete": "un deportista"
     }
   },

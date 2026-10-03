@@ -1020,13 +1020,16 @@
     "byMeaning": "encontrado por significado",
     "matched": "encontrado por <q>{match}</q>",
     "bestMatch": "melhor resultado",
+    "copied": "copiado para a área de transferência",
     "idle": "Um filme, um sentimento, um erro de digitação, outro idioma — experimente qualquer coisa.",
     "try": "Teste",
     "play": "Iniciar demo",
     "pause": "Pausar demo",
-    "edgeCache": "cache na borda",
+    "edgeCache": "{ms} · cache na borda",
     "edgeAi": "{ms} · IA na borda",
     "onDevice": "{ms} · no seu dispositivo",
+    "edgeDown": "{ms} · borda indisponível",
+    "emptyEdgeDown": "A busca por significado está indisponível agora. As palavras do dicionário continuam funcionando.",
     "kinds": {
       "film": "um filme",
       "meaning": "um significado",
@@ -1037,6 +1040,10 @@
       "greeting": "um cumprimento",
       "wish": "um desejo",
       "thanks": "obrigado",
+      "brand": "uma marca",
+      "nickname": "um apelido",
+      "concept": "um conceito",
+      "place": "um lugar",
       "athlete": "um atleta"
     }
   },

@@ -1016,13 +1016,16 @@
     "byMeaning": "anlama göre eşleşti",
     "matched": "<q>{match}</q> ile eşleşti",
     "bestMatch": "en iyi eşleşme",
+    "copied": "panoya kopyalandı",
     "idle": "Bir film, bir duygu, bir yazım hatası, başka bir dil. İstediğinizi deneyin.",
     "try": "Deneyin",
     "play": "Demoyu oynatın",
     "pause": "Demoyu duraklatın",
-    "edgeCache": "uç ağ önbelleği",
+    "edgeCache": "{ms} · uç ağ önbelleği",
     "edgeAi": "{ms} · uç ağda yapay zekâ",
     "onDevice": "{ms} · cihazınızda",
+    "edgeDown": "{ms} · uç ağa ulaşılamadı",
+    "emptyEdgeDown": "Anlam araması şu anda erişilemiyor. Sözlükteki kelimeler yine eşleşir.",
     "kinds": {
       "film": "bir film",
       "meaning": "bir anlam",
@@ -1033,6 +1036,10 @@
       "greeting": "bir selam",
       "wish": "bir dilek",
       "thanks": "teşekkür",
+      "brand": "bir marka",
+      "nickname": "bir lakap",
+      "concept": "bir kavram",
+      "place": "bir yer",
       "athlete": "bir sporcu"
     }
   },

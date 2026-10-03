@@ -1020,13 +1020,16 @@
     "byMeaning": "trouvé par sens",
     "matched": "correspond à <q>{match}</q>",
     "bestMatch": "meilleur résultat",
+    "copied": "copié dans le presse-papiers",
     "idle": "Un film, une émotion, une faute de frappe, une autre langue : essayez ce que vous voulez.",
     "try": "Essayez",
     "play": "Lancer la démo",
     "pause": "Suspendre la démo",
-    "edgeCache": "cache en périphérie",
+    "edgeCache": "{ms} · cache en périphérie",
     "edgeAi": "{ms} · IA en périphérie",
     "onDevice": "{ms} · sur votre appareil",
+    "edgeDown": "{ms} · périphérie injoignable",
+    "emptyEdgeDown": "La recherche par sens est injoignable pour le moment. Les mots du dictionnaire fonctionnent toujours.",
     "kinds": {
       "film": "un film",
       "meaning": "un sens",
@@ -1037,6 +1040,10 @@
       "greeting": "une salutation",
       "wish": "un souhait",
       "thanks": "un merci",
+      "brand": "une marque",
+      "nickname": "un surnom",
+      "concept": "un concept",
+      "place": "un lieu",
       "athlete": "un sportif"
     }
   },

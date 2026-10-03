@@ -1012,13 +1012,16 @@
     "byMeaning": "cocok berdasarkan makna",
     "matched": "cocok dengan <q>{match}</q>",
     "bestMatch": "paling cocok",
+    "copied": "disalin ke papan klip",
     "idle": "Film, perasaan, salah ketik, bahasa lain — coba apa saja.",
     "try": "Coba",
     "play": "Putar demo",
     "pause": "Jeda demo",
-    "edgeCache": "cache edge",
+    "edgeCache": "{ms} · cache edge",
     "edgeAi": "{ms} · AI edge",
     "onDevice": "{ms} · di perangkat Anda",
+    "edgeDown": "{ms} · edge tidak terjangkau",
+    "emptyEdgeDown": "Pencarian makna sedang tidak terjangkau. Kata dari kamus tetap cocok.",
     "kinds": {
       "film": "film",
       "meaning": "makna",
@@ -1029,6 +1032,10 @@
       "greeting": "sapaan",
       "wish": "harapan",
       "thanks": "terima kasih",
+      "brand": "merek",
+      "nickname": "julukan",
+      "concept": "konsep",
+      "place": "tempat",
       "athlete": "atlet"
     }
   },

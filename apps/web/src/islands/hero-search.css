@@ -102,6 +102,11 @@
   box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--live) 22%, transparent);
 }
 
+.hs-dot[data-down] {
+  background: var(--bad);
+  box-shadow: 0 0 0 0.1875rem color-mix(in srgb, var(--bad) 22%, transparent);
+}
+
 /* The empty message sits on top of the list, so the row keeps its height either way. */
 .hs-results {
   container-type: inline-size;
