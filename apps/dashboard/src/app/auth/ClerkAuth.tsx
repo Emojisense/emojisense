@@ -14,7 +14,7 @@ import { type AuthAdapter, AuthContext } from "./context";
  */
 const APPEARANCE: NonNullable<ClerkProviderProps["appearance"]> = {
   variables: {
-    colorPrimary: "var(--accent)",
+    colorPrimary: "var(--clerk-accent)",
     colorPrimaryForeground: "var(--on-accent)",
     colorBackground: "var(--bg)",
     colorForeground: "var(--ink)",
@@ -40,10 +40,35 @@ const APPEARANCE: NonNullable<ClerkProviderProps["appearance"]> = {
     // The sign-in sits inside the dashboard's own card.
     elevation: "flush",
     shimmer: false,
+    termsPageUrl: "https://emojisense.com/legal/terms/",
+    privacyPageUrl: "https://emojisense.com/legal/privacy/",
   },
   elements: {
     rootBox: { width: "100%" },
-    cardBox: { width: "100%", maxWidth: "none" },
+    cardBox: { width: "100%", maxWidth: "none", boxShadow: "none" },
+    card: { padding: 0, gap: "1.75rem", background: "transparent" },
+    header: { alignItems: "flex-start", gap: "0.5rem", textAlign: "left" },
+    headerTitle: {
+      font: "650 clamp(1.625rem, 1.35rem + 1vw, 2rem) / 1.1 var(--font-display)",
+      letterSpacing: "-0.035em",
+    },
+    headerSubtitle: { color: "var(--ink-2)", fontSize: "var(--text-md)" },
+    // Button lines, the one-column grid and the footer spacing: pages.css.
+    socialButtonsBlockButtonText: { color: "var(--ink)", fontSize: "var(--text-md)", fontWeight: 600 },
+    socialButtonsProviderIcon: { width: "1.125rem", height: "1.125rem" },
+    footer: { background: "transparent" },
+  },
+};
+
+/** One page signs in and signs up, so the title and buttons speak to both. */
+const LOCALIZATION: NonNullable<ClerkProviderProps["localization"]> = {
+  socialButtonsBlockButton: "Continue with {{provider|titleize}}",
+  socialButtonsBlockButtonManyInView: "Continue with {{provider|titleize}}",
+  signIn: {
+    start: {
+      titleCombined: "Welcome to Emojisense",
+      subtitleCombined: "Sign in or create your free account.",
+    },
   },
 };
 
@@ -103,6 +128,7 @@ export function ClerkAuth({ publishableKey, children }: { publishableKey: string
     <ClerkProvider
       publishableKey={publishableKey}
       appearance={APPEARANCE}
+      localization={LOCALIZATION}
       telemetry={false}
       // One page signs in and signs up (combined flow). After it, always "/" (a forced, same-origin
       // path: a redirect_url in the query is ignored); the app then routes from there.

@@ -79,9 +79,6 @@ function AuthLayout({ children }: { children: ReactNode }) {
       <section className="auth-main">
         <Wordmark />
         <div className="auth-card">{children}</div>
-        <p className="auth-legal hint">
-          Emojisense never stores who searched, IP addresses, message text or images.
-        </p>
       </section>
 
       <aside className="auth-aside" aria-label="What the engine answers">

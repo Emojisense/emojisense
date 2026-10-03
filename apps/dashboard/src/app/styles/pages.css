@@ -139,8 +139,13 @@
   display: grid;
   gap: 1rem;
   width: 100%;
-  max-width: 24rem;
+  max-width: 27rem;
   margin: auto;
+  padding: clamp(1.5rem, 1rem + 2vw, 2.25rem);
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--bg);
+  box-shadow: var(--shadow);
 }
 
 .auth-head {
@@ -158,6 +163,43 @@
 .auth-clerk {
   display: grid;
   min-height: 18rem;
+}
+
+/*
+ * Clerk draws borders as shadows of colorBorder at about 10% alpha, which disappear in dark mode.
+ * Three classes win over its injected styles.
+ */
+.auth .auth-clerk .cl-socialButtonsBlockButton,
+.auth .auth-clerk .cl-formFieldInput {
+  min-height: 2.75rem;
+  background: var(--bg);
+  box-shadow:
+    0 0 0 0.0625rem var(--line-strong),
+    var(--shadow-sm);
+}
+
+.auth .auth-clerk .cl-socialButtonsBlockButton:hover {
+  background: var(--bg-soft);
+}
+
+.auth .auth-clerk .cl-formFieldInput:focus-visible {
+  box-shadow:
+    0 0 0 0.0625rem var(--ink-2),
+    0 0 0 0.25rem color-mix(in srgb, var(--focus) 28%, transparent);
+}
+
+.auth .auth-clerk .cl-formButtonPrimary {
+  min-height: 2.75rem;
+}
+
+/* Clerk puts two providers side by side with short names; here each gets a full-width row. */
+.auth .auth-clerk .cl-socialButtons {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.625rem;
+}
+
+.auth .auth-clerk .cl-footer {
+  margin-top: 1rem;
 }
 
 .auth-clerk-loading {
@@ -186,10 +228,6 @@
   flex: 1;
   height: 0.0625rem;
   background: var(--line);
-}
-
-.auth-legal {
-  text-align: center;
 }
 
 .auth-aside {
@@ -273,12 +311,6 @@
 
 .auth-single .auth-card {
   justify-items: start;
-  max-width: 27rem;
-  padding: 2rem;
-  border: 0.0625rem solid var(--line);
-  border-radius: var(--radius-xl);
-  background: var(--bg);
-  box-shadow: var(--shadow);
 }
 
 @keyframes rise-in {

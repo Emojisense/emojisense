@@ -37,6 +37,8 @@
 
   /* Dashboard-only tokens, derived from the ones above. */
   --accent-hover: #2a2a33;
+  /* Clerk declares its own --accent inside its components, so it reads the accent from here. */
+  --clerk-accent: var(--accent);
   --overlay: rgb(13 13 18 / 0.32);
   --chart-match: #34343e;
   --chart-miss: #a9a9b6;
