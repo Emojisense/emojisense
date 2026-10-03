@@ -27,8 +27,8 @@ interface AliasSearchOptions {
   locale?: string;
   prefix?: boolean; // default true
   culture?: boolean; // false = canonical ranking only
-  region?: string; // ISO 3166-1 alpha-2, for regional culture entries
-  now?: Date | number; // the day culture windows are checked against
+  region?: string; // default: the device's region; "" = none; or ISO 3166-1 alpha-2, "JP"
+  now?: Date | number; // the day culture windows are checked against; default: the device's local day
   day?: string; // "YYYY-MM-DD", wins over now
 }`;
 
@@ -110,7 +110,8 @@ const session = `function createSearchSession(options: {
   debounceMs?: number; // default 200
   shouldUseSemantic?: (alias: AliasSearchOutput) => boolean;
   culture?: Culture | false; // default: the engine's; false = canonical ranking only
-  region?: string; // for regional culture entries, e.g. "BR"
+  region?: string; // default: the device's region; "" = none; "BR"; "auto" = the API's view
+  now?: () => Date | number; // the clock for culture windows; default Date.now
   onChange: (state: SessionState) => void;
 }): { update(query: string): void; dispose(): void };
 
@@ -166,12 +167,18 @@ baseId("1F44D-1F3FD"); // "${baseId("1F44D-1F3FD")}"
 groupLabel("food-drink", "tr"); // "${groupLabel("food-drink", "tr")}"
 hexcodeOf("❤️‍🔥"); // "${hexcodeOf("❤️‍🔥")}"`;
 
-const culture = `const culture = await loadCulture({ baseUrl: "${API_HOST}/v1/culture/0.1.0", locale: "es" });
+const culture = `// createEngineLoader (emojisense/autocomplete) loads the culture file next to the packs.
+createEngineLoader({ packUrl: "${PACK_URL}", locale: "es" });
+createEngineLoader({ packUrl: "${PACK_URL}", cultureUrl: false }); // no culture layer
+
+// Without the loader, load the file yourself.
+const culture = await loadCulture({ baseUrl: "${API_HOST}/v1/culture/0.1.0", locale: "es" });
 const cultured = engine.withCulture(culture); // shares the index
 
 cultured.search("goat", { locale: "es" }).results;
 // [🐐 (alias), ⚽ 🇦🇷 🇵🇹 (source "culture", context, cultureId), …]
 cultured.search("goat", { culture: false }); // the canonical ranking only
+cultured.search("goat", { locale: "es", region: "", day: "2026-10-25" }); // no region, a fixed day
 
 relevantNow(culture, { region: "MX", limit: 8 });
 // [{ emoji: "💀", hexcode: "1F480", context: "Día de Muertos, 1 y 2 de noviembre", cultureId: "dia-de-muertos" }, …]`;
@@ -257,15 +264,18 @@ emojiImageUrl("🦖", { endpoint: "${API_HOST}", emojiSet: "noto" });
 
   <h2 id="culture">Culture layer</h2>
   <p>Editorial emoji for a culture, a region and a moment (football’s greatest-of-all-time debate, Día de Muertos, Diwali), from one small file per locale at <code>/v1/culture/&lt;packVersion&gt;/culture.&lt;locale&gt;.json</code>. Editors, helped by AI, write and approve them. They join the results right after the top answer and never replace it.</p>
+  <p>The layer is on by default. <code>createEngineLoader</code>, <code>useEmojisense</code>, <code>&lt;emojisense-picker&gt;</code> and the CKEditor 5 and TinyMCE plugins load <code>/v1/culture/&lt;packVersion&gt;</code> next to <code>/v1/pack/&lt;packVersion&gt;</code>. <code>cultureUrl: false</code> turns it off (<code>culture-url="off"</code> on the web component, <code>emojisense_culture_url: "off"</code> in TinyMCE). A missing file changes nothing. A locale whose packs fall back to English uses the English culture file.</p>
   <CodeBlock code={culture} lang="ts" />
   <ul>
-    <li><code>loadCulture({"{ baseUrl, locale }"})</code> fetches and checks a culture file (<code>assertCulture</code>, <code>CULTURE_FORMAT</code>, <code>CULTURE_FORMAT_VERSION</code>). Pass it to <code>createEngine(packs, {"{ culture }"})</code> or <code>engine.withCulture(culture)</code>; a search session applies it after fusion.</li>
-    <li>Culture results have <code>source: "culture"</code>, <code>context</code> (the reason, in the file’s language) and <code>cultureId</code>. Search option <code>culture: false</code> keeps the canonical ranking; <code>region</code> (for example <code>"BR"</code>) turns on regional entries.</li>
+    <li><code>loadCulture({"{ baseUrl, locale }"})</code> fetches and checks a culture file (<code>assertCulture</code>, <code>CULTURE_FORMAT</code>, <code>CULTURE_FORMAT_VERSION</code>). Pass it to <code>createEngine(packs, {"{ culture }"})</code> or <code>engine.withCulture(culture)</code>; a search session applies it after fusion. <code>cultureUrlFor(packUrl)</code> gives the culture directory next to a pack version (<code>…/v1/pack/0.1.0</code> → <code>…/v1/culture/0.1.0</code>).</li>
+    <li>Culture results have <code>source: "culture"</code>, <code>context</code> (the reason, in the file’s language) and <code>cultureId</code>. Search option <code>culture: false</code> keeps the canonical ranking; <code>region</code> (for example <code>"BR"</code>) selects the regional entries.</li>
     <li>A regional sense (<code>kind: "regional"</code>) is the one entry that can go first: only with a <code>region</code> in its scope, for a query equal to its trigger, and over a canonical answer it names. “football” with <code>region: "GB"</code> gives ⚽ then 🏈; without a region 🏈 stays first. <code>matchRegionalLead(culture, query, topId, {"{ region }"})</code> applies that rule to your own list.</li>
-    <li><code>deviceRegion()</code> returns the region of the browser’s language (<code>navigator.language</code> <code>"pt-BR"</code> → <code>"BR"</code>), or <code>undefined</code> without a region subtag. <code>regionOf(locale)</code> does the same for any locale tag. <code>useEmojisense</code> and <code>&lt;emojisense-picker&gt;</code> use the browser’s region when the app passes none. The region stays on the device: it only selects regional entries and is never sent.</li>
-    <li><code>region: "auto"</code> (<code>AUTO_REGION</code>; <code>isAutoRegion(value)</code> tests for it) asks the API for the region of the request’s country: the session sends <code>region=auto</code> with its semantic requests and applies regional entries after the first API answer that reports a region.</li>
+    <li>By default the region is the device’s region: in <code>engine.search</code>, sessions, the React hooks, the web component and the editor plugins. <code>resolveRegion(region, culture)</code> applies the rule: <code>undefined</code> or <code>"device"</code> (<code>DEVICE_REGION</code>) gives the device’s region, <code>""</code> gives none, and any other value stays as given. <code>deviceRegion(zones)</code> returns the region of the browser’s language (<code>navigator.language</code> <code>"pt-BR"</code> → <code>"BR"</code>), else the region of its time zone from the culture file’s <code>zones</code> (<code>"ja"</code> in <code>Asia/Tokyo</code> → <code>"JP"</code>). <code>regionOf(locale)</code> reads the region of any locale tag. The region stays on the device: it only selects regional entries and is never sent.</li>
+    <li><code>region: "auto"</code> (<code>AUTO_REGION</code>; <code>isAutoRegion(value)</code> tests for it) is opt-in. It asks the API for the region of the request’s country: the session sends <code>region=auto</code> with its semantic requests and applies regional entries after the first API answer that reports a region.</li>
+    <li>Windows are checked against the device’s local day. <code>now</code> sets another clock (<code>createSearchSession</code>, and <code>createSuggestionSource</code> from <code>emojisense/autocomplete</code>). <code>day: "YYYY-MM-DD"</code> fixes the day of one <code>engine.search</code>.</li>
+    <li>The semantic client sends <code>culture=0</code>, because the session applies culture on the device, after fusion. Cached answers (shards, the API’s edge cache) hold no culture, so one cached answer serves every region and day.</li>
     <li><code>relevantNow(culture, options)</code> lists featured seasonal and event emoji active today, for an optional shelf.</li>
-    <li><code>matchCulture</code>, <code>insertCulture</code> and <code>applyCulture</code> apply a culture file to your own result list; <code>isActiveOn(when, day)</code> and <code>localDay(now)</code> evaluate windows. See <a href="/docs/pack-format/">Pack format §9</a>.</li>
+    <li><code>matchCulture</code>, <code>insertCulture</code> and <code>applyCulture</code> apply a culture file to your own result list; <code>isActiveOn(when, day)</code> and <code>localDay(now)</code> evaluate windows. For a message, such as reaction suggestions, <code>matchCultureInText(culture, text)</code> finds triggers as whole words anywhere in the text, and <code>applyCulture(results, culture, text, {"{ text: true }"})</code> applies them. See <a href="/docs/pack-format/">Pack format §9</a>.</li>
   </ul>
 
   <h2 id="emoji-sets">Emoji sets</h2>

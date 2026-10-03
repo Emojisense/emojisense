@@ -51,7 +51,7 @@ const examples = [
       <thead><tr><th scope="col">Setting</th><th scope="col">Default</th><th scope="col">Notes</th></tr></thead>
       <tbody>
         <tr><td><code>search_locale</code></td><td><code>auto</code></td><td>Each user’s interface language; English when Emojisense has no data for it</td></tr>
-        <tr><td><code>culture</code></td><td>On</td><td>Cultural and seasonal emoji after the best match</td></tr>
+        <tr><td><code>culture</code></td><td>On</td><td>Cultural and seasonal emoji after the best match. Regional entries follow the region of each user’s device (its language, else its time zone), read in the browser and never sent.</td></tr>
         <tr><td><code>api_enabled</code></td><td>Off</td><td>Ask the Emojisense API when the dictionary is unsure</td></tr>
         <tr><td><code>publishable_key</code></td><td>—</td><td>A <code>pk_live_…</code> key with the site’s address in its allowed origins. Theme settings are public: never a secret key.</td></tr>
         <tr><td><code>api_url</code></td><td><code>https://api.emojisense.com</code></td><td></td></tr>

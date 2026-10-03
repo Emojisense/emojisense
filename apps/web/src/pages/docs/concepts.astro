@@ -78,12 +78,12 @@ const { results, confidence } = engine.search("jurassic park");
 
   <h2 id="fusion">How results merge</h2>
   <p>When meaning results arrive, the SDK merges them with the dictionary results by weighted reciprocal rank fusion. Dictionary results with a score of 0.9 or more stay pinned at the top in their order, so the list does not jump under the person’s cursor. The more confident the dictionary was, the more weight its results keep.</p>
-  <p>Each result has a <code>source</code>: <code>alias</code> for the dictionary, <code>semantic</code> for meaning search, <code>custom</code> for custom emoji and <code>culture</code> for the optional culture layer, which adds emoji for the culture and the moment after the top result.</p>
+  <p>Each result has a <code>source</code>: <code>alias</code> for the dictionary, <code>semantic</code> for meaning search, <code>custom</code> for custom emoji and <code>culture</code> for the culture layer, which adds emoji for the place and the moment after the top result. It is on by default.</p>
 
   <h2 id="caching">Caching</h2>
   <ul>
     <li><strong>Packs and shards</strong> are static files. They are free, cached for a year and never metered.</li>
-    <li><strong>One shared edge cache.</strong> The Worker caches answers in each data center for up to a week. The cache key is the query text, locale, limit, mode, index version and a hash of the served data, so a data fix is never answered from old entries. It holds no key, app or origin, so every app warms the same cache for everyone. Custom emoji and culture are added after the cache, per request.</li>
+    <li><strong>One shared edge cache.</strong> The Worker caches answers in each data center for up to a week. The cache key is the query text, locale, limit, mode, index version and a hash of the served data, so a data fix is never answered from old entries. It holds no key, app or origin, so every app warms the same cache for everyone. Custom emoji and culture are added after the cache, per request, so one cached answer serves every region and day.</li>
     <li><strong>In the client</strong>, the semantic client keeps the last 200 answers in memory.</li>
     <li><strong>Reaction suggestions are never cached</strong>, because message text is private. For photos, only the model’s label (caption, reaction, keywords and proposed emoji) is cached, keyed by a perceptual hash of the image.</li>
   </ul>

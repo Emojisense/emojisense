@@ -84,6 +84,7 @@ pnpm --filter @emojisense/worker dev:offline   # http://localhost:8788`;
     <li>
       <h3 id="point-clients">Point your apps at it</h3>
       <CodeBlock code={client} lang="ts" />
+      <p><code>useEmojisense</code> also loads the culture file from <code>/v1/culture/{PACK_VERSION}</code>, next to <code>packBaseUrl</code>. Your Worker serves both. Pass <code>cultureUrl: false</code> to leave the culture layer out.</p>
     </li>
   </ol>
 

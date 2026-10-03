@@ -58,7 +58,8 @@ await ClassicEditor.create({
         <tr><td><code>packUrl</code></td><td>—</td><td>Base URL of a pack version. Set it or <code>engine</code>.</td></tr>
         <tr><td><code>engine</code></td><td>—</td><td>A ready engine instead of a pack URL</td></tr>
         <tr><td><code>locale</code></td><td>the content language</td><td><code>pt-br</code> becomes <code>pt</code>. English always loads too.</td></tr>
-        <tr><td><code>cultureUrl</code></td><td>—</td><td>Culture files, for cultural and seasonal emoji after the best match</td></tr>
+        <tr><td><code>cultureUrl</code></td><td>next to <code>packUrl</code></td><td>Culture files, for cultural and seasonal emoji after the best match. <code>false</code> turns them off.</td></tr>
+        <tr><td><code>region</code></td><td>the device’s</td><td>Region for regional culture entries: the device’s (its language, else its time zone), <code>""</code> for none, or an ISO code such as <code>"JP"</code></td></tr>
         <tr><td><code>endpoint</code></td><td>—</td><td>The Emojisense API. Without it, search stays on the device.</td></tr>
         <tr><td><code>publishableKey</code></td><td>—</td><td>A <code>pk_…</code> key. Never put a secret key in a browser.</td></tr>
         <tr><td><code>semantic</code></td><td>—</td><td>A semantic provider instead of <code>endpoint</code></td></tr>

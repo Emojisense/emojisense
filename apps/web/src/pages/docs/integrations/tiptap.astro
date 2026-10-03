@@ -106,6 +106,7 @@ const customMenu = `EmojiAutocomplete.configure({
         <tr><td><code>engine</code></td><td>—</td><td>The engine, or a getter. The menu stays closed while it is <code>undefined</code>.</td></tr>
         <tr><td><code>semantic</code></td><td>—</td><td>A semantic provider (for example <code>createSemanticClient</code>, or <code>chainProviders(shards, api)</code>), or a getter</td></tr>
         <tr><td><code>locale</code></td><td>first pack</td><td>Preferred locale for ranking and labels</td></tr>
+        <tr><td><code>region</code></td><td>the device’s</td><td>Region for regional culture entries of the engine’s culture file: the device’s (its language, else its time zone), <code>""</code> for none, or an ISO code such as <code>"JP"</code></td></tr>
         <tr><td><code>limit</code></td><td><code>8</code></td><td>Menu size</td></tr>
         <tr><td><code>debounceMs</code></td><td><code>200</code></td><td>Delay before a semantic request</td></tr>
         <tr><td><code>skinTone</code></td><td><code>"none"</code></td><td>A skin tone, or a getter that follows a user preference</td></tr>

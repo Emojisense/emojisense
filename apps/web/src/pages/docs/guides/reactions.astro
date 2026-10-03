@@ -72,6 +72,9 @@ const curl = `curl -X POST "${API_HOST}/v1/suggest-reactions" \\
         <tr><td><code>locale</code></td><td><code>en</code></td><td>Language of the dictionary part: one of <code>{LOCALES.join(", ")}</code>, or a BCP 47 tag of one, such as <code>pt-BR</code>. Any other language answers <code>400</code>. Meaning search is multilingual either way.</td></tr>
         <tr><td><code>limit</code></td><td><code>8</code></td><td>Number of results, 1–50.</td></tr>
         <tr><td><code>tenant</code></td><td>—</td><td>Optional, also as a query parameter. Your id for one of your customers: that <a href="/docs/guides/tenants/">tenant’s</a> custom emoji are suggested too. At most 128 characters.</td></tr>
+        <tr><td><code>culture</code></td><td><code>true</code></td><td><code>false</code> turns the culture layer off.</td></tr>
+        <tr><td><code>region</code></td><td>region of <code>locale</code></td><td>An ISO 3166-1 code such as <code>"JP"</code>, for regional culture entries, or <code>"auto"</code> for the request’s country. <code>pt-BR</code> gives <code>BR</code>.</td></tr>
+        <tr><td><code>day</code></td><td>caller’s local day</td><td><code>"YYYY-MM-DD"</code>, the day for seasonal and event entries. Without it, the local day in the time zone that Cloudflare’s edge derives from the IP address, else the UTC day.</td></tr>
       </tbody>
     </table>
   </div>
@@ -80,6 +83,7 @@ const curl = `curl -X POST "${API_HOST}/v1/suggest-reactions" \\
   <p>This is the real answer of the API for “{text}”, captured on {API_FIXTURES.madeOn}:</p>
   <CodeBlock code={prettyResponse(reactions.response)} lang="json" title="200 OK" />
   <p>“We did it” is a celebration cue, so the reactions people use for good news lead the list. Intent cues and dictionary matches have <code>"source": "alias"</code>. A result that the message embedding found has <code>"source": "semantic"</code>, as for messages without a clear cue. The <code>query</code> field echoes the normalized text in the response only. It is not stored. <code>aliasLocale</code> names the language whose dictionary ranked the text.</p>
+  <p>The culture layer is on by default, as in search. Culture emoji whose trigger is in the message come right after the top reaction: “thanks so much for the help!” with <code>"region": "JP"</code> gives 🙏 then 🙇. They have <code>"source": "culture"</code>, <code>context</code> and <code>cultureId</code>. The answer also has a <code>culture</code> field, and <code>region</code> when the request names one, as in search. This answer was captured before the culture layer was on by default, so it has neither field.</p>
 
   <h2 id="fallbacks">Fallbacks</h2>
   <ul>

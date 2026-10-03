@@ -93,7 +93,7 @@ export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) 
         <tr><td><code>empty</code></td><td>—</td><td>Rendered when a query has no results</td></tr>
         <tr><td><code>limit</code></td><td><code>24</code></td><td>Number of ranked results</td></tr>
         <tr><td><code>columns</code></td><td><code>9</code></td><td>Emoji per row</td></tr>
-        <tr><td><code>showRelevantNow</code></td><td><code>false</code></td><td>Show a row of seasonal and event emoji from the culture file above the browse list. Needs <code>cultureUrl</code>.</td></tr>
+        <tr><td><code>showRelevantNow</code></td><td><code>false</code></td><td>Show a row of seasonal and event emoji from the culture file above the browse list. Needs the culture file (loaded by default).</td></tr>
         <tr><td><code>relevantNowLabel</code></td><td><code>"Relevant now"</code></td><td>Heading of that row</td></tr>
       </tbody>
     </table>
@@ -118,15 +118,15 @@ export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) 
         <tr><td><code>emojiSet</code></td><td>How the pickers draw emoji. <code>"native"</code> (default) uses the system font. <code>"twemoji"</code>, <code>"noto"</code> and <code>"fluent"</code> draw images of a <a href="/docs/guides/emoji-sets/">hosted set</a> and need <code>endpoint</code>.</td></tr>
         <tr><td><code>customEmoji</code></td><td>Default <code>false</code>. <code>true</code> loads the app’s <a href="/docs/guides/custom-emoji/">custom emoji</a> from <code>GET /v1/custom-pack</code>, so they are searched on the device and drawn as images. Needs <code>endpoint</code> and <code>publishableKey</code>.</td></tr>
         <tr><td><code>tenant</code></td><td>Your id for one of your customers: adds that <a href="/docs/guides/tenants/">tenant’s</a> custom emoji.</td></tr>
-        <tr><td><code>cultureUrl</code></td><td>The culture files, for example <code>{CULTURE_URL}</code>. Emoji for the culture and the moment join the results after the top result, never above it (<code>source: "culture"</code>). Omit it for the canonical ranking.</td></tr>
-        <tr><td><code>region</code></td><td>An ISO 3166-1 code such as <code>"BR"</code>, for regional culture entries. Default: the region of the browser’s language, read on the device and never sent. <code>""</code> = no region.</td></tr>
+        <tr><td><code>cultureUrl</code></td><td>The culture files, for example <code>{CULTURE_URL}</code>. Emoji for the culture and the moment join the results after the top result, never above it (<code>source: "culture"</code>). Default: the culture directory next to <code>packBaseUrl</code>. <code>false</code> keeps the canonical ranking. A file that cannot load changes nothing.</td></tr>
+        <tr><td><code>region</code></td><td>An ISO 3166-1 code such as <code>"BR"</code>, for regional culture entries. Default: the device’s region: the region of the browser’s language (<code>"pt-BR"</code> → <code>"BR"</code>), else of its time zone (<code>"ja"</code> in <code>Asia/Tokyo</code> → <code>"JP"</code>, from the culture file). It is read on the device and never sent. <code>""</code> = no region. <code>"auto"</code>: the API reports the region of the request’s country (needs <code>endpoint</code>).</td></tr>
       </tbody>
     </table>
   </div>
   <p>It returns <code>{"{ engine, semantic, packs, customPack, locale, status, extended, emojiSet, endpoint, culture, region, error }"}</code>. <code>status</code> is <code>loading</code>, <code>ready</code> or <code>error</code>. To draw one emoji the same way as the pickers in your own components, use <code>{"<EmojiGlyph emoji={emoji} emojiSet={sense.emojiSet} endpoint={sense.endpoint} />"}</code>.</p>
 
   <h3 id="use-emoji-search"><code>useEmojiSearch(query, sense, options)</code></h3>
-  <p>Searches as the query changes. Dictionary results update on every keystroke. Meaning results arrive after <code>debounceMs</code> (default 200) and merge in without moving confident hits. Options: <code>limit</code> (default 24), <code>debounceMs</code> and <code>culture</code> (<code>false</code> keeps the canonical ranking even when a culture file is loaded).</p>
+  <p>Searches as the query changes. Dictionary results update on every keystroke. Meaning results arrive after <code>debounceMs</code> (default 200) and merge in without moving confident hits. Options: <code>limit</code> (default 24), <code>debounceMs</code>, <code>culture</code> (<code>false</code> keeps the canonical ranking even when a culture file is loaded) and <code>now</code> (a clock for the culture windows; default: the device’s clock).</p>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead><tr><th scope="col">Field</th><th scope="col">Meaning</th></tr></thead>
@@ -141,7 +141,7 @@ export function ReactionButton({ onPick }: { onPick: (emoji: string) => void }) 
   </div>
 
   <h3 id="use-relevant-now"><code>useRelevantNow(sense, options)</code></h3>
-  <p>The emoji for an optional “relevant now” shelf: the featured seasonal and event entries of the culture file that are active on the device’s day, in the person’s region. It returns <code>{"{ emoji, hexcode, context, cultureId }[]"}</code>, empty without <code>cultureUrl</code>. Options: <code>limit</code> (default 8) and <code>now</code>.</p>
+  <p>The emoji for an optional “relevant now” shelf: the featured seasonal and event entries of the culture file that are active on the device’s day, in the person’s region. It returns <code>{"{ emoji, hexcode, context, cultureId }[]"}</code>, empty without a culture file. Options: <code>limit</code> (default 8) and <code>now</code>.</p>
 
   <h2 id="shadcn">shadcn/ui</h2>
   <Callout type="experimental" title="The registry is in progress">
