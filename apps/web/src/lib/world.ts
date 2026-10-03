@@ -767,6 +767,7 @@ export const CITIES: [string, number, number][] = [
   ["Chicago", -87.6, 41.9],
   ["Dallas", -96.8, 32.8],
   ["Miami", -80.2, 25.8],
+  ["San Francisco", -122.4, 37.8],
   ["Seattle", -122.3, 47.6],
   ["Toronto", -79.4, 43.7],
   ["Denver", -105, 39.7],

@@ -3,7 +3,7 @@ import { i18nFor } from "../i18n/page";
 import { cityBubbles } from "../lib/showcase";
 import { CITIES, landDots, MAP, MAP_HEIGHT, project } from "../lib/world";
 
-const { t } = i18nFor(Astro);
+const { t, messages } = i18nFor(Astro);
 const dots = landDots();
 const cities = new Map(CITIES.map(([name, lon, lat]) => [name, project(lon, lat)]));
 const STILL = new Set(["Los Angeles", "São Paulo", "Istanbul", "Shanghai", "Sydney"]);
@@ -15,6 +15,21 @@ const bubbles = cityBubbles.flatMap((b, i) => {
   const align = left < 18 ? "start" : left > 82 ? "end" : "center";
   return [{ ...b, i, left, top: (at.y / MAP_HEIGHT) * 100, align, still: STILL.has(b.city) }];
 });
+
+/*
+ * The title names one city at a time, the city of the bubble that pops on the map. Each language
+ * writes the city with its own grammar ("in Paris", "Paris'te") and puts it on a line of its own
+ * with "\n", so the title never rewraps. That whole line turns, punctuation included.
+ */
+const cityNames: Record<string, string> = messages.edge.cities;
+const SLOT = "\u{E000}";
+const titleLines = t("edge.titleCity", { city: SLOT })
+  .split("\n")
+  .map((line) =>
+    line.includes(SLOT)
+      ? { reel: bubbles.map((b) => line.replace(SLOT, cityNames[b.city] ?? b.city)) }
+      : { text: line },
+  );
 
 const stats = [
   { value: "300+", label: t("edge.stats.cities") },
@@ -28,7 +43,26 @@ const stats = [
   <div class="container">
     <div class="edge-head">
       <p class="kicker">{t("edge.kicker")}</p>
-      <h2 id="edge-title">{t("edge.title")}</h2>
+      <h2 id="edge-title">
+        <span class="title-still" data-title-still>{t("edge.title")}</span>
+        <span class="title-reel" data-title-reel aria-hidden="true" hidden>
+          {
+            titleLines.map((line) => (
+              <span class="title-line">
+                {line.reel ? (
+                  <span class="reel" data-reel>
+                    {line.reel.map((city) => (
+                      <span class="reel-city">{city}</span>
+                    ))}
+                  </span>
+                ) : (
+                  line.text
+                )}
+              </span>
+            ))
+          }
+        </span>
+      </h2>
       <p class="lead">{t("edge.lead")}</p>
     </div>
 
@@ -79,15 +113,88 @@ const stats = [
 </section>
 
 <script>
-  // Paused, the map shows the same still bubbles as under reduced motion.
+  /** The bubble timing in the CSS below: one bubble pops every 2.4 s, the first 0.6 s early. */
+  const SLOT_MS = 2400;
+  const LEAD_MS = 600;
+
+  interface Reel {
+    play(): void;
+    stop(): void;
+  }
+
+  /**
+   * Turns the title to the city of each bubble as it pops. It reads the time from the first
+   * bubble's CSS animation, so the title and the map stay together after a pause or a hidden tab.
+   */
+  function createReel(section: Element, map: Element): Reel | undefined {
+    const still = section.querySelector("[data-title-still]");
+    const live = section.querySelector<HTMLElement>("[data-title-reel]");
+    const reel = section.querySelector<HTMLElement>("[data-reel]");
+    const bubble = map.querySelector(".bubble");
+    if (!still || !live || !reel || !bubble) return undefined;
+    const line = reel.parentElement ?? reel;
+    const cities = [...reel.children] as HTMLElement[];
+    let shown = -1;
+    let timer = 0;
+
+    still.classList.add("visually-hidden");
+    live.hidden = false;
+
+    /** Paused, the bubbles have no animation and the clock reads 0: the first city. */
+    const clock = () => Number(bubble.getAnimations()[0]?.currentTime ?? 0) + LEAD_MS;
+
+    const show = (index: number) => {
+      if (index === shown) return;
+      cities.forEach((city, i) => {
+        if (i === index) city.dataset.state = "in";
+        else if (i === shown) city.dataset.state = "out";
+        else delete city.dataset.state;
+      });
+      // In em of the reel, so the width follows the font size. A long name on a narrow phone shrinks.
+      const em = Number.parseFloat(getComputedStyle(reel).fontSize);
+      const width = (cities[index]?.getBoundingClientRect().width ?? 0) / em;
+      const parentEm = Number.parseFloat(getComputedStyle(line).fontSize);
+      reel.style.fontSize = `${Math.min(1, line.clientWidth / (width * parentEm))}em`;
+      reel.style.width = `${width}em`;
+      shown = index;
+    };
+
+    function tick() {
+      window.clearTimeout(timer);
+      const now = clock();
+      show(Math.floor(now / SLOT_MS) % cities.length);
+      timer = window.setTimeout(tick, SLOT_MS - (now % SLOT_MS) + 20);
+    }
+
+    show(Math.floor(clock() / SLOT_MS) % cities.length);
+    return {
+      play: tick,
+      stop: () => window.clearTimeout(timer),
+    };
+  }
+
   for (const button of document.querySelectorAll<HTMLButtonElement>("[data-map-pause]")) {
     const map = button.closest(".map");
+    const section = button.closest("section");
     const label = button.querySelector(".map-pause-label");
-    if (!map || !label) continue;
+    if (!map || !section || !label) continue;
     map.setAttribute("data-ready", "");
+
+    // Under reduced motion the title keeps its still text, like the map keeps still bubbles.
+    let reel: Reel | undefined;
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      void document.fonts.ready.then(() => {
+        reel = createReel(section, map);
+        if (!map.hasAttribute("data-paused")) reel?.play();
+      });
+    }
+
+    // Paused, the map shows the same still bubbles as under reduced motion, and the title stops.
     button.addEventListener("click", () => {
       const paused = map.toggleAttribute("data-paused");
       label.textContent = (paused ? button.dataset.labelPlay : button.dataset.labelPause) ?? "";
+      if (paused) reel?.stop();
+      else reel?.play();
     });
   }
 </script>
@@ -125,6 +232,44 @@ const stats = [
 
   .edge .lead {
     color: var(--edge-ink-2);
+  }
+
+  .title-line {
+    display: block;
+  }
+
+  /* All cities share one grid cell; the script sets the width of the one on show. */
+  .reel {
+    display: inline-grid;
+    padding-block: 0.2em;
+    margin-block: -0.2em;
+    clip-path: inset(0);
+    transition:
+      width 600ms var(--ease-out),
+      font-size 600ms var(--ease-out);
+  }
+
+  .reel-city {
+    grid-area: 1 / 1;
+    justify-self: start;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  .reel-city[data-state="in"] {
+    opacity: 1;
+    transform: none;
+    transition:
+      transform 600ms cubic-bezier(0.34, 1.4, 0.64, 1),
+      opacity 300ms;
+  }
+
+  .reel-city[data-state="out"] {
+    transform: translateY(-100%);
+    transition:
+      transform 450ms cubic-bezier(0.5, 0, 0.75, 0),
+      opacity 250ms;
   }
 
   .map {

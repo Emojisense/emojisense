@@ -128,6 +128,8 @@ const CITY_QUERIES = [
     queries: ["bravo", "joyeux anniversaire"],
     expect: [...CELEBRATE, ...BIRTHDAY_EMOJI],
   },
+  // Out of west-to-east order on purpose: next to Los Angeles, the two bubbles would overlap.
+  { city: "San Francisco", locale: "en", queries: ["ship it", "golden gate"], expect: ["🚀", "🌉"] },
   { city: "Istanbul", locale: "tr", queries: ["kolay gelsin"], expect: ["💪", "🙏", "👷", "🛠"] },
   {
     city: "Cairo",
