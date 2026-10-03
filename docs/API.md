@@ -466,7 +466,7 @@ backend with no client update.
 
 | Field | Meaning |
 | ----- | ------- |
-| `sample` | the share of sessions that report (0–1); each report counts `1 / sample` times |
+| `sample` | the share of sessions that report (0.001–1); each report counts `1 / sample` times |
 | `counts` | keystrokes by how their search ended: on the device, from memory (a loaded shard or an answer seen before), a shard file, the API, no layer answering, an error, or replaced by the next keystroke while it waited |
 | `picks` | up to 50 `[normalized query, hexcode]` pairs of search results that were chosen |
 

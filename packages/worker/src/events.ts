@@ -1,6 +1,6 @@
 import { privacyReason } from "@emojisense/data/shards";
 import { normalize } from "emojisense";
-import { EVENTS_MAX_BYTES, EVENTS_MAX_PICKS } from "./config.ts";
+import { EVENTS_MAX_BYTES, EVENTS_MAX_PICKS, EVENTS_MIN_SAMPLE } from "./config.ts";
 import type { Handler } from "./context.ts";
 import { corsHeaders, errorResponse, readBodyCapped } from "./http.ts";
 
@@ -27,7 +27,8 @@ function parseReport(text: string): Report | undefined {
     return undefined;
   }
   const { v, sample, locale, counts, picks } = body;
-  if (v !== 1 || typeof sample !== "number" || !(sample > 0 && sample <= 1)) return undefined;
+  if (v !== 1 || typeof sample !== "number" || !(sample >= EVENTS_MIN_SAMPLE && sample <= 1))
+    return undefined;
   if (
     locale !== undefined &&
     (typeof locale !== "string" || !/^[a-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/.test(locale))

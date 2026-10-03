@@ -84,6 +84,16 @@ describe("POST /v1/events", () => {
     expect(stats).not.toHaveBeenCalled();
   });
 
+  it("refuses a sample below 0.001, so one report cannot weigh more than 1000", async () => {
+    const { stats, post } = await setup();
+    for (const sample of [5e-324, 1e-300, 0.0009]) {
+      expect((await post(report({ sample }))).status).toBe(400);
+    }
+    expect(stats).not.toHaveBeenCalled();
+    expect((await post(report({ sample: 0.001, picks: [] }))).status).toBe(204);
+    expect(stats.mock.calls[0]?.[0].doubles[0]).toBe(1000);
+  });
+
   it("answers only /v1/events on a stats host", async () => {
     const { post, h } = await setup();
     expect((await post(report(), "", "https://stats.test")).status).toBe(204);

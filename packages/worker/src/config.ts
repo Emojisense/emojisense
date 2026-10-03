@@ -135,3 +135,5 @@ export const MAX_TENANT_LENGTH = 128;
 export const EVENTS_MAX_BYTES = 16 * 1024;
 /** …and the most picks in one (emojisense/stats sends at most 50). */
 export const EVENTS_MAX_PICKS = 50;
+/** The smallest `sample`: a report counts 1 / sample times, so this bounds one report's weight. */
+export const EVENTS_MIN_SAMPLE = 0.001;
