@@ -1,9 +1,10 @@
+import { observeMatches } from "../lib/observe.js";
 import { createReactionsApi, mountReactionBar } from "../lib/reactions-client.js";
 import "./reactions.scss";
 
 declare global {
   interface Window {
-    /** Written by Emojisense_Reactions::render() in PHP. */
+    /** Written by Emojisense_Reactions::enqueue_script() in PHP. */
     emojisenseReactions?: { root: string; strings?: { limited?: string; failed?: string } };
   }
 }
@@ -11,7 +12,8 @@ declare global {
 const settings = window.emojisenseReactions;
 if (settings?.root) {
   const api = createReactionsApi(settings.root);
-  for (const bar of document.querySelectorAll<HTMLElement>(".emojisense-reactions[data-emojisense-post]")) {
+  // BuddyPress adds activity items (and their bars) after the page loads.
+  observeMatches(document, ".emojisense-reactions[data-emojisense-id]", (bar) => {
     mountReactionBar(bar, { api, ...(settings.strings ? { strings: settings.strings } : {}) });
-  }
+  });
 }

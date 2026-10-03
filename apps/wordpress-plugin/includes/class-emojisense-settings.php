@@ -45,6 +45,9 @@ class Emojisense_Settings {
 			'reactions_post_types' => array(),
 			'default_reactions'    => array( '👍', '❤️', '😂', '😮', '😢', '🎉' ),
 			'comment_picker'       => false,
+			'forum_fields'         => false,
+			'forum_reactions'      => false,
+			'activity_reactions'   => false,
 		);
 	}
 
@@ -160,7 +163,14 @@ class Emojisense_Settings {
 	 */
 	public static function reaction_post_types() {
 		$types = self::value( 'reactions_post_types' );
-		return is_array( $types ) ? array_values( array_map( 'strval', $types ) ) : array();
+		$types = is_array( $types ) ? array_values( array_map( 'strval', $types ) ) : array();
+		/**
+		 * Filters the post types that show reactions. The bbPress integration adds topics and
+		 * replies when reactions in forums are on.
+		 *
+		 * @param string[] $types Post type names from the settings.
+		 */
+		return array_values( array_unique( array_map( 'strval', (array) apply_filters( 'emojisense_reaction_post_types', $types ) ) ) );
 	}
 
 	/**
@@ -273,7 +283,8 @@ class Emojisense_Settings {
 		$defaults = self::defaults();
 		$clean    = array();
 
-		foreach ( array( 'api_enabled', 'semantic_search', 'suggest_reactions', 'culture', 'editor_autocomplete', 'comment_picker' ) as $flag ) {
+		$flags = array( 'api_enabled', 'semantic_search', 'suggest_reactions', 'culture', 'editor_autocomplete', 'comment_picker', 'forum_fields', 'forum_reactions', 'activity_reactions' );
+		foreach ( $flags as $flag ) {
 			$clean[ $flag ] = ! empty( $input[ $flag ] );
 		}
 

@@ -93,6 +93,19 @@ class Emojisense_Admin {
 		add_settings_section( 'emojisense_comments', __( 'Comments', 'emojisense' ), '__return_false', self::PAGE );
 		$this->add_field( 'comment_picker', __( 'Emoji picker', 'emojisense' ), 'field_comment_picker', 'emojisense_comments' );
 
+		$bbpress    = Emojisense_Bbpress::is_active();
+		$buddypress = Emojisense_Buddypress::is_active();
+		if ( $bbpress || $buddypress ) {
+			add_settings_section( 'emojisense_forums', __( 'Forums and communities', 'emojisense' ), array( $this, 'section_forums' ), self::PAGE );
+			$this->add_field( 'forum_fields', __( 'Emoji in forms', 'emojisense' ), 'field_forum_fields', 'emojisense_forums' );
+			if ( $bbpress ) {
+				$this->add_field( 'forum_reactions', __( 'Forum reactions', 'emojisense' ), 'field_forum_reactions', 'emojisense_forums' );
+			}
+			if ( $buddypress ) {
+				$this->add_field( 'activity_reactions', __( 'Activity reactions', 'emojisense' ), 'field_activity_reactions', 'emojisense_forums' );
+			}
+		}
+
 		add_settings_section( 'emojisense_api', __( 'Emojisense API', 'emojisense' ), array( $this, 'section_api' ), self::PAGE );
 		$this->add_field( 'api_enabled', __( 'Connection', 'emojisense' ), 'field_api_enabled', 'emojisense_api' );
 		$this->add_field( 'publishable_key', __( 'Publishable key', 'emojisense' ), 'field_publishable_key', 'emojisense_api', true );
@@ -268,10 +281,12 @@ class Emojisense_Admin {
 	 * Post types with reactions.
 	 */
 	public function field_post_types() {
-		$selected = Emojisense_Settings::reaction_post_types();
+		$selected = (array) Emojisense_Settings::value( 'reactions_post_types' );
+		// Forum post types have their own setting (Forums and communities).
+		$hidden = array_merge( array( 'attachment' ), Emojisense_Bbpress::POST_TYPES );
 		echo '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Show reactions on', 'emojisense' ) . '</legend>';
 		foreach ( get_post_types( array( 'public' => true ), 'objects' ) as $type ) {
-			if ( 'attachment' === $type->name ) {
+			if ( in_array( $type->name, $hidden, true ) ) {
 				continue;
 			}
 			printf(
@@ -307,7 +322,46 @@ class Emojisense_Admin {
 	 * Comment picker checkbox.
 	 */
 	public function field_comment_picker() {
-		$this->checkbox( 'comment_picker', __( 'Add an emoji button under the comment field', 'emojisense' ) );
+		$this->checkbox( 'comment_picker', __( 'Add an emoji button and colon search to the comment field', 'emojisense' ) );
+	}
+
+	/**
+	 * Forums section intro.
+	 */
+	public function section_forums() {
+		echo '<p>' . esc_html__( 'Emoji by meaning where your community writes. Search runs in the browser with the data files of the plugin.', 'emojisense' ) . '</p>';
+	}
+
+	/**
+	 * Emoji button and colon search in bbPress and BuddyPress forms.
+	 */
+	public function field_forum_fields() {
+		$places = array();
+		if ( Emojisense_Bbpress::is_active() ) {
+			$places[] = __( 'forum topics and replies', 'emojisense' );
+		}
+		if ( Emojisense_Buddypress::is_active() ) {
+			$places[] = __( 'activity updates, activity comments and messages', 'emojisense' );
+		}
+		$this->checkbox(
+			'forum_fields',
+			/* translators: %s: where the emoji button appears, e.g. "forum topics and replies". */
+			sprintf( __( 'Add an emoji button and colon search to %s', 'emojisense' ), implode( __( ' and ', 'emojisense' ), $places ) )
+		);
+	}
+
+	/**
+	 * Reactions under bbPress topics and replies.
+	 */
+	public function field_forum_reactions() {
+		$this->checkbox( 'forum_reactions', __( 'Show reactions under forum topics and replies', 'emojisense' ) );
+	}
+
+	/**
+	 * Reactions under BuddyPress activity updates.
+	 */
+	public function field_activity_reactions() {
+		$this->checkbox( 'activity_reactions', __( 'Show reactions under activity updates', 'emojisense' ) );
 	}
 
 	/**

@@ -1,6 +1,6 @@
 === Emojisense ===
 Contributors: emojisense
-Tags: emoji, emoji picker, reactions, block editor, comments
+Tags: emoji, reactions, bbpress, buddypress, comments
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
@@ -20,7 +20,9 @@ Emojisense finds emoji by meaning, slang and intent, not only by their official 
 
 **Reactions (optional).** Visitors react to posts with emoji, without an account. Authors choose the reactions of each post in the editor sidebar, or let Emojisense suggest them from the post text. Only the counts are stored.
 
-**Comments (optional).** An Emoji button under the comment field opens a picker, so visitors can search emoji by meaning too.
+**Comments (optional).** An Emoji button under the comment field opens a picker, and typing a colon and a word in the comment field suggests emoji, so visitors can search emoji by meaning too.
+
+**bbPress and BuddyPress (optional).** The same Emoji button and colon search in forum topics and replies, and in BuddyPress activity updates, activity comments and messages. Reactions under forum topics and replies (public forums), and under activity updates (public activity).
 
 **Private by default.** Search runs in the browser with data files that come with the plugin. Out of the box, the plugin sends nothing to anyone. You can connect the Emojisense API for more:
 
@@ -50,7 +52,7 @@ As with any web request, the API receives the IP address of the browser or serve
 
 1. Install the plugin from Plugins → Add New, or upload the zip file.
 2. Activate it. The colon autocomplete and the emoji buttons work at once.
-3. Optional: in Settings → Emojisense, turn on reactions for posts or pages, and the emoji picker in comments.
+3. Optional: in Settings → Emojisense, turn on reactions for posts or pages, and the emoji picker in comments. With bbPress or BuddyPress active, the section "Forums and communities" turns on emoji in their forms and reactions under topics, replies and activity updates.
 4. Optional: to connect the Emojisense API, create a publishable key (`pk_live_…`) at https://app.emojisense.com, add your site address (for example `https://example.com`) to the key's allowed origins, paste the key in Settings → Emojisense and turn on the connection. "Test the saved settings" checks the key and the origin.
 
 == Frequently Asked Questions ==
@@ -81,11 +83,15 @@ The ones the author chose in the editor sidebar. Without a choice, the suggestio
 
 = Where are the reactions? Can I move them? =
 
-They appear after the content of single posts of the post types you selected. Use the `emojisense_show_reactions` filter to hide them on some posts.
+They appear after the content of single posts of the post types you selected, after each bbPress topic and reply, and in the meta row of each BuddyPress activity update. Use the `emojisense_show_reactions` filter to hide them on some posts, and `emojisense_show_activity_reactions` for activity items.
+
+= Which forum and activity items show reactions? =
+
+Only public ones, because visitors react without an account: topics and replies of public forums, and activity updates that everyone can see (not those of private or hidden groups). Forum replies never get reaction suggestions from the API; new topics can. The `emojisense_activity_reaction_types` filter adds other activity types.
 
 = Does it slow down my site? =
 
-The editor scripts load only in the editor. On the front end, the reactions script is about 3 KB. The comment picker loads its search data only when a visitor opens it.
+The editor scripts load only in the editor. On the front end, the reactions script is about 4 KB. The comment and forum fields load their search data only when a visitor clicks into a field or opens the picker.
 
 = What happens to my data when I delete the plugin? =
 
@@ -99,11 +105,13 @@ Deleting the plugin removes its settings, the reaction counts and the chosen and
 4. Reactions under a post.
 5. The emoji picker in the comment form.
 6. Settings → Emojisense.
+7. bbPress: reactions under a topic and a reply, and colon search in the reply form.
+8. BuddyPress: reactions under an activity update.
 
 == Changelog ==
 
 = 0.1.0 =
-* First release: colon autocomplete and an emoji picker in the block editor, a TinyMCE button, reactions under posts, a comment picker, the optional Emojisense API connection and 11 languages.
+* First release: colon autocomplete and an emoji picker in the block editor, a TinyMCE button, reactions under posts, an emoji button and colon search in the comment form, bbPress and BuddyPress support (forms, and reactions under topics, replies and activity updates), the optional Emojisense API connection and 11 languages.
 
 == Upgrade Notice ==
 

@@ -29,3 +29,5 @@ tests_add_filter(
 );
 
 require $emojisense_tests_dir . '/includes/bootstrap.php';
+
+require __DIR__ . '/class-test-emojisense-memory-target.php';

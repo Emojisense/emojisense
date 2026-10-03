@@ -1,14 +1,19 @@
 # Emojisense for WordPress
 
-A WordPress plugin: emoji by meaning in the block editor, the classic editor, post reactions and
-the comment form. `readme.txt` is the WordPress.org page; this file is for developers.
+A WordPress plugin: emoji by meaning in the block editor, the classic editor, post reactions, the
+comment form, and bbPress and BuddyPress. `readme.txt` is the WordPress.org page; this file is for
+developers.
 
 ```
  block editor                 classic editor           front end (optional)
  ─────────────                ──────────────           ────────────────────
- ":" completer (useItems)     TinyMCE button           reaction bar  ── REST emojisense/v1/reactions/:id
- toolbar "Emoji" → picker      → <emojisense-picker>    comment "Emoji" button → <emojisense-picker>
- sidebar "Reactions" panel
+ ":" completer (useItems)     TinyMCE button           reaction bars ── REST emojisense/v1/reactions/:type/:id
+ toolbar "Emoji" → picker      → <emojisense-picker>      post · bbPress topic/reply (type post)
+ sidebar "Reactions" panel                                BuddyPress activity update (type activity)
+                                                        text fields (fields.js, by CSS selector):
+                                                          "Emoji" button → <emojisense-picker>
+                                                          ":" menu → @emojisense/web-component/textarea
+                                                          comment form · bbPress forms · BuddyPress forms
           │                          │                          │
           └──── packs/0.1.0/pack.<locale>[.ext].json from the plugin folder (no network) ───┘
                 optional: Emojisense API (meaning search, suggestions, hosted sets), off by default
@@ -24,11 +29,11 @@ pnpm --filter @emojisense/wordpress-plugin release   # → release/emojisense/ a
 
 | Path | Role |
 | ---- | ---- |
-| `emojisense.php`, `includes/` | PHP: settings, assets, editor hooks, reactions REST API, hosted sets, privacy text |
+| `emojisense.php`, `includes/` | PHP: settings, assets, editor hooks, reactions REST API and its targets (posts, activity), text fields, bbPress and BuddyPress, hosted sets, privacy text |
 | `uninstall.php` | Deletes the option and the post meta of every site |
 | `src/editor/` | Block editor: completer, format (toolbar button), reactions panel (JSX, `@wordpress/*` externals) |
 | `src/classic/` | TinyMCE plugin (loaded by TinyMCE through `mce_external_plugins`) |
-| `src/front/` | Reaction bar (≈ 3 KB) and comment picker |
+| `src/front/` | Reaction bars (≈ 4 KB) and the text field script (button, picker, `:` menu) |
 | `src/lib/`, `src/shared/` | Framework-free TypeScript: engine loading, completer search, reactions client, popover |
 | `languages/emojisense.pot` | Strings of the PHP and the built scripts |
 | `assets/wporg/` | Sources of the WordPress.org icon and banner (not in the zip) |
@@ -46,6 +51,10 @@ The zip holds `emojisense.php`, `uninstall.php`, `readme.txt`, `includes/`, `bui
 | API | One switch, off by default. Meaning search, suggestions and hosted sets are separate options under it. The browser gets the API address and key only with meaning search on. |
 | Keys | Publishable keys only (`pk_live_`/`pk_test_`); secret keys are refused with advice. Server calls send the site origin, so the key's allowed origins work for both. |
 | Reactions | Counts per emoji in post meta (read, change, write: two reactions at the same instant may count once). Nonce from the GET answer, so cached pages keep working. Rate limit: 10 a minute per client (`emojisense_reaction_rate_limit`), keyed by an HMAC of the IP address that lives for one window. The browser remembers its own reactions in `localStorage`. The buttons carry code points (`data-emoji-hex`) because content filters rewrite emoji in attributes. |
+| Reaction targets | `Emojisense_Reaction_Target` per REST type: `post` (post meta, also bbPress topics and replies) and `activity` (BuddyPress activity meta). The filter `emojisense_reaction_targets` adds more. Anonymous requests, so only public objects: open or closed topics and replies of public forums, activity updates that are not hidden, not spam and readable by a visitor (`bp_activity_user_can_read( $activity, 0 )`). |
+| Text fields | One script for every plain text field with emoji (`emojisense_field_selectors`): the comment field, `#bbp_topic_content`, `#bbp_reply_content`, `#whats-new`, `textarea.ac-input`, `#message_content`. It watches the page for fields that appear later (BuddyPress renders forms with JavaScript) and loads the packs on the first focus. |
+| bbPress | Bars after each topic and reply (`bbp_theme_after_reply_content`), never after the page content. Replies get no API suggestions; topics can. The bbPress toolbar is Quicktags over a plain textarea, so the `:` menu works there. |
+| BuddyPress | Bars in the activity meta row (`bp_activity_entry_meta`). The reactions script loads up front on BuddyPress pages, because "Load more" and filters add items later. |
 | Suggestions | After publishing, in WP-Cron, never during the publish request. Skipped when the author chose reactions. |
 | Hosted sets | `wp_staticize_emoji()` with the API as `emoji_url`, on content, excerpts and comments. The API serves set images only for keys on a plan with hosted sets and checks the key against the `Referer` origin, so the images get `?key=` and `referrerpolicy="strict-origin-when-cross-origin"`; without a key the set stays native. A missing image falls back to the emoji text. |
 
@@ -65,6 +74,7 @@ npx @wordpress/env run cli --env-cwd=wp-content/plugins/wordpress-plugin \
 pnpm --filter @emojisense/wordpress-plugin release
 PLAYGROUND_NPX=/path/to/node-24.18+/npx pnpm --filter @emojisense/wordpress-plugin e2e   # Playground, headless Chromium
 E2E_PHP=7.4 E2E_SMOKE=1 pnpm --filter @emojisense/wordpress-plugin e2e
+pnpm --filter @emojisense/wordpress-plugin e2e:forums                                   # installs bbPress + BuddyPress (network)
 node scripts/wporg-assets.mjs                           # icons, banners, screenshots → release/wordpress-org/
 ```
 
@@ -77,7 +87,9 @@ node scripts/wporg-assets.mjs                           # icons, banners, screen
 | `test/php/test-settings.php` | Defaults send nothing; sanitization of keys, address, choices, emoji lists; idempotence; locale mapping |
 | `test/php/test-reactions.php` | REST read and write, nonce, hidden posts, rate limit with `Retry-After`, no personal data stored, suggestions (permissions, key, Origin, errors, WP-Cron), markup, meta in the REST API |
 | `test/php/test-plugin.php` | Code points, hosted set rendering, TinyMCE button, privacy text, uninstall |
-| `scripts/e2e.mjs` | The release zip in WordPress Playground: `:pizza` → 🍕, `:ship it` → 🚀, toolbar picker, sidebar panel, settings save and secret key refusal, reactions on the front end, comment picker, TinyMCE button |
+| `scripts/e2e.mjs` | The release zip in WordPress Playground: `:pizza` → 🍕, `:ship it` → 🚀, toolbar picker, sidebar panel, settings save and secret key refusal, reactions on the front end, comment picker and `:` menu, TinyMCE button. `E2E_FORUMS=1`: bbPress topic and reply bars, a reply reaction, `:ship it` in the reply form, a BuddyPress activity bar and reaction, `:pizza` in the post form |
+| `test/js/fields.test.ts` | Button and `:` menu on the configured fields only, packs on first focus, fields that appear later, `observeMatches` |
+| `test/php/test-targets.php` | Typed routes with a memory target, unknown types, markup, field selectors, forum settings without the forum plugins, activity visibility |
 
 ## Publish to WordPress.org (owner)
 

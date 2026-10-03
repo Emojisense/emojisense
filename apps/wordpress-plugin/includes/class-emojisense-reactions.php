@@ -1,7 +1,7 @@
 <?php
 /**
- * Emoji reactions under posts: post meta, the REST API, the markup and the suggestions from the
- * post text.
+ * Emoji reactions under posts (and, through targets, other objects such as BuddyPress activity):
+ * the REST API, the markup and the suggestions from the post text.
  *
  * @package Emojisense
  */
@@ -36,6 +36,13 @@ class Emojisense_Reactions {
 
 	/** Default rate limit window, in seconds. */
 	const RATE_WINDOW = 60;
+
+	/**
+	 * Whether the page already has the reactions script configuration.
+	 *
+	 * @var bool
+	 */
+	private static $configured = false;
 
 	/**
 	 * Hooks.
@@ -107,21 +114,30 @@ class Emojisense_Reactions {
 			'minimum'  => 1,
 			'required' => true,
 		);
+		$type    = array(
+			'type'     => 'string',
+			'pattern'  => '^[a-z_]+$',
+			'required' => true,
+		);
 		register_rest_route(
 			self::REST_NAMESPACE,
-			'/reactions/(?P<id>\d+)',
+			'/reactions/(?P<type>[a-z_]+)/(?P<id>\d+)',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'rest_get' ),
 					'permission_callback' => array( $this, 'can_view' ),
-					'args'                => array( 'id' => $post_id ),
+					'args'                => array(
+						'type' => $type,
+						'id'   => $post_id,
+					),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'rest_react' ),
 					'permission_callback' => array( $this, 'can_react' ),
 					'args'                => array(
+						'type'   => $type,
 						'id'     => $post_id,
 						'emoji'  => array(
 							'type'      => 'string',
@@ -157,15 +173,47 @@ class Emojisense_Reactions {
 	}
 
 	/**
-	 * Readable reactions: a public post of a type with reactions.
+	 * The kinds of objects with reactions, by REST type.
+	 *
+	 * @return array<string, Emojisense_Reaction_Target>
+	 */
+	public static function targets() {
+		/**
+		 * Filters the kinds of objects that carry reactions. The BuddyPress integration adds
+		 * "activity".
+		 *
+		 * @param array<string, Emojisense_Reaction_Target> $targets Targets by REST type.
+		 */
+		$targets = (array) apply_filters( 'emojisense_reaction_targets', array( 'post' => new Emojisense_Post_Reactions() ) );
+		return array_filter(
+			$targets,
+			static function ( $target ) {
+				return $target instanceof Emojisense_Reaction_Target;
+			}
+		);
+	}
+
+	/**
+	 * The target of a REST type.
+	 *
+	 * @param string $type REST type, e.g. "post".
+	 * @return Emojisense_Reaction_Target|null
+	 */
+	public static function target( $type ) {
+		$targets = self::targets();
+		return isset( $targets[ $type ] ) ? $targets[ $type ] : null;
+	}
+
+	/**
+	 * Readable reactions: a public object of a kind with reactions.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return true|WP_Error
 	 */
 	public function can_view( $request ) {
-		$post = get_post( (int) $request['id'] );
-		if ( ! $post || ! self::shows_reactions( $post ) ) {
-			return new WP_Error( 'emojisense_no_reactions', __( 'This post has no reactions.', 'emojisense' ), array( 'status' => 404 ) );
+		$target = self::target( (string) $request['type'] );
+		if ( ! $target || ! $target->can_view( (int) $request['id'] ) ) {
+			return new WP_Error( 'emojisense_no_reactions', __( 'There are no reactions here.', 'emojisense' ), array( 'status' => 404 ) );
 		}
 		return true;
 	}
@@ -206,11 +254,13 @@ class Emojisense_Reactions {
 	 * @return WP_REST_Response
 	 */
 	public function rest_get( $request ) {
-		$post_id  = (int) $request['id'];
+		$type     = (string) $request['type'];
+		$id       = (int) $request['id'];
 		$response = new WP_REST_Response(
 			array(
-				'post'      => $post_id,
-				'reactions' => self::reactions_with_counts( $post_id ),
+				'type'      => $type,
+				'id'        => $id,
+				'reactions' => self::reactions_with_counts( $id, $type ),
 				'nonce'     => wp_create_nonce( self::NONCE_ACTION ),
 			)
 		);
@@ -225,10 +275,12 @@ class Emojisense_Reactions {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function rest_react( $request ) {
-		$post_id = (int) $request['id'];
-		$emoji   = (string) $request['emoji'];
-		if ( ! in_array( $emoji, self::reaction_set( $post_id ), true ) ) {
-			return new WP_Error( 'emojisense_unknown_reaction', __( 'This post does not offer that reaction.', 'emojisense' ), array( 'status' => 400 ) );
+		$type   = (string) $request['type'];
+		$id     = (int) $request['id'];
+		$emoji  = (string) $request['emoji'];
+		$target = self::target( $type );
+		if ( ! $target || ! in_array( $emoji, $target->reaction_set( $id ), true ) ) {
+			return new WP_Error( 'emojisense_unknown_reaction', __( 'This reaction is not offered here.', 'emojisense' ), array( 'status' => 400 ) );
 		}
 		$retry_after = self::consume_rate_limit();
 		if ( $retry_after > 0 ) {
@@ -247,11 +299,12 @@ class Emojisense_Reactions {
 			);
 		}
 
-		self::change_count( $post_id, $emoji, 'remove' === $request['action'] ? -1 : 1 );
+		self::change_count( $id, $emoji, 'remove' === $request['action'] ? -1 : 1, $type );
 		$response = new WP_REST_Response(
 			array(
-				'post'      => $post_id,
-				'reactions' => self::reactions_with_counts( $post_id ),
+				'type'      => $type,
+				'id'        => $id,
+				'reactions' => self::reactions_with_counts( $id, $type ),
 			)
 		);
 		$response->header( 'Cache-Control', 'no-store' );
@@ -318,13 +371,18 @@ class Emojisense_Reactions {
 	/**
 	 * The offered reactions with their counts, in the order of the set.
 	 *
-	 * @param int $post_id Post ID.
+	 * @param int    $id   Object ID.
+	 * @param string $type REST type of the object.
 	 * @return array<int, array{emoji: string, count: int}>
 	 */
-	public static function reactions_with_counts( $post_id ) {
-		$counts = self::counts( $post_id );
+	public static function reactions_with_counts( $id, $type = 'post' ) {
+		$target = self::target( $type );
+		if ( ! $target ) {
+			return array();
+		}
+		$counts = self::counts( $id, $type );
 		$list   = array();
-		foreach ( self::reaction_set( $post_id ) as $emoji ) {
+		foreach ( $target->reaction_set( $id ) as $emoji ) {
 			$list[] = array(
 				'emoji' => $emoji,
 				'count' => isset( $counts[ $emoji ] ) ? $counts[ $emoji ] : 0,
@@ -336,11 +394,13 @@ class Emojisense_Reactions {
 	/**
 	 * Stored counts per emoji.
 	 *
-	 * @param int $post_id Post ID.
+	 * @param int    $id   Object ID.
+	 * @param string $type REST type of the object.
 	 * @return array<string,int>
 	 */
-	public static function counts( $post_id ) {
-		$stored = get_post_meta( $post_id, self::META_COUNTS, true );
+	public static function counts( $id, $type = 'post' ) {
+		$target = self::target( $type );
+		$stored = $target ? $target->stored_counts( $id ) : array();
 		$counts = array();
 		if ( is_array( $stored ) ) {
 			foreach ( $stored as $emoji => $count ) {
@@ -356,14 +416,19 @@ class Emojisense_Reactions {
 	 * Adds `$delta` to one count, never below zero. Read, change, write: two reactions in the
 	 * same instant may count as one, which is acceptable for reaction counts.
 	 *
-	 * @param int    $post_id Post ID.
-	 * @param string $emoji   Emoji of the post's set.
-	 * @param int    $delta   +1 or -1.
+	 * @param int    $id    Object ID.
+	 * @param string $emoji Emoji of the object's set.
+	 * @param int    $delta +1 or -1.
+	 * @param string $type  REST type of the object.
 	 */
-	public static function change_count( $post_id, $emoji, $delta ) {
-		$counts           = self::counts( $post_id );
+	public static function change_count( $id, $emoji, $delta, $type = 'post' ) {
+		$target = self::target( $type );
+		if ( ! $target ) {
+			return;
+		}
+		$counts           = self::counts( $id, $type );
 		$counts[ $emoji ] = max( 0, ( isset( $counts[ $emoji ] ) ? $counts[ $emoji ] : 0 ) + $delta );
-		update_post_meta( $post_id, self::META_COUNTS, $counts );
+		$target->save_counts( $id, $counts );
 	}
 
 	/**
@@ -435,6 +500,16 @@ class Emojisense_Reactions {
 		if ( ! $post || get_queried_object_id() !== $post->ID || ! self::shows_reactions( $post ) ) {
 			return $content;
 		}
+		/**
+		 * Filters whether the reaction bar follows the post content. The bbPress integration
+		 * places forum bars itself, after each topic and reply.
+		 *
+		 * @param bool    $append Whether to append the bar.
+		 * @param WP_Post $post   The post.
+		 */
+		if ( ! apply_filters( 'emojisense_reactions_after_content', true, $post ) ) {
+			return $content;
+		}
 		return $content . self::render( $post->ID );
 	}
 
@@ -442,30 +517,20 @@ class Emojisense_Reactions {
 	 * The reaction bar. It works as plain markup (counts show without JavaScript); the script
 	 * makes the buttons work and refreshes the counts.
 	 *
-	 * @param int $post_id Post ID.
+	 * @param int    $id   Object ID.
+	 * @param string $type REST type of the object.
 	 * @return string
 	 */
-	public static function render( $post_id ) {
-		$handle = Emojisense_Assets::enqueue( 'reactions' );
-		if ( '' !== $handle && ! wp_script_is( $handle, 'done' ) ) {
-			wp_add_inline_script(
-				$handle,
-				'window.emojisenseReactions = ' . wp_json_encode(
-					array(
-						'root'    => esc_url_raw( rest_url( self::REST_NAMESPACE . '/reactions/' ) ),
-						'strings' => array(
-							'limited' => __( 'Too many reactions. Wait a minute and try again.', 'emojisense' ),
-							'failed'  => __( 'Your reaction could not be saved. Try again.', 'emojisense' ),
-						),
-					)
-				) . ';',
-				'before'
-			);
+	public static function render( $id, $type = 'post' ) {
+		$target = self::target( $type );
+		if ( ! $target ) {
+			return '';
 		}
+		self::enqueue_script();
 
 		$set   = Emojisense_Settings::emoji_set();
 		$items = '';
-		foreach ( self::reactions_with_counts( $post_id ) as $reaction ) {
+		foreach ( self::reactions_with_counts( $id, $type ) as $reaction ) {
 			$emoji = $reaction['emoji'];
 			$glyph = 'native' === $set
 				? esc_html( $emoji )
@@ -486,10 +551,36 @@ class Emojisense_Reactions {
 		}
 
 		return sprintf(
-			'<div class="emojisense-reactions" data-emojisense-post="%1$d"><div class="emojisense-reactions__list" role="group" aria-label="%2$s">%3$s</div><p class="emojisense-reactions__status" role="status"></p></div>',
-			(int) $post_id,
-			esc_attr__( 'React to this post', 'emojisense' ),
+			'<div class="emojisense-reactions" data-emojisense-type="%1$s" data-emojisense-id="%2$d"><div class="emojisense-reactions__list" role="group" aria-label="%3$s">%4$s</div><p class="emojisense-reactions__status" role="status"></p></div>',
+			esc_attr( $type ),
+			(int) $id,
+			esc_attr( $target->label() ),
 			$items
+		);
+	}
+
+	/**
+	 * The reactions script and, once per page, its configuration. Pages that load bars later
+	 * (BuddyPress activity) call it up front.
+	 */
+	public static function enqueue_script() {
+		$handle = Emojisense_Assets::enqueue( 'reactions' );
+		if ( '' === $handle || self::$configured ) {
+			return;
+		}
+		self::$configured = true;
+		wp_add_inline_script(
+			$handle,
+			'window.emojisenseReactions = ' . wp_json_encode(
+				array(
+					'root'    => esc_url_raw( rest_url( self::REST_NAMESPACE . '/reactions/' ) ),
+					'strings' => array(
+						'limited' => __( 'Too many reactions. Wait a minute and try again.', 'emojisense' ),
+						'failed'  => __( 'Your reaction could not be saved. Try again.', 'emojisense' ),
+					),
+				)
+			) . ';',
+			'before'
 		);
 	}
 
@@ -507,6 +598,16 @@ class Emojisense_Reactions {
 			return;
 		}
 		if ( 'publish' !== $post->post_status || ! Emojisense_Settings::reactions_enabled_for( $post->post_type ) ) {
+			return;
+		}
+		/**
+		 * Filters whether a published post gets reaction suggestions from the API. The bbPress
+		 * integration skips forum replies: one API call per reply is too many.
+		 *
+		 * @param bool    $suggest Whether to ask the API.
+		 * @param WP_Post $post    The post.
+		 */
+		if ( ! apply_filters( 'emojisense_suggest_reactions_for', true, $post ) ) {
 			return;
 		}
 		$was_published = $post_before instanceof WP_Post && 'publish' === $post_before->post_status;

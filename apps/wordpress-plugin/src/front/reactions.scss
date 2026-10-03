@@ -83,3 +83,15 @@
     transform: none;
   }
 }
+
+// BuddyPress Nouveau styles every button in the activity meta row; keep the reaction look there.
+.buddypress-wrap .activity-meta .emojisense-reactions {
+  flex-basis: 100%;
+  margin: 0.75rem 0 0;
+
+  .emojisense-reaction {
+    border-radius: 999px;
+    background: transparent;
+    font-size: 0.9375rem;
+  }
+}

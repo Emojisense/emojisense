@@ -10,7 +10,7 @@ module.exports = {
   entry: {
     editor: "./src/editor/index.js",
     classic: "./src/classic/index.ts",
-    comments: "./src/front/comments.ts",
+    fields: "./src/front/fields.ts",
     reactions: "./src/front/reactions.ts",
     admin: "./src/admin/index.js",
   },

@@ -19,7 +19,7 @@ const REQUIRED = [
   "build/editor.js",
   "build/editor.asset.php",
   "build/classic.js",
-  "build/comments.js",
+  "build/fields.js",
   "build/reactions.js",
   "build/admin.js",
   "packs/0.1.0/pack.en.json",

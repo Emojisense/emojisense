@@ -8,6 +8,8 @@
  *   PLAYGROUND_NPX   npx that runs @wp-playground/cli (it needs Node >= 24.18), default "npx"
  *   E2E_PHP          PHP version of the site, default 8.3
  *   E2E_SMOKE=1      only load the main pages and fail on PHP errors (for E2E_PHP=7.4)
+ *   E2E_FORUMS=1     install bbPress and BuddyPress from wordpress.org (network) and check the
+ *                    forum and activity forms and reactions instead
  *   CHROMIUM_PATH    a Chromium binary; default: Playwright's, else the newest cached headless shell
  */
 import { spawn } from "node:child_process";
@@ -24,6 +26,7 @@ const PORT = 4410;
 const BASE = `http://127.0.0.1:${PORT}`;
 const PHP = process.env.E2E_PHP ?? "8.3";
 const SMOKE = process.env.E2E_SMOKE === "1";
+const FORUMS = process.env.E2E_FORUMS === "1";
 const DEMO_SLUG = "emojisense-demo";
 
 const results = [];
@@ -57,14 +60,87 @@ file_put_contents( WPMU_PLUGIN_DIR . '/e2e-classic-pages.php', '<?php add_filter
 // s.w.org. Screenshots should show the browser's emoji, as most visitors see them.
 file_put_contents( WPMU_PLUGIN_DIR . '/e2e-no-core-emoji.php', '<?php remove_action( "wp_head", "print_emoji_detection_script", 7 ); remove_action( "admin_print_scripts", "print_emoji_detection_script" ); remove_action( "wp_print_styles", "print_emoji_styles" ); remove_action( "admin_print_styles", "print_emoji_styles" );' );
 `;
+  const forumSteps = FORUMS
+    ? ["bbpress", "buddypress"].map((slug) => ({
+        step: "installPlugin",
+        pluginData: { resource: "wordpress.org/plugins", slug },
+        options: { activate: true },
+      }))
+    : [];
   return {
     $schema: "https://playground.wordpress.net/blueprint-schema.json",
     login: true,
     steps: [
+      ...forumSteps,
       { step: "activatePlugin", pluginPath: "emojisense/emojisense.php" },
       { step: "runPHP", code: php },
+      ...(FORUMS
+        ? [
+            { step: "runPHP", code: buddypressInstall() },
+            { step: "runPHP", code: forumSetup() },
+          ]
+        : []),
     ],
   };
+}
+
+/**
+ * BuddyPress installs its components and tables from the admin after activation. Here, in its own
+ * request: the next request then loads the activity component.
+ */
+function buddypressInstall() {
+  return `<?php
+require_once '/wordpress/wp-load.php';
+require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+require_once buddypress()->plugin_dir . 'bp-core/admin/bp-core-admin-schema.php';
+$components = array( 'activity' => 1, 'members' => 1, 'xprofile' => 1, 'settings' => 1, 'notifications' => 1 );
+bp_update_option( 'bp-active-components', $components );
+bp_core_install( $components );
+bp_core_add_page_mappings( $components );
+if ( function_exists( 'bp_version_bump' ) ) {
+	bp_version_bump();
+}
+update_option( 'permalink_structure', '/%postname%/' );
+`;
+}
+
+/**
+ * Forum setup: the forum settings on, a public forum with a topic and a reply, an activity
+ * update, and the page URLs in a file the checks read.
+ */
+function forumSetup() {
+  return `<?php
+require_once '/wordpress/wp-load.php';
+flush_rewrite_rules();
+update_option( 'emojisense_settings', array_merge( Emojisense_Settings::get(), array(
+	'forum_fields'       => true,
+	'forum_reactions'    => true,
+	'activity_reactions' => true,
+	'default_reactions'  => array( '👍', '🎉', '🚀' ),
+) ) );
+wp_set_current_user( 1 );
+$forum = bbp_insert_forum( array( 'post_title' => 'Launch', 'post_content' => 'Everything about the launch.' ) );
+$topic = bbp_insert_topic(
+	array( 'post_parent' => $forum, 'post_title' => 'What should we ship first?', 'post_content' => 'Ideas welcome.', 'post_author' => 1 ),
+	array( 'forum_id' => $forum )
+);
+bbp_insert_reply(
+	array( 'post_parent' => $topic, 'post_title' => 'Reply', 'post_content' => 'The onboarding, for sure.', 'post_author' => 1 ),
+	array( 'forum_id' => $forum, 'topic_id' => $topic )
+);
+$activity = bp_activity_add( array(
+	'user_id'   => 1,
+	'component' => 'activity',
+	'type'      => 'activity_update',
+	'action'    => 'admin posted an update',
+	'content'   => 'We shipped the new onboarding today!',
+) );
+file_put_contents( WP_CONTENT_DIR . '/e2e-urls.json', wp_json_encode( array(
+	'topic'    => get_permalink( $topic ),
+	'activity' => bp_get_activity_directory_permalink(),
+	'activityId' => (int) $activity,
+) ) );
+`;
 }
 
 async function startPlayground() {
@@ -330,10 +406,13 @@ async function frontEnd(page) {
   );
   check("reactions: a second click takes it back", (await stored.getAttribute("aria-pressed")) === "false");
 
-  // The comment picker (turned on in settingsPage).
-  const button = page.locator(".emojisense-comment-button");
+  // The comment picker and colon search (turned on in settingsPage).
+  const button = page.locator(".emojisense-field-button").first();
   await button.scrollIntoViewIfNeeded();
   check("comments: the Emoji button is visible", await button.isVisible());
+  const typed = await typeColonQuery(page, "#comment", "Lunch :pizza");
+  check("comments: :pizza suggests 🍕 first", typed.first.includes("🍕"), typed.first);
+  check("comments: Enter inserts 🍕", typed.value === "Lunch 🍕", typed.value);
   await page.locator("#comment").fill("Congrats team ");
   await button.click();
   const picker = page.locator(".emojisense-popover emojisense-picker");
@@ -357,6 +436,76 @@ async function frontEnd(page) {
   await picker.locator("input").press("Enter");
   const comment = await page.locator("#comment").inputValue();
   check("comments: the picker inserts 🍕 at the caret", comment === "Congrats team 🍕", comment);
+}
+
+/** Types `text` into a plain field, reads the first row of the colon menu and presses Enter. */
+async function typeColonQuery(page, selector, text) {
+  const field = page.locator(selector).first();
+  await field.scrollIntoViewIfNeeded();
+  await field.click();
+  await field.fill("");
+  await page.keyboard.type(text, { delay: 60 });
+  const row = page.locator(".emojisense-textarea-menu [role=option]").first();
+  await row.waitFor({ timeout: 30_000 });
+  const first = ((await row.textContent()) ?? "").trim();
+  await page.keyboard.press("Enter");
+  return { first, value: await field.inputValue() };
+}
+
+/** Clicks the first reaction of a bar and waits for the count to go up by one. */
+async function reactOnce(page, bar) {
+  const reaction = bar.locator(".emojisense-reaction").first();
+  await reaction.scrollIntoViewIfNeeded();
+  await page.waitForFunction((element) => !element.hasAttribute("disabled"), await reaction.elementHandle(), {
+    timeout: 20_000,
+  });
+  const counter = reaction.locator(".emojisense-reaction__count");
+  const before = Number((await counter.textContent()) ?? "0");
+  await reaction.click();
+  await page.waitForFunction(
+    ([element, count]) => element.textContent === String(count),
+    [await counter.elementHandle(), before + 1],
+    { timeout: 15_000 },
+  );
+  return (await reaction.getAttribute("aria-pressed")) === "true";
+}
+
+async function forums(page) {
+  const urls = await (await fetch(`${BASE}/wp-content/e2e-urls.json`)).json();
+
+  await page.goto(urls.topic, { waitUntil: "domcontentloaded" });
+  const bars = page.locator('.emojisense-reactions[data-emojisense-type="post"]');
+  await bars.first().waitFor({ timeout: 20_000 });
+  check(
+    "bbPress: the topic and the reply have reaction bars",
+    (await bars.count()) === 2,
+    `${await bars.count()} bars`,
+  );
+  check("bbPress: a reaction on the reply counts", await reactOnce(page, bars.nth(1)));
+  check(
+    "bbPress: the reply form has the Emoji button",
+    (await page
+      .locator(
+        "#bbp_reply_content ~ .emojisense-field-tools .emojisense-field-button, .emojisense-field-button",
+      )
+      .count()) > 0,
+  );
+  const reply = await typeColonQuery(page, "#bbp_reply_content", "Agreed :ship it");
+  await page.screenshot({ path: join(OUT, "screenshot-7.png"), fullPage: false }).catch(() => {});
+  check("bbPress: :ship it in the reply form suggests 🚀 first", reply.first.includes("🚀"), reply.first);
+  check("bbPress: Enter inserts 🚀", reply.value === "Agreed 🚀", reply.value);
+
+  await page.goto(urls.activity, { waitUntil: "domcontentloaded" });
+  const activityBar = page.locator(
+    `.emojisense-reactions[data-emojisense-type="activity"][data-emojisense-id="${urls.activityId}"]`,
+  );
+  await activityBar.waitFor({ timeout: 30_000 });
+  check("BuddyPress: the activity update has a reaction bar", await activityBar.isVisible());
+  check("BuddyPress: a reaction on the update counts", await reactOnce(page, activityBar));
+  await page.screenshot({ path: join(OUT, "screenshot-8.png"), fullPage: false }).catch(() => {});
+  const update = await typeColonQuery(page, "#whats-new", "Lunch :pizza");
+  check("BuddyPress: :pizza in the post form suggests 🍕 first", update.first.includes("🍕"), update.first);
+  check("BuddyPress: Enter inserts 🍕", update.value === "Lunch 🍕", update.value);
 }
 
 async function classicEditor(page) {
@@ -392,6 +541,13 @@ async function main() {
     await page.goto(`${BASE}/wp-admin/`, { waitUntil: "domcontentloaded" });
     if (SMOKE) {
       await smoke(page);
+    } else if (FORUMS) {
+      try {
+        await forums(page);
+      } catch (error) {
+        check("forums: steps completed", false, String(error).split("\n")[0]);
+        await page.screenshot({ path: join(OUT, "failure-forums.png") }).catch(() => {});
+      }
     } else {
       for (const [name, step] of [
         ["block editor", blockEditor],
@@ -412,8 +568,8 @@ async function main() {
     await browser.close();
     stop(child);
     await writeFile(
-      join(OUT, `results-php${PHP}.json`),
-      JSON.stringify({ php: PHP, smoke: SMOKE, results }, null, 2),
+      join(OUT, `results-php${PHP}${FORUMS ? "-forums" : ""}.json`),
+      JSON.stringify({ php: PHP, smoke: SMOKE, forums: FORUMS, results }, null, 2),
     );
     await writeFile(join(OUT, `playground-php${PHP}.log`), log());
     await writeFile(join(OUT, `console-php${PHP}.log`), consoleLog.join("\n"));

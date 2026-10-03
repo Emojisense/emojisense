@@ -51,7 +51,9 @@ final class Emojisense_Plugin {
 			new Emojisense_Admin(),
 			new Emojisense_Editor(),
 			new Emojisense_Reactions(),
-			new Emojisense_Comments(),
+			new Emojisense_Fields(),
+			new Emojisense_Bbpress(),
+			new Emojisense_Buddypress(),
 			new Emojisense_Emoji_Set(),
 			new Emojisense_Privacy(),
 		);

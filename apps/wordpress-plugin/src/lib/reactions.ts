@@ -44,17 +44,18 @@ export function formatCount(count: number, locale?: string): string {
 }
 
 /**
- * The reactions this browser gave, per post, in localStorage. Nothing about them is sent or
- * stored elsewhere; it only lets a visitor take a reaction back.
+ * The reactions this browser gave, per post (or activity item), in localStorage. Nothing about
+ * them is sent or stored elsewhere; it only lets a visitor take a reaction back.
  */
 export interface ReactedStore {
-  get(postId: number): Set<string>;
-  toggle(postId: number, emoji: string, on: boolean): void;
+  /** `type`: "post" (default) or another reaction target such as "activity". */
+  get(id: number, type?: string): Set<string>;
+  toggle(id: number, emoji: string, on: boolean, type?: string): void;
 }
 
 const STORAGE_KEY = "emojisense:reactions";
 /** Not a bare number: object keys that look like integers lose their insertion order. */
-const keyOf = (postId: number) => `p${postId}`;
+const keyOf = (id: number, type = "post") => (type === "post" ? `p${id}` : `${type}:${id}`);
 const MAX_POSTS = 200;
 
 export function createReactedStore(storage: Pick<Storage, "getItem" | "setItem"> | undefined): ReactedStore {
@@ -69,13 +70,13 @@ export function createReactedStore(storage: Pick<Storage, "getItem" | "setItem">
     }
   };
   return {
-    get(postId) {
-      const list = read()[keyOf(postId)];
+    get(id, type) {
+      const list = read()[keyOf(id, type)];
       return new Set(Array.isArray(list) ? list.filter((item) => typeof item === "string") : []);
     },
-    toggle(postId, emoji, on) {
+    toggle(id, emoji, on, type) {
       const all = read();
-      const key = keyOf(postId);
+      const key = keyOf(id, type);
       const current = new Set(Array.isArray(all[key]) ? all[key] : []);
       if (on) current.add(emoji);
       else current.delete(emoji);

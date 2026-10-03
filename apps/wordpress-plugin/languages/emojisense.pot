@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-02T16:24:51+00:00\n"
+"POT-Creation-Date: 2026-10-03T13:05:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: emojisense\n"
@@ -19,7 +19,7 @@ msgstr ""
 #: emojisense.php
 #: includes/class-emojisense-admin.php:36
 #: includes/class-emojisense-admin.php:37
-#: includes/class-emojisense-admin.php:170
+#: includes/class-emojisense-admin.php:183
 msgid "Emojisense"
 msgstr ""
 
@@ -36,6 +36,10 @@ msgstr ""
 #. Author URI of the plugin
 #: emojisense.php
 msgid "https://emojisense.com"
+msgstr ""
+
+#: includes/class-emojisense-activity-reactions.php:97
+msgid "React to this update"
 msgstr ""
 
 #: includes/class-emojisense-admin.php:64
@@ -64,7 +68,7 @@ msgid "Reactions"
 msgstr ""
 
 #: includes/class-emojisense-admin.php:90
-#: includes/class-emojisense-admin.php:272
+#: includes/class-emojisense-admin.php:287
 msgid "Show reactions on"
 msgstr ""
 
@@ -77,158 +81,205 @@ msgid "Comments"
 msgstr ""
 
 #: includes/class-emojisense-admin.php:94
-#: includes/class-emojisense-comments.php:42
 #: includes/class-emojisense-editor.php:113
+#: includes/class-emojisense-fields.php:84
 #: build/editor.js:1
 msgid "Emoji picker"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:96
-msgid "Emojisense API"
-msgstr ""
-
-#: includes/class-emojisense-admin.php:97
-msgid "Connection"
-msgstr ""
-
-#: includes/class-emojisense-admin.php:98
-msgid "Publishable key"
-msgstr ""
-
 #: includes/class-emojisense-admin.php:99
-msgid "Search by meaning"
+msgid "Forums and communities"
 msgstr ""
 
 #: includes/class-emojisense-admin.php:100
-msgid "Reaction suggestions"
-msgstr ""
-
-#: includes/class-emojisense-admin.php:101
-msgid "Emoji set"
+msgid "Emoji in forms"
 msgstr ""
 
 #: includes/class-emojisense-admin.php:102
+msgid "Forum reactions"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:105
+msgid "Activity reactions"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:109
+msgid "Emojisense API"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:110
+msgid "Connection"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:111
+msgid "Publishable key"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:112
+msgid "Search by meaning"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:113
+msgid "Reaction suggestions"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:114
+msgid "Emoji set"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:115
 msgid "API address"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:149
+#: includes/class-emojisense-admin.php:162
 msgid "Turn on the connection and save the settings first."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:156
+#: includes/class-emojisense-admin.php:169
 msgid "Connected without a key. Anonymous calls have a lower rate limit; add a publishable key for production."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:157
+#: includes/class-emojisense-admin.php:170
 msgid "Connected. The key accepts this site."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:172
+#: includes/class-emojisense-admin.php:185
 msgid "Find emoji by what they mean. Type a colon in the block editor (:pizza, :ship it), use the emoji button in the classic editor, and add reactions to posts and an emoji picker to comments."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:175
+#: includes/class-emojisense-admin.php:188
 msgid "Search runs in the browser with files from this site. Nothing is sent anywhere until you connect the Emojisense API below."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:178
+#: includes/class-emojisense-admin.php:191
 msgid "The plugin scripts are missing. Install the plugin from its release zip, or run the build."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:195
+#: includes/class-emojisense-admin.php:208
 msgid "Works in every text block of the block editor and in the classic editor. The toolbar of each text block also has an emoji button (in the “More” menu)."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:202
+#: includes/class-emojisense-admin.php:215
 msgid "Visitors can react to posts with emoji, without an account. Only the counts are stored. Authors can choose the reactions of each post in the editor sidebar."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:209
+#: includes/class-emojisense-admin.php:222
 msgid "Optional. With the connection on, unsure searches also ask the API for emoji with a similar meaning, published posts get reaction suggestions, and emoji can be drawn from a hosted set. The privacy policy guide (Settings → Privacy) has text for each of these."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:212
+#: includes/class-emojisense-admin.php:225
 msgid "Create a publishable key (pk_live_…) at"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:215
+#: includes/class-emojisense-admin.php:228
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:225
+#: includes/class-emojisense-admin.php:238
 msgid "Then add this site to the key’s allowed origins:"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:234
+#: includes/class-emojisense-admin.php:247
 msgid "Type : and a word in the block editor to get emoji suggestions"
 msgstr ""
 
 #. translators: %s: language name, e.g. English.
-#: includes/class-emojisense-admin.php:246
+#: includes/class-emojisense-admin.php:259
 #, php-format
 msgid "Site language (%s)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:256
+#: includes/class-emojisense-admin.php:269
 msgid "Search always understands English. This language is searched too, and its emoji names are shown."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:264
+#: includes/class-emojisense-admin.php:277
 msgid "Add cultural and seasonal emoji after the best result (for example ⚽ after 🐐 for “goat”)"
 msgstr ""
 
 #. translators: %d: maximum number of reactions.
-#: includes/class-emojisense-admin.php:302
+#: includes/class-emojisense-admin.php:317
 #, php-format
 msgid "Up to %d emoji, separated by spaces. Posts show these unless the author chose others or the API suggested some."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:310
-msgid "Add an emoji button under the comment field"
+#: includes/class-emojisense-admin.php:325
+msgid "Add an emoji button and colon search to the comment field"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:317
+#: includes/class-emojisense-admin.php:332
+msgid "Emoji by meaning where your community writes. Search runs in the browser with the data files of the plugin."
+msgstr ""
+
+#: includes/class-emojisense-admin.php:341
+msgid "forum topics and replies"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:344
+msgid "activity updates, activity comments and messages"
+msgstr ""
+
+#. translators: %s: where the emoji button appears, e.g. "forum topics and replies".
+#: includes/class-emojisense-admin.php:349
+#, php-format
+msgid "Add an emoji button and colon search to %s"
+msgstr ""
+
+#. translators: %s: where the emoji button appears, e.g. "forum topics and replies".
+#: includes/class-emojisense-admin.php:349
+msgid " and "
+msgstr ""
+
+#: includes/class-emojisense-admin.php:357
+msgid "Show reactions under forum topics and replies"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:364
+msgid "Show reactions under activity updates"
+msgstr ""
+
+#: includes/class-emojisense-admin.php:371
 msgid "Connect to the Emojisense API"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:333
+#: includes/class-emojisense-admin.php:387
 msgid "A publishable key is public: it is sent from the browser and only works on its allowed origins. Never use a secret key (sk_live_…) here. Without a key, the API still answers with a lower rate limit."
 msgstr ""
 
-#: includes/class-emojisense-admin.php:337
+#: includes/class-emojisense-admin.php:391
 msgid "Test the saved settings"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:345
+#: includes/class-emojisense-admin.php:399
 msgid "When a search is unsure, ask the API for emoji with a similar meaning (sends the search text)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:352
+#: includes/class-emojisense-admin.php:406
 msgid "Suggest reactions from the post text when a post is published (sends the title and the first 256 characters)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:360
+#: includes/class-emojisense-admin.php:414
 msgid "Native (the visitor’s system emoji)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:361
+#: includes/class-emojisense-admin.php:415
 msgid "Twemoji (CC BY 4.0, credit Twemoji on your site)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:362
+#: includes/class-emojisense-admin.php:416
 msgid "Noto Emoji (Apache 2.0)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:363
+#: includes/class-emojisense-admin.php:417
 msgid "Fluent Emoji (MIT; no country flags)"
 msgstr ""
 
-#: includes/class-emojisense-admin.php:374
+#: includes/class-emojisense-admin.php:428
 msgid "Shows the same emoji on every device: posts, excerpts, comments and reactions load the images from the API address. Needs a publishable key on the Solo plan or higher. Visitors’ browsers then request images from the API."
 msgstr ""
 
 #. translators: %s: default API address.
-#: includes/class-emojisense-admin.php:392
+#: includes/class-emojisense-admin.php:446
 #, php-format
 msgid "Change it only for a self-hosted API. Default: %s"
 msgstr ""
@@ -271,16 +322,6 @@ msgstr ""
 msgid "The Emojisense API answered with HTTP %d."
 msgstr ""
 
-#: includes/class-emojisense-comments.php:43
-#: build/editor.js:2
-msgid "Search emoji…"
-msgstr ""
-
-#: includes/class-emojisense-comments.php:50
-#: build/editor.js:1
-msgid "Emoji"
-msgstr ""
-
 #: includes/class-emojisense-editor.php:112
 msgid "Insert emoji"
 msgstr ""
@@ -288,6 +329,24 @@ msgstr ""
 #: includes/class-emojisense-editor.php:114
 #: build/editor.js:1
 msgid "Search emoji by meaning…"
+msgstr ""
+
+#: includes/class-emojisense-fields.php:83
+#: build/editor.js:1
+msgid "Emoji"
+msgstr ""
+
+#: includes/class-emojisense-fields.php:85
+#: build/editor.js:2
+msgid "Search emoji…"
+msgstr ""
+
+#: includes/class-emojisense-fields.php:86
+msgid "Emoji suggestions"
+msgstr ""
+
+#: includes/class-emojisense-post-reactions.php:62
+msgid "React to this post"
 msgstr ""
 
 #: includes/class-emojisense-privacy.php:41
@@ -299,11 +358,11 @@ msgid "This site uses the Emojisense plugin to find emoji and to show emoji reac
 msgstr ""
 
 #: includes/class-emojisense-privacy.php:42
-msgid "Emoji search in the editor and in the comment form runs in your browser with files from this site. By default, no search text and no other data is sent to anyone."
+msgid "Emoji search in the editor, in the comment form and in forum and activity forms runs in your browser with files from this site. By default, no search text and no other data is sent to anyone."
 msgstr ""
 
 #: includes/class-emojisense-privacy.php:43
-msgid "Reactions: when you react to a post, the site stores only the number of reactions per emoji. It does not store your IP address, your name or an account. To stop abuse, the site keeps a keyed hash of your IP address for at most a few minutes. Your browser remembers which reactions you chose (in local storage) so that you can take them back; this information stays on your device."
+msgid "Reactions: when you react to a post, a forum topic or reply, or an activity update, the site stores only the number of reactions per emoji. It does not store your IP address, your name or an account. To stop abuse, the site keeps a keyed hash of your IP address for at most a few minutes. Your browser remembers which reactions you chose (in local storage) so that you can take them back; this information stays on your device."
 msgstr ""
 
 #. translators: %s: Emojisense API address.
@@ -318,44 +377,40 @@ msgstr ""
 msgid "Emojisense privacy notice: %s"
 msgstr ""
 
-#: includes/class-emojisense-reactions.php:168
-msgid "This post has no reactions."
+#: includes/class-emojisense-reactions.php:216
+msgid "There are no reactions here."
 msgstr ""
 
-#: includes/class-emojisense-reactions.php:186
+#: includes/class-emojisense-reactions.php:234
 msgid "The page is out of date. Reload it and try again."
 msgstr ""
 
-#: includes/class-emojisense-reactions.php:231
-msgid "This post does not offer that reaction."
+#: includes/class-emojisense-reactions.php:283
+msgid "This reaction is not offered here."
 msgstr ""
 
-#: includes/class-emojisense-reactions.php:239
-#: includes/class-emojisense-reactions.php:457
+#: includes/class-emojisense-reactions.php:291
+#: includes/class-emojisense-reactions.php:578
 msgid "Too many reactions. Wait a minute and try again."
 msgstr ""
 
-#: includes/class-emojisense-reactions.php:458
+#: includes/class-emojisense-reactions.php:579
 msgid "Your reaction could not be saved. Try again."
 msgstr ""
 
-#: includes/class-emojisense-reactions.php:491
-msgid "React to this post"
-msgstr ""
-
-#: includes/class-emojisense-settings.php:287
+#: includes/class-emojisense-settings.php:298
 msgid "That is a secret key. Secret keys must never be put on a website. Create a publishable key (pk_live_…) instead, and revoke the secret key if it was shared."
 msgstr ""
 
-#: includes/class-emojisense-settings.php:288
+#: includes/class-emojisense-settings.php:299
 msgid "The publishable key must start with pk_live_. The key was not changed."
 msgstr ""
 
-#: includes/class-emojisense-settings.php:299
+#: includes/class-emojisense-settings.php:310
 msgid "The API address must start with https:// (http:// only for localhost). The address was not changed."
 msgstr ""
 
-#: includes/class-emojisense-settings.php:307
+#: includes/class-emojisense-settings.php:318
 msgid "Hosted emoji sets need a publishable key on the Solo plan or higher. Visitors see native emoji until you add one."
 msgstr ""
 

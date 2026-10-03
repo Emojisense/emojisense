@@ -82,7 +82,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 	 * GET: the default reactions with zero counts and a nonce; nothing is cached.
 	 */
 	public function test_get_returns_counts_and_a_nonce() {
-		$response = $this->request( 'GET', '/reactions/' . $this->post_id );
+		$response = $this->request( 'GET', '/reactions/post/' . $this->post_id );
 		$this->assertSame( 200, $response->get_status() );
 		$data = $response->get_data();
 		$this->assertSame( Emojisense_Settings::default_reactions(), array_column( $data['reactions'], 'emoji' ) );
@@ -99,7 +99,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 		$protected = self::factory()->post->create( array( 'post_password' => 'secret' ) );
 		$page      = self::factory()->post->create( array( 'post_type' => 'page' ) );
 		foreach ( array( $draft, $protected, $page, 999999 ) as $id ) {
-			$this->assertSame( 404, $this->request( 'GET', '/reactions/' . $id )->get_status(), (string) $id );
+			$this->assertSame( 404, $this->request( 'GET', '/reactions/post/' . $id )->get_status(), (string) $id );
 		}
 	}
 
@@ -107,9 +107,9 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 	 * POST needs the nonce.
 	 */
 	public function test_react_needs_the_nonce() {
-		$response = $this->request( 'POST', '/reactions/' . $this->post_id, array( 'emoji' => '👍' ) );
+		$response = $this->request( 'POST', '/reactions/post/' . $this->post_id, array( 'emoji' => '👍' ) );
 		$this->assertErrorResponse( 'emojisense_bad_nonce', $response, 403 );
-		$response = $this->request( 'POST', '/reactions/' . $this->post_id, array( 'emoji' => '👍' ), 'forged' );
+		$response = $this->request( 'POST', '/reactions/post/' . $this->post_id, array( 'emoji' => '👍' ), 'forged' );
 		$this->assertErrorResponse( 'emojisense_bad_nonce', $response, 403 );
 		$this->assertSame( array(), Emojisense_Reactions::counts( $this->post_id ) );
 	}
@@ -119,7 +119,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 	 */
 	public function test_react_add_and_remove() {
 		$nonce = wp_create_nonce( Emojisense_Reactions::NONCE_ACTION );
-		$route = '/reactions/' . $this->post_id;
+		$route = '/reactions/post/' . $this->post_id;
 
 		$response = $this->request( 'POST', $route, array( 'emoji' => '❤️' ), $nonce );
 		$this->assertSame( 200, $response->get_status() );
@@ -163,7 +163,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 		update_post_meta( $this->post_id, Emojisense_Reactions::META_SET, array( '🚀', '🎉', 'not emoji' ) );
 		$this->assertSame( array( '🚀', '🎉' ), Emojisense_Reactions::reaction_set( $this->post_id ) );
 		$nonce    = wp_create_nonce( Emojisense_Reactions::NONCE_ACTION );
-		$response = $this->request( 'POST', '/reactions/' . $this->post_id, array( 'emoji' => '🚀' ), $nonce );
+		$response = $this->request( 'POST', '/reactions/post/' . $this->post_id, array( 'emoji' => '🚀' ), $nonce );
 		$this->assertSame(
 			array(
 				'🚀' => 1,
@@ -187,7 +187,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 			}
 		);
 		$nonce = wp_create_nonce( Emojisense_Reactions::NONCE_ACTION );
-		$route = '/reactions/' . $this->post_id;
+		$route = '/reactions/post/' . $this->post_id;
 		$this->request( 'POST', $route, array( 'emoji' => '👍' ), $nonce );
 		$this->request( 'POST', $route, array( 'emoji' => '👍' ), $nonce );
 		$response = $this->request( 'POST', $route, array( 'emoji' => '👍' ), $nonce );
@@ -207,7 +207,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 	public function test_no_personal_data_is_stored() {
 		global $wpdb;
 		$nonce = wp_create_nonce( Emojisense_Reactions::NONCE_ACTION );
-		$this->request( 'POST', '/reactions/' . $this->post_id, array( 'emoji' => '👍' ), $nonce );
+		$this->request( 'POST', '/reactions/post/' . $this->post_id, array( 'emoji' => '👍' ), $nonce );
 
 		$meta = get_post_meta( $this->post_id );
 		$this->assertSame( array( Emojisense_Reactions::META_COUNTS ), array_values( preg_grep( '/^_emojisense/', array_keys( $meta ) ) ) );
@@ -368,7 +368,7 @@ class Test_Emojisense_Reactions extends WP_Test_REST_TestCase {
 	public function test_render() {
 		update_post_meta( $this->post_id, Emojisense_Reactions::META_COUNTS, array( '❤️' => 12 ) );
 		$html = Emojisense_Reactions::render( $this->post_id );
-		$this->assertStringContainsString( 'data-emojisense-post="' . $this->post_id . '"', $html );
+		$this->assertStringContainsString( 'data-emojisense-type="post" data-emojisense-id="' . $this->post_id . '"', $html );
 		$this->assertStringContainsString( 'data-emoji-hex="2764-FE0F"', $html );
 		$this->assertStringContainsString( '<span class="emojisense-reaction__count">12</span>', $html );
 		$this->assertSame( count( Emojisense_Settings::default_reactions() ), substr_count( $html, ' disabled>' ) );

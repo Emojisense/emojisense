@@ -39,8 +39,15 @@ class Emojisense_Emoji_Set {
 		add_filter( 'emoji_svg_url', array( $this, 'base_url' ) );
 		add_filter( 'emoji_ext', array( $this, 'extension' ) );
 		add_filter( 'emoji_svg_ext', array( $this, 'extension' ) );
-		foreach ( array( 'the_content', 'the_excerpt', 'comment_text' ) as $hook ) {
-			add_filter( $hook, array( $this, 'staticize' ), 50 );
+		/**
+		 * Filters the content filters whose emoji become the set's images. The bbPress and
+		 * BuddyPress integrations add forum posts and activity.
+		 *
+		 * @param string[] $hooks Filter names.
+		 */
+		$hooks = (array) apply_filters( 'emojisense_staticize_filters', array( 'the_content', 'the_excerpt', 'comment_text' ) );
+		foreach ( $hooks as $hook ) {
+			add_filter( (string) $hook, array( $this, 'staticize' ), 50 );
 		}
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_fallback' ) );
 	}

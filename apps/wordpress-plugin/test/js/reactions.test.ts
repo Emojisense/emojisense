@@ -8,10 +8,12 @@ import {
   withReaction,
 } from "../../src/lib/reactions.js";
 import {
+  createReactionsApi,
   mountReactionBar,
   type Reaction,
   ReactionError,
   type ReactionsApi,
+  type ReactionTarget,
 } from "../../src/lib/reactions-client.js";
 
 function memoryStorage() {
@@ -83,9 +85,9 @@ describe("createReactedStore", () => {
 });
 
 /** The markup of Emojisense_Reactions::render() for two reactions. */
-function renderBar(post = 42) {
+function renderBar(id = 42, type = "post") {
   document.body.innerHTML = `
-    <div class="emojisense-reactions" data-emojisense-post="${post}">
+    <div class="emojisense-reactions" data-emojisense-type="${type}" data-emojisense-id="${id}">
       <div class="emojisense-reactions__list" role="group" aria-label="React to this post">
         <button type="button" class="emojisense-reaction" data-emoji-hex="1F44D" aria-pressed="false" disabled><span class="emojisense-reaction__emoji">👍</span> <span class="emojisense-reaction__count">1</span></button>
         <button type="button" class="emojisense-reaction" data-emoji-hex="2764-FE0F" aria-pressed="false" disabled><span class="emojisense-reaction__emoji">❤️</span> <span class="emojisense-reaction__count">0</span></button>
@@ -101,7 +103,7 @@ function fakeApi(start: Reaction[]) {
   let nonce = "n1";
   const api = {
     load: vi.fn(async () => ({ reactions: list(), nonce })),
-    react: vi.fn(async (_post: number, emoji: string, action: "add" | "remove", sent: string) => {
+    react: vi.fn(async (_target: ReactionTarget, emoji: string, action: "add" | "remove", sent: string) => {
       if (sent !== nonce) throw new ReactionError(403, "emojisense_bad_nonce");
       counts.set(emoji, Math.max(0, (counts.get(emoji) ?? 0) + (action === "add" ? 1 : -1)));
       return list();
@@ -143,13 +145,13 @@ describe("mountReactionBar", () => {
     expect(button(root, "1F44D").disabled).toBe(false);
 
     await bar.toggle("❤️");
-    expect(api.react).toHaveBeenLastCalledWith(42, "❤️", "add", "n1");
+    expect(api.react).toHaveBeenLastCalledWith({ type: "post", id: 42 }, "❤️", "add", "n1");
     expect(count(root, "2764-FE0F")).toBe("1");
     expect(button(root, "2764-FE0F").getAttribute("aria-pressed")).toBe("true");
     expect(store.get(42).has("❤️")).toBe(true);
 
     await bar.toggle("❤️");
-    expect(api.react).toHaveBeenLastCalledWith(42, "❤️", "remove", "n1");
+    expect(api.react).toHaveBeenLastCalledWith({ type: "post", id: 42 }, "❤️", "remove", "n1");
     expect(count(root, "2764-FE0F")).toBe("0");
     expect(button(root, "2764-FE0F").getAttribute("aria-pressed")).toBe("false");
   });
@@ -162,7 +164,7 @@ describe("mountReactionBar", () => {
     api.rotateNonce();
     await bar.toggle("👍");
     expect(api.react).toHaveBeenCalledTimes(2);
-    expect(api.react).toHaveBeenLastCalledWith(42, "👍", "add", "n2");
+    expect(api.react).toHaveBeenLastCalledWith({ type: "post", id: 42 }, "👍", "add", "n2");
     expect(count(root, "1F44D")).toBe("2");
   });
 
@@ -198,5 +200,36 @@ describe("mountReactionBar", () => {
     await expect(bar.refresh()).rejects.toThrow();
     expect(count(root, "1F44D")).toBe("1");
     expect(button(root, "1F44D").disabled).toBe(true);
+  });
+
+  it("works for activity items, kept apart from posts with the same ID", async () => {
+    const root = renderBar(42, "activity");
+    const api = fakeApi([{ emoji: "👍", count: 0 }]);
+    const store = createReactedStore(memoryStorage());
+    const bar = mountReactionBar(root, { api, store });
+    await bar.refresh();
+    await bar.toggle("👍");
+    expect(api.load).toHaveBeenCalledWith({ type: "activity", id: 42 });
+    expect(api.react).toHaveBeenLastCalledWith({ type: "activity", id: 42 }, "👍", "add", "n1");
+    expect(store.get(42, "activity").has("👍")).toBe(true);
+    expect(store.get(42).has("👍")).toBe(false);
+  });
+});
+
+describe("createReactionsApi", () => {
+  it("calls /reactions/<type>/<id> with the nonce header", async () => {
+    const calls: [string, RequestInit | undefined][] = [];
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push([String(input), init]);
+      return new Response(JSON.stringify({ reactions: [{ emoji: "👍", count: 1 }], nonce: "n" }));
+    }) as typeof fetch;
+    const api = createReactionsApi("https://site.test/wp-json/emojisense/v1/reactions/", fetchImpl);
+    await api.load({ type: "activity", id: 7 });
+    await api.react({ type: "post", id: 3 }, "👍", "add", "n");
+    expect(calls.map(([url]) => url)).toEqual([
+      "https://site.test/wp-json/emojisense/v1/reactions/activity/7",
+      "https://site.test/wp-json/emojisense/v1/reactions/post/3",
+    ]);
+    expect(new Headers(calls[1]?.[1]?.headers).get("X-Emojisense-Nonce")).toBe("n");
   });
 });

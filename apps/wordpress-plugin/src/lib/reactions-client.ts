@@ -5,11 +5,17 @@ export interface Reaction {
   count: number;
 }
 
+/** What a bar belongs to: a post (or forum topic or reply), or a BuddyPress activity item. */
+export interface ReactionTarget {
+  type: string;
+  id: number;
+}
+
 export interface ReactionsApi {
-  /** Counts and a fresh nonce (GET /emojisense/v1/reactions/:id). */
-  load(postId: number): Promise<{ reactions: Reaction[]; nonce: string }>;
-  /** POST /emojisense/v1/reactions/:id. Rejects with a ReactionError. */
-  react(postId: number, emoji: string, action: "add" | "remove", nonce: string): Promise<Reaction[]>;
+  /** Counts and a fresh nonce (GET /emojisense/v1/reactions/:type/:id). */
+  load(target: ReactionTarget): Promise<{ reactions: Reaction[]; nonce: string }>;
+  /** POST /emojisense/v1/reactions/:type/:id. Rejects with a ReactionError. */
+  react(target: ReactionTarget, emoji: string, action: "add" | "remove", nonce: string): Promise<Reaction[]>;
 }
 
 export class ReactionError extends Error {
@@ -26,7 +32,7 @@ export function createReactionsApi(
   root: string,
   fetchImpl: typeof fetch = globalThis.fetch.bind(globalThis),
 ) {
-  const url = (postId: number) => `${root}${postId}`;
+  const url = ({ type, id }: ReactionTarget) => `${root}${encodeURIComponent(type)}/${id}`;
   const parse = async (response: Response) => {
     const body = (await response.json().catch(() => ({}))) as {
       reactions?: Reaction[];
@@ -37,13 +43,13 @@ export function createReactionsApi(
     return body;
   };
   const api: ReactionsApi = {
-    async load(postId) {
-      const body = await parse(await fetchImpl(url(postId), { credentials: "same-origin" }));
+    async load(target) {
+      const body = await parse(await fetchImpl(url(target), { credentials: "same-origin" }));
       return { reactions: body.reactions ?? [], nonce: body.nonce ?? "" };
     },
-    async react(postId, emoji, action, nonce) {
+    async react(target, emoji, action, nonce) {
       const body = await parse(
-        await fetchImpl(url(postId), {
+        await fetchImpl(url(target), {
           method: "POST",
           credentials: "same-origin",
           headers: { "Content-Type": "application/json", "X-Emojisense-Nonce": nonce },
@@ -69,7 +75,10 @@ export interface ReactionBarOptions {
  * view, then optimistic toggles that the server answer corrects.
  */
 export function mountReactionBar(root: HTMLElement, options: ReactionBarOptions) {
-  const postId = Number(root.dataset.emojisensePost);
+  const target: ReactionTarget = {
+    type: root.dataset.emojisenseType || "post",
+    id: Number(root.dataset.emojisenseId),
+  };
   const { api, strings = {} } = options;
   const store = options.store ?? createReactedStore(safeLocalStorage());
   const locale = options.locale ?? (root.ownerDocument.documentElement.lang || undefined);
@@ -97,12 +106,12 @@ export function mountReactionBar(root: HTMLElement, options: ReactionBarOptions)
     for (const { emoji, count } of reactions) setCount(emoji, count);
   };
   const showPressed = () => {
-    const mine = store.get(postId);
+    const mine = store.get(target.id, target.type);
     for (const [emoji, button] of buttons) button.setAttribute("aria-pressed", String(mine.has(emoji)));
   };
 
   const refresh = async () => {
-    const { reactions, nonce: fresh } = await api.load(postId);
+    const { reactions, nonce: fresh } = await api.load(target);
     nonce = fresh;
     showCounts(reactions);
     showPressed();
@@ -113,11 +122,11 @@ export function mountReactionBar(root: HTMLElement, options: ReactionBarOptions)
     if (busy || !nonce) return;
     busy = true;
     say("");
-    const on = !store.get(postId).has(emoji);
+    const on = !store.get(target.id, target.type).has(emoji);
     const before = countOf(emoji);
     setCount(emoji, before + (on ? 1 : -1));
     buttons.get(emoji)?.setAttribute("aria-pressed", String(on));
-    const send = () => api.react(postId, emoji, on ? "add" : "remove", nonce);
+    const send = () => api.react(target, emoji, on ? "add" : "remove", nonce);
     try {
       let reactions: Reaction[];
       try {
@@ -125,10 +134,10 @@ export function mountReactionBar(root: HTMLElement, options: ReactionBarOptions)
       } catch (error) {
         // The nonce may be older than the cached page allows: get a fresh one, once.
         if (!(error instanceof ReactionError) || error.status !== 403) throw error;
-        nonce = (await api.load(postId)).nonce;
+        nonce = (await api.load(target)).nonce;
         reactions = await send();
       }
-      store.toggle(postId, emoji, on);
+      store.toggle(target.id, emoji, on, target.type);
       showCounts(reactions);
     } catch (error) {
       setCount(emoji, before);
