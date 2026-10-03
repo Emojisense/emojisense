@@ -1,6 +1,6 @@
 # Emojisense dashboard
 
-Developers sign in with Clerk (email or a social account), create apps, create and revoke API
+Developers sign in with Clerk (Google or GitHub), create apps, create and revoke API
 keys, watch usage against their plan, and buy a paid plan through Whop. One Cloudflare Worker serves the SPA as static assets
 and runs only for `/api/*` (`run_worker_first`). It shares the D1 schema in
 `packages/platform/migrations` with the API Worker. The API contract is the "Dashboard API"
@@ -81,7 +81,7 @@ secret key is optional.
 | Instance | Used by | Publishable key | Frontend API |
 | -------- | ------- | --------------- | ------------ |
 | Development | localhost, app.emojisense.dev | `pk_test_ZmVhc2libGUtYmxvd2Zpc2gtOTY4MC5jbGVyay5hY2NvdW50cy5kZXYk` | `feasible-blowfish-9680.clerk.accounts.dev` |
-| Production (domain `emojisense.com`) | app.emojisense.com | `pk_live_…` (after the DNS check) | `clerk.emojisense.com`; Account Portal `accounts.emojisense.com` |
+| Production (domain `emojisense.com`) | app.emojisense.com | `pk_live_Y2xlcmsuZW1vamlzZW5zZS5jb20k` | `clerk.emojisense.com`; Account Portal `accounts.emojisense.com` |
 
 Set these in the Clerk Dashboard, for each instance:
 
@@ -98,15 +98,29 @@ Set these in the Clerk Dashboard, for each instance:
 
    Without these claims (or without a verified email) a new user gets `403 email_required` and
    no account: the email links legacy accounts, matches invites and confirms deletion.
-2. **User & authentication:** email address on, required, and verified at sign-up. Social
-   connections are optional (production needs your own OAuth credentials for each one). Turn on
-   "allow users to delete their accounts", so that Settings → Delete account can delete the
-   Clerk user with Clerk JS.
-3. **API keys → Show JWT public key → PEM:** this is `CLERK_JWT_KEY`. It is public.
-4. **Production only, Domains:** add the DNS records that the page lists for `emojisense.com`
-   (CNAMEs for `clerk` (Frontend API), `accounts` (Account Portal) and the email records). In
-   Cloudflare DNS, set them to **DNS only**, not proxied, or Clerk's DNS check fails. Then deploy
-   the certificates.
+2. **User & authentication:** users sign in with Google or GitHub only.
+
+   | Tab | Setting |
+   | --- | ------- |
+   | Email | Sign-up with email **on**, required, verified at sign-up. Sign-in with email **off**. Google and GitHub supply the verified email; with no email sign-in, the form shows only the two provider buttons. |
+   | Password, Phone, Username, Passkeys, Web3 | All **off** |
+   | User model | "Allow users to delete their account" **on** (Settings → Delete account deletes the Clerk user with Clerk JS). "Allow users to change their email address" **off**, so the token email stays the provider's email. |
+
+3. **SSO connections:** Google and GitHub, each with "Enable for sign-up and sign-in" on.
+   Production uses our own OAuth apps; the development instance can use Clerk's shared
+   credentials. The client secrets are stored only in Clerk. To rotate a secret, make a new one
+   at the provider and paste it into the connection.
+
+   | Provider | OAuth app | Redirect URI |
+   | -------- | --------- | ------------ |
+   | Google | Google Cloud project `emojisense-510514`, OAuth client "Clerk production". Consent screen: External, In production, no logo (no brand verification). | `https://clerk.emojisense.com/v1/oauth_callback` |
+   | GitHub | OAuth app "Emojisense" in the Emojisense GitHub organization | `https://clerk.emojisense.com/v1/oauth_callback` |
+
+4. **API keys → Show JWT public key → PEM:** this is `CLERK_JWT_KEY`. It is public.
+5. **Production only, Domains:** add the DNS records that the page lists for `emojisense.com`
+   (CNAMEs for `clerk` (Frontend API), `accounts` (Account Portal), `clkmail`, `clk._domainkey`
+   and `clk2._domainkey`). In Cloudflare DNS, set them to **DNS only**, not proxied, or Clerk's
+   DNS check fails. Clerk issues the certificates after the check.
 
 The dashboard renders Clerk's combined sign-in and sign-up form on its own pages (hash routing),
 so Clerk's paths stay at their defaults. The app is on the instance's domain (app.emojisense.com
