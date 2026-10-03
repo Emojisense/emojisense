@@ -2,6 +2,7 @@ import type { EmojiSuggestion, EmojiSuggestionProps, EmojiSuggestionRenderer } f
 import type { AliasEngine } from "emojisense";
 import type { DemoMessages } from "../../i18n/demos";
 import { interpolate, splitTags } from "../../i18n/translate";
+import { type MeaningStage, promotedIds } from "../meaning";
 import { describeEmoji, matchesFor } from "./describe";
 
 export type DocMenuWords = DemoMessages["doc"]["menu"];
@@ -11,6 +12,8 @@ export interface DocMenuController {
   /** Position of an emoji (by hexcode) in the open menu, or -1. */
   indexOf(id: string): number;
   activeIndex(): number;
+  /** "meaning" once meaning search has changed the list of the current query. */
+  stage(): MeaningStage;
   /** Move the highlight, like ↓ / ↑. */
   move(step: number): void;
   /**
@@ -58,6 +61,9 @@ export function createDocMenu(
   let items: EmojiSuggestion[] = [];
   let query: string | undefined;
   let active = 0;
+  /** Rows the latest answer for the same query added or moved up. They light once. */
+  let promoted: ReadonlySet<string> = new Set();
+  let stage: MeaningStage = "device";
 
   const optionId = (index: number) => `${id}-option-${index}`;
   const editorElement = () => props?.editor.view.dom;
@@ -102,18 +108,22 @@ export function createDocMenu(
     if (!listbox || !heading) return;
     const engine = getEngine();
     const matches = engine && query ? matchesFor(engine, query, locale) : new Map();
-    heading.replaceChildren(
+    const title = element("span", "doc-menu-title");
+    title.append(
       ...splitTags(words.matching).map((part) => {
         const text = interpolate(part.text, { query: query ?? "" });
         return part.tag === "code" ? element("code", "", text) : text;
       }),
     );
+    const badge = element("span", "meaning-badge", stage === "meaning" ? words.byMeaning : words.onDevice);
+    badge.dataset.stage = stage;
+    heading.replaceChildren(title, badge);
     listbox.replaceChildren(
       ...items.map((item, index) => {
         const info = engine
           ? describeEmoji(engine, item.id, item.source, matches.get(item.id), words, locale)
           : undefined;
-        const row = element("div", "doc-menu-row");
+        const row = element("div", promoted.has(item.id) ? "doc-menu-row meaning-promoted" : "doc-menu-row");
         row.id = optionId(index);
         row.setAttribute("role", "option");
         row.setAttribute("data-index", String(index));
@@ -148,6 +158,14 @@ export function createDocMenu(
     if (next.loading) return;
     const previousId = items[active]?.id;
     const sameQuery = next.query === query;
+    promoted = sameQuery
+      ? promotedIds(
+          items.map((item) => item.id),
+          next.items.map((item) => item.id),
+        )
+      : new Set();
+    if (!sameQuery) stage = "device";
+    if (promoted.size > 0 || next.items.some((item) => item.source === "semantic")) stage = "meaning";
     items = next.items;
     query = next.query;
     if (items.length === 0) {
@@ -218,6 +236,7 @@ export function createDocMenu(
     isOpen: () => unmount !== undefined,
     indexOf: (emojiId) => (unmount ? items.findIndex((item) => item.id === emojiId) : -1),
     activeIndex: () => active,
+    stage: () => stage,
     move,
     insertActive() {
       const item = items[active];

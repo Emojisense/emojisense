@@ -1,9 +1,10 @@
 /**
- * The real tool handlers of the Emojisense MCP server (packages/mcp/src/tools.ts). They depend on
- * the alias engine only, so the browser runs the same code an MCP client reaches over stdio. No
- * API client is passed: this is the server's offline mode, the default install.
+ * The real tool handlers of the Emojisense MCP server (packages/mcp/src/tools.ts), so the browser
+ * runs the same code an MCP client reaches over stdio. Without an API client they run in the
+ * server's offline mode, the default install; with one, unsure queries also go to meaning search.
  */
 import type { AliasEngine } from "emojisense";
+import type { EmojisenseApi } from "../../../../../packages/mcp/src/api";
 import type { EmojiSuggestion } from "../../../../../packages/mcp/src/suggestion";
 import {
   emojiForText,
@@ -37,14 +38,17 @@ export interface ToolRun {
   /** `content[0].text` of the MCP result: what the model reads. */
   text: string;
   /** `structuredContent` of the MCP result. */
-  structured: { results: EmojiSuggestion[]; suggestion?: string } & Record<string, unknown>;
+  structured: { results: EmojiSuggestion[]; suggestion?: string; semantic: boolean } & Record<
+    string,
+    unknown
+  >;
   /** Wall time of the handler in this browser. */
   ms: number;
 }
 
 /** Call one tool handler, as the MCP server does for `tools/call`. */
-export async function runTool(engine: AliasEngine, call: ToolCall): Promise<ToolRun> {
-  const deps = { engine };
+export async function runTool(engine: AliasEngine, call: ToolCall, api?: EmojisenseApi): Promise<ToolRun> {
+  const deps = { engine, api };
   const started = performance.now();
   const output =
     call.name === "search_emoji"

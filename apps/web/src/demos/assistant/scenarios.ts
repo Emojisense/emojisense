@@ -2,8 +2,9 @@
  * The scripted side of the demo. The prompts, the tool arguments and the wording are fixed; every
  * emoji, label and match in a reply is read from the live tool result, so the text follows the
  * engine. Queries were chosen by running the real handlers on the real packs (all 11 locales,
- * core + ext, the same files `pnpm --filter @emojisense/mcp build` bundles). The words around the
- * results are in the page's language (demos.assistant.scenarios); the tool calls stay as they are.
+ * core + ext, the same files `pnpm --filter @emojisense/mcp build` bundles) and the API. The words
+ * around the results are in the page's language (demos.assistant.scenarios); the tool calls stay
+ * as they are.
  */
 import type { DemoMessages } from "../../i18n/demos";
 import type { Translator } from "../../i18n/translate";
@@ -41,8 +42,12 @@ const glyph = (result: EmojiSuggestion | undefined) => result?.emoji ?? "";
 /** Why a result matched: the matched words of the input, else the alias phrase. */
 const reason = (result: EmojiSuggestion | undefined) => result?.window ?? result?.match;
 
-/** The status text the tool returns when it has no suggestion of its own. */
-const STATUS_TEXT = "Deploying on a Friday. Wish me luck.";
+/**
+ * No alias covers this sentence: offline, `search_emoji` returns nothing; with an API key, meaning
+ * search answers 💻 😵 🪫. The status text stays English: it is what the user posts.
+ */
+export const STATUS_QUERY = { query: "laptop died mid demo", target: "1F4BB" } as const;
+const STATUS_TEXT = "Laptop died mid demo. Presenting from my phone.";
 /** The message the reaction scenario sends to the tool (it stays English: it is the tool's input). */
 const REACT_TEXT = "10k users. We did it!";
 
@@ -112,24 +117,20 @@ export function scenarios(t: Translator<DemoMessages>): Scenario[] {
     {
       id: "status",
       prompt: s("assistant.scenarios.status.prompt"),
-      call: { name: "emoji_for_text", args: { text: STATUS_TEXT } },
+      call: { name: "search_emoji", args: { query: STATUS_QUERY.query, limit: 6 } },
       reply(run) {
-        const [first, second, third] = results(run);
-        const status = run.structured.suggestion ?? STATUS_TEXT;
+        const [first, second] = results(run);
+        if (!first) return [p(s("assistant.scenarios.status.offline"))];
         const why = reason(first);
         return [
           p(s("assistant.scenarios.status.intro")),
-          quote(status),
-          ...(first && why ? [p(s("assistant.scenarios.status.matched", { emoji: first.emoji, why }))] : []),
-          ...(second
-            ? [
-                p(
-                  third
-                    ? s("assistant.scenarios.status.sideways", { emoji: second.emoji, other: third.emoji })
-                    : s("assistant.scenarios.status.runnerUp", { emoji: second.emoji }),
-                ),
-              ]
-            : []),
+          quote(`${first.emoji} ${STATUS_TEXT}`),
+          p(
+            first.source === "semantic" || !why
+              ? s("assistant.scenarios.status.byMeaning", { emoji: first.emoji })
+              : s("assistant.scenarios.status.matched", { emoji: first.emoji, why }),
+          ),
+          ...(second ? [p(s("assistant.scenarios.status.runnerUp", { emoji: second.emoji }))] : []),
         ];
       },
     },

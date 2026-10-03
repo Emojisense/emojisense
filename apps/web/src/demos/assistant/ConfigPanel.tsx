@@ -4,8 +4,8 @@ import { CheckIcon, CopyIcon } from "./icons";
 import { highlightJson } from "./json";
 import { TOOLS, type ToolName } from "./mcp";
 
-/** The offline client config, verbatim from packages/mcp/README.md ("Client configuration"). */
-const CONFIG = `{
+/** The client configs, verbatim from packages/mcp/README.md ("Client configuration"). */
+const OFFLINE_CONFIG = `{
   "mcpServers": {
     "emojisense": {
       "command": "npx",
@@ -14,22 +14,43 @@ const CONFIG = `{
   }
 }`;
 
+const SEMANTIC_CONFIG = `{
+  "mcpServers": {
+    "emojisense": {
+      "command": "npx",
+      "args": ["-y", "@emojisense/mcp"],
+      "env": {
+        "EMOJISENSE_API_URL": "https://api.emojisense.com",
+        "EMOJISENSE_SECRET_KEY": "sk_live_…"
+      }
+    }
+  }
+}`;
+
+interface ConfigPanelProps {
+  activeTool: ToolName | undefined;
+  /** The server has an API key, so unsure queries also go to meaning search. */
+  semantic: boolean;
+  onSemanticChange: (semantic: boolean) => void;
+}
+
 type CopyState = "idle" | "copied" | "failed";
 
-/** How to install the server, and which of its tools the assistant is using right now. */
-export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }) {
+/** How to install the server, with or without its semantic layer, and the tool in use right now. */
+export function ConfigPanel({ activeTool, semantic, onSemanticChange }: ConfigPanelProps) {
   const [copy, setCopy] = useState<CopyState>("idle");
   const reset = useRef<ReturnType<typeof setTimeout>>(undefined);
   const codeRef = useRef<HTMLElement>(null);
   const titleId = useId();
   const { t } = useDemoI18n();
+  const config = semantic ? SEMANTIC_CONFIG : OFFLINE_CONFIG;
 
   useEffect(() => () => clearTimeout(reset.current), []);
 
   const onCopy = async () => {
     let next: CopyState = "copied";
     try {
-      await navigator.clipboard.writeText(CONFIG);
+      await navigator.clipboard.writeText(config);
     } catch {
       // No clipboard access (permissions, insecure context): select the code for a manual copy.
       next = "failed";
@@ -51,6 +72,21 @@ export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }
         <p className="assistant-side-lead">{t.t("assistant.config.lead")}</p>
       </div>
 
+      <label className="assistant-switch">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={semantic}
+          aria-checked={semantic}
+          onChange={(event) => onSemanticChange(event.currentTarget.checked)}
+        />
+        <span className="assistant-switch-track" aria-hidden="true" />
+        <span className="assistant-switch-text">
+          <strong>{t.t("assistant.config.semantic")}</strong>
+          <span>{semantic ? t.t("assistant.config.semanticOn") : t.t("assistant.config.semanticOff")}</span>
+        </span>
+      </label>
+
       <div className="assistant-config">
         <div className="assistant-config-bar">
           <span>mcp.json</span>
@@ -67,7 +103,7 @@ export function ConfigPanel({ activeTool }: { activeTool: ToolName | undefined }
         </div>
         {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code block must be reachable by keyboard. */}
         <pre tabIndex={0}>
-          <code ref={codeRef}>{highlightJson(CONFIG)}</code>
+          <code ref={codeRef}>{highlightJson(config)}</code>
         </pre>
       </div>
 

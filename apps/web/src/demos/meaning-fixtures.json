@@ -1,0 +1,11 @@
+{
+  "recorded": "2026-10-03",
+  "api": "https://api.emojisense.dev",
+  "answers": {
+    "nervous before the demo": ["1F630", "1F61F", "1F628", "1F62C", "1F627", "1F631"],
+    "everything_broke": ["1F494", "1F940", "1F643", "26D3-FE0F-200D-1F4A5", "1F62B", "1F4C9"],
+    "the wifi keeps dropping": ["1F6DC", "1F4F6", "1F4C9", "23EC", "1F4E1", "1F940"],
+    "pager went off at 3am": ["1F4DF", "1F552", "23F0", "1F6A8", "1F514", "1F6CE"],
+    "laptop died mid demo": ["1F4BB", "1F468-200D-1F4BB", "1F5A5", "1F635", "1F469-200D-1F4BB", "1FAAB"]
+  }
+}

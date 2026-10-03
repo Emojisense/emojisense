@@ -8,6 +8,7 @@ import { Composer } from "./chat/Composer";
 import {
   type AutoplayStep,
   autoplayMessage,
+  autoplayReply,
   autoplaySteps,
   type Message,
   type Reaction,
@@ -26,6 +27,8 @@ const CHANNEL = "launch";
 const MEMBER_COUNT = 12;
 const START_DELAY_MS = 800;
 const FULL_ENGINE_WAIT_MS = 2500;
+/** Longest wait for the semantic answer before the autoplay picks from the on-device list. */
+const MEANING_WAIT_MS = 4000;
 const VS16 = String.fromCodePoint(0xfe0f);
 const sameEmoji = (a: string, b: string) => a.replaceAll(VS16, "") === b.replaceAll(VS16, "");
 
@@ -48,6 +51,7 @@ interface Driver {
   ac: EmojiAutocomplete;
   engine: AliasEngine | undefined;
   send: (text: string) => void;
+  reply: () => void;
   press: (key: Pressing) => void;
 }
 
@@ -61,7 +65,10 @@ function toggleReaction(reactions: Reaction[], emoji: string): Reaction[] {
   return reactions.map((r) => (r === current ? next : r));
 }
 
-/** Types the scripted message like a person, picks 🐐 from the ":" popup and sends it. */
+/**
+ * Types the scripted message like a person, waits for meaning search to reorder the ":" popup,
+ * picks 😰 and sends it. A teammate answers later.
+ */
 async function runAutoplay(run: Run, steps: AutoplayStep[], driver: () => Driver): Promise<void> {
   await wait(START_DELAY_MS);
   let text = "";
@@ -88,6 +95,16 @@ async function runAutoplay(run: Run, steps: AutoplayStep[], driver: () => Driver
         write(text + char);
       }
     } else if (step.kind === "pick") {
+      if (step.meaning) {
+        const settled = () => {
+          const { session, trigger } = driver().ac;
+          return session !== undefined && session.query === trigger?.query && session.status !== "loading";
+        };
+        await waitFor(settled, Boolean, MEANING_WAIT_MS);
+        // Time to see meaning search reorder the list before the highlight moves.
+        await wait(800);
+        if (run.cancelled) return;
+      }
       const findTarget = () => driver().ac.results.findIndex((r) => r.id === step.id);
       const target = await waitFor(findTarget, (index) => index >= 0, 2500);
       await wait(650);
@@ -102,6 +119,8 @@ async function runAutoplay(run: Run, steps: AutoplayStep[], driver: () => Driver
       if (emoji && !run.cancelled) driver().ac.pick(emoji);
       await wait(60);
       text = driver().ac.value;
+    } else if (step.kind === "reply") {
+      driver().reply();
     } else {
       await press("send");
       if (run.cancelled) return;
@@ -154,31 +173,52 @@ export default function ChatDemo() {
     ac.clear();
   };
 
+  const reply = () => {
+    const { author, text, minutesLater } = autoplayReply(t);
+    stickToBottom.current = true;
+    setMessages((list) => [
+      ...list,
+      {
+        id: "reply",
+        author,
+        minute: (list.at(-1)?.minute ?? 600) + minutesLater,
+        text,
+        reactions: [],
+        fresh: true,
+      },
+    ]);
+  };
+
   const react = (messageId: string, emoji: string) => {
     setMessages((list) =>
       list.map((m) => (m.id === messageId ? { ...m, reactions: toggleReaction(m.reactions, emoji) } : m)),
     );
   };
 
-  const latest = useRef<Driver & { auto: AutoState }>({ ac, engine, send, press: setPressing, auto });
+  const latest = useRef<Driver & { auto: AutoState }>({ ac, engine, send, reply, press: setPressing, auto });
   useLayoutEffect(() => {
-    latest.current = { ac, engine, send, press: setPressing, auto };
+    latest.current = { ac, engine, send, reply, press: setPressing, auto };
   });
 
   // Reduced motion: no typing, show the end state at once.
   useEffect(() => {
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     setAuto("off");
-    setMessages((list) => [
-      ...list,
-      {
-        id: "you-final",
-        author: "you",
-        minute: (list.at(-1)?.minute ?? 600) + 3,
-        text: autoplayMessage(t),
-        reactions: [],
-      },
-    ]);
+    const answer = autoplayReply(t);
+    setMessages((list) => {
+      const minute = (list.at(-1)?.minute ?? 600) + 3;
+      return [
+        ...list,
+        { id: "you-final", author: "you", minute, text: autoplayMessage(t), reactions: [] },
+        {
+          id: "reply",
+          author: answer.author,
+          minute: minute + answer.minutesLater,
+          text: answer.text,
+          reactions: [],
+        },
+      ];
+    });
   }, [t]);
 
   // Autoplay waits until the window is on screen.

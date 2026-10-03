@@ -907,8 +907,8 @@
         "rollout": "Peluncuran sudah 100%. Pendaftaran naik 18% pagi ini, kerja bagus semuanya 📈"
       },
       "autoplay": {
-        "shipped": "onboarding baru sudah dirilis",
-        "thanks": "makasih tim"
+        "demo": "demo ke direksi 10 menit lagi",
+        "reply": "Demonya lancar, akhirnya kita semua bisa bernapas lega"
       },
       "reactionsLabel": "Reaksi",
       "reactionCount": {
@@ -977,7 +977,7 @@
         "action3": "Bagikan retro ini di #product (Maya)",
         "summary": "Ringkasan",
         "win": "Keberhasilan terbesar: onboarding baru",
-        "miss": "Masalah terbesar: deploy minggu peluncuran berakhir dengan"
+        "miss": "Masalah terbesar: deploy minggu peluncuran"
       },
       "placeholder": "Ketik “:” dan satu kata untuk emoji…",
       "bodyLabel": "Isi dokumen",
@@ -990,7 +990,9 @@
         "insert": "sisipkan",
         "close": "tutup",
         "similar": "makna serupa",
-        "custom": "emoji khusus"
+        "custom": "emoji khusus",
+        "onDevice": "di perangkat",
+        "byMeaning": "berdasarkan makna"
       },
       "picker": {
         "dialog": "Pilih ikon halaman",
@@ -1006,7 +1008,7 @@
         "hintWords": {
           "first": "peluncuran",
           "second": "kambing",
-          "third": "membara"
+          "third": "wifi putus-putus terus"
         },
         "pageIcon": "Ikon halaman. Ganti ikon",
         "pageIconNamed": "Ikon halaman: {label}. Ganti ikon"
@@ -1053,7 +1055,7 @@
         "shipIt": "rilis",
         "celebrate": "rayakan",
         "coffee": "kopi",
-        "gg": "gg"
+        "pager": "pager bunyi jam 3 pagi"
       },
       "kinds": {
         "acme": "Teknik",
@@ -1159,7 +1161,10 @@
           "search_emoji": "Kata kunci, bahasa gaul, nama, film",
           "emoji_for_text": "Emoji untuk kalimat yang Anda tulis",
           "suggest_reactions": "Reaksi yang digunakan pembaca"
-        }
+        },
+        "semantic": "Lapisan semantik",
+        "semanticOn": "Aktif: kueri yang belum pasti masuk ke pencarian makna dengan kunci API Anda.",
+        "semanticOff": "Nonaktif: hanya kamus bawaan, sepenuhnya luring."
       },
       "tool": {
         "failed": "Gagal",
@@ -1178,7 +1183,9 @@
         "loadFailed": "Data emoji gagal dimuat. Periksa koneksi dan coba lagi.",
         "none": "Tidak ada emoji yang cocok.",
         "generic": "Reaksi umum untuk melengkapi daftar yang pendek",
-        "matched": "Cocok dengan “{reason}”"
+        "matched": "Cocok dengan “{reason}”",
+        "byMeaning": "berdasarkan makna",
+        "onDevice": "di perangkat"
       },
       "scenarios": {
         "tweet": {
@@ -1201,11 +1208,12 @@
           "skip": "Lewati {emoji}: cocok dengan “10k” dalam konteks lomba lari."
         },
         "status": {
-          "prompt": "Atur status saya: deploy hari Jumat",
+          "prompt": "Atur status saya: laptop mati di tengah demo",
           "intro": "Ini status Anda:",
           "matched": "{emoji} cocok dengan “{why}”.",
-          "runnerUp": "Pilihan kedua: {emoji}.",
-          "sideways": "Pilihan kedua: {emoji}. Jika ada masalah, {other} siap dipakai."
+          "byMeaning": "{emoji} berasal dari pencarian berdasarkan makna. Tidak ada frasa kamus yang mencakup kalimat ini.",
+          "offline": "Saat luring, kamus tidak punya frasa untuk kalimat ini. Aktifkan lapisan semantik, lalu tanya lagi.",
+          "runnerUp": "Pilihan kedua: {emoji}."
         }
       }
     }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fullEngine } from "../../lib/engine-client";
+import { browserApi } from "./browser-api";
 import { runTool, type ToolRun } from "./mcp";
 import type { ReplyBlock, Scenario } from "./scenarios";
 
@@ -9,6 +10,8 @@ export type TurnPhase = "sent" | "calling" | "answered" | "streaming" | "done" |
 export interface Turn {
   key: number;
   scenario: Scenario;
+  /** The server was set up with an API key: unsure queries also go to meaning search. */
+  semantic: boolean;
   phase: TurnPhase;
   run?: ToolRun;
   reply?: ReplyBlock[];
@@ -77,7 +80,7 @@ export function useConversation() {
   }, []);
 
   const play = useCallback(
-    async (key: number, scenario: Scenario, signal: AbortSignal) => {
+    async (key: number, scenario: Scenario, semantic: boolean, signal: AbortSignal) => {
       const instant = prefersReducedMotion();
       const wait = (ms: number) => pause(instant ? 0 : ms, signal);
       await wait(MS.think);
@@ -85,7 +88,7 @@ export function useConversation() {
       const started = performance.now();
       let run: ToolRun;
       try {
-        run = await runTool(await fullEngine(), scenario.call);
+        run = await runTool(await fullEngine(), scenario.call, semantic ? browserApi() : undefined);
       } catch {
         patch(key, () => ({ phase: "failed", open: true }));
         return;
@@ -114,16 +117,16 @@ export function useConversation() {
   );
 
   const send = useCallback(
-    (scenario: Scenario) => {
+    (scenario: Scenario, semantic: boolean) => {
       for (const controller of live.current) controller.abort();
       const key = ++seq.current;
       const controller = new AbortController();
       live.current.add(controller);
       setTurns((prev) => [
         ...prev.map((turn) => (turn.open ? { ...turn, open: false } : turn)),
-        { key, scenario, phase: "sent", shown: 0, open: true, touched: false },
+        { key, scenario, semantic, phase: "sent", shown: 0, open: true, touched: false },
       ]);
-      void play(key, scenario, controller.signal).finally(() => live.current.delete(controller));
+      void play(key, scenario, semantic, controller.signal).finally(() => live.current.delete(controller));
     },
     [play],
   );

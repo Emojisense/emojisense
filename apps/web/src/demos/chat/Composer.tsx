@@ -3,6 +3,7 @@ import { type ChangeEvent, type KeyboardEvent, useEffect, useId, useLayoutEffect
 import { useDemoI18n } from "../../i18n/demos";
 import { rich } from "../../i18n/react";
 import type { EngineState } from "../../lib/engine-client";
+import { meaningStage, usePromoted } from "../meaning";
 import { AtIcon, FormatIcon, PlusIcon, SendIcon, SmileIcon } from "./icons";
 import { expandClosedCode, hintFor, shortcodeFor } from "./shortcodes";
 import type { EmojiAutocomplete } from "./useEmojiAutocomplete";
@@ -46,6 +47,11 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
   const listRef = useRef<HTMLDivElement>(null);
   const { trigger, results, session, active } = ac;
   const searching = session?.status === "loading";
+  // Keyed by the query the results answer, which trails the typed one by a render.
+  const promoted = usePromoted(
+    session?.query ?? "",
+    results.map((r) => r.id),
+  );
   const open = trigger !== undefined && (results.length > 0 || ready === "loading" || searching);
 
   useLayoutEffect(() => {
@@ -110,18 +116,14 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
   };
 
   const activeId = open && results.length > 0 ? `${listId}-${active}` : undefined;
-  const timing = session
-    ? [
-        t.t("chat.onDevice", { ms: formatMs(session.aliasMs, lang) }),
-        session.status === "fused" && session.semanticMs !== undefined
-          ? t.t("chat.meaning", { ms: formatMs(session.semanticMs, lang) })
-          : searching
-            ? t.t("chat.meaningPending")
-            : undefined,
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : undefined;
+  const stage = meaningStage(session?.status);
+  const timing = !session
+    ? undefined
+    : stage === "pending"
+      ? t.t("chat.meaningPending")
+      : stage === "meaning" && session.semanticMs !== undefined
+        ? t.t("chat.meaning", { ms: formatMs(session.semanticMs, lang) })
+        : t.t("chat.onDevice", { ms: formatMs(session.aliasMs, lang) });
 
   return (
     <div className="chat-compose">
@@ -131,7 +133,11 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
             <span className="chat-pop-title">
               {rich(t.raw("chat.popTitle"), { b: (text) => <b>{text}</b> }, { query: trigger.query })}
             </span>
-            {timing && <span className="chat-pop-time">{timing}</span>}
+            {timing && (
+              <span className="chat-pop-time meaning-badge" data-stage={stage}>
+                {timing}
+              </span>
+            )}
           </div>
           {results.length > 0 ? (
             <div
@@ -152,7 +158,7 @@ export function Composer({ ac, engine, ready, channel, onSend, ghostCaret, press
                     role="option"
                     tabIndex={-1}
                     aria-selected={i === active}
-                    className={`chat-opt${i === active && pressing === "option" ? " is-pressing" : ""}`}
+                    className={`chat-opt${i === active && pressing === "option" ? " is-pressing" : ""}${promoted.has(r.id) ? " meaning-promoted" : ""}`}
                     onPointerDown={(event) => event.preventDefault()}
                     onPointerMove={() => i !== active && ac.setActive(i)}
                     onClick={() => pick(r)}

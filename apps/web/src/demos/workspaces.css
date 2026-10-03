@@ -537,6 +537,11 @@
   transition: background 120ms;
 }
 
+/* Moved up by meaning search: the flash replaces the entrance. */
+.ws-tile.meaning-promoted {
+  animation: meaning-flash 1.6s var(--ease-out);
+}
+
 .ws-tile .emoji {
   transition: transform 180ms var(--spring);
 }
@@ -640,11 +645,9 @@
 }
 
 .ws-timing {
-  flex: none;
   margin-inline-start: auto;
-  color: var(--ink-3);
-  font: 400 0.6875rem / 1 var(--font-mono);
-  white-space: nowrap;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 /* Custom set */
@@ -936,10 +939,6 @@
   .ws-results {
     min-height: 9rem;
     max-height: 17rem;
-  }
-
-  .ws-timing {
-    display: none;
   }
 
   .ws-aside {

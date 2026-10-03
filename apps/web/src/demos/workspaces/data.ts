@@ -75,7 +75,10 @@ export const WORKSPACES: Workspace[] = [
         name: "cold-brew",
         aliases: ["coffee", "cold brew", "iced coffee", "caffeine", "fuel", "need coffee"],
       },
-      { name: "on-call", aliases: ["on call", "oncall", "pager", "paged", "incident", "sev1", "alert"] },
+      {
+        name: "on-call",
+        aliases: ["on call", "oncall", "pager", "paged", "pager went off", "incident", "sev1", "alert"],
+      },
       {
         name: "deploy-friday",
         aliases: ["friday deploy", "deploy on friday", "yolo", "risky", "this is fine", "living dangerously"],
@@ -154,15 +157,19 @@ export const WORKSPACES: Workspace[] = [
   },
 ];
 
-/** Queries that make the point: the same words, a different answer in every workspace. */
-export const PRESET_QUERIES = ["ship it", "celebrate", "coffee", "gg"] as const;
+/**
+ * Queries that make the point: the same words, a different answer in every workspace. The last one
+ * is a sentence no alias list covers: the standard emoji under it come from meaning search.
+ */
+export const MEANING_PRESET = { query: "pager went off at 3am", target: "1F4DF" } as const;
+export const PRESET_QUERIES = ["ship it", "celebrate", "coffee", MEANING_PRESET.query] as const;
 
 type PresetKey = keyof DemoMessages["workspaces"]["presets"];
 const PRESET_KEYS: Record<(typeof PRESET_QUERIES)[number], PresetKey> = {
   "ship it": "shipIt",
   celebrate: "celebrate",
   coffee: "coffee",
-  gg: "gg",
+  "pager went off at 3am": "pager",
 };
 
 export interface LocalizedWorkspaces {
@@ -173,8 +180,9 @@ export interface LocalizedWorkspaces {
 
 /**
  * The workspaces in the page's language. The custom sets keep their English names and aliases
- * (each workspace's admins wrote them), and every emoji found by an English preset also learns
- * the translated preset, so a chip finds the same custom emoji in every language.
+ * (each workspace's admins wrote them), and every emoji with an alias that starts an English preset
+ * ("pager went off" in "pager went off at 3am") also learns the translated preset, so a chip finds
+ * the same custom emoji in every language.
  */
 export function localizeWorkspaces(words: DemoMessages["workspaces"]): LocalizedWorkspaces {
   const presets = PRESET_QUERIES.map((preset) => words.presets[PRESET_KEYS[preset]]);
@@ -183,9 +191,12 @@ export function localizeWorkspaces(words: DemoMessages["workspaces"]): Localized
     kind: words.kinds[workspace.id],
     message: { ...workspace.message, text: words.texts[workspace.id] },
     emoji: workspace.emoji.map((item) => {
-      const extra = PRESET_QUERIES.filter((preset) => item.aliases.includes(preset)).map(
-        (preset) => words.presets[PRESET_KEYS[preset]],
-      );
+      const extra = PRESET_QUERIES.filter((preset) =>
+        item.aliases.some((alias) => preset === alias || preset.startsWith(`${alias} `)),
+      )
+        .map((preset) => words.presets[PRESET_KEYS[preset]])
+        // On the English page the alias that already matches stays the one the footer names.
+        .filter((translated) => !(PRESET_QUERIES as readonly string[]).includes(translated));
       return { ...item, aliases: [...new Set([...item.aliases, ...extra])] };
     }),
   }));

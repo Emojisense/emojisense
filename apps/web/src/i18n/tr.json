@@ -908,8 +908,8 @@
         "rollout": "Yayın %100'e ulaştı. Bu sabah kayıtlar %18 arttı, herkesin eline sağlık 📈"
       },
       "autoplay": {
-        "shipped": "yeni kullanıcı deneyimini yayına aldık",
-        "thanks": "teşekkürler ekip"
+        "demo": "10 dakika sonra yönetim kuruluna demo",
+        "reply": "Demo sorunsuz geçti, hepimiz rahat bir nefes aldık"
       },
       "reactionsLabel": "Tepkiler",
       "reactionCount": {
@@ -979,7 +979,7 @@
         "action3": "Bu değerlendirmeyi #product kanalında paylaş (Maya)",
         "summary": "Özet",
         "win": "En büyük başarı: yeni kullanıcı deneyimiyle uçuşa geçtik",
-        "miss": "En büyük aksilik: yayın haftasındaki dağıtımlar ortalığı yaktı"
+        "miss": "En büyük aksilik: yayın haftasındaki dağıtımlar"
       },
       "placeholder": "Emoji için “:” ve bir sözcük yazın…",
       "bodyLabel": "Belge içeriği",
@@ -992,7 +992,9 @@
         "insert": "ekleyin",
         "close": "kapatın",
         "similar": "benzer anlam",
-        "custom": "özel emoji"
+        "custom": "özel emoji",
+        "onDevice": "cihazda",
+        "byMeaning": "anlama göre"
       },
       "picker": {
         "dialog": "Sayfa simgesi seçin",
@@ -1008,7 +1010,7 @@
         "hintWords": {
           "first": "lansman",
           "second": "keçi",
-          "third": "yanıyor"
+          "third": "wifi sürekli kopuyor"
         },
         "pageIcon": "Sayfa simgesi. Simgeyi değiştirin",
         "pageIconNamed": "Sayfa simgesi: {label}. Simgeyi değiştirin"
@@ -1055,7 +1057,7 @@
         "shipIt": "yayına al",
         "celebrate": "kutla",
         "coffee": "kahve",
-        "gg": "gg"
+        "pager": "gece 3'te alarm geldi"
       },
       "kinds": {
         "acme": "Mühendislik",
@@ -1161,7 +1163,10 @@
           "search_emoji": "Anahtar sözcükler, argo, adlar, filmler",
           "emoji_for_text": "Yazdığınız cümle için emoji",
           "suggest_reactions": "Okuyucunun vereceği tepkiler"
-        }
+        },
+        "semantic": "Anlam katmanı",
+        "semanticOn": "Açık: emin olunmayan sorgular API anahtarınızla anlama göre aramaya gider.",
+        "semanticOff": "Kapalı: yalnızca gömülü sözlük, tamamen çevrimdışı."
       },
       "tool": {
         "failed": "Başarısız",
@@ -1181,7 +1186,9 @@
         "loadFailed": "Emoji verileri yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.",
         "none": "Eşleşen emoji yok.",
         "generic": "Kısa bir listeyi tamamlayan genel tepki",
-        "matched": "“{reason}” ile eşleşti"
+        "matched": "“{reason}” ile eşleşti",
+        "byMeaning": "anlama göre",
+        "onDevice": "cihazda"
       },
       "scenarios": {
         "tweet": {
@@ -1204,11 +1211,12 @@
           "skip": "{emoji} kullanmayın: koşu yarışı anlamındaki “10k” ile eşleşti."
         },
         "status": {
-          "prompt": "Durumumu ayarla: cuma günü dağıtım yapıyorum",
+          "prompt": "Durumumu ayarla: demonun ortasında laptop kapandı",
           "intro": "İşte durumunuz:",
           "matched": "{emoji}, “{why}” ile eşleşti.",
-          "runnerUp": "İkinci seçenek: {emoji}.",
-          "sideways": "İkinci seçenek: {emoji}. İşler ters giderse {other} de hazır."
+          "byMeaning": "{emoji} anlama göre aramadan geldi. Sözlükteki hiçbir ifade bu cümleyi karşılamıyor.",
+          "offline": "Çevrimdışıyken sözlükte bu cümle için bir ifade yok. Anlam katmanını açın ve yeniden sorun.",
+          "runnerUp": "İkinci seçenek: {emoji}."
         }
       }
     }

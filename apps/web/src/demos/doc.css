@@ -707,9 +707,20 @@ img.ProseMirror-separator {
 }
 
 .doc-menu-head {
-  padding: 0.25rem 0.5rem 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0.25rem 0.375rem 0.5rem;
   color: var(--ink-3);
   font-size: 0.75rem;
+}
+
+.doc-menu-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .doc-menu-head code {

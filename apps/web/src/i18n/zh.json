@@ -907,8 +907,8 @@
         "rollout": "已全量上线。今天上午的注册量增长了18%，大家辛苦了📈"
       },
       "autoplay": {
-        "shipped": "新版上手流程上线了",
-        "thanks": "谢谢大家"
+        "demo": "10 分钟后给董事会演示",
+        "reply": "演示成功了，大家终于可以松口气了"
       },
       "reactionsLabel": "回应",
       "reactionCount": {
@@ -977,7 +977,7 @@
         "action3": "在#product中分享这份复盘（Maya）",
         "summary": "总结",
         "win": "最大收获：新版上手流程顺利上线",
-        "miss": "最大问题：发布周一直在为部署救火"
+        "miss": "最大问题：发布周的部署"
       },
       "placeholder": "输入“:”和一个词，查找emoji…",
       "bodyLabel": "文档正文",
@@ -990,7 +990,9 @@
         "insert": "插入",
         "close": "关闭",
         "similar": "含义相近",
-        "custom": "自定义emoji"
+        "custom": "自定义emoji",
+        "onDevice": "设备端",
+        "byMeaning": "按含义匹配"
       },
       "picker": {
         "dialog": "选择页面图标",
@@ -1006,7 +1008,7 @@
         "hintWords": {
           "first": "发射",
           "second": "山羊",
-          "third": "着火"
+          "third": "WiFi 老是断"
         },
         "pageIcon": "页面图标。更换图标",
         "pageIconNamed": "页面图标：{label}。更换图标"
@@ -1053,7 +1055,7 @@
         "shipIt": "发布",
         "celebrate": "庆祝",
         "coffee": "咖啡",
-        "gg": "gg"
+        "pager": "凌晨3点被值班告警吵醒"
       },
       "kinds": {
         "acme": "工程团队",
@@ -1159,7 +1161,10 @@
           "search_emoji": "关键词、俚语、名称、电影",
           "emoji_for_text": "为你写的句子选择emoji",
           "suggest_reactions": "读者会用的emoji回应"
-        }
+        },
+        "semantic": "语义层",
+        "semanticOn": "开启：不确定的查询会用你的 API 密钥进行语义搜索。",
+        "semanticOff": "关闭：只用内置词典，完全离线。"
       },
       "tool": {
         "failed": "失败",
@@ -1178,7 +1183,9 @@
         "loadFailed": "emoji数据加载失败。请检查网络连接后重试。",
         "none": "没有匹配的emoji。",
         "generic": "结果较少时补充的通用回应",
-        "matched": "匹配到“{reason}”"
+        "matched": "匹配到“{reason}”",
+        "byMeaning": "按含义匹配",
+        "onDevice": "设备端"
       },
       "scenarios": {
         "tweet": {
@@ -1201,11 +1208,12 @@
           "skip": "跳过{emoji}：它匹配到的是“10k”，也就是10公里比赛。"
         },
         "status": {
-          "prompt": "设置我的状态：周五部署中",
+          "prompt": "设置我的状态：演示到一半笔记本没电了",
           "intro": "你的状态可以这样写：",
           "matched": "{emoji}匹配到“{why}”。",
-          "runnerUp": "备选：{emoji}。",
-          "sideways": "备选：{emoji}。如果出了问题，还可以用{other}。"
+          "byMeaning": "{emoji}来自语义搜索。词典里没有能覆盖这句话的短语。",
+          "offline": "离线时，词典里没有这句话的短语。打开语义层，再问一次。",
+          "runnerUp": "备选：{emoji}。"
         }
       }
     }

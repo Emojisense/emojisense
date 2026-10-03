@@ -909,8 +909,8 @@
         "rollout": "A liberação chegou a 100%. Os cadastros subiram 18% nesta manhã, ótimo trabalho, pessoal 📈"
       },
       "autoplay": {
-        "shipped": "lancei o novo onboarding",
-        "thanks": "valeu, time"
+        "demo": "demo pro conselho em 10 min",
+        "reply": "A demo deu certo, finalmente podemos respirar"
       },
       "reactionsLabel": "Reações",
       "reactionCount": {
@@ -981,7 +981,7 @@
         "action3": "Compartilhar esta retro em #product (Maya)",
         "summary": "Resumo",
         "win": "Maior acerto: o novo onboarding",
-        "miss": "Maior problema: os deploys da semana de lançamento pegaram"
+        "miss": "Maior problema: os deploys da semana de lançamento"
       },
       "placeholder": "Digite “:” e uma palavra para emoji…",
       "bodyLabel": "Corpo do documento",
@@ -994,7 +994,9 @@
         "insert": "inserir",
         "close": "fechar",
         "similar": "significado parecido",
-        "custom": "emoji personalizados"
+        "custom": "emoji personalizados",
+        "onDevice": "no dispositivo",
+        "byMeaning": "por significado"
       },
       "picker": {
         "dialog": "Escolha um ícone da página",
@@ -1010,7 +1012,7 @@
         "hintWords": {
           "first": "foguete",
           "second": "cabra",
-          "third": "pegando fogo"
+          "third": "o wifi fica caindo"
         },
         "pageIcon": "Ícone da página. Alterar ícone",
         "pageIconNamed": "Ícone da página: {label}. Alterar ícone"
@@ -1057,7 +1059,7 @@
         "shipIt": "lançar",
         "celebrate": "comemorar",
         "coffee": "café",
-        "gg": "gg"
+        "pager": "o pager tocou às 3 da manhã"
       },
       "kinds": {
         "acme": "Engenharia",
@@ -1163,7 +1165,10 @@
           "search_emoji": "Palavras-chave, gírias, nomes, filmes",
           "emoji_for_text": "Emoji para uma frase que você escreve",
           "suggest_reactions": "Com o que uma pessoa reage ao ler"
-        }
+        },
+        "semantic": "Camada semântica",
+        "semanticOn": "Ativada: consultas incertas vão para a busca por significado com sua chave API.",
+        "semanticOff": "Desativada: só o dicionário incluído, totalmente offline."
       },
       "tool": {
         "failed": "Falhou",
@@ -1184,7 +1189,9 @@
         "loadFailed": "Os dados de emoji não carregaram. Confira a conexão e tente novamente.",
         "none": "Nenhum emoji encontrado.",
         "generic": "Reação genérica que completa uma lista curta",
-        "matched": "Encontrado por “{reason}”"
+        "matched": "Encontrado por “{reason}”",
+        "byMeaning": "por significado",
+        "onDevice": "no dispositivo"
       },
       "scenarios": {
         "tweet": {
@@ -1207,11 +1214,12 @@
           "skip": "Evite {emoji}: ele foi encontrado por “10k”, como na corrida."
         },
         "status": {
-          "prompt": "Defina meu status: fazendo deploy numa sexta-feira",
+          "prompt": "Defina meu status: o notebook morreu no meio da demo",
           "intro": "Aqui está seu status:",
           "matched": "{emoji} foi encontrado por “{why}”.",
-          "runnerUp": "Segunda opção: {emoji}.",
-          "sideways": "Segunda opção: {emoji}. Se der errado, {other} está ali."
+          "byMeaning": "{emoji} veio da busca por significado. Nenhuma frase do dicionário cobre esta oração.",
+          "offline": "Offline, o dicionário não tem nenhuma frase para esta oração. Ative a camada semântica e pergunte de novo.",
+          "runnerUp": "Segunda opção: {emoji}."
         }
       }
     }

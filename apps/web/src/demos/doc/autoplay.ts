@@ -7,6 +7,9 @@ import type { DocEditor } from "./editor";
 import { presenceKey } from "./presence";
 import { sleep } from "./sleep";
 
+/** Longest wait for meaning search before the teammate picks from the on-device menu. */
+const MEANING_WAIT_MS = 3000;
+
 /** Human rhythm: quick inside words, a beat between words, slower and careful on a `:query`. */
 function keyDelay(char: string, previous: string, inQuery: boolean): number {
   const jitter = Math.random();
@@ -102,6 +105,12 @@ export async function playScript(doc: DocEditor, scroller: HTMLElement, name: st
     await type(view, scroller, `:${line.query}`, signal, true);
     // Let the menu settle (and be read) before choosing.
     await sleep(1100, signal);
+    if (line.meaning) {
+      const until = performance.now() + MEANING_WAIT_MS;
+      while (doc.menu.stage() !== "meaning" && performance.now() < until) await sleep(100, signal);
+      // Time to see the new order before the highlight moves.
+      await sleep(900, signal);
+    }
     let target = doc.menu.indexOf(line.target);
     if (target < 0) target = 0;
     for (let steps = 0; doc.menu.isOpen() && doc.menu.activeIndex() !== target && steps < 8; steps++) {

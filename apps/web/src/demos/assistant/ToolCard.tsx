@@ -2,6 +2,7 @@ import { type CSSProperties, useId, useState } from "react";
 import { type DemoMessages, useDemoI18n } from "../../i18n/demos";
 import type { Translator } from "../../i18n/translate";
 import { Chevron, ToolIcon } from "./icons";
+import "../meaning.css";
 import { highlightJson, inlineJson } from "./json";
 import { type EmojiSuggestion, SERVER_NAME } from "./mcp";
 import type { Turn } from "./useConversation";
@@ -23,6 +24,7 @@ function formatMs(ms: number, lang: string): string {
 
 function why(result: EmojiSuggestion, t: Translator<DemoMessages>): string {
   if (result.source === "default") return t.t("assistant.tool.generic");
+  if (result.source === "semantic") return t.t("assistant.tool.byMeaning");
   const reason = result.window ?? result.match;
   return reason ? t.t("assistant.tool.matched", { reason }) : "";
 }
@@ -69,6 +71,14 @@ export function ToolCard({ turn, onToggle }: { turn: Turn; onToggle: () => void 
                 {r.emoji}
               </span>
             ))}
+          </span>
+        )}
+        {run && (
+          <span
+            className="assistant-tool-tier meaning-badge"
+            data-stage={run.structured.semantic ? "meaning" : "device"}
+          >
+            {run.structured.semantic ? t.t("assistant.tool.byMeaning") : t.t("assistant.tool.onDevice")}
           </span>
         )}
         <span className="assistant-tool-meta">

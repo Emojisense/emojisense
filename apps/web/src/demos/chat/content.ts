@@ -73,31 +73,42 @@ export function seedMessages(t: T): Message[] {
 
 /** What the autoplay sends. Reduced motion shows this message as already sent. */
 export function autoplayMessage(t: T): string {
-  return `${t.t("chat.autoplay.shipped")} 🎉 ${t.t("chat.autoplay.thanks")} 🐐`;
+  return `${t.t("chat.autoplay.demo")} 😰`;
+}
+
+/** A teammate's answer after the demo. Its suggested reactions read the relief, not the words. */
+export function autoplayReply(t: T): { author: PersonId; text: string; minutesLater: number } {
+  return { author: "priya", text: t.t("chat.autoplay.reply"), minutesLater: 14 };
 }
 
 export type AutoplayStep =
   | { kind: "type"; text: string }
   | { kind: "insert"; text: string }
   | { kind: "pause"; ms: number }
-  /** Wait for this emoji (Emojibase id) in the ":" popup, highlight it, then pick it. */
-  | { kind: "pick"; id: string }
-  | { kind: "send" };
+  /**
+   * Wait for this emoji (Emojibase id) in the ":" popup, highlight it, then pick it. With
+   * `meaning`, first wait for the semantic answer, so the visitor sees the list change.
+   */
+  | { kind: "pick"; id: string; meaning?: boolean }
+  | { kind: "send" }
+  | { kind: "reply" };
 
-/** The ":goat" code is the same in every language: shortcodes are English everywhere. */
+/**
+ * The ":" query is plain English in every language, like a shortcode. No alias covers the whole
+ * sentence: on the device it gives 📽️ 👿 🪧 (from "demo"), and meaning search moves 😰 to the top.
+ */
+export const MEANING_QUERY = { query: "nervous before the demo", target: "1F630" } as const;
+
 export function autoplaySteps(t: T): AutoplayStep[] {
   return [
-    { kind: "type", text: `${t.t("chat.autoplay.shipped")} ` },
-    { kind: "pause", ms: 320 },
-    // Typed with the system emoji keyboard, so it lands in one keystroke.
-    { kind: "insert", text: "🎉" },
-    { kind: "pause", ms: 220 },
-    { kind: "type", text: ` ${t.t("chat.autoplay.thanks")} ` },
+    { kind: "type", text: `${t.t("chat.autoplay.demo")} ` },
     { kind: "pause", ms: 380 },
-    { kind: "type", text: ":goat" },
-    { kind: "pick", id: "1F410" },
+    { kind: "type", text: `:${MEANING_QUERY.query}` },
+    { kind: "pick", id: MEANING_QUERY.target, meaning: true },
     { kind: "pause", ms: 700 },
     { kind: "send" },
+    { kind: "pause", ms: 2600 },
+    { kind: "reply" },
   ];
 }
 

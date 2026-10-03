@@ -13,7 +13,12 @@ export interface ScriptLine {
   target: string;
   /** What the real engine ranks first for `query` (used for the static final state). */
   emoji: string;
+  /** No alias covers the query: wait for meaning search to reorder the menu before choosing. */
+  meaning?: boolean;
 }
+
+/** The line that shows meaning search; the other one is answered on the device. */
+export const MEANING_LINE = { query: "everything_broke", target: "1F494", emoji: "💔" } as const;
 
 /** The document's words in the page's language. */
 export interface DocCopy {
@@ -24,10 +29,11 @@ export interface DocCopy {
 }
 
 /**
- * What the teammate types at the end of the doc. The `:codes` are English shortcodes, the same in
- * every language. Picked by running the real engine on the served packs (pack 0.1.0):
- * - ":rocket" → 🚀 first (the list changes on every keystroke: ®️, 🇷🇴, 🪨, then 🚀).
- * - ":dumpster_fire" → 🔥 first, then 🗑️ and 🦝 (from the alias "dumpster diving").
+ * What the teammate types at the end of the doc. The `:codes` are English, the same in every
+ * language. Picked by running the real engine on the served packs (pack 0.1.0) and the API:
+ * - ":nailed_it" → 🎯 first on the device: an idiom the alias pack knows, no request.
+ * - ":everything_broke" → on the device 💸 👛 first ("broke" as in money). Meaning search moves
+ *   💔 to the top.
  */
 export function docCopy(doc: DemoMessages["doc"]): DocCopy {
   const { body } = doc;
@@ -36,8 +42,8 @@ export function docCopy(doc: DemoMessages["doc"]): DocCopy {
     summary: body.summary,
     body,
     script: [
-      { text: `${body.win} `, query: "rocket", target: "1F680", emoji: "🚀" },
-      { text: `${body.miss} `, query: "dumpster_fire", target: "1F525", emoji: "🔥" },
+      { text: `${body.win} `, query: "nailed_it", target: "1F3AF", emoji: "🎯" },
+      { text: `${body.miss} `, ...MEANING_LINE, meaning: true },
     ],
   };
 }

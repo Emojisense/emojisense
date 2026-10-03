@@ -749,9 +749,7 @@
 }
 
 .chat-pop-time {
-  flex: none;
-  font: 400 0.6875rem / 1 var(--font-mono);
-  font-variant-numeric: tabular-nums;
+  align-self: center;
 }
 
 .chat-pop-list {
@@ -925,8 +923,7 @@
 
   .chat-topic,
   .chat-compose-hint,
-  .chat-pop-foot,
-  .chat-pop-time {
+  .chat-pop-foot {
     display: none;
   }
 

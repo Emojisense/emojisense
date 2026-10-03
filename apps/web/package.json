@@ -11,7 +11,8 @@
     "typecheck": "astro check && tsc --noEmit",
     "test": "vitest run",
     "deploy": "astro build && wrangler deploy",
-    "brand:assets": "node scripts/brand-assets.mjs"
+    "brand:assets": "node scripts/brand-assets.mjs",
+    "record:meaning": "tsx scripts/record-meaning.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.0.0",

@@ -31,6 +31,9 @@ export default function AssistantDemo() {
   const pinned = useRef(true);
   const started = useRef(false);
   const autoplay = useRef<AbortController>(undefined);
+  /** The semantic layer starts on: it is what the demo shows. A ref, so the autoplay reads it too. */
+  const [semantic, setSemantic] = useState(true);
+  const semanticOn = useRef(semantic);
 
   const choose = useCallback(
     (scenario: Scenario) => {
@@ -39,10 +42,18 @@ export default function AssistantDemo() {
       setAutoplayPhase("off");
       setDraft("");
       pinned.current = true;
-      send(scenario);
+      send(scenario, semanticOn.current);
     },
     [send],
   );
+
+  /** Switching the layer asks the last prompt again, so the two answers sit next to each other. */
+  const changeSemantic = (next: boolean) => {
+    semanticOn.current = next;
+    setSemantic(next);
+    const last = turns.at(-1);
+    if (last) choose(last.scenario);
+  };
 
   /** "Stop demo": the typing stops, and an answer in progress shows in full at once. */
   const stopAutoplay = useCallback(() => {
@@ -85,7 +96,7 @@ export default function AssistantDemo() {
           await pause(420, controller.signal);
           if (controller.signal.aborted) return;
           setDraft("");
-          send(first);
+          send(first, semanticOn.current);
           setAutoplayPhase("answering");
         })();
       },
@@ -221,7 +232,7 @@ export default function AssistantDemo() {
         </div>
       </section>
 
-      <ConfigPanel activeTool={activeTool} />
+      <ConfigPanel activeTool={activeTool} semantic={semantic} onSemanticChange={changeSemantic} />
     </div>
   );
 }

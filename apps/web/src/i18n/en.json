@@ -908,8 +908,8 @@
         "rollout": "Rollout hit 100%. Signups are up 18% this morning, great work everyone 📈"
       },
       "autoplay": {
-        "shipped": "shipped the new onboarding",
-        "thanks": "thanks team"
+        "demo": "board demo in 10",
+        "reply": "The demo worked, we can all breathe again"
       },
       "reactionsLabel": "Reactions",
       "reactionCount": {
@@ -979,7 +979,7 @@
         "action3": "Share this retro in #product (Maya)",
         "summary": "Summary",
         "win": "Biggest win: the new onboarding",
-        "miss": "Biggest miss: launch-week deploys were a"
+        "miss": "Biggest miss: launch-week deploys"
       },
       "placeholder": "Type “:” and a word for emoji…",
       "bodyLabel": "Document body",
@@ -992,7 +992,9 @@
         "insert": "insert",
         "close": "close",
         "similar": "similar meaning",
-        "custom": "custom emoji"
+        "custom": "custom emoji",
+        "onDevice": "on-device",
+        "byMeaning": "by meaning"
       },
       "picker": {
         "dialog": "Choose a page icon",
@@ -1008,7 +1010,7 @@
         "hintWords": {
           "first": "launch",
           "second": "goat",
-          "third": "on fire"
+          "third": "the wifi keeps dropping"
         },
         "pageIcon": "Page icon. Change icon",
         "pageIconNamed": "Page icon: {label}. Change icon"
@@ -1055,7 +1057,7 @@
         "shipIt": "ship it",
         "celebrate": "celebrate",
         "coffee": "coffee",
-        "gg": "gg"
+        "pager": "pager went off at 3am"
       },
       "kinds": {
         "acme": "Engineering",
@@ -1161,7 +1163,10 @@
           "search_emoji": "Keywords, slang, names, films",
           "emoji_for_text": "Emoji for a sentence you write",
           "suggest_reactions": "What a reader reacts with"
-        }
+        },
+        "semantic": "Semantic layer",
+        "semanticOn": "On: unsure queries go to meaning search with your API key.",
+        "semanticOff": "Off: the bundled dictionary only, fully offline."
       },
       "tool": {
         "failed": "Failed",
@@ -1181,7 +1186,9 @@
         "loadFailed": "The emoji data did not load. Check the connection and try again.",
         "none": "No emoji matched.",
         "generic": "Generic reaction that fills a short list",
-        "matched": "Matched “{reason}”"
+        "matched": "Matched “{reason}”",
+        "byMeaning": "by meaning",
+        "onDevice": "on-device"
       },
       "scenarios": {
         "tweet": {
@@ -1204,11 +1211,12 @@
           "skip": "Skip {emoji}: it matched “10k”, as in the race."
         },
         "status": {
-          "prompt": "Set my status: deploying on a Friday",
+          "prompt": "Set my status: laptop died mid demo",
           "intro": "Here's your status:",
           "matched": "{emoji} matched “{why}”.",
-          "runnerUp": "Runner-up: {emoji}.",
-          "sideways": "Runner-up: {emoji}. If it goes sideways, {other} is right there."
+          "byMeaning": "{emoji} came from meaning search. No dictionary phrase covers this sentence.",
+          "offline": "Offline, the dictionary has no phrase for this sentence. Turn on the semantic layer and ask again.",
+          "runnerUp": "Runner-up: {emoji}."
         }
       }
     }

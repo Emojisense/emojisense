@@ -4,6 +4,7 @@ import { useDemoI18n } from "../i18n/demos";
 import { rich } from "../i18n/react";
 import { labelOf, pageLocale, sharedSemantic, useEngine } from "../lib/engine-client";
 import { formatClock } from "./chat/content";
+import { meaningStage, usePromoted } from "./meaning";
 import { searchCustom } from "./workspaces/custom-engine";
 import {
   type CustomEmoji,
@@ -159,6 +160,8 @@ export default function WorkspacesDemo() {
   }, [standard, query, hasQuery, engine, locale]);
 
   const options = useMemo(() => [...customOptions, ...standardOptions], [customOptions, standardOptions]);
+  // Keyed by the query the standard results answer, which trails the typed one.
+  const promoted = usePromoted(standard?.query ?? "", standard?.results.map((r) => r.id) ?? []);
   const activeIndex = Math.min(active, options.length - 1);
   const current = options[activeIndex];
   const matchedCustom = new Set(customResults.map((r) => r.id));
@@ -244,9 +247,11 @@ export default function WorkspacesDemo() {
   const inspectedItem =
     workspace.emoji.find((item) => `${workspace.id}/${item.name}` === inspected) ??
     workspace.emoji.find((item) => matchedCustom.has(`${workspace.id}/${item.name}`));
+  const standardStage =
+    standard && standard.query === query && hasQuery ? meaningStage(standard.status) : undefined;
   const standardTiming =
-    standard && standard.query === query && hasQuery
-      ? standard.status === "fused" && standard.semanticMs !== undefined
+    standard && standardStage
+      ? standardStage === "meaning" && standard.semanticMs !== undefined
         ? t.t("workspaces.timingMeaning", {
             ms: new Intl.NumberFormat(lang).format(Math.round(standard.semanticMs)),
           })
@@ -459,6 +464,15 @@ export default function WorkspacesDemo() {
                     <div className="ws-group" role="group" aria-labelledby={`${uid}-standard-label`}>
                       <div className="ws-group-label" id={`${uid}-standard-label`} role="presentation">
                         {t.t("workspaces.standard")}
+                        {standardTiming && (
+                          <span
+                            className="ws-timing meaning-badge"
+                            data-stage={standardStage}
+                            aria-hidden="true"
+                          >
+                            {standardTiming}
+                          </span>
+                        )}
                       </div>
                       <div className="ws-grid" role="presentation">
                         {ready === "failed" && (
@@ -488,7 +502,7 @@ export default function WorkspacesDemo() {
                               tabIndex={-1}
                               aria-selected={i === activeIndex}
                               aria-label={option.label || option.emoji}
-                              className="ws-tile"
+                              className={promoted.has(option.id) ? "ws-tile meaning-promoted" : "ws-tile"}
                               style={{ animationDelay: `${Math.min(j, 12) * 14}ms` }}
                               onMouseEnter={() => setActive(i)}
                               onClick={() => react(option)}
@@ -535,7 +549,6 @@ export default function WorkspacesDemo() {
                   ) : (
                     <span className="ws-preview-why">{t.t("workspaces.idle")}</span>
                   )}
-                  {standardTiming && <span className="ws-timing">{standardTiming}</span>}
                 </footer>
                 <p className="visually-hidden" aria-live="polite">
                   {hasQuery
