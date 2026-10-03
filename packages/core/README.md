@@ -136,8 +136,30 @@ if (match) {
 | `createSuggestionSource` | `search(query)`: alias rows now, fused rows later through `onLateResults`. `resolve(query)`: one promise per query, for editors that take one. |
 | `findShortcode(engine, code)` | An exact `:name:` match, for completing `:fire:` to 🔥 |
 | `allowContext`, `SHORTCODE_BEFORE_CARET` | The context rule and the shortcode pattern on their own |
-| `createEngineLoader({ packUrl, locale })` | Core packs on first use, extension packs when the browser is idle. English alone when the locale has no pack. |
+| `createEngineLoader({ packUrl, locale, cultureUrl })` | Core packs on first use, extension packs when the browser is idle. English alone when the locale has no pack. The culture file next to the packs, unless `cultureUrl: false`. |
 | `createApiSemantic({ endpoint, key, packVersion })` | The API host's free shards, then the metered API. `undefined` without an endpoint. |
+
+## Culture
+
+The culture layer adds emoji that fit a place and a time, right after the top result. It never
+replaces the top result: "thank you" in Japan gives 🙏 first, then 🙇. It is on by default.
+`createEngineLoader` loads `…/v1/culture/<version>` next to `…/v1/pack/<version>`. A missing file
+leaves the layer off.
+
+| Option | Default | Values |
+| ------ | ------- | ------ |
+| `cultureUrl` (loader) | the culture directory next to `packUrl` | a URL, or `false` for no culture |
+| `culture` (session, `search`) | the engine's culture file | `false` for the canonical ranking only |
+| `region` (session, `search`) | the device's region | an ISO code such as `"JP"`, `""` for none, `"auto"` for the API's view of the caller's country |
+| `now` (session) / `day` (`search`) | the device clock, local day | a clock, or `"YYYY-MM-DD"` |
+
+The device's region is the region of the browser's language ("en-JP" → JP). When the language has
+no region ("ja"), the time zone gives it ("Asia/Tokyo" → JP). The culture file holds the time
+zones of the regions that its entries name. Nothing about the region leaves the device.
+
+The semantic client sends `culture=0`, because the session applies culture on the device, after
+fusion. Cached answers (shards, the API's edge cache) hold no culture, so one cached answer serves
+every region and day.
 
 ## More
 
@@ -155,13 +177,12 @@ import {
 const endpoint = "https://api.emojisense.com";
 const packs = await loadPacks({ baseUrl: `${endpoint}/v1/pack/0.1.0`, locales: ["en", "es"] });
 
-// Culture: editorial emoji for the moment and the culture join the results after the top result.
+// Culture without the loader: load the file yourself (see "Culture" above).
 const culture = await loadCulture({ baseUrl: `${endpoint}/v1/culture/0.1.0`, locale: "es" });
 const engine = createEngine(packs, { culture });
-engine.search("goat", { locale: "es", region: "AR" }); // 🐐 first, then culture results such as ⚽
+engine.search("goat", { locale: "es" }); // 🐐 first, then culture results such as ⚽
+engine.search("goat", { locale: "es", region: "", day: "2026-10-25" }); // no region, a fixed day
 relevantNow(culture, { region: "MX", limit: 8 }); // a "relevant now" shelf
-// region: "auto" in createSearchSession: the API reports the caller's region (region=auto, from
-// the request's country), and regional entries apply after the first API answer.
 
 // Skin tones and hosted emoji sets (they need a key whose plan includes them, Solo and up).
 applySkinTone("👍", "medium"); // "👍🏽"
@@ -179,7 +200,8 @@ createEngine([...packs, custom]).search("party parrot");
 | `createSearchSession` | Keystroke controller with debounce, fusion and stale-answer handling |
 | `createLayeredSemantic`, `createShardProvider`, `createSemanticClient`, `chainProviders` | Semantic layers |
 | `fuse`, `fuseResults`, `shouldUseSemantic`, `semanticConfidence`, `rerank`, `rerankFeatures`, `RERANK_WEIGHTS` | Fusion of alias and semantic results (the learned reranker by default) |
-| `loadCulture`, `applyCulture`, `matchCulture`, `relevantNow`, `regionOf`, `deviceRegion` | The culture layer |
+| `loadCulture`, `cultureUrlFor`, `applyCulture`, `matchCulture`, `matchCultureInText`, `relevantNow` | The culture layer |
+| `resolveRegion`, `deviceRegion`, `regionOf` | The region rule of the culture layer |
 | `applySkinTone`, `SKIN_TONES`, `emojiImageUrl`, `EMOJI_SETS`, `groupLabel` | Rendering helpers |
 | `normalize`, `tokenize`, `baseId`, `hexcodeOf` | Text and id helpers |
 | `encodeVectors`, `decodeVectors`, `searchVectors`, `searchVectorSets` from `emojisense/vectors` | The emoji vector file format, for semantic search without the API (a separate entry, not in the picker bundle) |

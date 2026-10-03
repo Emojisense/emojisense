@@ -10,6 +10,18 @@ stays the long-term record through an export.
 `draft` and are never in a culture file. The website says "editors, helped by AI"; that stays
 true.
 
+## Where culture applies (2026-10-03: on by default)
+
+| Surface | Default | Region | Day |
+| --- | --- | --- | --- |
+| SDK (core, React, web component, editors) | on: the culture file next to the packs; `cultureUrl: false` turns it off | the device's: language region, else time zone (`zones` in the file); `""` none | the device's local day |
+| `GET /v1/search` | on; `culture=0` turns it off (the SDK client sends it) | `region=XX`, else the region of `locale` (`pt-BR`), else none; `auto` = IP country | `day=`, else the local day of the caller's time zone, else UTC |
+| `POST /v1/suggest-reactions` | on; `"culture": false` turns it off | as search, in the body | as search, in the body |
+| Kotlin, Swift | on with the culture file loaded | the device's (`Locale`, else `TimeZone`) | the device's local day (Gregorian) |
+
+Culture is applied after every cache: shard files, the search edge cache and the R2 answer store
+hold canonical answers only. Developer setup: packages/core/README.md ("Culture"), docs/API.md.
+
 ## Flow
 
 ```

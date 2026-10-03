@@ -543,14 +543,15 @@ A client MUST reject a file whose `format` differs or whose `formatVersion` it d
 | `from`, `until` | Days the build covered: the file holds every lasting entry, plus the seasonal and event entries active on any day of [`from`, `until`]. A build covers 366 days (at least 12 months, also across a leap day), so every yearly entry is in the file. |
 | `entries[].kind` | `lasting`, `seasonal` (a yearly window), `event` (one dated window, ≤ 60 days) or `regional` (a word whose main sense differs by region, always active; see step 3). A festival on a lunar calendar is one event entry per year (`diwali-2026`). |
 | `entries[].context` | The reason, in this file's locale. Neutral, ≤ 90 characters. |
-| `entries[].when` | `null` (always), `{ from: "MM-DD", to: "MM-DD", recurs: "yearly" }` (may wrap the year end, e.g. `12-26` → `01-02`) or `{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`. Days are inclusive and compared with the user's **local** calendar day (the search API: the request's UTC day). |
-| `entries[].regions` | ISO 3166-1 alpha-2 codes, or `["*"]`. Without a region from the app, only `"*"` entries apply. |
+| `entries[].when` | `null` (always), `{ from: "MM-DD", to: "MM-DD", recurs: "yearly" }` (may wrap the year end, e.g. `12-26` → `01-02`) or `{ from: "YYYY-MM-DD", to: "YYYY-MM-DD" }`. Days are inclusive and compared with the user's **local** calendar day (the search API: `day=`, else the local day of the caller's time zone, else UTC). |
+| `entries[].regions` | ISO 3166-1 alpha-2 codes, or `["*"]`. Without a region, only `"*"` entries apply. SDKs use the device's region unless the app says otherwise (see `zones`). |
 | `entries[].exceptRegions` | Optional, with `regions: ["*"]`: codes where the entry does not apply when the app names one of them. |
 | `entries[].outranks` | `regional` entries only: hexcodes of the canonical top answers the regional sense may move to second place. |
 | `entries[].triggers` | Normalized phrases (§3) that people of this locale type. |
 | `entries[].emoji` | `[emoji, hexcode, weight]`, strongest first; weight in (0, 1]. Base hexcodes only. |
 | `entries[].featured` | May appear on an optional "relevant now" shelf (seasonal and event entries only). |
 | `relevantNow` | Always `[]` in 12-month files (see below). In older files: ids of the featured entries active on `from`, in shelf order, for clients that do not evaluate windows. |
+| `zones` | Optional (files since 2026-10-03): IANA time zone → ISO 3166-1 alpha-2 region, for the regions that the file's entries name (`regions`, `exceptRegions`), from the tz database's zone.tab plus the names browsers report (`Asia/Calcutta` next to `Asia/Kolkata`). A client whose language has no region ("ja") takes the region of its time zone here. A zone of any other region is left out: it would change no result. Older clients ignore the key. |
 
 **Applying it (reference: `packages/core/src/culture.ts`).**
 
