@@ -92,7 +92,8 @@ public actor SemanticClient: SemanticProvider {
 
   /// The request URL, which is also the key of the memory. `nil`: nothing to ask (an empty query,
   /// or a pause after an over-limit answer). The client fuses with its own alias results, so it
-  /// asks for semantic results only.
+  /// asks for semantic results only. The session applies the culture layer on the device after
+  /// fusion, so the API must not (`culture=0`). Only the region "auto" is sent.
   private nonisolated func requestURL(query: String, options: SemanticSearchOptions) throws -> URL? {
     if Normalizer.normalize(query).isEmpty || now() < memory.withLock({ $0.pausedUntil }) {
       return nil
@@ -100,8 +101,9 @@ public actor SemanticClient: SemanticProvider {
     // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
     var parameters = [
       ("q", Normalizer.embeddingText(query)), ("locale", options.locale ?? "en"),
-      ("limit", String(options.limit)), ("mode", "semantic"),
+      ("limit", String(options.limit)), ("mode", "semantic"), ("culture", "0"),
     ]
+    if isAutoRegion(options.region) { parameters.append(("region", autoRegion)) }
     if let packVersion = configuration.packVersion { parameters.append(("pack", packVersion)) }
     if let key = configuration.key { parameters.append(("key", key)) }
     let base = URLEncoding.trimmingTrailingSlashes(configuration.endpoint)

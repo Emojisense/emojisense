@@ -3,15 +3,34 @@ import Foundation
 public struct AliasSearchOptions: Sendable {
   /// Maximum number of results. Default 24.
   public var limit: Int
-  /// Preferred locale. Matches that exist only in other loaded packs get a small penalty.
+  /// Preferred locale. Matches that exist only in other loaded packs get a small penalty. Also
+  /// the label locale of culture results.
   public var locale: String?
   /// Treat the last token as a prefix while the user is still typing. Default true.
   public var prefix: Bool
+  /// `false`: the canonical ranking only, even when the engine has a culture file
+  /// (reproducible). Default true.
+  public var culture: Bool
+  /// ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". `nil` (or "device"): the
+  /// device's region (``CultureLayer/resolveRegion(_:culture:)``). "": none, only the entries for
+  /// every region.
+  public var region: String?
+  /// The moment culture windows are checked against, as a local calendar day. Default: now.
+  public var now: Date?
+  /// The calendar day culture windows are checked against, "YYYY-MM-DD". It wins over `now`.
+  public var day: String?
 
-  public init(limit: Int = 24, locale: String? = nil, prefix: Bool = true) {
+  public init(
+    limit: Int = 24, locale: String? = nil, prefix: Bool = true, culture: Bool = true,
+    region: String? = nil, now: Date? = nil, day: String? = nil
+  ) {
     self.limit = limit
     self.locale = locale
     self.prefix = prefix
+    self.culture = culture
+    self.region = region
+    self.now = now
+    self.day = day
   }
 }
 
@@ -20,35 +39,63 @@ public struct AliasSearchOptions: Sendable {
 /// A port of `createEngine` in `packages/core/src/engine.ts` that gives the same ranking and the
 /// same scores. Searching is thread-safe: concurrent calls share scratch buffers and run one at a
 /// time, so a keystroke never allocates per-phrase state.
+///
+/// With a culture file (``culture``), ``search(_:options:)`` adds the culture layer's results
+/// after the canonical top result (PACK_FORMAT.md §9). ``canonicalSearch(_:options:)`` never
+/// does.
 public final class AliasEngine: @unchecked Sendable {
   public static let defaultMinCoverage = 0.34
 
   public var entries: [EmojiEntry] { index.entries }
   public var locales: [String] { index.locales }
   public var packVersion: String { index.packVersion }
+  /// The culture file whose entries add results after the canonical top result, or `nil`.
+  public let culture: Culture?
 
   private let index: AliasIndex
   private let minCoverage: Double
-  private let lock = NSLock()
-  /// Guarded by `lock`.
-  private var scratch: SearchScratch
+  /// Shared by the engines that ``withCulture(_:)`` makes from this one.
+  private let searchState: SearchState
+  private var lock: NSLock { searchState.lock }
+  /// Guarded by `lock`. The coroutine accessors mutate the shared buffers in place; a getter and
+  /// setter would copy them on every write.
+  private var scratch: SearchScratch {
+    _read { yield searchState.scratch }
+    _modify { yield &searchState.scratch }
+  }
 
   /// Builds the index from packs in index order: the first pack is the primary one.
   /// `popularity: false` ignores the packs' `popularity` (equal scores keep row order).
-  public init(packs: [Pack], minCoverage: Double = defaultMinCoverage, popularity: Bool = true)
-    throws
-  {
+  public init(
+    packs: [Pack], minCoverage: Double = defaultMinCoverage, popularity: Bool = true,
+    culture: Culture? = nil
+  ) throws {
     index = try AliasIndex(packs: packs, popularity: popularity)
     self.minCoverage = minCoverage
-    scratch = SearchScratch(phraseCount: index.phraseCount, emojiCount: index.entries.count)
+    self.culture = culture
+    searchState = SearchState(
+      SearchScratch(phraseCount: index.phraseCount, emojiCount: index.entries.count))
   }
 
   /// Builds the index in the order PACK_FORMAT.md §2 prescribes: every core part first
   /// (English first), then the extension parts.
   public convenience init(
-    core: [Pack], extensions: [Pack] = [], minCoverage: Double = defaultMinCoverage
+    core: [Pack], extensions: [Pack] = [], minCoverage: Double = defaultMinCoverage,
+    culture: Culture? = nil
   ) throws {
-    try self.init(packs: core + extensions, minCoverage: minCoverage)
+    try self.init(packs: core + extensions, minCoverage: minCoverage, culture: culture)
+  }
+
+  private init(sharing engine: AliasEngine, culture: Culture?) {
+    index = engine.index
+    minCoverage = engine.minCoverage
+    searchState = engine.searchState
+    self.culture = culture
+  }
+
+  /// The same index with another culture file (`nil` = none). The index is shared, not rebuilt.
+  public func withCulture(_ culture: Culture?) -> AliasEngine {
+    AliasEngine(sharing: self, culture: culture)
   }
 
   public func entry(id: String) -> EmojiEntry? {
@@ -60,11 +107,31 @@ public final class AliasEngine: @unchecked Sendable {
     index.entryIndexById[id].map { Double(index.entryPopularity[$0]) / 100 } ?? 0
   }
 
-  /// The search of the query as typed, merged with the search of its split word joined back
-  /// (`joinedQuery`) at `joinedWordFactor`: each emoji keeps its better score (PACK_FORMAT.md §4).
+  /// The canonical ranking (``canonicalSearch(_:options:)``), plus culture results after its top
+  /// result when the engine has a culture file and `options.culture` is true. The region is
+  /// `options.region` as ``CultureLayer/resolveRegion(_:culture:)`` reads it: the device's region
+  /// by default. ``AliasSearchOutput/confidence`` and ``AliasSearchOutput/coverage`` stay the
+  /// canonical ones.
   public func search(_ query: String, options: AliasSearchOptions = AliasSearchOptions())
     -> AliasSearchOutput
   {
+    var output = canonicalSearch(query, options: options)
+    guard let culture, options.culture else { return output }
+    output.results = CultureLayer.applyCulture(
+      output.results, culture: culture, query: query,
+      region: CultureLayer.resolveRegion(options.region, culture: culture), now: options.now,
+      day: options.day, prefix: options.prefix, limit: options.limit, engine: self,
+      locale: options.locale)
+    return output
+  }
+
+  /// The canonical ranking only: alias results, never culture results (`options.culture` and the
+  /// culture options are ignored). The search of the query as typed, merged with the search of
+  /// its split word joined back (`joinedQuery`) at `joinedWordFactor`: each emoji keeps its
+  /// better score (PACK_FORMAT.md §4).
+  public func canonicalSearch(
+    _ query: String, options: AliasSearchOptions = AliasSearchOptions()
+  ) -> AliasSearchOutput {
     let output = searchAsTyped(query, options: options)
     guard let joined = joinedQuery(query, tokens: output.tokens) else { return output }
     let other = searchAsTyped(joined, options: options)
@@ -479,6 +546,18 @@ public final class AliasEngine: @unchecked Sendable {
       }
     }
     return low
+  }
+}
+
+/// The lock and scratch buffers of one index, shared by the engines that
+/// ``AliasEngine/withCulture(_:)`` makes.
+private final class SearchState: @unchecked Sendable {
+  let lock = NSLock()
+  /// Guarded by `lock`.
+  var scratch: SearchScratch
+
+  init(_ scratch: SearchScratch) {
+    self.scratch = scratch
   }
 }
 

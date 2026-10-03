@@ -9,6 +9,9 @@ public enum Field: String, CaseIterable, Codable, Sendable {
   case alias
   case typo
   case low
+  /// Not a pack field: marks a result the culture layer added (``AliasResult/source`` is
+  /// ``ResultSource/culture``), so alias and culture results read alike.
+  case culture
 
   public var defaultWeight: Double {
     switch self {
@@ -18,8 +21,12 @@ public enum Field: String, CaseIterable, Codable, Sendable {
     case .alias: 0.8
     case .typo: 0.75
     case .low: 0.55
+    case .culture: 0
     }
   }
+
+  /// The fields a pack row holds phrases for, strongest first.
+  static let packFields: [Field] = [.name, .shortcode, .keyword, .alias, .typo, .low]
 }
 
 /// One emoji of a pack: an 11-position JSON array.
@@ -59,7 +66,8 @@ public struct PackRow: Hashable, Sendable {
     self.low = low
   }
 
-  /// The stored phrases of a field. ``Field/name`` is derived from ``label`` and returns "".
+  /// The stored phrases of a field. ``Field/name`` is derived from ``label`` and returns "", as
+  /// does ``Field/culture``.
   public func phrases(for field: Field) -> String {
     switch field {
     case .name: ""
@@ -68,6 +76,7 @@ public struct PackRow: Hashable, Sendable {
     case .alias: alias
     case .typo: typo
     case .low: low
+    case .culture: ""
     }
   }
 }

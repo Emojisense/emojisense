@@ -72,7 +72,7 @@ struct AliasIndex: Sendable {
       for row in pack.emoji {
         guard let emojiIndex = entryIndexById[row.hexcode] else { continue }
         if !row.label.isEmpty { entries[emojiIndex].labels[pack.locale] = row.label }
-        for field in Field.allCases {
+        for field in Field.packFields {
           let value = field == .name ? Normalizer.normalize(row.label) : row.phrases(for: field)
           if value.isEmpty || pack.weight(for: field) <= 0 { continue }
           for phrase in value.splitOnScalar("|", omittingEmpty: true) {

@@ -9,8 +9,10 @@ same results as the TypeScript engine.
 | Normalization | `Normalizer` | PACK_FORMAT.md §3, for queries and labels. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes `pack.<locale>.json` and `pack.<locale>.ext.json`. Verifies `sha256`. |
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards on the CDN (§6): a live layer, then a base layer. A loaded shard answers `peek` between keystrokes. |
-| Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic`, with an LRU cache that answers `peek`. Over the limit it still gets the edge's cached answers. |
+| Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic&culture=0`, with an LRU cache that answers `peek`. Over the limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Pinned reciprocal rank fusion, as in `core/src/fusion.ts`. |
+| Session | `SearchSession` | The search loop, as `createSearchSession` in `core/src/session.ts`: alias results on every keystroke, semantic results fused in after a debounce (or at once from memory), culture applied last. |
+| Culture | `Culture`, `CultureLayer`, `CultureResult` | Decodes `culture.<locale>.json` (PACK_FORMAT.md §9). Adds editorial emoji after the canonical top result, by region and calendar day, as `core/src/culture.ts`. |
 | Confidence | `Confidence` | The unsure verdict (`assess`), as in `core/src/confidence.ts`. |
 | Emoji sets | `EmojiSet`, `Hexcode` | The `emojiSet` option of the pickers: `.native` or a hosted set. `imageURL(for:endpoint:key:)` gives `/v1/sets/<set>/<hexcode>.svg?key=…` (a key whose plan includes hosted sets). No UI. |
 
@@ -44,23 +46,23 @@ import Emojisense
 
 // 1. Load the core packs (English is always first). You can also bundle the files and use
 //    `try Pack(jsonData: data)`.
-let loader = PackLoader(baseURL: URL(string: "https://api.emojisense.com/v1/pack/0.1.0")!)
+let packURL = URL(string: "https://api.emojisense.com/v1/pack/0.1.0")!
+let loader = PackLoader(baseURL: packURL)
 let manifest = try await loader.loadManifest()
 let core = try await loader.loadPacks(locales: ["en", "tr"], manifest: manifest)
-var engine = try AliasEngine(core: core)
 
-// 2. Alias search runs on every keystroke. It is synchronous and fast (see Performance). Fusion
-//    needs the same candidates whatever the limit (`Fusion.rankDepth`), so search deeper and show
-//    `limit`.
-let limit = 12
-let depth = max(limit, Fusion.rankDepth)
+// 2. Load the culture file next to the packs (`.../v1/culture/0.1.0`). Without it, search has
+//    no culture layer and works as before, so a failed load is not an error.
+let culture = try? await CultureLayer.loadCulture(
+  baseURL: CultureLayer.cultureURL(forPackURL: packURL)!, locale: "tr")
+var engine = try AliasEngine(core: core, culture: culture)
 
-// 3. When the device is idle, load the extension parts and rebuild the index.
+// 3. When the device is idle, load the extension parts and rebuild the index. Make a new
+//    session for the new engine.
 let extensions = try await loader.loadPacks(locales: ["en", "tr"], part: .ext, manifest: manifest)
-engine = try AliasEngine(core: core, extensions: extensions)
+engine = try AliasEngine(core: core, extensions: extensions, culture: culture)
 
-// 4. Semantic layers: static shards first (free files on the CDN), then the API. Load the shard
-//    indexes while the user starts to type.
+// 4. Semantic layers: static shards first (free files on the CDN), then the API.
 let semantic = ProviderChain([
   ShardProvider(baseURL: URL(string: "https://cdn.emojisense.com/p/0.1.0")!),
   SemanticClient(
@@ -68,51 +70,45 @@ let semantic = ProviderChain([
       endpoint: URL(string: "https://api.emojisense.com")!, key: "pk_live_…",
       packVersion: engine.packVersion)),
 ])
-semantic.prefetch("", locale: "en")
 
-// 5. The search loop: call `update` on every keystroke. `show` is your UI.
-var semanticTask: Task<Void, Never>?
-
-func update(_ query: String) {
-  semanticTask?.cancel()
-  let alias = engine.search(query, options: AliasSearchOptions(limit: depth, locale: "en"))
-  show(alias.results.prefix(limit).map(\.searchResult))
-  guard Fusion.shouldUseSemantic(alias) else { return }
-  let options = SemanticSearchOptions(locale: "en", limit: depth)
-  // A loaded shard, or an answer the client already has: show it at once, with no debounce.
-  if let response = semantic.peek(query, options: options) {
-    return show(fused(alias, response))
-  }
-  // Load the query's shard during the debounce, so that the next keystroke can peek at it.
-  semantic.prefetch(query, locale: "en")
-  semanticTask = Task {
-    try? await Task.sleep(for: .milliseconds(200))
-    guard !Task.isCancelled, let response = try? await semantic.search(query, options: options),
-      !Task.isCancelled
-    else { return }
-    show(fused(alias, response))
+// 5. The session loads the shard indexes at once. Call `update` on every keystroke. `show` is
+//    your UI.
+let session = SearchSession(engine: engine, semantic: semantic, locale: "tr", limit: 12) {
+  state in
+  Task { @MainActor in
+    // `state.unsure`: no tier understood the query. Show the results as guesses.
+    show(state.results, unsure: state.unsure)
   }
 }
-
-func fused(_ alias: AliasSearchOutput, _ response: SemanticResponse) -> [SearchResult] {
-  // The calibration of the server's model; older servers send none.
-  let calibration = response.calibration ?? .standard
-  // 6. No tier understood the query: show the results as guesses.
-  let isUnsure = Confidence.assess(
-    alias: alias, semantic: response.results, calibration: calibration
-  ).unsure
-  return Fusion.fuse(
-    alias: alias, semantic: response.results, limit: limit, calibration: calibration,
-    ranking: .init(popularity: { [engine] in engine.popularity($0) }))
-}
+session.update("greatest of all time")
 ```
+
+`SearchSession` does what the reference session does:
+
+1. It searches the alias engine at once and calls `onChange` before `update` returns.
+2. When the alias engine is unsure (`Fusion.shouldUseSemantic`), it asks the semantic layers. An
+   answer in memory (`peek`: a loaded shard, or an answer `SemanticClient` already has) comes at
+   once, with no debounce and no request. Otherwise the session calls `prefetch`, waits for the
+   debounce (200 ms) and calls `search`.
+3. It fuses the alias and semantic results (`Fusion.fuse`, `Confidence.assess`). Fusion always
+   sees `Fusion.rankDepth` candidates, and the session cuts the list to `limit`.
+4. It applies the culture layer last, so the canonical top result stays first.
+
+A newer `update` cancels the older request, and the session drops an answer for an older query.
+`onChange` runs in `update` for the alias results and for answers in memory, and on a background
+task for requested answers. The calls never overlap and come in order. Hop to the main actor the
+same way in every call, as above. Keep `onChange` short, and never wait in it for the thread that
+calls `update` (no `DispatchQueue.main.sync`). Call `cancel()` when the search UI goes away.
+
+To build your own loop, use `engine.canonicalSearch` (alias results only), `Fusion.fuse`, and then
+`CultureLayer.applyCulture` on the fused list.
 
 Notes:
 
-- Call `peek` first on each keystroke. A loaded shard, or an answer that `SemanticClient` already
-  has, needs no debounce and no request. Otherwise call `prefetch`, then debounce `search` (for
-  example 200 ms). Cancel the task when the query changes. `peek` never returns an `overLimit`
-  answer.
+- In your own loop, call `peek` first on each keystroke. A loaded shard, or an answer that
+  `SemanticClient` already has, needs no debounce and no request. Otherwise call `prefetch`, then
+  debounce `search` (for example 200 ms). Cancel the task when the query changes. `peek` never
+  returns an `overLimit` answer.
 - `AliasEngine` is thread-safe. Concurrent searches use one shared scratch buffer, one at a time.
 - `SemanticClient` returns `nil` while it is paused after an `overLimit` answer. It throws
   `EmojisenseError.httpStatus` for HTTP errors. `ShardProvider` returns `nil` for network errors,
@@ -131,6 +127,63 @@ Notes:
 - `AliasSearchOutput.coverage` is the largest share of the query that one phrase matches with
   whole tokens. Below `Confidence.wholeCoverage` (0.85) the dictionary does not explain the query.
 
+## Culture
+
+The culture layer adds editorial emoji next to the canonical answer: "greatest of all time" keeps
+🐐 first and also shows ⚽ 🇦🇷 🇵🇹. It is a port of `packages/core/src/culture.ts`
+(PACK_FORMAT.md §9).
+
+- **On by default.** An engine with a culture file (`AliasEngine(…, culture:)` or
+  `engine.withCulture(file)`) applies it in `search` and in every `SearchSession`. Load the file
+  next to the packs: `CultureLayer.cultureURL(forPackURL:)` turns `.../v1/pack/0.1.0` into
+  `.../v1/culture/0.1.0`, and `CultureLayer.loadCulture(baseURL:locale:)` fetches
+  `culture.<locale>.json`. Load the file of the pack locale, or the English file when the
+  locale has no packs. `withCulture` shares the index; it does not rebuild it.
+- **Off.** `AliasSearchOptions(culture: false)`, `engine.canonicalSearch`, or
+  `SearchSession(engine:…, culture: nil, …)`. Use it for reproducible ranking.
+- **Where results go.** Culture results come right after the canonical top result, never above
+  it. One exception: a regional sense (`CultureKind.regional`) of the whole query in the app's
+  region leads when the canonical top result is the other region's reading ("football" in
+  Germany: ⚽ first, 🏈 second). In `AliasSearchOutput.results` a culture result has
+  `source == .culture`, `field == .culture`, a `context` (the reason, in the file's locale) and a
+  `cultureId`. In `SessionState.results` it is a `SearchResult` with the same `source`,
+  `context` and `cultureId`.
+- **Region.** `region: nil` (or `"device"`) is the device's region: `Locale.current.region`,
+  else the region of `TimeZone.current` in the file's `zones` map. `""` is no region: only the
+  entries for every region apply. A code (`"BR"`) is used as given. In a session, `"auto"` sends
+  `region=auto` to the API and uses the region of the first answer that has one. A region code
+  never leaves the device. `CultureLayer.resolveRegion(_:culture:)` applies these rules.
+- **Day.** Windows are checked against the local calendar day (Gregorian calendar, device time
+  zone) on every search, so one file covers 12 months. `AliasSearchOptions(now:)`,
+  `AliasSearchOptions(day: "2026-10-31")` and `SearchSession(…, now:)` set the day. A `day` that
+  is not `YYYY-MM-DD` is a programming error (precondition failure); check one first with
+  `CultureLayer.scopeDay(day:)`, which throws.
+- **The API.** `SemanticClient` sends `culture=0` on every request: the session applies culture
+  on the device after fusion, so the API must not apply it too.
+- **Messages.** `CultureLayer.matchCultureInText` and `applyCulture(…, text: true)` find
+  triggers inside a message (reaction suggestions): whole words, or anywhere for scripts written
+  without spaces. A message gets no regional lead.
+- **Shelf.** `CultureLayer.relevantNow(_:)` lists featured seasonal and event emoji that are
+  active today.
+
+### Changes to the public API
+
+The culture layer added these. Existing code compiles unchanged, except an exhaustive `switch`
+over `ResultSource`, `Field` or `EmojisenseError`, which needs the new cases.
+
+| Type | Change |
+| ---- | ------ |
+| `AliasEngine` | `culture`, `init(…, culture:)`, `withCulture(_:)`, `canonicalSearch(_:options:)`. `search` adds culture results when the engine has a culture file. |
+| `AliasSearchOptions` | `culture` (default `true`), `region` (default: the device's region), `now`, `day`. |
+| `AliasResult` | `source` (`.alias` or `.culture`), `context`, `cultureId`. `searchResult` keeps them. |
+| `SearchResult` | `context`, `cultureId` (culture results only). |
+| `ResultSource` | New case `culture`. |
+| `Field` | New case `culture`: marks a culture result. It is not a pack field. |
+| `SemanticSearchOptions` | `region` (only `"auto"` is sent). |
+| `SemanticResponse` | `region` (the region the API found for `region=auto`). |
+| `SemanticClient` | Sends `culture=0`, and `region=auto` for the region `"auto"`. |
+| `EmojisenseError` | New cases `invalidData(_:)` and `invalidLocale(_:)`. |
+
 ## Tests and conformance
 
 ```sh
@@ -139,9 +192,10 @@ cd sdks/swift && swift build && swift test
 ```
 
 The conformance tests compare the Swift port with the TypeScript reference engine.
-`Tests/EmojisenseTests/Resources/golden.json` holds the reference output. The tests read the packs
-from `packages/data/dist/packs/<version>`, or from `EMOJISENSE_PACK_DIR`. The packs are not copied
-into the SDK, because they are 2 MB. If the packs are missing, the search tests are skipped. If the
+`Tests/EmojisenseTests/Resources/golden.json` holds the reference output.
+`Tests/EmojisenseTests/Resources/culture-golden.json` holds the culture layer's reference output
+(Kotlin reads the same file). The tests read the packs from `packages/data/dist/packs/<version>`,
+or from `EMOJISENSE_PACK_DIR`. The packs are not copied into the SDK, because they are 2 MB. If the packs are missing, the search tests are skipped. If the
 packs differ from the ones in `golden.json` (sha256), the tests fail and tell you to regenerate.
 
 | Check | Cases | Result |
@@ -159,6 +213,7 @@ packs differ from the ones in `golden.json` (sha256), the tests fail and tell yo
 | Fusion (`Fusion.fuse`) on recorded lists, with and without the reranker (55 queries and 2 number-slang queries): same top-10 ids | 57 × 2 | 100% |
 | Confidence cases (`Confidence.assess`, `semanticStrength`): same confidence and unsure (required 100%); strength within 1e-12 (39 cases with a semantic list; largest difference 0) | 44 cases | 100% |
 | Function-word lists (`FunctionWords.swift`) equal the reference | 11 locales | 100% |
+| Culture layer (`culture-golden.json`: one English culture file, every entry's first trigger in and out of its region and window, as a prefix, with a trailing space and in a message, plus fixed queries): `engine.search` and `applyCulture(text: true)` give the same ids, sources, culture ids and scores | 186 cases | 100% |
 
 Measured on macOS 26 (arm64), Swift 6.4, Node 24.5.0, pack 0.1.0.
 
@@ -166,7 +221,7 @@ Regenerate the reference data after a change to `packages/core`, the packs or th
 
 ```sh
 pnpm exec tsx sdks/swift/scripts/make-function-words.ts    # after a list changes (Swift and Kotlin)
-pnpm exec tsx sdks/swift/scripts/make-golden.ts            # writes golden.json
+pnpm exec tsx sdks/swift/scripts/make-golden.ts            # writes golden.json and culture-golden.json
 pnpm exec tsx sdks/swift/scripts/make-unicode-tables.ts    # after a Node (Unicode) upgrade
 ```
 

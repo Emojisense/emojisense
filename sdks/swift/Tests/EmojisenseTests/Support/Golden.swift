@@ -206,10 +206,11 @@ struct GoldenPacks: Sendable {
     return repositoryRoot.appendingPathComponent("packages/data/dist/packs/\(packVersion)")
   }
 
-  static func load(for golden: Golden) throws -> GoldenPacks {
+  /// - Parameter files: Only these pack files (each must be one of `golden.packSha256`).
+  static func load(for golden: Golden, files: [String]? = nil) throws -> GoldenPacks {
     let directory = directory(packVersion: golden.packVersion)
     var byFile: [String: Pack] = [:]
-    for (file, expectedHash) in golden.packSha256 {
+    for (file, expectedHash) in golden.packSha256 where files?.contains(file) ?? true {
       let url = directory.appendingPathComponent(file)
       guard FileManager.default.fileExists(atPath: url.path) else {
         throw GoldenError.packsNotBuilt(directory)

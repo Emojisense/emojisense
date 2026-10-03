@@ -13,6 +13,10 @@ public enum EmojisenseError: Error, Equatable, Sendable, CustomStringConvertible
   case checksumMismatch(file: String)
   /// A URL could not be built from the configured base URL.
   case invalidURL(String)
+  /// The file has the expected format but its content is not valid.
+  case invalidData(String)
+  /// The value is not a plain locale tag such as "en" or "pt-BR".
+  case invalidLocale(String)
 
   public var description: String {
     switch self {
@@ -28,6 +32,10 @@ public enum EmojisenseError: Error, Equatable, Sendable, CustomStringConvertible
       "emojisense: \(file) does not match the sha256 in the manifest"
     case .invalidURL(let value):
       "emojisense: cannot build a URL from \(value)"
+    case .invalidData(let message):
+      "emojisense: \(message)"
+    case .invalidLocale(let value):
+      "emojisense: \"\(value)\" is not a locale tag"
     }
   }
 }

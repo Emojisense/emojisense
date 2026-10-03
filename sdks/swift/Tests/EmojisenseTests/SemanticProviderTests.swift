@@ -34,14 +34,43 @@ final class SemanticClientTests: XCTestCase {
     XCTAssertEqual(requests.count, 1)
     XCTAssertEqual(
       requests.first?.absoluteString,
-      "https://api.test/v1/search?q=jurassic+park%21%21&locale=en&limit=5&mode=semantic&key=pk_1")
+      "https://api.test/v1/search?q=jurassic+park%21%21&locale=en&limit=5&mode=semantic&culture=0&key=pk_1")
   }
 
   func testEncodesAPlusLikeURLSearchParams() async throws {
     let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8)) }
     _ = try await client(transport).search("+1")
     let url = await transport.requests.first
-    XCTAssertEqual(url?.query, "q=%2B1&locale=en&limit=24&mode=semantic")
+    XCTAssertEqual(url?.query, "q=%2B1&locale=en&limit=24&mode=semantic&culture=0")
+  }
+
+  /// The session applies culture on the device, so the API must not; only "auto" is sent as a
+  /// region, after `culture` and before `pack` and `key`, in the order of the reference.
+  func testSendsCultureOffAndOnlyTheAutoRegion() async throws {
+    let transport = StubTransport { _ in HTTPResponse(status: 200, body: Data(semanticBody.utf8)) }
+    let client = SemanticClient(
+      configuration: .init(
+        endpoint: URL(string: "https://api.test")!, key: "pk_1", packVersion: "0.1.0"),
+      transport: transport)
+    _ = try await client.search("volcano", options: SemanticSearchOptions(region: "AUTO"))
+    _ = try await client.search("lava", options: SemanticSearchOptions(region: "BR"))
+    let queries = await transport.requests.map(\.query)
+    XCTAssertEqual(
+      queries,
+      [
+        "q=volcano&locale=en&limit=24&mode=semantic&culture=0&region=auto&pack=0.1.0&key=pk_1",
+        "q=lava&locale=en&limit=24&mode=semantic&culture=0&pack=0.1.0&key=pk_1",
+      ])
+  }
+
+  func testDecodesTheRegionTheAPIFound() throws {
+    let json = semanticBody.replacingOccurrences(
+      of: #""cached":false"#, with: #""cached":false,"region":"DE","culture":null"#)
+    let response = try JSONDecoder().decode(SemanticResponse.self, from: Data(json.utf8))
+    XCTAssertEqual(response.region, "DE")
+    let unknown = semanticBody.replacingOccurrences(
+      of: #""cached":false"#, with: #""cached":false,"region":null"#)
+    XCTAssertNil(try JSONDecoder().decode(SemanticResponse.self, from: Data(unknown.utf8)).region)
   }
 
   func testGoesQuietAfterAnOverLimitAnswerThenRetriesAfterTheCooldown() async throws {

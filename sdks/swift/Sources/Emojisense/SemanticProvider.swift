@@ -27,12 +27,15 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
   public var unsure: Bool?
   /// Set by the provider that answered.
   public var layer: SemanticLayer?
+  /// Server, after a request with `region=auto` (``SemanticSearchOptions/region``): the caller's
+  /// country as the API's edge saw it. `nil` when unknown.
+  public var region: String?
 
   public init(
     results: [SearchResult], packVersion: String, model: String? = nil,
     calibration: Fusion.SemanticCalibration? = nil, cached: Bool, degraded: Bool = false,
     overLimit: Bool = false, confidence: Double? = nil, unsure: Bool? = nil,
-    layer: SemanticLayer? = nil
+    layer: SemanticLayer? = nil, region: String? = nil
   ) {
     self.results = results
     self.packVersion = packVersion
@@ -44,6 +47,7 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
     self.confidence = confidence
     self.unsure = unsure
     self.layer = layer
+    self.region = region
   }
 
   public init(from decoder: any Decoder) throws {
@@ -59,6 +63,7 @@ public struct SemanticResponse: Codable, Equatable, Sendable {
     confidence = try container.decodeIfPresent(Double.self, forKey: .confidence)
     unsure = try container.decodeIfPresent(Bool.self, forKey: .unsure)
     layer = try container.decodeIfPresent(SemanticLayer.self, forKey: .layer)
+    region = try container.decodeIfPresent(String.self, forKey: .region)
   }
 }
 
@@ -66,11 +71,24 @@ public struct SemanticSearchOptions: Sendable {
   /// Default: the provider's default ("en" for the API).
   public var locale: String?
   public var limit: Int
+  /// "auto" asks the API for the caller's region (`region=auto`, from the request's country),
+  /// which it returns in ``SemanticResponse/region``. Only "auto" is sent: a region code stays
+  /// on the device.
+  public var region: String?
 
-  public init(locale: String? = nil, limit: Int = 24) {
+  public init(locale: String? = nil, limit: Int = 24, region: String? = nil) {
     self.locale = locale
     self.limit = limit
+    self.region = region
   }
+}
+
+/// The region value that asks the API for the caller's region.
+let autoRegion = "auto"
+
+/// True for "auto" in any case.
+func isAutoRegion(_ region: String?) -> Bool {
+  region?.lowercased() == autoRegion
 }
 
 /// A source of semantic results: precomputed shards, the HTTP API, or (later) an on-device model.

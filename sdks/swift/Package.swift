@@ -12,7 +12,7 @@ let package = Package(
     .testTarget(
       name: "EmojisenseTests",
       dependencies: ["Emojisense"],
-      resources: [.copy("Resources/golden.json")]
+      resources: [.copy("Resources/golden.json"), .copy("Resources/culture-golden.json")]
     ),
   ]
 )
