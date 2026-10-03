@@ -106,6 +106,19 @@ internal const val AUTO_REGION = "auto"
  */
 public fun interface SemanticProvider {
     public suspend fun search(query: String, options: SemanticSearchOptions): SemanticResponse?
+
+    /**
+     * The answer that is already in memory, without I/O: a loaded shard, or a response this client
+     * received before. [SearchSession] shows it at once, with no debounce. Null: nothing in memory.
+     */
+    public fun peek(query: String, options: SemanticSearchOptions): SemanticResponse? = null
+
+    /**
+     * Starts to load what [peek] needs for this query (a shard index, the query's shard), so it is
+     * there by the next keystroke. An empty query loads the indexes only. Returns at once and never
+     * throws.
+     */
+    public fun prefetch(query: String, locale: String?) {}
 }
 
 /** [SemanticProvider.search] with the default options. */
@@ -121,6 +134,13 @@ public class ProviderChain(public val providers: List<SemanticProvider>) : Seman
             provider.search(query, options)?.let { return it }
         }
         return null
+    }
+
+    override fun peek(query: String, options: SemanticSearchOptions): SemanticResponse? =
+        providers.firstNotNullOfOrNull { it.peek(query, options) }
+
+    override fun prefetch(query: String, locale: String?) {
+        for (provider in providers) provider.prefetch(query, locale)
     }
 }
 

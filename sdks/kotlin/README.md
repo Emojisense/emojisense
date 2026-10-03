@@ -9,11 +9,11 @@ It gives the same results as the TypeScript engine and the Swift SDK.
 | Normalization | `Normalizer` | PACK_FORMAT.md §3 for queries and labels, and `embeddingText` for the semantic tier. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes core, ext and custom packs. Verifies `sha256` against the manifest. |
 | Culture layer | `CultureLayer`, `Culture` | `applyCulture`, regional senses, `relevantNow` (PACK_FORMAT.md §9). |
-| Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6). |
+| Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6): content-named files (`files`) and a base layer (`base`). Answers between keystrokes. |
 | Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic` with an LRU cache. Over the plan limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Confidence-weighted reciprocal rank fusion with the alias floor and the flag guard. |
 | Unsure queries | `Confidence` | `assessConfidence` and `semanticStrength`: is the query unsure. |
-| Session | `SearchSession` | Alias results on every keystroke, then debounced semantic results, then culture. Coroutines. |
+| Session | `SearchSession` | Alias results on every keystroke, then semantic results (at once from a loaded shard, else debounced), then culture. Coroutines. |
 | Emoji sets | `EmojiSet`, `Hexcode` | `.svg` URLs of the hosted sets. No UI. |
 
 Requirements: Java 8 bytecode; JDK 21 to build. Dependencies: `kotlinx-coroutines-core` and
@@ -64,7 +64,7 @@ class SearchViewModel : ViewModel() {
             engine = engine,
             scope = viewModelScope,
             semantic = ProviderChain(
-                ShardProvider("$api/p/0.1.0"),
+                ShardProvider("https://cdn.emojisense.com/p/0.1.0"),
                 SemanticClient(SemanticClient.Configuration(api, key = "pk_live_…", packVersion = engine.packVersion)),
             ),
             locale = "tr",
@@ -90,8 +90,19 @@ Notes:
   errors and for queries whose embedding text differs from the normalized query, so the next
   provider gets the query.
 - `ShardProvider` reads the shards of `SemanticSearchOptions.locale`. English (or no locale) uses
-  `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. If a
-  locale has no shards (404), the provider stops asking for that locale and the API answers.
+  `<base>/index.json`. Another locale uses its folder, for example `<base>/tr/index.json`. An index
+  names the file of each key (`files`, relative to the index) and can name a base layer (`base`).
+  The provider asks the live layer first, then the base layer. If a locale has no shards (404), the
+  provider stops asking for that locale and the API answers. After a network error, it asks again
+  after `retryMillis` (default 10 s).
+- Shards answer between keystrokes. `SearchSession` calls `prefetch` when it is created (the shard
+  indexes) and on each keystroke that needs semantic results (the query's shard). On the next
+  keystroke, `peek` reads a loaded shard from memory: the session shows the fused results at once,
+  with no debounce and no request (`semanticMillis` is 0). `SemanticClient.peek` reads the answers
+  of earlier requests in the same way. The downloads run in the `scope` of `ShardProvider` (default:
+  `Dispatchers.Default`).
+- The CDN (`https://cdn.emojisense.com/p/<packVersion>`) serves the shards with no Worker. The API
+  host (`https://api.emojisense.com/p/<packVersion>`) serves the same files for older clients.
 - `CultureLayer.deviceRegion()` reads the region of `Locale.getDefault()` on the device. Nothing
   sends it anywhere. Pass `culture = null` to `SearchSession` (or `culture = false` in
   `AliasSearchOptions`) for the canonical ranking only.

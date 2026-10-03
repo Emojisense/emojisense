@@ -37,11 +37,8 @@ public class SemanticClient @JvmOverloads constructor(
      * [EmojisenseException.HttpStatus] for HTTP errors.
      */
     override suspend fun search(query: String, options: SemanticSearchOptions): SemanticResponse? {
-        if (Normalizer.normalize(query).isEmpty() || clock() < synchronized(lock) { pausedUntil }) return null
-        // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
-        val url = requestUrl(Normalizer.embeddingText(query), options)
-        // From this client's memory: no request went out, so it is not a fresh model answer.
-        synchronized(lock) { cache[url] }?.let { hit -> return if (hit.overLimit) null else hit.copy(cached = true) }
+        val url = requestUrl(query, options) ?: return null
+        synchronized(lock) { cache[url] }?.let { hit -> return remembered(hit) }
 
         val response = transport.get(url)
         if (!response.isSuccess) throw EmojisenseException.HttpStatus(response.status, url)
@@ -55,13 +52,26 @@ public class SemanticClient @JvmOverloads constructor(
 
     public suspend fun search(query: String): SemanticResponse? = search(query, SemanticSearchOptions())
 
+    /** An answer of an earlier [search] with the same request, from memory only. Never an over-limit answer. */
+    override fun peek(query: String, options: SemanticSearchOptions): SemanticResponse? {
+        val url = requestUrl(query, options) ?: return null
+        return synchronized(lock) { cache[url] }?.let(::remembered)
+    }
+
+    /** From this client's memory: no request went out, so it is not a fresh model answer. */
+    private fun remembered(hit: SemanticResponse): SemanticResponse? = if (hit.overLimit) null else hit.copy(cached = true)
+
     /**
-     * The client fuses with its own alias results, so it asks for semantic results only. It sends
-     * `region=auto` only for the value "auto": an explicit region code stays on the device.
+     * The request URL, which is also the key of the memory. Null: nothing to ask (an empty query, or
+     * paused after an over-limit answer). The client fuses with its own alias results, so it asks for
+     * semantic results only. It sends `region=auto` only for the value "auto": an explicit region code
+     * stays on the device.
      */
-    private fun requestUrl(query: String, options: SemanticSearchOptions): String {
+    private fun requestUrl(query: String, options: SemanticSearchOptions): String? {
+        if (Normalizer.normalize(query).isEmpty() || clock() < synchronized(lock) { pausedUntil }) return null
         val parameters = mutableListOf(
-            "q" to query,
+            // The text the API embeds, accents and punctuation kept (`normalize` would fold them).
+            "q" to Normalizer.embeddingText(query),
             "locale" to (options.locale ?: "en"),
             "limit" to options.limit.toString(),
             "mode" to "semantic",

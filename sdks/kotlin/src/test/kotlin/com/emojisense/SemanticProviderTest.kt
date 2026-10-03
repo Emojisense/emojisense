@@ -1,5 +1,6 @@
 package com.emojisense
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceTimeBy
@@ -110,6 +111,26 @@ class SemanticClientTest {
         now = 2000
         client.search("volcano eruption")
         assertEquals(2, transport.requests.size)
+    }
+
+    @Test
+    fun `peeks at its own memory only`() = runBlocking {
+        val transport = StubTransport.json(SEMANTIC_BODY)
+        val client = client(transport)
+        assertNull(client.peek("volcano eruption", SemanticSearchOptions()))
+        client.search("volcano eruption")
+        val peeked = client.peek("volcano eruption", SemanticSearchOptions())
+        assertEquals(true, peeked?.cached)
+        assertEquals(SemanticLayer.API, peeked?.layer)
+        assertNull(client.peek("volcano eruption", SemanticSearchOptions(locale = "tr")))
+        assertEquals(1, transport.requests.size)
+    }
+
+    @Test
+    fun `never peeks at an over-limit answer`() = runBlocking {
+        val client = client(StubTransport.json(SEMANTIC_BODY.replace("\"cached\":false", "\"cached\":false,\"overLimit\":true")))
+        assertNull(client.search("lava eruption"))
+        assertNull(client.peek("lava eruption", SemanticSearchOptions()))
     }
 
     @Test
@@ -275,6 +296,130 @@ class ShardProviderTest {
         assertEquals(SemanticLayer.SHARD, shards.search("congrats on the launch")?.layer)
         assertEquals(1, transport.requests.count { it.endsWith("/de/index.json") })
     }
+
+    // ── Hashed files and the base layer ──────────────────────────────────────────────────────
+
+    /** Live English index with hashed files and a base index; the base files are in f/ as well. */
+    private val layeredFiles = mapOf(
+        "$base/index.json" to
+            """{"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256","keys":["co"],"files":{"co":"f/live-co.json"},"base":"f/base-en.json"}""",
+        "$base/f/live-co.json" to files.getValue("co.json"),
+        "$base/f/base-en.json" to """{"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256","keys":["th"],"files":{"th":"base-th.json"}}""",
+        "$base/f/base-th.json" to """{"key":"th","entries":{"thank you so much":[["🙏","1F64F",0.9]]}}""",
+        "$base/tr/index.json" to """{"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256","keys":[],"files":{},"base":"../f/base-en.json"}""",
+    )
+
+    private fun serveLayered(url: String): HttpResponse =
+        layeredFiles[url]?.let { HttpResponse(200, it.encodeToByteArray()) } ?: HttpResponse(404, ByteArray(0))
+
+    private fun paths(transport: StubTransport): List<String> = transport.requests.map { it.removePrefix("$base/") }
+
+    @Test
+    fun `resolves file URLs like the URL constructor`() {
+        assertEquals("https://x/p/1/f/a.json", ShardProvider.resolve("https://x/p/1/tr/index.json", "../f/a.json"))
+        assertEquals("https://x/p/1/f/a.json", ShardProvider.resolve("https://x/p/1/index.json", "f/a.json"))
+        assertEquals("https://x/p/1/the%20.json", ShardProvider.resolve("https://x/p/1/index.json", "the%20.json"))
+        assertEquals("https://cdn.test/f/a.json", ShardProvider.resolve("https://x/p/1/index.json", "https://cdn.test/f/a.json"))
+        assertNull(ShardProvider.resolve("https://x/p/1/index.json", "a b.json"))
+    }
+
+    @Test
+    fun `reads the files the index names, then the base layer`() = runBlocking {
+        val transport = StubTransport(::serveLayered)
+        val provider = ShardProvider(base, transport)
+        assertEquals("🚀", provider.search("congrats on the launch")?.results?.first()?.emoji)
+        assertEquals("🙏", provider.search("thank you so much")?.results?.first()?.emoji)
+        assertNull(provider.search("thanks a lot"))
+        assertEquals(listOf("index.json", "f/base-en.json", "f/live-co.json", "f/base-th.json"), paths(transport))
+    }
+
+    @Test
+    fun `resolves a base index named relative to a locale folder to the shared folder`() = runBlocking {
+        val transport = StubTransport(::serveLayered)
+        val provider = ShardProvider(base, transport)
+        assertEquals(SemanticLayer.SHARD, provider.search("thank you so much", SemanticSearchOptions(locale = "tr"))?.layer)
+        assertEquals("🙏", provider.search("thank you so much")?.results?.first()?.emoji)
+        // English and Turkish share the base index and its file: each is downloaded once.
+        assertEquals(listOf("tr/index.json", "f/base-en.json", "f/base-th.json", "index.json"), paths(transport))
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `peeks only at what is loaded, and prefetch loads it`() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        val served = StubTransport(::serveLayered)
+        val provider = ShardProvider(base, { url -> gate.await(); served.get(url) }, scope = backgroundScope)
+        val options = SemanticSearchOptions()
+        assertNull(provider.peek("thank you so much", options))
+        provider.prefetch("thank you", null)
+        // prefetch returns at once: nothing has arrived yet.
+        assertNull(provider.peek("thank you so much", options))
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(listOf("index.json", "f/base-en.json", "f/base-th.json"), paths(served))
+        assertEquals("🙏", provider.peek("thank you so much", options)?.results?.first()?.emoji)
+        assertEquals(emptyList(), provider.peek("thank you so much", SemanticSearchOptions(limit = 0))?.results)
+        assertNull(provider.peek("thank you!", options))
+        // search uses the files that prefetch loaded.
+        assertEquals("🙏", provider.search("thank you so much")?.results?.first()?.emoji)
+        assertEquals(3, served.requests.size)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `prefetch with an empty query loads the indexes only`() = runTest {
+        val transport = StubTransport(::serveLayered)
+        ShardProvider(base, transport, scope = backgroundScope).prefetch("", "tr")
+        runCurrent()
+        assertEquals(listOf("tr/index.json", "f/base-en.json"), paths(transport))
+    }
+
+    @Test
+    fun `asks again a while after a network error, but not after a 404`() = runBlocking {
+        var now = 0L
+        val failOnce = mutableSetOf("$base/index.json")
+        val transport = StubTransport { url ->
+            if (failOnce.remove(url)) throw java.io.IOException("network down")
+            serveLayered(url)
+        }
+        val provider = ShardProvider(base, transport, retryMillis = 20, clock = { now })
+        assertNull(provider.search("congrats on the launch"))
+        // Within the retry delay, an unreachable host is not asked on every keystroke.
+        assertNull(provider.search("congrats on the launch"))
+        assertEquals(1, transport.requests.count { it == "$base/index.json" })
+        now = 30
+        assertEquals(SemanticLayer.SHARD, provider.search("congrats on the launch")?.layer)
+
+        val german = SemanticSearchOptions(locale = "de")
+        assertNull(provider.search("thanks", german))
+        now = 1_000_000
+        assertNull(provider.search("thanks", german))
+        assertEquals(SemanticLayer.SHARD, provider.search("congrats on the launch")?.layer)
+        assertEquals(2, transport.requests.count { it == "$base/index.json" })
+        assertEquals(1, transport.requests.count { it == "$base/de/index.json" })
+    }
+
+    @Test
+    fun `treats a file that is not a shard index as no index`() = runBlocking {
+        val transport = StubTransport.urls(
+            mapOf(
+                "$base/index.json" to """{"format":"emojisense-shards","keys":"co"}""",
+                "$base/co.json" to files.getValue("co.json"),
+                "$base/tr/index.json" to """{"format":"emojisense-shards","formatVersion":1,"packVersion":"t","model":"m@256","keys":["co"],"base":"f/base.json"}""",
+                "$base/tr/co.json" to files.getValue("co.json"),
+                "$base/tr/f/base.json" to "[]",
+            ),
+        )
+        val provider = ShardProvider(base, transport)
+        assertNull(provider.search("congrats on the launch"))
+        assertNull(provider.search("congrats on the launch"))
+        assertEquals(listOf("$base/index.json"), transport.requests)
+        // A base index that is not an index leaves the live layer.
+        assertEquals("🚀", provider.search("congrats on the launch", SemanticSearchOptions(locale = "tr"))?.results?.first()?.emoji)
+
+        // An error page served as 200 (e.g. a Wi-Fi login page) gives no answer either.
+        assertNull(ShardProvider(base, StubTransport.json("<!doctype html><title>Wi-Fi login</title>")).search("congrats on the launch"))
+    }
 }
 
 /** Ports the session tests of packages/core/test/client-session.test.ts. */
@@ -363,6 +508,60 @@ class SearchSessionTest {
         runCurrent()
         assertEquals(SessionStatus.ERROR, states.last().status)
         assertEquals("down", states.last().error?.message)
+    }
+
+    @Test
+    fun `shows an answer in memory at once, with no debounce and no request`() = runTest {
+        val transport = StubTransport.json(SEMANTIC_BODY)
+        val client = SemanticClient(SemanticClient.Configuration("https://api.test"), transport)
+        client.search("volcano eruption", SemanticSearchOptions(limit = 24))
+        val states = mutableListOf<SessionState>()
+        SearchSession(engine, this, semantic = client, debounceMillis = 200, onChange = { states.add(it) }).update("volcano eruption")
+        val shown = states.single()
+        assertEquals(SessionStatus.FUSED, shown.status)
+        assertEquals(SemanticLayer.API, shown.layer)
+        assertEquals(true, shown.semanticCached)
+        assertEquals(0.0, shown.semanticMillis)
+        advanceTimeBy(500)
+        runCurrent()
+        assertEquals(1, transport.requests.size)
+        assertEquals(1, states.size)
+    }
+
+    @Test
+    fun `loads the index at once and answers from a loaded shard on the next keystroke, with no debounce`() = runTest {
+        val shards = StubTransport.urls(
+            mapOf(
+                "https://cdn.test/p/test/index.json" to """{"format":"emojisense-shards","formatVersion":1,"packVersion":"test","model":"m@256","keys":["v"]}""",
+                "https://cdn.test/p/test/v.json" to """{"key":"v","entries":{"volcano eruption":[["🌋","1F30B",0.8]]}}""",
+            ),
+        )
+        val api = StubTransport.json(SEMANTIC_BODY)
+        val states = mutableListOf<SessionState>()
+        val session = SearchSession(
+            engine = engine,
+            scope = this,
+            semantic = ProviderChain(
+                ShardProvider("https://cdn.test/p/test", shards, scope = backgroundScope),
+                SemanticClient(SemanticClient.Configuration("https://api.test"), api),
+            ),
+            debounceMillis = 1000,
+            onChange = { states.add(it) },
+        )
+        assertEquals(listOf("https://cdn.test/p/test/index.json"), shards.requests)
+        session.update("volcano erupti")
+        advanceTimeBy(5)
+        runCurrent()
+        session.update("volcano eruption")
+        val last = states.last()
+        assertEquals(SessionStatus.FUSED, last.status)
+        assertEquals(SemanticLayer.SHARD, last.layer)
+        assertEquals(0.0, last.semanticMillis)
+        assertTrue("🌋" in last.results.map { it.emoji })
+        advanceTimeBy(2000)
+        runCurrent()
+        assertEquals(0, api.requests.size)
+        assertEquals(listOf("https://cdn.test/p/test/index.json", "https://cdn.test/p/test/v.json"), shards.requests)
     }
 }
 

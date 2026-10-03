@@ -32,7 +32,7 @@ public data class SessionState(
     val status: SessionStatus,
     /** Time spent in the alias engine for this query, in milliseconds. */
     val aliasMillis: Double,
-    /** Round-trip time of the semantic request, when one finished. */
+    /** Round-trip time of the semantic request, when one finished. 0 for an answer in memory. */
     val semanticMillis: Double? = null,
     val semanticCached: Boolean? = null,
     /** Which layer gave the semantic results. */
@@ -50,9 +50,13 @@ public data class SessionState(
 
 /**
  * Search controller, like `createSearchSession` in packages/core: alias results on every
- * keystroke, then debounced, cancellable semantic results fused in. A newer query cancels the
- * older request, so stale answers never arrive. [onChange] runs synchronously for the alias
- * results and in [scope] (e.g. `lifecycleScope` on Android) for the semantic ones.
+ * keystroke, then semantic results fused in. When a provider has the answer in memory (a loaded
+ * shard, [SemanticProvider.peek]), the fused results arrive at once, with no debounce and no
+ * request. Else the semantic request is debounced and cancellable. A newer query cancels the older
+ * request, so stale answers never arrive. [onChange] runs synchronously for the alias results and
+ * for answers in memory, and in [scope] (e.g. `lifecycleScope` on Android) for the requested ones.
+ * The session calls [SemanticProvider.prefetch] when it is created (the shard indexes) and on each
+ * keystroke that needs semantic results (the query's shard).
  *
  * The culture layer is applied last, after fusion, so the canonical top result stays first.
  */
@@ -85,6 +89,11 @@ public class SearchSession @JvmOverloads constructor(
     @Volatile
     private var learnedRegion: String? = null
 
+    init {
+        // The shard indexes load while the user starts typing, which also opens the connection.
+        semantic?.prefetch("", locale)
+    }
+
     /** Call on every keystroke. The alias results are delivered before it returns. */
     public fun update(query: String) {
         cancel()
@@ -111,14 +120,41 @@ public class SearchSession @JvmOverloads constructor(
             unsure = aliasOnly.unsure,
             confidence = aliasOnly.confidence,
         )
+        val options = SemanticSearchOptions(locale = locale, limit = depth, region = if (autoRegion) AUTO_REGION else null)
+        fun fusedState(response: SemanticResponse, semanticMillis: Double): SessionState {
+            // The model that scored the results knows its calibration; older servers send none.
+            val calibration = response.calibration ?: SemanticCalibration.DEFAULT
+            val verdict = Confidence.assessConfidence(alias, response.results, calibration)
+            return SessionState(
+                query = query,
+                results = present(query, Fusion.fuse(alias, response.results, limit, calibration, Fusion.Ranking(engine::popularity))),
+                alias = alias,
+                status = SessionStatus.FUSED,
+                aliasMillis = aliasMillis,
+                semanticMillis = semanticMillis,
+                semanticCached = response.cached,
+                layer = response.layer,
+                unsure = verdict.unsure,
+                confidence = verdict.confidence,
+            )
+        }
+
+        // A loaded shard (or an answer this session already had) needs no debounce: no request.
+        val peeked = if (wantsSemantic) semantic.peek(query, options) else null
+        if (peeked != null) {
+            onChange(fusedState(peeked, 0.0))
+            return
+        }
         onChange(aliasState(status))
         if (!wantsSemantic) return
+        // The query's shard loads during the debounce, so the next keystroke can peek at it.
+        semantic.prefetch(query, locale)
 
         job = scope.launch {
             delay(debounceMillis)
             val requested = System.nanoTime()
             val response = try {
-                semantic.search(query, SemanticSearchOptions(locale = locale, limit = depth, region = if (autoRegion) AUTO_REGION else null))
+                semantic.search(query, options)
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (error: Exception) {
@@ -131,23 +167,7 @@ public class SearchSession @JvmOverloads constructor(
                 return@launch
             }
             if (autoRegion && learnedRegion == null) learnedRegion = response.region
-            // The model that scored the results knows its calibration; older servers send none.
-            val calibration = response.calibration ?: SemanticCalibration.DEFAULT
-            val verdict = Confidence.assessConfidence(alias, response.results, calibration)
-            onChange(
-                SessionState(
-                    query = query,
-                    results = present(query, Fusion.fuse(alias, response.results, limit, calibration, Fusion.Ranking(engine::popularity))),
-                    alias = alias,
-                    status = SessionStatus.FUSED,
-                    aliasMillis = aliasMillis,
-                    semanticMillis = (System.nanoTime() - requested) / 1_000_000.0,
-                    semanticCached = response.cached,
-                    layer = response.layer,
-                    unsure = verdict.unsure,
-                    confidence = verdict.confidence,
-                ),
-            )
+            onChange(fusedState(response, (System.nanoTime() - requested) / 1_000_000.0))
         }
     }
 
