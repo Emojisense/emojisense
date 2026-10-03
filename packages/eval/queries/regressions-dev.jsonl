@@ -1,0 +1,92 @@
+{"id": "reg-entity-01", "q": "messi", "locale": "en", "cat": "entity", "answers": ["⚽", "🇦🇷", "🐐", "🏆", "🥅"], "forbid": ["🍿", "🫟", "🇧🇫"]}
+{"id": "reg-entity-02", "q": "lionel messi", "locale": "en", "cat": "entity", "answers": ["⚽", "🇦🇷", "🐐", "🏆", "🥅"], "forbid": ["🍿", "🫟", "🇧🇫"]}
+{"id": "reg-entity-03", "q": "ronaldo", "locale": "en", "cat": "entity", "answers": ["⚽", "🇵🇹", "🐐", "🏆"]}
+{"id": "reg-entity-04", "q": "neymar", "locale": "en", "cat": "entity", "answers": ["⚽", "🇧🇷"]}
+{"id": "reg-entity-05", "q": "lebron", "locale": "en", "cat": "entity", "answers": ["🏀", "👑", "🐐"]}
+{"id": "reg-entity-06", "q": "serena williams", "locale": "en", "cat": "entity", "answers": ["🎾"]}
+{"id": "reg-entity-07", "q": "usain bolt", "locale": "en", "cat": "entity", "answers": ["⚡", "🏃", "🥇"]}
+{"id": "reg-entity-08", "q": "taylor swift", "locale": "en", "cat": "entity", "answers": ["🎤", "🎶", "🎸", "💅", "🐍", "✨", "💃"]}
+{"id": "reg-entity-09", "q": "beyonce", "locale": "en", "cat": "entity", "answers": ["🐝", "👑", "🎤", "💃"]}
+{"id": "reg-entity-10", "q": "elon musk", "locale": "en", "cat": "entity", "answers": ["🚀", "🚗", "👨‍💻", "🤑"], "forbid": ["🍈"]}
+{"id": "reg-entity-11", "q": "harry potter", "locale": "en", "cat": "entity", "answers": ["⚡", "🧙", "🪄", "🧙‍♂️", "🦉"]}
+{"id": "reg-entity-12", "q": "star wars", "locale": "en", "cat": "entity", "answers": ["⭐", "✨", "🚀", "🌌", "🤖"]}
+{"id": "reg-entity-13", "q": "pokemon", "locale": "en", "cat": "entity", "answers": ["⚡", "🎮", "🐭"]}
+{"id": "reg-entity-14", "q": "netflix", "locale": "en", "cat": "entity", "answers": ["📺", "🍿", "🎬"]}
+{"id": "reg-entity-15", "q": "bitcoin", "locale": "en", "cat": "entity", "answers": ["🪙", "💰", "📈", "💸"]}
+{"id": "reg-entity-16", "q": "spongebob", "locale": "en", "cat": "entity", "answers": ["🧽", "🍍", "🌊"]}
+{"id": "reg-entity-17", "q": "kendrick lamar", "locale": "en", "cat": "entity", "answers": ["🎤", "🎧", "🎶", "🎵", "👑", "🔥"], "forbid": ["🦙"]}
+{"id": "reg-entity-18", "q": "bad bunny", "locale": "en", "cat": "entity", "answers": ["🐰", "🎤", "🇵🇷"]}
+{"id": "reg-entity-19", "q": "titanic", "locale": "en", "cat": "entity", "answers": ["🚢", "🧊", "💔"]}
+{"id": "reg-entity-20", "q": "jurassic park", "locale": "en", "cat": "entity", "answers": ["🦖", "🦕"]}
+{"id": "reg-entity-21", "q": "batman", "locale": "en", "cat": "entity", "answers": ["🦇", "🃏", "🌃"]}
+{"id": "reg-entity-22", "q": "olympics", "locale": "en", "cat": "entity", "answers": ["🏅", "🥇", "🏟️"]}
+{"id": "reg-entity-23", "q": "world cup", "locale": "en", "cat": "entity", "answers": ["⚽", "🏆", "🌍"]}
+{"id": "reg-entity-24", "q": "super bowl", "locale": "en", "cat": "entity", "answers": ["🏈", "🏆"]}
+{"id": "reg-entity-25", "q": "shrek", "locale": "en", "cat": "entity", "answers": ["👹", "🧅", "🫏"]}
+{"id": "reg-prefix-word-01", "q": "hell", "locale": "en", "cat": "prefix-word", "answers": ["😈", "👿", "🔥", "💀"], "forbid": ["👋", "🫂", "🇬🇷"]}
+{"id": "reg-prefix-word-02", "q": "car", "locale": "en", "cat": "prefix-word", "answers": ["🚗", "🚙", "🏎️"], "forbid": ["🥕", "💳"]}
+{"id": "reg-prefix-word-03", "q": "cat", "locale": "en", "cat": "prefix-word", "answers": ["🐱", "🐈", "🐈‍⬛", "😺"]}
+{"id": "reg-prefix-word-04", "q": "sun", "locale": "en", "cat": "prefix-word", "answers": ["☀️", "🌞", "🌅"]}
+{"id": "reg-prefix-word-05", "q": "bat", "locale": "en", "cat": "prefix-word", "answers": ["🦇", "🏏"], "forbid": ["🛁"]}
+{"id": "reg-prefix-word-06", "q": "pin", "locale": "en", "cat": "prefix-word", "answers": ["📌", "📍", "🧷"], "forbid": ["🍍", "🌲"]}
+{"id": "reg-prefix-word-07", "q": "cup", "locale": "en", "cat": "prefix-word", "answers": ["☕", "🏆", "🥤", "🍵", "🥛"]}
+{"id": "reg-prefix-word-08", "q": "ant", "locale": "en", "cat": "prefix-word", "answers": ["🐜"], "forbid": ["📡"]}
+{"id": "reg-prefix-word-09", "q": "art", "locale": "en", "cat": "prefix-word", "answers": ["🎨", "🖼️"]}
+{"id": "reg-prefix-word-10", "q": "bee", "locale": "en", "cat": "prefix-word", "answers": ["🐝"], "forbid": ["🍺"]}
+{"id": "reg-prefix-word-11", "q": "star", "locale": "en", "cat": "prefix-word", "answers": ["⭐", "🌟", "✨"]}
+{"id": "reg-prefix-word-12", "q": "ban", "locale": "en", "cat": "prefix-word", "answers": ["🚫", "⛔"], "forbid": ["🍌"]}
+{"id": "reg-prefix-word-13", "q": "hat", "locale": "en", "cat": "prefix-word", "answers": ["🎩", "👒", "🧢"]}
+{"id": "reg-prefix-word-14", "q": "tea", "locale": "en", "cat": "prefix-word", "answers": ["☕", "🍵", "🫖"]}
+{"id": "reg-prefix-word-15", "q": "war", "locale": "en", "cat": "prefix-word", "answers": ["⚔️", "💣", "🪖"]}
+{"id": "reg-typo-01", "q": "hapy", "locale": "en", "cat": "typo", "answers": ["😀", "😃", "😄", "😊", "🙂", "😁"]}
+{"id": "reg-typo-02", "q": "birthdy", "locale": "en", "cat": "typo", "answers": ["🎂", "🎉", "🥳", "🎁"]}
+{"id": "reg-typo-03", "q": "pizzza", "locale": "en", "cat": "typo", "answers": ["🍕"]}
+{"id": "reg-typo-04", "q": "thnks", "locale": "en", "cat": "typo", "answers": ["🙏"]}
+{"id": "reg-typo-05", "q": "coffe", "locale": "en", "cat": "typo", "answers": ["☕"]}
+{"id": "reg-typo-06", "q": "beutiful", "locale": "en", "cat": "typo", "answers": ["😍", "🌸", "✨", "💖"]}
+{"id": "reg-typo-07", "q": "footbal", "locale": "en", "cat": "typo", "answers": ["⚽", "🏈"]}
+{"id": "reg-typo-08", "q": "halloweeen", "locale": "en", "cat": "typo", "answers": ["🎃", "👻"]}
+{"id": "reg-typo-09", "q": "chrismas", "locale": "en", "cat": "typo", "answers": ["🎄", "🎅"]}
+{"id": "reg-typo-10", "q": "sleepy", "locale": "en", "cat": "typo", "answers": ["😴", "💤", "🥱", "😪"]}
+{"id": "reg-split-01", "q": "hallo ween", "locale": "en", "cat": "split", "answers": ["🎃", "👻", "🦇"], "forbid": ["🌭"]}
+{"id": "reg-split-02", "q": "birth day", "locale": "en", "cat": "split", "answers": ["🎂", "🎉", "🥳"]}
+{"id": "reg-split-03", "q": "cup cake", "locale": "en", "cat": "split", "answers": ["🧁"]}
+{"id": "reg-split-04", "q": "sun flower", "locale": "en", "cat": "split", "answers": ["🌻"]}
+{"id": "reg-split-05", "q": "home work", "locale": "en", "cat": "split", "answers": ["📚", "📝", "✏️"]}
+{"id": "reg-split-06", "q": "foot ball", "locale": "en", "cat": "split", "answers": ["⚽", "🏈"]}
+{"id": "reg-split-07", "q": "pop corn", "locale": "en", "cat": "split", "answers": ["🍿"]}
+{"id": "reg-split-08", "q": "rain bow", "locale": "en", "cat": "split", "answers": ["🌈"]}
+{"id": "reg-split-09", "q": "snow man", "locale": "en", "cat": "split", "answers": ["⛄", "☃️"]}
+{"id": "reg-split-10", "q": "fire works", "locale": "en", "cat": "split", "answers": ["🎆", "🎇"]}
+{"id": "reg-weak-alias-01", "q": "messy", "locale": "en", "cat": "weak-alias", "answers": ["🫟", "🌪️", "🐖", "💩", "😵", "🧹", "🗑️"], "forbid": ["🍿"]}
+{"id": "reg-weak-alias-02", "q": "mess", "locale": "en", "cat": "weak-alias", "answers": ["🫟", "🌪️", "🐖", "💩", "😵", "🧹", "🗑️"], "forbid": ["🍿"]}
+{"id": "reg-slang-01", "q": "lgtm", "locale": "en", "cat": "slang", "answers": ["👍", "✅"]}
+{"id": "reg-slang-02", "q": "ship it", "locale": "en", "cat": "slang", "answers": ["🚀", "🚢"]}
+{"id": "reg-slang-03", "q": "goat", "locale": "en", "cat": "slang", "answers": ["🐐"]}
+{"id": "reg-slang-04", "q": "no cap", "locale": "en", "cat": "slang", "answers": ["🧢", "💯"]}
+{"id": "reg-slang-05", "q": "slay", "locale": "en", "cat": "slang", "answers": ["💅", "🔥", "👑"]}
+{"id": "reg-slang-06", "q": "touch grass", "locale": "en", "cat": "slang", "answers": ["🌱", "🌿"]}
+{"id": "reg-slang-07", "q": "sus", "locale": "en", "cat": "slang", "answers": ["🤨", "📮"]}
+{"id": "reg-slang-08", "q": "rizz", "locale": "en", "cat": "slang", "answers": ["😏", "😎", "💘"]}
+{"id": "reg-multilingual-01", "q": "gracias", "locale": "es", "cat": "multilingual", "answers": ["🙏"]}
+{"id": "reg-multilingual-02", "q": "merci", "locale": "fr", "cat": "multilingual", "answers": ["🙏"]}
+{"id": "reg-multilingual-03", "q": "生日快乐", "locale": "zh", "cat": "multilingual", "answers": ["🎂", "🎉", "🥳"]}
+{"id": "reg-multilingual-04", "q": "躺平", "locale": "zh", "cat": "multilingual", "answers": ["🛌", "😴", "💤", "🥱"]}
+{"id": "reg-multilingual-05", "q": "kolay gelsin", "locale": "tr", "cat": "multilingual", "answers": ["💪", "🙏"]}
+{"id": "reg-multilingual-06", "q": "teşekkürler", "locale": "tr", "cat": "multilingual", "answers": ["🙏"]}
+{"id": "reg-multilingual-07", "q": "спасибо", "locale": "ru", "cat": "multilingual", "answers": ["🙏"]}
+{"id": "reg-multilingual-08", "q": "धन्यवाद", "locale": "hi", "cat": "multilingual", "answers": ["🙏"]}
+{"id": "reg-multilingual-09", "q": "feliz cumpleaños", "locale": "es", "cat": "multilingual", "answers": ["🎂", "🎉", "🥳"]}
+{"id": "reg-multilingual-10", "q": "joyeux anniversaire", "locale": "fr", "cat": "multilingual", "answers": ["🎂", "🎉", "🥳"]}
+{"id": "reg-multilingual-11", "q": "futebol", "locale": "pt", "cat": "multilingual", "answers": ["⚽"]}
+{"id": "reg-multilingual-12", "q": "kucing", "locale": "id", "cat": "multilingual", "answers": ["🐱", "🐈"]}
+{"id": "reg-sentence-01", "q": "i'm exhausted", "locale": "en", "cat": "sentence", "answers": ["😩", "😴", "😫", "🥱", "💤"]}
+{"id": "reg-sentence-02", "q": "congrats on the launch", "locale": "en", "cat": "sentence", "answers": ["🎉", "🚀", "🥳", "👏"]}
+{"id": "reg-sentence-03", "q": "break a leg", "locale": "en", "cat": "sentence", "answers": ["🍀", "🎭", "👍"], "forbid": ["🦵"]}
+{"id": "reg-sentence-04", "q": "go to hell", "locale": "en", "cat": "sentence", "answers": ["😈", "👿", "🖕", "🤬", "😡", "🔥"], "forbid": ["👋"]}
+{"id": "reg-sentence-05", "q": "greatest of all time", "locale": "en", "cat": "sentence", "answers": ["🐐", "🏆", "👑"]}
+{"id": "reg-sentence-06", "q": "feeling blue", "locale": "en", "cat": "sentence", "answers": ["😢", "💙", "😔"]}
+{"id": "reg-sentence-07", "q": "rainy monday mood", "locale": "en", "cat": "sentence", "answers": ["🌧️", "☔", "😩", "😒"]}
+{"id": "reg-sentence-08", "q": "cold feet", "locale": "en", "cat": "sentence", "answers": ["😰", "😬", "😟", "🥶"]}
+{"id": "reg-sentence-09", "q": "proud of my team", "locale": "en", "cat": "sentence", "answers": ["👏", "🙌", "🏆", "💪", "🎉"]}
+{"id": "reg-sentence-10", "q": "spooky season", "locale": "en", "cat": "sentence", "answers": ["🎃", "👻", "🦇"]}

@@ -7,6 +7,7 @@ import {
   WHOLE_COVERAGE,
 } from "../src/confidence.js";
 import type { AliasSearchOutput, SearchResult } from "../src/engine.js";
+import { DEFAULT_SEMANTIC_CALIBRATION } from "../src/fusion.js";
 
 const result = (id: string, score: number, source: SearchResult["source"]): SearchResult => ({
   emoji: id,
@@ -35,7 +36,7 @@ const semantic = (top: number, gap: number) => [
 
 describe("semanticStrength", () => {
   it("is 0 below the calibration floor and 1 for a clear top at the ceiling", () => {
-    expect(semanticStrength(semantic(0.4, 0.01))).toBe(0);
+    expect(semanticStrength(semantic(0.38, 0.01))).toBe(0);
     expect(semanticStrength(semantic(0.6, 0.1))).toBe(1);
   });
 
@@ -91,7 +92,8 @@ describe("assessConfidence", () => {
 
   it("uses one threshold for the semantic list", () => {
     expect(SEMANTIC_SURE).toBeGreaterThan(0);
-    const justBelow = semantic(0.44 + 0.14 * (SEMANTIC_SURE - 0.01), 0.06);
+    const { floor, ceiling } = DEFAULT_SEMANTIC_CALIBRATION;
+    const justBelow = semantic(floor + (ceiling - floor) * (SEMANTIC_SURE - 0.01), 0.06);
     expect(assessConfidence(alias(0, 0, []), justBelow).unsure).toBe(true);
   });
 });

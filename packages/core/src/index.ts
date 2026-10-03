@@ -51,6 +51,7 @@ export {
   type FuseRanking,
   fuse,
   fuseResults,
+  RANK_DEPTH,
   type SemanticCalibration,
   semanticConfidence,
   shouldUseSemantic,

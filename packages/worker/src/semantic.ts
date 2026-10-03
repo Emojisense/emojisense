@@ -1,6 +1,13 @@
 import type { EmbeddingModel } from "@emojisense/data/models";
 import { semanticBonus } from "@emojisense/data/semantic-score";
-import { type AliasEngine, type AliasSearchOutput, type Culture, fuse, type SearchResult } from "emojisense";
+import {
+  type AliasEngine,
+  type AliasSearchOutput,
+  type Culture,
+  fuse,
+  RANK_DEPTH,
+  type SearchResult,
+} from "emojisense";
 import { l2normalize, searchVectorSets, type VectorIndex } from "emojisense/vectors";
 import type { AiBinding, Env, GeneratedConfig } from "./env.ts";
 import type { LocaleIndexes } from "./locale-vectors.ts";
@@ -176,6 +183,8 @@ export interface Ranked {
  */
 export async function rank(env: Env, catalog: Catalog, options: RankOptions): Promise<Ranked> {
   const { aliasQuery, embedText, locale, limit } = options;
+  // Both tiers bring RANK_DEPTH candidates, so the ranking does not depend on the limit asked for.
+  const depth = Math.max(limit, RANK_DEPTH);
   const started = Date.now();
   // The Workers AI call goes out first. In a new isolate the engines below take a CPU moment to
   // build (the bundled English engine: ≈ 70 ms on a laptop), which then overlaps the call.
@@ -201,18 +210,18 @@ export async function rank(env: Env, catalog: Catalog, options: RankOptions): Pr
     vectorsMs = vectorsWait;
     if (embedded.vector) {
       vectorsUnavailable = !vectors.complete;
-      semantic = semanticResults(engine, vectors.indexes, embedded.vector, limit, catalog.glyph?.());
+      semantic = semanticResults(engine, vectors.indexes, embedded.vector, depth, catalog.glyph?.());
     }
   }
 
   let alias: AliasSearchOutput | undefined;
   if (aliasQuery !== undefined) {
     const aliasEngine = await aliasLoad;
-    alias = aliasEngine?.search(aliasQuery, { locale, limit, prefix: options.prefix ?? true });
+    alias = aliasEngine?.search(aliasQuery, { locale, limit: depth, prefix: options.prefix ?? true });
   }
   let results: SearchResult[];
   if (alias && semantic) results = fuse(alias, semantic, limit, undefined, { popularity: engine.popularity });
-  else results = alias?.results ?? semantic ?? [];
+  else results = (alias?.results ?? semantic ?? []).slice(0, limit);
   return {
     results: results.map(({ emoji, id, score, source }) => ({ emoji, id, score, source })),
     degraded,

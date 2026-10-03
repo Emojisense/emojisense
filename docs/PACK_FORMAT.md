@@ -213,9 +213,14 @@ For each query token, find candidate vocabulary tokens with a match quality:
 | Match | Quality |
 | ----- | ------: |
 | exact | 1.0 |
-| prefix (only the last token, only while typing, i.e. the raw query does not end with whitespace) | 0.6 + 0.35 × len(query token) / len(vocab token) |
+| prefix (only the last token, only while typing, i.e. the raw query does not end with whitespace) | 0.6 + 0.35 × len(query token) / len(vocab token); × 0.5 when the query token is itself a vocabulary token |
 | final repeated letter removed (`upp` → `up`), only if there is no exact match | 0.85 |
-| optimal-string-alignment distance 1 (token length 4–7) or ≤ 2 (length ≥ 8), only if there is no exact match | 0.8 (d = 1), 0.65 (d = 2) |
+| optimal-string-alignment distance 1 (token length 4–7) or ≤ 2 (length ≥ 8), only if there is no exact match | 0.8 (d = 1; 0.7 for a query token of at most 5 UTF-16 code units), 0.65 (d = 2) |
+
+A query token that is a whole vocabulary word means that word before its completions: en "hell"
+is hell (😈 👿) before "hello" (👋), "bee" is 🐝 before "beer" (🍺); the completions stay in the
+list, lower (added 2026-10-03). A one-edit typo of a short token is weaker because a short unknown
+word is often a name: en "messi" is not "messy".
 
 When the query has at least one token that is not a function word, a function word has one
 candidate only: the vocabulary token equal to it (quality 1.0), if there is one. It is never a
@@ -287,6 +292,16 @@ whole coverage, rounded to 3 decimals (0 without results). `assessConfidence` (c
 
 Sort by score (descending), then by `popularity` (§2, descending), then by row order.
 `confidence` = the top score; `coverage` as above. Without `popularity`, equal scores keep row order.
+
+**Split words** (added 2026-10-03). Find the first pair of neighbouring query tokens, both at least
+2 UTF-16 code units, whose concatenation is a vocabulary token and has no unspaced-script code
+point (en "hallo ween" → "halloween", "rain bow" → "rainbow"). When there is one, search the query
+with that pair joined as well (one token; a trailing space of the raw query is kept) and merge:
+start from the as-typed results; for each joined result, its score × 0.95, rounded to 3
+decimals, replaces the as-typed score of the same emoji when there is none or it is higher. Sort
+by score, descending, stable (as-typed order, then joined order), and cut to `limit`.
+`confidence` = the top score; `coverage` = the larger of the two; `query` and `tokens` stay the
+as-typed ones.
 
 ## 5. Vectors (`vectors.<model>.<dims>.bin`, "ESVEC1")
 
@@ -574,6 +589,19 @@ A client that shows alias and semantic results together (a search session, the S
 { popularity })` (`packages/core/src/fusion.ts`, `rerank.ts`; Swift `Fusion.fuse`, Kotlin
 `Fusion.fuse`). A port SHOULD give the same order; the golden file checks it on recorded lists.
 
+**Candidates whatever the limit.** The features read the lists (ranks, the lowest semantic
+score), so both lists MUST hold `RANK_DEPTH` = 24 candidates (or `limit`, when larger) before
+fusion; the fused list is cut to `limit`. A client showing 12 results ranks like the API.
+
+**Calibration.** `semanticConfidence` (0–1): sort the semantic scores, descending; `best` = the
+first (0 for an empty list); `level = clamp((best − floor) / (ceiling − floor))`. When the
+calibration has `gapFloor` and `gapCeiling` and the list has more than one score: `gap = best −`
+the mean of the next scores (at most 4), and the confidence is `max(level, clamp((gap − gapFloor)
+/ (gapCeiling − gapFloor)))`; else `level`. The production model's calibration
+(`DEFAULT_SEMANTIC_CALIBRATION`, EmbeddingGemma @768) is floor 0.39, ceiling 0.56, gapFloor 0.02,
+gapCeiling 0.1. The Search API sends the calibration of its model with each search answer
+(`calibration`); a client fuses and judges that answer with it, else with its default.
+
 1. **Pinned.** Alias results with a score ≥ 0.9 come first, in alias order. Without one, number
    slang is pinned: when the alias output's `query` is ASCII digits only (`^[0-9]+( [0-9]+)*$`),
    its confidence is ≥ 0.6 and its top result's `match` is the whole query in field `name`,
@@ -585,22 +613,22 @@ A client that shows alias and semantic results together (a search session, the S
 
    | i | Feature | Weight |
    | -: | ------- | -----: |
-   | 0 | 1 when the alias list holds it, else 0 | 0.04023 |
-   | 1 | alias score `a` (0 without) | 1.781 |
-   | 2 | 1 / alias rank (1-based; 0 without) | 1.697 |
-   | 3 | `a` / alias confidence (0 without) | 0.8871 |
-   | 4 | semantic score `s`; without one, the semantic list's lowest score − 0.02 (0 for an empty list) | 13.72 |
-   | 5 | best semantic score (0 or more) − `s` | −19.46 |
-   | 6 | popularity, 0–1 (§2) | 2.342 |
-   | 7 | `a` × alias confidence | 2.146 |
-   | 8 | `s` × semantic confidence (`semanticConfidence`, the calibration of `fuse`) | 3.891 |
+   | 0 | 1 when the alias list holds it, else 0 | −0.3173 |
+   | 1 | alias score `a` (0 without) | 1.715 |
+   | 2 | 1 / alias rank (1-based; 0 without) | 1.57 |
+   | 3 | `a` / alias confidence (0 without) | 0.4408 |
+   | 4 | semantic score `s`; without one, the semantic list's lowest score − 0.02 (0 for an empty list) | 12.39 |
+   | 5 | best semantic score (0 or more) − `s` | −8.606 |
+   | 6 | popularity, 0–1 (§2) | 3.18 |
+   | 7 | `a` × alias confidence | 2.129 |
+   | 8 | `s` × semantic confidence (`semanticConfidence`, the calibration of `fuse`) | 1.067 |
 
    Sort by score, descending; equal scores keep candidate order.
 4. **Flag guard.** A country flag that the alias list does not hold and whose semantic score is
    below the calibration ceiling moves after the other candidates (`demoteUnsupportedFlags`).
 5. Pinned results, then the candidates, cut to `limit`.
 
-The weights are learned for bge-m3 @1024 with the semantic score of §5, on the in-house suite
+The weights are learned for EmbeddingGemma @768 with the semantic score of §5, on the in-house suite
 and the dev sets, never on the held-out set (`pnpm --filter @emojisense/eval rerank:train`).
 Another model needs its own weights. `{ rerank: false }` selects the previous fusion:
 confidence-weighted reciprocal rank fusion (`fuseResults`, 0.4 + confidence weights, an alias

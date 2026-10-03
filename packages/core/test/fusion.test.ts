@@ -96,11 +96,21 @@ describe("fuse with rerank: false (confidence-weighted reciprocal rank fusion)",
 
   it("maps the best cosine to 0–1 between the calibration floor and ceiling", () => {
     expect(semanticConfidence([])).toBe(0);
-    expect(semanticConfidence(semantic(0.4))).toBe(0);
-    expect(semanticConfidence(semantic(0.51))).toBeCloseTo(0.5);
+    expect(semanticConfidence(semantic(0.38))).toBe(0);
+    expect(semanticConfidence(semantic(0.475))).toBeCloseTo(0.5);
     expect(semanticConfidence(semantic(0.8))).toBe(1);
-    expect(semanticConfidence([r("x", 0.3, "semantic"), r("y", 0.51, "semantic")])).toBeCloseTo(0.5);
+    expect(semanticConfidence([r("x", 0.47, "semantic"), r("y", 0.475, "semantic")])).toBeCloseTo(0.5);
     expect(semanticConfidence(semantic(0.5), { floor: 0.2, ceiling: 0.6 })).toBe(0.75);
+  });
+
+  it("counts a top that stands out from ranks 2–5 even when its cosine is low", () => {
+    // "messi": ⚽ 0.35, then 0.284, 0.257, 0.253, 0.244 (gap 0.09).
+    const clear = [0.35, 0.284, 0.257, 0.253, 0.244].map((s, i) => r(`S${i}`, s, "semantic"));
+    expect(semanticConfidence(clear)).toBeCloseTo(0.88, 2);
+    const flat = [0.35, 0.345, 0.34, 0.335, 0.33].map((s, i) => r(`S${i}`, s, "semantic"));
+    expect(semanticConfidence(flat)).toBe(0);
+    // Without gap values only the best cosine counts.
+    expect(semanticConfidence(clear, { floor: 0.39, ceiling: 0.56 })).toBe(0);
   });
 
   it("keeps an unsure alias hit above a weak semantic list", () => {

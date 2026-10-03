@@ -93,9 +93,12 @@ describe("a partial match of one token does not stand for a query of unknown wor
 
 describe("prefix completions into another locale's words", () => {
   it("rank below an exact word, in any locale", () => {
-    // id "lamar" (in "lamar pacar") is a whole word; id "lamaran" only completes it.
+    // id "lamar" (in "lamar pacar") is a whole word; id "lamaran" only completes it. A completion
+    // of a whole word is weak enough to drop out entirely (WHOLE_WORD_COMPLETION_QUALITY).
     const results = emoji(enId, "lamar");
-    expect(results.indexOf("🧎")).toBeLessThan(results.indexOf("💍"));
+    const ring = results.indexOf("💍");
+    expect(results.indexOf("🧎")).toBe(0);
+    expect(ring === -1 || ring > 0).toBe(true);
   });
 
   it("never outrank a match of the preferred locale", () => {

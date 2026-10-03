@@ -52,7 +52,8 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
       if (hit) {
         cache.delete(url);
         cache.set(url, hit);
-        return hit.overLimit ? undefined : hit;
+        // From this client's memory: no request went out, so it is not a fresh model answer.
+        return hit.overLimit ? undefined : { ...hit, cached: true };
       }
       const response = await doFetch(url, { signal: signal ?? null });
       if (!response.ok) {

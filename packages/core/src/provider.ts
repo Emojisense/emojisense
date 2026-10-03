@@ -1,4 +1,5 @@
 import type { SearchResult } from "./engine.js";
+import type { SemanticCalibration } from "./fusion.js";
 
 /** Where a semantic answer came from (docs/ARCHITECTURE.md, layers). */
 export type SemanticLayer = "device" | "shard" | "api";
@@ -7,6 +8,12 @@ export interface SemanticResponse {
   results: SearchResult[];
   packVersion: string;
   model?: string;
+  /**
+   * Server: the calibration of the model that scored `results`. The client fuses and judges with
+   * it, so a model change on the server needs no client update. Absent: the client's default.
+   */
+  calibration?: SemanticCalibration;
+  /** Answered from a cache: the server's shared one, or the client's own memory. */
   cached: boolean;
   /** Server: Workers AI unavailable, results are alias-only. */
   degraded?: boolean;

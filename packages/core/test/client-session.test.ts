@@ -28,6 +28,12 @@ describe("semantic client", () => {
     expect(url.searchParams.get("key")).toBe("pk_1");
   });
 
+  it("marks an answer from its own memory as cached", async () => {
+    const client = createSemanticClient({ endpoint: "https://api.test", fetch: fakeFetch() });
+    expect((await client.search("volcano"))?.cached).toBe(false);
+    expect((await client.search("volcano"))?.cached).toBe(true);
+  });
+
   it("asks the API for the caller's region only with region auto, and never sends a region code", async () => {
     const fetch = fakeFetch();
     const client = createSemanticClient({ endpoint: "https://api.test", key: "pk_1", fetch });
@@ -96,6 +102,21 @@ describe("semantic client", () => {
 describe("search session", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
+
+  it("fuses the same candidates whatever its limit, and shows the limit", async () => {
+    const fetch = fakeFetch();
+    const states: SessionState[] = [];
+    createSearchSession({
+      engine: createEngine(en),
+      semantic: createSemanticClient({ endpoint: "https://api.test", fetch }),
+      limit: 2,
+      debounceMs: 10,
+      onChange: (s) => states.push(s),
+    }).update("volcano eruption");
+    await vi.advanceTimersByTimeAsync(100);
+    expect(new URL(String(fetch.mock.calls[0]?.[0])).searchParams.get("limit")).toBe("24");
+    expect(states.every((s) => s.results.length <= 2)).toBe(true);
+  });
 
   it("delivers alias results at once and fused results after the debounce", async () => {
     const fetch = fakeFetch();
@@ -175,6 +196,26 @@ describe("unsure queries", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(states.at(-1)).toMatchObject({ status: "fused", unsure: true });
     expect(states.at(-1)?.results[0]).toMatchObject({ source: "semantic" });
+  });
+
+  it("judges with the calibration the API sends for its model", async () => {
+    // A top of 0.4 that stands out: weak under the default calibration, sure under one whose
+    // ceiling is below it.
+    const results = [
+      { emoji: "🌋", id: "1F30B", score: 0.4, source: "semantic" },
+      { emoji: "🐐", id: "1F410", score: 0.3, source: "semantic" },
+    ];
+    const body = { ...unsureBody, results, calibration: { floor: 0.1, ceiling: 0.3 } };
+    const fetch = vi.fn(async (_url: string | URL | Request) => new Response(JSON.stringify(body)));
+    const states: SessionState[] = [];
+    createSearchSession({
+      engine: createEngine(en),
+      semantic: createSemanticClient({ endpoint: "https://api.test", fetch }),
+      debounceMs: 10,
+      onChange: (s) => states.push(s),
+    }).update("kendrick lamar");
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(states.at(-1)).toMatchObject({ status: "fused", unsure: false });
   });
 });
 

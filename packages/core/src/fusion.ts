@@ -54,28 +54,58 @@ export function fuseResults(
   ].slice(0, limit);
 }
 
-/** Cosine range of the semantic model over which its top match goes from "rarely right" to "usually right". */
+/** Score ranges of the semantic model over which its top match goes from "rarely right" to "usually right". */
 export interface SemanticCalibration {
+  /** Best cosine. */
   floor: number;
   ceiling: number;
+  /**
+   * Gap between the best cosine and the mean of ranks 2–5. Optional: without it only the best
+   * cosine counts. A name scores low on every emoji but clearly highest on one ("messi" → ⚽ 0.35,
+   * the next four 0.24–0.28), so the gap knows it when the cosine does not.
+   */
+  gapFloor?: number;
+  gapCeiling?: number;
 }
 
 /**
- * bge-m3 @1024 (the production model) on the in-house set: `floor` = 25th percentile of the best
- * cosine of the semantic misses, `ceiling` = median best cosine of the hits (under a tenth of the
- * hits are below the floor). Another model or dims needs its own values; `pnpm eval` measures them
- * (DECISIONS.md, 2026-10-02 quality diagnosis).
+ * EmbeddingGemma @768 (the production model). Best cosine on the in-house set: `floor` = 25th
+ * percentile of the semantic misses, `ceiling` = median of the hits. Gap, on the reranker's
+ * training sets: a top match is right 26% of the time below 0.02 and 94% above 0.10. Another model
+ * or dims needs its own values; `pnpm eval` measures floor and ceiling (DECISIONS.md).
  */
-export const DEFAULT_SEMANTIC_CALIBRATION: SemanticCalibration = { floor: 0.44, ceiling: 0.58 };
+export const DEFAULT_SEMANTIC_CALIBRATION: SemanticCalibration = {
+  floor: 0.39,
+  ceiling: 0.56,
+  gapFloor: 0.02,
+  gapCeiling: 0.1,
+};
 
-/** How sure the semantic tier is, 0–1, from its best cosine score. */
+/**
+ * Candidates each tier brings to fusion, however many results are shown. The reranker's features
+ * read the lists (ranks, the lowest semantic score), so a shorter list would rank differently: a
+ * client showing 12 results must fuse the same 24 candidates as the API.
+ */
+export const RANK_DEPTH = 24;
+
+/** Ranks 2–5 whose mean the best score is compared with. */
+const GAP_RANKS = 4;
+
+const unit = (x: number) => Math.min(1, Math.max(0, x));
+
+/** How sure the semantic tier is, 0–1: from its best cosine, or from how far that stands out (the larger). */
 export function semanticConfidence(
   semantic: readonly SearchResult[],
   calibration: SemanticCalibration = DEFAULT_SEMANTIC_CALIBRATION,
 ): number {
-  const best = semantic.reduce((max, r) => Math.max(max, r.score), 0);
-  const { floor, ceiling } = calibration;
-  return Math.min(1, Math.max(0, (best - floor) / (ceiling - floor)));
+  const scores = semantic.map((r) => r.score).sort((a, b) => b - a);
+  const [best = 0, ...rest] = scores;
+  const { floor, ceiling, gapFloor, gapCeiling } = calibration;
+  const level = unit((best - floor) / (ceiling - floor));
+  const next = rest.slice(0, GAP_RANKS);
+  if (gapFloor === undefined || gapCeiling === undefined || next.length === 0) return level;
+  const gap = best - next.reduce((sum, s) => sum + s, 0) / next.length;
+  return Math.max(level, unit((gap - gapFloor) / (gapCeiling - gapFloor)));
 }
 
 const REGIONAL_INDICATOR_A = 0x1f1e6;

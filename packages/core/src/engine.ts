@@ -143,8 +143,17 @@ const FUNCTION_WORD_WEIGHT_CAP = 0.3;
  * "lamar" → id "lamaran" (💍) is a partial match, not the word the user is typing.
  */
 const FOREIGN_PREFIX_QUALITY = 0.7;
+/**
+ * Quality factor of a prefix completion of a token that is a whole vocabulary word already: "hell"
+ * means hell before it means "hello", "bee" before "beer".
+ */
+const WHOLE_WORD_COMPLETION_QUALITY = 0.5;
 /** Tokens up to this length need stronger evidence for a typo match (PACK_FORMAT.md §4). */
 const SHORT_TYPO_LENGTH = 5;
+/** One-edit typo quality for a short token: a short unknown word is often a name ("messi"), not a slip. */
+const SHORT_TYPO_QUALITY = 0.7;
+/** Score factor of a word split by a space and joined back ("hallo ween" → "halloween"). */
+const JOINED_WORD_FACTOR = 0.95;
 /** Longest piece (code points) tried when a run of an unspaced script is split. */
 const MAX_PIECE_LENGTH = 16;
 /**
@@ -522,12 +531,13 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
 
     let prefixMatches = 0;
     if (asPrefix) {
+      const completion = exact === undefined ? 1 : WHOLE_WORD_COMPLETION_QUALITY;
       const start = lowerBound(token);
       for (let i = start; i < vocab.length && i < start + MAX_PREFIX_EXPANSION; i++) {
         const candidate = vocab[i] as string;
         if (!candidate.startsWith(token)) break;
         if (candidate.length > token.length) {
-          const quality = 0.6 + (0.35 * token.length) / candidate.length;
+          const quality = (0.6 + (0.35 * token.length) / candidate.length) * completion;
           if (preferredToken(i)) add(i, quality);
           else {
             add(i, quality * FOREIGN_PREFIX_QUALITY);
@@ -555,7 +565,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
           // extends: en "lamar" is not "lama" (🦙, Turkish), "messi" is not "mess".
           if (short && (token.startsWith(candidate) || !preferredToken(id))) continue;
           const distance = boundedEditDistance(token, candidate, maxEdits);
-          if (distance <= maxEdits) add(id, distance === 1 ? 0.8 : 0.65);
+          if (distance <= maxEdits) add(id, distance === 1 ? (short ? SHORT_TYPO_QUALITY : 0.8) : 0.65);
         }
       }
     }
@@ -673,7 +683,49 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
     }
   }
 
+  /**
+   * The query with its first pair of neighbouring tokens that together are a vocabulary word joined
+   * into it ("hallo ween" → "halloween"), else undefined. Pieces of an unspaced script are left alone.
+   */
+  function joinedQuery(query: string, tokens: readonly string[]): string | undefined {
+    for (let i = 0; i + 1 < tokens.length; i++) {
+      const left = tokens[i] as string;
+      const right = tokens[i + 1] as string;
+      if (left.length < 2 || right.length < 2 || UNSPACED_SCRIPT.test(left + right)) continue;
+      if (idOf(left + right) === undefined) continue;
+      const joined = [...tokens.slice(0, i), left + right, ...tokens.slice(i + 2)].join(" ");
+      // A trailing space still means the last word is finished.
+      return /\s$/.test(query) ? `${joined} ` : joined;
+    }
+    return undefined;
+  }
+
+  /**
+   * The search of the query as typed, merged with the search of its split word joined back
+   * (`joinedQuery`) at `JOINED_WORD_FACTOR`: each emoji keeps its better score (PACK_FORMAT.md §4).
+   */
   function search(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
+    const output = searchAsTyped(query, options);
+    const joined = joinedQuery(query, output.tokens);
+    if (joined === undefined) return output;
+    const other = searchAsTyped(joined, options);
+    const byId = new Map(output.results.map((r) => [r.id, r]));
+    for (const result of other.results) {
+      const score = Math.round(result.score * JOINED_WORD_FACTOR * 1000) / 1000;
+      const current = byId.get(result.id);
+      if (!current || score > current.score) byId.set(result.id, { ...result, score });
+    }
+    // Stable: equal scores keep the as-typed order, then the joined search's.
+    const results = [...byId.values()].sort((a, b) => b.score - a.score).slice(0, options.limit ?? 24);
+    return {
+      ...output,
+      results,
+      confidence: results[0]?.score ?? 0,
+      coverage: Math.max(output.coverage ?? 0, other.coverage ?? 0),
+    };
+  }
+
+  function searchAsTyped(query: string, options: AliasSearchOptions = {}): CanonicalSearchOutput {
     const { limit = 24, locale, prefix = true } = options;
     const normalized = normalize(query);
     const lastIsPrefix = prefix && !/\s$/.test(query);

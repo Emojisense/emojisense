@@ -1,4 +1,5 @@
 import { getModel } from "@emojisense/data/models";
+import { DEFAULT_SEMANTIC_CALIBRATION } from "emojisense";
 import { describe, expect, it, vi } from "vitest";
 import type { SearchBody } from "../src/search.ts";
 import type { Catalog } from "../src/semantic.ts";
@@ -47,12 +48,24 @@ describe("GET /v1/search", () => {
     expect(body.results[0]).toMatchObject({ emoji: "🦖", source: "alias" });
   });
 
+  it("ranks the same candidates whatever the limit, then cuts to it", async () => {
+    const h = harness();
+    const ids = async (limit: number) =>
+      (
+        (await (await h.call(keyedSearch("lava eruption", `&limit=${limit}`))).json()) as SearchBody
+      ).results.map((r) => r.id);
+    const all = await ids(24);
+    expect(await ids(2)).toEqual(all.slice(0, 2));
+  });
+
   it("returns semantic results only in semantic mode", async () => {
     const body = (await (
       await harness().call(keyedSearch("jurassic park", "&mode=semantic"))
     ).json()) as SearchBody;
     expect(body.results.length).toBeGreaterThan(0);
     expect(body.results.every((r) => r.source === "semantic")).toBe(true);
+    // The client fuses with the model's own calibration (core session.ts).
+    expect(body.calibration).toEqual(DEFAULT_SEMANTIC_CALIBRATION);
   });
 
   it("says how well the tiers understood the query, in both modes", async () => {

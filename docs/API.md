@@ -87,7 +87,7 @@ use the website's own publishable key, so they are not anonymous.
 | ----- | ------- | ----- |
 | `q` | — | Required. Cut to 64 characters. The semantic tier embeds it with its accents and punctuation (PACK_FORMAT.md §3, "Embedding text"); aliases, custom emoji and analytics use its normalized form. |
 | `locale` | `en` | A pack locale: `en`, `zh`, `hi`, `es`, `ar`, `fr`, `bn`, `pt`, `ru`, `id`, `tr`. See [Locales](#locales). Semantic search covers the English and this locale's emoji vectors (PACK_FORMAT.md §5). |
-| `limit` | `24` | 1–50 |
+| `limit` | `24` | 1–50. The ranking does not depend on it: both tiers bring at least 24 candidates, and the fused list is cut to `limit` (PACK_FORMAT.md §10). |
 | `mode` | `hybrid` | `hybrid` = alias + semantic fused on the server (thin clients). `semantic` = semantic only (the SDK fuses with its own on-device results). |
 | `pack` | — | Client pack version (informational) |
 | `key` | — | Publishable key |
@@ -100,7 +100,8 @@ use the website's own publishable key, so they are not anonymous.
   "query": "jurassic park",
   "results": [{ "emoji": "🦖", "id": "1F996", "score": 0.82, "source": "alias" }],
   "packVersion": "0.1.0",
-  "model": "bge-m3@1024",
+  "model": "embeddinggemma@768",
+  "calibration": { "floor": 0.39, "ceiling": 0.56, "gapFloor": 0.02, "gapCeiling": 0.1 },
   "cached": false,
   "degraded": false,
   "overLimit": false,
@@ -116,6 +117,7 @@ use the website's own publishable key, so they are not anonymous.
 | `query` | The normalized query (PACK_FORMAT.md §3) |
 | `results[]` | `{ emoji, id, score, source }`, best first. `id` is the Emojibase hexcode of the base emoji. `source`: `alias`, `semantic`, `custom` (with `imageUrl` and `shortcode`, below) or `culture` (only with `culture=1`, with `context` and `cultureId`, see [Culture in search](#culture-in-search)) |
 | `packVersion`, `model` | The data the Worker serves, e.g. `0.1.0` and `bge-m3@1024` (model key @ dims) |
+| `calibration` | The calibration of `model`: the score ranges over which its top match goes from rarely to usually right (PACK_FORMAT.md §10). A client that fuses `semantic` results with its own aliases uses it for `fuse` and the unsure verdict, so a model change on the server needs no client update. Absent in answers cached before 2026-10-03 |
 | `cached` | The answer came from the shared edge cache |
 | `degraded` | Workers AI was unavailable, so the results are alias-only (and not cached) |
 | `overLimit` | The key's account has used its monthly `semantic_calls` limit (see "Metering and plan limits") |

@@ -1,11 +1,13 @@
 import { UNKNOWN_COUNTRY } from "@emojisense/platform";
 import {
   assessConfidence,
+  DEFAULT_SEMANTIC_CALIBRATION,
   embeddingText,
   normalize,
   type QueryConfidence,
   SEMANTIC_SURE,
   type SearchResult,
+  type SemanticCalibration,
   semanticStrength,
 } from "emojisense";
 import { type Outcome, record } from "./analytics.ts";
@@ -33,6 +35,11 @@ export interface SearchBody {
   results: (SearchResult | ApiCultureResult)[];
   packVersion: string;
   model: string;
+  /**
+   * Search only: the calibration of `model` (core's default is the production model's). Clients
+   * fuse and judge semantic results with it (core session.ts).
+   */
+  calibration?: SemanticCalibration;
   cached: boolean;
   /** Workers AI was unavailable; results are alias-only. */
   degraded: boolean;
@@ -183,7 +190,12 @@ export const handleSearch: Handler = async (
 
   const regionEcho = cultureParams.regionRequested ? { region: cultureParams.region ?? null } : {};
   const searchRegion = { locale, country };
-  const base = { query: params.query, packVersion: catalog.config.packVersion, model: modelTag(catalog) };
+  const base = {
+    query: params.query,
+    packVersion: catalog.config.packVersion,
+    model: modelTag(catalog),
+    calibration: DEFAULT_SEMANTIC_CALIBRATION,
+  };
   const log = (
     outcome: Outcome,
     scores: { aliasConfidence?: number; semanticTop?: number } = {},

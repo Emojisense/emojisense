@@ -1,7 +1,7 @@
 import { assessConfidence } from "./confidence.js";
 import { applyCulture, type Culture } from "./culture.js";
 import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
-import { shouldUseSemantic as defaultShouldUseSemantic, fuse } from "./fusion.js";
+import { shouldUseSemantic as defaultShouldUseSemantic, fuse, RANK_DEPTH } from "./fusion.js";
 import { AUTO_REGION, isAutoRegion, type SemanticLayer, type SemanticProvider } from "./provider.js";
 
 export type SessionStatus = "idle" | "alias" | "loading" | "fused" | "error";
@@ -93,9 +93,12 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
   return {
     update(query) {
       cancel();
+      // Fusion sees the same candidates whatever the limit (RANK_DEPTH); the results are cut to it.
+      const depth = Math.max(limit, RANK_DEPTH);
       const aliasStarted = performance.now();
-      const alias = engine.search(query, { limit, culture: false, ...(locale ? { locale } : {}) });
+      const alias = engine.search(query, { limit: depth, culture: false, ...(locale ? { locale } : {}) });
       const aliasMs = performance.now() - aliasStarted;
+      const shown = alias.results.slice(0, limit);
       const present = (results: SearchResult[]): SearchResult[] =>
         culture
           ? applyCulture(results, culture, query, {
@@ -109,7 +112,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
       const aliasOnly = { ...assessConfidence(alias, undefined), alias, aliasMs };
       onChange({
         query,
-        results: present(alias.results),
+        results: present(shown),
         ...aliasOnly,
         status: alias.tokens.length === 0 ? "idle" : wantsSemantic ? "loading" : "alias",
       });
@@ -121,7 +124,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
         const started = performance.now();
         try {
           const response = await semantic.search(query, {
-            limit,
+            limit: depth,
             signal: controller.signal,
             ...(locale ? { locale } : {}),
             ...(auto ? { region: AUTO_REGION } : {}),
@@ -130,17 +133,19 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           if (auto && typeof response?.region === "string") learnedRegion ??= response.region;
           if (!response) {
             // No layer had an answer (or the key is over its limit): alias results stand.
-            onChange({ query, results: present(alias.results), ...aliasOnly, status: "alias" });
+            onChange({ query, results: present(shown), ...aliasOnly, status: "alias" });
             return;
           }
+          // The model that scored the results knows its calibration; older servers send none.
+          const { calibration } = response;
           onChange({
             query,
             results: present(
-              fuse(alias, response.results, limit, undefined, { popularity: engine.popularity }),
+              fuse(alias, response.results, limit, calibration, { popularity: engine.popularity }),
             ),
             alias,
             aliasMs,
-            ...assessConfidence(alias, response.results),
+            ...assessConfidence(alias, response.results, calibration),
             status: "fused",
             semanticMs: performance.now() - started,
             semanticCached: response.cached,
@@ -148,7 +153,7 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           });
         } catch (error) {
           if (controller.signal.aborted) return;
-          onChange({ query, results: present(alias.results), ...aliasOnly, status: "error", error });
+          onChange({ query, results: present(shown), ...aliasOnly, status: "error", error });
         }
       }, debounceMs);
     },
