@@ -4,18 +4,18 @@
     "skipLink": "跳转到正文",
     "shareAlt": {
       "home": "Emojisense：每个应用所需的emoji功能。展示“jurassic park”和“feliz cumpleaños”等搜索及其排名靠前的emoji结果。",
-      "pricing": "Emojisense定价：免费起步，按需付费。展示Free、Solo、Pro和Scale套餐及其月费。"
+      "pricing": "Emojisense定价：免费起步，按需付费。展示Free、Solo和Pro套餐及其月费。"
     },
     "home": {
       "description": "适用于每个应用的emoji平台：搜索理解俚语和11种语言，提供emoji回应建议、照片转emoji、自定义emoji、托管emoji集和数据分析。提供Free套餐，核心开源。"
     },
     "pricing": {
       "title": "定价",
-      "description": "Emojisense定价：完整的emoji平台，免费起步。所有套餐均提供搜索和emoji回应建议；按用量、照片、自定义emoji和团队功能付费。"
+      "description": "Emojisense定价：完整的emoji平台，免费起步。所有套餐均提供搜索和emoji回应建议；按用量、自定义emoji和团队功能付费。"
     },
     "waitlist": {
       "title": "候补名单",
-      "description": "Emojisense付费套餐现已开售：在定价页面选择Solo、Pro或Scale。"
+      "description": "Emojisense付费套餐现已开售：在定价页面选择Solo或Pro。"
     },
     "about": {
       "title": "关于",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "定价",
       "title": "免费起步，按需付费。",
-      "lead": "所有套餐均提供搜索和emoji回应建议。按用量、照片、自定义emoji和团队功能付费。"
+      "lead": "所有套餐均提供搜索和emoji回应建议。按用量、自定义emoji和团队功能付费。"
     },
     "faq": {
       "kicker": "常见问题",
@@ -205,7 +205,7 @@
     },
     "photo": {
       "title": "照片转emoji",
-      "tag": "测试版",
+      "tag": "即将推出",
       "body": "小狗照片会得到🐶和🥹。照片从不存储。"
     },
     "custom": {
@@ -233,7 +233,8 @@
       "production": "生产"
     },
     "tenants": {
-      "title": "租户与Webhook",
+      "title": "租户",
+      "tag": "即将推出",
       "body": "正在搭建平台？为每个客户提供专属emoji集，通过API管理。",
       "root": "你的平台"
     },
@@ -482,13 +483,13 @@
     "yearlyHint": "按年计费",
     "fine": "<strong>达到限额，搜索仍可用。</strong>用完每月AI调用额度后，设备端答案、预置答案和缓存答案仍会提供服务，直到下个月。<link>哪些请求计为调用？</link>",
     "unlimited": "不限量",
+    "soon": "即将推出",
     "groups": {
       "core": "所有套餐均包含",
       "usage": "用量",
       "emoji": "自定义emoji与emoji集",
       "teams": "数据分析与团队",
-      "platform": "面向平台",
-      "support": "支持"
+      "soon": "即将推出"
     },
     "features": {
       "search": {
@@ -510,9 +511,8 @@
         "unit": "次AI调用/月"
       },
       "photos": {
-        "label": "每月照片转emoji",
-        "hint": "将照片内容识别为emoji",
-        "unit": "张照片转emoji/月"
+        "label": "照片转emoji",
+        "hint": "将照片内容识别为emoji"
       },
       "overLimit": {
         "label": "达到限额后仍可用",
@@ -550,17 +550,6 @@
       "tenants": {
         "label": "租户",
         "hint": "每个客户一个自定义emoji集，通过API管理"
-      },
-      "webhooks": {
-        "label": "Webhook",
-        "hint": "接收租户和emoji变更通知"
-      },
-      "communitySupport": {
-        "label": "社区支持",
-        "hint": "GitHub Discussions和文档"
-      },
-      "prioritySupport": {
-        "label": "优先支持"
       }
     }
   },
@@ -568,7 +557,7 @@
     "hero": {
       "kicker": "定价",
       "title": "免费起步。<line>按需付费。</line>",
-      "lead": "适用于每个应用的完整emoji平台。所有套餐均提供搜索和emoji回应建议，只需为用量、照片、自定义emoji和团队功能付费。",
+      "lead": "适用于每个应用的完整emoji平台。所有套餐均提供搜索和emoji回应建议，只需为用量、自定义emoji和团队功能付费。",
       "assurances": {
         "card": "免费套餐无需银行卡",
         "failure": "达到限额也不中断服务",
@@ -578,7 +567,7 @@
     "compare": {
       "kicker": "套餐对比",
       "title": "所有功能，一览对比。",
-      "lead": "每个套餐都能使用完整emoji平台。更高档套餐增加用量、自定义emoji、团队和租户功能。",
+      "lead": "每个套餐都能使用完整emoji平台。更高档套餐增加用量、自定义emoji和团队功能。",
       "caption": "Emojisense各套餐的功能和限额",
       "included": "包含",
       "notIncluded": "不包含"
@@ -672,7 +661,7 @@
       "items": {
         "free": {
           "q": "免费套餐真的免费吗？",
-          "a": "是的，无需银行卡。每月包含{calls}次AI调用和{photos}次照片识别、全部SDK与集成，以及不限量的设备端答案。所有套餐都无需显示“技术支持”标识。"
+          "a": "是的，无需银行卡。每月包含{calls}次AI调用、全部SDK与集成，以及不限量的设备端答案。所有套餐都无需显示“技术支持”标识。"
         },
         "call": {
           "q": "哪些请求计为调用？",
@@ -735,7 +724,7 @@
   "waitlist": {
     "hero": {
       "title": "付费套餐现已开售。",
-      "lead": "在<link>定价页面</link>选择Solo、Pro或Scale，并在控制台付款。此表单保留供旧链接使用，仅将你的邮箱添加到我们的列表中。"
+      "lead": "在<link>定价页面</link>选择Solo或Pro，并在控制台付款。此表单保留供旧链接使用，仅将你的邮箱添加到我们的列表中。"
     },
     "formLabel": "候补名单表单",
     "plansTitle": "付费套餐一览",
@@ -809,7 +798,7 @@
     },
     "money": {
       "title": "收入来源",
-      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、照片转emoji、自定义emoji、数据分析、团队和租户功能。没有广告，也不出售数据。现在就<pricing>选择套餐</pricing>，或<free>免费开始</free>。"
+      "body": "所有套餐均免费提供搜索和emoji回应建议。付费套餐增加用量、自定义emoji、数据分析和团队功能。没有广告，也不出售数据。现在就<pricing>选择套餐</pricing>，或<free>免费开始</free>。"
     },
     "now": {
       "title": "当前进展",
@@ -822,6 +811,7 @@
   "hero": {
     "searchLabel": "搜索emoji",
     "placeholder": "用日常说话的方式搜索emoji…",
+    "typeHint": "演示 · 输入文字亲自试试",
     "offline": "离线",
     "results": "emoji搜索结果",
     "empty": "暂无匹配，请继续输入。",
@@ -1042,14 +1032,14 @@
       "timingMeaning": "语义搜索 · {ms} ms",
       "timingDevice": "设备端 · {ms} ms",
       "aside": "{workspace}的自定义emoji",
-      "importTitle": "Slack和Discord导入：Pro和Scale套餐",
+      "importTitle": "Slack和Discord导入：Pro套餐",
       "imported": "从{source}导入",
       "addedByAdmins": "由工作区管理员添加",
       "set": "自定义emoji集",
       "reactWith": "用{code}回应",
       "inspectIdle": "将指针移到emoji上，查看哪些词能搜到它。",
       "tenants": "租户",
-      "scalePlan": "Scale套餐",
+      "soon": "即将推出",
       "tenantsNote": "每个客户都是一个租户，拥有独立的自定义emoji集。你的服务器使用私密密钥写入数据。",
       "presets": {
         "shipIt": "发布",

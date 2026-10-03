@@ -97,11 +97,11 @@ describe("Billing page: buying a plan", () => {
       },
     });
     await loaded();
-    fireEvent.click(within(card("Scale")).getByRole("button", { name: "Upgrade to Scale" }));
-    expect((await within(card("Scale")).findByRole("alert")).textContent).toContain("Whop did not start");
+    fireEvent.click(within(card("Pro")).getByRole("button", { name: "Upgrade to Pro" }));
+    expect((await within(card("Pro")).findByRole("alert")).textContent).toContain("Whop did not start");
     expect(assign).not.toHaveBeenCalled();
     expect(
-      (within(card("Scale")).getByRole("button", { name: "Upgrade to Scale" }) as HTMLButtonElement).disabled,
+      (within(card("Pro")).getByRole("button", { name: "Upgrade to Pro" }) as HTMLButtonElement).disabled,
     ).toBe(false);
   });
 
@@ -115,6 +115,52 @@ describe("Billing page: buying a plan", () => {
     expect(
       (within(card("Pro")).getByRole("button", { name: "Upgrade to Pro" }) as HTMLButtonElement).disabled,
     ).toBe(true);
+  });
+});
+
+describe("Billing page: Scale is not on sale", () => {
+  const planCards = () =>
+    within(screen.getByRole("list", { name: "Plans" }))
+      .getAllByRole("heading", { level: 2 })
+      .map((heading) => heading.textContent);
+
+  it.each([
+    ["free", PLANS.free],
+    ["pro", PLANS.pro],
+  ] as const)(
+    "shows a %s account the plans on sale only, without a Tenants and webhooks row",
+    async (id, plan) => {
+      openBilling("/billing", {
+        "GET /api/me": { body: me({ plan: toPlanSummary(plan) }) },
+        "GET /api/billing": { body: billing(id) },
+      });
+      await loaded();
+      expect(planCards()).toEqual(["Free", "Solo", "Pro"]);
+      expect(screen.queryByRole("listitem", { name: "Scale" })).toBeNull();
+      expect(document.body.textContent).not.toContain("Scale");
+      expect(document.body.textContent).not.toContain("Tenants and webhooks");
+    },
+  );
+
+  it("ignores an old link that picks Scale", async () => {
+    openBilling("/billing?plan=scale&interval=month", { "GET /api/billing": { body: billing("free") } });
+    await loaded();
+    expect(screen.queryByText(/You picked/)).toBeNull();
+    expect(screen.queryByText("Your pick")).toBeNull();
+    expect(planCards()).toEqual(["Free", "Solo", "Pro"]);
+  });
+
+  it("keeps the card of an account on Scale, as its plan", async () => {
+    openBilling("/billing", {
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS.scale) }) },
+      "GET /api/billing": { body: billing("scale") },
+    });
+    await loaded();
+    expect(planCards()).toEqual(["Free", "Solo", "Pro", "Scale"]);
+    expect(within(card("Scale")).getByRole("button", { name: "Your plan" })).toBeTruthy();
+    expect(card("Scale").textContent).toContain("Tenants and webhooks");
+    expect(within(card("Pro")).getByRole("button", { name: "Switch to Pro" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Current plan" }).textContent).toContain("Scale");
   });
 });
 
@@ -133,9 +179,8 @@ describe("Billing page: a paid subscription", () => {
     expect(manage.getAttribute("target")).toBe("_blank");
 
     expect(within(card("Pro")).getByRole("button", { name: "Your plan" })).toBeTruthy();
-    expect(within(card("Scale")).getByRole("button", { name: "Upgrade to Scale" })).toBeTruthy();
     expect(within(card("Solo")).getByRole("button", { name: "Switch to Solo" })).toBeTruthy();
-    expect(card("Scale").textContent).toContain("stops renewing when this one starts");
+    expect(card("Solo").textContent).toContain("stops renewing when this one starts");
     expect(within(card("Free")).getByRole("link", { name: /Cancel in Whop/ })).toBeTruthy();
   });
 

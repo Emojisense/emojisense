@@ -1,5 +1,5 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import Callout from "../../components/docs/Callout.astro";
 import CodeBlock from "../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
@@ -66,7 +66,7 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
   <p>Search, reaction suggestions and photo to emoji also work without a key, for demos and first tests. Such calls are never metered and never over a limit, but they get the stricter rate limit, no custom emoji and no analytics. Custom packs and the tenants API need a key.</p>
 
   <h2 id="plan-limits">Plan limits</h2>
-  <p>Limits are monthly, in UTC, with no daily caps. Only AI calls and photo classifications are metered. An AI call is a search or a reaction suggestion that reaches the API, a cached answer included. On-device searches, packs and shards are free and unlimited on every plan.</p>
+  <p>Limits are monthly, in UTC, with no daily caps. Only AI calls are metered on the plans. An AI call is a search or a reaction suggestion that reaches the API, a cached answer included. On-device searches, packs and shards are free and unlimited on every plan.</p>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead>
@@ -74,19 +74,17 @@ const secret = `curl "${API_HOST}/v1/search?q=ship%20it" \\
           <th scope="col">Plan</th>
           <th scope="col">Price</th>
           <th scope="col">AI calls</th>
-          <th scope="col">Photo to emoji</th>
           <th scope="col">Custom emoji</th>
           <th scope="col">Apps</th>
         </tr>
       </thead>
       <tbody>
         {
-          PLAN_IDS.map((id) => (
+          LISTED_PLAN_IDS.map((id) => (
             <tr>
               <td>{PLANS[id].name}</td>
               <td>{PLANS[id].priceUsdMonthly === 0 ? "Free" : `$${PLANS[id].priceUsdMonthly} a month`}</td>
               <td>{formatCount(PLANS[id].limits.semantic_calls)}</td>
-              <td>{formatCount(PLANS[id].limits.image_classifications)}</td>
               <td>{PLANS[id].limits.custom_emoji > 0 ? formatCount(PLANS[id].limits.custom_emoji) : "—"}</td>
               <td>{formatCount(PLANS[id].maxApps)}</td>
             </tr>

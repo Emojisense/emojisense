@@ -4,18 +4,18 @@
     "skipLink": "Langsung ke konten",
     "shareAlt": {
       "home": "Emojisense: semua kebutuhan emoji, untuk setiap aplikasi. Pencarian seperti “jurassic park” dan “feliz cumpleaños” beserta hasil emoji teratasnya.",
-      "pricing": "Harga Emojisense: gratis untuk memulai, terjangkau saat berkembang. Paket Free, Solo, Pro, dan Scale beserta harga bulanannya."
+      "pricing": "Harga Emojisense: gratis untuk memulai, terjangkau saat berkembang. Paket Free, Solo, dan Pro beserta harga bulanannya."
     },
     "home": {
       "description": "Platform emoji untuk setiap aplikasi: pencarian yang memahami bahasa gaul dan 11 bahasa, saran reaksi, foto ke emoji, emoji khusus, set emoji yang dihosting, dan analitik. Paket Free, inti sumber terbuka."
     },
     "pricing": {
       "title": "Harga",
-      "description": "Harga Emojisense: platform emoji lengkap, gratis untuk memulai. Pencarian dan saran reaksi tersedia di setiap paket; bayar untuk volume, foto, emoji khusus, dan tim."
+      "description": "Harga Emojisense: platform emoji lengkap, gratis untuk memulai. Pencarian dan saran reaksi tersedia di setiap paket; bayar untuk volume, emoji khusus, dan tim."
     },
     "waitlist": {
       "title": "Daftar tunggu",
-      "description": "Paket berbayar Emojisense sudah tersedia. Pilih Solo, Pro, atau Scale di halaman harga."
+      "description": "Paket berbayar Emojisense sudah tersedia. Pilih Solo atau Pro di halaman harga."
     },
     "about": {
       "title": "Tentang",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Harga",
       "title": "Gratis untuk memulai. Terjangkau saat berkembang.",
-      "lead": "Pencarian dan saran reaksi tersedia di setiap paket. Bayar untuk volume, foto, emoji khusus, dan fitur tim."
+      "lead": "Pencarian dan saran reaksi tersedia di setiap paket. Bayar untuk volume, emoji khusus, dan fitur tim."
     },
     "faq": {
       "kicker": "FAQ",
@@ -205,7 +205,7 @@
     },
     "photo": {
       "title": "Foto ke emoji",
-      "tag": "Beta",
+      "tag": "Segera",
       "body": "Anak anjing mendapat 🐶 dan 🥹. Foto tidak pernah disimpan."
     },
     "custom": {
@@ -233,7 +233,8 @@
       "production": "Produksi"
     },
     "tenants": {
-      "title": "Tenant dan webhook",
+      "title": "Tenant",
+      "tag": "Segera",
       "body": "Membangun platform? Berikan setiap pelanggan set emoji sendiri, yang dikelola melalui API.",
       "root": "Platform Anda"
     },
@@ -482,13 +483,13 @@
     "yearlyHint": "tahunan",
     "fine": "<strong>Pencarian tetap bekerja saat batas tercapai.</strong> Setelah jatah panggilan AI bulanan habis, jawaban di perangkat, jawaban siap pakai, dan jawaban dalam cache tetap tersedia sampai bulan berikutnya. <link>Apa yang dihitung sebagai panggilan?</link>",
     "unlimited": "Tanpa batas",
+    "soon": "Segera",
     "groups": {
       "core": "Di setiap paket",
       "usage": "Penggunaan",
       "emoji": "Emoji khusus dan set",
       "teams": "Wawasan dan tim",
-      "platform": "Untuk platform",
-      "support": "Dukungan"
+      "soon": "Segera hadir"
     },
     "features": {
       "search": {
@@ -510,9 +511,8 @@
         "unit": "panggilan AI per bulan"
       },
       "photos": {
-        "label": "Foto ke emoji per bulan",
-        "hint": "Foto diklasifikasikan menjadi emoji",
-        "unit": "foto ke emoji per bulan"
+        "label": "Foto ke emoji",
+        "hint": "Foto diklasifikasikan menjadi emoji"
       },
       "overLimit": {
         "label": "Tetap bekerja setelah batas tercapai",
@@ -550,17 +550,6 @@
       "tenants": {
         "label": "Tenant",
         "hint": "Satu set emoji khusus per pelanggan, dikelola melalui API"
-      },
-      "webhooks": {
-        "label": "Webhook",
-        "hint": "Dapatkan kabar perubahan tenant dan emoji"
-      },
-      "communitySupport": {
-        "label": "Dukungan komunitas",
-        "hint": "GitHub Discussions dan dokumentasi"
-      },
-      "prioritySupport": {
-        "label": "Dukungan prioritas"
       }
     }
   },
@@ -568,7 +557,7 @@
     "hero": {
       "kicker": "Harga",
       "title": "Gratis untuk memulai. <line>Terjangkau saat berkembang.</line>",
-      "lead": "Platform emoji lengkap untuk setiap aplikasi. Pencarian dan saran reaksi tersedia di setiap paket — bayar hanya untuk volume, foto, emoji khusus, dan fitur tim.",
+      "lead": "Platform emoji lengkap untuk setiap aplikasi. Pencarian dan saran reaksi tersedia di setiap paket — bayar hanya untuk volume, emoji khusus, dan fitur tim.",
       "assurances": {
         "card": "Tanpa kartu untuk paket gratis",
         "failure": "Layanan tetap berjalan saat batas tercapai",
@@ -578,7 +567,7 @@
     "compare": {
       "kicker": "Bandingkan paket",
       "title": "Bandingkan setiap fitur.",
-      "lead": "Setiap paket mendapat seluruh platform emoji. Paket lebih tinggi menambahkan volume, emoji khusus, tim, dan tenant.",
+      "lead": "Setiap paket mendapat seluruh platform emoji. Paket lebih tinggi menambahkan volume, emoji khusus, dan tim.",
       "caption": "Fitur dan batas setiap paket Emojisense",
       "included": "Termasuk",
       "notIncluded": "Tidak termasuk"
@@ -672,7 +661,7 @@
       "items": {
         "free": {
           "q": "Apakah paket gratis benar-benar gratis?",
-          "a": "Ya, dan Anda tidak perlu kartu. Termasuk {calls} panggilan AI dan {photos} klasifikasi foto per bulan, semua SDK dan integrasi, serta jawaban di perangkat tanpa batas. Semua paket tanpa lencana “didukung oleh”."
+          "a": "Ya, dan Anda tidak perlu kartu. Termasuk {calls} panggilan AI per bulan, semua SDK dan integrasi, serta jawaban di perangkat tanpa batas. Semua paket tanpa lencana “didukung oleh”."
         },
         "call": {
           "q": "Apa yang dihitung sebagai panggilan?",
@@ -735,7 +724,7 @@
   "waitlist": {
     "hero": {
       "title": "Paket berbayar sudah tersedia.",
-      "lead": "Pilih Solo, Pro, atau Scale di <link>halaman harga</link> dan bayar di dasbor. Formulir ini tetap tersedia untuk tautan lama. Formulir ini hanya menambahkan email Anda ke daftar kami."
+      "lead": "Pilih Solo atau Pro di <link>halaman harga</link> dan bayar di dasbor. Formulir ini tetap tersedia untuk tautan lama. Formulir ini hanya menambahkan email Anda ke daftar kami."
     },
     "formLabel": "Formulir daftar tunggu",
     "plansTitle": "Sekilas paket berbayar",
@@ -809,7 +798,7 @@
     },
     "money": {
       "title": "Sumber pendapatan kami",
-      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, foto ke emoji, emoji khusus, analitik, tim, dan tenant. Tanpa iklan, dan kami tidak menjual data. <pricing>Pilih paket</pricing>, atau <free>mulai gratis</free> hari ini."
+      "body": "Pencarian dan saran reaksi gratis di setiap paket. Paket berbayar menambahkan volume, emoji khusus, analitik, dan tim. Tanpa iklan, dan kami tidak menjual data. <pricing>Pilih paket</pricing>, atau <free>mulai gratis</free> hari ini."
     },
     "now": {
       "title": "Perkembangan saat ini",
@@ -822,6 +811,7 @@
   "hero": {
     "searchLabel": "Cari emoji",
     "placeholder": "Cari emoji dengan bahasa sehari-hari…",
+    "typeHint": "Demo · ketik untuk mencoba sendiri",
     "offline": "luring",
     "results": "Hasil emoji",
     "empty": "Belum ada yang cocok — terus ketik.",
@@ -1042,14 +1032,14 @@
       "timingMeaning": "makna · {ms} ms",
       "timingDevice": "di perangkat · {ms} ms",
       "aside": "Emoji khusus {workspace}",
-      "importTitle": "Impor Slack dan Discord: paket Pro dan Scale",
+      "importTitle": "Impor Slack dan Discord: paket Pro",
       "imported": "Diimpor dari {source}",
       "addedByAdmins": "Ditambahkan admin ruang kerja",
       "set": "Set khusus",
       "reactWith": "Beri reaksi {code}",
       "inspectIdle": "Arahkan kursor ke emoji untuk melihat kata yang dapat menemukannya.",
       "tenants": "Tenant",
-      "scalePlan": "Paket Scale",
+      "soon": "Segera",
       "tenantsNote": "Setiap pelanggan adalah tenant dengan set emoji khusus sendiri. Server Anda menulisnya dengan kunci rahasia.",
       "presets": {
         "shipIt": "rilis",

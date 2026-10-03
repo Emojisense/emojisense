@@ -1,4 +1,4 @@
-import { isPaidPlan, PLANS, type PlanId } from "@emojisense/platform";
+import { isListedPlan, isPaidPlan, PLANS, type PlanId } from "@emojisense/platform";
 import { useId } from "react";
 import { formatPrice } from "../format";
 import { checkoutIntentQuery } from "../lib/checkoutIntent";
@@ -14,10 +14,15 @@ interface PlanGateProps {
   compact?: boolean;
 }
 
-/** Shown when a feature needs a higher plan: a calm invitation that names the plan, never an error. */
+/**
+ * Shown when a feature needs a higher plan: a calm invitation that names the plan, never an error.
+ * A plan that is not on sale (Scale) gets no price and no upgrade, only a short note.
+ */
 export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
   const required = PLANS[plan ?? FEATURE_PLAN[feature]];
   const copy = FEATURE_COPY[feature];
+  const listed = isListedPlan(required.id);
+  const note = copy.unlistedNote ?? "Coming soon.";
   const { detail } = useAppScope();
   const titleId = useId();
   // A team app runs on its owner's plan: only the owner can upgrade it.
@@ -50,23 +55,21 @@ export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
           {copy.emoji}
         </span>
         <div className="gate-compact-text">
-          <strong id={titleId}>
-            {copy.title} with {required.name}
-          </strong>
-          <span className="gate-compact-sub">{copy.text}</span>
+          <strong id={titleId}>{listed ? `${copy.title} with ${required.name}` : copy.title}</strong>
+          <span className="gate-compact-sub">{listed ? copy.text : note}</span>
         </div>
-        {upgradeButton}
+        {listed && upgradeButton}
       </section>
     );
   }
 
   return (
-    <section className="gate" aria-labelledby={titleId}>
+    <section className={listed ? "gate" : "gate gate-single"} aria-labelledby={titleId}>
       <div className="gate-main">
         <span className="gate-emoji emoji" aria-hidden="true">
           {copy.emoji}
         </span>
-        <p className="section-label">Available on {required.name} and up</p>
+        <p className="section-label">{listed ? `Available on ${required.name} and up` : note}</p>
         <h2 id={titleId} className="gate-title">
           {copy.title}
         </h2>
@@ -80,21 +83,24 @@ export function PlanGate({ feature, plan, compact = false }: PlanGateProps) {
           ))}
         </ul>
       </div>
-      <div className="gate-side">
-        <div className="gate-price">
-          <span className="section-label">{required.name} plan</span>
-          <p>
-            <strong>{formatPrice(required.priceUsdMonthly)}</strong> <span className="muted">per month</span>
-          </p>
+      {listed && (
+        <div className="gate-side">
+          <div className="gate-price">
+            <span className="section-label">{required.name} plan</span>
+            <p>
+              <strong>{formatPrice(required.priceUsdMonthly)}</strong>{" "}
+              <span className="muted">per month</span>
+            </p>
+          </div>
+          <div className="gate-actions">
+            {upgradeButton}
+            <Link to="/billing" className="btn btn-ghost btn-block">
+              Compare plans
+            </Link>
+            {!owner && <p className="hint">Paid through Whop. Cancel at any time.</p>}
+          </div>
         </div>
-        <div className="gate-actions">
-          {upgradeButton}
-          <Link to="/billing" className="btn btn-ghost btn-block">
-            Compare plans
-          </Link>
-          {!owner && <p className="hint">Paid through Whop. Cancel at any time.</p>}
-        </div>
-      </div>
+      )}
     </section>
   );
 }

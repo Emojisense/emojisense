@@ -1,5 +1,5 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLAN_IDS, PLANS } from "@emojisense/platform";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
 import { API_HOST } from "../../../components/docs/facts";
@@ -40,7 +40,7 @@ const render = `function EmojiCell({ result }: { result: SearchResult }) {
   );
 }`;
 
-const plans = PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
+const plans = LISTED_PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
 ---
 
 <DocsLayout path="/docs/guides/custom-emoji/">
@@ -61,8 +61,8 @@ const plans = PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
   <p>Upload images in the dashboard, under your app. Each emoji has a shortcode and a list of aliases that search uses.</p>
   <ul>
     <li><strong>Formats:</strong> PNG, GIF, WebP or SVG, at most 256 KB each. SVG files are checked and rejected if they contain scripts, event handlers, <code>javascript:</code> links or external references.</li>
-    <li><strong>Import from Slack</strong> (Pro and Scale): paste a Slack user token. Emojisense reads the workspace’s emoji list, downloads the images and never stores the token.</li>
-    <li><strong>Import from Discord</strong> (Pro and Scale): give a bot token and a server (guild) id. The token is not stored either.</li>
+    <li><strong>Import from Slack</strong> (Pro): paste a Slack user token. Emojisense reads the workspace’s emoji list, downloads the images and never stores the token.</li>
+    <li><strong>Import from Discord</strong> (Pro): give a bot token and a server (guild) id. The token is not stored either.</li>
   </ul>
   <p>One import call stores at most 50 new emoji and reports <code>imported</code>, <code>skipped</code> and <code>remaining</code>. The dashboard calls again until nothing remains. Imports skip Slack aliases of other emoji, shortcodes you already have, images that fail the upload checks and anything over your plan’s limit. The full contract is in the <a href="/docs/api/#slack-and-discord-import">HTTP API reference</a>.</p>
   <p>Each emoji has this shape in the dashboard API:</p>
@@ -82,5 +82,5 @@ const plans = PLAN_IDS.filter((id) => PLANS[id].limits.custom_emoji > 0);
   <CodeBlock code={render} lang="tsx" />
 
   <h2 id="per-customer">One set per customer</h2>
-  <p>If your product has many customers and each one needs its own emoji, use <a href="/docs/guides/tenants/">Tenants</a> on the Scale plan.</p>
+  <p>If your product has many customers and each one needs its own emoji, use <a href="/docs/guides/tenants/">Tenants</a>. They are coming soon.</p>
 </DocsLayout>

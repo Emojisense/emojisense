@@ -4,7 +4,7 @@
  * server with VITE_MOCK=1 (see main.tsx); production builds do not contain this module.
  *
  * URL switches, read once on load and kept in localStorage:
- *   ?mock-plan=free|solo|pro|scale   the account's plan (default scale)
+ *   ?mock-plan=free|solo|pro|scale   the account's plan (default pro, the top plan on sale)
  *   ?mock-signed-out=1|0             start signed out (sign in from the page) or signed in
  *   ?mock-ui=0                       hide the mock toolbar (for screenshots)
  *   ?mock-billing=active|canceling|past_due|canceled|none   the subscription state (Billing banners)
@@ -24,7 +24,7 @@ interface MockSettings {
 }
 
 function readSettings(): MockSettings {
-  const fallback: MockSettings = { plan: "scale", signedIn: true, toolbar: true };
+  const fallback: MockSettings = { plan: "pro", signedIn: true, toolbar: true };
   try {
     return { ...fallback, ...(JSON.parse(localStorage.getItem(STORE_KEY) ?? "{}") as Partial<MockSettings>) };
   } catch {

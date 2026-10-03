@@ -1,4 +1,4 @@
-import { PAST_DUE_GRACE_DAYS, PLAN_IDS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PAST_DUE_GRACE_DAYS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
 import type { Messages } from "../../i18n/catalogs";
 import en from "../../i18n/en.json";
 import { formatCountIn, formatUsdIn } from "../../i18n/format";
@@ -38,7 +38,7 @@ export function pricingFaqs(plans: Record<PlanId, Plan> = PLANS, page: FaqLocale
     ...(page.docsInEnglish ? { hreflang: "en" } : {}),
   });
   const free = plans.free;
-  const yearly = PLAN_IDS.map((id) => plans[id]).filter((plan) => plan.priceUsdYearly !== undefined);
+  const yearly = LISTED_PLAN_IDS.map((id) => plans[id]).filter((plan) => plan.priceUsdYearly !== undefined);
   const yearlyAnswer =
     yearly.length === 0
       ? t("yearly.none")
@@ -57,10 +57,7 @@ export function pricingFaqs(plans: Record<PlanId, Plan> = PLANS, page: FaqLocale
   return [
     {
       q: t("free.q"),
-      a: t("free.a", {
-        calls: count(free.limits.semantic_calls),
-        photos: count(free.limits.image_classifications),
-      }),
+      a: t("free.a", { calls: count(free.limits.semantic_calls) }),
     },
     {
       q: t("call.q"),

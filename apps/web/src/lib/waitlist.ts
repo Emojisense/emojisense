@@ -2,7 +2,7 @@ import type { PlanId } from "@emojisense/platform";
 
 /** Plans people can wait for. Free needs no waitlist: it is open now. */
 export type WaitlistPlan = Exclude<PlanId, "free">;
-export const WAITLIST_PLANS: readonly WaitlistPlan[] = ["solo", "pro", "scale"];
+export const WAITLIST_PLANS: readonly WaitlistPlan[] = ["solo", "pro"];
 export const DEFAULT_WAITLIST_PLAN: WaitlistPlan = "pro";
 
 /** Longest address SMTP allows (RFC 5321 path limit minus the angle brackets). */

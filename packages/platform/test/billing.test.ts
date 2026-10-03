@@ -19,15 +19,20 @@ const IDS =
   '{"solo":{"month":"plan_SoloM","year":"plan_SoloY"},"pro":{"month":"plan_ProM"},"scale":{"month":"plan_ScaleM"}}';
 
 describe("billing options", () => {
-  it("sells every paid plan monthly and Solo also yearly, at the PLANS prices", () => {
+  it("sells every listed paid plan monthly and Solo also yearly, at the PLANS prices", () => {
     expect(billingOptions()).toEqual([
       { plan: "solo", interval: "month", priceUsd: 5, periodDays: 30 },
       { plan: "solo", interval: "year", priceUsd: 48, periodDays: 365 },
       { plan: "pro", interval: "month", priceUsd: 20, periodDays: 30 },
-      { plan: "scale", interval: "month", priceUsd: 100, periodDays: 30 },
     ]);
     expect(billingIntervalsOf("free")).toEqual([]);
     expect(priceOf("pro", "year")).toBeUndefined();
+  });
+
+  it("does not sell Scale, which is not listed, but keeps its price for accounts on it", () => {
+    expect(billingOptions().some((option) => option.plan === "scale")).toBe(false);
+    expect(billingIntervalsOf("scale")).toEqual(["month"]);
+    expect(priceOf("scale", "month")).toBe(100);
   });
 });
 
@@ -41,6 +46,12 @@ describe("WHOP_PLAN_IDS", () => {
     expect(findWhopPlan(ids, "plan_ProM")).toEqual({ plan: "pro", interval: "month" });
     expect(findWhopPlan(ids, "plan_Other")).toBeUndefined();
     expect(purchasableIntervals(ids)).toEqual({ solo: ["month", "year"], pro: ["month"], scale: ["month"] });
+  });
+
+  it("still maps a Scale variant from an older WHOP_PLAN_IDS, so its renewals keep the plan", () => {
+    const ids = parseWhopPlanIds(IDS);
+    expect(ids?.scale).toEqual({ month: "plan_ScaleM" });
+    expect(ids && findWhopPlan(ids, "plan_ScaleM")).toEqual({ plan: "scale", interval: "month" });
   });
 
   it("treats a missing value as nothing for sale", () => {

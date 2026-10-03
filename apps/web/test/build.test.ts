@@ -11,9 +11,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   analyticsKeepDays,
+  LISTED_PLAN_IDS,
   METRICS,
-  PLAN_IDS,
   PLANS,
+  type PlanId,
   WAITLIST_KEEP_MONTHS,
   waitlistReturnUrl,
 } from "@emojisense/platform";
@@ -215,8 +216,10 @@ describe("landing page", () => {
 
 describe("pricing page", () => {
   const doc = () => page("/pricing/");
+  // Photo classifications are metered but not sold yet: the page lists them as "Soon".
+  const SOLD_METRICS = METRICS.filter((metric) => metric !== "image_classifications");
 
-  it.each(PLAN_IDS)("shows the %s price from PLANS", (id) => {
+  it.each(LISTED_PLAN_IDS)("shows the %s price from PLANS", (id) => {
     const card = doc().querySelector(`[data-plan="${id}"]`);
     expect(card).not.toBeNull();
     expect(Number(card?.getAttribute("data-price-monthly"))).toBe(PLANS[id].priceUsdMonthly);
@@ -232,9 +235,10 @@ describe("pricing page", () => {
 
   // Cards read "Everything in <previous plan>, plus", so each lists the limits it includes. The
   // comparison table below lists every feature of every plan, included or not.
-  it.each(PLAN_IDS)("shows every %s limit from PLANS", (id) => {
+  it.each(LISTED_PLAN_IDS)("shows every %s limit from PLANS", (id) => {
     const card = doc().querySelector(`[data-plan="${id}"]`);
-    for (const metric of METRICS) {
+    expect(card?.querySelector('[data-feature="image_classifications"]')).toBeNull();
+    for (const metric of SOLD_METRICS) {
       const limit = PLANS[id].limits[metric];
       const row = card?.querySelector(`[data-feature="${metric}"]`);
       if (limit === 0) {
@@ -254,21 +258,40 @@ describe("pricing page", () => {
     const columns = Array.from(table?.querySelectorAll('thead th[scope="col"]') ?? [], (th) =>
       th.getAttribute("data-col"),
     );
-    expect(columns).toEqual([...PLAN_IDS]);
+    expect(columns).toEqual([...LISTED_PLAN_IDS]);
     const rows = table?.querySelectorAll("tbody tr[data-feature]") ?? [];
-    expect(rows.length).toBeGreaterThanOrEqual(12);
+    expect(rows.length).toBeGreaterThanOrEqual(10);
     for (const row of Array.from(rows)) {
       expect(row.querySelector('th[scope="row"]')).not.toBeNull();
-      expect(row.querySelectorAll("td[data-col]")).toHaveLength(PLAN_IDS.length);
+      expect(row.querySelectorAll("td[data-col]")).toHaveLength(LISTED_PLAN_IDS.length);
     }
   });
 
-  it.each(PLAN_IDS)("lists every %s limit from PLANS in the comparison table", (id) => {
+  it("hides Scale and lists photo to emoji and tenants as coming soon", () => {
+    const pricing = doc();
+    expect(pricing.querySelector('[data-plan="scale"]')).toBeNull();
+    expect(pricing.querySelector('[data-col="scale"]')).toBeNull();
+    expect(pricing.getElementById("compare")?.textContent).not.toContain("Scale");
+    for (const key of ["tenants", "webhooks", "priority_support", "community_support"]) {
+      expect(pricing.querySelector(`tr[data-feature="${key}"]`), key).toBeNull();
+    }
+    const soon = Array.from(pricing.querySelectorAll("#compare table tr[data-soon]"), (row) => ({
+      key: row.getAttribute("data-soon"),
+      tags: Array.from(row.querySelectorAll("td[data-col]"), (td) => td.textContent?.trim()),
+    }));
+    const tags = LISTED_PLAN_IDS.map(() => "Soon");
+    expect(soon).toEqual([
+      { key: "image_classifications", tags },
+      { key: "tenants", tags },
+    ]);
+  });
+
+  it.each(LISTED_PLAN_IDS)("lists every %s limit from PLANS in the comparison table", (id) => {
     const plan = PLANS[id];
     const cell = (key: string) =>
       doc().querySelector(`#compare table tr[data-feature="${key}"] td[data-col="${id}"]`);
     const numbers: [string, number, (value: number) => string][] = [
-      ...METRICS.map((metric): [string, number, (value: number) => string] => [
+      ...SOLD_METRICS.map((metric): [string, number, (value: number) => string] => [
         metric,
         plan.limits[metric],
         formatCount,
@@ -285,14 +308,13 @@ describe("pricing page", () => {
     const flags: [string, boolean][] = [
       ["hosted_sets", plan.hostedEmojiSets],
       ["team", plan.teamMembers],
-      ["tenants", plan.tenants],
     ];
     for (const [key, included] of flags) {
       expect(cell(key)?.textContent?.trim(), key).toBe(included ? "Included" : "Not included");
     }
   });
 
-  it.each(PLAN_IDS)("sends the %s card to the dashboard, a paid plan to its Billing page", (id) => {
+  it.each(LISTED_PLAN_IDS)("sends the %s card to the dashboard, a paid plan to its Billing page", (id) => {
     const href = doc().querySelector(`[data-plan="${id}"] a.btn`)?.getAttribute("href");
     expect(href).toBe(
       PLANS[id].priceUsdMonthly === 0 ? `${DASHBOARD}/` : `${DASHBOARD}/billing?plan=${id}&interval=month`,
@@ -330,7 +352,7 @@ describe("waitlist page", () => {
     const plans = Array.from(form?.querySelectorAll('select[name="plan"] option') ?? [], (o) =>
       o.getAttribute("value"),
     );
-    expect(plans).toEqual(["solo", "pro", "scale"]);
+    expect(plans).toEqual(["solo", "pro"]);
     expect(form?.querySelector('button[type="submit"]')).not.toBeNull();
   });
 
@@ -692,7 +714,7 @@ describe("legal pages", () => {
     // cron, DELETE /api/me, invocation_logs: false) and the Analytics Engine limit.
     expect(privacy).toContain(`${WAITLIST_KEEP_MONTHS} months after your first sign-up`);
     expect(privacy).toContain("keeps them for three months");
-    const keep = (id: (typeof PLAN_IDS)[number]) => formatDays(analyticsKeepDays(PLANS[id]));
+    const keep = (id: PlanId) => formatDays(analyticsKeepDays(PLANS[id]));
     expect(privacy).toContain(`${keep("pro")} on Pro, ${keep("scale")} on Scale`);
     expect(keep("free")).toBe(keep("solo"));
     expect(privacy).toContain(`On Free and Solo we keep them for ${keep("free")}`);

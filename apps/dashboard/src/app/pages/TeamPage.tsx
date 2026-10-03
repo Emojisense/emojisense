@@ -25,7 +25,7 @@ import { useToast } from "../ui/Toast";
 
 const ROLE_COPY: Record<TeamRole, string> = {
   admin: "Everything, except changing the plan.",
-  developer: "Apps, keys, custom emoji, webhooks and analytics. No team management.",
+  developer: "Apps, keys, custom emoji and analytics. No team management.",
   viewer: "Read only: usage, analytics and settings.",
 };
 

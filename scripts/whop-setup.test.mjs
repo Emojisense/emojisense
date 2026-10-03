@@ -90,16 +90,15 @@ const setup = (whop, env, options = {}) =>
   });
 
 describe("whop-setup", () => {
-  it("creates hidden products and variants at the PLANS prices, and the webhook with its secret", async () => {
+  it("creates hidden products and variants of the listed plans at the PLANS prices, and the webhook with its secret", async () => {
     const whop = fakeWhop();
     const result = await setup(whop, {});
-    assert.equal(whop.state.products.length, 3);
+    // Scale is not listed: no product, no variant.
     assert.deepEqual(
       whop.state.products.map((p) => [p.title, p.visibility, p.metadata.emojisense_product]),
       [
         ["Emojisense Solo", "hidden", "emojisense-solo"],
         ["Emojisense Pro", "hidden", "emojisense-pro"],
-        ["Emojisense Scale", "hidden", "emojisense-scale"],
       ],
     );
     assert.deepEqual(
@@ -113,7 +112,6 @@ describe("whop-setup", () => {
         ["emojisense-solo-month", 5, 30, 0],
         ["emojisense-solo-year", 48, 365, 0],
         ["emojisense-pro-month", 20, 30, 0],
-        ["emojisense-scale-month", 100, 30, 0],
       ],
     );
     const [webhook] = whop.state.webhooks;
@@ -124,7 +122,7 @@ describe("whop-setup", () => {
     assert.equal(webhook.resource_id, DEFAULT_COMPANY_ID);
 
     const ids = platform.parseWhopPlanIds(result.updates.WHOP_PLAN_IDS);
-    assert.deepEqual(Object.keys(ids), ["solo", "pro", "scale"]);
+    assert.deepEqual(Object.keys(ids), ["solo", "pro"]);
     assert.equal(ids.solo.year, whop.state.variants[1].id);
     assert.equal(result.updates.WHOP_WEBHOOK_SECRET, SECRET);
     assert.equal(result.updates.WHOP_API_BASE, LIVE_API);
@@ -154,6 +152,23 @@ describe("whop-setup", () => {
     const second = await setup(whop, { ...first.updates });
     assert.equal(whop.state.variants.length, variants);
     assert.equal(second.updates.WHOP_PLAN_IDS, first.updates.WHOP_PLAN_IDS);
+  });
+
+  it("keeps the Scale variant an older WHOP_PLAN_IDS names, so its renewals still map, and makes no Scale product", async () => {
+    const whop = fakeWhop();
+    const first = await setup(whop, {});
+    const withScale = JSON.stringify({
+      ...JSON.parse(first.updates.WHOP_PLAN_IDS),
+      scale: { month: "plan_OldScale" },
+    });
+    const posts = whop.state.calls.filter((call) => call.startsWith("POST")).length;
+    const second = await setup(whop, { ...first.updates, WHOP_PLAN_IDS: withScale });
+    assert.equal(whop.state.calls.filter((call) => call.startsWith("POST")).length, posts);
+    assert.ok(!whop.state.products.some((p) => p.metadata.emojisense_product === "emojisense-scale"));
+    const ids = platform.parseWhopPlanIds(second.updates.WHOP_PLAN_IDS);
+    assert.deepEqual(Object.keys(ids), ["solo", "pro", "scale"]);
+    assert.equal(ids.scale.month, "plan_OldScale");
+    assert.deepEqual(second.warnings, []);
   });
 
   it("adds missing events to an existing webhook and warns when its secret is not in the env file", async () => {
@@ -219,7 +234,7 @@ describe("whop-setup", () => {
     const older = fakeWhop({ variantsPath: "/plans" });
     const result = await setup(older, {});
     assert.ok(older.state.calls.includes("POST /plans"));
-    assert.equal(older.state.variants.length, 4);
+    assert.equal(older.state.variants.length, 3);
     assert.ok(result.updates.WHOP_PLAN_IDS);
   });
 

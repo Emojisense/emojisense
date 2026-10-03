@@ -1,5 +1,5 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { isListedPlan, PLAN_IDS, PLANS } from "@emojisense/platform";
 import { DASHBOARD_URL, REPO_URL, SITE_URL } from "../../config";
 import Base from "../../layouts/Base.astro";
 import {
@@ -31,11 +31,14 @@ const STATUS_LABELS: Record<DocsStatus, string> = {
   planned: "Planned",
   next: "Coming in this release",
   experimental: "Experimental",
+  soon: "Coming soon",
 };
 
-/** "Solo, Pro and Scale" for a feature that starts on Solo. */
+/** "Solo and Pro" for a feature that starts on Solo. Plans that are not on sale are left out. */
 function plansFrom(id: (typeof PLAN_IDS)[number]): string {
-  const names = PLAN_IDS.slice(PLAN_IDS.indexOf(id)).map((plan) => PLANS[plan].name);
+  const names = PLAN_IDS.slice(PLAN_IDS.indexOf(id))
+    .filter(isListedPlan)
+    .map((plan) => PLANS[plan].name);
   return names.length === 1 ? (names[0] ?? "") : `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
 }
 
@@ -79,7 +82,7 @@ const jsonLd = {
                 <li>
                   <a class="docs-nav-link" href={item.href} aria-current={item.href === path ? "page" : undefined}>
                     <span>{item.navTitle ?? item.title}</span>
-                    {item.status === "planned" && <span class="docs-nav-tag">Soon</span>}
+                    {(item.status === "planned" || item.status === "soon") && <span class="docs-nav-tag">Soon</span>}
                     {item.status === "next" && <span class="docs-nav-tag">Next</span>}
                   </a>
                 </li>
@@ -108,7 +111,7 @@ const jsonLd = {
           (page.plan || page.status) && (
             <ul class="docs-meta" aria-label="Availability">
               {page.status && <li class="docs-pill" data-status={page.status}>{STATUS_LABELS[page.status]}</li>}
-              {page.plan && (
+              {page.plan && page.status !== "soon" && (
                 <li class="docs-pill">
                   <span class="docs-pill-label">Plans</span> {plansFrom(page.plan)}
                 </li>
@@ -124,6 +127,16 @@ const jsonLd = {
             <p>
               This feature is in the product contract and is being built now. The routes and fields below are the
               planned design. They can still change before the release, so do not build on them yet.
+            </p>
+          </Callout>
+        )
+      }
+      {
+        page.status === "soon" && (
+          <Callout type="planned" title="Coming soon">
+            <p>
+              This feature works on the hosted API, but no plan includes it yet. It opens on a plan soon, and the
+              routes below can still change until then.
             </p>
           </Callout>
         )

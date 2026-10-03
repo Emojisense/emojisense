@@ -4,18 +4,18 @@
     "skipLink": "Ir al contenido",
     "shareAlt": {
       "home": "Emojisense: todo para tus emoji, en cada app. Búsquedas como “jurassic park” y “feliz cumpleaños” con sus principales resultados de emoji.",
-      "pricing": "Precios de Emojisense: empieza gratis, paga lo justo al crecer. Planes Free, Solo, Pro y Scale con sus precios mensuales."
+      "pricing": "Precios de Emojisense: empieza gratis, paga lo justo al crecer. Planes Free, Solo y Pro con sus precios mensuales."
     },
     "home": {
       "description": "La plataforma de emoji para cada app: búsqueda que entiende expresiones coloquiales y 11 idiomas, sugerencias de reacciones, foto a emoji, emoji personalizados, conjuntos de emoji alojados y estadísticas. Plan gratuito, núcleo de código abierto."
     },
     "pricing": {
       "title": "Precios",
-      "description": "Precios de Emojisense: la plataforma completa de emoji, gratis para empezar. Búsqueda y sugerencias de reacciones en todos los planes; paga por volumen, fotos, emoji personalizados y equipos."
+      "description": "Precios de Emojisense: la plataforma completa de emoji, gratis para empezar. Búsqueda y sugerencias de reacciones en todos los planes; paga por volumen, emoji personalizados y equipos."
     },
     "waitlist": {
       "title": "Lista de espera",
-      "description": "Los planes de pago de Emojisense ya están disponibles. Elige Solo, Pro o Scale en la página de precios."
+      "description": "Los planes de pago de Emojisense ya están disponibles. Elige Solo o Pro en la página de precios."
     },
     "about": {
       "title": "Acerca de",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Precios",
       "title": "Empieza gratis. Paga lo justo al crecer.",
-      "lead": "La búsqueda y las sugerencias de reacciones están en todos los planes. Paga por volumen, fotos, emoji personalizados y funciones para equipos."
+      "lead": "La búsqueda y las sugerencias de reacciones están en todos los planes. Paga por volumen, emoji personalizados y funciones para equipos."
     },
     "faq": {
       "kicker": "Dudas",
@@ -205,7 +205,7 @@
     },
     "photo": {
       "title": "Foto a emoji",
-      "tag": "Beta",
+      "tag": "Pronto",
       "body": "Un cachorro recibe 🐶 y 🥹. Las fotos nunca se guardan."
     },
     "custom": {
@@ -233,7 +233,8 @@
       "production": "Producción"
     },
     "tenants": {
-      "title": "Clientes y webhooks",
+      "title": "Clientes",
+      "tag": "Pronto",
       "body": "¿Estás creando una plataforma? Dale a cada cliente su propio conjunto de emoji, gestionado mediante la API.",
       "root": "Tu plataforma"
     },
@@ -482,13 +483,13 @@
     "yearlyHint": "anual",
     "fine": "<strong>La búsqueda nunca falla por un límite.</strong> Al agotar tus llamadas de IA mensuales, las respuestas en el dispositivo, las respuestas preparadas y las guardadas en caché siguen funcionando hasta el mes siguiente. <link>¿Qué cuenta como una llamada?</link>",
     "unlimited": "Sin límite",
+    "soon": "Pronto",
     "groups": {
       "core": "En todos los planes",
       "usage": "Uso",
       "emoji": "Emoji personalizados y conjuntos",
       "teams": "Estadísticas y equipos",
-      "platform": "Para plataformas",
-      "support": "Soporte"
+      "soon": "Próximamente"
     },
     "features": {
       "search": {
@@ -510,9 +511,8 @@
         "unit": "llamadas de IA al mes"
       },
       "photos": {
-        "label": "Foto a emoji al mes",
-        "hint": "Fotos clasificadas en emoji",
-        "unit": "fotos a emoji al mes"
+        "label": "Foto a emoji",
+        "hint": "Fotos clasificadas en emoji"
       },
       "overLimit": {
         "label": "Sigue funcionando al superar un límite",
@@ -552,17 +552,6 @@
       "tenants": {
         "label": "Clientes",
         "hint": "Un conjunto de emoji personalizados por cliente, gestionado mediante la API"
-      },
-      "webhooks": {
-        "label": "Webhooks",
-        "hint": "Recibe avisos de cambios en los clientes y los emoji"
-      },
-      "communitySupport": {
-        "label": "Soporte de la comunidad",
-        "hint": "GitHub Discussions y las guías"
-      },
-      "prioritySupport": {
-        "label": "Soporte prioritario"
       }
     }
   },
@@ -570,7 +559,7 @@
     "hero": {
       "kicker": "Precios",
       "title": "Empieza gratis. <line>Paga lo justo al crecer.</line>",
-      "lead": "La plataforma completa de emoji para cada app. La búsqueda y las sugerencias de reacciones están en todos los planes: paga solo por volumen, fotos, emoji personalizados y funciones para equipos.",
+      "lead": "La plataforma completa de emoji para cada app. La búsqueda y las sugerencias de reacciones están en todos los planes: paga solo por volumen, emoji personalizados y funciones para equipos.",
       "assurances": {
         "card": "Sin tarjeta para el plan gratuito",
         "failure": "Nunca se bloquea al alcanzar un límite",
@@ -580,7 +569,7 @@
     "compare": {
       "kicker": "Comparar planes",
       "title": "Todas las funciones, lado a lado.",
-      "lead": "Todos los planes incluyen la plataforma completa de emoji. Los planes superiores añaden volumen, emoji personalizados, equipos y clientes.",
+      "lead": "Todos los planes incluyen la plataforma completa de emoji. Los planes superiores añaden volumen, emoji personalizados y equipos.",
       "caption": "Funciones y límites de cada plan de Emojisense",
       "included": "Incluido",
       "notIncluded": "No incluido"
@@ -674,7 +663,7 @@
       "items": {
         "free": {
           "q": "¿El plan gratuito es realmente gratis?",
-          "a": "Sí, y no necesitas tarjeta. Incluye {calls} llamadas de IA y {photos} clasificaciones de fotos al mes, cada SDK e integración y respuestas en el dispositivo sin límite. Ningún plan muestra un distintivo «con tecnología de»."
+          "a": "Sí, y no necesitas tarjeta. Incluye {calls} llamadas de IA al mes, cada SDK e integración y respuestas en el dispositivo sin límite. Ningún plan muestra un distintivo «con tecnología de»."
         },
         "call": {
           "q": "¿Qué cuenta como una llamada?",
@@ -737,7 +726,7 @@
   "waitlist": {
     "hero": {
       "title": "Los planes de pago ya están disponibles.",
-      "lead": "Elige Solo, Pro o Scale en la <link>página de precios</link> y paga en el panel. Este formulario se mantiene para los enlaces antiguos. Solo añade tu correo a nuestra lista."
+      "lead": "Elige Solo o Pro en la <link>página de precios</link> y paga en el panel. Este formulario se mantiene para los enlaces antiguos. Solo añade tu correo a nuestra lista."
     },
     "formLabel": "Formulario de lista de espera",
     "plansTitle": "Planes de pago de un vistazo",
@@ -811,7 +800,7 @@
     },
     "money": {
       "title": "Cómo generamos ingresos",
-      "body": "La búsqueda y las sugerencias de reacciones son gratis en todos los planes. Los planes de pago añaden volumen, foto a emoji, emoji personalizados, estadísticas, equipos y clientes. Sin anuncios, y no vendemos datos. <pricing>Elige un plan</pricing> o <free>empieza gratis</free> hoy."
+      "body": "La búsqueda y las sugerencias de reacciones son gratis en todos los planes. Los planes de pago añaden volumen, emoji personalizados, estadísticas y equipos. Sin anuncios, y no vendemos datos. <pricing>Elige un plan</pricing> o <free>empieza gratis</free> hoy."
     },
     "now": {
       "title": "En qué punto estamos",
@@ -824,6 +813,7 @@
   "hero": {
     "searchLabel": "Buscar emoji",
     "placeholder": "Busca emoji como hablas…",
+    "typeHint": "Demo · escribe para probarlo tú",
     "offline": "sin conexión",
     "results": "Resultados de emoji",
     "empty": "Aún sin coincidencias. Sigue escribiendo.",
@@ -1046,14 +1036,14 @@
       "timingMeaning": "significado · {ms} ms",
       "timingDevice": "en el dispositivo · {ms} ms",
       "aside": "Emoji personalizados de {workspace}",
-      "importTitle": "Importación de Slack y Discord: planes Pro y Scale",
+      "importTitle": "Importación de Slack y Discord: plan Pro",
       "imported": "Importado de {source}",
       "addedByAdmins": "Añadido por los administradores del espacio de trabajo",
       "set": "Conjunto personalizado",
       "reactWith": "Reaccionar con {code}",
       "inspectIdle": "Señala un emoji para ver las palabras que lo encuentran.",
       "tenants": "Clientes",
-      "scalePlan": "Plan Scale",
+      "soon": "Pronto",
       "tenantsNote": "Cada cliente tiene su propio conjunto personalizado. Tu servidor lo guarda con una clave secreta.",
       "presets": {
         "shipIt": "lánzalo",

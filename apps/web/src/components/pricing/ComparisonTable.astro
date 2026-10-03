@@ -2,7 +2,7 @@
 import { DASHBOARD_URL } from "../../config";
 import { i18nFor } from "../../i18n/page";
 import { pricingLocaleFor } from "../../i18n/pricing";
-import { comparisonOf, planViews } from "../../lib/pricing";
+import { comparisonOf, planViews, soonFeatures } from "../../lib/pricing";
 import CompareValue from "./CompareValue.astro";
 import { FEATURED_PLAN, PLAN_COPY } from "./plan-copy";
 
@@ -10,6 +10,7 @@ const { t, locale } = i18nFor(Astro);
 const pricing = pricingLocaleFor(locale);
 const groups = comparisonOf(undefined, pricing);
 const plans = planViews(DASHBOARD_URL, undefined, pricing);
+const soon = soonFeatures(pricing);
 ---
 
 <section id="compare" class="section cmp" aria-labelledby="compare-title">
@@ -70,6 +71,30 @@ const plans = planViews(DASHBOARD_URL, undefined, pricing);
           </tbody>
         ))
       }
+      {
+        soon.length > 0 && (
+          <tbody>
+            <tr class="cmp-group">
+              <th scope="rowgroup" colspan={plans.length + 1}>
+                {t("plans.groups.soon")}
+              </th>
+            </tr>
+            {soon.map((feature) => (
+              <tr data-soon={feature.key}>
+                <th scope="row">
+                  <span class="cmp-label">{feature.label}</span>
+                  {feature.hint && <span class="cmp-hint">{feature.hint}</span>}
+                </th>
+                {plans.map((plan) => (
+                  <td data-col={plan.id} class:list={{ featured: plan.id === FEATURED_PLAN }}>
+                    <span class="soon-tag">{t("plans.soon")}</span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        )
+      }
       <tfoot>
         <tr>
           <td></td>
@@ -122,6 +147,21 @@ const plans = planViews(DASHBOARD_URL, undefined, pricing);
                   </dl>
                 </div>
               ))}
+              {soon.length > 0 && (
+                <div class="cmp-card-group">
+                  <h4>{t("plans.groups.soon")}</h4>
+                  <dl>
+                    {soon.map((feature) => (
+                      <div>
+                        <dt>{feature.label}</dt>
+                        <dd>
+                          <span class="soon-tag">{t("plans.soon")}</span>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              )}
               <a
                 class:list={["btn", "cmp-card-cta", plan.id === FEATURED_PLAN ? "btn-primary" : "btn-secondary"]}
                 href={plan.cta.href}
@@ -398,5 +438,15 @@ const plans = planViews(DASHBOARD_URL, undefined, pricing);
 
   .cmp-card-cta {
     width: 100%;
+  }
+
+  .soon-tag {
+    display: inline-block;
+    padding: 0.1875rem 0.5rem;
+    border: 0.0625rem solid var(--line-strong);
+    border-radius: var(--pill);
+    color: var(--ink-3);
+    font: 400 0.75rem / 1 var(--font-mono);
+    letter-spacing: 0.02em;
   }
 </style>

@@ -46,15 +46,15 @@ describe("WaitlistForm", () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response("{}", { status: 201 }));
     const { email, plan, submit } = setup(fetch);
     fireEvent.change(email, { target: { value: "ada@example.com" } });
-    fireEvent.change(plan, { target: { value: "scale" } });
+    fireEvent.change(plan, { target: { value: "solo" } });
     fireEvent.click(submit);
     const status = await screen.findByRole("status");
     expect(status.textContent).toContain("You are on the list");
     expect(status.textContent).toContain("ada@example.com");
-    expect(status.textContent).toContain("Scale");
+    expect(status.textContent).toContain("Solo");
     expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual({
       email: "ada@example.com",
-      plan: "scale",
+      plan: "solo",
     });
   });
 

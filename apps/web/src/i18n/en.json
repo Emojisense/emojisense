@@ -4,18 +4,18 @@
     "skipLink": "Skip to content",
     "shareAlt": {
       "home": "Emojisense: everything emoji, for every app. Searches such as “jurassic park” and “feliz cumpleaños” with their top emoji results.",
-      "pricing": "Emojisense pricing: free to start, fair when you grow. Free, Solo, Pro and Scale plans with their monthly prices."
+      "pricing": "Emojisense pricing: free to start, fair when you grow. Free, Solo and Pro plans with their monthly prices."
     },
     "home": {
       "description": "The emoji platform for every app: search that understands slang and 11 languages, reaction suggestions, photo to emoji, custom emoji, hosted emoji sets and analytics. Free plan, open-source core."
     },
     "pricing": {
       "title": "Pricing",
-      "description": "Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume, photos, custom emoji and teams."
+      "description": "Emojisense pricing: the complete emoji platform, free to start. Search and reaction suggestions on every plan; pay for volume, custom emoji and teams."
     },
     "waitlist": {
       "title": "Waitlist",
-      "description": "Paid Emojisense plans are open: choose Solo, Pro or Scale on the pricing page."
+      "description": "Paid Emojisense plans are open: choose Solo or Pro on the pricing page."
     },
     "about": {
       "title": "About",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Pricing",
       "title": "Free to start. Fair when you grow.",
-      "lead": "Search and reaction suggestions are on every plan. Pay for volume, photos, custom emoji and team features."
+      "lead": "Search and reaction suggestions are on every plan. Pay for volume, custom emoji and team features."
     },
     "faq": {
       "kicker": "FAQ",
@@ -205,7 +205,7 @@
     },
     "photo": {
       "title": "Photo to emoji",
-      "tag": "Beta",
+      "tag": "Soon",
       "body": "A puppy gets 🐶 and 🥹. Photos are never stored."
     },
     "custom": {
@@ -233,7 +233,8 @@
       "production": "Production"
     },
     "tenants": {
-      "title": "Tenants and webhooks",
+      "title": "Tenants",
+      "tag": "Soon",
       "body": "Building a platform? Give each customer their own emoji set, managed through the API.",
       "root": "Your platform"
     },
@@ -482,13 +483,13 @@
     "yearlyHint": "yearly",
     "fine": "<strong>Search never breaks at a limit.</strong> Past your monthly AI calls, on-device, ready-made and cached answers keep working until the next month. <link>What counts as a call?</link>",
     "unlimited": "Unlimited",
+    "soon": "Soon",
     "groups": {
       "core": "On every plan",
       "usage": "Usage",
       "emoji": "Custom emoji and sets",
       "teams": "Insights and teams",
-      "platform": "For platforms",
-      "support": "Support"
+      "soon": "Coming soon"
     },
     "features": {
       "search": {
@@ -510,9 +511,8 @@
         "unit": "AI calls a month"
       },
       "photos": {
-        "label": "Photo to emoji a month",
-        "hint": "Photos classified into emoji",
-        "unit": "photos to emoji a month"
+        "label": "Photo to emoji",
+        "hint": "Photos classified into emoji"
       },
       "overLimit": {
         "label": "Keeps working past a limit",
@@ -551,17 +551,6 @@
       "tenants": {
         "label": "Tenants",
         "hint": "One custom emoji set per customer, managed through the API"
-      },
-      "webhooks": {
-        "label": "Webhooks",
-        "hint": "Hear about tenant and emoji changes"
-      },
-      "communitySupport": {
-        "label": "Community support",
-        "hint": "GitHub Discussions and the docs"
-      },
-      "prioritySupport": {
-        "label": "Priority support"
       }
     }
   },
@@ -569,7 +558,7 @@
     "hero": {
       "kicker": "Pricing",
       "title": "Free to start. <line>Fair when you grow.</line>",
-      "lead": "The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for volume, photos, custom emoji and team features.",
+      "lead": "The complete emoji platform for every app. Search and reaction suggestions are on every plan — pay only for volume, custom emoji and team features.",
       "assurances": {
         "card": "No card for the free plan",
         "failure": "Never a hard failure at a limit",
@@ -579,7 +568,7 @@
     "compare": {
       "kicker": "Compare plans",
       "title": "Every feature, side by side.",
-      "lead": "Every plan gets the whole emoji platform. Higher plans add volume, custom emoji, teams and tenants.",
+      "lead": "Every plan gets the whole emoji platform. Higher plans add volume, custom emoji and teams.",
       "caption": "Features and limits of each Emojisense plan",
       "included": "Included",
       "notIncluded": "Not included"
@@ -673,7 +662,7 @@
       "items": {
         "free": {
           "q": "Is the free plan really free?",
-          "a": "Yes, and you need no card. It includes {calls} AI calls and {photos} photo classifications a month, every SDK and integration, and unlimited on-device answers. There is no “powered by” badge on any plan."
+          "a": "Yes, and you need no card. It includes {calls} AI calls a month, every SDK and integration, and unlimited on-device answers. There is no “powered by” badge on any plan."
         },
         "call": {
           "q": "What counts as a call?",
@@ -736,7 +725,7 @@
   "waitlist": {
     "hero": {
       "title": "Paid plans are open.",
-      "lead": "Choose Solo, Pro or Scale on the <link>pricing page</link> and pay in the dashboard. This form stays for older links: it only adds your email to our list."
+      "lead": "Choose Solo or Pro on the <link>pricing page</link> and pay in the dashboard. This form stays for older links: it only adds your email to our list."
     },
     "formLabel": "Waitlist form",
     "plansTitle": "Paid plans at a glance",
@@ -810,7 +799,7 @@
     },
     "money": {
       "title": "How we make money",
-      "body": "Search and reaction suggestions are free on every plan. Paid plans add volume, photo to emoji, custom emoji, analytics, teams and tenants. No ads, and we do not sell data. <pricing>Choose a plan</pricing>, or <free>start free</free> today."
+      "body": "Search and reaction suggestions are free on every plan. Paid plans add volume, custom emoji, analytics and teams. No ads, and we do not sell data. <pricing>Choose a plan</pricing>, or <free>start free</free> today."
     },
     "now": {
       "title": "Where we are",
@@ -823,6 +812,7 @@
   "hero": {
     "searchLabel": "Search emoji",
     "placeholder": "Search emoji the way people talk…",
+    "typeHint": "Demo · type to try it yourself",
     "offline": "offline",
     "results": "Emoji results",
     "empty": "No match yet — keep typing.",
@@ -1044,14 +1034,14 @@
       "timingMeaning": "meaning · {ms} ms",
       "timingDevice": "on-device · {ms} ms",
       "aside": "{workspace} custom emoji",
-      "importTitle": "Slack and Discord import: Pro and Scale plans",
+      "importTitle": "Slack and Discord import: Pro plan",
       "imported": "Imported from {source}",
       "addedByAdmins": "Added by workspace admins",
       "set": "Custom set",
       "reactWith": "React with {code}",
       "inspectIdle": "Point at an emoji to see the words that find it.",
       "tenants": "Tenants",
-      "scalePlan": "Scale plan",
+      "soon": "Soon",
       "tenantsNote": "Each customer is a tenant with its own custom set. Your server writes it with a secret key.",
       "presets": {
         "shipIt": "ship it",

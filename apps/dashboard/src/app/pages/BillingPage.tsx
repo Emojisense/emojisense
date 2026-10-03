@@ -1,7 +1,9 @@
 import {
   type BillingInterval,
   billingIntervalsOf,
+  isListedPlan,
   isPaidPlan,
+  LISTED_PLAN_IDS,
   type PaidPlanId,
   PLAN_IDS,
   PLANS,
@@ -26,8 +28,9 @@ import { UsageMeter } from "../ui/UsageMeter";
 const count = (value: number, unit: string) =>
   Number.isFinite(value) ? `${formatCompact(value)} ${unit}` : `Unlimited ${unit}`;
 
-function planFeatures(plan: Plan): { text: string; included: boolean }[] {
-  return [
+/** `withTenants`: only when a shown plan has them, so the cards never point at a plan not on sale. */
+function planFeatures(plan: Plan, withTenants: boolean): { text: string; included: boolean }[] {
+  const features = [
     { text: `${count(plan.limits.semantic_calls, "AI calls")} a month`, included: true },
     { text: `${count(plan.limits.image_classifications, "photo to emoji calls")} a month`, included: true },
     {
@@ -49,8 +52,13 @@ function planFeatures(plan: Plan): { text: string; included: boolean }[] {
       included: plan.analyticsRetentionDays > 0,
     },
     { text: "Team members and roles", included: plan.teamMembers },
-    { text: "Tenants and webhooks", included: plan.tenants },
   ];
+  return withTenants ? [...features, { text: "Tenants and webhooks", included: plan.tenants }] : features;
+}
+
+/** The plans on sale, and the account's own plan when it is not on sale (Scale keeps its card). */
+function shownPlans(currentId: PlanId): PlanId[] {
+  return PLAN_IDS.filter((id) => isListedPlan(id) || id === currentId);
 }
 
 /** Statuses in which the account pays through Whop. */
@@ -61,7 +69,7 @@ function cardInterval(plan: PlanId, chosen: BillingInterval): BillingInterval {
   return billingIntervalsOf(plan).includes(chosen) ? chosen : "month";
 }
 
-const YEARLY_PLANS = PLAN_IDS.filter((id) => billingIntervalsOf(id).includes("year"));
+const YEARLY_PLANS = LISTED_PLAN_IDS.filter((id) => billingIntervalsOf(id).includes("year"));
 
 function yearlySavingPercent(): number {
   const savings = YEARLY_PLANS.map((id) => {
@@ -250,6 +258,8 @@ export function BillingPage() {
   const checkout = useCheckout();
   const confirmation = useCheckoutConfirmation(returning, data, reload, refresh);
   const savings = yearlySavingPercent();
+  const plans = shownPlans(current.id);
+  const withTenants = plans.some((id) => PLANS[id].tenants);
 
   // Signed in: the pick is in the URL now, so the stored one is done.
   useEffect(() => {
@@ -349,7 +359,7 @@ export function BillingPage() {
         )}
 
         <ul className="plan-grid" aria-label="Plans">
-          {PLAN_IDS.map((id) => (
+          {plans.map((id) => (
             <PlanCard
               key={id}
               planId={id}
@@ -357,6 +367,7 @@ export function BillingPage() {
               interval={cardInterval(id, interval)}
               billing={data}
               picked={intent?.plan === id}
+              withTenants={withTenants}
               checkout={checkout}
             />
           ))}
@@ -390,10 +401,11 @@ interface PlanCardProps {
   interval: BillingInterval;
   billing: BillingResponse | null;
   picked: boolean;
+  withTenants: boolean;
   checkout: ReturnType<typeof useCheckout>;
 }
 
-function PlanCard({ planId, currentId, interval, billing, picked, checkout }: PlanCardProps) {
+function PlanCard({ planId, currentId, interval, billing, picked, withTenants, checkout }: PlanCardProps) {
   const plan = PLANS[planId];
   const headingId = useId();
   const noteId = useId();
@@ -431,7 +443,7 @@ function PlanCard({ planId, currentId, interval, billing, picked, checkout }: Pl
               : "Billed monthly"}
       </p>
       <ul className="plan-features">
-        {planFeatures(plan).map((feature) => (
+        {planFeatures(plan, withTenants).map((feature) => (
           <li key={feature.text} data-included={feature.included || undefined}>
             <Icon name={feature.included ? "check" : "close"} />
             <span>

@@ -1,4 +1,4 @@
-import { lowestPlanWith, PLANS } from "@emojisense/platform";
+import { PLANS } from "@emojisense/platform";
 import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 import {
   api,
@@ -14,7 +14,7 @@ import { ImportDialog, type ImportSource } from "../components/emoji/ImportDialo
 import { UploadDialog, type UploadRequest } from "../components/emoji/UploadDialog";
 import { formatNumber } from "../format";
 import { toShortcode } from "../lib/emoji";
-import { FEATURE_PLAN, planIncludes } from "../lib/plans";
+import { FEATURE_PLAN, lowestListedPlanWith, planIncludes } from "../lib/plans";
 import { useResource } from "../lib/useResource";
 import { navigate, useSearchParams } from "../router";
 import { appHref } from "../routes";
@@ -309,7 +309,8 @@ function EmojiUsage({ used, limit, appCount }: { used: number; limit: number | n
 /** Why uploads and imports are off: the account is at (or, after a downgrade, over) its limit. */
 function limitNotice(used: number, limit: number, planId: PlanId): string {
   const plan = PLANS[planId];
-  const next = lowestPlanWith((candidate) => candidate.limits.custom_emoji > Math.max(limit, used));
+  // Only a plan on sale: on the top one (Pro), the notice names no other plan.
+  const next = lowestListedPlanWith((candidate) => candidate.limits.custom_emoji > Math.max(limit, used));
   const upgrade = next ? ` ${PLANS[next].name} allows ${formatNumber(PLANS[next].limits.custom_emoji)}.` : "";
   if (limit === 0) {
     return `Custom emoji are not part of the ${plan.name} plan. You can still edit and delete these.${upgrade}`;

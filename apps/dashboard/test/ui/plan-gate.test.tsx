@@ -1,6 +1,8 @@
+import { PLANS } from "@emojisense/platform";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { App } from "../../src/app/App";
+import { toPlanSummary } from "../../src/worker/plans";
 import { APP, billing, me, stubApi } from "./fake-api";
 
 const planRequired = (plan: string) => ({
@@ -32,7 +34,7 @@ describe("plan gates", () => {
     expect(screen.getByText(/You picked/).textContent).toContain("Pro");
   });
 
-  it("uses the plan the API names, even when the page expected another", async () => {
+  it("says Coming soon, with no price and no upgrade, when the plan the API names is not on sale", async () => {
     window.history.replaceState(null, "", "/apps/app_1/webhooks");
     stubApi({
       "GET /api/me": { body: me() },
@@ -43,7 +45,31 @@ describe("plan gates", () => {
     render(<App />);
 
     const gate = await screen.findByRole("region", { name: "Get told when things change" });
-    expect(within(gate).getByRole("link", { name: "Upgrade to Scale" })).toBeTruthy();
+    expect(within(gate).getByText("Coming soon.")).toBeTruthy();
+    expect(within(gate).queryByRole("link")).toBeNull();
+    expect(gate.textContent).not.toContain("Scale");
+    expect(gate.textContent).not.toContain("$");
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("offers no plan when the API names one that is not on sale for more apps", async () => {
+    window.history.replaceState(null, "", "/apps");
+    stubApi({
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS.pro), appCount: 0 }) },
+      "GET /api/apps": { body: { apps: [] } },
+      "POST /api/apps": {
+        status: 402,
+        body: { error: { code: "plan_required", message: "Your Pro plan allows 3 apps.", plan: "scale" } },
+      },
+    });
+    render(<App />);
+
+    fireEvent.change(await screen.findByLabelText("App name"), { target: { value: "Fourth" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create app" }));
+
+    const gate = await screen.findByRole("region", { name: "More apps" });
+    expect(gate.textContent).toContain("No plan has more apps yet.");
+    expect(within(gate).queryByRole("link")).toBeNull();
   });
 
   it("asks a team member to talk to the owner instead of offering an upgrade", async () => {
@@ -73,9 +99,71 @@ describe("plan gates", () => {
 
     const nav = await screen.findByRole("navigation", { name: "Chat app app" });
     expect(within(nav).getByRole("link", { name: "Analytics Pro" })).toBeTruthy();
-    expect(within(nav).getByRole("link", { name: "Webhooks Scale" })).toBeTruthy();
     expect(within(nav).getByRole("link", { name: "Keys" })).toBeTruthy();
   });
+
+  it.each([
+    ["free", APP],
+    ["pro", { ...APP, plan: "pro" as const }],
+  ])("hides Tenants and Webhooks from a %s app, since no plan on sale has them", async (_, app) => {
+    window.history.replaceState(null, "", "/apps/app_1");
+    stubApi({
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS[app.plan]) }) },
+      "GET /api/apps": { body: { apps: [app] } },
+      "GET /api/apps/app_1": { body: { app, keys: [] } },
+    });
+    render(<App />);
+
+    const nav = await screen.findByRole("navigation", { name: "Chat app app" });
+    expect(within(nav).queryByRole("link", { name: /Tenants/ })).toBeNull();
+    expect(within(nav).queryByRole("link", { name: /Webhooks/ })).toBeNull();
+    expect(document.querySelector(".sidebar")?.textContent).not.toContain("Scale");
+  });
+
+  it("keeps Tenants and Webhooks for an app on Scale, without lock hints", async () => {
+    const app = { ...APP, plan: "scale" as const };
+    window.history.replaceState(null, "", "/apps/app_1");
+    stubApi({
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS.scale) }) },
+      "GET /api/apps": { body: { apps: [app] } },
+      "GET /api/apps/app_1": { body: { app, keys: [] } },
+    });
+    render(<App />);
+
+    const nav = await screen.findByRole("navigation", { name: "Chat app app" });
+    expect(within(nav).getByRole("link", { name: "Tenants" })).toBeTruthy();
+    expect(within(nav).getByRole("link", { name: "Webhooks" })).toBeTruthy();
+  });
+});
+
+describe("sidebar plan nudge", () => {
+  it.each([
+    ["free", "Custom emoji, analytics and a team come with paid plans."],
+    ["solo", "Analytics, Slack import and a team come with Pro."],
+  ] as const)("invites a %s account to the next plan on sale", async (id, pitch) => {
+    window.history.replaceState(null, "", "/apps");
+    stubApi({
+      "GET /api/me": { body: me({ plan: toPlanSummary(PLANS[id]) }) },
+      "GET /api/apps": { body: { apps: [] } },
+    });
+    render(<App />);
+    expect(await screen.findByText(pitch)).toBeTruthy();
+  });
+
+  it.each(["pro", "scale"] as const)(
+    "shows no nudge to a %s account: no higher plan is on sale",
+    async (id) => {
+      window.history.replaceState(null, "", "/apps");
+      stubApi({
+        "GET /api/me": { body: me({ plan: toPlanSummary(PLANS[id]) }) },
+        "GET /api/apps": { body: { apps: [] } },
+      });
+      render(<App />);
+      expect(await screen.findByRole("navigation", { name: "Account" })).toBeTruthy();
+      expect(document.querySelector(".side-plan")).toBeNull();
+      expect(screen.queryByRole("link", { name: "Upgrade" })).toBeNull();
+    },
+  );
 });
 
 describe("live search key", () => {

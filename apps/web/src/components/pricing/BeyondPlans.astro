@@ -1,11 +1,11 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import { REPO_URL } from "../../config";
 import { i18nFor } from "../../i18n/page";
 
 /** config.ts has no sales address yet, so custom requests go to GitHub Discussions. */
 const contactUrl = `${REPO_URL}/discussions`;
-const topPlan = PLANS[PLAN_IDS[PLAN_IDS.length - 1] ?? "scale"].name;
+const topPlan = PLANS[LISTED_PLAN_IDS.at(-1) ?? "pro"].name;
 const { t, locale } = i18nFor(Astro);
 const openParts = [
   t("pricing.beyond.oss.parts.engine"),

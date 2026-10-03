@@ -1,5 +1,5 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import Callout from "../../components/docs/Callout.astro";
 import CodeBlock from "../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
@@ -89,23 +89,21 @@ const { results, confidence } = engine.search("jurassic park");
   </ul>
 
   <h2 id="plan-limits">Plan limits never fail</h2>
-  <p>Metered calls are Worker searches, reaction suggestions and photo classifications. Periods are monthly, in UTC, with no daily caps. On-device searches, packs and shards are never metered.</p>
+  <p>Metered calls are Worker searches and reaction suggestions. Periods are monthly, in UTC, with no daily caps. On-device searches, packs and shards are never metered.</p>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead>
         <tr>
           <th scope="col">Plan</th>
           <th scope="col">AI calls a month</th>
-          <th scope="col">Photo to emoji a month</th>
         </tr>
       </thead>
       <tbody>
         {
-          PLAN_IDS.map((id) => (
+          LISTED_PLAN_IDS.map((id) => (
             <tr>
               <td>{PLANS[id].name}</td>
               <td>{formatCount(PLANS[id].limits.semantic_calls)}</td>
-              <td>{formatCount(PLANS[id].limits.image_classifications)}</td>
             </tr>
           ))
         }

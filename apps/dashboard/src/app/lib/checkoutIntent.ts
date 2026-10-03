@@ -7,6 +7,7 @@ import {
   type BillingInterval,
   billingIntervalsOf,
   isBillingInterval,
+  isListedPlan,
   isPaidPlan,
   type PaidPlanId,
 } from "@emojisense/platform";
@@ -18,11 +19,14 @@ export interface CheckoutIntent {
 
 const KEY = "emojisense:checkout";
 
-/** The pick in a query string; `null` without a paid plan. A missing or unsold interval is monthly. */
+/**
+ * The pick in a query string; `null` without a paid plan on sale (an old `?plan=scale` link is
+ * ignored). A missing or unsold interval is monthly.
+ */
 export function parseCheckoutIntent(search: URLSearchParams | string): CheckoutIntent | null {
   const params = typeof search === "string" ? new URLSearchParams(search) : search;
   const plan = params.get("plan");
-  if (!isPaidPlan(plan)) return null;
+  if (!isPaidPlan(plan) || !isListedPlan(plan)) return null;
   const interval = params.get("interval");
   return {
     plan,

@@ -1,9 +1,7 @@
 ---
-import { PLANS } from "@emojisense/platform";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
 import { API_HOST } from "../../../components/docs/facts";
-import { formatCount } from "../../../lib/format";
 
 const upload = `curl -X POST "${API_HOST}/v1/tenants/acme/emoji" \\
   -H "Authorization: Bearer sk_live_…" \\
@@ -23,7 +21,7 @@ GET ${API_HOST}/v1/custom-pack?key=pk_live_…&tenant=acme`;
     <li>A tenant has your own <strong>external id</strong>, for example the workspace id from your database. You never need to store an Emojisense id.</li>
     <li>Custom emoji belong to the whole app or to one tenant.</li>
     <li>A search with <code>tenant=&lt;externalId&gt;</code> returns the app-wide custom emoji, that tenant’s emoji and Unicode emoji. Other tenants’ emoji never appear.</li>
-    <li>Tenant emoji count toward the plan’s custom emoji limit: {formatCount(PLANS.scale.limits.custom_emoji)} on Scale.</li>
+    <li>Tenant emoji count toward the plan’s custom emoji limit.</li>
   </ul>
 
   <h2 id="manage">Manage tenants from your server</h2>

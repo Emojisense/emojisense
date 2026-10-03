@@ -1,10 +1,12 @@
 /**
  * Paid plans through Whop (DECISIONS.md, "Whop for payments"). Prices come from PLANS; Whop has one
- * variant ("plan_…") per paid plan and billing interval. WHOP_PLAN_IDS maps ours to theirs, and
- * the webhook trusts only that map, never a plan named in checkout metadata.
+ * variant ("plan_…") per listed paid plan and billing interval. WHOP_PLAN_IDS maps ours to theirs,
+ * and the webhook trusts only that map, never a plan named in checkout metadata. Scale is not
+ * listed, so it gets no variant, but a Scale entry in WHOP_PLAN_IDS still parses and maps: an
+ * existing Scale subscription keeps renewing.
  */
 import type { D1DatabaseLike } from "./d1-like.js";
-import { PLAN_IDS, PLANS, type PlanId } from "./plans.js";
+import { isListedPlan, PLAN_IDS, PLANS, type PlanId } from "./plans.js";
 
 export const BILLING_INTERVALS = ["month", "year"] as const;
 export type BillingInterval = (typeof BILLING_INTERVALS)[number];
@@ -67,9 +69,9 @@ export function billingIntervalsOf(plan: PlanId): BillingInterval[] {
   return BILLING_INTERVALS.filter((interval) => priceOf(plan, interval) !== undefined);
 }
 
-/** Every paid plan and interval that is for sale, in plan order. */
+/** Every listed paid plan and interval: what is for sale, in plan order. */
 export function billingOptions(): BillingOption[] {
-  return PAID_PLAN_IDS.flatMap((plan) =>
+  return PAID_PLAN_IDS.filter(isListedPlan).flatMap((plan) =>
     billingIntervalsOf(plan).map((interval) => ({
       plan,
       interval,

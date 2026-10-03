@@ -1,9 +1,9 @@
-import { PLAN_IDS, PLANS, type PlanId } from "@emojisense/platform";
 import { useEffect, useState } from "react";
 import type { App } from "../api";
 import { CreateAppForm } from "../components/CreateAppForm";
 import { formatDate } from "../format";
 import { appEmoji } from "../lib/identity";
+import { lowestListedPlanWith } from "../lib/plans";
 import { Link, navigate, useSearchParams } from "../router";
 import { appHref } from "../routes";
 import { useSession } from "../session";
@@ -15,10 +15,8 @@ import { Icon } from "../ui/Icon";
 import { PageHeader } from "../ui/PageHeader";
 import { PlanGate } from "../ui/PlanGate";
 
-/** The cheapest plan with room for one more app than the account has. */
-function planWithMoreApps(current: PlanId, appCount: number): PlanId | undefined {
-  return PLAN_IDS.slice(PLAN_IDS.indexOf(current) + 1).find((id) => PLANS[id].maxApps > appCount);
-}
+/** The cheapest plan on sale with room for one more app than the account has; none on the top one. */
+const planWithMoreApps = (appCount: number) => lowestListedPlanWith((plan) => plan.maxApps > appCount);
 
 export function AppsPage() {
   const { me, refresh } = useSession();
@@ -46,7 +44,7 @@ export function AppsPage() {
   const own = list.filter((app) => app.role === "owner");
   const shared = list.filter((app) => app.role !== "owner");
   const empty = apps.status === "ready" && list.length === 0;
-  const morePlan = atLimit ? planWithMoreApps(me.plan.id, me.appCount) : undefined;
+  const morePlan = atLimit ? planWithMoreApps(me.appCount) : undefined;
 
   return (
     <>

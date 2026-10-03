@@ -1,5 +1,6 @@
-// Sets up Whop for one environment, idempotently: a product per paid plan, a variant ("plan_…")
-// per plan and billing interval, and the webhook to the dashboard.
+// Sets up Whop for one environment, idempotently: a product per listed paid plan, a variant
+// ("plan_…") per plan and billing interval, and the webhook to the dashboard. Scale is not listed:
+// it gets no product, and a Scale entry already in WHOP_PLAN_IDS is kept for its renewals.
 //   node scripts/whop-setup.mjs dev|production [--dry-run]
 //
 // Reads from .deploy/<env>.env (gitignored): WHOP_API_KEY (required), WHOP_API_BASE (default the
@@ -182,10 +183,12 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
     if (variant) known.push(variant);
   }
 
-  // Products: one per paid plan, found again by metadata.emojisense_product (or external_identifier).
+  // Products: one per listed paid plan, found again by metadata.emojisense_product (or
+  // external_identifier).
   const products = await whop.list("/products", { account_id: companyId });
   const productIds = {};
-  for (const plan of platform.PAID_PLAN_IDS) {
+  const listedPlans = [...new Set(platform.billingOptions().map((option) => option.plan))];
+  for (const plan of listedPlans) {
     const key = `emojisense-${plan}${keySuffix}`;
     const knownProduct = known.find((v) =>
       v?.metadata?.emojisense_variant?.startsWith(`emojisense-${plan}-`),
@@ -250,6 +253,16 @@ export async function runSetup({ environment, env, platform, fetch, dryRun = fal
       report.push(`variant ${key}: ${created(variant.id)}`);
     }
     planIds[option.plan] = { ...planIds[option.plan], [option.interval]: variant.id };
+  }
+
+  // A plan that is not listed gets no variant, but the ones WHOP_PLAN_IDS names stay mapped: the
+  // webhook needs them to renew the accounts still on that plan.
+  for (const plan of platform.PAID_PLAN_IDS) {
+    if (platform.isListedPlan(plan) || !knownIds[plan]) continue;
+    planIds[plan] = knownIds[plan];
+    report.push(
+      `${plan}: kept ${Object.values(knownIds[plan]).join(", ")} from WHOP_PLAN_IDS (not for sale)`,
+    );
   }
 
   // The webhook to the dashboard of this environment.

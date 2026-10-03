@@ -2,7 +2,7 @@ import { PLANS } from "@emojisense/platform";
 import { describe, expect, it } from "vitest";
 import { codePointLabel, formatCount, formatDays, formatUsd } from "../src/lib/format";
 import { docsLinkResolver, renderMarkdown, slugify } from "../src/lib/markdown";
-import { planViews, yearlySavingsPercent } from "../src/lib/pricing";
+import { comparisonOf, planViews, soonFeatures, yearlySavingsPercent } from "../src/lib/pricing";
 
 describe("format", () => {
   it.each([
@@ -34,9 +34,9 @@ describe("format", () => {
 describe("planViews", () => {
   const views = planViews("https://dashboard.test");
 
-  it("lists the plans in PLANS order with their prices", () => {
-    expect(views.map((v) => v.id)).toEqual(["free", "solo", "pro", "scale"]);
-    expect(views.map((v) => v.monthly)).toEqual(["$0", "$5", "$20", "$100"]);
+  it("lists the plans on sale in PLANS order with their prices, without Scale", () => {
+    expect(views.map((v) => v.id)).toEqual(["free", "solo", "pro"]);
+    expect(views.map((v) => v.monthly)).toEqual(["$0", "$5", "$20"]);
     expect(views.find((v) => v.id === "solo")?.yearly).toEqual({ price: "$48", savings: "$12", raw: 48 });
   });
 
@@ -60,7 +60,7 @@ describe("planViews", () => {
   });
 
   it("frames each paid card as everything in the plan before it, plus what it adds", () => {
-    expect(views.map((v) => v.inherits)).toEqual([undefined, "Free", "Solo", "Pro"]);
+    expect(views.map((v) => v.inherits)).toEqual([undefined, "Free", "Solo"]);
     const keys = (id: string) => views.find((v) => v.id === id)?.highlights.map((f) => f.key) ?? [];
     expect(keys("free")).toContain("search");
     expect(keys("free")).not.toContain("custom_emoji");
@@ -68,7 +68,24 @@ describe("planViews", () => {
     expect(keys("solo")).not.toContain("search");
     expect(keys("pro")).toEqual(expect.arrayContaining(["team", "emoji_import", "analytics"]));
     expect(keys("pro")).not.toContain("hosted_sets");
-    expect(keys("scale")).toEqual(expect.arrayContaining(["tenants", "webhooks", "priority_support"]));
+  });
+
+  it("sells no photo classifications, tenants, webhooks or support, and lists photos and tenants as soon", () => {
+    const sold = [
+      ...views.flatMap((v) => v.highlights.map((f) => f.key)),
+      ...comparisonOf().flatMap((group) => group.rows.map((row) => row.key)),
+    ];
+    for (const key of [
+      "image_classifications",
+      "tenants",
+      "webhooks",
+      "priority_support",
+      "community_support",
+    ]) {
+      expect(sold, key).not.toContain(key);
+    }
+    expect(soonFeatures().map((f) => f.key)).toEqual(["image_classifications", "tenants"]);
+    expect(soonFeatures().map((f) => f.label)).toEqual(["Photo to emoji", "Tenants"]);
   });
 
   it("spreads the yearly price over twelve months", () => {

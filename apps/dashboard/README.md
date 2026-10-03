@@ -152,7 +152,7 @@ API in `CLERK_PUBLISHABLE_KEY`; `exp`/`nbf`; the session is not `pending`. Cooki
 | `VITE_CLERK_PUBLISHABLE_KEY` | build-time env | The same publishable key for the SPA. The `_headers` CSP allows exactly that instance's Frontend API. Without it the build offers only the localhost dev sign-in. |
 | `WHOP_API_BASE` | var | `https://api.whop.com/api/v1` (default) or the sandbox, `https://sandbox-api.whop.com/api/v1` |
 | `WHOP_COMPANY_ID` | var (public) | The Whop company that sells the plans, `biz_…` |
-| `WHOP_PLAN_IDS` | var (public) | JSON: our plan and interval → Whop variant, e.g. `{"solo":{"month":"plan_…","year":"plan_…"},"pro":{"month":"plan_…"},"scale":{"month":"plan_…"}}`. `scripts/whop-setup.mjs` writes it. A malformed value sells nothing. |
+| `WHOP_PLAN_IDS` | var (public) | JSON: our plan and interval → Whop variant, e.g. `{"solo":{"month":"plan_…","year":"plan_…"},"pro":{"month":"plan_…"}}`. `scripts/whop-setup.mjs` writes it. A malformed value sells nothing. Scale is not on sale, but a `scale` entry still maps, so accounts on it keep renewing. |
 | `WHOP_API_KEY` | secret | Creates checkouts and cancels a replaced membership. Whop permissions: checkout configurations (create), plans and products (read; create for the setup script), memberships (cancel), webhooks (manage, for the setup script), and receiving payment, membership, refund and dispute webhooks. |
 | `WHOP_WEBHOOK_SECRET` | secret | The webhook's `ws_…` signing secret, exactly as Whop shows it |
 
@@ -162,7 +162,8 @@ API in `CLERK_PUBLISHABLE_KEY`; `exp`/`nbf`; the session is not `pending`. Cooki
    `.deploy/<env>.env`. Without them the setup uses the live API and the Emojisense company.
 2. `pnpm exec turbo run build --filter=@emojisense/platform`, then
    `node scripts/whop-setup.mjs <env>` (`--dry-run` only reads). It creates the hidden products and
-   variants at the `PLANS` prices and the webhook to `https://app.<domain>/api/whop/webhook`, and
+   variants of the plans on sale (Solo, Pro) at the `PLANS` prices, keeps a Scale entry that
+   `WHOP_PLAN_IDS` already has, and creates the webhook to `https://app.<domain>/api/whop/webhook`, and
    writes `WHOP_PLAN_IDS`, `WHOP_COMPANY_ID`, `WHOP_API_BASE` and a new webhook's
    `WHOP_WEBHOOK_SECRET` to the env file. Running it again changes nothing.
 3. Deploy with the two secrets and the three vars (scripts/deploy.sh). In Whop, turn on "access

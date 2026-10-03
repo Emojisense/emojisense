@@ -27,7 +27,7 @@ describe("validateEmail", () => {
 describe("parsePlan", () => {
   it("keeps paid plans and falls back to pro", () => {
     expect(parsePlan("solo")).toBe("solo");
-    expect(parsePlan("scale")).toBe("scale");
+    expect(parsePlan("scale")).toBe("pro");
     expect(parsePlan("free")).toBe("pro");
     expect(parsePlan("enterprise")).toBe("pro");
     expect(parsePlan(null)).toBe("pro");

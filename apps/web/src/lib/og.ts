@@ -19,7 +19,7 @@ export const SHARE_IMAGES = {
   },
   pricing: {
     path: "/og/pricing.png",
-    alt: "Emojisense pricing: free to start, fair when you grow. Free, Solo, Pro and Scale plans with their monthly prices.",
+    alt: "Emojisense pricing: free to start, fair when you grow. Free, Solo and Pro plans with their monthly prices.",
     ...SIZE,
   },
   docs: {

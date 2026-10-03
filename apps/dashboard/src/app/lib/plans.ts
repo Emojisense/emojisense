@@ -1,4 +1,13 @@
-import { lowestPlanWith, PLAN_IDS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
+import {
+  isHigherPlan,
+  isListedPlan,
+  LISTED_PLAN_IDS,
+  lowestPlanWith,
+  PLAN_IDS,
+  PLANS,
+  type Plan,
+  type PlanId,
+} from "@emojisense/platform";
 import { formatNumber } from "../format";
 
 export type Feature =
@@ -18,7 +27,8 @@ const lowestPlan = (has: (plan: Plan) => boolean, fallback: PlanId): PlanId =>
 
 /**
  * The lowest plan with each feature, for lock hints before a request. Flags come from PLANS; the
- * rest from the product contract. The API's `402` answer names the plan too, and wins.
+ * rest from the product contract. The API's `402` answer names the plan too, and wins. Tenants and
+ * webhooks are on Scale, which is not on sale: accounts on it keep them, others do not see them.
  */
 export const FEATURE_PLAN: Record<Feature, PlanId> = {
   apps: lowestPlan((plan) => plan.maxApps > 1, "pro"),
@@ -35,11 +45,28 @@ export function planIncludes(plan: PlanId, feature: Feature): boolean {
   return planRank(plan) >= planRank(FEATURE_PLAN[feature]);
 }
 
+/** The cheapest plan on sale that passes `test`; `undefined` when none does (Scale is not sold). */
+export function lowestListedPlanWith(test: (plan: Plan) => boolean): PlanId | undefined {
+  return LISTED_PLAN_IDS.find((id) => test(PLANS[id]));
+}
+
+/** True when a plan on sale is higher than `plan`, so an upgrade can be offered. */
+export function hasHigherListedPlan(plan: PlanId): boolean {
+  return LISTED_PLAN_IDS.some((id) => isHigherPlan(id, plan));
+}
+
+/** False for a feature whose lowest plan is not on sale: the dashboard does not offer it. */
+export function isFeatureListed(feature: Feature): boolean {
+  return isListedPlan(FEATURE_PLAN[feature]);
+}
+
 export interface FeatureCopy {
   emoji: string;
   title: string;
   text: string;
   points: string[];
+  /** What a gate says when no plan on sale has the feature, or more of it. Default "Coming soon." */
+  unlistedNote?: string;
 }
 
 const emojiLimit = (id: PlanId) => formatNumber(PLANS[id].limits.custom_emoji);
@@ -50,10 +77,11 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
     title: "More apps",
     text: "Your plan’s apps are all in use. Separate apps keep staging and dev traffic out of production’s usage.",
     points: [
-      `${PLANS.pro.maxApps} apps on Pro, as many as you need on Scale`,
+      `Up to ${PLANS.pro.maxApps} apps on Pro`,
       "Own keys, usage and custom emoji per app",
       "Environment badges for prod, staging and dev",
     ],
+    unlistedNote: "No plan has more apps yet.",
   },
   custom_emoji: {
     emoji: "🎨",
@@ -64,6 +92,7 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
       "PNG, GIF, WebP or SVG, up to 256 KB each",
       "Aliases, so “ship it” finds :shipit:",
     ],
+    unlistedNote: "No plan has more custom emoji yet.",
   },
   emoji_import: {
     emoji: "📦",
@@ -74,6 +103,7 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
       "We use the token once and never store it",
       "Aliases of aliases and emoji over your limit are skipped",
     ],
+    unlistedNote: "No plan has more custom emoji yet.",
   },
   hosted_sets: {
     emoji: "🖼️",
@@ -90,7 +120,7 @@ export const FEATURE_COPY: Record<Feature, FeatureCopy> = {
     title: "See what people search for",
     text: "Daily searches, the top queries and the searches that found nothing: your list of emoji to add next.",
     points: [
-      `${PLANS.pro.analyticsRetentionDays} days of history on Pro, ${PLANS.scale.analyticsRetentionDays} on Scale`,
+      `${PLANS.pro.analyticsRetentionDays} days of history on Pro`,
       "No user, IP address or message text is stored",
       "One click from a missed search to a new custom emoji",
     ],

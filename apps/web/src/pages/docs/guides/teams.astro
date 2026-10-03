@@ -1,5 +1,5 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import DocsLayout from "../../../components/docs/DocsLayout.astro";
 import { formatCount } from "../../../lib/format";
@@ -72,7 +72,7 @@ const accept = `POST /api/invites/<token>/accept
     <table>
       <thead><tr><th scope="col">Plan</th><th scope="col">Apps</th><th scope="col">Team members</th></tr></thead>
       <tbody>
-        {PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].maxApps)}</td><td>{PLANS[id].teamMembers ? "Yes" : "—"}</td></tr>)}
+        {LISTED_PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].maxApps)}</td><td>{PLANS[id].teamMembers ? "Yes" : "—"}</td></tr>)}
       </tbody>
     </table>
   </div>

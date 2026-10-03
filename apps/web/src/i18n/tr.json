@@ -4,18 +4,18 @@
     "skipLink": "İçeriğe geç",
     "shareAlt": {
       "home": "Emojisense: her uygulama için emojiye dair her şey. “jurassic park” ve “feliz cumpleaños” gibi aramalar ve ilk sıradaki emoji sonuçları.",
-      "pricing": "Emojisense fiyatları: başlangıç ücretsiz, büyüdükçe adil. Free, Solo, Pro ve Scale planları ve aylık fiyatları."
+      "pricing": "Emojisense fiyatları: başlangıç ücretsiz, büyüdükçe adil. Free, Solo ve Pro planları ve aylık fiyatları."
     },
     "home": {
       "description": "Her uygulama için emoji platformu: argoyu ve 11 dili anlayan arama, tepki önerileri, fotoğraftan emoji, özel emoji, barındırılan emoji setleri ve analizler. Free planı, açık kaynaklı çekirdek."
     },
     "pricing": {
       "title": "Fiyatlar",
-      "description": "Emojisense fiyatları: başlangıcı ücretsiz, eksiksiz emoji platformu. Her planda arama ve tepki önerileri; kullanım miktarı, fotoğraflar, özel emoji ve ekipler için ödeme yapın."
+      "description": "Emojisense fiyatları: başlangıcı ücretsiz, eksiksiz emoji platformu. Her planda arama ve tepki önerileri; kullanım miktarı, özel emoji ve ekipler için ödeme yapın."
     },
     "waitlist": {
       "title": "Bekleme listesi",
-      "description": "Emojisense ücretli planları artık satışta. Fiyatlar sayfasından Solo, Pro veya Scale seçin."
+      "description": "Emojisense ücretli planları artık satışta. Fiyatlar sayfasından Solo veya Pro seçin."
     },
     "about": {
       "title": "Hakkımızda",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Fiyatlar",
       "title": "Başlangıç ücretsiz. Büyüdükçe adil.",
-      "lead": "Arama ve tepki önerileri her planda var. Kullanım miktarı, fotoğraflar, özel emoji ve ekip özellikleri için ödeme yapın."
+      "lead": "Arama ve tepki önerileri her planda var. Kullanım miktarı, özel emoji ve ekip özellikleri için ödeme yapın."
     },
     "faq": {
       "kicker": "SSS",
@@ -205,7 +205,7 @@
     },
     "photo": {
       "title": "Fotoğraftan emoji",
-      "tag": "Beta",
+      "tag": "Yakında",
       "body": "Bir yavru köpeğe 🐶 ve 🥹 gelir. Fotoğraflar asla saklanmaz."
     },
     "custom": {
@@ -233,7 +233,8 @@
       "production": "Üretim"
     },
     "tenants": {
-      "title": "Müşteri alanları ve web kancaları",
+      "title": "Müşteri alanları",
+      "tag": "Yakında",
       "body": "Platform mu geliştiriyorsunuz? Her müşteriye API üzerinden yönetilen kendi emoji setini sunun.",
       "root": "Platformunuz"
     },
@@ -482,13 +483,13 @@
     "yearlyHint": "yıllık",
     "fine": "<strong>Limite ulaşınca arama durmaz.</strong> Aylık yapay zekâ çağrılarınız bitse de cihazdaki, hazır ve önbellekteki yanıtlar gelecek aya kadar çalışır. <link>Neler çağrı sayılır?</link>",
     "unlimited": "Sınırsız",
+    "soon": "Yakında",
     "groups": {
       "core": "Her planda",
       "usage": "Kullanım",
       "emoji": "Özel emoji ve setler",
       "teams": "Analizler ve ekipler",
-      "platform": "Platformlar için",
-      "support": "Destek"
+      "soon": "Yakında"
     },
     "features": {
       "search": {
@@ -510,9 +511,8 @@
         "unit": "yapay zekâ çağrısı / ay"
       },
       "photos": {
-        "label": "Aylık fotoğraftan emoji",
-        "hint": "Emojilere göre sınıflandırılan fotoğraflar",
-        "unit": "fotoğraftan emoji / ay"
+        "label": "Fotoğraftan emoji",
+        "hint": "Emojilere göre sınıflandırılan fotoğraflar"
       },
       "overLimit": {
         "label": "Limit aşılsa da çalışır",
@@ -551,17 +551,6 @@
       "tenants": {
         "label": "Müşteri alanları",
         "hint": "Her müşteri için API üzerinden yönetilen bir özel emoji seti"
-      },
-      "webhooks": {
-        "label": "Web kancaları",
-        "hint": "Müşteri alanı ve emoji değişikliklerinden haberdar olun"
-      },
-      "communitySupport": {
-        "label": "Topluluk desteği",
-        "hint": "GitHub Discussions ve belgeler"
-      },
-      "prioritySupport": {
-        "label": "Öncelikli destek"
       }
     }
   },
@@ -569,7 +558,7 @@
     "hero": {
       "kicker": "Fiyatlar",
       "title": "Başlangıç ücretsiz. <line>Büyüdükçe adil.</line>",
-      "lead": "Her uygulama için eksiksiz emoji platformu. Arama ve tepki önerileri her planda var. Yalnızca kullanım miktarı, fotoğraflar, özel emoji ve ekip özellikleri için ödeme yapın.",
+      "lead": "Her uygulama için eksiksiz emoji platformu. Arama ve tepki önerileri her planda var. Yalnızca kullanım miktarı, özel emoji ve ekip özellikleri için ödeme yapın.",
       "assurances": {
         "card": "Ücretsiz planda kart gerekmez",
         "failure": "Limite ulaşınca tamamen durmaz",
@@ -579,7 +568,7 @@
     "compare": {
       "kicker": "Planları karşılaştırın",
       "title": "Tüm özellikler, yan yana.",
-      "lead": "Her plan tüm emoji platformunu sunar. Üst planlar daha fazla kullanım, özel emoji, ekipler ve müşteri alanları ekler.",
+      "lead": "Her plan tüm emoji platformunu sunar. Üst planlar daha fazla kullanım, özel emoji ve ekipler ekler.",
       "caption": "Her Emojisense planının özellikleri ve limitleri",
       "included": "Dahil",
       "notIncluded": "Dahil değil"
@@ -673,7 +662,7 @@
       "items": {
         "free": {
           "q": "Ücretsiz plan gerçekten ücretsiz mi?",
-          "a": "Evet, üstelik kart gerekmez. Ayda {calls} yapay zekâ çağrısı ve {photos} fotoğraf sınıflandırması dahildir. Tüm SDK ve entegrasyonları, cihazda sınırsız yanıtları da içerir. Hiçbir planda sağlayıcı adı taşıyan rozet yoktur."
+          "a": "Evet, üstelik kart gerekmez. Ayda {calls} yapay zekâ çağrısı dahildir. Tüm SDK ve entegrasyonları, cihazda sınırsız yanıtları da içerir. Hiçbir planda sağlayıcı adı taşıyan rozet yoktur."
         },
         "call": {
           "q": "Neler çağrı sayılır?",
@@ -736,7 +725,7 @@
   "waitlist": {
     "hero": {
       "title": "Ücretli planlar artık satışta.",
-      "lead": "<link>Fiyatlar sayfasından</link> Solo, Pro veya Scale seçin ve kontrol panelinde ödeme yapın. Bu form eski bağlantılar için burada kalır. Yalnızca e-posta adresinizi listemize ekler."
+      "lead": "<link>Fiyatlar sayfasından</link> Solo veya Pro seçin ve kontrol panelinde ödeme yapın. Bu form eski bağlantılar için burada kalır. Yalnızca e-posta adresinizi listemize ekler."
     },
     "formLabel": "Bekleme listesi formu",
     "plansTitle": "Bir bakışta ücretli planlar",
@@ -810,7 +799,7 @@
     },
     "money": {
       "title": "Nasıl gelir elde ediyoruz?",
-      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, fotoğraftan emoji, özel emoji, analizler, ekipler ve müşteri alanları ekler. Reklam yok, veri satmıyoruz. Bugün <pricing>bir plan seçin</pricing> veya <free>ücretsiz başlayın</free>."
+      "body": "Arama ve tepki önerileri her planda ücretsizdir. Ücretli planlar daha fazla kullanım, özel emoji, analizler ve ekipler ekler. Reklam yok, veri satmıyoruz. Bugün <pricing>bir plan seçin</pricing> veya <free>ücretsiz başlayın</free>."
     },
     "now": {
       "title": "Ne durumdayız?",
@@ -823,6 +812,7 @@
   "hero": {
     "searchLabel": "Emoji arayın",
     "placeholder": "Konuşur gibi emoji arayın…",
+    "typeHint": "Demo · kendiniz denemek için yazın",
     "offline": "çevrimdışı",
     "results": "Emoji sonuçları",
     "empty": "Henüz eşleşme yok, yazmaya devam edin.",
@@ -1044,14 +1034,14 @@
       "timingMeaning": "anlam · {ms} ms",
       "timingDevice": "cihazda · {ms} ms",
       "aside": "{workspace} özel emojileri",
-      "importTitle": "Slack ve Discord'dan içe aktarma: Pro ve Scale planları",
+      "importTitle": "Slack ve Discord'dan içe aktarma: Pro planı",
       "imported": "{source} üzerinden içe aktarıldı",
       "addedByAdmins": "Çalışma alanı yöneticileri ekledi",
       "set": "Özel set",
       "reactWith": "{code} ile tepki verin",
       "inspectIdle": "Bir emojiyi bulan sözcükleri görmek için üzerine gelin.",
       "tenants": "Müşteri alanları",
-      "scalePlan": "Scale planı",
+      "soon": "Yakında",
       "tenantsNote": "Her müşterinin kendi özel seti olan bir müşteri alanı vardır. Sunucunuz bu seti gizli anahtarla kaydeder.",
       "presets": {
         "shipIt": "yayına al",

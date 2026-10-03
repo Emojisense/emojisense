@@ -3,7 +3,7 @@ import {
   ANALYTICS_MIN_QUERY_SEARCHES,
   ANALYTICS_WINDOWS,
   analyticsKeepDays,
-  PLAN_IDS,
+  LISTED_PLAN_IDS,
   PLANS,
 } from "@emojisense/platform";
 import Callout from "../../../components/docs/Callout.astro";
@@ -45,7 +45,7 @@ const windows = ANALYTICS_WINDOWS.join(", ");
       <thead><tr><th scope="col">Plan</th><th scope="col">Analytics in the dashboard</th><th scope="col">Rows kept</th></tr></thead>
       <tbody>
         {
-          PLAN_IDS.map((id) => (
+          LISTED_PLAN_IDS.map((id) => (
             <tr>
               <td>{PLANS[id].name}</td>
               <td>{PLANS[id].analyticsRetentionDays > 0 ? formatDays(PLANS[id].analyticsRetentionDays) : "—"}</td>

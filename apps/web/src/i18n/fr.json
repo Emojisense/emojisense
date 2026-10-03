@@ -4,18 +4,18 @@
     "skipLink": "Aller au contenu",
     "shareAlt": {
       "home": "Emojisense : tout pour les emoji, dans toutes les applications. Des recherches comme “jurassic park” et “feliz cumpleaños” et leurs meilleurs résultats emoji.",
-      "pricing": "Tarifs Emojisense : gratuits au départ, justes quand vous grandissez. Forfaits Free, Solo, Pro et Scale avec leurs prix mensuels."
+      "pricing": "Tarifs Emojisense : gratuits au départ, justes quand vous grandissez. Forfaits Free, Solo et Pro avec leurs prix mensuels."
     },
     "home": {
       "description": "La plateforme emoji pour toutes les applications : recherche qui comprend l’argot et 11 langues, suggestions de réactions, photo en emoji, emoji personnalisés, jeux d’emoji hébergés et statistiques. Forfait gratuit, cœur open source."
     },
     "pricing": {
       "title": "Tarifs",
-      "description": "Tarifs Emojisense : la plateforme emoji complète, gratuite au départ. Recherche et suggestions de réactions dans chaque forfait ; payez pour le volume, les photos, les emoji personnalisés et les équipes."
+      "description": "Tarifs Emojisense : la plateforme emoji complète, gratuite au départ. Recherche et suggestions de réactions dans chaque forfait ; payez pour le volume, les emoji personnalisés et les équipes."
     },
     "waitlist": {
       "title": "Liste d’attente",
-      "description": "Les forfaits payants Emojisense sont disponibles. Choisissez Solo, Pro ou Scale sur la page des tarifs."
+      "description": "Les forfaits payants Emojisense sont disponibles. Choisissez Solo ou Pro sur la page des tarifs."
     },
     "about": {
       "title": "À propos",
@@ -126,7 +126,7 @@
     "pricing": {
       "kicker": "Tarifs",
       "title": "Gratuit au départ. Juste quand vous grandissez.",
-      "lead": "Recherche et suggestions de réactions dans chaque forfait. Payez pour le volume, les photos, les emoji personnalisés et les fonctions d’équipe."
+      "lead": "Recherche et suggestions de réactions dans chaque forfait. Payez pour le volume, les emoji personnalisés et les fonctions d’équipe."
     },
     "faq": {
       "kicker": "FAQ",
@@ -205,7 +205,7 @@
     },
     "photo": {
       "title": "Photo en emoji",
-      "tag": "Bêta",
+      "tag": "Bientôt",
       "body": "Un chiot donne 🐶 et 🥹. Les photos ne sont jamais conservées."
     },
     "custom": {
@@ -233,7 +233,8 @@
       "production": "Production"
     },
     "tenants": {
-      "title": "Locataires et webhooks",
+      "title": "Locataires",
+      "tag": "Bientôt",
       "body": "Vous créez une plateforme ? Donnez à chaque client son propre jeu d’emoji, géré par l’API.",
       "root": "Votre plateforme"
     },
@@ -482,13 +483,13 @@
     "yearlyHint": "facturation annuelle",
     "fine": "<strong>La recherche fonctionne même à la limite.</strong> Une fois vos appels IA mensuels utilisés, les réponses sur l’appareil, les réponses préparées et les réponses en cache continuent jusqu’au mois suivant. <link>Qu’est-ce qui compte comme un appel ?</link>",
     "unlimited": "Illimité",
+    "soon": "Bientôt",
     "groups": {
       "core": "Dans chaque forfait",
       "usage": "Consommation",
       "emoji": "Emoji personnalisés et jeux",
       "teams": "Statistiques et équipes",
-      "platform": "Pour les plateformes",
-      "support": "Assistance"
+      "soon": "Bientôt disponible"
     },
     "features": {
       "search": {
@@ -510,9 +511,8 @@
         "unit": "appels IA par mois"
       },
       "photos": {
-        "label": "Photo en emoji par mois",
-        "hint": "Photos classées en emoji",
-        "unit": "photos en emoji par mois"
+        "label": "Photo en emoji",
+        "hint": "Photos classées en emoji"
       },
       "overLimit": {
         "label": "Fonctionne au-delà de la limite",
@@ -552,17 +552,6 @@
       "tenants": {
         "label": "Locataires",
         "hint": "Un jeu d’emoji personnalisés par client, géré par l’API"
-      },
-      "webhooks": {
-        "label": "Webhooks",
-        "hint": "Recevez les modifications des locataires et des emoji"
-      },
-      "communitySupport": {
-        "label": "Assistance communautaire",
-        "hint": "GitHub Discussions et la documentation"
-      },
-      "prioritySupport": {
-        "label": "Assistance prioritaire"
       }
     }
   },
@@ -570,7 +559,7 @@
     "hero": {
       "kicker": "Tarifs",
       "title": "Gratuit au départ. <line>Juste quand vous grandissez.</line>",
-      "lead": "La plateforme emoji complète pour toutes les applications. Recherche et suggestions de réactions dans chaque forfait. Payez seulement pour le volume, les photos, les emoji personnalisés et les fonctions d’équipe.",
+      "lead": "La plateforme emoji complète pour toutes les applications. Recherche et suggestions de réactions dans chaque forfait. Payez seulement pour le volume, les emoji personnalisés et les fonctions d’équipe.",
       "assurances": {
         "card": "Sans carte pour le forfait gratuit",
         "failure": "Aucun blocage à la limite",
@@ -580,7 +569,7 @@
     "compare": {
       "kicker": "Comparer les offres",
       "title": "Toutes les fonctions, côte à côte.",
-      "lead": "Chaque forfait inclut toute la plateforme emoji. Les forfaits supérieurs ajoutent du volume, des emoji personnalisés, des équipes et des locataires.",
+      "lead": "Chaque forfait inclut toute la plateforme emoji. Les forfaits supérieurs ajoutent du volume, des emoji personnalisés et des équipes.",
       "caption": "Fonctions et limites de chaque forfait Emojisense",
       "included": "Inclus",
       "notIncluded": "Non inclus"
@@ -674,7 +663,7 @@
       "items": {
         "free": {
           "q": "Le forfait gratuit est-il vraiment gratuit ?",
-          "a": "Oui, sans carte bancaire. Il inclut {calls} appels IA et {photos} classifications de photos par mois, chaque SDK et chaque intégration, et des réponses sur l’appareil sans limite. Aucun forfait n’impose de badge « propulsé par »."
+          "a": "Oui, sans carte bancaire. Il inclut {calls} appels IA par mois, chaque SDK et chaque intégration, et des réponses sur l’appareil sans limite. Aucun forfait n’impose de badge « propulsé par »."
         },
         "call": {
           "q": "Qu’est-ce qui compte comme un appel ?",
@@ -737,7 +726,7 @@
   "waitlist": {
     "hero": {
       "title": "Les forfaits payants sont disponibles.",
-      "lead": "Choisissez Solo, Pro ou Scale sur la <link>page des tarifs</link> et payez dans le tableau de bord. Ce formulaire reste disponible pour les anciens liens. Il ajoute seulement votre adresse e-mail à notre liste."
+      "lead": "Choisissez Solo ou Pro sur la <link>page des tarifs</link> et payez dans le tableau de bord. Ce formulaire reste disponible pour les anciens liens. Il ajoute seulement votre adresse e-mail à notre liste."
     },
     "formLabel": "Formulaire de liste d’attente",
     "plansTitle": "Les forfaits payants en bref",
@@ -811,7 +800,7 @@
     },
     "money": {
       "title": "Comment nous gagnons de l’argent",
-      "body": "La recherche et les suggestions de réactions sont gratuites dans chaque forfait. Les forfaits payants ajoutent du volume, la photo en emoji, les emoji personnalisés, les statistiques, les équipes et les locataires. Aucune publicité. Nous ne vendons pas les données. <pricing>Choisissez un forfait</pricing> ou <free>commencez gratuitement</free> dès aujourd’hui."
+      "body": "La recherche et les suggestions de réactions sont gratuites dans chaque forfait. Les forfaits payants ajoutent du volume, les emoji personnalisés, les statistiques et les équipes. Aucune publicité. Nous ne vendons pas les données. <pricing>Choisissez un forfait</pricing> ou <free>commencez gratuitement</free> dès aujourd’hui."
     },
     "now": {
       "title": "Où nous en sommes",
@@ -824,6 +813,7 @@
   "hero": {
     "searchLabel": "Chercher des emoji",
     "placeholder": "Cherchez des emoji avec vos mots…",
+    "typeHint": "Démo · tapez pour essayer vous-même",
     "offline": "hors ligne",
     "results": "Résultats emoji",
     "empty": "Aucun résultat pour le moment. Continuez à taper.",
@@ -1046,14 +1036,14 @@
       "timingMeaning": "sens · {ms} ms",
       "timingDevice": "sur l’appareil · {ms} ms",
       "aside": "Emoji personnalisés de {workspace}",
-      "importTitle": "Import Slack et Discord : forfaits Pro et Scale",
+      "importTitle": "Import Slack et Discord : forfait Pro",
       "imported": "Importés depuis {source}",
       "addedByAdmins": "Ajoutés par les administrateurs de l’espace",
       "set": "Jeu personnalisé",
       "reactWith": "Réagir avec {code}",
       "inspectIdle": "Survolez un emoji pour voir les mots qui le trouvent.",
       "tenants": "Locataires",
-      "scalePlan": "Forfait Scale",
+      "soon": "Bientôt",
       "tenantsNote": "Chaque client est un locataire avec son propre jeu personnalisé. Votre serveur l’enregistre avec une clé secrète.",
       "presets": {
         "shipIt": "on livre",

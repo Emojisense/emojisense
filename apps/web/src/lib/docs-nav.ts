@@ -8,8 +8,9 @@ import type { PlanId } from "@emojisense/platform";
  * - `planned`: designed in the product contract, not on `main` yet. The page says so.
  * - `next`: the routes are on `main` but not deployed: "Coming in this release".
  * - `experimental`: works today, the API can still change.
+ * - `soon`: the routes are live, but no plan sells the feature yet. The page says so.
  */
-export type DocsStatus = "planned" | "next" | "experimental";
+export type DocsStatus = "planned" | "next" | "experimental" | "soon";
 
 export interface DocsPage {
   href: string;
@@ -80,6 +81,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
         href: "/docs/guides/photo-to-emoji/",
         title: "Photo to emoji",
         description: "Turn a photo into the emoji that fit it, without storing the image.",
+        status: "soon",
       },
       {
         href: "/docs/guides/custom-emoji/",
@@ -115,6 +117,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Tenants",
         description: "Give each of your customers their own custom emoji set, from one app.",
         plan: "scale",
+        status: "soon",
         routes: ["/v1/tenants"],
       },
       {
@@ -122,6 +125,7 @@ export const DOCS_SECTIONS: DocsSection[] = [
         title: "Webhooks",
         description: "Get signed events when custom emoji, tenants or usage change.",
         plan: "scale",
+        status: "soon",
         routes: ["/api/apps/:id/webhooks"],
       },
     ],

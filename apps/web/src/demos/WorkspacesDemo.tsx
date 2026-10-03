@@ -620,7 +620,7 @@ export default function WorkspacesDemo() {
 
             <div className="ws-note">
               <p className="ws-note-label">
-                {t.t("workspaces.tenants")} <span>{t.t("workspaces.scalePlan")}</span>
+                {t.t("workspaces.tenants")} <span>{t.t("workspaces.soon")}</span>
               </p>
               <p>{t.t("workspaces.tenantsNote")}</p>
             </div>

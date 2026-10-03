@@ -4,7 +4,7 @@ import type { App } from "../api";
 import { useAdminStatus } from "../lib/admin";
 import { DOCS_URL } from "../lib/config";
 import { initials } from "../lib/identity";
-import { FEATURE_PLAN, type Feature, planIncludes } from "../lib/plans";
+import { FEATURE_PLAN, type Feature, hasHigherListedPlan, isFeatureListed, planIncludes } from "../lib/plans";
 import { Link } from "../router";
 import { APP_SECTIONS, type AppSection, appHref, type Route, SECTION_INFO } from "../routes";
 import { useSession } from "../session";
@@ -56,6 +56,8 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
               const info = SECTION_INFO[name];
               // App features follow the app's plan, which is its owner's.
               const locked = info.feature && !planIncludes(currentApp.plan, info.feature);
+              // A feature no plan on sale has (tenants, webhooks) shows only to apps that have it.
+              if (locked && info.feature && !isFeatureListed(info.feature)) return null;
               const active = route.name === "app" && route.section === name;
               return (
                 <Link
@@ -95,7 +97,7 @@ export function Sidebar({ route, currentApp, onClose }: SidebarProps) {
       </div>
 
       <div className="side-foot">
-        {(me.plan.id !== "scale" || me.billingStatus === "past_due") && <PlanNudge />}
+        {(hasHigherListedPlan(me.plan.id) || me.billingStatus === "past_due") && <PlanNudge />}
         <AccountMenu />
       </div>
     </aside>
@@ -132,12 +134,10 @@ function LockHint({ feature }: { feature: Feature }) {
   );
 }
 
-/** What the next plan adds, in a line. Scale has no next plan and shows no nudge. */
-const NEXT_PLAN_PITCH: Record<PlanId, string> = {
+/** What the next plan on sale adds, in a line. Pro is the top plan on sale and shows no nudge. */
+const NEXT_PLAN_PITCH: Partial<Record<PlanId, string>> = {
   free: "Custom emoji, analytics and a team come with paid plans.",
   solo: "Analytics, Slack import and a team come with Pro.",
-  pro: "Tenants and webhooks come with Scale.",
-  scale: "",
 };
 
 function PlanNudge() {

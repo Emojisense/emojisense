@@ -21,7 +21,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import { createEngine } from "emojisense";
 import { PLAN_COPY } from "../src/components/pricing/plan-copy.ts";
 import { formatCount, formatUsd } from "../src/lib/format.ts";
@@ -190,22 +190,24 @@ function homeCard() {
   return frame({
     headline: ["Everything", "emoji, for", "every app."],
     sub: ["Search that understands slang, films,", "feelings and 11 languages."],
-    footnote: "Search · Reactions · Photo → emoji · Custom emoji",
+    footnote: "Search · Reactions · Custom emoji · Hosted sets",
     card: cardHeader("what people type", "top results") + body,
   });
 }
 
 function pricingCard() {
-  const rowHeight = 107;
-  const body = PLAN_IDS.map((id, i) => {
+  // The rows share the card's height; each row's content is 107 px tall and sits in its middle.
+  const rowHeight = 428 / LISTED_PLAN_IDS.length;
+  const body = LISTED_PLAN_IDS.map((id, i) => {
     const plan = PLANS[id];
-    const y = CARD.y + 72 + i * rowHeight;
+    const top = CARD.y + 72 + i * rowHeight;
+    const y = top + (rowHeight - 107) / 2;
     const calls = `${formatCount(plan.limits.semantic_calls)} AI calls a month`;
     const price = formatUsd(plan.priceUsdMonthly);
     const priceX = CARD.x + CARD.width - 32 - 40;
     const divider =
-      i < PLAN_IDS.length - 1
-        ? `<line x1="${CARD.x + 32}" x2="${CARD.x + CARD.width - 32}" y1="${y + rowHeight}" y2="${y + rowHeight}" stroke="${LINE}" stroke-width="1.5"/>`
+      i < LISTED_PLAN_IDS.length - 1
+        ? `<line x1="${CARD.x + 32}" x2="${CARD.x + CARD.width - 32}" y1="${top + rowHeight}" y2="${top + rowHeight}" stroke="${LINE}" stroke-width="1.5"/>`
         : "";
     return [
       tile(CARD.x + 32, y + 24, PLAN_COPY[id].emoji, { size: 60, glyphSize: 34 }),

@@ -2,7 +2,7 @@
 import {
   ANALYTICS_MIN_QUERY_SEARCHES,
   analyticsKeepDays,
-  PLAN_IDS,
+  LISTED_PLAN_IDS,
   PLANS,
   SHARD_MIN_ACCOUNTS,
   SHARD_MIN_SEARCHES,
@@ -17,7 +17,9 @@ import Callout from "../../components/docs/Callout.astro";
 import DocsLayout from "../../components/docs/DocsLayout.astro";
 import { formatDays } from "../../lib/format";
 
-const keep = PLAN_IDS.map((id) => `${PLANS[id].name} ${formatDays(analyticsKeepDays(PLANS[id]))}`).join(", ");
+const keep = LISTED_PLAN_IDS.map(
+  (id) => `${PLANS[id].name} ${formatDays(analyticsKeepDays(PLANS[id]))}`,
+).join(", ");
 ---
 
 <DocsLayout path="/docs/privacy/">

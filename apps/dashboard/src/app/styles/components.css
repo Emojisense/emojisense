@@ -962,6 +962,11 @@ select.input {
   box-shadow: var(--shadow-sm);
 }
 
+/* No plan on sale has the feature: no price side. */
+.gate-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .gate-main {
   display: grid;
   align-content: start;

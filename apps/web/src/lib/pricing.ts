@@ -1,4 +1,4 @@
-import { PLAN_IDS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS, type Plan, type PlanId } from "@emojisense/platform";
 import type { Messages } from "../i18n/catalogs";
 import en from "../i18n/en.json";
 import { formatCountIn, formatDaysIn, formatUsdIn } from "../i18n/format";
@@ -77,15 +77,19 @@ export interface ComparisonGroup {
   rows: ComparisonRow[];
 }
 
+/** A feature that is not on any plan yet, listed as "Soon". */
+export interface SoonFeature {
+  key: string;
+  label: string;
+  hint?: string;
+}
+
 /**
- * docs/PRICING.md sells some features in bundles that PLANS has no field for: Slack and Discord
- * import ship with team members; webhooks and priority support ship with tenants. They are read
- * through the flag they ship with, so PLANS stays the only source.
+ * docs/PRICING.md sells Slack and Discord import with team members, and PLANS has no field for
+ * it. It is read through the flag it ships with, so PLANS stays the only source.
  */
 const bundled = {
   emojiImport: (plan: Plan) => plan.teamMembers,
-  webhooks: (plan: Plan) => plan.tenants,
-  prioritySupport: (plan: Plan) => plan.tenants,
 };
 
 function textOf(page: PricingLocale, text: FeatureText): { label: string; hint?: string; unit?: unknown } {
@@ -147,12 +151,6 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         text: "semanticCalls",
         onCard: true,
         read: (plan, page) => limit(page, plan.limits.semantic_calls, "semanticCalls"),
-      },
-      {
-        key: "image_classifications",
-        text: "photos",
-        onCard: true,
-        read: (plan, page) => limit(page, plan.limits.image_classifications, "photos"),
       },
       {
         key: "over_limit",
@@ -224,39 +222,15 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       },
     ],
   },
-  {
-    id: "platform",
-    features: [
-      {
-        key: "tenants",
-        text: "tenants",
-        onCard: true,
-        read: (plan) => ({ value: plan.tenants }),
-      },
-      {
-        key: "webhooks",
-        text: "webhooks",
-        onCard: true,
-        read: (plan) => ({ value: bundled.webhooks(plan) }),
-      },
-    ],
-  },
-  {
-    id: "support",
-    features: [
-      {
-        key: "community_support",
-        text: "communitySupport",
-        read: () => ({ value: true }),
-      },
-      {
-        key: "priority_support",
-        text: "prioritySupport",
-        onCard: true,
-        read: (plan) => ({ value: bundled.prioritySupport(plan) }),
-      },
-    ],
-  },
+];
+
+/**
+ * Built, but on no plan yet (DECISIONS.md, "Scale hidden at launch"). The API still meters photo
+ * classifications under PLANS; the pricing page lists both as "Soon" instead of a limit.
+ */
+const SOON_FEATURES: { key: string; text: FeatureText }[] = [
+  { key: "image_classifications", text: "photos" },
+  { key: "tenants", text: "tenants" },
 ];
 
 const FEATURE_SPECS = FEATURE_GROUPS.flatMap((group) => group.features);
@@ -265,13 +239,11 @@ const FEATURE_SPECS = FEATURE_GROUPS.flatMap((group) => group.features);
 const SUMMARY_KEYS = [
   "search",
   "semantic_calls",
-  "image_classifications",
   "custom_emoji",
   "hosted_sets",
   "analytics",
   "apps",
   "team",
-  "tenants",
 ] as const;
 
 function featureOf(spec: FeatureSpec, plan: Plan, page: PricingLocale): PlanFeature {
@@ -310,6 +282,13 @@ export function highlightsOf(
     .map(({ current }) => current);
 }
 
+export function soonFeatures(page: PricingLocale = ENGLISH_PRICING): SoonFeature[] {
+  return SOON_FEATURES.map(({ key, text }) => {
+    const { label, hint } = textOf(page, text);
+    return { key, label, ...(hint ? { hint } : {}) };
+  });
+}
+
 export function comparisonOf(
   plans: Record<PlanId, Plan> = PLANS,
   page: PricingLocale = ENGLISH_PRICING,
@@ -323,7 +302,7 @@ export function comparisonOf(
         key: spec.key,
         label: text.label,
         ...(text.hint ? { hint: text.hint } : {}),
-        cells: PLAN_IDS.map((id) => {
+        cells: LISTED_PLAN_IDS.map((id) => {
           const { value, raw } = spec.read(plans[id], page);
           return { plan: id, value, ...(raw === undefined ? {} : { raw }) };
         }),
@@ -353,9 +332,9 @@ export function planViews(
   page: PricingLocale = ENGLISH_PRICING,
 ): PlanView[] {
   const usd = (value: number) => formatUsdIn(page.tag, value);
-  return PLAN_IDS.map((id, index) => {
+  return LISTED_PLAN_IDS.map((id, index) => {
     const plan = plans[id];
-    const previousId = PLAN_IDS[index - 1];
+    const previousId = LISTED_PLAN_IDS[index - 1];
     const previous = previousId === undefined ? undefined : plans[previousId];
     const yearly = plan.priceUsdYearly;
     return {
@@ -383,7 +362,7 @@ export function planViews(
 
 /** Biggest yearly saving across plans, in whole percent (0 when no plan bills yearly). */
 export function yearlySavingsPercent(plans: Record<PlanId, Plan> = PLANS): number {
-  const savings = PLAN_IDS.map((id) => plans[id]).map((plan) =>
+  const savings = LISTED_PLAN_IDS.map((id) => plans[id]).map((plan) =>
     plan.priceUsdYearly === undefined || plan.priceUsdMonthly === 0
       ? 0
       : 1 - plan.priceUsdYearly / (plan.priceUsdMonthly * 12),

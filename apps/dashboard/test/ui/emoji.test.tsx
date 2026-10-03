@@ -57,7 +57,7 @@ describe("custom emoji usage", () => {
 
     expect(
       await screen.findByText(
-        "All 2,000 custom emoji of the Pro plan are in use across the account’s apps. Delete some to add new ones. Scale allows 10,000.",
+        "All 2,000 custom emoji of the Pro plan are in use across the account’s apps. Delete some to add new ones.",
       ),
     ).toBeTruthy();
     expect((screen.getByRole("button", { name: "Upload emoji" }) as HTMLButtonElement).disabled).toBe(true);

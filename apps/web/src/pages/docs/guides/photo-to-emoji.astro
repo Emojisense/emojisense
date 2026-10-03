@@ -1,5 +1,5 @@
 ---
-import { PLAN_IDS, PLANS } from "@emojisense/platform";
+import { LISTED_PLAN_IDS, PLANS } from "@emojisense/platform";
 import Callout from "../../../components/docs/Callout.astro";
 import CodeBlock from "../../../components/docs/CodeBlock.astro";
 import CodeTabs from "../../../components/docs/CodeTabs.astro";
@@ -94,12 +94,13 @@ const curl = `curl -X POST "${API_HOST}/v1/classify-image?locale=en&limit=5" \\
   <h2 id="cache">Cache repeated images</h2>
   <p>The same meme is often shared many times. Send <code>X-Image-Hash</code> with a perceptual hash (for example a 64-bit difference hash), and the API caches the label for that hash in the data center. Later calls with the same hash skip the vision model. The cache key also holds the vision model and the prompt version, so a new prompt never reads an old label. Every call still counts as one classification, also when it is a cache hit.</p>
 
-  <h2 id="limits">Plans and limits</h2>
+  <h2 id="limits">Limits</h2>
+  <p>No plan sells photo to emoji yet. Until then, each plan has a small monthly allowance to try it:</p>
   <div class="table-scroll" tabindex="0">
     <table>
       <thead><tr><th scope="col">Plan</th><th scope="col">Classifications a month</th></tr></thead>
       <tbody>
-        {PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].limits.image_classifications)}</td></tr>)}
+        {LISTED_PLAN_IDS.map((id) => <tr><td>{PLANS[id].name}</td><td>{formatCount(PLANS[id].limits.image_classifications)}</td></tr>)}
       </tbody>
     </table>
   </div>
