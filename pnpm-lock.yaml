@@ -390,6 +390,28 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
 
+  packages/tinymce:
+    dependencies:
+      emojisense:
+        specifier: workspace:^
+        version: link:../core
+    devDependencies:
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
+      happy-dom:
+        specifier: 20.14.5
+        version: 20.14.5
+      playwright-core:
+        specifier: 1.63.0
+        version: 1.63.0
+      tinymce:
+        specifier: 8.9.2
+        version: 8.9.2
+      tinymce-7:
+        specifier: npm:tinymce@7.9.3
+        version: tinymce@7.9.3
+
   packages/tiptap:
     dependencies:
       emojisense:
@@ -8014,6 +8036,12 @@ packages:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
 
+  tinymce@7.9.3:
+    resolution: {integrity: sha512-Mtm54U5YJ6Pyo/GaAx+JSHXTGEuxrg2AowVWCD9zy1eBolp5Ub7S1rTtsyQdxhPegfhLuR3VLiTKGw1tacv09g==}
+
+  tinymce@8.9.2:
+    resolution: {integrity: sha512-Qh6ADSC0x1F/KsrupfResNJFAaINJQBtfVjx5zxxWJ0ZrGtaKldtAXDMI6uEA57s2n+0rEtXmtbitiU4zV7+0Q==}
+
   tldts-core@7.4.16:
     resolution: {integrity: sha512-MDolfaSJtlSK5Y0A1xl3277ekubZwobpBjugknDizI9O5Rm60a1m8k4ICK+MRsCDzPygT81mp3BBf5RKDlFRfA==}
 
@@ -12495,7 +12523,7 @@ snapshots:
       eslint: 10.11.0
       eslint-config-prettier: 10.1.8(eslint@10.11.0)
       eslint-import-resolver-typescript: 4.4.5(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint@10.11.0))(eslint@10.11.0)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.5(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint@10.11.0))(eslint@10.11.0))(eslint@10.11.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.5)(eslint@10.11.0)
       eslint-plugin-jest: 29.16.6(@typescript-eslint/eslint-plugin@8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint@10.11.0)(typescript@5.9.3))(eslint@10.11.0)(typescript@5.9.3)
       eslint-plugin-jsdoc: 64.5.4(eslint@10.11.0)(typescript@5.9.3)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@10.11.0)
@@ -13998,7 +14026,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.5(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint@10.11.0))(eslint@10.11.0))(eslint@10.11.0)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.5)(eslint@10.11.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -14013,7 +14041,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.5(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint@10.11.0))(eslint@10.11.0))(eslint@10.11.0):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0)(typescript@5.9.3))(eslint-import-resolver-typescript@4.4.5)(eslint@10.11.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.2.0
@@ -14565,7 +14593,7 @@ snapshots:
       buffer-image-size: 0.6.4
       entities: 7.0.1
       whatwg-mimetype: 3.0.0
-      ws: 8.21.0
+      ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -17269,6 +17297,10 @@ snapshots:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.7)
       picomatch: 4.0.7
+
+  tinymce@7.9.3: {}
+
+  tinymce@8.9.2: {}
 
   tldts-core@7.4.16: {}
 

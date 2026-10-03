@@ -1,0 +1,76 @@
+{
+  "name": "@emojisense/tinymce",
+  "version": "0.0.0",
+  "description": "TinyMCE plugin: `:` emoji autocomplete ranked by Emojisense.",
+  "keywords": [
+    "emoji",
+    "emoji-search",
+    "tinymce",
+    "tinymce-plugin",
+    "autocomplete",
+    "editor"
+  ],
+  "homepage": "https://emojisense.com",
+  "bugs": {
+    "url": "https://github.com/emojisense/emojisense/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emojisense/emojisense.git",
+    "directory": "packages/tinymce"
+  },
+  "license": "MIT",
+  "author": "Emojisense",
+  "type": "module",
+  "sideEffects": [
+    "./dist/global.js",
+    "./dist/plugin.min.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/global.d.ts",
+      "default": "./dist/global.js"
+    },
+    "./plugin.min.js": "./dist/plugin.min.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && esbuild src/global.ts --bundle --minify --format=iife --outfile=dist/plugin.min.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:browser": "node scripts/browser-test.mjs"
+  },
+  "dependencies": {
+    "emojisense": "workspace:^"
+  },
+  "peerDependencies": {
+    "tinymce": ">=7.0.0 <9.0.0"
+  },
+  "peerDependenciesMeta": {
+    "tinymce": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.5",
+    "playwright-core": "1.63.0",
+    "tinymce": "8.9.2",
+    "tinymce-7": "npm:tinymce@7.9.3"
+  }
+}
