@@ -20,6 +20,7 @@
     "culture:review": "tsx src/culture/review.ts",
     "culture:build": "tsx src/culture/build.ts",
     "culture:import-live": "tsx src/culture/import-live.ts",
+    "culture:zones": "tsx scripts/make-zones.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests"
   },

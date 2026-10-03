@@ -45,7 +45,9 @@ describe("semantic client", () => {
     const names = String(sent[0])
       .split("&")
       .map((pair) => pair.split("=")[0]);
-    expect(names).toEqual(["q", "locale", "limit", "mode", "region", "key"]);
+    expect(names).toEqual(["q", "locale", "limit", "mode", "culture", "region", "key"]);
+    // The session applies culture on the device, after fusion: the API must not apply it too.
+    expect(sent.map((params) => params.get("culture"))).toEqual(["0", "0", "0"]);
     expect(sent.map((params) => params.get("region"))).toEqual(["auto", null, null]);
   });
 

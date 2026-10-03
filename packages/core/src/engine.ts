@@ -1,7 +1,13 @@
-import { applyCulture, type Culture, type CultureResult, type CultureScope } from "./culture.js";
+import {
+  applyCulture,
+  type Culture,
+  type CultureResult,
+  type CultureScope,
+  resolveRegion,
+} from "./culture.js";
 import { functionWordsFor } from "./function-words.js";
 import { boundedEditDistance, maxEditsFor, plausibleTypo } from "./fuzzy.js";
-import { normalize, tokenize } from "./normalize.js";
+import { normalize, tokenize, UNSPACED_SCRIPT } from "./normalize.js";
 import {
   assertPack,
   DEFAULT_WEIGHTS,
@@ -156,11 +162,6 @@ const SHORT_TYPO_QUALITY = 0.7;
 const JOINED_WORD_FACTOR = 0.95;
 /** Longest piece (code points) tried when a run of an unspaced script is split. */
 const MAX_PIECE_LENGTH = 16;
-/**
- * Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han. A run of
- * them is one token after normalization, so a sentence only matches if it is a whole phrase.
- */
-const UNSPACED_SCRIPT = /[฀-໿က-႟ក-៿぀-ヿ㐀-䶿一-鿿豈-﫿\u{20000}-\u{3134F}]/u;
 
 function entryOf(pack: Pack, row: PackRow): EmojiEntry {
   const entry: EmojiEntry = {
@@ -925,6 +926,7 @@ export function createEngine(input: Pack | Pack[], options: EngineOptions = {}):
       if (!culture || options.culture === false) return output;
       const results = applyCulture(output.results, culture, query, {
         ...options,
+        region: resolveRegion(options.region, culture),
         engine,
         limit: options.limit ?? 24,
       });

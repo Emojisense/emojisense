@@ -13,6 +13,7 @@ import {
 } from "emojisense";
 import type { CultureRecord, RecordStatus } from "./types.ts";
 import { targetLocales } from "./validate.ts";
+import { ZONE_REGIONS } from "./zones.generated.ts";
 
 export interface CompileOptions {
   packVersion: string;
@@ -107,6 +108,7 @@ export function compileCulture(
     });
   }
   entries.sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.id.localeCompare(b.id));
+  const zones = zonesFor(entries);
   return {
     format: CULTURE_FORMAT,
     formatVersion: CULTURE_FORMAT_VERSION,
@@ -118,7 +120,19 @@ export function compileCulture(
     // A list for one day would be out of date until the next deploy. Clients check the windows
     // (core `relevantNow`); a client that reads this list shows no shelf instead of an old one.
     relevantNow: [],
+    ...(zones ? { zones } : {}),
   };
+}
+
+/**
+ * The time zones of the regions that entries name (`regions`, `exceptRegions`), so a device whose
+ * language has no region ("ja", "fr") can find one from its time zone. A zone of any other region
+ * would change nothing, so the file leaves it out. Undefined when entries name no region.
+ */
+export function zonesFor(entries: readonly CultureEntry[]): Record<string, string> | undefined {
+  const named = new Set(entries.flatMap((e) => [...e.regions, ...(e.exceptRegions ?? [])]));
+  const zones = Object.entries(ZONE_REGIONS).filter(([, region]) => named.has(region));
+  return zones.length > 0 ? Object.fromEntries(zones) : undefined;
 }
 
 /** Ids of the featured entries of a file that are active on `day` (build log, previews). */

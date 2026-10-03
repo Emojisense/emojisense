@@ -1,5 +1,5 @@
 import { assessConfidence } from "./confidence.js";
-import { applyCulture, type Culture } from "./culture.js";
+import { applyCulture, type Culture, resolveRegion } from "./culture.js";
 import type { AliasEngine, AliasSearchOutput, CanonicalSearchOutput, SearchResult } from "./engine.js";
 import { shouldUseSemantic as defaultShouldUseSemantic, fuse, RANK_DEPTH } from "./fusion.js";
 import {
@@ -53,11 +53,14 @@ export interface SearchSessionOptions {
    */
   culture?: Culture | false;
   /**
-   * ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". `"auto"`: the region the
-   * API reports for the caller's country (`region=auto`), learned from the first API answer
-   * that has one; until then only entries for every region apply.
+   * ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". Default (or `"device"`):
+   * the device's region, from its language or else its time zone ({@link resolveRegion}). `""`:
+   * none, only entries for every region. `"auto"`: the region the API reports for the caller's
+   * country (`region=auto`), learned from the first API answer that has one.
    */
   region?: string;
+  /** The clock that culture windows are checked against (its local day). Default: `Date.now`. */
+  now?: () => Date | number;
   onChange: (state: SessionState) => void;
 }
 
@@ -81,10 +84,12 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
     debounceMs = 200,
     shouldUseSemantic = defaultShouldUseSemantic,
     region,
+    now = Date.now,
     onChange,
   } = options;
   const culture = options.culture === false ? undefined : (options.culture ?? engine.culture);
   const auto = isAutoRegion(region);
+  const fixedRegion = auto ? undefined : resolveRegion(region, culture);
   /** With `region: "auto"`, the region of the first API answer that reported one. */
   let learnedRegion: string | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -113,7 +118,8 @@ export function createSearchSession(options: SearchSessionOptions): SearchSessio
           ? applyCulture(results, culture, query, {
               engine,
               locale,
-              region: auto ? learnedRegion : region,
+              region: auto ? learnedRegion : fixedRegion,
+              now: now(),
               limit,
             })
           : results;

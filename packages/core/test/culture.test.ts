@@ -1,17 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  applyCulture,
   assertCulture,
   type Culture,
   type CultureEntry,
+  cultureUrlFor,
   deviceRegion,
   insertCulture,
   isActiveOn,
   loadCulture,
   localDay,
   matchCulture,
+  matchCultureInText,
   matchRegionalLead,
   regionOf,
   relevantNow,
+  resolveRegion,
   scopeDay,
 } from "../src/culture.js";
 import { createEngine, type SearchResult } from "../src/engine.js";
@@ -312,6 +316,57 @@ describe("matchCulture", () => {
   });
 });
 
+describe("matchCultureInText", () => {
+  const thanks = entry({ ...bowJapan, triggers: ["thank you", "thanks"] });
+  const midAutumn = entry({
+    id: "mid-autumn",
+    context: "Mid-Autumn Festival",
+    triggers: ["中秋节"],
+    emoji: [["🥮", "1F96E", 0.9]],
+  });
+
+  it("finds a trigger as whole words inside a message", () => {
+    const file = culture([thanks, goat]);
+    expect(
+      matchCultureInText(file, "Thanks so much for the help!", { region: "JP" }).map((r) => r.emoji),
+    ).toEqual(["🙇"]);
+    expect(matchCultureInText(file, "he is the goat, no debate", {}).map((r) => r.emoji)).toEqual([
+      "🐐",
+      "⚽",
+      "🇦🇷",
+      "🇵🇹",
+    ]);
+  });
+
+  it("never matches part of a word", () => {
+    expect(matchCultureInText(culture([thanks]), "happy thanksgiving", { region: "JP" })).toEqual([]);
+  });
+
+  it("keeps the region and the window", () => {
+    const file = culture([thanks, halloween]);
+    expect(matchCultureInText(file, "thanks a lot")).toEqual([]);
+    expect(matchCultureInText(file, "ready for halloween?", { day: "2026-10-01" })).toEqual([]);
+    expect(matchCultureInText(file, "ready for halloween?", { day: "2026-10-20" })[0]?.emoji).toBe("🎃");
+  });
+
+  it("matches triggers of a script without spaces anywhere in the text", () => {
+    const file = culture([midAutumn], "zh");
+    expect(matchCultureInText(file, "祝大家中秋节快乐")[0]?.match).toBe("中秋节");
+  });
+
+  it("names the longest trigger that matched", () => {
+    expect(matchCultureInText(culture([thanks]), "thank you, thanks!", { region: "JP" })[0]?.match).toBe(
+      "thank you",
+    );
+  });
+
+  it("adds after the top reaction in applyCulture, with no regional lead", () => {
+    const top = { emoji: "🙏", id: "1F64F", score: 0.9, source: "semantic" as const };
+    const merged = applyCulture([top], culture([thanks]), "thanks so much!", { region: "JP", text: true });
+    expect(merged.map((r) => r.emoji)).toEqual(["🙏", "🙇"]);
+  });
+});
+
 describe("insertCulture", () => {
   const canonical: SearchResult[] = [
     { emoji: "🐐", id: "1F410", score: 1, source: "alias" },
@@ -511,6 +566,40 @@ describe("session with culture", () => {
     session.update("thank you");
     expect(ids(states[0]?.results ?? [])).toEqual(["🙇"]);
   });
+
+  it("uses the device's region by default, and none with an empty region", () => {
+    vi.stubGlobal("navigator", { language: "en-JP" });
+    const search = (region?: string) => {
+      const states: SessionState[] = [];
+      createSearchSession({
+        engine: createEngine(pack),
+        culture: culture([bowJapan]),
+        ...(region === undefined ? {} : { region }),
+        onChange: (s) => states.push(s),
+      }).update("thank you");
+      return ids(states[0]?.results ?? []);
+    };
+    expect(search()).toEqual(["🙇"]);
+    expect(search("device")).toEqual(["🙇"]);
+    expect(search("")).toEqual([]);
+    vi.unstubAllGlobals();
+  });
+
+  it("checks windows against its clock", () => {
+    const states: SessionState[] = [];
+    let now = new Date(2026, 9, 1, 12).getTime();
+    const session = createSearchSession({
+      engine: createEngine(pack),
+      culture: culture([halloween]),
+      now: () => now,
+      onChange: (s) => states.push(s),
+    });
+    session.update("halloween");
+    expect(ids(states.at(-1)?.results ?? [])).toEqual(["🎃"]);
+    now = OCT_20.getTime();
+    session.update("halloween");
+    expect(ids(states.at(-1)?.results ?? [])).toEqual(["🎃", "👻"]);
+  });
 });
 
 describe("relevantNow", () => {
@@ -613,5 +702,40 @@ describe("regionOf and deviceRegion", () => {
     expect(deviceRegion()).toBeUndefined();
     vi.stubGlobal("navigator", undefined);
     expect(deviceRegion()).toBeUndefined();
+  });
+
+  it("falls back to the time zone when the language has no region", () => {
+    const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    vi.stubGlobal("navigator", { language: "ja" });
+    expect(deviceRegion({ [zone]: "JP" })).toBe("JP");
+    expect(deviceRegion({ "Not/A_Zone": "JP" })).toBeUndefined();
+    vi.stubGlobal("navigator", { language: "en-CA" });
+    expect(deviceRegion({ [zone]: "JP" })).toBe("CA");
+  });
+
+  it("resolves an app's region option", () => {
+    vi.stubGlobal("navigator", { language: "en-IN" });
+    expect(resolveRegion(undefined)).toBe("IN");
+    expect(resolveRegion("device")).toBe("IN");
+    expect(resolveRegion("")).toBeUndefined();
+    expect(resolveRegion("BR")).toBe("BR");
+    expect(resolveRegion("auto")).toBe("auto");
+    const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    vi.stubGlobal("navigator", { language: "ja" });
+    expect(resolveRegion(undefined, { zones: { [zone]: "JP" } })).toBe("JP");
+  });
+});
+
+describe("cultureUrlFor", () => {
+  it("finds the culture directory next to a pack directory", () => {
+    expect(cultureUrlFor("https://api.emojisense.com/v1/pack/0.1.0")).toBe(
+      "https://api.emojisense.com/v1/culture/0.1.0",
+    );
+    expect(cultureUrlFor("/v1/pack/0.1.0/")).toBe("/v1/culture/0.1.0");
+  });
+
+  it("gives none for other layouts", () => {
+    expect(cultureUrlFor("https://packs.test/0.1.0")).toBeUndefined();
+    expect(cultureUrlFor("https://example.com/packs/0.1.0")).toBeUndefined();
   });
 });

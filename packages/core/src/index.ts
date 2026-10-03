@@ -19,6 +19,8 @@ export {
   type CultureScope,
   type CultureWhen,
   type CultureWindow,
+  cultureUrlFor,
+  DEVICE_REGION,
   deviceRegion,
   insertCulture,
   isActiveOn,
@@ -27,11 +29,13 @@ export {
   localDay,
   type MatchCultureOptions,
   matchCulture,
+  matchCultureInText,
   matchRegionalLead,
   type RelevantEmoji,
   type RelevantNowOptions,
   regionOf,
   relevantNow,
+  resolveRegion,
 } from "./culture.js";
 export {
   type AliasEngine,

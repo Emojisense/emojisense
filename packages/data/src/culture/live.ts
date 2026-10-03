@@ -4,7 +4,7 @@
  * and publishes the result to R2, so an approval goes live without a deploy. No file access.
  */
 import type { Culture, CultureEntry } from "emojisense";
-import { compileCulture, KIND_ORDER } from "./compile.ts";
+import { compileCulture, KIND_ORDER, zonesFor } from "./compile.ts";
 import type { CultureRecord } from "./types.ts";
 import { targetLocales } from "./validate.ts";
 
@@ -44,7 +44,12 @@ export function mergeLiveEntries(
   const entries = [...file.entries, ...added].sort(
     (a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind] || a.id.localeCompare(b.id),
   );
-  return { culture: { ...file, entries }, added: added.map((e) => e.id), shadowed };
+  // Live entries may name regions the deployed file did not.
+  const culture: Culture = { ...file, entries };
+  const zones = zonesFor(entries);
+  if (zones) culture.zones = zones;
+  else delete culture.zones;
+  return { culture, added: added.map((e) => e.id), shadowed };
 }
 
 /** Which entry owns a trigger, per locale: proposals never repeat a trigger that is taken. */

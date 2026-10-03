@@ -5,6 +5,12 @@
 
 export const MAX_QUERY_LENGTH = 64;
 
+/**
+ * Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han. A run of
+ * them is one token after normalization, so a sentence only matches if it is a whole phrase.
+ */
+export const UNSPACED_SCRIPT = /[฀-໿က-႟ក-៿぀-ヿ㐀-䶿一-鿿豈-﫿\u{20000}-\u{3134F}]/u;
+
 const EMOJI_PARTS =
   /[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}\u{E0020}-\u{E007F}]/gu;
 /** Zero-width joiner, variation selectors and the keycap mark: invisible glue inside emoji. */

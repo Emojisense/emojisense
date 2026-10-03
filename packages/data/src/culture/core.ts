@@ -13,6 +13,7 @@ export {
   featuredOn,
   KIND_ORDER,
   triggersFor,
+  zonesFor,
 } from "./compile.ts";
 export {
   answerSchema,

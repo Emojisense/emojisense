@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Culture } from "../src/culture.js";
 import { createApiSemantic, createEngineLoader } from "../src/engine-loader.js";
 import type { Pack } from "../src/pack.js";
 import { en } from "./fixture.js";
@@ -13,7 +14,18 @@ const custom: Pack = {
   images: { "C-1": "https://example.com/parrot.png" },
 };
 
-function packFetch(files: Record<string, Pack>) {
+const cultureFile = (locale: string): Culture => ({
+  format: "emojisense-culture",
+  formatVersion: 1,
+  packVersion: "0.1.0",
+  locale,
+  from: "2026-10-02",
+  until: "2027-10-03",
+  entries: [],
+  relevantNow: [],
+});
+
+function packFetch(files: Record<string, Pack | Culture>) {
   const requests: string[] = [];
   const fetchImpl = (async (input: RequestInfo | URL) => {
     const url = String(input);
@@ -62,6 +74,50 @@ describe("createEngineLoader", () => {
       whenIdle: () => {},
     });
     expect((await loader.load()).locales).toEqual(["en"]);
+  });
+
+  it("loads the culture file next to the packs by default", async () => {
+    const { fetchImpl, requests } = packFetch({ "pack.en.json": en, "culture.en.json": cultureFile("en") });
+    const loader = createEngineLoader({
+      packUrl: "https://api.test/v1/pack/0.1.0",
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    expect((await loader.load()).culture?.locale).toBe("en");
+    expect(requests).toContain("https://api.test/v1/culture/0.1.0/culture.en.json");
+  });
+
+  it("loads no culture file with cultureUrl: false", async () => {
+    const { fetchImpl, requests } = packFetch({ "pack.en.json": en, "culture.en.json": cultureFile("en") });
+    const loader = createEngineLoader({
+      packUrl: "https://api.test/v1/pack/0.1.0",
+      cultureUrl: false,
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    expect((await loader.load()).culture).toBeUndefined();
+    expect(requests.some((url) => url.includes("culture"))).toBe(false);
+  });
+
+  it("takes the English culture file when the locale falls back to English", async () => {
+    const { fetchImpl } = packFetch({ "pack.en.json": en, "culture.en.json": cultureFile("en") });
+    const loader = createEngineLoader({
+      packUrl: "https://api.test/v1/pack/0.1.0",
+      locale: "de",
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    expect((await loader.load()).culture?.locale).toBe("en");
+  });
+
+  it("keeps working without a culture file", async () => {
+    const { fetchImpl } = packFetch({ "pack.en.json": en });
+    const loader = createEngineLoader({
+      packUrl: "https://api.test/v1/pack/0.1.0",
+      fetch: fetchImpl,
+      whenIdle: () => {},
+    });
+    expect((await loader.load()).culture).toBeUndefined();
   });
 
   it("adds extra packs, such as custom emoji, to every engine", async () => {

@@ -4,7 +4,7 @@
  * docs/PACK_FORMAT.md §9.
  */
 import type { AliasEngine, SearchResult } from "./engine.js";
-import { normalize } from "./normalize.js";
+import { normalize, UNSPACED_SCRIPT } from "./normalize.js";
 
 export const CULTURE_FORMAT = "emojisense-culture";
 export const CULTURE_FORMAT_VERSION = 1;
@@ -74,6 +74,11 @@ export interface Culture {
    * {@link relevantNow}, which checks the windows on the device.
    */
   relevantNow: string[];
+  /**
+   * IANA time zone → ISO 3166-1 alpha-2 region, for the regions that entries name. A device whose
+   * language has no region ("ja", "fr") finds its region from its time zone ({@link deviceRegion}).
+   */
+  zones?: Record<string, string>;
 }
 
 export interface CultureResult extends SearchResult {
@@ -91,15 +96,17 @@ export interface CultureResult extends SearchResult {
 
 export interface CultureScope {
   /**
-   * ISO 3166-1 alpha-2 region, e.g. "BR". Without it, only entries for every region (`"*"`)
-   * apply; regional entries need an explicit region.
+   * ISO 3166-1 alpha-2 region, e.g. "BR". The functions of this module apply only entries for
+   * every region (`"*"`) without it, and regional entries need one. An engine's `search` and a
+   * search session use the device's region when none is given, and `""` for none
+   * ({@link resolveRegion}).
    */
   region?: string;
   /** The moment to check windows against, as a local calendar day. Default: now. */
   now?: Date | number;
   /**
    * The calendar day to check windows against, "YYYY-MM-DD". It wins over `now`. The search API
-   * passes the request's UTC day, because it does not know the user's.
+   * passes the caller's local day when it knows the time zone, else the UTC day.
    */
   day?: string;
 }
@@ -114,6 +121,11 @@ export interface MatchCultureOptions extends CultureScope {
 export interface ApplyCultureOptions extends MatchCultureOptions {
   /** Length of the returned list. Default: canonical results + culture results. */
   limit?: number;
+  /**
+   * Match triggers anywhere in a message ({@link matchCultureInText}), for reaction suggestions,
+   * instead of the query as typed. A message gets no regional lead. Default false.
+   */
+  text?: boolean;
   /** Only add emoji this engine knows, with its glyph and label. */
   engine?: Pick<AliasEngine, "get">;
   /** Label locale (with `engine`). */
@@ -121,6 +133,8 @@ export interface ApplyCultureOptions extends MatchCultureOptions {
 }
 
 const MAX_CULTURE_RESULTS = 5;
+/** Longest message (code points) that {@link matchCultureInText} reads, as the reactions API. */
+const MAX_TEXT_LENGTH = 256;
 /** A typed prefix completes a trigger only when it is this long and covers half of the trigger. */
 const MIN_PREFIX_LENGTH = 3;
 
@@ -166,6 +180,15 @@ export async function loadCulture(options: LoadCultureOptions): Promise<Culture>
   return culture;
 }
 
+/**
+ * The culture directory of the pack directory on the same host: ".../v1/pack/0.1.0" →
+ * ".../v1/culture/0.1.0". Undefined when the URL does not end in `pack/<version>`.
+ */
+export function cultureUrlFor(packUrl: string): string | undefined {
+  const match = /^(.*\/)pack\/([^/?#]+)\/*$/.exec(packUrl);
+  return match ? `${match[1]}culture/${match[2]}` : undefined;
+}
+
 const ISO_REGION = /^[A-Z]{2}$/;
 
 /**
@@ -181,13 +204,42 @@ export function regionOf(locale: string): string | undefined {
   }
 }
 
+function deviceTimeZone(): string | undefined {
+  try {
+    return new Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
- * The region of the browser's language (`navigator.language`), the default region for culture
- * entries when an app gives none. It is read on the device and never sent anywhere.
+ * The device's region, the default region for culture entries when an app gives none: the region
+ * of the browser's language ("en-JP" → "JP"), else the region of the device's time zone in `zones`
+ * (a culture file's {@link Culture.zones}: "Asia/Tokyo" → "JP"). It is read on the device and
+ * never sent anywhere.
  */
-export function deviceRegion(): string | undefined {
+export function deviceRegion(zones?: Readonly<Record<string, string>>): string | undefined {
   const language = globalThis.navigator?.language;
-  return language ? regionOf(language) : undefined;
+  const region = language ? regionOf(language) : undefined;
+  if (region || !zones) return region;
+  const zone = deviceTimeZone();
+  return zone ? zones[zone] : undefined;
+}
+
+/** The `region` value for the device's region ({@link deviceRegion}); also what no value means. */
+export const DEVICE_REGION = "device";
+
+/**
+ * The region that an app's `region` option stands for: undefined or `"device"` →
+ * {@link deviceRegion} (with the culture file's time zones), `""` → none (only entries for every
+ * region), anything else as given: a code, or `"auto"`, which a search session learns from the API.
+ */
+export function resolveRegion(
+  region: string | undefined,
+  culture?: Pick<Culture, "zones">,
+): string | undefined {
+  if (region === undefined || region.toLowerCase() === DEVICE_REGION) return deviceRegion(culture?.zones);
+  return region === "" ? undefined : region;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -237,24 +289,26 @@ function triggerQuality(trigger: string, query: string, typing: boolean): number
   return 0;
 }
 
-/** Culture results for a query (active window and region only), strongest first. */
-export function matchCulture(
+/**
+ * In-scope entries whose best trigger has a quality above 0 (the longest trigger wins a tie), as
+ * culture results, best per emoji, strongest first.
+ */
+function collectMatches(
   culture: Culture,
-  query: string,
-  options: MatchCultureOptions = {},
+  scope: CultureScope,
+  limit: number,
+  qualityOf: (trigger: string) => number,
 ): CultureResult[] {
-  const normalized = normalize(query);
-  if (normalized === "") return [];
-  const typing = (options.prefix ?? true) && !/\s$/.test(query);
-  const day = scopeDay(options);
+  const day = scopeDay(scope);
   const best = new Map<string, CultureResult>();
   for (const entry of culture.entries) {
-    if (!inScope(entry, options.region, day)) continue;
+    if (!inScope(entry, scope.region, day)) continue;
     let quality = 0;
     let match = "";
     for (const trigger of entry.triggers) {
-      const q = triggerQuality(trigger, normalized, typing);
-      if (q > quality) [quality, match] = [q, trigger];
+      const q = qualityOf(trigger);
+      if (q > quality || (q > 0 && q === quality && trigger.length > match.length))
+        [quality, match] = [q, trigger];
     }
     if (quality === 0) continue;
     for (const [emoji, id, weight] of entry.emoji) {
@@ -273,7 +327,42 @@ export function matchCulture(
       });
     }
   }
-  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, options.limit ?? MAX_CULTURE_RESULTS);
+  return [...best.values()].sort((a, b) => b.score - a.score).slice(0, limit);
+}
+
+/** Culture results for a query (active window and region only), strongest first. */
+export function matchCulture(
+  culture: Culture,
+  query: string,
+  options: MatchCultureOptions = {},
+): CultureResult[] {
+  const normalized = normalize(query);
+  if (normalized === "") return [];
+  const typing = (options.prefix ?? true) && !/\s$/.test(query);
+  return collectMatches(culture, options, options.limit ?? MAX_CULTURE_RESULTS, (trigger) =>
+    triggerQuality(trigger, normalized, typing),
+  );
+}
+
+/**
+ * Culture results for a whole message (reaction suggestions): every in-scope entry with a trigger
+ * inside the text, as whole words ("thanks so much!" holds "thanks"). A trigger of a script
+ * written without spaces (Han, kana, Thai) matches anywhere in the text. Strongest first.
+ */
+export function matchCultureInText(
+  culture: Culture,
+  text: string,
+  options: Omit<MatchCultureOptions, "prefix"> = {},
+): CultureResult[] {
+  const normalized = normalize(text, MAX_TEXT_LENGTH);
+  if (normalized === "") return [];
+  const padded = ` ${normalized} `;
+  return collectMatches(culture, options, options.limit ?? MAX_CULTURE_RESULTS, (trigger) => {
+    const inside = UNSPACED_SCRIPT.test(trigger)
+      ? normalized.includes(trigger)
+      : padded.includes(` ${trigger} `);
+    return inside ? 1 : 0;
+  });
 }
 
 /**
@@ -338,14 +427,17 @@ export function insertCulture<T extends SearchResult>(
   return [...head, ...added, ...rest.filter((r) => !ids.has(r.id))].slice(0, limit);
 }
 
-/** {@link matchCulture}, {@link matchRegionalLead} and {@link insertCulture} in one step. */
+/**
+ * {@link matchCulture} (or {@link matchCultureInText} with `text`), {@link matchRegionalLead} and
+ * {@link insertCulture} in one step.
+ */
 export function applyCulture<T extends SearchResult>(
   results: readonly T[],
   culture: Culture,
   query: string,
   options: ApplyCultureOptions = {},
 ): (T | CultureResult)[] {
-  const { engine, locale, limit } = options;
+  const { engine, locale, limit, text = false } = options;
   const withLabel = (match: CultureResult): CultureResult[] => {
     if (!engine) return [match];
     const entry = engine.get(match.id);
@@ -353,8 +445,11 @@ export function applyCulture<T extends SearchResult>(
     const label = entry.labels[locale ?? ""] ?? entry.labels.en ?? Object.values(entry.labels)[0] ?? "";
     return [{ ...match, emoji: entry.emoji, label }];
   };
-  const matches = matchCulture(culture, query, { ...options, limit: MAX_CULTURE_RESULTS }).flatMap(withLabel);
-  const lead = matchRegionalLead(culture, query, results[0]?.id, options);
+  const scope = { ...options, limit: MAX_CULTURE_RESULTS };
+  const matches = (
+    text ? matchCultureInText(culture, query, scope) : matchCulture(culture, query, scope)
+  ).flatMap(withLabel);
+  const lead = text ? undefined : matchRegionalLead(culture, query, results[0]?.id, options);
   return insertCulture(results, matches, limit, lead && withLabel(lead)[0]);
 }
 

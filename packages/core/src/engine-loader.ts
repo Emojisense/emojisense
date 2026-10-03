@@ -1,4 +1,4 @@
-import { type Culture, loadCulture } from "./culture.js";
+import { type Culture, cultureUrlFor, loadCulture } from "./culture.js";
 import { type AliasEngine, createEngine } from "./engine.js";
 import { createLayeredSemantic } from "./layered.js";
 import { loadPacks } from "./loader.js";
@@ -10,8 +10,12 @@ export interface EngineLoaderOptions {
   packUrl: string;
   /** Pack locale ("tr"). English always loads too, and alone when the locale has no pack. */
   locale?: string | undefined;
-  /** Culture files of the pack version; omit for no culture layer. A failed load is ignored. */
-  cultureUrl?: string | undefined;
+  /**
+   * Culture files of the pack version. Default: the culture directory next to `packUrl`
+   * (".../v1/pack/0.1.0" → ".../v1/culture/0.1.0"). `false`: no culture layer. A failed load
+   * (or a locale without a file) leaves the layer off and search works as before.
+   */
+  cultureUrl?: string | false | undefined;
   /** Packs to add to every engine, e.g. a custom emoji pack. */
   extraPacks?: readonly Pack[] | undefined;
   fetch?: typeof fetch;
@@ -40,7 +44,9 @@ const defaultWhenIdle = (task: () => void) => {
 };
 
 export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
-  const { packUrl, locale = "en", cultureUrl, extraPacks = [], whenIdle = defaultWhenIdle } = options;
+  const { packUrl, locale = "en", extraPacks = [], whenIdle = defaultWhenIdle } = options;
+  const cultureUrl =
+    options.cultureUrl === false ? undefined : (options.cultureUrl ?? cultureUrlFor(packUrl));
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
   const listeners = new Set<(engine: AliasEngine) => void>();
   let engine: AliasEngine | undefined;
@@ -51,9 +57,9 @@ export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
     for (const listener of listeners) listener(next);
   };
 
-  const culture = (): Promise<Culture | undefined> =>
+  const culture = (fileLocale: string): Promise<Culture | undefined> =>
     cultureUrl
-      ? loadCulture({ baseUrl: cultureUrl, locale, fetch: doFetch }).catch(() => undefined)
+      ? loadCulture({ baseUrl: cultureUrl, locale: fileLocale, fetch: doFetch }).catch(() => undefined)
       : Promise.resolve(undefined);
 
   const corePacks = async (): Promise<{ packs: Pack[]; locales: string[] }> => {
@@ -70,7 +76,10 @@ export function createEngineLoader(options: EngineLoaderOptions): EngineLoader {
   };
 
   const start = async (): Promise<AliasEngine> => {
-    const [{ packs: core, locales }, cultureFile] = await Promise.all([corePacks(), culture()]);
+    const wanted = culture(locale);
+    const { packs: core, locales } = await corePacks();
+    // Culture follows the packs: a locale that fell back to English gets the English file.
+    const cultureFile = locales[0] === locale ? await wanted : await culture(locales[0] as string);
     const engineOptions = cultureFile ? { culture: cultureFile } : {};
     const first = createEngine([...core, ...extraPacks], engineOptions);
     publish(first);

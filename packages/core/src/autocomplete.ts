@@ -3,7 +3,6 @@
  * CKEditor 5, TinyMCE), the textarea autocomplete and the WordPress and Discourse integrations.
  * No DOM: it runs wherever the engine runs.
  */
-import { deviceRegion } from "./culture.js";
 import type { AliasEngine, ResultSource, SearchResult } from "./engine.js";
 import { normalize } from "./normalize.js";
 import type { SemanticProvider } from "./provider.js";
@@ -57,8 +56,13 @@ export interface SuggestionSourceOptions {
   minQueryLength?: number | undefined;
   /** Custom emoji are images: leave them out where only text can be inserted. Default true. */
   includeCustom?: boolean | undefined;
-  /** Region for regional culture entries. `"device"`: the region of the browser's language. */
+  /**
+   * Region for regional culture entries. Default (or `"device"`): the device's region, `""`: none,
+   * `"auto"`: the caller's country as the API sees it (createSearchSession).
+   */
   region?: string | undefined;
+  /** The clock that culture windows are checked against. Default: `Date.now`. */
+  now?: (() => Date | number) | undefined;
   /** Fused semantic results for a query that `search` answered earlier. */
   onLateResults?: ((query: string, suggestions: EmojiSuggestion[]) => void) | undefined;
 }
@@ -104,7 +108,6 @@ export function createSuggestionSource(options: SuggestionSourceOptions): Sugges
     includeCustom = true,
     onLateResults,
   } = options;
-  const region = options.region === "device" ? deviceRegion() : options.region;
   const toSuggestions = (results: readonly SearchResult[]) =>
     toSuggestionList(results, engine, locale, limit, includeCustom);
 
@@ -129,7 +132,8 @@ export function createSuggestionSource(options: SuggestionSourceOptions): Sugges
     limit: limit * 2,
     ...(semantic ? { semantic } : {}),
     ...(debounceMs !== undefined ? { debounceMs } : {}),
-    ...(region ? { region } : {}),
+    ...(options.region !== undefined ? { region: options.region } : {}),
+    ...(options.now ? { now: options.now } : {}),
     onChange: (state) => {
       if (searching) {
         immediate = toSuggestions(state.results);

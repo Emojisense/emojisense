@@ -68,6 +68,8 @@ export function createSemanticClient(options: SemanticClientOptions): SemanticCl
     const q = embeddingText(query);
     // The client fuses with its own alias results, so it asks for semantic results only.
     const params = new URLSearchParams({ q, locale, limit: String(limit), mode: "semantic" });
+    // The session applies the culture layer on the device, after fusion; the API must not.
+    params.set("culture", "0");
     // The API answers with the caller's region. A region code is never sent.
     if (isAutoRegion(region)) params.set("region", AUTO_REGION);
     if (packVersion) params.set("pack", packVersion);
