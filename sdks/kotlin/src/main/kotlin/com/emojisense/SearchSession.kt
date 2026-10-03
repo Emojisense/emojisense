@@ -73,7 +73,9 @@ public class SearchSession @JvmOverloads constructor(
     private val culture: Culture? = engine.culture,
     /**
      * ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". This code stays on the
-     * device. "auto": the session sends `region=auto` to the API and uses the region of the first
+     * device. Default (null or [CultureLayer.DEVICE_REGION]): the device's region, from its language
+     * or else its time zone ([CultureLayer.resolveRegion]). `""`: none, only the entries for every
+     * region. "auto": the session sends `region=auto` to the API and uses the region of the first
      * answer that has one. Until then, only the entries for every region apply.
      */
     private val region: String? = null,
@@ -84,6 +86,9 @@ public class SearchSession @JvmOverloads constructor(
 ) {
     private var job: Job? = null
     private val autoRegion = region.equals(AUTO_REGION, ignoreCase = true)
+
+    /** The region of the culture layer without "auto", resolved once (the device's region by default). */
+    private val fixedRegion = if (autoRegion) null else CultureLayer.resolveRegion(region, culture)
 
     /** With region "auto": the region of the first API answer that has one. */
     @Volatile
@@ -183,7 +188,7 @@ public class SearchSession @JvmOverloads constructor(
             results,
             culture,
             query,
-            ApplyCultureOptions(region = if (autoRegion) learnedRegion else region, now = clock(), limit = limit, locale = locale, engine = engine),
+            ApplyCultureOptions(region = if (autoRegion) learnedRegion else fixedRegion, now = clock(), limit = limit, locale = locale, engine = engine),
         )
     }
 }

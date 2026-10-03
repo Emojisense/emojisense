@@ -5,9 +5,9 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import java.util.Calendar
+import java.util.GregorianCalendar
 import java.util.Locale
-import kotlin.test.AfterTest
+import java.util.TimeZone
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -70,12 +70,26 @@ class CultureTest {
     private fun culture(entries: List<CultureEntry>, locale: String = "en") =
         Culture(packVersion = "test", locale = locale, from = "2026-10-02", until = "2026-10-16", entries = entries)
 
-    /** A local date, like `new Date(year, monthIndex, day, hour)`. */
+    /** A local date, like `new Date(year, monthIndex, day, hour)`. Gregorian whatever the default locale. */
     private fun date(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0): Long =
-        Calendar.getInstance().apply {
+        GregorianCalendar(TimeZone.getDefault(), Locale.ROOT).apply {
             clear()
             set(year, month, day, hour, minute)
         }.timeInMillis
+
+    /** Runs [block] with the device's language (and time zone), then restores both. */
+    private inline fun onDevice(languageTag: String, timeZone: String? = null, block: () -> Unit) {
+        val locale = Locale.getDefault()
+        val zone = TimeZone.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag(languageTag))
+            if (timeZone != null) TimeZone.setDefault(TimeZone.getTimeZone(timeZone))
+            block()
+        } finally {
+            Locale.setDefault(locale)
+            TimeZone.setDefault(zone)
+        }
+    }
 
     private val october20 = date(2026, 9, 20, 12)
     private fun ids(results: List<SearchResult>) = results.map { it.emoji }
@@ -119,6 +133,15 @@ class CultureTest {
     fun `uses the local calendar day`() {
         assertEquals("2026-12-31", CultureLayer.localDay(date(2026, 11, 31, 23, 59)))
         assertEquals("2027-01-01", CultureLayer.localDay(date(2027, 0, 1, 0, 1)))
+    }
+
+    @Test
+    fun `counts days in the Gregorian calendar whatever the default locale`() {
+        val moment = date(2026, 9, 20, 12)
+        // Calendar.getInstance() gives a Buddhist year (2569) in th-TH and an era year (8) in Japanese.
+        for (tag in listOf("th-TH", "ja-JP-u-ca-japanese", "ja-JP-x-lvariant-JP")) {
+            onDevice(tag) { assertEquals("2026-10-20", CultureLayer.localDay(moment), tag) }
+        }
     }
 
     @Test
@@ -196,6 +219,66 @@ class CultureTest {
         assertEquals(listOf("⚽" to "a", "🐐" to "goat-football"), results.map { it.emoji to it.cultureId })
     }
 
+    // ── matchCultureInText ───────────────────────────────────────────────────────────────────
+
+    private val thanks = bowJapan.copy(triggers = listOf("thank you", "thanks"))
+    private val midAutumn = CultureEntry(
+        id = "mid-autumn",
+        context = "Mid-Autumn Festival",
+        triggers = listOf("中秋节"),
+        emoji = listOf(CultureEmoji("🥮", "1F96E", 0.9)),
+    )
+
+    @Test
+    fun `finds a trigger as whole words inside a message`() {
+        val file = culture(listOf(thanks, goat))
+        assertEquals(listOf("🙇"), ids(CultureLayer.matchCultureInText(file, "Thanks so much for the help!", ApplyCultureOptions(region = "JP"))))
+        assertEquals(listOf("🐐", "⚽", "🇦🇷", "🇵🇹"), ids(CultureLayer.matchCultureInText(file, "he is the goat, no debate")))
+    }
+
+    @Test
+    fun `never matches part of a word`() {
+        assertEquals(emptyList(), CultureLayer.matchCultureInText(culture(listOf(thanks)), "happy thanksgiving", ApplyCultureOptions(region = "JP")))
+    }
+
+    @Test
+    fun `keeps the region and the window`() {
+        val file = culture(listOf(thanks, halloween))
+        assertEquals(emptyList(), CultureLayer.matchCultureInText(file, "thanks a lot"))
+        assertEquals(emptyList(), CultureLayer.matchCultureInText(file, "ready for halloween?", ApplyCultureOptions(day = "2026-10-01")))
+        assertEquals("🎃", CultureLayer.matchCultureInText(file, "ready for halloween?", ApplyCultureOptions(day = "2026-10-20")).firstOrNull()?.emoji)
+    }
+
+    @Test
+    fun `matches triggers of a script without spaces anywhere in the text`() {
+        val file = culture(listOf(midAutumn), "zh")
+        assertEquals("中秋节", CultureLayer.matchCultureInText(file, "祝大家中秋节快乐").firstOrNull()?.match)
+    }
+
+    @Test
+    fun `names the longest trigger that matched`() {
+        assertEquals(
+            "thank you",
+            CultureLayer.matchCultureInText(culture(listOf(thanks)), "thank you, thanks!", ApplyCultureOptions(region = "JP")).firstOrNull()?.match,
+        )
+        val shortFirst = thanks.copy(triggers = listOf("thanks", "thank you"))
+        assertEquals(
+            "thank you",
+            CultureLayer.matchCultureInText(culture(listOf(shortFirst)), "thank you, thanks!", ApplyCultureOptions(region = "JP")).firstOrNull()?.match,
+        )
+    }
+
+    @Test
+    fun `adds after the top reaction in applyCulture, with no regional lead`() {
+        val top = EmojiResult("🙏", "1F64F", 0.9, ResultSource.SEMANTIC)
+        val merged = CultureLayer.applyCulture(listOf(top), culture(listOf(thanks)), "thanks so much!", ApplyCultureOptions(region = "JP", text = true))
+        assertEquals(listOf("🙏", "🙇"), ids(merged))
+        val football = culture(listOf(footballSoccer))
+        val canonical = listOf(EmojiResult("🏈", "1F3C8", 1.0, ResultSource.ALIAS))
+        assertEquals(listOf("⚽", "🏈"), ids(CultureLayer.applyCulture(canonical, football, "football", ApplyCultureOptions(region = "GB"))))
+        assertEquals(listOf("🏈", "⚽"), ids(CultureLayer.applyCulture(canonical, football, "football", ApplyCultureOptions(region = "GB", text = true))))
+    }
+
     // ── insertCulture ────────────────────────────────────────────────────────────────────────
 
     private val canonical = listOf(
@@ -242,7 +325,8 @@ class CultureTest {
     )
     private val regionalEngine by lazy { AliasEngine(listOf(pack)).withCulture(culture(listOf(footballSoccer, pantsUk, goat))) }
 
-    private fun top2(query: String, region: String? = null) =
+    /** `""`: no region, whatever the device's region is. */
+    private fun top2(query: String, region: String = "") =
         ids(regionalEngine.search(query, AliasSearchOptions(prefix = false, region = region)).results.take(2))
 
     @Test
@@ -435,6 +519,48 @@ class CultureTest {
         assertEquals(listOf("🙇"), ids(states.last().results))
     }
 
+    @Test
+    fun `uses the device's region by default, and none with an empty region`() = runTest {
+        onDevice("en-JP") {
+            fun search(region: String?): List<String> {
+                val states = mutableListOf<SessionState>()
+                SearchSession(AliasEngine(listOf(pack)), this, culture = culture(listOf(bowJapan)), region = region, onChange = { states.add(it) })
+                    .update("thank you")
+                return ids(states[0].results)
+            }
+            assertEquals(listOf("🙇"), search(null))
+            assertEquals(listOf("🙇"), search("device"))
+            assertEquals(emptyList(), search(""))
+        }
+    }
+
+    @Test
+    fun `uses the device's region in an engine search by default, and none with an empty region`() {
+        val engine = AliasEngine(listOf(pack), culture = culture(listOf(bowJapan)))
+        onDevice("en-JP") {
+            assertEquals(listOf("🙇"), ids(engine.search("thank you").results))
+            assertEquals(listOf("🙇"), ids(engine.search("thank you", AliasSearchOptions(region = "Device")).results))
+            assertEquals(emptyList(), ids(engine.search("thank you", AliasSearchOptions(region = "")).results))
+        }
+        onDevice("ja", "Asia/Tokyo") {
+            assertEquals(emptyList(), ids(engine.search("thank you").results))
+            val zoned = engine.withCulture(engine.culture?.copy(zones = mapOf("Asia/Tokyo" to "JP")))
+            assertEquals(listOf("🙇"), ids(zoned.search("thank you").results))
+        }
+    }
+
+    @Test
+    fun `checks windows against its clock`() = runTest {
+        val states = mutableListOf<SessionState>()
+        var now = date(2026, 9, 1, 12)
+        val session = SearchSession(AliasEngine(listOf(pack)), this, culture = culture(listOf(halloween)), clock = { now }, onChange = { states.add(it) })
+        session.update("halloween")
+        assertEquals(listOf("🎃"), ids(states.last().results))
+        now = october20
+        session.update("halloween")
+        assertEquals(listOf("🎃", "👻"), ids(states.last().results))
+    }
+
     // ── relevantNow ──────────────────────────────────────────────────────────────────────────
 
     private val shelfFiles by lazy {
@@ -616,16 +742,57 @@ class CultureTest {
         for (tag in listOf("en", "zh-Hans", "es-419", "", "not a tag")) assertNull(CultureLayer.regionOf(tag), tag)
     }
 
-    private val defaultLocale = Locale.getDefault()
-
-    @AfterTest
-    fun restoreLocale() = Locale.setDefault(defaultLocale)
-
     @Test
     fun `derives the device region from the default locale`() {
-        Locale.setDefault(Locale.forLanguageTag("pt-BR"))
-        assertEquals("BR", CultureLayer.deviceRegion())
-        Locale.setDefault(Locale.forLanguageTag("fr"))
-        assertNull(CultureLayer.deviceRegion())
+        onDevice("pt-BR") { assertEquals("BR", CultureLayer.deviceRegion()) }
+        onDevice("fr") { assertNull(CultureLayer.deviceRegion()) }
+    }
+
+    @Test
+    fun `falls back to the time zone when the language has no region`() {
+        onDevice("ja", "Asia/Tokyo") {
+            assertEquals("JP", CultureLayer.deviceRegion(mapOf("Asia/Tokyo" to "JP")))
+            assertNull(CultureLayer.deviceRegion(mapOf("Not/A_Zone" to "JP")))
+            assertNull(CultureLayer.deviceRegion())
+        }
+        onDevice("en-CA", "Asia/Tokyo") { assertEquals("CA", CultureLayer.deviceRegion(mapOf("Asia/Tokyo" to "JP"))) }
+    }
+
+    @Test
+    fun `resolves an app's region option`() {
+        onDevice("en-IN") {
+            assertEquals("IN", CultureLayer.resolveRegion(null))
+            assertEquals("IN", CultureLayer.resolveRegion(CultureLayer.DEVICE_REGION))
+            assertEquals("IN", CultureLayer.resolveRegion("DEVICE"))
+            assertNull(CultureLayer.resolveRegion(""))
+            assertEquals("BR", CultureLayer.resolveRegion("BR"))
+            assertEquals("auto", CultureLayer.resolveRegion("auto"))
+        }
+        onDevice("ja", "Asia/Tokyo") {
+            val zoned = culture(emptyList()).copy(zones = mapOf("Asia/Tokyo" to "JP"))
+            assertEquals("JP", CultureLayer.resolveRegion(null, zoned))
+            assertNull(CultureLayer.resolveRegion(null))
+        }
+    }
+
+    @Test
+    fun `decodes the time zones of a culture file, and none from an older file`() {
+        assertEquals(emptyMap(), Culture.fromJson(fileJson).zones)
+        val zoned = fileJson.replace("\"relevantNow\"", "\"zones\":{\"Asia/Tokyo\":\"JP\",\"Europe/Lisbon\":\"PT\",\"Odd/Value\":7},\"relevantNow\"")
+        assertEquals(mapOf("Asia/Tokyo" to "JP", "Europe/Lisbon" to "PT"), Culture.fromJson(zoned).zones)
+    }
+
+    // ── cultureUrlFor ────────────────────────────────────────────────────────────────────────
+
+    @Test
+    fun `finds the culture directory next to a pack directory`() {
+        assertEquals("https://api.emojisense.com/v1/culture/0.1.0", CultureLayer.cultureUrlFor("https://api.emojisense.com/v1/pack/0.1.0"))
+        assertEquals("/v1/culture/0.1.0", CultureLayer.cultureUrlFor("/v1/pack/0.1.0/"))
+    }
+
+    @Test
+    fun `gives no culture directory for other layouts`() {
+        assertNull(CultureLayer.cultureUrlFor("https://packs.test/0.1.0"))
+        assertNull(CultureLayer.cultureUrlFor("https://example.com/packs/0.1.0"))
     }
 }

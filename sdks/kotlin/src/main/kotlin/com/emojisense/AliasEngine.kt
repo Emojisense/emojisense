@@ -10,7 +10,11 @@ public data class AliasSearchOptions @JvmOverloads constructor(
     val prefix: Boolean = true,
     /** `false` = the canonical ranking only, even when the engine has a culture file (reproducible). */
     val culture: Boolean = true,
-    /** ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". */
+    /**
+     * ISO 3166-1 alpha-2 region for regional culture entries, e.g. "BR". Default (null or
+     * [CultureLayer.DEVICE_REGION]): the device's region, from its language or else its time zone
+     * ([CultureLayer.resolveRegion]). `""`: none, only the entries for every region.
+     */
     val region: String? = null,
     /** The moment culture windows are checked against (epoch milliseconds, local calendar day). Default: now. */
     val now: Long? = null,
@@ -96,7 +100,7 @@ public class AliasEngine private constructor(
             culture,
             query,
             ApplyCultureOptions(
-                region = options.region,
+                region = CultureLayer.resolveRegion(options.region, culture),
                 now = options.now,
                 day = options.day,
                 prefix = options.prefix,
@@ -598,26 +602,5 @@ internal class Searcher(val index: AliasIndex, private val minCoverage: Double) 
 
         /** Longest piece (code points) tried when a run of an unspaced script is split. */
         const val MAX_PIECE_LENGTH = 16
-
-        /**
-         * Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han (the
-         * ranges of `UNSPACED_SCRIPT` in packages/core/src/engine.ts).
-         */
-        val UNSPACED_RANGES = intArrayOf(
-            0x0E00, 0x0EFF, 0x1000, 0x109F, 0x1780, 0x17FF, 0x3040, 0x30FF,
-            0x3400, 0x4DBF, 0x4E00, 0x9FFF, 0xF900, 0xFAFF, 0x20000, 0x3134F,
-        )
-
-        fun isUnspacedScript(token: String): Boolean {
-            var i = 0
-            while (i < token.length) {
-                val codePoint = token.codePointAt(i)
-                for (r in UNSPACED_RANGES.indices step 2) {
-                    if (codePoint >= UNSPACED_RANGES[r] && codePoint <= UNSPACED_RANGES[r + 1]) return true
-                }
-                i += Character.charCount(codePoint)
-            }
-            return false
-        }
     }
 }

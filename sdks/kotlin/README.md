@@ -8,7 +8,7 @@ It gives the same results as the TypeScript engine and the Swift SDK.
 | Tier 0 | `AliasEngine` | Offline alias search over the packs (PACK_FORMAT.md §4). Runs on every keystroke. |
 | Normalization | `Normalizer` | PACK_FORMAT.md §3 for queries and labels, and `embeddingText` for the semantic tier. |
 | Packs | `Pack`, `PackLoader`, `Manifest` | Decodes core, ext and custom packs. Verifies `sha256` against the manifest. |
-| Culture layer | `CultureLayer`, `Culture` | `applyCulture`, regional senses, `relevantNow` (PACK_FORMAT.md §9). |
+| Culture layer | `CultureLayer`, `Culture` | `applyCulture`, regional senses, triggers in a message (`matchCultureInText`), `relevantNow`, the device's region (PACK_FORMAT.md §9). |
 | Layer 2 | `ShardProvider` | Precomputed semantic results from static shards (§6): content-named files (`files`) and a base layer (`base`). Answers between keystrokes. |
 | Layer 3 | `SemanticClient` | `GET /v1/search?mode=semantic` with an LRU cache. Over the plan limit it still gets the edge's cached answers. |
 | Fusion | `Fusion` | Confidence-weighted reciprocal rank fusion with the alias floor and the flag guard. |
@@ -49,7 +49,10 @@ class SearchViewModel : ViewModel() {
             // 1. Core packs first (English is always first), then the extension parts when idle.
             val manifest = loader.loadManifest()
             val core = loader.loadPacks(listOf("en", "tr"), manifest = manifest)
-            val culture = runCatching { CultureLayer.loadCulture("$api/v1/culture/0.1.0", "tr") }.getOrNull()
+            // 2. The culture file next to the packs (".../v1/culture/0.1.0"). Without it, search works as before.
+            val culture = CultureLayer.cultureUrlFor(loader.baseUrl)?.let { url ->
+                runCatching { CultureLayer.loadCulture(url, "tr") }.getOrNull()
+            }
             var engine = withContext(Dispatchers.Default) { AliasEngine(core, culture = culture) }
             startSession(engine)
             val ext = loader.loadPacks(listOf("en", "tr"), PackPart.EXT, manifest)
@@ -68,7 +71,7 @@ class SearchViewModel : ViewModel() {
                 SemanticClient(SemanticClient.Configuration(api, key = "pk_live_…", packVersion = engine.packVersion)),
             ),
             locale = "tr",
-            region = CultureLayer.deviceRegion(),
+            // No region: the device's region. "" for none, "auto" for the region the API finds.
             onChange = { state -> results.value = state.results },
         )
     }
@@ -103,13 +106,35 @@ Notes:
   `Dispatchers.Default`).
 - The CDN (`https://cdn.emojisense.com/p/<packVersion>`) serves the shards with no Worker. The API
   host (`https://api.emojisense.com/p/<packVersion>`) serves the same files for older clients.
-- `CultureLayer.deviceRegion()` reads the region of `Locale.getDefault()` on the device. Nothing
-  sends it anywhere. Pass `culture = null` to `SearchSession` (or `culture = false` in
-  `AliasSearchOptions`) for the canonical ranking only.
+- The culture layer is on by default. Load the culture file of the pack version next to the packs
+  (`CultureLayer.cultureUrlFor(packUrl)`: `.../v1/pack/0.1.0` → `.../v1/culture/0.1.0`) and give it to
+  `AliasEngine`. `AliasEngine.search` and `SearchSession` then apply it. Each pack locale has a
+  culture file. If the load fails, the layer stays off and search works as before. Pass
+  `culture = null` to `SearchSession` (or `culture = false` in `AliasSearchOptions`) for the
+  canonical ranking only.
+- The region of the culture layer (`region` in `SearchSession` and `AliasSearchOptions`):
+
+  | Value | Region |
+  | ----- | ------ |
+  | `null` (default) or `"device"` | The device's region: the country of `Locale.getDefault()` ("en-JP" → JP), else the region of the device's time zone in the culture file's `zones` ("ja" + Asia/Tokyo → JP) |
+  | `""` | None: only the entries for every region |
+  | `"BR"` | That region |
+  | `"auto"` (`SearchSession` only) | The region that the API finds (see below) |
+
+  `CultureLayer.resolveRegion(region, culture)` applies this rule. The functions of `CultureLayer`
+  (`applyCulture`, `matchCulture`) take the region as given: null means none. The SDK reads the
+  device's region on the device and never sends it. On a server, pass the user's region or `""`:
+  the device's region there is the server's.
 - `region = "auto"` in `SearchSession` lets the API find the region. The session sends
   `region=auto` with its semantic requests and uses the region of the first API answer that has
   one (`SemanticResponse.region`). Until then, only the culture entries for every region apply. An
   explicit region code (for example `"BR"`) stays on the device: the SDK never sends it.
+- `SemanticClient` sends `culture=0`. The session applies the culture layer on the device, after
+  fusion, so the API must not apply it too.
+- For reaction suggestions on a message, use `CultureLayer.applyCulture` with
+  `ApplyCultureOptions(text = true)`. It finds triggers as whole words anywhere in the message
+  ("thanks so much!" holds "thanks"), and anywhere at all for scripts without spaces (Han, kana,
+  Thai). A message gets no regional lead.
 - Draw custom emoji (`result.source == ResultSource.CUSTOM`) from `result.imageUrl`.
 - `SessionState.unsure` is true when no tier understood the query: the dictionary does not cover
   it (`AliasSearchOutput.coverage` below 0.85) and the semantic list is flat or low. Show the
@@ -149,11 +174,11 @@ cd sdks/kotlin && ./gradlew test      # JDK 17 or newer to run Gradle; the build
 from Homebrew: `JAVA_HOME=$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home ./gradlew test`.
 
 The conformance tests compare the Kotlin port with the TypeScript reference engine. They read the
-golden file of the Swift SDK (`sdks/swift/Tests/EmojisenseTests/Resources/golden.json`, or
-`EMOJISENSE_GOLDEN`) and the packs in `packages/data/dist/packs/<version>` (or
-`EMOJISENSE_PACK_DIR`). Without built packs the search tests are skipped. If the packs differ from
-the ones in `golden.json` (sha256), the tests fail and tell you to regenerate it. CI regenerates the
-golden file for each commit and then runs these tests.
+golden files of the Swift SDK (`sdks/swift/Tests/EmojisenseTests/Resources/golden.json`, or
+`EMOJISENSE_GOLDEN`, and `culture-golden.json` in the same directory) and the packs in
+`packages/data/dist/packs/<version>` (or `EMOJISENSE_PACK_DIR`). Without built packs the search
+tests are skipped. If the packs differ from the ones in `golden.json` (sha256), the tests fail and
+tell you to regenerate it. CI regenerates the golden files for each commit and then runs these tests.
 
 | Check | Cases | Result |
 | ----- | ----: | -----: |
@@ -173,6 +198,7 @@ golden file for each commit and then runs these tests.
 | Unsure verdict (`Confidence.assessConfidence`), generated inputs: same confidence and `unsure` | 44 cases | 100% |
 | Semantic strength (`Confidence.semanticStrength`): within 1e-12 (all bit-identical). The other 5 cases record no semantic list | 39 cases | 100% |
 | Function-word lists (`FunctionWords.kt`, generated by `sdks/swift/scripts/make-function-words.ts`) equal the reference | 11 locales | 100% |
+| Culture layer on the English culture file (`culture-golden.json`), en core + ext: searches and messages (`text`) in and out of each entry's regions and windows, prefixes: same ids, sources, culture ids and scores | 186 cases | 100% |
 
 Measured with JDK 21 (macOS, arm64), Node 24.5.0, pack 0.1.0. The unit tests port the TypeScript and
 Swift tests: engine, partial matches, custom packs, fusion, confidence, culture, semantic client, shards,

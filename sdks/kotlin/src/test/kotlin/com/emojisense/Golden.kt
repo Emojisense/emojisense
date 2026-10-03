@@ -203,6 +203,54 @@ class Golden private constructor(root: JsonObject) {
     }
 }
 
+/**
+ * The culture cases of the SDK ports (culture-golden.json, next to golden.json), written by
+ * sdks/swift/scripts/make-golden.ts: one English culture file, and what the TypeScript culture
+ * layer adds to searches and messages for fixed regions and days.
+ */
+class CultureGolden private constructor(root: JsonObject) {
+    /** `[id, source, cultureId or null, score]`. */
+    data class Ranked(val id: String, val source: String, val cultureId: String?, val score: Double) {
+        override fun toString() = "$id $source ${cultureId ?: "-"} $score"
+    }
+
+    /** [region] `""` = none. [text]: matched as a message (`applyCulture` with `text`). */
+    data class Case(val q: String, val region: String, val day: String, val text: Boolean, val results: List<Ranked>)
+
+    val packVersion: String = root.getValue("packVersion").jsonPrimitive.content
+    val packs: List<String> = root.getValue("packs").jsonArray.map { it.jsonPrimitive.content }
+    val culture: Culture = Culture.fromJson(root.getValue("culture").toString())
+
+    /** The `zones` of the culture file as written, to check the decoder against. */
+    val zones: Map<String, String> = root.getValue("culture").jsonObject.getValue("zones").jsonObject
+        .mapValues { it.value.jsonPrimitive.content }
+
+    val cases: List<Case> = root.getValue("cases").jsonArray.map { element ->
+        val case = element.jsonObject
+        Case(
+            q = case.getValue("q").jsonPrimitive.content,
+            region = case.getValue("region").jsonPrimitive.content,
+            day = case.getValue("day").jsonPrimitive.content,
+            text = case.getValue("text").jsonPrimitive.boolean,
+            results = case.getValue("results").jsonArray.map {
+                val row = it.jsonArray
+                Ranked(
+                    id = row[0].jsonPrimitive.content,
+                    source = row[1].jsonPrimitive.content,
+                    cultureId = (row[2] as? JsonPrimitive)?.takeIf { value -> value.isString }?.content,
+                    score = row[3].jsonPrimitive.double,
+                )
+            },
+        )
+    }
+
+    companion object {
+        val file: File by lazy { File(Golden.file.absoluteFile.parentFile, "culture-golden.json") }
+
+        val instance: CultureGolden by lazy { CultureGolden(Json.parseToJsonElement(file.readText()).jsonObject) }
+    }
+}
+
 /** The packs of the golden pack version, read from the monorepo build output and checked by sha256. */
 class GoldenPacks private constructor(private val byFile: Map<String, Pack>) {
     fun engine(files: List<String>): AliasEngine = AliasEngine(files.map { byFile.getValue(it) })

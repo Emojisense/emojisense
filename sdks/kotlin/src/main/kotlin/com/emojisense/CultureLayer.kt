@@ -1,20 +1,24 @@
 package com.emojisense
 
 import java.util.Calendar
+import java.util.GregorianCalendar
 import java.util.Locale
+import java.util.TimeZone
 
-/** Options of [CultureLayer.matchCulture] and [CultureLayer.applyCulture]. */
+/** Options of [CultureLayer.matchCulture], [CultureLayer.matchCultureInText] and [CultureLayer.applyCulture]. */
 public data class ApplyCultureOptions @JvmOverloads constructor(
     /**
-     * ISO 3166-1 alpha-2 region, e.g. "BR". Without it, only entries for every region (`"*"`)
-     * apply; regional entries need an explicit region.
+     * ISO 3166-1 alpha-2 region, e.g. "BR". The functions of [CultureLayer] apply only the entries
+     * for every region (`"*"`) without it, and regional entries need one. [AliasEngine.search] and
+     * [SearchSession] use the device's region when none is given, and `""` for none
+     * ([CultureLayer.resolveRegion]).
      */
     val region: String? = null,
     /** The moment windows are checked against (epoch milliseconds, local calendar day). Default: now. */
     val now: Long? = null,
     /**
-     * The calendar day windows are checked against, "YYYY-MM-DD". It wins over [now]. A server
-     * passes the request's UTC day, because it does not know the user's.
+     * The calendar day windows are checked against, "YYYY-MM-DD". It wins over [now]. The search API
+     * passes the caller's local day when it knows the time zone, else the UTC day.
      */
     val day: String? = null,
     /** Let the last word complete a trigger while the user is typing. */
@@ -25,6 +29,11 @@ public data class ApplyCultureOptions @JvmOverloads constructor(
     val locale: String? = null,
     /** Only add emoji this engine knows, with its glyph and label. */
     val engine: AliasEngine? = null,
+    /**
+     * [CultureLayer.applyCulture]: match triggers anywhere in a message ([CultureLayer.matchCultureInText]),
+     * for reaction suggestions, instead of the query as typed. A message gets no regional lead.
+     */
+    val text: Boolean = false,
 )
 
 /** Options of [CultureLayer.relevantNow]. */
@@ -47,7 +56,13 @@ public data class RelevantEmoji(val emoji: String, val hexcode: String, val cont
  * packages/core/src/culture.ts.
  */
 public object CultureLayer {
+    /** The `region` value for the device's region ([deviceRegion]); also what no value (null) means. */
+    public const val DEVICE_REGION: String = "device"
+
     private const val MAX_CULTURE_RESULTS = 5
+
+    /** Longest message (UTF-16 units) that [matchCultureInText] reads, as the reactions API. */
+    private const val MAX_TEXT_LENGTH = 256
 
     /** A typed prefix completes a trigger only when it is this long and covers half of the trigger. */
     private const val MIN_PREFIX_LENGTH = 3
@@ -56,6 +71,7 @@ public object CultureLayer {
     private val LOCALE_TAG = Regex("^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$")
     private val ISO_REGION = Regex("^[A-Z]{2}$")
     private val DAY = Regex("^\\d{4}-\\d{2}-\\d{2}$")
+    private val PACK_DIRECTORY = Regex("^(.*/)pack/([^/?#]+)/*$")
 
     /**
      * Fetches one locale's culture file, e.g. from `https://api.emojisense.com/v1/culture/0.1.0`.
@@ -77,6 +93,14 @@ public object CultureLayer {
     }
 
     /**
+     * The culture directory of the pack directory on the same host: ".../v1/pack/0.1.0" →
+     * ".../v1/culture/0.1.0". Null when the URL does not end in `pack/<version>`.
+     */
+    @JvmStatic
+    public fun cultureUrlFor(packUrl: String): String? =
+        PACK_DIRECTORY.find(packUrl)?.let { "${it.groupValues[1]}culture/${it.groupValues[2]}" }
+
+    /**
      * The ISO 3166-1 alpha-2 region of a BCP 47 locale tag: "pt-BR" → "BR", "zh-Hant-TW" → "TW".
      * Null when the tag has no such region ("en", "es-419") or is not a valid tag.
      */
@@ -84,17 +108,40 @@ public object CultureLayer {
     public fun regionOf(locale: String): String? = LanguageTag.region(locale)?.takeIf { ISO_REGION.matches(it) }
 
     /**
-     * The region of the device's language (`Locale.getDefault()`), the default region for culture
-     * entries when an app gives none. It is read on the device and never sent anywhere.
+     * The device's region, the default region for culture entries when an app gives none: the region
+     * of the device's language (`Locale.getDefault()`, "en-JP" → "JP"), else the region of the
+     * device's time zone in [zones] (a culture file's [Culture.zones]: "Asia/Tokyo" → "JP"). It is
+     * read on the device and never sent anywhere.
      */
     @JvmStatic
-    public fun deviceRegion(): String? = Locale.getDefault().country.uppercase(Locale.ROOT).takeIf { ISO_REGION.matches(it) }
+    @JvmOverloads
+    public fun deviceRegion(zones: Map<String, String>? = null): String? {
+        val region = Locale.getDefault().country.uppercase(Locale.ROOT).takeIf { ISO_REGION.matches(it) }
+        if (region != null || zones == null) return region
+        return zones[TimeZone.getDefault().id]
+    }
 
-    /** The local calendar day of `now` (epoch milliseconds) as "YYYY-MM-DD". */
+    /**
+     * The region that an app's `region` option stands for: null or [DEVICE_REGION] → [deviceRegion]
+     * (with the culture file's time zones), `""` → none (only entries for every region), anything
+     * else as given: a code, or "auto", which a [SearchSession] learns from the API.
+     */
+    @JvmStatic
+    @JvmOverloads
+    public fun resolveRegion(region: String?, culture: Culture? = null): String? {
+        if (region == null || region.lowercase() == DEVICE_REGION) return deviceRegion(culture?.zones)
+        return region.ifEmpty { null }
+    }
+
+    /**
+     * The local calendar day of `now` (epoch milliseconds) as "YYYY-MM-DD", always in the Gregorian
+     * calendar: `Calendar.getInstance()` gives a Buddhist year in th-TH and a Japanese era year in
+     * ja-JP-u-ca-japanese.
+     */
     @JvmStatic
     @JvmOverloads
     public fun localDay(now: Long = System.currentTimeMillis()): String {
-        val calendar = Calendar.getInstance()
+        val calendar = GregorianCalendar(TimeZone.getDefault(), Locale.ROOT)
         calendar.timeInMillis = now
         val month = (calendar.get(Calendar.MONTH) + 1).toString().padStart(2, '0')
         val day = calendar.get(Calendar.DAY_OF_MONTH).toString().padStart(2, '0')
@@ -133,6 +180,32 @@ public object CultureLayer {
         val normalized = Normalizer.normalize(query)
         if (normalized.isEmpty()) return emptyList()
         val typing = options.prefix && !endsWithJavaScriptWhitespace(query)
+        return collectMatches(culture, options) { trigger -> triggerQuality(trigger, normalized, typing) }
+    }
+
+    /**
+     * Culture results for a whole message (reaction suggestions): every in-scope entry with a trigger
+     * inside the text, as whole words ("thanks so much!" holds "thanks"). A trigger of a script
+     * written without spaces (Han, kana, Thai) matches anywhere in the text. Strongest first, at most
+     * [ApplyCultureOptions.limit] (5). [ApplyCultureOptions.prefix] does not apply.
+     */
+    @JvmStatic
+    @JvmOverloads
+    public fun matchCultureInText(culture: Culture, text: String, options: ApplyCultureOptions = ApplyCultureOptions()): List<CultureResult> {
+        val normalized = Normalizer.normalize(text, MAX_TEXT_LENGTH)
+        if (normalized.isEmpty()) return emptyList()
+        val padded = " $normalized "
+        return collectMatches(culture, options) { trigger ->
+            val inside = if (isUnspacedScript(trigger)) trigger in normalized else " $trigger " in padded
+            if (inside) 1.0 else 0.0
+        }
+    }
+
+    /**
+     * In-scope entries whose best trigger has a quality above 0 (the longest trigger wins a tie), as
+     * culture results, best per emoji, strongest first.
+     */
+    private fun collectMatches(culture: Culture, options: ApplyCultureOptions, qualityOf: (String) -> Double): List<CultureResult> {
         val day = scopeDay(options.day, options.now)
         val best = LinkedHashMap<String, CultureResult>()
         for (entry in culture.entries) {
@@ -140,8 +213,8 @@ public object CultureLayer {
             var quality = 0.0
             var match = ""
             for (trigger in entry.triggers) {
-                val value = triggerQuality(trigger, normalized, typing)
-                if (value > quality) {
+                val value = qualityOf(trigger)
+                if (value > quality || (value > 0.0 && value == quality && trigger.length > match.length)) {
                     quality = value
                     match = trigger
                 }
@@ -226,7 +299,10 @@ public object CultureLayer {
         return (head + added + results.drop(1).filter { it.id !in ids }).take(maxOf(0, limit))
     }
 
-    /** [matchCulture], [matchRegionalLead] and [insertCulture] in one step. */
+    /**
+     * [matchCulture] (or [matchCultureInText] with [ApplyCultureOptions.text]), [matchRegionalLead]
+     * and [insertCulture] in one step.
+     */
     @JvmStatic
     @JvmOverloads
     public fun applyCulture(
@@ -242,8 +318,14 @@ public object CultureLayer {
             val label = entry.labels[options.locale ?: ""] ?: entry.labels["en"] ?: entry.labels.values.firstOrNull() ?: ""
             return match.copy(emoji = entry.emoji, label = label)
         }
-        val matches = matchCulture(culture, query, options.copy(limit = MAX_CULTURE_RESULTS)).mapNotNull(::withLabel)
-        val lead = matchRegionalLead(culture, query, results.firstOrNull()?.id, options.region, options.now, options.day)
+        val scope = options.copy(limit = MAX_CULTURE_RESULTS)
+        val found = if (options.text) matchCultureInText(culture, query, scope) else matchCulture(culture, query, scope)
+        val matches = found.mapNotNull(::withLabel)
+        val lead = if (options.text) {
+            null
+        } else {
+            matchRegionalLead(culture, query, results.firstOrNull()?.id, options.region, options.now, options.day)
+        }
         val limit = options.limit ?: (results.size + matches.size + 1)
         return insertCulture(results, matches, limit, lead?.let(::withLabel))
     }

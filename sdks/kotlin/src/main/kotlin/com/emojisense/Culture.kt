@@ -75,6 +75,12 @@ public data class Culture(
      * cover 12 months hold none; use [CultureLayer.relevantNow], which checks the windows on the device.
      */
     val relevantNow: List<String> = emptyList(),
+    /**
+     * IANA time zone → ISO 3166-1 alpha-2 region, for the regions that entries name. A device whose
+     * language has no region ("ja", "fr") finds its region from its time zone ([CultureLayer.deviceRegion]).
+     * Empty in files built before the map existed.
+     */
+    val zones: Map<String, String> = emptyMap(),
 ) {
     public companion object {
         public const val FORMAT: String = "emojisense-culture"
@@ -94,6 +100,10 @@ public data class Culture(
                 until = root.optionalString("until") ?: "",
                 entries = entries.map(::decodeEntry),
                 relevantNow = root.optionalArray("relevantNow")?.mapNotNull { it.stringOrNull() } ?: emptyList(),
+                zones = root.optionalObject("zones")
+                    ?.mapNotNull { (zone, region) -> region.stringOrNull()?.let { zone to it } }
+                    ?.toMap()
+                    ?: emptyMap(),
             )
         }
 

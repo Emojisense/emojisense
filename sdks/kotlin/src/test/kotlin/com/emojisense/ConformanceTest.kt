@@ -174,6 +174,48 @@ class ConformanceTest {
         assertEquals(emptyList(), verdict)
     }
 
+    /**
+     * The culture layer on the reference's culture file (culture-golden.json): searches through the
+     * engine, and messages through `applyCulture` with `text`, for fixed regions and days.
+     */
+    @Test
+    fun `culture matches the reference`() {
+        val packs = packs()
+        val reference = CultureGolden.instance
+        assertEquals(golden.packVersion, reference.packVersion, "culture-golden.json and golden.json must come from the same packs")
+        assertEquals(reference.zones, reference.culture.zones)
+        val engine = packs.engine(reference.packs).withCulture(reference.culture)
+        // CULTURE_TOP and the scope of cultureCase() in sdks/swift/scripts/make-golden.ts.
+        val top = 6
+        val differences = reference.cases.mapNotNull { case ->
+            // A search with region "" applies no region; a message takes none (null) directly.
+            val scope = AliasSearchOptions(limit = top, locale = "en", region = case.region, day = case.day)
+            val results = if (case.text) {
+                val alias = engine.search(case.q, scope.copy(culture = false)).results
+                val options = ApplyCultureOptions(
+                    region = case.region.ifEmpty { null },
+                    day = case.day,
+                    limit = top,
+                    locale = "en",
+                    engine = engine,
+                    text = true,
+                )
+                CultureLayer.applyCulture(alias, reference.culture, case.q, options)
+            } else {
+                engine.search(case.q, scope).results
+            }
+            val actual = results.map { CultureGolden.Ranked(it.id, it.source.key, (it as? CultureResult)?.cultureId, it.score) }
+            if (actual == case.results) {
+                null
+            } else {
+                val kind = if (case.text) "message" else "search"
+                "  $kind ${debug(case.q)} region ${debug(case.region)} ${case.day}:\n    kotlin $actual\n    ts     ${case.results}"
+            }
+        }
+        report("culture: identical ids, sources, culture ids and scores", reference.cases.size, differences)
+        assertEquals(emptyList(), differences)
+    }
+
     /** The Kotlin copy (FunctionWords.kt, generated) holds exactly the reference lists. */
     @Test
     fun `function words match the reference`() {

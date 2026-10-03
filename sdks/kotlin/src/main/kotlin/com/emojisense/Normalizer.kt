@@ -156,5 +156,28 @@ private fun isJavaScriptWhitespace(unit: Char): Boolean = when (unit.code) {
     else -> false
 }
 
+/**
+ * Scripts written without spaces between words: Thai, Lao, Myanmar, Khmer, kana, Han (the ranges of
+ * `UNSPACED_SCRIPT` in packages/core/src/normalize.ts). A run of them is one token after
+ * normalization, so a sentence only matches if it is a whole phrase.
+ */
+private val UNSPACED_RANGES = intArrayOf(
+    0x0E00, 0x0EFF, 0x1000, 0x109F, 0x1780, 0x17FF, 0x3040, 0x30FF,
+    0x3400, 0x4DBF, 0x4E00, 0x9FFF, 0xF900, 0xFAFF, 0x20000, 0x3134F,
+)
+
+/** Does the text hold a code point of a script written without spaces (`UNSPACED_SCRIPT.test`)? */
+internal fun isUnspacedScript(text: String): Boolean {
+    var i = 0
+    while (i < text.length) {
+        val codePoint = text.codePointAt(i)
+        for (r in UNSPACED_RANGES.indices step 2) {
+            if (codePoint >= UNSPACED_RANGES[r] && codePoint <= UNSPACED_RANGES[r + 1]) return true
+        }
+        i += Character.charCount(codePoint)
+    }
+    return false
+}
+
 /** JavaScript `Math.round` for scores: halves round up. */
 internal fun roundScore(value: Double): Double = Math.round(value * 1000).toDouble() / 1000

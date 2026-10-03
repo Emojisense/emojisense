@@ -64,8 +64,10 @@ public class SemanticClient @JvmOverloads constructor(
     /**
      * The request URL, which is also the key of the memory. Null: nothing to ask (an empty query, or
      * paused after an over-limit answer). The client fuses with its own alias results, so it asks for
-     * semantic results only. It sends `region=auto` only for the value "auto": an explicit region code
-     * stays on the device.
+     * semantic results only, and with `culture=0`: the session applies the culture layer on the device,
+     * after fusion, so the API must not. It sends `region=auto` only for the value "auto": an explicit
+     * region code stays on the device. The parameter order is the TypeScript client's, so both share
+     * browser and proxy cache entries.
      */
     private fun requestUrl(query: String, options: SemanticSearchOptions): String? {
         if (Normalizer.normalize(query).isEmpty() || clock() < synchronized(lock) { pausedUntil }) return null
@@ -75,6 +77,7 @@ public class SemanticClient @JvmOverloads constructor(
             "locale" to (options.locale ?: "en"),
             "limit" to options.limit.toString(),
             "mode" to "semantic",
+            "culture" to "0",
         )
         if (options.region.equals(AUTO_REGION, ignoreCase = true)) parameters.add("region" to AUTO_REGION)
         configuration.packVersion?.let { parameters.add("pack" to it) }

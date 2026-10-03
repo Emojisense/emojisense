@@ -39,7 +39,7 @@ class SemanticClientTest {
         val url = transport.requests.single()
         assertTrue(url.startsWith("https://api.test/v1/search?"))
         assertEquals(
-            mapOf("q" to "doğum günü!!", "locale" to "tr", "limit" to "5", "mode" to "semantic", "key" to "pk_1"),
+            mapOf("q" to "doğum günü!!", "locale" to "tr", "limit" to "5", "mode" to "semantic", "culture" to "0", "key" to "pk_1"),
             parameters(url),
         )
     }
@@ -56,8 +56,8 @@ class SemanticClientTest {
         val transport = StubTransport.json(SEMANTIC_BODY)
         client(transport).search("+1")
         client(transport).search("jurassic park!!")
-        assertEquals("q=%2B1&locale=en&limit=24&mode=semantic", transport.requests[0].substringAfter('?'))
-        assertEquals("q=jurassic+park%21%21&locale=en&limit=24&mode=semantic", transport.requests[1].substringAfter('?'))
+        assertEquals("q=%2B1&locale=en&limit=24&mode=semantic&culture=0", transport.requests[0].substringAfter('?'))
+        assertEquals("q=jurassic+park%21%21&locale=en&limit=24&mode=semantic&culture=0", transport.requests[1].substringAfter('?'))
     }
 
     @Test
@@ -68,6 +68,21 @@ class SemanticClientTest {
         client(transport).search("volcano", SemanticSearchOptions(region = "BR"))
         client(transport).search("eruption", SemanticSearchOptions())
         assertEquals(listOf("auto", "auto", null, null), transport.requests.map { parameters(it)["region"] })
+    }
+
+    @Test
+    fun `asks for no culture results, in the parameter order of the TypeScript client`() = runBlocking {
+        val transport = StubTransport.json(SEMANTIC_BODY)
+        val client = SemanticClient(SemanticClient.Configuration("https://api.test", key = "pk_1", packVersion = "0.1.0"), transport)
+        client.search("volcano", SemanticSearchOptions(region = "AUTO"))
+        client.search("lava", SemanticSearchOptions(region = "BR"))
+        client.search("magma")
+        // The same order as packages/core/src/client.ts, so both clients share browser and proxy cache entries.
+        val names = transport.requests[0].substringAfter('?').split('&').map { it.substringBefore('=') }
+        assertEquals(listOf("q", "locale", "limit", "mode", "culture", "region", "pack", "key"), names)
+        // The session applies culture on the device, after fusion: the API must not apply it too.
+        assertEquals(listOf("0", "0", "0"), transport.requests.map { parameters(it)["culture"] })
+        assertEquals(listOf("auto", null, null), transport.requests.map { parameters(it)["region"] })
     }
 
     @Test
