@@ -165,6 +165,24 @@ describe("culture layer", () => {
     await waitFor(() => expect(result.current.results.map((r) => r.emoji)).toEqual(["🦖"]));
   });
 
+  it("checks culture windows against the now option", async () => {
+    const [, film] = culture.entries;
+    if (!film) throw new Error("fixture has no film entry");
+    const october: Culture = {
+      ...culture,
+      entries: [{ ...film, kind: "seasonal", when: { from: "10-15", to: "10-31", recurs: "yearly" } }],
+    };
+    vi.stubGlobal("fetch", packAndCultureFetch(october));
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    await waitFor(() => expect(sense.current.engine?.culture).toBeDefined());
+    const search = (now: number) =>
+      renderHook(() => useEmojiSearch("jurassic park", sense.current, { now: () => now })).result;
+    const outside = search(new Date(2026, 9, 1, 12).getTime());
+    await waitFor(() => expect(outside.current.results.map((r) => r.emoji)).toEqual(["🦖"]));
+    const inside = search(new Date(2026, 9, 20, 12).getTime());
+    await waitFor(() => expect(inside.current.results.map((r) => r.emoji)).toEqual(["🦖", "🚀"]));
+  });
+
   it("lists relevant-now emoji from featured entries", async () => {
     vi.stubGlobal("fetch", packAndCultureFetch());
     const { result: sense } = renderHook(() => useEmojisense(options));
@@ -221,11 +239,11 @@ describe("culture region", () => {
   };
 
   /** Packs, the regional culture file and the search API; returns every request URL. */
-  function serve(answerRegion?: string) {
+  function serve(answerRegion?: string, file: Culture = regional) {
     const packs = packFetch();
     const fetch = vi.fn(async (url: string | URL | Request) => {
       const u = String(url);
-      if (u.endsWith("/culture/culture.en.json")) return new Response(JSON.stringify(regional));
+      if (u.endsWith("/culture/culture.en.json")) return new Response(JSON.stringify(file));
       if (u.includes("/v1/search")) {
         const results = [{ emoji: "🚀", id: "1F680", score: 0.6, source: "semantic" }];
         const region = answerRegion ? { region: answerRegion } : {};
@@ -254,12 +272,21 @@ describe("culture region", () => {
     expect(await search(sense)).toEqual(["🦖", "👍", "🚀"]);
   });
 
-  it("has no region when the browser's language has no region subtag", async () => {
+  it("has no region when neither the browser's language nor the time zone gives one", async () => {
     serve();
     speak("pt");
     const { result: sense } = renderHook(() => useEmojisense(options));
     expect(sense.current.region).toBeUndefined();
     expect(await search(sense)).toEqual(["🦖", "🚀"]);
+  });
+
+  it("takes the region of the time zone when the language has none", async () => {
+    const zone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    serve(undefined, { ...regional, zones: { [zone]: "BR" } });
+    speak("pt");
+    const { result: sense } = renderHook(() => useEmojisense(options));
+    expect(await search(sense)).toEqual(["🦖", "👍", "🚀"]);
+    expect(sense.current.region).toBe("BR");
   });
 
   it("prefers the app's region, and an empty region turns regional entries off", async () => {

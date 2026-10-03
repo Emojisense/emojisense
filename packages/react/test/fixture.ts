@@ -109,8 +109,8 @@ export const culture: Culture = {
 };
 
 /** Packs, plus the English culture file under /culture/. */
-export function packAndCultureFetch() {
+export function packAndCultureFetch(file: Culture = culture) {
   const packs = packFetch();
   return async (url: string | URL | Request) =>
-    String(url).endsWith("/culture/culture.en.json") ? new Response(JSON.stringify(culture)) : packs(url);
+    String(url).endsWith("/culture/culture.en.json") ? new Response(JSON.stringify(file)) : packs(url);
 }

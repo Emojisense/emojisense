@@ -5,7 +5,6 @@ import {
   createEngine,
   createLayeredSemantic,
   createSearchSession,
-  deviceRegion,
   type EmojiSet,
   isAutoRegion,
   loadCustomPack,
@@ -13,6 +12,7 @@ import {
   type Pack,
   type RelevantEmoji,
   relevantNow,
+  resolveRegion,
   type SearchResult,
   type SemanticLayer,
   type SemanticProvider,
@@ -63,10 +63,11 @@ export interface EmojisenseOptions {
   cultureUrl?: string | false;
   /**
    * ISO 3166-1 alpha-2 region, e.g. "BR". Regional culture entries apply only with it. Default:
-   * the region of the browser's language (`navigator.language` "pt-BR" → "BR"), read on the
-   * device and never sent. `""` = no region. `"auto"`: the region the API reports for the
-   * request's country (`region=auto`, needs `endpoint`), learned from the first API answer of a
-   * search; the relevant-now shelf then shows entries for every region only.
+   * the device's region: the region of the browser's language (`navigator.language` "pt-BR" →
+   * "BR"), else the region of its time zone ("ja" in "Asia/Tokyo" → "JP", from the culture file).
+   * It is read on the device and never sent. `""` = no region. `"auto"`: the region the API
+   * reports for the request's country (`region=auto`, needs `endpoint`), learned from the first
+   * API answer of a search; the relevant-now shelf then shows entries for every region only.
    */
   region?: string;
   /**
@@ -98,7 +99,7 @@ export interface Emojisense {
   publishableKey?: string;
   /** The loaded culture file (also attached to `engine`), once `cultureUrl` answered. */
   culture?: Culture;
-  /** The region for culture entries: the `region` option, else the browser's region. */
+  /** The region for culture entries: the `region` option, else the device's region. */
   region?: string;
   /** With `statsUrl`: report picks with `stats.pick(query, id)`; `useEmojiSearch` counts searches. */
   stats?: StatsReporter;
@@ -114,7 +115,12 @@ const NO_PACKS: readonly Pack[] = [];
  * `packBaseUrl`, `locale` and `extended` shares one download and one index, so a picker that mounts
  * again is ready on its first render.
  */
-function packLoader({ packBaseUrl, locale = "en", extended = true, cultureUrl }: LoaderOptions): EngineLoader {
+function packLoader({
+  packBaseUrl,
+  locale = "en",
+  extended = true,
+  cultureUrl,
+}: LoaderOptions): EngineLoader {
   return createEngineLoader({ packUrl: packBaseUrl, locale, extended, cultureUrl });
 }
 
@@ -142,7 +148,7 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
     customEmoji = false,
     tenant,
     cultureUrl,
-    region = deviceRegion(),
+    region: regionOption,
     statsUrl,
     statsSample,
   } = options;
@@ -189,6 +195,8 @@ export function useEmojisense(options: EmojisenseOptions): Emojisense {
   const error = failure?.loader === loader && !localeEngine ? failure.error : undefined;
 
   const culture = localeEngine?.culture;
+  // The culture file's time zones can name the region when the browser's language does not.
+  const region = useMemo(() => resolveRegion(regionOption, culture), [regionOption, culture]);
   // The custom pack needs its own index; without one, the shared index is used as it is.
   const customEngine = useMemo(
     () => (customPack && packs.length > 0 ? createEngine([...packs, customPack]) : undefined),
@@ -259,6 +267,8 @@ export interface UseEmojiSearchOptions {
   debounceMs?: number;
   /** `false` = canonical ranking only, even when a culture file is loaded (reproducible). */
   culture?: boolean;
+  /** The clock that culture windows are checked against (its local day). Default: `Date.now`. */
+  now?: () => Date | number;
 }
 
 const IDLE: EmojiSearchState = {
@@ -284,6 +294,9 @@ export function useEmojiSearch(
 ): EmojiSearchState {
   const { engine, semantic, locale, region, stats } = emojisense;
   const { limit = 24, debounceMs = 200, culture = true } = options;
+  // Read through a ref: a new clock function on each render must not start a new session.
+  const nowRef = useRef(options.now);
+  nowRef.current = options.now;
   const [state, setState] = useState<EmojiSearchState>(IDLE);
   const sessionRef = useRef<ReturnType<typeof createSearchSession> | undefined>(undefined);
 
@@ -298,6 +311,7 @@ export function useEmojiSearch(
       ...(culture ? {} : { culture: false as const }),
       // The region is resolved here; "" tells the session not to use the device's region.
       region: region ?? "",
+      now: () => (nowRef.current ?? Date.now)(),
       onChange: (s) => {
         stats?.observe(s);
         setState({
