@@ -288,3 +288,57 @@ describe("webhooks: access and plan gate", () => {
     expect((await create({ url: HOOK_URL }, developer)).status).toBe(201);
   });
 });
+
+describe("webhooks: masked URLs below developer", () => {
+  const SLACK_URL = "https://hooks.slack.com/services/T0001/B0001/s3cretT0ken?channel=general";
+
+  async function listAs(h: Awaited<ReturnType<typeof setup>>["h"], path: string, cookie: string) {
+    const text = await (await h.call("GET", path, { cookie })).text();
+    return { text, webhooks: (JSON.parse(text) as WebhooksResponse).webhooks };
+  }
+
+  it("shows a viewer the scheme and host only, and developers, admins and the owner the full URL", async () => {
+    const { h, cookie, webhooks, created } = await setup();
+    const { webhook } = await created({ url: SLACK_URL });
+    expect(webhook.url).toBe(SLACK_URL);
+
+    const viewer = await h.signIn("vic");
+    await joinTeam(h, cookie, viewer, "viewer");
+    const seen = await listAs(h, webhooks, viewer);
+    expect(seen.webhooks).toEqual([{ ...webhook, url: "https://hooks.slack.com/…" }]);
+    expect(seen.text).not.toContain("s3cretT0ken");
+    expect(seen.text).not.toContain("services");
+    expect(seen.text).not.toContain("channel=");
+
+    for (const role of ["developer", "admin"]) {
+      const member = await h.signIn(role);
+      await joinTeam(h, cookie, member, role);
+      expect((await listAs(h, webhooks, member)).webhooks).toEqual([webhook]);
+    }
+    expect((await listAs(h, webhooks, cookie)).webhooks).toEqual([webhook]);
+  });
+
+  it("keeps the port of a masked URL", async () => {
+    const { h, cookie, webhooks, created } = await setup();
+    await created({ url: "http://localhost:3000/hooks/emojisense" });
+    const viewer = await h.signIn("vic");
+    await joinTeam(h, cookie, viewer, "viewer");
+    expect((await listAs(h, webhooks, viewer)).webhooks[0]?.url).toBe("http://localhost:3000/…");
+  });
+
+  it("refuses a masked URL, so it never replaces the real one", async () => {
+    const { h, cookie, webhooks, create, created } = await setup();
+    const { webhook } = await created({ url: SLACK_URL });
+    for (const response of [
+      await h.call("PATCH", `/api/webhooks/${webhook.id}`, {
+        cookie,
+        body: { url: "https://hooks.slack.com/…" },
+      }),
+      await create({ url: " https://hooks.slack.com/… " }),
+    ]) {
+      expect(response.status).toBe(400);
+      expect(await body(response)).toMatchObject({ error: { code: "invalid_request", field: "url" } });
+    }
+    expect((await listAs(h, webhooks, cookie)).webhooks.map((hook) => hook.url)).toEqual([SLACK_URL]);
+  });
+});

@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { isMaskedWebhookUrl } from "../../shared/webhook-url";
 import { api, errorMessage, type Webhook, type WebhookDelivery } from "../api";
 import { CreateWebhookDialog, EVENT_COPY } from "../components/CreateWebhookDialog";
 import { formatDateTime, formatNumber, formatRelative } from "../format";
@@ -18,6 +19,7 @@ const MAX_WEBHOOKS = 10;
 function hostOf(url: string): string {
   try {
     const parsed = new URL(url);
+    if (isMaskedWebhookUrl(url)) return `${parsed.host}/…`;
     return `${parsed.host}${parsed.pathname === "/" ? "" : parsed.pathname}`;
   } catch {
     return url;
@@ -218,6 +220,11 @@ function WebhookDetail({
             Added {formatDateTime(hook.createdAt)}
             {!hook.enabled && hook.disabledAt ? ` · paused ${formatRelative(hook.disabledAt)}` : ""}
           </p>
+          {isMaskedWebhookUrl(hook.url) && (
+            <p className="card-sub">
+              The path is hidden: it can contain a secret token. Developers and admins see the full URL.
+            </p>
+          )}
         </div>
         {!readOnly && (
           <div className="btn-row">

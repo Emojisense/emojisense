@@ -22,6 +22,7 @@ import {
 import type {
   CreatedWebhookResponse,
   OkResponse,
+  Role,
   WebhookDeliveriesResponse,
   WebhookDeliverySummary,
   WebhookResponse,
@@ -29,7 +30,8 @@ import type {
   WebhooksResponse,
   WebhookTestResponse,
 } from "../../shared/contract";
-import { type AppAccess, accessFor, assertCan, type Permission, requireAppAccess } from "../access";
+import { isMaskedWebhookUrl, maskWebhookUrl } from "../../shared/webhook-url";
+import { type AppAccess, accessFor, assertCan, can, type Permission, requireAppAccess } from "../access";
 import type { D1Database } from "../d1";
 import type { AuthedContext, Env } from "../env";
 import { HttpError, json, readJsonObject } from "../http";
@@ -68,6 +70,9 @@ function valid<T>(parsed: Parsed<T>): T {
 }
 
 function parseUrl(value: unknown, env: Env): string {
+  if (typeof value === "string" && isMaskedWebhookUrl(value.trim())) {
+    throw new HttpError(400, "invalid_request", "url is masked. Send the full URL.", "url");
+  }
   const check = checkWebhookUrl(value, { allowLoopback: isDevelopment(env.ENVIRONMENT) });
   if (!check.ok) throw new HttpError(400, "invalid_request", check.message, "url");
   return check.url;
@@ -100,11 +105,12 @@ function toDeliverySummary(row: Omit<WebhookDeliveryRow, "webhook_id">): Webhook
   };
 }
 
-function toWebhookSummary(row: WebhookWithLast): WebhookSummary {
+/** The full URL needs the edit permission: the path of a Slack or Discord hook is its secret. */
+function toWebhookSummary(row: WebhookWithLast, role: Role): WebhookSummary {
   return {
     id: row.id,
     appId: row.app_id,
-    url: row.url,
+    url: can(role, "edit") ? row.url : maskWebhookUrl(row.url),
     events: parseStoredEvents(row.events),
     enabled: row.disabled_at === null,
     createdAt: row.created_at,
@@ -122,28 +128,28 @@ function toWebhookSummary(row: WebhookWithLast): WebhookSummary {
   };
 }
 
-async function loadWebhookSummary(db: D1Database, id: string): Promise<WebhookSummary> {
+async function loadWebhookSummary(db: D1Database, id: string, role: Role): Promise<WebhookSummary> {
   const row = await db.prepare(`${WEBHOOK_WITH_LAST} WHERE w.id = ?`).bind(id).first<WebhookWithLast>();
   if (!row) throw new HttpError(404, "not_found", "No webhook with this id in your apps.");
-  return toWebhookSummary(row);
+  return toWebhookSummary(row, role);
 }
 
 // --- Routes -----------------------------------------------------------------------------------
 
 export async function listWebhooks(ctx: AuthedContext): Promise<Response> {
-  const { app } = await requireWebhooksAppAccess(ctx, "view");
+  const { app, role } = await requireWebhooksAppAccess(ctx, "view");
   const { results } = await ctx.env.DB.prepare(
     `${WEBHOOK_WITH_LAST} WHERE w.app_id = ? ORDER BY w.created_at, w.id`,
   )
     .bind(app.id)
     .all<WebhookWithLast>();
-  const body: WebhooksResponse = { webhooks: results.map(toWebhookSummary) };
+  const body: WebhooksResponse = { webhooks: results.map((row) => toWebhookSummary(row, role)) };
   return json(body);
 }
 
 /** `{ url, events? }`; events default to all. Answers the secret, once. */
 export async function createWebhook(ctx: AuthedContext): Promise<Response> {
-  const { app } = await requireWebhooksAppAccess(ctx, "edit");
+  const { app, role } = await requireWebhooksAppAccess(ctx, "edit");
   const input = await readJsonObject(ctx.request);
   const url = parseUrl(input.url, ctx.env);
   const events = valid(parseWebhookEvents(input.events));
@@ -159,13 +165,13 @@ export async function createWebhook(ctx: AuthedContext): Promise<Response> {
   if (result.meta.changes === 0) {
     throw new HttpError(409, "webhook_limit", `An app can have at most ${MAX_WEBHOOKS_PER_APP} webhooks.`);
   }
-  const body: CreatedWebhookResponse = { webhook: await loadWebhookSummary(ctx.env.DB, id), secret };
+  const body: CreatedWebhookResponse = { webhook: await loadWebhookSummary(ctx.env.DB, id, role), secret };
   return json(body, 201);
 }
 
 /** `{ url?, events?, enabled? }`. Disabling keeps the webhook and its deliveries. */
 export async function updateWebhook(ctx: AuthedContext): Promise<Response> {
-  const { webhook } = await requireWebhookAccess(ctx, "edit");
+  const { webhook, access } = await requireWebhookAccess(ctx, "edit");
   const input = await readJsonObject(ctx.request);
   if (!("url" in input) && !("events" in input) && !("enabled" in input)) {
     throw new HttpError(400, "invalid_request", "Send at least one of url, events or enabled.");
@@ -182,7 +188,7 @@ export async function updateWebhook(ctx: AuthedContext): Promise<Response> {
   await ctx.env.DB.prepare("UPDATE webhooks SET url = ?, events = ?, disabled_at = ? WHERE id = ?")
     .bind(url, events, disabledAt, webhook.id)
     .run();
-  const body: WebhookResponse = { webhook: await loadWebhookSummary(ctx.env.DB, webhook.id) };
+  const body: WebhookResponse = { webhook: await loadWebhookSummary(ctx.env.DB, webhook.id, access.role) };
   return json(body);
 }
 
