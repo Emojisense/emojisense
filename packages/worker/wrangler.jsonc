@@ -87,7 +87,10 @@
     // "true" runs the nightly culture proposals (drafts only; editors approve in the dashboard).
     // CULTURE_PROPOSE_BUDGET caps the Workers AI calls per night (≈ $0.0005 each).
     "CULTURE_CRON_ENABLED": "true",
-    "CULTURE_PROPOSE_BUDGET": "12"
+    "CULTURE_PROPOSE_BUDGET": "12",
+    // "true" also keeps search answers in SHARDS (answers/), shared by every data center
+    // (src/answer-store.ts): an R2 write per new answer. Set a 7-day lifecycle rule first.
+    "ANSWER_CACHE_ENABLED": "false"
   },
   "env": {
     // `wrangler dev --env offline`: no Workers AI binding, so it runs with no Cloudflare login.
@@ -127,7 +130,10 @@
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "http://localhost:4321,http://localhost:5173,http://localhost:8790",
         "CULTURE_CRON_ENABLED": "true",
-        "CULTURE_PROPOSE_BUDGET": "12"
+        "CULTURE_PROPOSE_BUDGET": "12",
+        // "true" also keeps search answers in SHARDS (answers/), shared by every data center
+        // (src/answer-store.ts): an R2 write per new answer. Set a 7-day lifecycle rule first.
+        "ANSWER_CACHE_ENABLED": "false"
       }
     },
     // Internal dev environment at api.emojisense.dev (`pnpm deploy:dev`). Not "development":
@@ -180,7 +186,10 @@
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "https://emojisense.dev,https://app.emojisense.dev",
         "CULTURE_CRON_ENABLED": "true",
-        "CULTURE_PROPOSE_BUDGET": "12"
+        "CULTURE_PROPOSE_BUDGET": "12",
+        // "true" also keeps search answers in SHARDS (answers/), shared by every data center
+        // (src/answer-store.ts): an R2 write per new answer. Set a 7-day lifecycle rule first.
+        "ANSWER_CACHE_ENABLED": "false"
       }
     },
     // Production at api.emojisense.com (`pnpm deploy:production`). No dev keys: every key is a
@@ -222,7 +231,10 @@
         "SHARDS_CRON_ENABLED": "true",
         "FIRST_PARTY_ORIGINS": "https://emojisense.com,https://www.emojisense.com,https://app.emojisense.com",
         "CULTURE_CRON_ENABLED": "true",
-        "CULTURE_PROPOSE_BUDGET": "12"
+        "CULTURE_PROPOSE_BUDGET": "12",
+        // "true" also keeps search answers in SHARDS (answers/), shared by every data center
+        // (src/answer-store.ts): an R2 write per new answer. Set a 7-day lifecycle rule first.
+        "ANSWER_CACHE_ENABLED": "false"
       }
     }
   }

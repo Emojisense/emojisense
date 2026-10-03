@@ -53,6 +53,11 @@ export interface Env {
    * API host. Without it, /p/* serves the static shards in public/p (if any).
    */
   CDN?: R2Bucket;
+  /**
+   * "true" stores search answers in SHARDS under `answers/` as well, shared by every data center
+   * (src/answer-store.ts). Off by default.
+   */
+  ANSWER_CACHE_ENABLED?: string;
   /** "true" runs the nightly shard build; any other value skips it (wrangler.jsonc). */
   SHARDS_CRON_ENABLED?: string;
   /**

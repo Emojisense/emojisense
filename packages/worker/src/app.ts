@@ -1,4 +1,5 @@
 import type { WebhookRuntime } from "@emojisense/platform";
+import { withAnswerStore } from "./answer-store.ts";
 import { authenticate, KeyResolver } from "./auth.ts";
 import { type CacheLike, createMetering, type Handler } from "./context.ts";
 import {
@@ -184,7 +185,12 @@ export function createApp(options: AppOptions) {
       // The edge-cache lookup needs no key: it runs while the key is checked, and a refused key
       // never sees its answer.
       const early = route.cacheKey?.(url, catalog);
-      const cache = early ? lookAhead(options.cache(), early, timing) : options.cache();
+      // Search answers may also be shared across data centers through R2 (off by default).
+      const shared =
+        route.cacheKey && env.ANSWER_CACHE_ENABLED === "true" && env.SHARDS
+          ? withAnswerStore(options.cache(), env.SHARDS, ctx)
+          : options.cache();
+      const cache = early ? lookAhead(shared, early, timing) : shared;
       const authStarted = Date.now();
       const principal = await authenticate(request, url, env, resolver);
       timing.add("auth", Date.now() - authStarted);
