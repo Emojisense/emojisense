@@ -18,6 +18,10 @@ pnpm add @emojisense/lexical emojisense lexical @lexical/react react react-dom
 
 With `@emojisense/react`, which loads the packs and builds the engine:
 
+```bash
+pnpm add @emojisense/react
+```
+
 ```tsx
 import { EmojiAutocompletePlugin } from "@emojisense/lexical";
 import "@emojisense/lexical/styles.css"; // optional default look
@@ -31,6 +35,7 @@ function Editor() {
   const sense = useEmojisense({
     packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
     endpoint: "https://api.emojisense.com",
+    publishableKey: "pk_live_REPLACE_WITH_YOUR_KEY",
   });
   return (
     <LexicalComposer initialConfig={{ namespace: "chat", onError: console.error }}>
@@ -40,6 +45,9 @@ function Editor() {
   );
 }
 ```
+
+Replace the key with your publishable key for semantic API search. Omit `endpoint` and
+`publishableKey` for search on the device only.
 
 Without React hooks for the data: `engine={createEngine(await loadPacks({ baseUrl }))}` from
 `emojisense`. While `engine` is `undefined` (packs still loading) the plugin stays inactive.
@@ -52,13 +60,23 @@ to `useEmojisense` (only their packs load) and to the plugin (the menu matches o
 phrases):
 
 ```tsx
+import { EmojiAutocompletePlugin } from "@emojisense/lexical";
+import { useEmojisense } from "@emojisense/react";
 import { userLocales } from "emojisense";
 
-const locales = userLocales();
-const sense = useEmojisense({ packBaseUrl, locale: locales[0], locales });
-// …
-<EmojiAutocompletePlugin engine={sense.engine} locale={sense.locale} locales={sense.locales} />;
+export function EmojiSearchPlugin() {
+  const locales = userLocales();
+  const sense = useEmojisense({
+    packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
+    locale: locales[0],
+    locales,
+  });
+
+  return <EmojiAutocompletePlugin engine={sense.engine} locale={sense.locale} locales={sense.locales} />;
+}
 ```
+
+Render `EmojiSearchPlugin` inside `LexicalComposer` in place of `EmojiAutocompletePlugin`.
 
 A user of English and Turkish then never gets a match from a Portuguese alias. English always
 counts: it carries the shortcodes. Without `locales`, the menu matches every pack of the engine.

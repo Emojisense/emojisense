@@ -29,12 +29,15 @@ await ClassicEditor.create({
   emojisense: {
     packUrl: "https://api.emojisense.com/v1/pack/0.1.0",
     endpoint: "https://api.emojisense.com", // optional: search by meaning
-    publishableKey: "pk_live_…", // optional
+    publishableKey: "pk_live_REPLACE_WITH_YOUR_KEY",
   },
 });
 ```
 
 CKEditor 47 takes the element as the first argument: `ClassicEditor.create(element, config)`.
+
+Replace the key with your publishable key for semantic API search. Omit `endpoint` and
+`publishableKey` for search on the device only.
 
 ### With the official emoji feature
 
@@ -64,11 +67,16 @@ one keeps `:` and the console shows `emojisense-marker-conflict`.
 preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
 
 ```ts
+import { EmojisenseMention } from "@emojisense/ckeditor5";
+import { ClassicEditor, Essentials, Paragraph } from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import { userLocales } from "emojisense";
 
 const locales = userLocales();
 await ClassicEditor.create({
-  // …
+  attachTo: document.querySelector<HTMLElement>("#editor")!,
+  licenseKey: "GPL",
+  plugins: [Essentials, Paragraph, EmojisenseMention],
   emojisense: { packUrl: "https://api.emojisense.com/v1/pack/0.1.0", locale: locales[0], locales },
 });
 ```

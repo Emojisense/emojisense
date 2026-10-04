@@ -34,9 +34,12 @@ await tinymce.init({
   plugins: "emojisense",
   emojisense_pack_url: "https://api.emojisense.com/v1/pack/0.1.0",
   emojisense_endpoint: "https://api.emojisense.com", // optional: search by meaning
-  emojisense_publishable_key: "pk_live_…", // optional
+  emojisense_publishable_key: "pk_live_REPLACE_WITH_YOUR_KEY",
 });
 ```
+
+Replace the key with your publishable key for semantic API search. Omit `emojisense_endpoint`
+and `emojisense_publishable_key` for search on the device only.
 
 ### TinyMCE from a CDN or a script tag
 
@@ -48,6 +51,7 @@ Load the prebuilt plugin with `external_plugins`. It registers itself on the glo
   tinymce.init({
     selector: "#editor",
     license_key: "gpl",
+    plugins: "emojisense",
     external_plugins: {
       emojisense: "https://cdn.jsdelivr.net/npm/@emojisense/tinymce/dist/plugin.min.js",
     },
@@ -82,11 +86,20 @@ In production, pin exact versions in both URLs and add `integrity` attributes. W
 preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
 
 ```ts
+import "tinymce/models/dom";
+import "tinymce/themes/silver";
+import "tinymce/icons/default";
+import { registerEmojisense } from "@emojisense/tinymce";
 import { userLocales } from "emojisense";
+import tinymce from "tinymce";
 
+registerEmojisense(tinymce);
 const locales = userLocales();
 await tinymce.init({
-  // …
+  selector: "#editor",
+  license_key: "gpl",
+  plugins: "emojisense",
+  emojisense_pack_url: "https://api.emojisense.com/v1/pack/0.1.0",
   emojisense_locale: locales[0],
   emojisense_locales: locales,
 });

@@ -11,7 +11,7 @@
 ## Install
 
 ```bash
-pnpm add @emojisense/tiptap emojisense @tiptap/core @tiptap/pm @tiptap/suggestion @floating-ui/dom
+pnpm add @emojisense/tiptap emojisense @tiptap/core @tiptap/pm @tiptap/suggestion @tiptap/starter-kit @floating-ui/dom
 ```
 
 `@floating-ui/dom` is a peer dependency of `@tiptap/suggestion` (≥ 3.28), which positions the menu.
@@ -32,12 +32,18 @@ new Editor({
     StarterKit,
     EmojiAutocomplete.configure({
       engine: createEngineLoader({ packUrl: "https://api.emojisense.com/v1/pack/0.1.0" }),
-      semantic: createSemanticClient({ endpoint: "https://api.emojisense.com" }), // optional
+      semantic: createSemanticClient({
+        endpoint: "https://api.emojisense.com",
+        key: "pk_live_REPLACE_WITH_YOUR_KEY",
+      }), // optional
       skinTone: "medium", // optional
     }),
   ],
 });
 ```
+
+Replace the key with your publishable key for semantic API search. Omit `semantic` for
+search on the device only.
 
 With a loader, the packs load when the editor first gets the focus, not with the page. A `:`
 typed before they arrive gets its menu as soon as they do. Editors with the same packs on one
@@ -48,29 +54,38 @@ page share one download and one index. A ready `AliasEngine` works too.
 The packs load after the editor is created, so pass getters. The extension reads them on each
 keystroke and also picks up the idle-loaded extension packs.
 
+```bash
+pnpm add @emojisense/react @tiptap/react react react-dom
+```
+
 ```tsx
 import { useEmojisense } from "@emojisense/react";
 import { EmojiAutocomplete } from "@emojisense/tiptap";
-import { useEditor } from "@tiptap/react";
+import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { useRef } from "react";
 
-const sense = useEmojisense({
-  packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
-  endpoint: "https://api.emojisense.com",
-});
-const senseRef = useRef(sense);
-senseRef.current = sense;
+export function Editor() {
+  const sense = useEmojisense({
+    packBaseUrl: "https://api.emojisense.com/v1/pack/0.1.0",
+    endpoint: "https://api.emojisense.com",
+    publishableKey: "pk_live_REPLACE_WITH_YOUR_KEY",
+  });
+  const senseRef = useRef(sense);
+  senseRef.current = sense;
 
-const editor = useEditor({
-  extensions: [
-    StarterKit,
-    EmojiAutocomplete.configure({
-      engine: () => senseRef.current.engine,
-      semantic: () => senseRef.current.semantic,
-    }),
-  ],
-});
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      EmojiAutocomplete.configure({
+        engine: () => senseRef.current.engine,
+        semantic: () => senseRef.current.semantic,
+      }),
+    ],
+  });
+
+  return <EditorContent editor={editor} />;
+}
 ```
 
 ### The user's languages
@@ -80,7 +95,9 @@ preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en
 to the loader (only their packs load) and to the extension (the menu matches only their phrases):
 
 ```ts
+import { EmojiAutocomplete } from "@emojisense/tiptap";
 import { userLocales } from "emojisense";
+import { createEngineLoader } from "emojisense/autocomplete";
 
 const locales = userLocales();
 const packUrl = "https://api.emojisense.com/v1/pack/0.1.0";
@@ -166,19 +183,22 @@ getter. The extension reads it when the menu opens. While the getter returns `nu
 import { EmojiAutocomplete } from "@emojisense/tiptap";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import type { AliasEngine } from "emojisense";
 import { useRef } from "react";
 
-const frameRef = useRef<HTMLDivElement>(null);
+export function FramedEditor({ engine }: { engine: AliasEngine }) {
+  const frameRef = useRef<HTMLDivElement>(null);
 
-const editor = useEditor({
-  extensions: [StarterKit, EmojiAutocomplete.configure({ engine, menuContainer: () => frameRef.current })],
-});
+  const editor = useEditor({
+    extensions: [StarterKit, EmojiAutocomplete.configure({ engine, menuContainer: () => frameRef.current })],
+  });
 
-return (
-  <div ref={frameRef} style={{ position: "relative" }}>
-    <EditorContent editor={editor} />
-  </div>
-);
+  return (
+    <div ref={frameRef} style={{ position: "relative" }}>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
 ```
 
 `menuContainer` also applies to a custom `render` that calls `props.mount`.

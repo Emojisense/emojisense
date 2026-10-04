@@ -34,8 +34,15 @@ const data = emojiMartData as unknown as EmojiMartData;
 const base = "https://api.emojisense.com";
 const packs = await loadPacks({ baseUrl: `${base}/v1/pack/0.1.0` });
 const engine = createEngine(packs);
-const semantic = createLayeredSemantic({ shardsUrl: `${base}/p/0.1.0`, endpoint: base, key: "pk_live_…" });
+const semantic = createLayeredSemantic({
+  shardsUrl: `${base}/p/0.1.0`,
+  endpoint: base,
+  key: "pk_live_REPLACE_WITH_YOUR_KEY",
+});
 ```
+
+Replace the key with your publishable key for semantic API search. Omit `semantic` from
+the adapter options for search on the device only.
 
 ### The user's languages
 
@@ -44,9 +51,10 @@ languages. `userLocales()` reads `navigator.languages` and keeps the languages t
 most preferred first, always with English: `["tr-TR", "en-US", "de"]` → `["tr", "en"]`.
 
 ```ts
-import { userLocales } from "emojisense";
+import { createEngine, loadPacks, userLocales } from "emojisense";
 
 const locales = userLocales();
+const base = "https://api.emojisense.com";
 const engine = createEngine(await loadPacks({ baseUrl: `${base}/v1/pack/0.1.0`, locales }));
 // then pass `locale: locales[0]` and `locales` to attachEmojisense, createEmojiMartSearch or
 // overrideSearchIndex
