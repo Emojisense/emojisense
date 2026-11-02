@@ -55,7 +55,7 @@
   "dependencies": {
     "@modelcontextprotocol/server": "2.1.0",
     "emojisense": "workspace:^",
-    "zod": "4.6.5"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@emojisense/data": "workspace:*"
