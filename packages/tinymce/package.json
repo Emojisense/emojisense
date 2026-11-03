@@ -70,7 +70,7 @@
     "esbuild": "0.28.2",
     "happy-dom": "20.14.5",
     "playwright-core": "1.63.0",
-    "tinymce": "8.9.2",
+    "tinymce": "8.9.3",
     "tinymce-7": "npm:tinymce@7.9.3"
   }
 }
