@@ -30,7 +30,7 @@
     "@tiptap/pm": "3.31.3",
     "@tiptap/starter-kit": "3.31.3",
     "@tiptap/suggestion": "3.31.3",
-    "astro": "7.3.5",
+    "astro": "7.4.7",
     "bidi-js": "1.1.0",
     "emojisense": "workspace:*",
     "harfbuzzjs": "0.3.6",
